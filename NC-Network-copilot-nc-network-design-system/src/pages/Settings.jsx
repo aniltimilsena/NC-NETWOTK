@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getProfile, updateProfileData, subscribeToProfile, uploadProfileMedia } from '../services/profile';
 import { updateProfile } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { FileUploadCard } from "@/components/ui/file-upload-card"
 import { InlineAlert } from '../components/ui/AlertBanner';
 import { 
@@ -384,6 +385,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
             setHairColor(data.hairColor || "");
             setRole(data.role || "");
             setAvatarUrl(data.image || data.photoURL || "");
+            setTwoFactor(data.twoFactorEnabled || false);
           }
         }
         setIsLoading(false);
@@ -420,7 +422,8 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
       hairColor,
       role,
       image: avatarUrl || null,
-      photoURL: avatarUrl || null
+      photoURL: avatarUrl || null,
+      twoFactorEnabled: twoFactor
     };
 
     try {
@@ -448,6 +451,56 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
   // Example Settings State
   const [searchVisibility, setSearchVisibility] = useState(true);
   const [twoFactor, setTwoFactor] = useState(false);
+  const [sessions, setSessions] = useState([]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    
+    const sessionsColRef = collection(db, 'profiles', user.uid, 'sessions');
+    const q = query(sessionsColRef, orderBy('lastActive', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setSessions(list);
+    }, (error) => {
+      console.error("Error subscribing to active sessions:", error);
+    });
+    
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  const handleRevokeSession = async (sessionId) => {
+    if (!user?.uid) return;
+    try {
+      await deleteDoc(doc(db, 'profiles', user.uid, 'sessions', sessionId));
+      showToast('Session revoked successfully.', 'success');
+    } catch (error) {
+      console.error("Error revoking session:", error);
+      showToast('Failed to revoke session.', 'error');
+    }
+  };
+
+  const isMobileDevice = (os) => {
+    const osLower = (os || '').toLowerCase();
+    return osLower.includes('iphone') || osLower.includes('ipad') || osLower.includes('android');
+  };
+
+  const formatLastActive = (timestamp) => {
+    if (!timestamp) return 'Active just now';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+    
+    if (seconds < 60) return 'Active just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `Active ${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `Active ${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `Active ${days} days ago`;
+  };
 
   const tabs = [
     { id: 'account', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>, label: 'Account' },
@@ -1033,32 +1086,78 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
                 <h4 className="text-white font-bold mb-1">Two-Factor Authentication (2FA)</h4>
                 <p className="text-[#888] text-xs max-w-[250px] leading-relaxed">Require a cryptographic code from an authenticator app when logging in.</p>
               </div>
-              <GoldenToggle enabled={twoFactor} onChange={(v) => { setTwoFactor(v); markDirty(); }} />
+              <GoldenToggle 
+                enabled={twoFactor} 
+                onChange={async (v) => {
+                  if (v) {
+                    const permission = await Notification.requestPermission();
+                    if (permission !== 'granted') {
+                      showToast('Please enable browser system notifications to receive 2FA codes.', 'info');
+                    }
+                  }
+                  setTwoFactor(v);
+                  markDirty();
+                }} 
+              />
             </section>
 
             <section>
               <h3 className="text-lg font-bold text-white mb-4">Active Sessions</h3>
-              <div className="border border-[#222] bg-[#111] rounded-xl overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-[#222] bg-[#151515]">
-                  <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                    <div>
-                      <p className="text-sm font-bold text-white">Windows 11 • Chrome</p>
-                      <p className="text-xs text-green-500 font-medium tracking-wide border border-green-500/20 bg-green-500/10 px-2 py-0.5 rounded inline-block mt-1">Current Session</p>
+              <div className="border border-[#222] bg-[#111] rounded-xl overflow-hidden divide-y divide-[#222]">
+                {sessions.map((sess) => {
+                  const currentSessionId = localStorage.getItem('nc_session_id');
+                  const isCurrent = sess.id === currentSessionId;
+                  const isMobile = isMobileDevice(sess.os);
+                  
+                  return (
+                    <div 
+                      key={sess.id} 
+                      className={`flex items-center justify-between p-4 ${
+                        isCurrent ? 'bg-[#151515]' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {isMobile ? (
+                          <svg className={`w-5 h-5 ${isCurrent ? 'text-green-500' : 'text-[#666]'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                        ) : (
+                          <svg className={`w-5 h-5 ${isCurrent ? 'text-green-500' : 'text-[#666]'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                        <div>
+                          <p className={`text-sm font-bold ${isCurrent ? 'text-white' : 'text-[#CCC]'}`}>
+                            {sess.os} • {sess.browser}
+                          </p>
+                          {isCurrent ? (
+                            <p className="text-xs text-green-500 font-medium tracking-wide border border-green-500/20 bg-green-500/10 px-2 py-0.5 rounded inline-block mt-1">Current Session</p>
+                          ) : (
+                            <p className="text-xs text-[#666] mt-1">
+                              {formatLastActive(sess.lastActive)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <p className="text-xs text-[#666]">{sess.location || "Unknown Location"}</p>
+                        {!isCurrent && (
+                          <button 
+                            onClick={() => handleRevokeSession(sess.id)}
+                            className="text-xs text-red-400 hover:text-red-300 font-bold px-3 py-1.5 rounded bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                          >
+                            Revoke
+                          </button>
+                        )}
+                      </div>
                     </div>
+                  );
+                })}
+                {sessions.length === 0 && (
+                  <div className="p-4 text-center text-xs text-[#555] italic">
+                    No active sessions found.
                   </div>
-                  <p className="text-xs text-[#666]">Los Angeles, CA</p>
-                </div>
-                <div className="flex items-center justify-between p-4 border-b border-[#222]">
-                  <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-[#666]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                    <div>
-                      <p className="text-sm font-bold text-[#CCC]">iPhone 14 Pro • Safari</p>
-                      <p className="text-xs text-[#666] mt-1">Active 3 days ago</p>
-                    </div>
-                  </div>
-                  <button className="text-xs text-red-400 hover:text-red-300 font-bold px-3 py-1.5 rounded bg-red-500/10 hover:bg-red-500/20 transition-colors">Revoke</button>
-                </div>
+                )}
               </div>
             </section>
           </div>

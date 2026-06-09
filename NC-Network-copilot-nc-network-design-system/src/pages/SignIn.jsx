@@ -3,16 +3,24 @@ import { EyeToggleIcon } from "@/components/ui/animated-state-icons"
 import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import Logo from '../components/ui/Logo';
-import { auth, googleProvider } from '../lib/firebase';
+import { auth, googleProvider, db } from '../lib/firebase';
 import { signInWithPopup } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
-import { signInUser, ensureUserProfile } from '../services/auth';
+import { signInUser, ensureUserProfile, logoutUser } from '../services/auth';
 
 export default function SignIn({ onNavigate, showAlert }) {
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // 2FA States
+  const [show2fa, setShow2fa] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [correctCode, setCorrectCode] = useState('');
+  const [tempCredentials, setTempCredentials] = useState(null);
+  const [twoFactorError, setTwoFactorError] = useState('');
 
   const handleSignIn = async (e) => {
     e?.preventDefault();
@@ -29,8 +37,73 @@ export default function SignIn({ onNavigate, showAlert }) {
     if (authError) {
       setError(authError);
       setIsLoading(false);
-    } else {
+      return;
+    }
+
+    if (user) {
+      try {
+        const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
+        if (profileSnap.exists() && profileSnap.data().twoFactorEnabled === true) {
+          // Two-Factor is enabled!
+          const code = Math.floor(100000 + Math.random() * 900000).toString();
+          setCorrectCode(code);
+          setTempCredentials({ email: form.email, password: form.password });
+          
+          // Request and trigger browser notification
+          if (Notification.permission === 'granted') {
+            new Notification("NC-Network Verification", {
+              body: `Your Two-Factor Authentication (2FA) verification code is: ${code}`,
+              icon: '/logo.png',
+              requireInteraction: true
+            });
+          } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(permission => {
+              if (permission === 'granted') {
+                new Notification("NC-Network Verification", {
+                  body: `Your Two-Factor Authentication (2FA) verification code is: ${code}`,
+                  icon: '/logo.png',
+                  requireInteraction: true
+                });
+              }
+            });
+          }
+
+          // Sign out immediately so they aren't authenticated yet
+          await logoutUser();
+          
+          setShow2fa(true);
+          setIsLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Error checking 2FA profile:", err);
+      }
+      
       onNavigate('home');
+    }
+  };
+
+  const handleVerify2fa = async (e) => {
+    e?.preventDefault();
+    if (!verificationCode) {
+      setTwoFactorError('Please enter the verification code.');
+      return;
+    }
+
+    setIsLoading(true);
+    setTwoFactorError('');
+
+    if (verificationCode.trim() === correctCode) {
+      const { user, error: authError } = await signInUser(tempCredentials.email, tempCredentials.password);
+      if (authError) {
+        setTwoFactorError(authError);
+        setIsLoading(false);
+      } else {
+        onNavigate('home');
+      }
+    } else {
+      setTwoFactorError('Incorrect verification code. Please check your notifications.');
+      setIsLoading(false);
     }
   };
 
@@ -46,6 +119,78 @@ export default function SignIn({ onNavigate, showAlert }) {
       setIsLoading(false);
     }
   };
+
+  if (show2fa) {
+    return (
+      <div className="min-h-screen bg-nc-dark flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Background effects */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-nc-accent/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-nc-blue/5 rounded-full blur-3xl" />
+        
+        <div className="w-full max-w-md z-10">
+          <div className="text-center mb-10">
+            <Logo onNavigate={onNavigate} size="lg" className="mx-auto mb-6" />
+            <h1 className="text-2xl font-black text-white">Two-Factor Verification</h1>
+            <p className="text-nc-muted mt-1">Check your system notifications for the security code</p>
+          </div>
+          
+          <GlassCard strong className="p-5 sm:p-8">
+            <form onSubmit={handleVerify2fa} className="space-y-6">
+              {twoFactorError && <div className="text-red-500 text-xs text-center bg-red-500/10 py-2 rounded-lg">{twoFactorError}</div>}
+              
+              <div className="bg-sky-500/5 border border-sky-500/20 rounded-xl p-4 text-center">
+                <p className="text-xs text-sky-400 font-semibold leading-relaxed">
+                  A verification code has been dispatched. If you did not receive a system notification, please check your notification permissions.
+                </p>
+                {Notification.permission !== 'granted' && (
+                  <div className="mt-2 text-[11px] text-[#888] border-t border-sky-500/10 pt-2">
+                    Fallback code for testing (Notifications blocked): <span className="font-mono text-white font-bold select-all bg-white/10 px-1.5 py-0.5 rounded">{correctCode}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-nc-secondary mb-2">Verification Code</label>
+                <input
+                  type="text"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  value={verificationCode}
+                  onChange={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="e.g. 123456"
+                  className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-center font-mono text-xl tracking-[0.3em] font-bold"
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <Button 
+                  className="w-full justify-center" 
+                  size="lg"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Verifying...' : 'Verify & Sign In'}
+                </Button>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShow2fa(false);
+                    setVerificationCode('');
+                    setTwoFactorError('');
+                    setTempCredentials(null);
+                  }}
+                  className="w-full text-center text-xs text-nc-muted hover:text-white transition-colors py-2"
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            </form>
+          </GlassCard>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-nc-dark flex items-center justify-center p-4 relative overflow-hidden">

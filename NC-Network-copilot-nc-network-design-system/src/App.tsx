@@ -23,7 +23,7 @@ import AdminRoute from './routes/AdminRoute';
 // Firebase
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useNotifications } from './hooks/useNotifications';
 
 // Lazy Loaded Pages
@@ -313,6 +313,64 @@ const TrustRoute = () => (
   </PageTransition>
 );
 
+function getSessionInfo() {
+  const ua = navigator.userAgent;
+  let os = "Unknown OS";
+  let browser = "Unknown Browser";
+
+  if (ua.includes("Windows NT 10.0")) os = "Windows 11";
+  else if (ua.includes("Windows NT 6.3")) os = "Windows 8.1";
+  else if (ua.includes("Windows NT 6.2")) os = "Windows 8";
+  else if (ua.includes("Windows NT 6.1")) os = "Windows 7";
+  else if (ua.includes("Macintosh")) os = "macOS";
+  else if (ua.includes("iPhone")) os = "iPhone";
+  else if (ua.includes("iPad")) os = "iPad";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("Linux")) os = "Linux";
+
+  if (ua.includes("Chrome") && !ua.includes("Chromium") && !ua.includes("Edg")) browser = "Chrome";
+  else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+  else if (ua.includes("Firefox")) browser = "Firefox";
+  else if (ua.includes("Edg")) browser = "Edge";
+  
+  return { os, browser };
+}
+
+async function fetchLocation() {
+  try {
+    const res = await fetch("https://freeipapi.com/api/json");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.cityName && data.countryName) {
+        return `${data.cityName}, ${data.countryName}`;
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to fetch location from IP:", err);
+  }
+  return "Unknown Location";
+}
+
+async function registerSession(uid: string) {
+  let sessionId = localStorage.getItem('nc_session_id');
+  if (!sessionId) {
+    sessionId = 'session_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('nc_session_id', sessionId);
+  }
+  const { os, browser } = getSessionInfo();
+  const locationStr = await fetchLocation();
+  
+  const sessionRef = doc(db, 'profiles', uid, 'sessions', sessionId);
+  await setDoc(sessionRef, {
+    id: sessionId,
+    os,
+    browser,
+    location: locationStr,
+    lastActive: serverTimestamp(),
+    userAgent: navigator.userAgent
+  }, { merge: true });
+}
+
 // ─── MAIN APP COMPONENT ──────────────────────────────────────────────────────
 
 export default function App() {
@@ -380,6 +438,54 @@ export default function App() {
     });
     return () => unsubscribe();
   }, []);
+
+  // Active session revocation listener
+  useEffect(() => {
+    if (!user?.uid) return;
+    
+    const sessionId = localStorage.getItem('nc_session_id');
+    let isInitial = true;
+    let unsub = () => {};
+    
+    const setupListener = async () => {
+      let currentSessionId = sessionId;
+      if (!currentSessionId) {
+        currentSessionId = 'session_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('nc_session_id', currentSessionId);
+      }
+      
+      const sessionRef = doc(db, 'profiles', user.uid, 'sessions', currentSessionId);
+      
+      unsub = onSnapshot(sessionRef, async (snap) => {
+        if (isInitial) {
+          isInitial = false;
+          if (!snap.exists()) {
+            try {
+              await registerSession(user.uid);
+            } catch (err) {
+              console.error("Failed to register session:", err);
+            }
+          }
+          return;
+        }
+        
+        if (!snap.exists()) {
+          showAlert(
+            "Session Revoked",
+            "logout",
+            "Your active session was revoked from another device. Please sign in again."
+          );
+          localStorage.removeItem('nc_session_id');
+          await auth.signOut();
+          navigate('/signin');
+        }
+      });
+    };
+
+    setupListener();
+    
+    return () => unsub();
+  }, [user?.uid, navigate, showAlert]);
 
   // Subscribe to profile data
   useEffect(() => {
