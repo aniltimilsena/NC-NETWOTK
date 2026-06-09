@@ -28,8 +28,8 @@ export default function Breadcrumbs() {
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter((x) => x);
 
-  // Don't render breadcrumbs on home
-  if (pathnames.length === 0) {
+  // Don't render breadcrumbs on home or messages page (full-screen layout)
+  if (pathnames.length === 0 || pathnames[0] === 'messages') {
     return null;
   }
 
