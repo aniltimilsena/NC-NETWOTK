@@ -17,11 +17,9 @@ import { Plus, Check } from "lucide-react"
 import Avatar from '../components/ui/Avatar';
 
 
-// Cinematic Toggle
+// Cinematic Toggle (now unified with the premium neon toggle style)
 const GoldenToggle = ({ enabled, onChange }) => (
-  <button onClick={() => onChange(!enabled)} className="focus:outline-none">
-    <ToggleIcon active={enabled} size={40} color="#FACC15" className="opacity-80 hover:opacity-100 transition-opacity" />
-  </button>
+  <NeonToggle enabled={enabled} onChange={onChange} />
 );
 
 // Clean Edit Profile Input
@@ -175,12 +173,13 @@ const NeonToggle = ({ enabled, onChange }) => (
     aria-checked={enabled}
     onClick={() => onChange(!enabled)}
     className={`
-      relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full
+      relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full
       border-2 transition-all duration-300 ease-in-out
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111]
+      bg-[#0B0B0C]
       ${enabled
-        ? 'bg-sky-500/20 border-sky-400/50 shadow-[0_0_8px_rgba(56,189,248,0.25)]'
-        : 'bg-[#1A1A1A] border-[#333] hover:border-[#444]'
+        ? 'border-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.5),inset_0_0_4px_rgba(56,189,248,0.3)]'
+        : 'border-[#333] hover:border-[#444]'
       }
     `}
   >
@@ -189,8 +188,8 @@ const NeonToggle = ({ enabled, onChange }) => (
         pointer-events-none inline-block h-[18px] w-[18px] rounded-full
         shadow-lg transition-all duration-300 ease-in-out transform
         ${enabled
-          ? 'translate-x-[21px] bg-sky-400 shadow-sky-400/30'
-          : 'translate-x-[1px] bg-[#555]'
+          ? 'translate-x-[18px] bg-sky-400'
+          : 'translate-x-[0px] bg-[#555]'
         }
       `}
     />

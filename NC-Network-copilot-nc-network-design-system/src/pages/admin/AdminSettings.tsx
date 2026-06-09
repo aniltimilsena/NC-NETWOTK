@@ -1,5 +1,6 @@
 import React from 'react';
 import { ToggleLeft as Toggle, Sliders, Database, Globe, Lock, Bell, Trash2, Plus } from 'lucide-react';
+import { Switch } from "@/components/ui/shadcn-switch";
 
 export default function AdminSettings() {
   return (
@@ -28,9 +29,7 @@ export default function AdminSettings() {
                   <p className="text-sm font-bold text-white leading-none mb-1">{f.label}</p>
                   <p className="text-[10px] text-nc-muted uppercase">{f.desc}</p>
                 </div>
-                <button className={`w-10 h-5 rounded-full p-1 transition-all ${f.enabled ? 'bg-admin-success flex justify-end' : 'bg-admin-border flex justify-start'}`}>
-                  <div className="w-3 h-3 bg-white rounded-full shadow-lg"></div>
-                </button>
+                <Switch checked={f.enabled} />
               </div>
             ))}
           </div>
