@@ -342,6 +342,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
             </svg>
             <input 
               type="text" 
+              id="messages-search"
+              name="messages-search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search messages..." 
@@ -741,6 +743,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
               <div className="flex items-center gap-3">
                 <input 
                   type="file" 
+                  id="messages-file-upload"
+                  name="messages-file-upload"
                   ref={fileInputRef} 
                   className="hidden" 
                   onChange={handleFileUpload} 
@@ -767,6 +771,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                   ) : (
                     <input
                       type="text"
+                      id="messages-new-message"
+                      name="messages-new-message"
                       placeholder="Type a message..."
                       className="w-full bg-nc-surface border border-nc-border rounded-[2rem] px-5 py-3.5 text-sm text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-all"
                       value={newMessage}
@@ -831,6 +837,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                 </svg>
                 <input 
                   type="text" 
+                  id="messages-new-chat-search"
+                  name="messages-new-chat-search"
                   value={newChatSearch}
                   onChange={(e) => setNewChatSearch(e.target.value)}
                   placeholder="Search by name or role..." 
