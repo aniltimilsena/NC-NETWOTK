@@ -40,6 +40,9 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setTalents(data);
       setLoading(false);
+    }, (err) => {
+      console.warn("Talents snapshot listener failed or permission denied:", err);
+      setLoading(false);
     });
     return () => unsub();
   }, []);

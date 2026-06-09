@@ -26,6 +26,9 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         setCall({ id: snap.id, ...snap.data() });
       }
       setLoading(false);
+    }, (err) => {
+      console.warn("Casting call snapshot listener failed or permission denied:", err);
+      setLoading(false);
     });
     return () => unsub();
   }, [castingId]);

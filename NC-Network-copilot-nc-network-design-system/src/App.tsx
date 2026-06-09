@@ -492,6 +492,8 @@ export default function App() {
           await auth.signOut();
           navigate('/signin');
         }
+      }, (err) => {
+        console.warn("Session listener failed or permission denied:", err);
       });
     };
 
@@ -510,6 +512,8 @@ export default function App() {
       if (snap.exists()) {
         setUserProfile(snap.data());
       }
+    }, (err) => {
+      console.warn("Profile snapshot listener failed or permission denied:", err);
     });
     return () => unsub();
   }, [user?.uid]);
