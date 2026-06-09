@@ -416,6 +416,19 @@ export default function App() {
   // Initialize Notifications
   useNotifications(user, showAlert, handleLegacyNavigate);
 
+  // Request notification permission immediately when site opens
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+        .then((permission) => {
+          console.log('Notification permission requested on mount:', permission);
+        })
+        .catch((err) => {
+          console.error('Error requesting notification permission on mount:', err);
+        });
+    }
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
