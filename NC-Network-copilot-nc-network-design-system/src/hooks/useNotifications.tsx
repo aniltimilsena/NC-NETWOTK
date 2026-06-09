@@ -36,6 +36,23 @@ export const useNotifications = (
   const registerFCMToken = useCallback(async () => {
     if (!messaging || !user?.uid) return;
 
+    const localApiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+    
+    // Skip on localhost in local development unless explicitly enabled via environment variable
+    const isLocalhost = typeof window !== 'undefined' && 
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const enableFCMOnLocalhost = import.meta.env.VITE_ENABLE_FCM_LOCALHOST === 'true';
+    
+    if (isLocalhost && !enableFCMOnLocalhost) {
+      console.log('Skipping FCM registration on localhost (set VITE_ENABLE_FCM_LOCALHOST=true to enable)');
+      return;
+    }
+
+    if (localStorage.getItem('nc_fcm_unauthorized_key') === localApiKey) {
+      console.log('Skipping FCM registration: FCM is unconfigured or unauthorized for this API key.');
+      return;
+    }
+
     try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
@@ -62,8 +79,16 @@ export const useNotifications = (
           console.log('FCM Token registered');
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.debug('FCM subscription skipped or failed (this is expected in local development):', error);
+      const isUnauthorized = error && (
+        error.code === 'messaging/token-subscribe-failed' || 
+        String(error).includes('authentication credential') || 
+        String(error).includes('401')
+      );
+      if (isUnauthorized) {
+        localStorage.setItem('nc_fcm_unauthorized_key', import.meta.env.VITE_FIREBASE_API_KEY || 'dummy');
+      }
     }
   }, [user?.uid]);
 
