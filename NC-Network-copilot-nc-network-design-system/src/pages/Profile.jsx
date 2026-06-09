@@ -126,10 +126,10 @@ export default function Profile({ onNavigate, user, profileId }) {
     reviews: profile?.reviews || 0,
     image: profile?.image || (isOwnProfile ? user?.photoURL : null),
     coverImage: profile?.coverImage || '/hero-bg.png',
-    skills: profile?.skills || [],
-    experience: profile?.experience || [],
-    media: profile?.media || [],
-    languages: profile?.languages || [],
+    skills: Array.isArray(profile?.skills) ? profile.skills : [],
+    experience: Array.isArray(profile?.experience) ? profile.experience : [],
+    media: Array.isArray(profile?.media) ? profile.media : [],
+    languages: Array.isArray(profile?.languages) ? profile.languages : [],
     verified: profile?.verified || false,
     gender: profile?.gender || 'Not Specified',
     email: profile?.email || (isOwnProfile ? user?.email : null) || 'contact@nc-network.com',
@@ -375,11 +375,11 @@ export default function Profile({ onNavigate, user, profileId }) {
                     <div key={idx} className="relative pl-6 before:absolute before:left-0 before:top-1.5 before:bottom-0 before:w-px before:bg-nc-border last:before:bottom-6">
                       <div className="absolute left-[-4px] top-1 w-2.5 h-2.5 rounded-full bg-nc-accent ring-4 ring-nc-accent/10"></div>
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="text-white font-bold text-sm tracking-tight">{exp.role}</h4>
-                        <span className="text-[10px] text-nc-muted font-black uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded">{exp.year}</span>
+                        <h4 className="text-white font-bold text-sm tracking-tight">{exp?.role || exp?.title || ''}</h4>
+                        <span className="text-[10px] text-nc-muted font-black uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded">{exp?.year || ''}</span>
                       </div>
-                      <div className="text-nc-accent text-xs font-medium mb-2">{exp.production}</div>
-                      <p className="text-nc-muted text-xs leading-relaxed">{exp.description}</p>
+                      <div className="text-nc-accent text-xs font-medium mb-2">{exp?.production || exp?.company || ''}</div>
+                      <p className="text-nc-muted text-xs leading-relaxed">{exp?.description || ''}</p>
                     </div>
                   ))}
                 </div>
@@ -516,14 +516,14 @@ export default function Profile({ onNavigate, user, profileId }) {
                       <div className="bg-nc-surface border border-nc-border rounded-[2rem] p-4">
                         <div className="flex items-start justify-between flex-wrap gap-2">
                           <div>
-                            <h3 className="font-bold text-white">{exp.role}</h3>
-                            <p className="text-nc-accent text-sm">{exp.production}</p>
+                            <h3 className="font-bold text-white">{exp?.role || exp?.title || ''}</h3>
+                            <p className="text-nc-accent text-sm">{exp?.production || exp?.company || ''}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Tag color="accent">{exp.year}</Tag>
+                            <Tag color="accent">{exp?.year || ''}</Tag>
                           </div>
                         </div>
-                        <p className="text-nc-secondary text-sm mt-2">{exp.description}</p>
+                        <p className="text-nc-secondary text-sm mt-2">{exp?.description || ''}</p>
                       </div>
                     </div>
                   ))}
