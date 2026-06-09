@@ -1,0 +1,32 @@
+# Dependency directories
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+functions/lib/
+
+# Firebase Cache/Config
+.firebase/
+firestore-debug.log
+ui-debug.log
+firebase-debug.log
+
+# Environment files
+.env
+.env.local
+.env.*
+**/.env
+**/.env.local
+**/.env.*
+
+# Logs
+*.log
+**/*.log
+
+# IDEs and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
