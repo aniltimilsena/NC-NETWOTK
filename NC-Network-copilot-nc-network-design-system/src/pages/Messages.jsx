@@ -313,14 +313,14 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
   };
 
   return (
-    <div className="bg-nc-dark pt-20 pb-20 md:pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col md:flex-row gap-6 h-[100dvh]">
+    <div className="bg-nc-dark flex flex-col md:flex-row w-full h-[calc(100dvh-4rem)] sm:h-[calc(100dvh-5rem)] mt-16 sm:mt-20 overflow-hidden">
       <ConfirmDialog 
         {...confirmConfig} 
         onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))} 
       />
       
       {/* Conversations List */}
-      <GlassCard className={`flex-1 md:w-1/3 md:flex-none flex-col overflow-hidden h-full ${activeChat ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`flex flex-col w-full md:w-[320px] lg:w-[380px] shrink-0 border-r border-white/5 bg-[#0D0D12] h-full ${activeChat ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
           <h2 className="text-xl font-bold text-white">Messages</h2>
           <Button 
@@ -401,10 +401,10 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
             </div>
           )}
         </div>
-      </GlassCard>
+      </div>
 
       {/* Chat Area */}
-      <GlassCard className={`flex-1 h-full flex-col overflow-hidden ${!activeChat ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`flex-1 h-full flex flex-col overflow-hidden bg-[#08080C] ${!activeChat ? 'hidden md:flex' : 'flex'}`}>
         {!activeChat ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-nc-accent mb-4">
@@ -792,7 +792,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
             </div>
           </>
         )}
-      </GlassCard>
+      </div>
 
       {/* New Chat Modal */}
       <AnimatePresence>
