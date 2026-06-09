@@ -18,6 +18,7 @@ export default function Profile({ onNavigate, user, profileId }) {
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [mediaUploadProgress, setMediaUploadProgress] = useState(0);
   const [shareCopied, setShareCopied] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const { requestPermission } = usePermissionContext();
 
   useEffect(() => {
@@ -103,6 +104,21 @@ export default function Profile({ onNavigate, user, profileId }) {
       } catch (err) {
         console.error("Failed to copy link:", err);
       }
+    }
+  };
+
+  const handleDeleteMedia = async (idx) => {
+    if (!user || !profile) return;
+    
+    const confirmDelete = window.confirm("Are you sure you want to delete this photo from your media showcase?");
+    if (!confirmDelete) return;
+
+    try {
+      const updatedMedia = p.media.filter((_, i) => i !== idx);
+      await updateProfileData(user.uid, { media: updatedMedia });
+      setFullscreenImage(null);
+    } catch (err) {
+      console.error("Error deleting media:", err);
     }
   };
 
@@ -570,7 +586,11 @@ export default function Profile({ onNavigate, user, profileId }) {
             {p.media.length > 0 || isUploadingMedia ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {p.media.map((src, idx) => (
-                  <div key={idx} className="group relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-nc-surface border border-nc-border shadow-lg hover:shadow-2xl transition-all duration-500">
+                  <div 
+                    key={idx} 
+                    onClick={() => setFullscreenImage({ src, idx })}
+                    className="group relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-nc-surface border border-nc-border shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer"
+                  >
                     <img 
                       src={src} 
                       alt={`Portfolio asset ${idx + 1}`} 
@@ -688,6 +708,38 @@ export default function Profile({ onNavigate, user, profileId }) {
             <Button onClick={() => setShowReviewModal(false)}>Submit Review</Button>
           </div>
         </GlassCard>
+      </div>
+    )}
+
+    {/* Fullscreen Media Lightbox Overlay */}
+    {fullscreenImage && (
+      <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-black/95 backdrop-blur-md animate-fade-in p-4">
+        <button 
+          onClick={() => setFullscreenImage(null)}
+          className="absolute top-6 right-6 text-white/50 hover:text-white p-3 rounded-full hover:bg-white/5 transition-all text-xl font-bold"
+          title="Close Preview"
+        >
+          ✕
+        </button>
+        <div className="relative max-w-full max-h-[80vh] flex items-center justify-center">
+          <img 
+            src={fullscreenImage.src} 
+            alt="Fullscreen preview" 
+            className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/5" 
+          />
+        </div>
+        
+        {isOwnProfile && (
+          <button
+            onClick={() => handleDeleteMedia(fullscreenImage.idx)}
+            className="mt-6 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full font-black uppercase tracking-wider text-xs shadow-lg shadow-red-600/30 flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete Photo
+          </button>
+        )}
       </div>
     )}
     </>
