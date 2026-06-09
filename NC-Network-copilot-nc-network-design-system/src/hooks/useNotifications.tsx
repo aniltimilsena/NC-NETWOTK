@@ -63,7 +63,7 @@ export const useNotifications = (
         }
       }
     } catch (error) {
-      console.error('Error registering for notifications:', error);
+      console.debug('FCM subscription skipped or failed (this is expected in local development):', error);
     }
   }, [user?.uid]);
 

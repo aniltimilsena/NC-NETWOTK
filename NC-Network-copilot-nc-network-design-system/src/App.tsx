@@ -493,7 +493,9 @@ export default function App() {
           navigate('/signin');
         }
       }, (err) => {
-        console.warn("Session listener failed or permission denied:", err);
+        if (err.code !== 'permission-denied') {
+          console.error("Session listener failed:", err);
+        }
       });
     };
 
@@ -513,7 +515,9 @@ export default function App() {
         setUserProfile(snap.data());
       }
     }, (err) => {
-      console.warn("Profile snapshot listener failed or permission denied:", err);
+      if (err.code !== 'permission-denied') {
+        console.error("Profile snapshot listener failed:", err);
+      }
     });
     return () => unsub();
   }, [user?.uid]);

@@ -91,7 +91,9 @@ export default function Navbar({ onNavigate, currentPage, onBack, showBack, isAd
       setNotifications(notifs);
       setUnreadCount(notifs.filter(n => !n.read).length);
     }, (err) => {
-      console.warn("Notifications snapshot listener failed or permission denied:", err);
+      if (err.code !== 'permission-denied') {
+        console.error("Notifications snapshot listener failed:", err);
+      }
     });
 
     return () => unsubscribe();
