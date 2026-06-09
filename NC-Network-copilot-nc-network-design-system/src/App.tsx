@@ -516,7 +516,10 @@ export default function App() {
 
   // Enriched user object for layouts/screens
   const enrichedUser = user ? {
-    ...user,
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
     gender: userProfile?.gender || '',
     profileImage: userProfile?.image || user.photoURL || '',
   } : null;
