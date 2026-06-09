@@ -90,6 +90,23 @@ const FCM_TOKEN_LIMIT_REACHED = 'FCM_TOKEN_LIMIT_REACHED';
 
 const allowedUploadMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
+function formatMessagePreview(text: string): string {
+  if (!text) return '';
+  if (typeof text !== 'string') return String(text);
+  const trimmed = text.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    const lower = trimmed.toLowerCase();
+    if (lower.includes('.mp4') || lower.includes('.webm') || lower.includes('.mov') || lower.includes('/video/')) {
+      return '🎥 Sent a video';
+    }
+    if (lower.includes('.jpg') || lower.includes('.jpeg') || lower.includes('.png') || lower.includes('.gif') || lower.includes('.webp') || lower.includes('/image/') || lower.includes('cloudinary')) {
+      return '📷 Sent a photo';
+    }
+    return '🔗 Sent a link';
+  }
+  return text;
+}
+
 app.use(helmet());
 app.use(cors({
   origin: (origin, callback) => {
@@ -424,10 +441,11 @@ app.post(
         });
 
         if (allTokens.length > 0) {
+          const preview = formatMessagePreview(validatedData.text);
           const messagePayload = {
             notification: {
               title: 'New Message',
-              body: validatedData.text.length > 50 ? `${validatedData.text.substring(0, 47)}...` : validatedData.text,
+              body: preview.length > 50 ? `${preview.substring(0, 47)}...` : preview,
               icon: '/logo.png',
             },
             data: {

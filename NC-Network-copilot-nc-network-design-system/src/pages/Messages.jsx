@@ -20,6 +20,7 @@ import {
   pinMessage
 } from '../services/messaging';
 import { uploadProfileMedia } from '../services/profile';
+import { formatMessagePreview } from '../utils/format';
 
 export default function Messages({ onNavigate, user, initialUserId, showAlert }) {
   const { startCall } = useCall();
@@ -384,7 +385,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                   </div>
                   <div className="flex justify-between items-center gap-2">
                     <p className={`text-xs truncate ${chat.unread ? 'text-white font-medium' : 'text-nc-muted'}`}>
-                      {chat.lastMessage}
+                      {formatMessagePreview(chat.lastMessage)}
                     </p>
                     {chat.unread > 0 && (
                       <span className="bg-nc-accent text-nc-darker text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">

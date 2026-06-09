@@ -18,13 +18,30 @@ if (configParam) {
   console.warn('[firebase-messaging-sw.js] No config provided in query params');
 }
 
+const formatMessagePreview = (text) => {
+  if (!text) return '';
+  if (typeof text !== 'string') return text;
+  const trimmed = text.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    const lower = trimmed.toLowerCase();
+    if (lower.includes('.mp4') || lower.includes('.webm') || lower.includes('.mov') || lower.includes('/video/')) {
+      return '🎥 Sent a video';
+    }
+    if (lower.includes('.jpg') || lower.includes('.jpeg') || lower.includes('.png') || lower.includes('.gif') || lower.includes('.webp') || lower.includes('/image/') || lower.includes('cloudinary')) {
+      return '📷 Sent a photo';
+    }
+    return '🔗 Sent a link';
+  }
+  return text;
+};
+
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
-    body: payload.notification.body,
+    body: formatMessagePreview(payload.notification.body),
     icon: payload.notification.icon || '/logo.png',
     data: payload.data
   };

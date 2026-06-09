@@ -3,6 +3,7 @@ import { messaging } from '../lib/firebase';
 import { getToken, onMessage } from 'firebase/messaging';
 import { playNotificationSound } from '../utils/notification-sound';
 import { callSecureFunction } from '../api/functionsClient';
+import { formatMessagePreview } from '../utils/format';
 
 // VAPID key is required for FCM Web
 const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY;
@@ -89,7 +90,7 @@ export const useNotifications = (
         showAlert(
           title || 'New Notification',
           'info',
-          body,
+          formatMessagePreview(body),
           navigation ? () => onNavigate(navigation.page, navigation.param) : undefined
         );
       }

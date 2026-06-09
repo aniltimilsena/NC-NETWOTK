@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, limit, doc, updateDoc } from 'firebase/firestore';
+import { formatMessagePreview } from '../utils/format';
 
 export default function Notifications({ onNavigate, user }) {
   const [filter, setFilter] = useState('all');
@@ -238,7 +239,7 @@ export default function Notifications({ onNavigate, user }) {
                         </h3>
                       </div>
                       <p className={`text-xs leading-relaxed ${notif.read ? 'text-[#555]' : 'text-[#888]'}`}>
-                        {notif.body}
+                        {formatMessagePreview(notif.body)}
                       </p>
                       <span className="text-[10px] text-[#444] mt-2 block font-medium">
                         {timeAgo(notif.createdAt?.seconds)}

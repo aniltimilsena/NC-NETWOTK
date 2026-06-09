@@ -13,7 +13,7 @@ import Avatar from '../ui/Avatar';
 import { db } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, Timestamp, limit } from 'firebase/firestore';
 
-// Mock data removed in refactor
+import { formatMessagePreview } from '../../utils/format';
 
 export default function Navbar({ onNavigate, currentPage, onBack, showBack, isAdmin, user, onLogout }) {
   const isLoggedIn = !!user;
@@ -265,7 +265,7 @@ export default function Navbar({ onNavigate, currentPage, onBack, showBack, isAd
                           <Avatar src={notif.senderImage} size="sm" className="shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs text-white leading-relaxed">
-                              <span className="font-bold">{notif.senderName}</span> {notif.message}
+                              <span className="font-bold">{notif.senderName}</span> {formatMessagePreview(notif.message)}
                             </p>
                             <p className="text-[10px] text-nc-muted mt-1">{formatTimeAgo(notif.createdAt)}</p>
                           </div>
