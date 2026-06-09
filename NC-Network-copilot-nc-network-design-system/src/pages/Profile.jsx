@@ -183,7 +183,7 @@ export default function Profile({ onNavigate, user, profileId }) {
                   size="lg"
                 />
 
-                {isLoggedIn && (
+                {isOwnProfile && (
                   <button
                     onClick={() => onNavigate('settings', 'about')}
                     className="absolute -bottom-1 -right-1 w-7 h-7 bg-nc-accent rounded-full flex items-center justify-center shadow-lg border-2 border-[#0E0E0E] hover:scale-110 transition-transform"
