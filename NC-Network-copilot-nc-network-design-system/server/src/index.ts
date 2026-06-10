@@ -52,11 +52,11 @@ if (!admin.apps.length) {
 
     admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: projectId || 'nc-network-10d0b',
+        projectId: projectId || 'nc-network-default',
         clientEmail: clientEmail || 'dummy@example.com',
         privateKey: dummyPrivateKey,
       }),
-      storageBucket: `${projectId || 'nc-network-10d0b'}.appspot.com`,
+      storageBucket: `${projectId || 'nc-network-default'}.appspot.com`,
     });
   }
 }
@@ -457,6 +457,9 @@ app.post(
           admin.messaging().sendEachForMulticast(messagePayload)
             .then(response => {
               console.log(`${response.successCount} messages were sent successfully`);
+            })
+            .catch(err => {
+              console.error('Failed to send multicast notifications:', err);
             });
         }
       }

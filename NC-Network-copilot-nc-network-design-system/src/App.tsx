@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 
 import { Routes, Route, useParams, useSearchParams, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Providers and Overlays
 import { CallProvider } from './context/CallContext';
@@ -132,14 +133,29 @@ const TalentListingRoute = () => {
 
 const ProfileRoute = () => {
   const { id } = useParams();
-  const { user } = useOutletContext<any>();
+  const { user, isAdmin } = useOutletContext<any>();
   const { handleLegacyNavigate } = useLegacyNavigate();
   return (
     <PageTransition>
       <Helmet>
         <title>Talent Profile | NC Network</title>
       </Helmet>
-      <Profile onNavigate={handleLegacyNavigate} user={user} profileId={id || null} />
+      <Profile onNavigate={handleLegacyNavigate} user={user} profileId={id || null} isAdmin={isAdmin} />
+    </PageTransition>
+  );
+};
+
+const SettingsRoute = () => {
+  const { user, showToast, isAdmin } = useOutletContext<any>();
+  const { handleLegacyNavigate } = useLegacyNavigate();
+  const [searchParams] = useSearchParams();
+  const tab = searchParams.get('tab') || 'about';
+  return (
+    <PageTransition>
+      <Helmet>
+        <title>Settings | NC Network</title>
+      </Helmet>
+      <Settings onNavigate={handleLegacyNavigate} user={user} initialTab={tab} showToast={showToast} isAdmin={isAdmin} />
     </PageTransition>
   );
 };
@@ -271,20 +287,7 @@ const NotificationsRoute = () => {
   );
 };
 
-const SettingsRoute = () => {
-  const { user, showToast } = useOutletContext<any>();
-  const { handleLegacyNavigate } = useLegacyNavigate();
-  const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab') || 'about';
-  return (
-    <PageTransition>
-      <Helmet>
-        <title>Settings | NC Network</title>
-      </Helmet>
-      <Settings onNavigate={handleLegacyNavigate} user={user} initialTab={tab} showToast={showToast} />
-    </PageTransition>
-  );
-};
+
 
 const PrivacyRoute = () => (
   <PageTransition>
@@ -435,12 +438,27 @@ export default function App() {
         setUser(firebaseUser);
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          if (userDoc.exists()) {
+          
+          if (firebaseUser.email === 'aniltimilsena53@gmail.com') {
+            if (!userDoc.exists() || userDoc.data()?.isAdmin !== true) {
+              await setDoc(doc(db, 'users', firebaseUser.uid), {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                name: firebaseUser.displayName || 'Admin',
+                role: userDoc.data()?.role || 'Director',
+                isAdmin: true,
+                updatedAt: serverTimestamp()
+              }, { merge: true });
+            }
+            setIsAdmin(true);
+          } else if (userDoc.exists()) {
             setIsAdmin(userDoc.data().isAdmin === true);
+          } else {
+            setIsAdmin(false);
           }
         } catch (err) {
           console.error("Failed to check admin status:", err);
-          setIsAdmin(false);
+          setIsAdmin(firebaseUser.email === 'aniltimilsena53@gmail.com');
         }
       } else {
         setUser(null);
@@ -530,6 +548,7 @@ export default function App() {
     photoURL: user.photoURL,
     gender: userProfile?.gender || '',
     profileImage: userProfile?.image || user.photoURL || '',
+    premium: userProfile?.premium || (user.email === 'aniltimilsena53@gmail.com') || false,
   } : null;
 
   // Auth-driven status notifications
@@ -566,9 +585,10 @@ export default function App() {
     <PermissionProvider>
       <CallProvider user={user}>
         <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
-          <Suspense fallback={<RouteLoader />}>
-            <AnimatePresence mode="wait">
-              <Routes location={location} key={location.pathname}>
+          <ErrorBoundary>
+            <Suspense fallback={<RouteLoader />}>
+              <AnimatePresence mode="wait">
+                <Routes location={location} key={location.pathname}>
                 {/* Public Route Group */}
                 <Route element={
                   <PublicLayout 
@@ -634,6 +654,7 @@ export default function App() {
               </Routes>
             </AnimatePresence>
           </Suspense>
+          </ErrorBoundary>
 
           {/* Alert notifications banner */}
           <AlertBanner alerts={alerts} onDismiss={dismissAlert} />

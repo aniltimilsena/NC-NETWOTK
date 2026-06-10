@@ -3,6 +3,7 @@ import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import { createCastingCall } from '../services/casting';
+import { uploadProfileMedia } from '../services/profile';
 
 const STEPS = [
   { id: 1, title: 'Project Details', icon: '' },
@@ -13,11 +14,16 @@ const STEPS = [
 export default function CastingCallCreate({ onNavigate, user, showAlert }) {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState('');
   const [form, setForm] = useState({
     title: '', type: 'Feature Film', location: '', description: '',
     thumbnail: '',
+    budget: '',
+    deadline: '',
     roles: [{ name: '', ageRange: '', description: '' }],
     requirements: { wardrobe: false, travel: false, headshot: false },
+    otherRequirements: '',
   });
 
   const handlePublish = async () => {
@@ -27,26 +33,42 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
       return;
     }
 
-    if (!form.title || !form.type || !form.location || !form.thumbnail) {
-      showAlert('Missing Information', 'error', 'Please fill in all required project details including a project thumbnail.');
+    if (!form.title || !form.type || !form.location || !form.thumbnail || !form.budget || !form.deadline) {
+      showAlert('Missing Information', 'error', 'Please fill in all required details, including budget/paying range and deadline.');
       setStep(1);
       return;
     }
 
     setIsLoading(true);
     try {
+      let thumbnailUrl = form.thumbnail;
+      if (thumbnailFile) {
+        thumbnailUrl = await uploadProfileMedia(user.uid, thumbnailFile);
+        if (!thumbnailUrl) {
+          throw new Error('Failed to upload thumbnail image. Please check your connection or try another image.');
+        }
+      }
+
       // Convert requirements object to readable array
       const requirementList = [];
       if (form.requirements.headshot) requirementList.push('Professional Headshots Required');
       if (form.requirements.wardrobe) requirementList.push('Own Wardrobe Required');
       if (form.requirements.travel) requirementList.push('Travel Involved');
+      if (form.otherRequirements && form.otherRequirements.trim()) {
+        const customReqs = form.otherRequirements
+          .split('\n')
+          .map(r => r.trim())
+          .filter(Boolean);
+        requirementList.push(...customReqs);
+      }
 
       const callData = {
         ...form,
+        thumbnail: thumbnailUrl,
         requirements: requirementList,
         production: user.displayName || 'Independent Production',
-        budget: 'Competitive',
-        deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString(), // 2 weeks from now
+        budget: form.budget,
+        deadline: form.deadline ? form.deadline.trim() : 'N/A',
         creatorId: user.uid,
         creatorName: user.displayName || 'Anonymous Producer',
         creatorEmail: user.email,
@@ -65,7 +87,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
       }
     } catch (err) {
       console.error('Error publishing casting call:', err);
-      showAlert('Unexpected Error', 'error', 'Something went wrong while publishing.');
+      const msg = err instanceof Error ? err.message : 'Something went wrong while publishing.';
+      showAlert('Unexpected Error', 'error', msg);
     } finally {
       setIsLoading(false);
     }
@@ -73,8 +96,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
 
   const handleNext = () => {
     if (step === 1) {
-      if (!form.title || !form.type || !form.type.trim() || !form.location || !form.thumbnail) {
-        showAlert('Required Fields', 'error', 'Please fill in the Project Title, Type, Location, and Thumbnail before continuing.');
+      if (!form.title || !form.type || !form.type.trim() || !form.location || !form.thumbnail || !form.budget || !form.deadline) {
+        showAlert('Required Fields', 'error', 'Please fill in all required fields: Title, Type, Location, Thumbnail, Budget, and Deadline.');
         return;
       }
     }
@@ -129,11 +152,16 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
                   <label className="block text-sm font-medium text-nc-secondary mb-3">Project Thumbnail *</label>
                   <div className="flex flex-col sm:flex-row gap-5 items-start">
                     <div className="w-full sm:w-48 h-32 bg-nc-surface border-2 border-dashed border-nc-border rounded-2xl flex flex-col items-center justify-center overflow-hidden relative group hover:border-nc-accent transition-all cursor-pointer">
-                      {form.thumbnail ? (
+                      {thumbnailPreview || form.thumbnail ? (
                         <>
-                          <img src={form.thumbnail} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                          <img src={thumbnailPreview || form.thumbnail} alt="Thumbnail preview" className="w-full h-full object-cover" />
                           <button 
-                            onClick={(e) => { e.stopPropagation(); setForm({...form, thumbnail: ''}); }}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              setForm({...form, thumbnail: ''}); 
+                              setThumbnailFile(null);
+                              setThumbnailPreview('');
+                            }}
                             className="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -155,9 +183,9 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => setForm({...form, thumbnail: reader.result});
-                            reader.readAsDataURL(file);
+                            setThumbnailFile(file);
+                            setThumbnailPreview(URL.createObjectURL(file));
+                            setForm({...form, thumbnail: 'has-file'});
                           }
                         }} 
                         className="absolute inset-0 opacity-0 cursor-pointer" 
@@ -224,6 +252,30 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
                   <label className="block text-sm font-medium text-nc-secondary mb-2">Location *</label>
                   <input type="text" value={form.location} onChange={e => setForm({...form, location: e.target.value})} placeholder="City, State" className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm" />
                 </div>
+                
+                <div className="flex flex-col sm:flex-row gap-5 w-full">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-nc-secondary mb-2">Paying Range / Budget *</label>
+                    <input 
+                      type="text" 
+                      value={form.budget} 
+                      onChange={e => setForm({...form, budget: e.target.value})} 
+                      placeholder="e.g. Rs. 5000 - 10000" 
+                      className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm" 
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-nc-secondary mb-2">Application Deadline *</label>
+                    <input 
+                      type="text" 
+                      value={form.deadline} 
+                      onChange={e => setForm({...form, deadline: e.target.value})} 
+                      placeholder="e.g. July 15, 2026, or In 2 weeks"
+                      className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm" 
+                    />
+                  </div>
+                </div>
+
                 <div className="w-full">
                   <label className="block text-sm font-medium text-nc-secondary mb-2">Project Description / Synopsis</label>
                   <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="Give actors an idea of the storyline..." rows={4} className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm resize-none" />
@@ -281,6 +333,17 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
                     <div className="text-xs text-nc-muted">Out of state/country travel is expected for the shoot.</div>
                   </div>
                 </label>
+
+                <div className="pt-4 border-t border-nc-border">
+                  <label className="block text-sm font-medium text-nc-secondary mb-2">Other / Custom Requirements</label>
+                  <textarea 
+                    value={form.otherRequirements} 
+                    onChange={e => setForm({...form, otherRequirements: e.target.value})} 
+                    placeholder="Enter any other specific requirements (e.g. Speak fluent Nepali, Must be based in Kathmandu - one per line)..." 
+                    rows={4} 
+                    className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm resize-none" 
+                  />
+                </div>
               </div>
             </div>
           )}

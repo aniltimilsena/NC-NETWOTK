@@ -234,12 +234,22 @@ export const bootstrapUserProfile = onCall(callableOptions, async (request) => {
         email,
         role,
         gender,
-        isAdmin: false,
+        isAdmin: email === "aniltimilsena53@gmail.com",
         createdAt: now,
         updatedAt: now,
       });
     } else {
-      transaction.set(userRef, { name: profileName, role, gender, updatedAt: now }, { merge: true });
+      transaction.set(
+        userRef,
+        {
+          name: profileName,
+          role,
+          gender,
+          updatedAt: now,
+          isAdmin: email === "aniltimilsena53@gmail.com" ? true : userSnap.data()?.isAdmin ?? false,
+        },
+        { merge: true }
+      );
     }
 
     transaction.set(

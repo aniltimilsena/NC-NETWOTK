@@ -204,7 +204,7 @@ export default function Navbar({ onNavigate, currentPage, onBack, showBack, isAd
                     <>
                       <div className="mx-2 my-1 border-t border-white/5"></div>
                       <Link to="/admin" className="w-full text-left block px-4 py-2.5 text-[10px] uppercase tracking-widest font-black text-admin-primary hover:text-white hover:bg-admin-primary/20 transition-all flex items-center justify-between group/admin">
-                        <span>Master Control</span>
+                        <span>Admin</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-admin-primary shadow-[0_0_8px_#38bdf8] group-hover/admin:scale-125 transition-transform"></span>
                       </Link>
                     </>
@@ -299,7 +299,7 @@ export default function Navbar({ onNavigate, currentPage, onBack, showBack, isAd
                 <SendIcon size={24} color="currentColor" active={isActionActive('messages')} />
               </Link>
  
-              {!isAdmin && (
+              {!isAdmin && !user?.premium && (
                 <Link
                   to="/premium"
                   className={`hidden lg:block px-3 py-1.5 rounded-lg text-sm font-bold transition-all ml-1 ${
@@ -403,27 +403,29 @@ export default function Navbar({ onNavigate, currentPage, onBack, showBack, isAd
               })}
             </div>
 
-            <div className="flex-1"></div>
+            {!isAdmin && !user?.premium && <div className="flex-1"></div>}
 
             <div className="px-6 pb-6">
               {/* Premium Box Container */}
-              <div className="bg-[#1C1C1C] rounded-[2rem] p-5 mb-5 border border-[#2A2A2A] relative overflow-hidden">
-                <h4 className="text-white font-bold text-[15px] mb-1 relative z-10">Go PRO</h4>
-                <p className="text-[#888] text-[12px] leading-relaxed mb-4 max-w-[200px] relative z-10">
-                  Unlock exclusive casting calls and AI talent matching.
-                </p>
-                <Link 
-                  to="/premium" 
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full text-center block bg-nc-pro text-black rounded-xl py-2.5 font-bold text-[13px] hover:bg-nc-pro/90 transition-colors relative z-10 shadow-lg shadow-nc-pro/20 animate-none"
-                  style={{ backgroundColor: '#FACC15' }}
-                >
-                  Go PRO
-                </Link>
-                
-                {/* Subtle top-right glow matching screenshot */}
-                <div className="absolute -top-10 -right-10 w-24 h-24 bg-nc-accent blur-3xl opacity-10 rounded-full"></div>
-              </div>
+              {!isAdmin && !user?.premium && (
+                <div className="bg-[#1C1C1C] rounded-[2rem] p-5 mb-5 border border-[#2A2A2A] relative overflow-hidden">
+                  <h4 className="text-white font-bold text-[15px] mb-1 relative z-10">Go PRO</h4>
+                  <p className="text-[#888] text-[12px] leading-relaxed mb-4 max-w-[200px] relative z-10">
+                    Unlock exclusive casting calls and AI talent matching.
+                  </p>
+                  <Link 
+                    to="/premium" 
+                    onClick={() => setMenuOpen(false)}
+                    className="w-full text-center block bg-nc-pro text-black rounded-xl py-2.5 font-bold text-[13px] hover:bg-nc-pro/90 transition-colors relative z-10 shadow-lg shadow-nc-pro/20 animate-none"
+                    style={{ backgroundColor: '#FACC15' }}
+                  >
+                    Go PRO
+                  </Link>
+                  
+                  {/* Subtle top-right glow matching screenshot */}
+                  <div className="absolute -top-10 -right-10 w-24 h-24 bg-nc-accent blur-3xl opacity-10 rounded-full"></div>
+                </div>
+              )}
 
               {/* Bottom Actions Container */}
               <div className="flex flex-col gap-1 px-2 mb-4">

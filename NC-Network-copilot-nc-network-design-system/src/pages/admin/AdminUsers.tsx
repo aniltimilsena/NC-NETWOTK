@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, MoreVertical, ShieldCheck, UserMinus, Trash2, Mail, ExternalLink, Activity } from 'lucide-react';
 import { db } from "../../lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { useNavigate } from 'react-router-dom';
 
 type AdminUser = {
   id: string;
@@ -18,27 +19,121 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  const navigate = useNavigate();
+
+  const handleVerify = async (userId: string) => {
+    try {
+      await updateDoc(doc(db, "users", userId), { verified: true });
+      await updateDoc(doc(db, "profiles", userId), { verified: true });
+      alert("User verified successfully!");
+    } catch (err) {
+      console.error("Failed to verify user:", err);
+      alert("Error verifying user.");
+    }
+  };
+
+  const handleToggleSuspend = async (userId: string, currentStatus: string) => {
+    try {
+      const nextStatus = currentStatus === 'Suspended' ? 'Active' : 'Suspended';
+      await updateDoc(doc(db, "users", userId), { status: nextStatus });
+      await updateDoc(doc(db, "profiles", userId), { status: nextStatus });
+      alert(`User status set to ${nextStatus}!`);
+    } catch (err) {
+      console.error("Failed to toggle status:", err);
+      alert("Error updating user status.");
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (window.confirm("Are you sure you want to permanently delete this user? This cannot be undone.")) {
+      try {
+        await deleteDoc(doc(db, "users", userId));
+        await deleteDoc(doc(db, "profiles", userId));
+        alert("User record deleted successfully!");
+      } catch (err) {
+        console.error("Failed to delete user:", err);
+        alert("Error deleting user.");
+      }
+    }
+  };
+
+  const handleAddUser = async () => {
+    const name = prompt("Enter full name:");
+    if (!name) return;
+    const email = prompt("Enter email address:");
+    if (!email) return;
+    const role = prompt("Enter role (Talent, Agent, Director):", "Talent");
+    if (!role) return;
+
+    try {
+      const tempId = doc(collection(db, "users")).id;
+      const createdAt = new Date();
+      await setDoc(doc(db, "users", tempId), {
+        name,
+        email,
+        role,
+        status: 'Active',
+        createdAt
+      });
+      await setDoc(doc(db, "profiles", tempId), {
+        name,
+        email,
+        role,
+        status: 'Active',
+        createdAt
+      });
+      alert("User added successfully!");
+    } catch (err) {
+      console.error("Failed to add user:", err);
+      alert("Failed to create user doc.");
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "profiles"));
-        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as AdminUser[];
-        setUsers(data);
-      } catch (error) {
-        console.error("Failed to fetch users", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUsers();
+    const q = collection(db, "users");
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((doc) => {
+        const u = doc.data();
+        let joinedDate = 'N/A';
+        if (u.createdAt) {
+          const date = u.createdAt.toDate ? u.createdAt.toDate() : new Date(u.createdAt);
+          joinedDate = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        return {
+          id: doc.id,
+          name: u.name || 'Unknown User',
+          email: u.email || 'No email',
+          role: u.isAdmin ? 'Admin' : u.role || 'Talent',
+          status: u.status || 'Active',
+          activity: u.role === 'Agent' || u.role === 'Director' ? 'High' : 'Moderate',
+          joined: joinedDate,
+          avatar: (u.name || '?').charAt(0).toUpperCase()
+        };
+      }) as AdminUser[];
+      setUsers(data);
+      setLoading(false);
+    }, (error) => {
+      console.error("Failed to sync users", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
   
   // Stealth Logic: Filter out Admins from management view
   const visibleUsers = users.filter((u) => u.role !== 'Admin' && (
     (u.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
     (u.email ?? '').toLowerCase().includes(search.toLowerCase())
   ));
+
+  const totalPages = Math.ceil(visibleUsers.length / pageSize);
+  const paginatedUsers = visibleUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="p-8 space-y-6 animate-in slide-in-from-bottom duration-500">
@@ -58,7 +153,10 @@ export default function AdminUsers() {
             <Filter className="w-3.5 h-3.5" />
             Filters
           </button>
-          <button className="flex items-center gap-2 px-6 py-2 bg-admin-primary text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-admin-primary/20 transition-transform active:scale-95">
+          <button 
+            onClick={handleAddUser}
+            className="flex items-center gap-2 px-6 py-2 bg-admin-primary text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-admin-primary/20 transition-transform active:scale-95"
+          >
             Add New User
           </button>
         </div>
@@ -77,7 +175,7 @@ export default function AdminUsers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-admin-border/50">
-              {visibleUsers.map((user) => (
+              {paginatedUsers.map((user) => (
                 <tr key={user.id} className="group hover:bg-admin-surface-light/30 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
@@ -123,16 +221,32 @@ export default function AdminUsers() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
-                      <button title="View Profile" className="p-2 text-nc-muted hover:text-white rounded-lg hover:bg-white/5">
+                      <button 
+                        onClick={() => navigate(`/profile/${user.id}`)}
+                        title="View Profile" 
+                        className="p-2 text-nc-muted hover:text-white rounded-lg hover:bg-white/5"
+                      >
                         <ExternalLink className="w-4 h-4" />
                       </button>
-                      <button title="Fast Verification" className="p-2 text-nc-muted hover:text-admin-success rounded-lg hover:bg-admin-success/10">
+                      <button 
+                        onClick={() => handleVerify(user.id)}
+                        title="Fast Verification" 
+                        className="p-2 text-nc-muted hover:text-admin-success rounded-lg hover:bg-admin-success/10"
+                      >
                         <ShieldCheck className="w-4 h-4" />
                       </button>
-                      <button title="Suspend / Ban" className="p-2 text-nc-muted hover:text-admin-warning rounded-lg hover:bg-admin-warning/10">
+                      <button 
+                        onClick={() => handleToggleSuspend(user.id, user.status || 'Active')}
+                        title="Suspend / Ban" 
+                        className="p-2 text-nc-muted hover:text-admin-warning rounded-lg hover:bg-admin-warning/10"
+                      >
                         <UserMinus className="w-4 h-4" />
                       </button>
-                      <button title="Delete Record" className="p-2 text-nc-muted hover:text-admin-error rounded-lg hover:bg-admin-error/10">
+                      <button 
+                        onClick={() => handleDeleteUser(user.id)}
+                        title="Delete Record" 
+                        className="p-2 text-nc-muted hover:text-admin-error rounded-lg hover:bg-admin-error/10"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -143,10 +257,23 @@ export default function AdminUsers() {
           </table>
         </div>
         <div className="p-4 bg-admin-surface-light/20 flex items-center justify-between border-t border-admin-border">
-          <p className="text-xs text-nc-muted">Showing <span className="text-white font-bold">5</span> of <span className="text-white font-bold">42,482</span> entities</p>
-          <div className="flex gap-2">
-            <button className="px-3 py-1.5 rounded-lg border border-admin-border text-[10px] font-bold text-nc-muted hover:text-white transition-colors">Prev</button>
-            <button className="px-3 py-1.5 rounded-lg border border-admin-border text-[10px] font-bold text-nc-muted hover:text-white transition-colors">Next</button>
+          <p className="text-xs text-nc-muted">Showing <span className="text-white font-bold">{paginatedUsers.length}</span> of <span className="text-white font-bold">{visibleUsers.length}</span> entities</p>
+          <div className="flex gap-2 items-center">
+            <button 
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              className="px-3 py-1.5 rounded-lg border border-admin-border text-[10px] font-bold text-nc-muted hover:text-white transition-colors disabled:opacity-30 disabled:hover:text-nc-muted"
+            >
+              Prev
+            </button>
+            <span className="text-xs text-nc-muted px-2">Page {currentPage} of {totalPages || 1}</span>
+            <button 
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              className="px-3 py-1.5 rounded-lg border border-admin-border text-[10px] font-bold text-nc-muted hover:text-white transition-colors disabled:opacity-30 disabled:hover:text-nc-muted"
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>

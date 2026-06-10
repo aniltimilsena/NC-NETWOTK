@@ -56,6 +56,16 @@ export const updateProfileData = async (
     // Save directly to Firestore since rules allow write if owner
     await setDoc(doc(db, "profiles", uid), cleanData, { merge: true });
 
+    // Also update users/{uid} for shared fields to keep them in sync
+    const userUpdate: Record<string, any> = {};
+    if (cleanData.name !== undefined) userUpdate.name = cleanData.name;
+    if (cleanData.role !== undefined) userUpdate.role = cleanData.role;
+    if (cleanData.gender !== undefined) userUpdate.gender = cleanData.gender;
+
+    if (Object.keys(userUpdate).length > 0) {
+      await setDoc(doc(db, "users", uid), userUpdate, { merge: true });
+    }
+
     return { success: true, error: null };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to update profile";

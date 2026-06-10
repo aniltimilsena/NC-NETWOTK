@@ -1,8 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ToggleLeft as Toggle, Sliders, Database, Globe, Lock, Bell, Trash2, Plus } from 'lucide-react';
 import { Switch } from "@/components/ui/shadcn-switch";
 
 export default function AdminSettings() {
+  const [features, setFeatures] = useState([
+    { id: 1, label: 'Public Talent Discovery', desc: 'Allow guests to search profiles.', enabled: true },
+    { id: 2, label: 'AI Casting Matcher v2', desc: 'Neural candidate suggestion engine.', enabled: true },
+    { id: 3, label: 'Real-time Messaging', desc: 'WebSocket-based user chat.', enabled: false },
+    { id: 4, label: 'PRO-only Screenings', desc: 'Gated content for membership tiers.', enabled: true },
+  ]);
+
+  const handleToggle = (id: number) => {
+    setFeatures(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
+  };
+
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500 max-w-5xl">
       <div>
@@ -18,18 +29,16 @@ export default function AdminSettings() {
             Feature Toggles
           </h4>
           <div className="space-y-4">
-            {[
-              { id: 1, label: 'Public Talent Discovery', desc: 'Allow guests to search profiles.', enabled: true },
-              { id: 2, label: 'AI Casting Matcher v2', desc: 'Neural candidate suggestion engine.', enabled: true },
-              { id: 3, label: 'Real-time Messaging', desc: 'WebSocket-based user chat.', enabled: false },
-              { id: 4, label: 'PRO-only Screenings', desc: 'Gated content for membership tiers.', enabled: true },
-            ].map(f => (
+            {features.map(f => (
               <div key={f.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all">
                 <div>
                   <p className="text-sm font-bold text-white leading-none mb-1">{f.label}</p>
                   <p className="text-[10px] text-nc-muted uppercase">{f.desc}</p>
                 </div>
-                <Switch checked={f.enabled} />
+                <Switch 
+                  checked={f.enabled} 
+                  onCheckedChange={() => handleToggle(f.id)} 
+                />
               </div>
             ))}
           </div>

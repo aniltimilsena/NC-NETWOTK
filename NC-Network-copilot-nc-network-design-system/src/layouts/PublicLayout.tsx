@@ -54,11 +54,11 @@ export default function PublicLayout({
         currentPage={location.pathname}
         onNavigate={handleLegacyNavigate}
       />
-      <main className="flex-1">
+      <main className="flex-1 px-4 md:px-0">
         <Breadcrumbs />
         <Outlet context={{ user, isAdmin, showAlert, showToast }} />
       </main>
-      <Footer user={user} />
+      {location.pathname === '/' && <Footer user={user} />}
     </div>
   );
 }

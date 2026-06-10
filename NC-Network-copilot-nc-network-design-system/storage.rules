@@ -10,7 +10,7 @@ service firebase.storage {
       allow write: if isAuthenticated()
         && request.auth.uid == userId
         && request.resource.size < 50 * 1024 * 1024 // 50MB limit for images/videos
-        && (request.resource.contentType.matches('image/.*') || request.resource.contentType.matches('video/.*'));
+        && ((request.resource.contentType.matches('image/.*') && request.resource.contentType != 'image/svg+xml') || request.resource.contentType.matches('video/.*'));
     }
 
     match /{allPaths=**} {

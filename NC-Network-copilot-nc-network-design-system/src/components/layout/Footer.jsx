@@ -49,9 +49,6 @@ export default function Footer({ user }) {
           {/* Logo Column */}
           <div className="col-span-1 flex flex-col items-start text-left space-y-2">
             <Logo size="md" className="mx-0" />
-            <p className="text-nc-muted text-xs leading-relaxed max-w-[200px]">
-              The leading platform for cinema professionals and talent discovery in Nepal.
-            </p>
           </div>
 
           {/* Nav Sections: Discover, Create, Account */}
@@ -91,23 +88,18 @@ export default function Footer({ user }) {
           </div>
         </div>
 
-        {/* ── Mobile layout (<lg): logo + desc + legal only ───── */}
-        <div className="flex lg:hidden flex-col items-center text-center mb-8 space-y-5">
+        {/* ── Mobile layout (<lg): logo + legal only ───── */}
+        <div className="flex lg:hidden flex-row justify-center items-center flex-wrap gap-4 sm:gap-6 text-center mb-8">
           {/* Logo */}
-          <Logo size="md" />
-
-          {/* Description */}
-          <p className="text-nc-muted text-xs leading-relaxed max-w-[260px]">
-            The leading platform for cinema professionals and talent discovery in Nepal.
-          </p>
+          <Logo size="sm" />
 
           {/* Legal Links */}
-          <nav aria-label="Legal" className="flex flex-col items-center gap-3 w-full">
+          <nav aria-label="Legal" className="flex flex-row justify-center flex-wrap gap-2 sm:gap-4 w-auto">
             {legalLinks.map((link) => (
               <Link
                 key={link.label}
                 to={link.to}
-                className="relative py-1 px-4 text-nc-muted hover:text-white text-[13px] font-medium transition-colors after:absolute after:inset-x-0 after:top-1/2 after:-translate-y-1/2 after:h-[44px] after:content-['']"
+                className="relative py-1 px-3 text-nc-muted hover:text-white text-[12px] font-bold transition-colors after:absolute after:inset-x-0 after:top-1/2 after:-translate-y-1/2 after:h-[44px] after:content-['']"
               >
                 {link.label}
               </Link>

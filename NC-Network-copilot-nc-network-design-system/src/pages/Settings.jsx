@@ -224,10 +224,15 @@ const NotificationRow = ({ row, markDirty }) => {
   );
 };
 
-export default function Settings({ onNavigate, user, initialTab, showToast }) {
+export default function Settings({ onNavigate, user, initialTab, showToast, isAdmin }) {
+  const isUserAdmin = isAdmin || user?.email === 'aniltimilsena53@gmail.com';
+
   const [activeTab, setActiveTab] = useState(() => {
     if (['about', 'skills', 'experience', 'media', 'reviews'].includes(initialTab)) {
       return 'profile';
+    }
+    if (initialTab === 'premium' && isUserAdmin) {
+      return 'account';
     }
     return initialTab || 'account';
   });
@@ -245,6 +250,11 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
   // Sync state if initialTab prop changes (e.g. via navigation)
   useEffect(() => {
     if (initialTab) {
+      if (initialTab === 'premium' && isUserAdmin) {
+        setActiveTab('account');
+        setIsMobileDetail(true);
+        return;
+      }
       if (['about', 'skills', 'experience', 'media', 'reviews'].includes(initialTab)) {
         setActiveTab('profile');
         if (['about', 'skills', 'experience'].includes(initialTab)) {
@@ -257,7 +267,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
       }
       setIsMobileDetail(true);
     }
-  }, [initialTab]);
+  }, [initialTab, isUserAdmin]);
   
   // Parse name into first and last if possible
   const displayName = user?.displayName || "";
@@ -287,6 +297,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarProgress, setAvatarProgress] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [isPremium, setIsPremium] = useState(false);
 
   // Profile States
   const [bio, setBio] = useState("");
@@ -300,6 +311,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
   const [eyeColor, setEyeColor] = useState("");
   const [hairColor, setHairColor] = useState("");
   const [role, setRole] = useState("");
+  const [showContactInfo, setShowContactInfo] = useState(false);
   
 
 
@@ -308,6 +320,13 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !user?.uid) return;
+    
+    // Enforce limits: 5MB for Free, 10MB for Pro
+    const sizeLimit = (isPremium || isUserAdmin) ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > sizeLimit) {
+      showToast(`Profile picture exceeds the limit of ${(isPremium || isUserAdmin) ? '10MB' : '5MB'} for your current tier.`, 'error');
+      return;
+    }
     
     setIsUploadingAvatar(true);
     setAvatarProgress(0);
@@ -366,6 +385,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
     if (user?.uid) {
       const unsubscribe = subscribeToProfile(user.uid, (data) => {
         if (data) {
+          setIsPremium(data.premium || isUserAdmin || false);
           // Only update form fields if not currently saving to avoid race conditions
           if (!isSavingRef.current) {
             setFName(data.firstName || defaultFirstName);
@@ -384,6 +404,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
             setEyeColor(data.eyeColor || "");
             setHairColor(data.hairColor || "");
             setRole(data.role || "");
+            setShowContactInfo(data.showContactInfo || false);
             setAvatarUrl(data.image || data.photoURL || "");
             setTwoFactor(data.twoFactorEnabled || false);
           }
@@ -421,6 +442,8 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
       eyeColor,
       hairColor,
       role,
+      showContactInfo,
+      email: showContactInfo ? (user?.email || "") : "",
       image: avatarUrl || null,
       photoURL: avatarUrl || null,
       twoFactorEnabled: twoFactor
@@ -507,7 +530,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
     { id: 'profile', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>, label: 'Profile Details' },
     { id: 'privacy', icon: <EyeToggleIcon size={18} color="currentColor" />, label: 'Privacy & Visibility' },
     { id: 'notifications', icon: <NotificationIcon size={18} color="currentColor" />, label: 'Notifications' },
-    { id: 'premium', icon: <Plus size={18} color="currentColor" />, label: 'Subscription (PRO)' },
+    ...(!isUserAdmin ? [{ id: 'premium', icon: <Plus size={18} color="currentColor" />, label: 'Subscription (PRO)' }] : []),
     { id: 'security', icon: <LockUnlockIcon size={18} color="currentColor" />, label: 'Security' },
     { id: 'data', icon: <SuccessIcon size={18} color="currentColor" />, label: 'Data & Control' },
   ];
@@ -970,7 +993,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast }) {
                   <h4 className="text-sm font-medium text-white">Show Contact Info to Network</h4>
                   <p className="text-xs text-[#888] mt-1">Make your email/phone visible to other verified members.</p>
                 </div>
-                <GoldenToggle enabled={false} onChange={markDirty} />
+                <GoldenToggle enabled={showContactInfo} onChange={(v) => { setShowContactInfo(v); markDirty(); }} />
               </div>
             </section>
 

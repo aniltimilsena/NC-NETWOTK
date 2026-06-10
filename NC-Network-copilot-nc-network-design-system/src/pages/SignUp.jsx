@@ -52,7 +52,7 @@ export default function SignUp({ onNavigate, showAlert }) {
       setIsLoading(false);
     }
   };
-  const roles = ['Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer'];
+  const roles = ['Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer', 'Agent'];
 
   return (
     <div className="min-h-screen bg-nc-dark flex items-center justify-center p-4 relative overflow-hidden">

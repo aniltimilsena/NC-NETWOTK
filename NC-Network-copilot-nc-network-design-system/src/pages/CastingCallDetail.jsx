@@ -3,8 +3,9 @@ import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import SEO from '../components/SEO';
 import { InlineAlert } from '../components/ui/AlertBanner';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { db } from '../lib/firebase';
-import { doc, onSnapshot, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, collection, addDoc, serverTimestamp, deleteDoc, updateDoc, query, where, orderBy } from 'firebase/firestore';
 
 export default function CastingCallDetail({ onNavigate, castingId, user, showAlert }) {
   const [call, setCall] = useState(null);
@@ -19,6 +20,24 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   const [saved, setSaved] = useState(false);
   const [saveAlert, setSaveAlert] = useState({ type: null, message: null });
 
+  const [apps, setApps] = useState([]);
+  const [loadingApps, setLoadingApps] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+  const [applicationId, setApplicationId] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(null);
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    cancelText: '',
+    type: 'default',
+    onConfirm: () => {},
+  });
+
+  const isCreator = user && call && (call.creatorId === user.uid || call.createdBy === user.uid);
+
   useEffect(() => {
     if (!castingId) return;
     const unsub = onSnapshot(doc(db, 'casting_calls', castingId), (snap) => {
@@ -32,6 +51,74 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     });
     return () => unsub();
   }, [castingId]);
+
+  // Check if current user has already applied
+  useEffect(() => {
+    if (!castingId || !user) return;
+    const q = query(
+      collection(db, 'applications'),
+      where('castingId', '==', castingId),
+      where('userId', '==', user.uid)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      if (!snap.empty) {
+        setApplied(true);
+        setApplicationId(snap.docs[0].id);
+        setApplicationStatus(snap.docs[0].data().status || 'pending');
+      } else {
+        setApplied(false);
+        setApplicationId(null);
+        setApplicationStatus(null);
+      }
+    });
+    return () => unsub();
+  }, [castingId, user]);
+
+  // Subscribe to received applications (for creators)
+  useEffect(() => {
+    if (!castingId || !isCreator) {
+      setApps([]);
+      setLoadingApps(false);
+      return;
+    }
+
+    setLoadingApps(true);
+    const q = query(
+      collection(db, 'applications'),
+      where('castingId', '==', castingId),
+      where('creatorId', '==', user.uid)
+    );
+
+    const unsub = onSnapshot(q, (snap) => {
+      const docs = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+
+      // Sort locally by appliedAt desc to bypass Firestore index requirements
+      docs.sort((a, b) => {
+        const t1 = a.appliedAt?.toDate ? a.appliedAt.toDate().getTime() : 0;
+        const t2 = b.appliedAt?.toDate ? b.appliedAt.toDate().getTime() : 0;
+        return t2 - t1;
+      });
+
+      const formattedDocs = docs.map(d => ({
+        ...d,
+        appliedAtFormatted: d.appliedAt?.toDate
+          ? d.appliedAt.toDate().toLocaleDateString()
+          : 'Just now'
+      }));
+
+      setApps(formattedDocs);
+      setLoadingApps(false);
+    }, (err) => {
+      console.error("Error subscribing to received applications:", err);
+      showAlert?.(`Failed to load applications: ${err.message}`, 'error');
+      setLoadingApps(false);
+    });
+
+    return () => unsub();
+  }, [castingId, isCreator, user?.uid]);
 
   // ── Apply Now — real Firestore write ────────────────────────────────────────
   const handleApply = async () => {
@@ -50,8 +137,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         castingTitle: call.title,
         userId: user.uid,
         userEmail: user.email,
+        userName: user.displayName || 'Anonymous Actor',
+        userPhoto: user.profileImage || user.photoURL || '',
         appliedAt: serverTimestamp(),
         status: 'pending',
+        creatorId: call.creatorId || call.createdBy || '',
       });
 
       setApplied(true);
@@ -72,6 +162,67 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     } finally {
       setApplying(false);
     }
+  };
+
+  const handleDelete = () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Delete Casting Call',
+      description: 'Are you sure you want to delete this casting call? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: async () => {
+        setDeleting(true);
+        try {
+          await deleteDoc(doc(db, 'casting_calls', castingId));
+          showAlert?.('Casting call deleted successfully.', 'success');
+          onNavigate('casting');
+        } catch (err) {
+          console.error('Error deleting casting call:', err);
+          showAlert?.('Failed to delete casting call. Please try again.', 'error');
+        } finally {
+          setDeleting(false);
+        }
+      }
+    });
+  };
+
+  const handleUpdateAppStatus = async (appId, newStatus) => {
+    try {
+      await updateDoc(doc(db, 'applications', appId), {
+        status: newStatus,
+        updatedAt: serverTimestamp()
+      });
+      showAlert?.(`Application marked as ${newStatus}.`, 'success');
+    } catch (err) {
+      console.error('Error updating application status:', err);
+      showAlert?.('Failed to update application status.', 'error');
+    }
+  };
+
+  const handleCancelApplication = () => {
+    if (!applicationId) return;
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Withdraw Application',
+      description: 'Are you sure you want to withdraw your application for this casting call?',
+      confirmText: 'Withdraw',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: async () => {
+        setCancelling(true);
+        try {
+          await deleteDoc(doc(db, 'applications', applicationId));
+          showAlert?.('Your application has been withdrawn.', 'success');
+        } catch (err) {
+          console.error('Error withdrawing application:', err);
+          showAlert?.('Failed to withdraw application. Please try again.', 'error');
+        } finally {
+          setCancelling(false);
+        }
+      }
+    });
   };
 
   // ── Save for Later — real Firestore write ────────────────────────────────────
@@ -131,6 +282,10 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   return (
     <div className="min-h-screen bg-nc-dark pt-16 pb-24">
+      <ConfirmDialog
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
       <SEO
         title={`${call.title} | Auditions in ${call.location}`}
         description={call.description ? (call.description.slice(0, 150) + '...') : 'Check out this new casting call on NC Network.'}
@@ -194,6 +349,84 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 }
               </div>
             </div>
+
+            {isCreator && (
+              <div className="bg-nc-card border border-nc-border rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-nc-border">
+                  <h2 className="font-bold text-white text-lg">Applications Received ({apps.length})</h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-nc-accent/10 text-nc-accent border border-nc-accent/20">
+                    Creator Portal
+                  </span>
+                </div>
+
+                {loadingApps ? (
+                  <div className="flex flex-col items-center py-8 gap-2">
+                    <div className="w-6 h-6 rounded-full border-2 border-nc-accent/30 border-t-nc-accent animate-spin" />
+                    <p className="text-nc-muted text-xs">Loading applicants...</p>
+                  </div>
+                ) : apps.length === 0 ? (
+                  <div className="text-center py-12 border border-dashed border-nc-border rounded-xl">
+                    <p className="text-nc-muted text-sm">No applications received yet.</p>
+                    <p className="text-[10px] text-nc-muted mt-1 uppercase tracking-wider font-bold">Applications will appear here in real-time</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                    {apps.map((app) => (
+                      <div key={app.id} className="bg-nc-surface border border-nc-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-nc-accent/20 transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-nc-card border border-nc-border overflow-hidden flex items-center justify-center flex-shrink-0">
+                            {app.userPhoto ? (
+                              <img src={app.userPhoto} alt={app.userName} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-sm font-bold text-nc-accent">{app.userName?.charAt(0) || '?'}</span>
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium text-white flex items-center gap-2">
+                              {app.userName}
+                              {app.status !== 'pending' && (
+                                <span className={`text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded ${
+                                  app.status === 'accepted' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                }`}>
+                                  {app.status}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-nc-muted">{app.userEmail}</div>
+                            <div className="text-[10px] text-nc-muted mt-1">Applied: {app.appliedAtFormatted}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          <button
+                            onClick={() => onNavigate('profile', app.userId)}
+                            className="px-3 py-1.5 rounded-lg border border-nc-border text-xs font-bold text-nc-secondary hover:text-white hover:border-white transition-all"
+                          >
+                            View Profile
+                          </button>
+                          {app.status === 'pending' && (
+                            <>
+                              <button
+                                onClick={() => handleUpdateAppStatus(app.id, 'accepted')}
+                                className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 text-xs font-bold hover:bg-green-500 hover:text-black transition-all"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                onClick={() => handleUpdateAppStatus(app.id, 'rejected')}
+                                className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold hover:bg-red-500 hover:text-white transition-all"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -229,45 +462,93 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 />
               )}
 
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleApply}
-                disabled={applied || applying}
-              >
-                {applying ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Submitting...
-                  </span>
-                ) : applied ? '✓ Applied' : 'Apply Now'}
-              </Button>
-
-              {/* Save for Later */}
-              <div className="space-y-2">
-                {saveAlert.type && (
-                  <InlineAlert
-                    type={saveAlert.type}
-                    message={saveAlert.message}
-                    onDismiss={() => setSaveAlert({ type: null, message: null })}
-                  />
-                )}
-                <button
-                  onClick={handleSave}
-                  disabled={saved}
-                  className={`w-full text-sm transition-colors ${
-                    saved ? 'text-nc-accent cursor-default' : 'text-nc-muted hover:text-white'
-                  }`}
+              {isCreator ? (
+                <Button
+                  className="w-full bg-red-600 hover:bg-red-700 text-white border-none"
+                  size="lg"
+                  onClick={handleDelete}
+                  loading={deleting}
+                  disabled={deleting}
                 >
-                  {saved ? '🔖 Saved to library' : '🔖 Save for Later'}
-                </button>
-              </div>
+                  Delete Casting Call 🗑️
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    className={`w-full ${
+                      applicationStatus === 'accepted'
+                        ? 'bg-green-600/20 text-green-400 border border-green-500/30 cursor-default hover:bg-green-600/20'
+                        : applicationStatus === 'rejected'
+                        ? 'bg-red-600/20 text-red-400 border border-red-500/30 cursor-default hover:bg-red-600/20'
+                        : ''
+                    }`}
+                    size="lg"
+                    onClick={handleApply}
+                    disabled={applied || applying}
+                  >
+                    {applying ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Submitting...
+                      </span>
+                    ) : applicationStatus === 'accepted' ? (
+                      '✓ Application Accepted'
+                    ) : applicationStatus === 'rejected' ? (
+                      '✕ Application Rejected'
+                    ) : applied ? (
+                      '✓ Applied (Pending)'
+                    ) : (
+                      'Apply Now'
+                    )}
+                  </Button>
+
+                  {applied && applicationId && applicationStatus === 'pending' && (
+                    <button
+                      onClick={handleCancelApplication}
+                      disabled={cancelling}
+                      className="w-full py-2.5 rounded-xl border border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 text-sm font-bold transition-all flex items-center justify-center gap-2"
+                    >
+                      {cancelling ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                          Withdrawing...
+                        </>
+                      ) : (
+                        'Withdraw Application ✕'
+                      )}
+                    </button>
+                  )}
+
+                  {applicationStatus === 'rejected' && (
+                    <p className="text-[11px] text-red-400 text-center leading-relaxed font-medium mt-1">
+                      Your application was rejected by the production. You cannot re-apply to this casting call.
+                    </p>
+                  )}
+
+                  {/* Save for Later */}
+                  <div className="space-y-2">
+                    {saveAlert.type && (
+                      <InlineAlert
+                        type={saveAlert.type}
+                        message={saveAlert.message}
+                        onDismiss={() => setSaveAlert({ type: null, message: null })}
+                      />
+                    )}
+                    <button
+                      onClick={handleSave}
+                      disabled={saved}
+                      className={`w-full text-sm transition-colors ${
+                        saved ? 'text-nc-accent cursor-default' : 'text-nc-muted hover:text-white'
+                      }`}
+                    >
+                      {saved ? '🔖 Saved to library' : '🔖 Save for Later'}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
-            <div className="bg-nc-card border border-nc-border rounded-2xl p-5">
-              <h3 className="font-bold text-white mb-3 text-sm">About Production House</h3>
-              <p className="text-nc-muted text-sm leading-relaxed">{call.about}</p>
-            </div>
+
           </div>
         </div>
       </div>

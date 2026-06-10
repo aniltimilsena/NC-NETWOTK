@@ -10,16 +10,26 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
     // User Profiles
     match /profiles/{userId} {
       allow read: if true;
-      allow write: if isOwner(userId);
+      allow write: if isOwner(userId)
+        && (resource == null
+            ? (request.resource.data.verified == false)
+            : (request.resource.data.verified == resource.data.verified));
     }
 
     // Users
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId);
+      allow write: if isOwner(userId)
+        && (resource == null
+            ? ((request.resource.data.isAdmin == false || request.auth.token.email == 'aniltimilsena53@gmail.com') && request.resource.data.role in ['Talent', 'Agent', 'Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer'])
+            : ((request.resource.data.isAdmin == resource.data.isAdmin || request.auth.token.email == 'aniltimilsena53@gmail.com') && request.resource.data.role in ['Talent', 'Agent', 'Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer']));
     }
 
     // Conversations
@@ -47,32 +57,47 @@ service cloud.firestore {
     // Story Replies
     match /story_replies/{replyId} {
       allow read: if isSignedIn() && (resource.data.recipientId == request.auth.uid || resource.data.senderId == request.auth.uid);
-      allow create: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
     }
 
     // Notifications
     match /notifications/{notifId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read, update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
     }
 
     // Casting Calls
     match /casting_calls/{callId} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow create: if isSignedIn() && (getUserData().role == 'Agent' || getUserData().role == 'Director' || getUserData().isAdmin == true);
+      allow update, delete: if isSignedIn() && ((getUserData().role == 'Agent' || getUserData().role == 'Director') && resource.data.createdBy == request.auth.uid || getUserData().isAdmin == true);
+    }
+
+    // Applications
+    match /applications/{appId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.creatorId == request.auth.uid);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid && resource.data.status == 'pending';
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid && request.resource.data.status == 'pending';
+      allow update: if isSignedIn() && resource.data.creatorId == request.auth.uid && request.resource.data.status in ['pending', 'accepted', 'rejected'];
+    }
+
+    // Saved Calls
+    match /saved_calls/{saveId} {
+      allow read, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
     }
 
     // WebRTC Calls
     match /calls/{callId} {
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isSignedIn() && (resource.data.callerId == request.auth.uid || resource.data.calleeId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.callerId == request.auth.uid;
 
       match /callerCandidates/{candId} {
-        allow read, write: if isSignedIn();
+        allow read, write: if isSignedIn() && (get(/databases/$(database)/documents/calls/$(callId)).data.callerId == request.auth.uid || get(/databases/$(database)/documents/calls/$(callId)).data.calleeId == request.auth.uid);
       }
 
       match /calleeCandidates/{candId} {
-        allow read, write: if isSignedIn();
+        allow read, write: if isSignedIn() && (get(/databases/$(database)/documents/calls/$(callId)).data.callerId == request.auth.uid || get(/databases/$(database)/documents/calls/$(callId)).data.calleeId == request.auth.uid);
       }
     }
 

@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   updateProfile,
+  sendPasswordResetEmail,
   type User,
 } from "firebase/auth";
 import { auth, db } from "../lib/firebase";
@@ -19,7 +20,7 @@ export const ensureUserProfile = async (user: User) => {
       name: user.displayName || "NC User",
       email: user.email,
       role: "Talent",
-      isAdmin: false,
+      isAdmin: user.email === "aniltimilsena53@gmail.com",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }, { merge: true });
@@ -77,7 +78,7 @@ export const signUpUser = async (
       email,
       role: role || "Talent",
       gender: gender || "",
-      isAdmin: false,
+      isAdmin: email === "aniltimilsena53@gmail.com",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }, { merge: true });
@@ -115,6 +116,15 @@ export const signInUser = async (email: string, password: string): Promise<AuthR
 export const logoutUser = async (): Promise<{ error: string | null }> => {
   try {
     await signOut(auth);
+    return { error: null };
+  } catch (error: unknown) {
+    return { error: getErrorMessage(error) };
+  }
+};
+
+export const sendPasswordReset = async (email: string): Promise<{ error: string | null }> => {
+  try {
+    await sendPasswordResetEmail(auth, email);
     return { error: null };
   } catch (error: unknown) {
     return { error: getErrorMessage(error) };

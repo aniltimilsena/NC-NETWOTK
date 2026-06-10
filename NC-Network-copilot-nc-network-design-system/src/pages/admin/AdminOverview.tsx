@@ -11,6 +11,8 @@ export default function AdminOverview() {
     newSignups: 0
   });
   const [loading, setLoading] = useState(true);
+  const [selectedPeriod, setSelectedPeriod] = useState('30D');
+  const [registrationDates, setRegistrationDates] = useState<Date[]>([]);
 
   useEffect(() => {
     // Real-time counts
@@ -18,6 +20,19 @@ export default function AdminOverview() {
       const all = snap.size;
       const pro = snap.docs.filter(d => d.data().premium).length;
       setCounts(prev => ({ ...prev, users: all, proMembers: pro }));
+
+      const dates = snap.docs
+        .map(doc => {
+          const u = doc.data();
+          if (u.createdAt) {
+            return u.createdAt.toDate ? u.createdAt.toDate() : new Date(u.createdAt);
+          }
+          return null;
+        })
+        .filter((d): d is Date => d !== null)
+        .sort((a, b) => a.getTime() - b.getTime());
+      
+      setRegistrationDates(dates);
     });
 
     const unsubCasting = onSnapshot(collection(db, "casting_calls"), (snap) => {
@@ -31,6 +46,99 @@ export default function AdminOverview() {
     };
   }, []);
 
+  const getGraphData = () => {
+    const now = new Date();
+    let daysLimit = 30;
+    if (selectedPeriod === '7D') daysLimit = 7;
+    else if (selectedPeriod === '90D') daysLimit = 90;
+
+    const startDate = new Date(now.getTime() - daysLimit * 24 * 60 * 60 * 1000);
+
+    // Filter dates within the period
+    const filteredDates = registrationDates.filter(d => d >= startDate);
+
+    // Group by day
+    const dayBuckets: Record<string, number> = {};
+    for (let i = 0; i <= daysLimit; i++) {
+      const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+      const key = d.toDateString();
+      dayBuckets[key] = 0;
+    }
+
+    filteredDates.forEach(d => {
+      const key = d.toDateString();
+      if (dayBuckets[key] !== undefined) {
+        dayBuckets[key]++;
+      }
+    });
+
+    // Generate cumulative count over the period
+    let cumulative = registrationDates.filter(d => d < startDate).length;
+    const dataPoints: { x: number; y: number; label: string; count: number }[] = [];
+
+    const keys = Object.keys(dayBuckets);
+    const stepX = 800 / (keys.length - 1 || 1);
+
+    keys.forEach((key, idx) => {
+      cumulative += dayBuckets[key];
+      dataPoints.push({
+        x: idx * stepX,
+        y: cumulative, // raw count, will scale later
+        label: key,
+        count: cumulative
+      });
+    });
+
+    // Scale Y coordinates (between 180 for min, 40 for max)
+    const countsList = dataPoints.map(p => p.count);
+    const maxVal = Math.max(...countsList, 0); 
+    const minVal = Math.min(...countsList, 0);
+    const range = maxVal - minVal || 1;
+
+    const scaledPoints = dataPoints.map(p => {
+      // 180 is bottom, 40 is top
+      const y = 180 - ((p.count - minVal) / range) * 140;
+      return { ...p, y };
+    });
+
+    // Build SVG Path
+    let pathD = '';
+    let areaD = '';
+
+    if (scaledPoints.length > 0) {
+      pathD = `M ${scaledPoints[0].x} ${scaledPoints[0].y}`;
+      for (let i = 1; i < scaledPoints.length; i++) {
+        const prev = scaledPoints[i - 1];
+        const curr = scaledPoints[i];
+        // Curved path using cubic bezier controls
+        const cpX1 = prev.x + (curr.x - prev.x) / 3;
+        const cpY1 = prev.y;
+        const cpX2 = prev.x + 2 * (curr.x - prev.x) / 3;
+        const cpY2 = curr.y;
+        pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${curr.x} ${curr.y}`;
+      }
+      areaD = `${pathD} L ${scaledPoints[scaledPoints.length - 1].x} 200 L ${scaledPoints[0].x} 200 Z`;
+    }
+
+    return { points: scaledPoints, pathD, areaD, maxVal };
+  };
+
+  const getPeriodLabels = () => {
+    const now = new Date();
+    let daysLimit = 30;
+    if (selectedPeriod === '7D') daysLimit = 7;
+    else if (selectedPeriod === '90D') daysLimit = 90;
+
+    const startDate = new Date(now.getTime() - daysLimit * 24 * 60 * 60 * 1000);
+    return {
+      start: startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      end: now.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    };
+  };
+
+  const { points, pathD, areaD, maxVal } = getGraphData();
+  const periodLabels = getPeriodLabels();
+
   const stats = [
     { label: 'Total Users', value: counts.users.toLocaleString(), change: '+2.1%', trend: 'up', icon: Users },
     { label: 'Platform Pulse', value: 'Healthy', change: '100%', trend: 'up', icon: Zap },
@@ -38,6 +146,7 @@ export default function AdminOverview() {
     { label: 'PRO Members', value: counts.proMembers.toLocaleString(), change: '+8.2%', trend: 'up', icon: TrendingUp },
     { label: 'Network Integrity', value: 'Secure', change: '99.9%', trend: 'up', icon: UserCheck },
   ];
+
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
       {/* KPI Cards */}
@@ -94,7 +203,13 @@ export default function AdminOverview() {
             </div>
             <div className="flex gap-2">
               {['7D', '30D', '90D'].map(t => (
-                <button key={t} className={`px-3 py-1 text-[10px] font-black rounded-lg transition-all ${t === '30D' ? 'bg-admin-primary text-white' : 'text-nc-muted hover:text-white'}`}>{t}</button>
+                <button 
+                  key={t} 
+                  onClick={() => setSelectedPeriod(t)}
+                  className={`px-3 py-1 text-[10px] font-black rounded-lg transition-all ${t === selectedPeriod ? 'bg-admin-primary text-white' : 'text-nc-muted hover:text-white'}`}
+                >
+                  {t}
+                </button>
               ))}
             </div>
           </div>
@@ -114,42 +229,45 @@ export default function AdminOverview() {
               ))}
               
               {/* Area */}
-              <path 
-                d="M0,180 Q100,140 200,160 T400,80 T600,120 T800,40 L800,200 L0,200 Z" 
-                fill="url(#chartGradient)"
-                className="transition-all duration-1000"
-              />
+              {areaD && (
+                <path 
+                  d={areaD} 
+                  fill="url(#chartGradient)"
+                  className="transition-all duration-500"
+                />
+              )}
               
               {/* Line */}
-              <path 
-                d="M0,180 Q100,140 200,160 T400,80 T600,120 T800,40" 
-                fill="none" 
-                stroke="#38BDF8" 
-                strokeWidth="3" 
-                strokeLinecap="round"
-                strokeDasharray="1000"
-                strokeDashoffset="0"
-                className="animate-[dash_2s_ease-out]"
-              />
+              {pathD && (
+                <path 
+                  d={pathD} 
+                  fill="none" 
+                  stroke="#38BDF8" 
+                  strokeWidth="3" 
+                  strokeLinecap="round"
+                  className="transition-all duration-500"
+                />
+              )}
               
               {/* Data Points */}
-              <circle cx="400" cy="80" r="5" fill="#FFF" className="animate-pulse shadow-[0_0_10px_white]" />
-              <circle cx="800" cy="40" r="5" fill="#38BDF8" />
+              {points.length > 0 && (
+                <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="5" fill="#FFF" className="animate-pulse shadow-[0_0_10px_white]" />
+              )}
             </svg>
 
             {/* Hover Tooltip Overlay */}
             <div className="absolute top-1/2 left-1/4 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               <div className="bg-white px-3 py-1.5 rounded-lg shadow-xl shadow-admin-primary/20">
                 <p className="text-[10px] font-black text-admin-primary uppercase leading-tight">Current Peak</p>
-                <p className="text-sm font-black text-black">12,482 Active</p>
+                <p className="text-sm font-black text-black">{maxVal} Users</p>
               </div>
             </div>
           </div>
           
           <div className="flex justify-between px-4 text-[10px] text-white/40 font-black uppercase tracking-widest border-t border-white/5 pt-4 mt-4">
-            <span>Mar 12</span>
-            <span>Platform Peak</span>
-            <span>Apr 13</span>
+            <span>{periodLabels.start}</span>
+            <span>Platform Trend</span>
+            <span>{periodLabels.end}</span>
           </div>
         </div>
       </div>

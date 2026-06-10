@@ -7,7 +7,13 @@ import Avatar from '../components/ui/Avatar';
 import { subscribeToProfile, uploadProfileMedia, updateProfileData } from '../services/profile';
 import { usePermissionContext } from '../context/PermissionContext';
 
-export default function Profile({ onNavigate, user, profileId }) {
+const isVideoUrl = (url) => {
+  if (!url) return false;
+  const ext = url.split('.').pop()?.split('?')[0]?.toLowerCase();
+  return ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext) || url.includes('/video/upload/');
+};
+
+export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   const isLoggedIn = !!user;
   const [profile, setProfile] = useState(null);
   const [activeTab, setActiveTab] = useState('about');
@@ -19,6 +25,8 @@ export default function Profile({ onNavigate, user, profileId }) {
   const [mediaUploadProgress, setMediaUploadProgress] = useState(0);
   const [shareCopied, setShareCopied] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [isUploadingIntro, setIsUploadingIntro] = useState(false);
+  const [introProgress, setIntroProgress] = useState(0);
   const { requestPermission } = usePermissionContext();
 
   useEffect(() => {
@@ -55,6 +63,52 @@ export default function Profile({ onNavigate, user, profileId }) {
   const handleMediaUpload = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0 || !user) return;
+
+    const isOwnProfile = isLoggedIn && (!profileId || profileId === user?.uid);
+    const isPremium = profile?.premium || (profile?.email === 'aniltimilsena53@gmail.com') || (isOwnProfile && isAdmin) || false;
+    const existingPhotosCount = (profile?.media || []).filter(url => !isVideoUrl(url)).length;
+    const existingVideosCount = (profile?.media || []).filter(url => isVideoUrl(url)).length;
+
+    let newPhotosCount = 0;
+    let newVideosCount = 0;
+
+    // Validate all files first
+    for (const file of files) {
+      const isVideo = file.type.startsWith('video/');
+      const isImage = file.type.startsWith('image/');
+
+      if (isImage) {
+        newPhotosCount++;
+        const sizeLimit = isPremium ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
+        if (file.size > sizeLimit) {
+          showAlert('File Too Large', 'error', `Gallery photo "${file.name}" exceeds the size limit of ${isPremium ? '10MB' : '5MB'}.`);
+          return;
+        }
+      } else if (isVideo) {
+        newVideosCount++;
+        const sizeLimit = isPremium ? 500 * 1024 * 1024 : 100 * 1024 * 1024;
+        if (file.size > sizeLimit) {
+          showAlert('File Too Large', 'error', `Showreel video "${file.name}" exceeds the size limit of ${isPremium ? '500MB' : '100MB'}.`);
+          return;
+        }
+      } else {
+        showAlert('Invalid File Type', 'error', `File "${file.name}" is not a supported image or video format.`);
+        return;
+      }
+    }
+
+    // Enforce count limits
+    const photoLimit = isPremium ? 50 : 10;
+    if (existingPhotosCount + newPhotosCount > photoLimit) {
+      showAlert('Limit Exceeded', 'error', `Gallery is limited to ${photoLimit} photos for ${isPremium ? 'PRO' : 'Free'} users. (Current: ${existingPhotosCount}, Uploading: ${newPhotosCount})`);
+      return;
+    }
+
+    const videoLimit = isPremium ? 5 : 1;
+    if (existingVideosCount + newVideosCount > videoLimit) {
+      showAlert('Limit Exceeded', 'error', `Showreel is limited to ${videoLimit} videos for ${isPremium ? 'PRO' : 'Free'} users. (Current: ${existingVideosCount}, Uploading: ${newVideosCount})`);
+      return;
+    }
     
     requestPermission('photos', async () => {
       setIsUploadingMedia(true);
@@ -77,10 +131,43 @@ export default function Profile({ onNavigate, user, profileId }) {
       } finally {
         setIsUploadingMedia(false);
         setMediaUploadProgress(0);
-        // Reset input so the same file can be selected again
         e.target.value = '';
       }
     });
+  };
+
+  const handleIntroVideoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const isOwnProfile = isLoggedIn && (!profileId || profileId === user?.uid);
+    const isPremium = profile?.premium || (profile?.email === 'aniltimilsena53@gmail.com') || (isOwnProfile && isAdmin) || false;
+    const sizeLimit = isPremium ? 250 * 1024 * 1024 : 50 * 1024 * 1024;
+    if (file.size > sizeLimit) {
+      showAlert('File Too Large', 'error', `Intro video exceeds the limit of ${isPremium ? '250MB' : '50MB'} for your current tier.`);
+      return;
+    }
+
+    setIsUploadingIntro(true);
+    setIntroProgress(0);
+    try {
+      const url = await uploadProfileMedia(user.uid, file, (progress) => {
+        setIntroProgress(Math.round(progress));
+      });
+      if (url) {
+        await updateProfileData(user.uid, { introVideo: url });
+        showAlert('Success', 'success', 'Intro video uploaded successfully.');
+      } else {
+        showAlert('Upload Failed', 'error', 'Failed to upload intro video.');
+      }
+    } catch (err) {
+      console.error("Error uploading intro video:", err);
+      showAlert('Error', 'error', 'An error occurred during upload.');
+    } finally {
+      setIsUploadingIntro(false);
+      setIntroProgress(0);
+      e.target.value = '';
+    }
   };
 
   const handleShare = async () => {
@@ -147,6 +234,8 @@ export default function Profile({ onNavigate, user, profileId }) {
     media: Array.isArray(profile?.media) ? profile.media : [],
     languages: Array.isArray(profile?.languages) ? profile.languages : [],
     verified: profile?.verified || false,
+    premium: profile?.premium || (profile?.email === 'aniltimilsena53@gmail.com') || (isOwnProfile && isAdmin) || false,
+    introVideo: profile?.introVideo || null,
     gender: profile?.gender || 'Not Specified',
     email: profile?.email || (isOwnProfile ? user?.email : null) || 'contact@nc-network.com',
     phone: profile?.phone || 'Not Specified',
@@ -156,6 +245,8 @@ export default function Profile({ onNavigate, user, profileId }) {
     hairColor: profile?.hairColor || 'Not Specified',
     openToWork: profile?.openToWork || false,
   };
+  
+  const showContact = isOwnProfile || profile?.showContactInfo === true;
 
   const tabs = ['about', 'media', 'skills', 'experience', 'reviews'];
 
@@ -415,7 +506,7 @@ export default function Profile({ onNavigate, user, profileId }) {
                     </div>
                     <div>
                       <div className="text-nc-muted text-xs">Email</div>
-                      <div className="text-nc-secondary text-sm">{p.email}</div>
+                      <div className="text-nc-secondary text-sm">{showContact ? p.email : 'Private'}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -426,7 +517,7 @@ export default function Profile({ onNavigate, user, profileId }) {
                     </div>
                     <div>
                       <div className="text-nc-muted text-xs">Phone</div>
-                      <div className="text-nc-secondary text-sm">{p.phone}</div>
+                      <div className="text-nc-secondary text-sm">{showContact ? p.phone : 'Private'}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -558,80 +649,234 @@ export default function Profile({ onNavigate, user, profileId }) {
         )}
 
         {/* Media */}
-        {activeTab === 'media' && (
-          <div className="animate-fade-in group/gallery min-h-[400px]">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white tracking-tight">Media Showcase</h2>
-              {isOwnProfile && (
-                <>
-                  <button 
-                    onClick={() => document.getElementById('profile-media-upload')?.click()}
-                    disabled={isUploadingMedia}
-                    className="text-nc-accent text-[10px] font-black uppercase tracking-[0.2em] hover:brightness-125 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isUploadingMedia ? 'Uploading...' : 'Upload Media'}
-                  </button>
-                  <input 
-                    id="profile-media-upload"
-                    type="file" 
-                    multiple 
-                    accept="image/*,video/*"
-                    className="hidden" 
-                    onChange={handleMediaUpload}
-                  />
-                </>
-              )}
-            </div>
-            
-            {p.media.length > 0 || isUploadingMedia ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {p.media.map((src, idx) => (
-                  <div 
-                    key={idx} 
-                    onClick={() => setFullscreenImage({ src, idx })}
-                    className="group relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-nc-surface border border-nc-border shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer"
-                  >
-                    <img 
-                      src={src} 
-                      alt={`Portfolio asset ${idx + 1}`} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end p-6 backdrop-blur-[2px]">
-                      <div className="w-full translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                        <span className="text-[10px] text-nc-accent font-black uppercase tracking-widest bg-nc-accent/10 border border-nc-accent/20 px-3 py-1 rounded-full backdrop-blur-md">
-                          Asset Fullscreen
-                        </span>
-                      </div>
-                    </div>
+        {activeTab === 'media' && (() => {
+          const photos = p.media.filter(url => !isVideoUrl(url));
+          const videos = p.media.filter(url => isVideoUrl(url));
+          const isPremium = p.premium;
+          return (
+            <div className="animate-fade-in min-h-[400px] space-y-8">
+              {/* Intro Video Section */}
+              <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-xl text-left">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white tracking-tight">Intro Video</h3>
+                    <p className="text-xs text-nc-muted">A short introduction video for casting directors.</p>
                   </div>
-                ))}
+                  {isOwnProfile && !p.introVideo && !isUploadingIntro && (
+                    <button 
+                      onClick={() => document.getElementById('profile-intro-upload')?.click()}
+                      className="text-nc-accent text-[10px] font-black uppercase tracking-[0.2em] hover:brightness-125 transition-all"
+                    >
+                      Upload Video
+                    </button>
+                  )}
+                </div>
+
+                {isUploadingIntro ? (
+                  <div className="py-12 text-center space-y-4 border border-dashed border-white/5 rounded-2xl bg-white/2">
+                    <div className="w-full max-w-xs mx-auto h-1.5 bg-white/5 rounded-full overflow-hidden relative">
+                      <div 
+                        className="absolute inset-y-0 left-0 bg-nc-accent transition-all duration-300" 
+                        style={{ width: `${introProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-nc-accent font-bold tracking-widest uppercase">Uploading Intro Video: {introProgress}%</p>
+                  </div>
+                ) : p.introVideo ? (
+                  <div className="relative aspect-video rounded-3xl overflow-hidden bg-black/40 border border-white/5 shadow-inner">
+                    <video src={p.introVideo} controls className="w-full h-full object-cover" />
+                    {isOwnProfile && (
+                      <button 
+                        onClick={async () => {
+                          try {
+                            await updateProfileData(user.uid, { introVideo: null });
+                            showAlert('Removed', 'info', 'Intro video removed.');
+                          } catch (err) {
+                            console.error("Error removing intro video:", err);
+                          }
+                        }}
+                        className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg"
+                        title="Remove Intro Video"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center border border-dashed border-white/5 rounded-3xl bg-white/2">
+                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 mx-auto">
+                      <span className="text-2xl">🎥</span>
+                    </div>
+                    <p className="text-xs text-nc-muted max-w-xs mx-auto leading-relaxed">
+                      {isOwnProfile 
+                        ? `Introduce yourself to the network! Maximum file size: ${isPremium ? '250MB' : '50MB'}.`
+                        : 'No intro video has been uploaded by this talent.'}
+                    </p>
+                  </div>
+                )}
+                
+                <input 
+                  id="profile-intro-upload"
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={handleIntroVideoUpload}
+                />
+              </div>
+
+              {/* Media Showcase Grid */}
+              <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-xl text-left">
+                <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-5">
+                  <div>
+                    <h3 className="text-lg font-bold text-white tracking-tight">Portfolio & Reels</h3>
+                    <p className="text-xs text-nc-muted">Manage your photo gallery and video showreels.</p>
+                  </div>
+                  {isOwnProfile && (
+                    <>
+                      <button 
+                        onClick={() => document.getElementById('profile-media-upload')?.click()}
+                        disabled={isUploadingMedia}
+                        className="bg-nc-accent text-nc-darker text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isUploadingMedia ? 'Uploading...' : 'Upload Media'}
+                      </button>
+                      <input 
+                        id="profile-media-upload"
+                        type="file" 
+                        multiple 
+                        accept="image/*,video/*"
+                        className="hidden" 
+                        onChange={handleMediaUpload}
+                      />
+                    </>
+                  )}
+                </div>
+
+                {/* Gallery Photos Section */}
+                <div className="space-y-4 mb-10">
+                  <div className="flex items-center justify-between border-b border-white/2 pb-2">
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <span>🖼️</span> Gallery Photos
+                    </h4>
+                    <span className="text-[10px] font-black text-nc-muted bg-white/5 px-2.5 py-1 rounded-full">
+                      {photos.length} / {isPremium ? 50 : 10} photos
+                    </span>
+                  </div>
+                  
+                  {photos.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {photos.map((src, idx) => (
+                        <div 
+                          key={idx} 
+                          onClick={() => setFullscreenImage({ src, idx })}
+                          className="group relative aspect-[4/5] rounded-3xl overflow-hidden bg-nc-surface border border-nc-border shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer"
+                        >
+                          <img 
+                            src={src} 
+                            alt={`Gallery asset ${idx + 1}`} 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end justify-between p-4 backdrop-blur-[2px]">
+                            <span className="text-[9px] text-nc-accent font-black uppercase tracking-widest bg-nc-accent/10 border border-nc-accent/20 px-2.5 py-1 rounded-full">
+                              Fullscreen
+                            </span>
+                            {isOwnProfile && (
+                              <button 
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    const updatedMedia = p.media.filter(url => url !== src);
+                                    await updateProfileData(user.uid, { media: updatedMedia });
+                                    showAlert('Deleted', 'info', 'Gallery photo removed.');
+                                  } catch (err) {
+                                    console.error("Error deleting image:", err);
+                                  }
+                                }}
+                                className="bg-black/60 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors shadow-lg"
+                                title="Delete Photo"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-nc-muted italic pl-1">No photos in gallery.</p>
+                  )}
+                </div>
+
+                {/* Showreel Videos Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/2 pb-2">
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <span>🎬</span> Showreel Videos
+                    </h4>
+                    <span className="text-[10px] font-black text-nc-muted bg-white/5 px-2.5 py-1 rounded-full">
+                      {videos.length} / {isPremium ? 5 : 1} videos
+                    </span>
+                  </div>
+                  
+                  {videos.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {videos.map((src, idx) => (
+                        <div 
+                          key={idx} 
+                          className="group relative aspect-video rounded-3xl overflow-hidden bg-nc-surface border border-nc-border shadow-lg"
+                        >
+                          <video src={src} controls className="w-full h-full object-cover" />
+                          {isOwnProfile && (
+                            <button 
+                              onClick={async () => {
+                                try {
+                                  const updatedMedia = p.media.filter(url => url !== src);
+                                  await updateProfileData(user.uid, { media: updatedMedia });
+                                  showAlert('Deleted', 'info', 'Showreel video removed.');
+                                } catch (err) {
+                                  console.error("Error deleting video:", err);
+                                }
+                              }}
+                              className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg"
+                              title="Delete Video"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-nc-muted italic pl-1">No videos in showreel.</p>
+                  )}
+                </div>
+
+                {/* Uploading Shimmer card */}
                 {isUploadingMedia && (
-                  <div className="group relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-[#0A0A0A] border border-[#1A1A1A] shadow-lg flex items-center justify-center">
-                    <div className="w-full space-y-2 px-6">
+                  <div className="mt-8 group relative aspect-video sm:aspect-[4/1] rounded-3xl overflow-hidden bg-[#0A0A0A] border border-[#1A1A1A] shadow-lg flex items-center justify-center">
+                    <div className="w-full max-w-xs space-y-2 px-6">
                       <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden relative">
                          <div 
                             className="absolute inset-y-0 left-0 bg-nc-accent transition-all duration-300" 
                             style={{ width: `${mediaUploadProgress}%` }}
                          />
                       </div>
-                      <p className="text-[9px] text-nc-accent font-black text-center uppercase tracking-widest">
-                        Uploading {mediaUploadProgress}%
+                      <p className="text-[9px] text-nc-accent font-black text-center uppercase tracking-widest animate-pulse">
+                        Uploading portfolio file: {mediaUploadProgress}%
                       </p>
                     </div>
                   </div>
                 )}
               </div>
-            ) : (
-              <EmptyState 
-                title="No Media Assets"
-                description="Profiles with headshots and showreels get 10x more engagement."
-                icon="📸"
-                actionLabel={isOwnProfile ? "Upload Media" : null}
-                onAction={() => document.getElementById('profile-media-upload')?.click()}
-              />
-            )}
-          </div>
-        )}
+            </div>
+          );
+        })()}
 
 
 

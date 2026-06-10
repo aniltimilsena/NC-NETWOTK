@@ -1,18 +1,64 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, AlertCircle, Eye, ShieldAlert, TrendingUp, Search } from 'lucide-react';
+import { db } from '../../lib/firebase';
+import { collection, onSnapshot, Timestamp } from 'firebase/firestore';
 
 export default function AdminMessages() {
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [userMap, setUserMap] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
+      const mapping: Record<string, string> = {};
+      snap.docs.forEach(doc => {
+        mapping[doc.id] = doc.data().name || 'Discovery User';
+      });
+      setUserMap(mapping);
+    });
+
+    const unsubConvos = onSnapshot(collection(db, "conversations"), (snap) => {
+      const convos = snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setConversations(convos);
+      setLoading(false);
+    }, (error) => {
+      console.error("Failed to sync conversations", error);
+      setLoading(false);
+    });
+
+    return () => {
+      unsubUsers();
+      unsubConvos();
+    };
+  }, []);
+
+  const formatTimeAgo = (timestamp: any) => {
+    if (!timestamp) return 'now';
+    const date = timestamp instanceof Timestamp ? timestamp.toDate() : new Date(timestamp);
+    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+    
+    if (seconds < 60) return 'now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes + 'm ago';
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours + 'h ago';
+    return Math.floor(hours / 24) + 'd ago';
+  };
+
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">Activity Monitoring</h2>
-          <p className="text-nc-muted text-sm mt-1">Surveillance of messaging patterns and automated abuse detection.</p>
+          <p className="text-nc-muted text-sm mt-1">Surveillance of messaging patterns and active chat volumes.</p>
         </div>
         <div className="flex gap-4">
           <div className="bg-admin-surface border border-admin-border px-6 py-3 rounded-2xl flex flex-col items-end">
-            <span className="text-[10px] font-black text-nc-muted uppercase">24h Volumne</span>
-            <span className="text-2xl font-bold text-admin-primary">12.4K</span>
+            <span className="text-[10px] font-black text-nc-muted uppercase">Active Chats</span>
+            <span className="text-2xl font-bold text-admin-primary">{conversations.length}</span>
           </div>
         </div>
       </div>
@@ -20,40 +66,50 @@ export default function AdminMessages() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-admin-surface border border-admin-border rounded-2xl overflow-hidden">
           <div className="p-4 border-b border-admin-border flex items-center justify-between bg-admin-surface-light/30">
-            <h4 className="text-sm font-bold text-white uppercase tracking-widest">Flagged Conversations</h4>
+            <h4 className="text-sm font-bold text-white uppercase tracking-widest">Active Channels Monitor</h4>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-admin-error animate-pulse"></span>
-              <span className="text-[10px] font-black text-admin-error uppercase">3 Anomalies Detected</span>
+              <span className="w-2 h-2 rounded-full bg-admin-success animate-pulse"></span>
+              <span className="text-[10px] font-black text-admin-success uppercase">{conversations.length} Active Feeds</span>
             </div>
           </div>
           <div className="divide-y divide-admin-border">
-            {[
-              { id: 1, participants: ['Marcus K.', 'Julian T.'], reason: 'Keyword: "Payment Outside"', priority: 'High', time: '12m ago' },
-              { id: 2, participants: ['bot_01', 'talent_82'], reason: 'Pattern: Bulk Spamming', priority: 'Critical', time: '1h ago' },
-              { id: 3, participants: ['Anonymous', 'Director_X'], reason: 'Sentiment: Aggressive', priority: 'Moderate', time: '3h ago' },
-            ].map(chat => (
-              <div key={chat.id} className="p-5 hover:bg-white/5 transition-all flex items-center gap-6 group">
-                <div className="flex -space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-admin-surface-light border-2 border-admin-surface flex items-center justify-center font-bold text-xs text-admin-primary">{chat.participants[0].charAt(0)}</div>
-                  <div className="w-10 h-10 rounded-full bg-admin-primary/10 border-2 border-admin-surface flex items-center justify-center font-bold text-xs text-admin-primary">{chat.participants[1].charAt(0)}</div>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-white mb-0.5">{chat.participants.join(' ↔ ')}</p>
-                  <p className={`text-[10px] font-black uppercase flex items-center gap-1 ${
-                    chat.priority === 'Critical' ? 'text-admin-error' : 
-                    chat.priority === 'High' ? 'text-admin-warning' : 'text-admin-primary'
-                  }`}>
-                    <AlertCircle className="w-3 h-3" /> {chat.reason}
-                  </p>
-                </div>
-                <div className="text-right">
-                   <p className="text-[10px] text-nc-muted font-bold uppercase mb-2">{chat.time}</p>
-                   <button className="px-3 py-1.5 bg-admin-surface-light border border-admin-border rounded-lg text-[10px] font-black uppercase opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                    <Eye className="w-3.5 h-3.5" /> Inspect
-                   </button>
-                </div>
+            {loading ? (
+              <p className="p-6 text-xs text-nc-muted">Synchronizing active feeds...</p>
+            ) : conversations.length === 0 ? (
+              <div className="p-10 text-center text-xs text-nc-muted">
+                No active conversations detected in the ecosystem.
               </div>
-            ))}
+            ) : (
+              conversations.map(chat => {
+                const names = (chat.participants || []).map((pId: string) => userMap[pId] || 'NC Member');
+                return (
+                  <div key={chat.id} className="p-5 hover:bg-white/5 transition-all flex items-center gap-6 group">
+                    <div className="flex -space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-admin-surface-light border-2 border-admin-surface flex items-center justify-center font-bold text-xs text-admin-primary">
+                        {(names[0] || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-admin-primary/10 border-2 border-admin-surface flex items-center justify-center font-bold text-xs text-admin-primary">
+                        {(names[1] || '?').charAt(0).toUpperCase()}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white mb-0.5 truncate">{names.join(' ↔ ')}</p>
+                      <p className="text-[10px] font-black uppercase text-admin-primary flex items-center gap-1 truncate">
+                        <AlertCircle className="w-3.5 h-3.5" /> {chat.lastMessage || 'No messages exchanged'}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                       <p className="text-[10px] text-nc-muted font-bold uppercase mb-2">
+                         {formatTimeAgo(chat.lastMessageAt || chat.updatedAt)}
+                       </p>
+                       <button className="px-3 py-1.5 bg-admin-surface-light border border-admin-border rounded-lg text-[10px] font-black uppercase opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                        <Eye className="w-3.5 h-3.5" /> Inspect
+                       </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 

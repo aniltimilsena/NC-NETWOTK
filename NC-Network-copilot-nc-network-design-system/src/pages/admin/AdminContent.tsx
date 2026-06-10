@@ -1,13 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon, Video, CheckCircle, XCircle, Trash2, AlertTriangle, ExternalLink } from 'lucide-react';
-
-const contentQueue = [
-  { id: 1, type: 'Profile Photo', user: 'Maya Rose', status: 'Pending', meta: 'Studio High-res', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
-  { id: 2, type: 'Video Reel', user: 'Julian T.', status: 'Flagged', meta: 'Showreel 2024', flag: 'Potential Copyright' },
-  { id: 3, type: 'Portfolio Gallery', user: 'Sasha Kole', status: 'Approved', meta: 'Vogue Collection' },
-];
+import { db } from '../../lib/firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 
 export default function AdminContent() {
+  const [contentQueue, setContentQueue] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "profiles"), (snap) => {
+      const items: any[] = [];
+      snap.docs.forEach(docSnap => {
+        const profile = docSnap.data();
+        if (Array.isArray(profile.media) && profile.media.length > 0) {
+          profile.media.forEach((url: string, index: number) => {
+            items.push({
+              id: `${docSnap.id}-${index}`,
+              userId: docSnap.id,
+              user: profile.name || 'Unknown User',
+              type: 'Portfolio Image',
+              status: 'Approved',
+              meta: `Media Asset #${index + 1} for profile`,
+              img: url
+            });
+          });
+        }
+      });
+      setContentQueue(items);
+      setLoading(false);
+    }, (error) => {
+      console.error("Failed to sync content queue", error);
+      setLoading(false);
+    });
+
+    return () => unsub();
+  }, []);
+
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-end">
@@ -18,14 +46,21 @@ export default function AdminContent() {
         <div className="flex gap-4">
           <div className="bg-admin-surface border border-admin-border px-6 py-3 rounded-2xl flex flex-col items-end">
             <span className="text-[10px] font-black text-nc-muted uppercase">Pending Audit</span>
-            <span className="text-2xl font-bold text-admin-primary">824</span>
+            <span className="text-2xl font-bold text-admin-primary">{contentQueue.length}</span>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {contentQueue.map((item) => (
-          <div key={item.id} className="bg-admin-surface border border-admin-border rounded-2xl p-6 hover:bg-admin-surface-light/30 transition-all flex gap-6 relative group">
+        {loading ? (
+          <p className="text-xs text-nc-muted p-6 col-span-full">Synchronizing media assets...</p>
+        ) : contentQueue.length === 0 ? (
+          <div className="col-span-full py-20 text-center bg-admin-surface rounded-2xl border border-dashed border-admin-border w-full">
+            <p className="text-nc-muted text-sm font-medium">No uploaded portfolio media assets detected.</p>
+          </div>
+        ) : (
+          contentQueue.map((item) => (
+            <div key={item.id} className="bg-admin-surface border border-admin-border rounded-2xl p-6 hover:bg-admin-surface-light/30 transition-all flex gap-6 relative group">
             <div className="w-24 h-24 rounded-xl bg-admin-surface-light border border-admin-border flex-shrink-0 relative overflow-hidden flex items-center justify-center">
               {item.img ? (
                 <img src={item.img} alt="content" className="w-full h-full object-cover" />
@@ -73,7 +108,7 @@ export default function AdminContent() {
               </div>
             </div>
           </div>
-        ))}
+        )))}
       </div>
     </div>
   );
