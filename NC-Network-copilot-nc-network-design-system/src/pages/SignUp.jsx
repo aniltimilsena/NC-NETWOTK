@@ -79,12 +79,21 @@ export default function SignUp({ onNavigate, showAlert }) {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        sessionStorage.setItem('nc_google_redirect', 'true');
-        await signInWithRedirect(auth, googleProvider);
-      } else {
-        const result = await signInWithPopup(auth, googleProvider);
+      let result;
+      try {
+        result = await signInWithPopup(auth, googleProvider);
+      } catch (err) {
+        // If popup is blocked by the browser, fallback to redirect
+        if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request')) {
+          console.warn("Popup blocked, falling back to redirect registration:", err);
+          sessionStorage.setItem('nc_google_redirect', 'true');
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        }
+        throw err;
+      }
+
+      if (result && result.user) {
         const profileRes = await ensureUserProfile(result.user);
         if (!profileRes.success) {
           throw new Error(profileRes.error || "Failed to initialize user profile");
