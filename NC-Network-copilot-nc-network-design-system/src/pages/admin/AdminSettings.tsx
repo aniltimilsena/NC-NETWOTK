@@ -23,6 +23,7 @@ import {
   AdminLog 
 } from '../../services/admin';
 import { auth, db } from '../../lib/firebase';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { logAdminAction } from '../../services/admin';
 import { CATEGORIES } from '../../constants/categories';
 import { collection, getDocs, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -45,6 +46,17 @@ export default function AdminSettings() {
     specificUserId: ''
   });
   const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    cancelText: '',
+    type: 'default' as 'default' | 'danger' | 'warning' | 'success' | 'info',
+    isLoading: false,
+    onConfirm: () => {},
+  });
 
   const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
 
@@ -115,111 +127,116 @@ export default function AdminSettings() {
     }
   };
 
-  const runDatabaseMigration = async () => {
-    if (!window.confirm("Are you sure you want to scan and migrate all Users, Profiles, and Casting Calls to the 8 approved categories? This will modify legacy categories in Firestore.")) {
-      return;
-    }
+  const runDatabaseMigration = () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Run Database Migration?",
+      description: "Are you sure you want to scan and migrate all Users, Profiles, and Casting Calls to the 8 approved categories? This will modify legacy categories in Firestore.",
+      confirmText: "Migrate",
+      cancelText: "Cancel",
+      type: "warning",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        setIsMigrating(true);
+        setMigrationStatus("Initializing migration...");
+        try {
+          // 1. Update settings/global
+          setMigrationStatus("Updating global settings categories...");
+          await updateGlobalSettings({ categories: [...CATEGORIES] });
 
-    setIsMigrating(true);
-    setMigrationStatus("Initializing migration...");
+          const mappingFunction = (role: string | undefined | null): string => {
+            if (!role) return "Actors";
+            const clean = role.trim().toLowerCase();
+            if (clean === "actor" || clean === "actors") return "Actors";
+            if (clean === "director" || clean === "directors") return "Directors";
+            if (clean === "model" || clean === "models") return "Models";
+            if (clean === "dancer" || clean === "dancers") return "Dancers";
+            if (clean === "musician" || clean === "musicians") return "Musicians";
+            if (clean === "voice over" || clean === "voiceover" || clean === "voice-over" || clean === "voice artist") return "Voice Over";
+            if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
+            if (clean === "writer" || clean === "writers") return "Writers";
 
-    try {
-      // 1. Update settings/global
-      setMigrationStatus("Updating global settings categories...");
-      await updateGlobalSettings({ categories: [...CATEGORIES] });
+            for (const cat of CATEGORIES) {
+              if (cat.toLowerCase().startsWith(clean) || clean.startsWith(cat.toLowerCase().slice(0, -1))) {
+                return cat;
+              }
+            }
+            return "Actors";
+          };
 
-      const mappingFunction = (role: string | undefined | null): string => {
-        if (!role) return "Actors";
-        const clean = role.trim().toLowerCase();
-        if (clean === "actor" || clean === "actors") return "Actors";
-        if (clean === "director" || clean === "directors") return "Directors";
-        if (clean === "model" || clean === "models") return "Models";
-        if (clean === "dancer" || clean === "dancers") return "Dancers";
-        if (clean === "musician" || clean === "musicians") return "Musicians";
-        if (clean === "voice over" || clean === "voiceover" || clean === "voice-over" || clean === "voice artists" || clean === "voice artist") return "Voice Over";
-        if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
-        if (clean === "writer" || clean === "writers") return "Writers";
-        
-        if (clean === "photographer" || clean === "photographers") return "Models";
-        if (clean === "agent" || clean === "agents" || clean === "producer" || clean === "producers") return "Directors";
-        if (clean === "talent" || clean === "extras" || clean === "crew" || clean === "crew members") return "Actors";
+          const castingTypeMappingFunction = (type: string | undefined | null): string => {
+            if (!type) return "Actors";
+            const clean = type.trim().toLowerCase();
+            if (clean === "actor" || clean === "actors") return "Actors";
+            if (clean === "director" || clean === "directors") return "Directors";
+            if (clean === "model" || clean === "models") return "Models";
+            if (clean === "dancer" || clean === "dancers") return "Dancers";
+            if (clean === "musician" || clean === "musicians") return "Musicians";
+            if (clean === "voice over" || clean === "voiceover" || clean === "voice-over" || clean === "voice artist") return "Voice Over";
+            if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
+            if (clean === "writer" || clean === "writers") return "Writers";
+            if (clean === "film" || clean === "theatre" || clean === "commercial" || clean === "series" || clean === "short film") {
+              return "Actors";
+            }
+            return "Actors";
+          };
 
-        for (const cat of CATEGORIES) {
-          if (cat.toLowerCase().startsWith(clean) || clean.startsWith(cat.toLowerCase().slice(0, -1))) {
-            return cat;
+          // 2. Migrate Users
+          setMigrationStatus("Scanning users...");
+          const usersSnap = await getDocs(collection(db, "users"));
+          let usersUpdated = 0;
+          for (const d of usersSnap.docs) {
+            const data = d.data();
+            if (!CATEGORIES.includes(data.role)) {
+              const newRole = mappingFunction(data.role);
+              await updateDoc(doc(db, "users", d.id), { role: newRole });
+              usersUpdated++;
+            }
           }
-        }
-        return "Actors";
-      };
 
-      const castingTypeMappingFunction = (type: string | undefined | null): string => {
-        if (!type) return "Actors";
-        const clean = type.trim().toLowerCase();
-        if (clean === "actor" || clean === "actors") return "Actors";
-        if (clean === "director" || clean === "directors") return "Directors";
-        if (clean === "model" || clean === "models") return "Models";
-        if (clean === "dancer" || clean === "dancers") return "Dancers";
-        if (clean === "musician" || clean === "musicians") return "Musicians";
-        if (clean === "voice over" || clean === "voiceover" || clean === "voice-over" || clean === "voice artist") return "Voice Over";
-        if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
-        if (clean === "writer" || clean === "writers") return "Writers";
-        if (clean === "film" || clean === "theatre" || clean === "commercial" || clean === "series" || clean === "short film") {
-          return "Actors";
-        }
-        return "Actors";
-      };
+          // 3. Migrate Profiles
+          setMigrationStatus("Scanning profiles...");
+          const profilesSnap = await getDocs(collection(db, "profiles"));
+          let profilesUpdated = 0;
+          for (const d of profilesSnap.docs) {
+            const data = d.data();
+            if (!CATEGORIES.includes(data.role)) {
+              const newRole = mappingFunction(data.role);
+              await updateDoc(doc(db, "profiles", d.id), { role: newRole });
+              profilesUpdated++;
+            }
+          }
 
-      // 2. Migrate Users
-      setMigrationStatus("Scanning users...");
-      const usersSnap = await getDocs(collection(db, "users"));
-      let usersUpdated = 0;
-      for (const d of usersSnap.docs) {
-        const data = d.data();
-        if (!CATEGORIES.includes(data.role)) {
-          const newRole = mappingFunction(data.role);
-          await updateDoc(doc(db, "users", d.id), { role: newRole });
-          usersUpdated++;
-        }
-      }
+          // 4. Migrate Casting Calls
+          setMigrationStatus("Scanning casting calls...");
+          const castingSnap = await getDocs(collection(db, "casting_calls"));
+          let castingUpdated = 0;
+          for (const d of castingSnap.docs) {
+            const data = d.data();
+            if (!CATEGORIES.includes(data.type)) {
+              const newType = castingTypeMappingFunction(data.type);
+              await updateDoc(doc(db, "casting_calls", d.id), { type: newType });
+              castingUpdated++;
+            }
+          }
 
-      // 3. Migrate Profiles
-      setMigrationStatus("Scanning profiles...");
-      const profilesSnap = await getDocs(collection(db, "profiles"));
-      let profilesUpdated = 0;
-      for (const d of profilesSnap.docs) {
-        const data = d.data();
-        if (!CATEGORIES.includes(data.role)) {
-          const newRole = mappingFunction(data.role);
-          await updateDoc(doc(db, "profiles", d.id), { role: newRole });
-          profilesUpdated++;
+          const logMsg = `Migrated: ${usersUpdated} users, ${profilesUpdated} profiles, ${castingUpdated} casting calls.`;
+          await logAdminAction(adminEmail, "Database Category Migration", "global_settings", logMsg);
+
+          setMigrationStatus(`Success! Migrated ${usersUpdated} users, ${profilesUpdated} profiles, and ${castingUpdated} casting calls.`);
+          alert(`Migration completed!\n- Users updated: ${usersUpdated}\n- Profiles updated: ${profilesUpdated}\n- Casting Calls updated: ${castingUpdated}`);
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err: any) {
+          console.error(err);
+          setMigrationStatus(`Error: ${err.message}`);
+          alert("Migration failed: " + err.message);
+        } finally {
+          setIsMigrating(false);
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
       }
-
-      // 4. Migrate Casting Calls
-      setMigrationStatus("Scanning casting calls...");
-      const castingSnap = await getDocs(collection(db, "casting_calls"));
-      let castingUpdated = 0;
-      for (const d of castingSnap.docs) {
-        const data = d.data();
-        if (!CATEGORIES.includes(data.type)) {
-          const newType = castingTypeMappingFunction(data.type);
-          await updateDoc(doc(db, "casting_calls", d.id), { type: newType });
-          castingUpdated++;
-        }
-      }
-
-      const logMsg = `Migrated: ${usersUpdated} users, ${profilesUpdated} profiles, ${castingUpdated} casting calls.`;
-      await logAdminAction(adminEmail, "Database Category Migration", "global_settings", logMsg);
-
-      setMigrationStatus(`Success! Migrated ${usersUpdated} users, ${profilesUpdated} profiles, and ${castingUpdated} casting calls.`);
-      alert(`Migration completed!\n- Users updated: ${usersUpdated}\n- Profiles updated: ${profilesUpdated}\n- Casting Calls updated: ${castingUpdated}`);
-    } catch (err: any) {
-      console.error(err);
-      setMigrationStatus(`Error: ${err.message}`);
-      alert("Migration failed: " + err.message);
-    } finally {
-      setIsMigrating(false);
-    }
+    });
   };
 
 
@@ -306,20 +323,39 @@ export default function AdminSettings() {
     }
   };
 
-  const handleDeleteCategory = async (catName: string) => {
+  const handleDeleteCategory = (catName: string) => {
     if (!settings) return;
-    if (!window.confirm(`Are you sure you want to delete the taxonomy category "${catName}"?`)) return;
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Taxonomy Category?",
+      description: `Are you sure you want to delete the taxonomy category "${catName}"?`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          const updatedCategories = settings.categories.filter(c => c !== catName);
+          setUpdating(true);
+          const res = await updateGlobalSettings({ categories: updatedCategories });
+          setUpdating(false);
 
-    const updatedCategories = settings.categories.filter(c => c !== catName);
-    setUpdating(true);
-    const res = await updateGlobalSettings({ categories: updatedCategories });
-    setUpdating(false);
-
-    if (res.success) {
-      await logAdminAction(adminEmail, "Delete Taxonomy Category", "global_settings", `Deleted category: ${catName}`);
-    } else {
-      alert("Error deleting category: " + res.error);
-    }
+          if (res.success) {
+            await logAdminAction(adminEmail, "Delete Taxonomy Category", "global_settings", `Deleted category: ${catName}`);
+            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+          } else {
+            alert("Error deleting category: " + res.error);
+          }
+        } catch (err: any) {
+          console.error("Error deleting category:", err);
+          alert("Error deleting category.");
+          setUpdating(false);
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
   };
 
   const formatLogDate = (timestamp: any) => {
@@ -338,6 +374,10 @@ export default function AdminSettings() {
 
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500 max-w-6xl">
+      <ConfirmDialog
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">Platform Configuration</h2>

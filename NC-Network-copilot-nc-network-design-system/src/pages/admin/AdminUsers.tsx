@@ -22,6 +22,7 @@ import { collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, addDoc, serv
 import { useNavigate } from 'react-router-dom';
 import { logAdminAction } from '../../services/admin';
 import { CATEGORIES } from '../../constants/categories';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 type AdminUser = {
   id: string;
@@ -52,6 +53,17 @@ export default function AdminUsers() {
   const pageSize = 10;
   const navigate = useNavigate();
   const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    cancelText: '',
+    type: 'default' as 'default' | 'danger' | 'warning' | 'success' | 'info',
+    isLoading: false,
+    onConfirm: () => {},
+  });
 
   const handleVerify = async (userId: string, currentVerified: boolean) => {
     try {
@@ -204,23 +216,36 @@ export default function AdminUsers() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (window.confirm("Are you sure you want to permanently delete this user? This will remove their user record and profile. This cannot be undone.")) {
-      try {
-        await deleteDoc(doc(db, "users", userId));
-        await deleteDoc(doc(db, "profiles", userId));
-        
-        await logAdminAction(adminEmail, `Delete User`, userId, `Permanently deleted user and profile documents`);
-        
-        if (selectedUser?.id === userId) {
-          setSelectedUser(null);
+  const handleDeleteUser = (userId: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete User Account?",
+      description: "Are you sure you want to permanently delete this user? This will remove their user record and profile. This cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          await deleteDoc(doc(db, "users", userId));
+          await deleteDoc(doc(db, "profiles", userId));
+          
+          await logAdminAction(adminEmail, `Delete User`, userId, `Permanently deleted user and profile documents`);
+          
+          if (selectedUser?.id === userId) {
+            setSelectedUser(null);
+          }
+          alert("User record deleted successfully!");
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          console.error("Failed to delete user:", err);
+          alert("Error deleting user.");
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
-        alert("User record deleted successfully!");
-      } catch (err) {
-        console.error("Failed to delete user:", err);
-        alert("Error deleting user.");
       }
-    }
+    });
   };
 
   const handleAddUser = async () => {
@@ -332,6 +357,10 @@ export default function AdminUsers() {
 
   return (
     <div className="p-8 space-y-6 animate-in slide-in-from-bottom duration-500">
+      <ConfirmDialog
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
       <div className="flex flex-col md:flex-row justify-between items-end gap-4">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">User Operations</h2>

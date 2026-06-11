@@ -18,6 +18,7 @@ import {
 import { db, auth } from '../../lib/firebase';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { logAdminAction } from '../../services/admin';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 type TalentProfile = {
   id: string;
@@ -42,6 +43,17 @@ export default function AdminContent() {
   const [selectedProfile, setSelectedProfile] = useState<TalentProfile | null>(null);
 
   const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    cancelText: '',
+    type: 'default' as 'default' | 'danger' | 'warning' | 'success' | 'info',
+    isLoading: false,
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "profiles"), (snap) => {
@@ -127,21 +139,34 @@ export default function AdminContent() {
     }
   };
 
-  const handleDeleteProfile = async (profileId: string) => {
-    if (window.confirm("Are you sure you want to permanently delete this profile? This will delete the portfolio document. The main user account will remain.")) {
-      try {
-        await deleteDoc(doc(db, "profiles", profileId));
-        await logAdminAction(adminEmail, "Delete Profile", profileId, "Permanently deleted profile document");
-        
-        if (selectedProfile?.id === profileId) {
-          setSelectedProfile(null);
+  const handleDeleteProfile = (profileId: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Profile?",
+      description: "Are you sure you want to permanently delete this profile? This will delete the portfolio document. The main user account will remain.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          await deleteDoc(doc(db, "profiles", profileId));
+          await logAdminAction(adminEmail, "Delete Profile", profileId, "Permanently deleted profile document");
+          
+          if (selectedProfile?.id === profileId) {
+            setSelectedProfile(null);
+          }
+          alert("Profile deleted successfully!");
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          console.error("Failed to delete profile:", err);
+          alert("Error deleting profile.");
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
-        alert("Profile deleted successfully!");
-      } catch (err) {
-        console.error("Failed to delete profile:", err);
-        alert("Error deleting profile.");
       }
-    }
+    });
   };
 
   // Filter profiles based on search and filters
@@ -159,6 +184,10 @@ export default function AdminContent() {
 
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
+      <ConfirmDialog
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
       <div className="flex flex-col md:flex-row justify-between items-end gap-4">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">Talent Audit Board</h2>

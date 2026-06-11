@@ -4,6 +4,7 @@ import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import SkillBar from '../components/ui/SkillBar';
 import Avatar from '../components/ui/Avatar';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { subscribeToProfile, uploadProfileMedia, updateProfileData } from '../services/profile';
 import { usePermissionContext } from '../context/PermissionContext';
 import { 
@@ -53,6 +54,16 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   const [loading, setLoading] = useState(true);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [mediaUploadProgress, setMediaUploadProgress] = useState(0);
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    cancelText: '',
+    type: 'default',
+    isLoading: false,
+    onConfirm: () => {},
+  });
   const [shareCopied, setShareCopied] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [isUploadingIntro, setIsUploadingIntro] = useState(false);
@@ -516,19 +527,31 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     }
   };
 
-  const handleDeleteMedia = async (idx) => {
+  const handleDeleteMedia = (idx) => {
     if (!user || !profile) return;
     
-    const confirmDelete = window.confirm("Are you sure you want to delete this photo from your media showcase?");
-    if (!confirmDelete) return;
-
-    try {
-      const updatedMedia = p.media.filter((_, i) => i !== idx);
-      await updateProfileData(user.uid, { media: updatedMedia });
-      setFullscreenImage(null);
-    } catch (err) {
-      console.error("Error deleting media:", err);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Showcase Item?",
+      description: "Are you sure you want to delete this photo from your media showcase? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          const updatedMedia = p.media.filter((_, i) => i !== idx);
+          await updateProfileData(user.uid, { media: updatedMedia });
+          setFullscreenImage(null);
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          console.error("Error deleting media:", err);
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
   };
 
   // isOwnProfile defined at top of component
@@ -573,6 +596,10 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
 
   return (
     <>
+      <ConfirmDialog
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
       <div className="min-h-screen bg-nc-dark pb-24">
       {/* Cover + Hero */}
       <div className="relative">

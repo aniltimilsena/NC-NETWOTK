@@ -20,6 +20,7 @@ import { db, auth } from '../../lib/firebase';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
 import { deleteCastingCallAdmin, setCastingPriorityAdmin } from '../../services/casting';
 import { logAdminAction } from '../../services/admin';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 type CastingCall = {
   id: string;
@@ -56,6 +57,17 @@ export default function AdminCasting() {
   const [loadingApplicants, setLoadingApplicants] = useState(false);
 
   const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    cancelText: '',
+    type: 'default' as 'default' | 'danger' | 'warning' | 'success' | 'info',
+    isLoading: false,
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     const q = collection(db, "casting_calls");
@@ -111,17 +123,35 @@ export default function AdminCasting() {
     fetchApplicants();
   }, [selectedCall]);
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this casting call?')) {
-      const res = await deleteCastingCallAdmin(id);
-      if (res.success) {
-        await logAdminAction(adminEmail, "Delete Casting Call", id, "Permanently deleted casting call");
-        if (selectedCall?.id === id) setSelectedCall(null);
-        alert("Casting call deleted successfully!");
-      } else {
-        alert("Error deleting casting call: " + res.error);
+  const handleDelete = (id: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Casting Call?",
+      description: "Are you sure you want to delete this casting call? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          const res = await deleteCastingCallAdmin(id);
+          if (res.success) {
+            await logAdminAction(adminEmail, "Delete Casting Call", id, "Permanently deleted casting call");
+            if (selectedCall?.id === id) setSelectedCall(null);
+            alert("Casting call deleted successfully!");
+            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+          } else {
+            alert("Error deleting casting call: " + res.error);
+          }
+        } catch (err: any) {
+          console.error("Error deleting casting call:", err);
+          alert("Error deleting casting call.");
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    }
+    });
   };
 
   const togglePriority = async (id: string, current: boolean) => {
@@ -175,6 +205,10 @@ export default function AdminCasting() {
 
   return (
     <div className="p-8 space-y-6 animate-in slide-in-from-right duration-500">
+      <ConfirmDialog
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
       <div className="flex flex-col md:flex-row justify-between items-end gap-4">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">Casting Board</h2>

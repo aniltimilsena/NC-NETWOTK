@@ -17,6 +17,7 @@ import {
 import { db, auth } from '../../lib/firebase';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { logAdminAction } from '../../services/admin';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 type SafetyReport = {
   id: string;
@@ -41,6 +42,17 @@ export default function AdminModeration() {
   const [selectedReport, setSelectedReport] = useState<SafetyReport | null>(null);
 
   const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    cancelText: '',
+    type: 'default' as 'default' | 'danger' | 'warning' | 'success' | 'info',
+    isLoading: false,
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "reports"), (snap) => {
@@ -140,50 +152,76 @@ export default function AdminModeration() {
     }
   };
 
-  const handleDeleteContent = async (reportId: string, contentType: string, contentId: string) => {
+  const handleDeleteContent = (reportId: string, contentType: string, contentId: string) => {
     if (!contentId || !contentType) {
       alert("No content details available to delete.");
       return;
     }
     
-    if (window.confirm(`Are you sure you want to delete the reported content (${contentType})? This cannot be undone.`)) {
-      try {
-        if (contentType.toLowerCase() === 'casting_call' || contentType.toLowerCase() === 'casting call') {
-          await deleteDoc(doc(db, "casting_calls", contentId));
-        } else if (contentType.toLowerCase() === 'profile' || contentType.toLowerCase() === 'talent content') {
-          // Deleting portfolio media/details
-          await updateDoc(doc(db, "profiles", contentId), { bio: '[Bio deleted by admin moderation]', media: [] });
-        } else {
-          // generic document deletion if path format is supplied
-          await deleteDoc(doc(db, contentType, contentId));
-        }
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Content?",
+      description: `Are you sure you want to delete the reported content (${contentType})? This cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          if (contentType.toLowerCase() === 'casting_call' || contentType.toLowerCase() === 'casting call') {
+            await deleteDoc(doc(db, "casting_calls", contentId));
+          } else if (contentType.toLowerCase() === 'profile' || contentType.toLowerCase() === 'talent content') {
+            // Deleting portfolio media/details
+            await updateDoc(doc(db, "profiles", contentId), { bio: '[Bio deleted by admin moderation]', media: [] });
+          } else {
+            // generic document deletion if path format is supplied
+            await deleteDoc(doc(db, contentType, contentId));
+          }
 
-        await handleResolveReport(reportId, 'Content Deleted');
-        await logAdminAction(adminEmail, "Delete Reported Content", contentId, `Deleted reported ${contentType}`);
-        
-        alert("Reported content deleted successfully!");
-      } catch (err) {
-        console.error("Failed to delete content:", err);
-        alert("Error deleting content.");
+          await handleResolveReport(reportId, 'Content Deleted');
+          await logAdminAction(adminEmail, "Delete Reported Content", contentId, `Deleted reported ${contentType}`);
+          
+          alert("Reported content deleted successfully!");
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          console.error("Failed to delete content:", err);
+          alert("Error deleting content.");
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    }
+    });
   };
 
-  const handleDeleteReportRecord = async (reportId: string) => {
-    if (window.confirm("Are you sure you want to permanently delete this report record from history?")) {
-      try {
-        await deleteDoc(doc(db, "reports", reportId));
-        await logAdminAction(adminEmail, "Delete Report Record", reportId, "Deleted report record");
-        
-        if (selectedReport?.id === reportId) {
-          setSelectedReport(null);
+  const handleDeleteReportRecord = (reportId: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Report?",
+      description: "Are you sure you want to permanently delete this report record from history?",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          await deleteDoc(doc(db, "reports", reportId));
+          await logAdminAction(adminEmail, "Delete Report Record", reportId, "Deleted report record");
+          
+          if (selectedReport?.id === reportId) {
+            setSelectedReport(null);
+          }
+          alert("Report deleted.");
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          console.error("Failed to delete report:", err);
+          alert("Error deleting report.");
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
-        alert("Report deleted.");
-      } catch (err) {
-        console.error("Failed to delete report:", err);
-        alert("Error deleting report.");
       }
-    }
+    });
   };
 
   const filteredReports = reports.filter(r => {
@@ -193,6 +231,10 @@ export default function AdminModeration() {
 
   return (
     <div className="p-8 space-y-8 animate-in slide-in-from-top-4 duration-500">
+      <ConfirmDialog
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
       <div className="flex flex-col md:flex-row justify-between items-end gap-4">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">Trust & Safety</h2>
