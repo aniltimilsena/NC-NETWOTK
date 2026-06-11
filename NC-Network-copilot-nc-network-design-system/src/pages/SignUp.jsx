@@ -14,18 +14,23 @@ export default function SignUp({ onNavigate, showAlert }) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Handle redirect result for mobile
+  // Handle redirect result for mobile (only if a redirect was initiated)
   useEffect(() => {
+    if (!sessionStorage.getItem('nc_google_redirect')) return;
     let isMounted = true;
     const checkRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result && result.user && isMounted) {
+          sessionStorage.removeItem('nc_google_redirect');
           await ensureUserProfile(result.user);
           onNavigate('home');
+        } else {
+          sessionStorage.removeItem('nc_google_redirect');
         }
       } catch (err) {
         console.error("Redirect auth error:", err);
+        sessionStorage.removeItem('nc_google_redirect');
         if (isMounted) {
           setError('Google Registration failed. Please try again.');
           setIsLoading(false);
@@ -67,6 +72,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     try {
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
+        sessionStorage.setItem('nc_google_redirect', 'true');
         await signInWithRedirect(auth, googleProvider);
       } else {
         const result = await signInWithPopup(auth, googleProvider);
