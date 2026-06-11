@@ -70,7 +70,14 @@ service cloud.firestore {
     match /casting_calls/{callId} {
       allow read: if true;
       allow create: if isSignedIn() && (getUserData().role == 'Agent' || getUserData().role == 'Director' || getUserData().isAdmin == true);
-      allow update, delete: if isSignedIn() && ((getUserData().role == 'Agent' || getUserData().role == 'Director') && resource.data.createdBy == request.auth.uid || getUserData().isAdmin == true);
+      allow update: if isSignedIn() && (
+        (resource.data.createdBy == request.auth.uid) ||
+        (getUserData().isAdmin == true)
+      );
+      allow delete: if isSignedIn() && (
+        (resource.data.createdBy == request.auth.uid) ||
+        (getUserData().isAdmin == true)
+      );
     }
 
     // Applications
