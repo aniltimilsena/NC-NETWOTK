@@ -4,7 +4,7 @@ import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import Logo from '../components/ui/Logo';
 import { auth, googleProvider } from '../lib/firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 
 import { signUpUser, ensureUserProfile } from '../services/auth';
 
@@ -13,6 +13,24 @@ export default function SignUp({ onNavigate, showAlert }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Handle redirect result for mobile
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          await ensureUserProfile(result.user);
+          onNavigate('home');
+        }
+      } catch (err) {
+        console.error("Redirect auth error:", err);
+        setError('Google Registration failed. Please try again.');
+        setIsLoading(false);
+      }
+    };
+    checkRedirect();
+  }, [onNavigate]);
 
   const handleSignUp = async (e) => {
     e?.preventDefault();
@@ -43,9 +61,14 @@ export default function SignUp({ onNavigate, showAlert }) {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      await ensureUserProfile(result.user);
-      onNavigate('home');
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        const result = await signInWithPopup(auth, googleProvider);
+        await ensureUserProfile(result.user);
+        onNavigate('home');
+      }
     } catch (err) {
       console.error(err);
       setError('Google Registration failed. Please try again.');

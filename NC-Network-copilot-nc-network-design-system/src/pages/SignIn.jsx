@@ -4,7 +4,7 @@ import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import Logo from '../components/ui/Logo';
 import { auth, googleProvider, db } from '../lib/firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 import { signInUser, ensureUserProfile, logoutUser, sendPasswordReset } from '../services/auth';
@@ -15,6 +15,26 @@ export default function SignIn({ onNavigate, showAlert }) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [lockoutTimeLeft, setLockoutTimeLeft] = useState(0);
+
+  // Handle redirect result for mobile
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          await ensureUserProfile(result.user);
+          localStorage.removeItem('login_attempts');
+          localStorage.removeItem('login_lockout_until');
+          onNavigate('home');
+        }
+      } catch (err) {
+        console.error("Redirect auth error:", err);
+        setError('Google Sign-In failed. Please try again.');
+        setIsLoading(false);
+      }
+    };
+    checkRedirect();
+  }, [onNavigate]);
 
   // Handle countdown timer for lockout
   useEffect(() => {
@@ -182,11 +202,16 @@ export default function SignIn({ onNavigate, showAlert }) {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      await ensureUserProfile(result.user);
-      localStorage.removeItem('login_attempts');
-      localStorage.removeItem('login_lockout_until');
-      onNavigate('home');
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        const result = await signInWithPopup(auth, googleProvider);
+        await ensureUserProfile(result.user);
+        localStorage.removeItem('login_attempts');
+        localStorage.removeItem('login_lockout_until');
+        onNavigate('home');
+      }
     } catch (err) {
       console.error(err);
       setError('Google Sign-In failed. Please try again.');
