@@ -160,7 +160,7 @@ export default function SignUp({ onNavigate, showAlert }) {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-nc-secondary mb-3">I am a...</label>
+              <label className="block text-sm font-medium text-nc-secondary mb-3">Choose a Role</label>
               <div className="flex flex-wrap gap-2">
                 {roles.map(role => (
                   <button
