@@ -32,7 +32,7 @@ export default function SignUp({ onNavigate, showAlert }) {
         console.error("Redirect auth error:", err);
         sessionStorage.removeItem('nc_google_redirect');
         if (isMounted) {
-          setError('Google Registration failed. Please try again.');
+          setError('Google Registration failed: ' + (err instanceof Error ? err.message : String(err)));
           setIsLoading(false);
         }
       }
@@ -81,7 +81,7 @@ export default function SignUp({ onNavigate, showAlert }) {
       }
     } catch (err) {
       console.error(err);
-      setError('Google Registration failed. Please try again.');
+      setError('Google Registration failed: ' + (err instanceof Error ? err.message : String(err)));
       setIsLoading(false);
     }
   };

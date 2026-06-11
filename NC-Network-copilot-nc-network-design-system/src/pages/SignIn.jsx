@@ -36,7 +36,7 @@ export default function SignIn({ onNavigate, showAlert }) {
         console.error("Redirect auth error:", err);
         sessionStorage.removeItem('nc_google_redirect');
         if (isMounted) {
-          setError('Google Sign-In failed. Please try again.');
+          setError('Google Sign-In failed: ' + (err instanceof Error ? err.message : String(err)));
           setIsLoading(false);
         }
       }
@@ -224,7 +224,7 @@ export default function SignIn({ onNavigate, showAlert }) {
       }
     } catch (err) {
       console.error(err);
-      setError('Google Sign-In failed. Please try again.');
+      setError('Google Sign-In failed: ' + (err instanceof Error ? err.message : String(err)));
       setIsLoading(false);
     }
   };
