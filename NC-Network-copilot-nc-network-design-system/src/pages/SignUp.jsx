@@ -24,7 +24,10 @@ export default function SignUp({ onNavigate, showAlert }) {
         const result = await getRedirectResult(auth);
         if (result && result.user && isMounted) {
           sessionStorage.removeItem('nc_google_redirect');
-          await ensureUserProfile(result.user);
+          const profileRes = await ensureUserProfile(result.user);
+          if (!profileRes.success) {
+            throw new Error(profileRes.error || "Failed to initialize user profile");
+          }
           onNavigate('home');
         } else {
           sessionStorage.removeItem('nc_google_redirect');
@@ -82,7 +85,10 @@ export default function SignUp({ onNavigate, showAlert }) {
         await signInWithRedirect(auth, googleProvider);
       } else {
         const result = await signInWithPopup(auth, googleProvider);
-        await ensureUserProfile(result.user);
+        const profileRes = await ensureUserProfile(result.user);
+        if (!profileRes.success) {
+          throw new Error(profileRes.error || "Failed to initialize user profile");
+        }
         onNavigate('home');
       }
     } catch (err) {
