@@ -977,75 +977,77 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           return (
             <div className="animate-fade-in min-h-[400px] space-y-8">
               {/* Intro Video Section */}
-              <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-xl text-left">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-white tracking-tight">Intro Video</h3>
-                    <p className="text-xs text-nc-muted">A short introduction video for casting directors.</p>
-                  </div>
-                  {isOwnProfile && !p.introVideo && !isUploadingIntro && (
-                    <button 
-                      onClick={() => document.getElementById('profile-intro-upload')?.click()}
-                      className="text-nc-accent text-[10px] font-black uppercase tracking-[0.2em] hover:brightness-125 transition-all"
-                    >
-                      Upload Video
-                    </button>
-                  )}
-                </div>
-
-                {isUploadingIntro ? (
-                  <div className="py-12 text-center space-y-4 border border-dashed border-white/5 rounded-2xl bg-white/2">
-                    <div className="w-full max-w-xs mx-auto h-1.5 bg-white/5 rounded-full overflow-hidden relative">
-                      <div 
-                        className="absolute inset-y-0 left-0 bg-nc-accent transition-all duration-300" 
-                        style={{ width: `${introProgress}%` }}
-                      />
+              {(isOwnProfile || p.introVideo || isUploadingIntro) && (
+                <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-xl text-left">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-white tracking-tight">Intro Video</h3>
+                      <p className="text-xs text-nc-muted">A short introduction video for casting directors.</p>
                     </div>
-                    <p className="text-xs text-nc-accent font-bold tracking-widest uppercase">Uploading Intro Video: {introProgress}%</p>
-                  </div>
-                ) : p.introVideo ? (
-                  <div className="relative aspect-video rounded-3xl overflow-hidden bg-black/40 border border-white/5 shadow-inner">
-                    <video src={p.introVideo} controls className="w-full h-full object-cover" />
-                    {isOwnProfile && (
+                    {isOwnProfile && !p.introVideo && !isUploadingIntro && (
                       <button 
-                        onClick={async () => {
-                          try {
-                            await updateProfileData(user.uid, { introVideo: null });
-                            showAlert('Removed', 'info', 'Intro video removed.');
-                          } catch (err) {
-                            console.error("Error removing intro video:", err);
-                          }
-                        }}
-                        className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg"
-                        title="Remove Intro Video"
+                        onClick={() => document.getElementById('profile-intro-upload')?.click()}
+                        className="text-nc-accent text-[10px] font-black uppercase tracking-[0.2em] hover:brightness-125 transition-all"
                       >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        Upload Video
                       </button>
                     )}
                   </div>
-                ) : (
-                  <div className="py-12 text-center border border-dashed border-white/5 rounded-3xl bg-white/2">
-                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 mx-auto">
-                      <span className="text-2xl">🎥</span>
+
+                  {isUploadingIntro ? (
+                    <div className="py-12 text-center space-y-4 border border-dashed border-white/5 rounded-2xl bg-white/2">
+                      <div className="w-full max-w-xs mx-auto h-1.5 bg-white/5 rounded-full overflow-hidden relative">
+                        <div 
+                          className="absolute inset-y-0 left-0 bg-nc-accent transition-all duration-300" 
+                          style={{ width: `${introProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-nc-accent font-bold tracking-widest uppercase">Uploading Intro Video: {introProgress}%</p>
                     </div>
-                    <p className="text-xs text-nc-muted max-w-xs mx-auto leading-relaxed">
-                      {isOwnProfile 
-                        ? `Introduce yourself to the network! Maximum file size: ${isPremium ? '250MB' : '50MB'}.`
-                        : 'No intro video has been uploaded by this talent.'}
-                    </p>
-                  </div>
-                )}
-                
-                <input 
-                  id="profile-intro-upload"
-                  type="file"
-                  accept="video/*"
-                  className="hidden"
-                  onChange={handleIntroVideoUpload}
-                />
-              </div>
+                  ) : p.introVideo ? (
+                    <div className="relative aspect-video rounded-3xl overflow-hidden bg-black/40 border border-white/5 shadow-inner">
+                      <video src={p.introVideo} controls className="w-full h-full object-cover" />
+                      {isOwnProfile && (
+                        <button 
+                          onClick={async () => {
+                            try {
+                              await updateProfileData(user.uid, { introVideo: null });
+                              showAlert('Removed', 'info', 'Intro video removed.');
+                            } catch (err) {
+                              console.error("Error removing intro video:", err);
+                            }
+                          }}
+                          className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg"
+                          title="Remove Intro Video"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="py-12 text-center border border-dashed border-white/5 rounded-3xl bg-white/2">
+                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 mx-auto">
+                        <span className="text-2xl">🎥</span>
+                      </div>
+                      <p className="text-xs text-nc-muted max-w-xs mx-auto leading-relaxed">
+                        {isOwnProfile 
+                          ? `Introduce yourself to the network! Maximum file size: ${isPremium ? '250MB' : '50MB'}.`
+                          : 'No intro video has been uploaded by this talent.'}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <input 
+                    id="profile-intro-upload"
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={handleIntroVideoUpload}
+                  />
+                </div>
+              )}
 
               {/* Media Showcase Grid */}
               <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-xl text-left">
