@@ -139,10 +139,14 @@ export default function AdminCasting() {
 
   const handleUpdateStatus = async (id: string, nextStatus: 'Open' | 'Closed' | 'Approved' | 'Rejected') => {
     try {
-      await updateDoc(doc(db, "casting_calls", id), {
-        status: nextStatus,
-        approved: nextStatus === 'Approved' ? true : nextStatus === 'Rejected' ? false : undefined
-      });
+      const updateData: any = { status: nextStatus };
+      if (nextStatus === 'Approved') {
+        updateData.approved = true;
+      } else if (nextStatus === 'Rejected') {
+        updateData.approved = false;
+      }
+      
+      await updateDoc(doc(db, "casting_calls", id), updateData);
       
       await logAdminAction(adminEmail, "Moderate Casting Call Status", id, `Set status to ${nextStatus}`);
       
@@ -152,7 +156,7 @@ export default function AdminCasting() {
       alert(`Casting call status updated to ${nextStatus}!`);
     } catch (err) {
       console.error("Failed to update status:", err);
-      alert("Error updating casting call status.");
+      alert("Error updating casting call status: " + (err instanceof Error ? err.message : String(err)));
     }
   };
 
