@@ -16,20 +16,24 @@ export default function SignUp({ onNavigate, showAlert }) {
 
   // Handle redirect result for mobile
   useEffect(() => {
+    let isMounted = true;
     const checkRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (result && result.user) {
+        if (result && result.user && isMounted) {
           await ensureUserProfile(result.user);
           onNavigate('home');
         }
       } catch (err) {
         console.error("Redirect auth error:", err);
-        setError('Google Registration failed. Please try again.');
-        setIsLoading(false);
+        if (isMounted) {
+          setError('Google Registration failed. Please try again.');
+          setIsLoading(false);
+        }
       }
     };
     checkRedirect();
+    return () => { isMounted = false; };
   }, [onNavigate]);
 
   const handleSignUp = async (e) => {

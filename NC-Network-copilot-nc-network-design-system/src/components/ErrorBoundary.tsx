@@ -24,8 +24,20 @@ export default class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error in boundary:", error, errorInfo);
   }
 
+  // Reset error state when children change (i.e. route navigation)
+  public componentDidUpdate(prevProps: Props) {
+    if (this.state.hasError && prevProps.children !== this.props.children) {
+      this.setState({ hasError: false, error: null });
+    }
+  }
+
   private handleReload = () => {
     window.location.reload();
+  };
+
+  private handleGoBack = () => {
+    this.setState({ hasError: false, error: null });
+    window.history.back();
   };
 
   public render() {
@@ -49,9 +61,14 @@ export default class ErrorBoundary extends Component<Props, State> {
                 </div>
               )}
             </div>
-            <Button variant="primary" size="md" onClick={this.handleReload} className="w-full">
-              Reload Page
-            </Button>
+            <div className="flex gap-3">
+              <Button variant="primary" size="md" onClick={this.handleGoBack} className="flex-1">
+                Go Back
+              </Button>
+              <Button variant="primary" size="md" onClick={this.handleReload} className="flex-1">
+                Reload Page
+              </Button>
+            </div>
           </div>
         </div>
       );

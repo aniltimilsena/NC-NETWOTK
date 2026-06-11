@@ -591,7 +591,7 @@ export default function App() {
     <PermissionProvider>
       <CallProvider user={user}>
         <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
-          <ErrorBoundary>
+          <ErrorBoundary key={location.pathname}>
             <Suspense fallback={<RouteLoader />}>
               <AnimatePresence mode="wait">
                 <Routes location={location} key={location.pathname}>

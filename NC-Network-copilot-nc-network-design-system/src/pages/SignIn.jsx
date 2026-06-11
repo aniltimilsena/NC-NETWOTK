@@ -18,10 +18,11 @@ export default function SignIn({ onNavigate, showAlert }) {
 
   // Handle redirect result for mobile
   useEffect(() => {
+    let isMounted = true;
     const checkRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (result && result.user) {
+        if (result && result.user && isMounted) {
           await ensureUserProfile(result.user);
           localStorage.removeItem('login_attempts');
           localStorage.removeItem('login_lockout_until');
@@ -29,11 +30,14 @@ export default function SignIn({ onNavigate, showAlert }) {
         }
       } catch (err) {
         console.error("Redirect auth error:", err);
-        setError('Google Sign-In failed. Please try again.');
-        setIsLoading(false);
+        if (isMounted) {
+          setError('Google Sign-In failed. Please try again.');
+          setIsLoading(false);
+        }
       }
     };
     checkRedirect();
+    return () => { isMounted = false; };
   }, [onNavigate]);
 
   // Handle countdown timer for lockout
