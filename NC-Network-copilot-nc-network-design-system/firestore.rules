@@ -30,8 +30,8 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if (isOwner(userId)
         && (resource == null
-            ? ((request.resource.data.isAdmin == false || request.auth.token.email == 'aniltimilsena53@gmail.com') && request.resource.data.role in ['Talent', 'Agent', 'Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer'])
-            : ((request.resource.data.isAdmin == resource.data.isAdmin || request.auth.token.email == 'aniltimilsena53@gmail.com') && request.resource.data.role in ['Talent', 'Agent', 'Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer'])))
+            ? ((request.resource.data.isAdmin == false || request.auth.token.email == 'aniltimilsena53@gmail.com') && request.resource.data.role in ['Talent', 'Agent', 'Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer', 'Actors', 'Directors', 'Models', 'Musicians', 'Voice Over', 'VFX', 'Writers'])
+            : ((request.resource.data.isAdmin == resource.data.isAdmin || request.auth.token.email == 'aniltimilsena53@gmail.com') && request.resource.data.role in ['Talent', 'Agent', 'Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer', 'Actors', 'Directors', 'Models', 'Musicians', 'Voice Over', 'VFX', 'Writers'])))
         || (isSignedIn() && getUserData().isAdmin == true)
         || (isSignedIn() && resource != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followers']));
     }
@@ -73,7 +73,7 @@ service cloud.firestore {
     // Casting Calls
     match /casting_calls/{callId} {
       allow read: if true;
-      allow create: if isSignedIn() && (getUserData().role == 'Agent' || getUserData().role == 'Director' || getUserData().isAdmin == true);
+      allow create: if isSignedIn() && (getUserData().role in ['Agent', 'Agents', 'Director', 'Directors'] || getUserData().isAdmin == true);
       allow update: if isSignedIn() && (
         (resource.data.createdBy == request.auth.uid) ||
         (getUserData().isAdmin == true)
