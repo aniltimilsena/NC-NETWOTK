@@ -35,5 +35,14 @@ export default defineConfig({
   define: {
     __BUILD_VERSION__: JSON.stringify(buildVersion),
   },
+  server: {
+    proxy: {
+      '/__/auth': {
+        target: 'https://nc-network-10d0b.firebaseapp.com',
+        changeOrigin: true,
+        secure: true,
+      }
+    }
+  }
 })
 

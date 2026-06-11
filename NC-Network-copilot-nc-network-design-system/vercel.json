@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/__/auth/:match*",
+      "destination": "https://nc-network-10d0b.firebaseapp.com/__/auth/:match*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
