@@ -79,21 +79,21 @@
     display: none;
   }
 
-  /* ─── Category Skeleton ─────────────────────────────────────── */
+  /* â”€â”€â”€ Category Skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-  /* Card‑level opacity pulse — subtle "breathing" */
+  /* Cardâ€‘level opacity pulse â€” subtle "breathing" */
   .cat-skeleton-card {
     animation: catSkeletonPulse 1.8s ease-in-out infinite;
     will-change: opacity;
   }
 
-  /* Individual bone elements — gentle opacity shimmer */
+  /* Individual bone elements â€” gentle opacity shimmer */
   .cat-skeleton-bone {
     animation: catBonePulse 1.8s ease-in-out infinite;
     will-change: opacity;
   }
 
-  /* Full‑width shimmer sweep layer */
+  /* Fullâ€‘width shimmer sweep layer */
   .cat-skeleton-shimmer {
     position: absolute;
     inset: 0;
@@ -121,13 +121,13 @@
     will-change: transform;
   }
 
-  /* ─── Category Card Reveal (loaded state) ───────────────────── */
+  /* â”€â”€â”€ Category Card Reveal (loaded state) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   .cat-card-reveal {
     animation: catCardReveal 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
     will-change: transform, opacity;
   }
 
-  /* ─── Keyframes ─────────────────────────────────────────────── */
+  /* â”€â”€â”€ Keyframes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   @keyframes catSkeletonPulse {
     0%, 100% { opacity: 0.85; }
     50%      { opacity: 1; }
@@ -155,7 +155,7 @@
   }
 }
 
-/* ─── Reduced‑motion: disable all skeleton & reveal animations ── */
+/* â”€â”€â”€ Reducedâ€‘motion: disable all skeleton & reveal animations â”€â”€ */
 @media (prefers-reduced-motion: reduce) {
   .cat-skeleton-card,
   .cat-skeleton-bone,
@@ -184,10 +184,10 @@
   }
 }
 
-/* ─── Talent Card Skeleton ───────────────────────────────────── */
+/* â”€â”€â”€ Talent Card Skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @layer utilities {
 
-  /* Card‑level breathing pulse */
+  /* Cardâ€‘level breathing pulse */
   .talent-skeleton-card {
     animation: talentSkeletonPulse 2s ease-in-out infinite;
     will-change: opacity;
@@ -252,13 +252,13 @@
     will-change: opacity;
   }
 
-  /* ─── Talent Card Reveal (loaded state) ─────────────────────── */
+  /* â”€â”€â”€ Talent Card Reveal (loaded state) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   .talent-card-reveal {
     animation: talentCardReveal 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
     will-change: transform, opacity;
   }
 
-  /* ─── Keyframes ─────────────────────────────────────────────── */
+  /* â”€â”€â”€ Keyframes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   @keyframes talentSkeletonPulse {
     0%, 100% { opacity: 0.9; }
     50%      { opacity: 1; }
@@ -312,9 +312,6 @@
   }
 }
 
-
- h t m l . f o n t - s i z e - s m a l l   {   f o n t - s i z e :   1 4 p x ;   } 
- h t m l . f o n t - s i z e - m e d i u m   {   f o n t - s i z e :   1 6 p x ;   } 
- h t m l . f o n t - s i z e - l a r g e   {   f o n t - s i z e :   1 8 p x ;   } 
-  
- 
+html.font-size-small { font-size: 14px; }
+html.font-size-medium { font-size: 16px; }
+html.font-size-large { font-size: 18px; }
