@@ -251,7 +251,7 @@ export default function Home({ onNavigate, user }) {
 
 
       {isLoading ? (
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-12 space-y-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-12 space-y-16">
           {/* ── Premium category skeletons ─────────────────────── */}
           <section className="pt-2 pb-8 lg:pt-4 lg:pb-12">
             <div className="max-w-7xl mx-auto">
@@ -278,7 +278,7 @@ export default function Home({ onNavigate, user }) {
           {/* Featured Actors Showcase (Per Image Reference) */}
           {talents.filter(t => t.role?.includes('Actor')).length > 0 && (
             <section className="pt-10 pb-2 bg-nc-dark relative overflow-hidden">
-              <div className="max-w-7xl mx-auto px-6 sm:px-8">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                 {/* Header Block */}
                 <div className="flex items-center gap-3 mb-8 group/header">
                   <div className="w-[4px] h-6 bg-sky-400 rounded-sm shadow-[0_0_10px_rgba(56,189,248,0.2)]"></div>
@@ -327,7 +327,7 @@ export default function Home({ onNavigate, user }) {
 
           {/* Categories */}
           <section className="pt-2 pb-8 lg:pt-4 lg:pb-12 bg-nc-surface">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
           <div className="flex items-center gap-3 mb-8 group/header">
             <div className="w-[4px] h-6 bg-sky-400 rounded-sm shadow-[0_0_10px_rgba(56,189,248,0.2)]"></div>
             <div className="flex items-center gap-3">
@@ -415,7 +415,7 @@ export default function Home({ onNavigate, user }) {
       {/* Trending Talents */}
       {talents.length > 0 && (
         <section className="py-8 lg:py-12">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
             <div className="flex items-center gap-3 mb-8 group/header">
               <div className="w-[4px] h-6 bg-sky-400 rounded-sm shadow-[0_0_10px_rgba(56,189,248,0.2)]"></div>
               <div className="flex items-center gap-3">

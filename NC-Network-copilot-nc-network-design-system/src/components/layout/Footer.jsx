@@ -42,7 +42,7 @@ export default function Footer({ user }) {
       {/* Background Accent */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-nc-accent/5 rounded-full blur-[120px] -z-10" />
       
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
         {/* ── Desktop layout (≥lg): full multi-column ─────────── */}
         <div className="hidden lg:grid grid-cols-5 gap-8 mb-16">

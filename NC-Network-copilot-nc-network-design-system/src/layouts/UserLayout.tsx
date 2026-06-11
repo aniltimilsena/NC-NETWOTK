@@ -52,7 +52,7 @@ export default function UserLayout({
         currentPage={location.pathname}
         onNavigate={handleLegacyNavigate}
       />
-      <main className="flex-1 px-2 md:px-0">
+      <main className="flex-1">
         <Breadcrumbs />
         <Outlet context={{ user, isAdmin, showAlert, showToast }} />
       </main>

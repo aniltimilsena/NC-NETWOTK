@@ -80,7 +80,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         title="Browse Professional Talent | NC Network" 
         description="Premium directory of cinema professionals in Nepal." 
       />
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Browse Talents</h1>
