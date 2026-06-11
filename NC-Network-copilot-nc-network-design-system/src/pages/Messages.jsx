@@ -23,7 +23,7 @@ import { uploadProfileMedia } from '../services/profile';
 import { formatMessagePreview } from '../utils/format';
 
 export default function Messages({ onNavigate, user, initialUserId, showAlert }) {
-  const { startCall } = useCall();
+  const { initiateCall: startCall } = useCall();
   const [activeChatId, setActiveChatId] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [messages, setMessages] = useState([]);
