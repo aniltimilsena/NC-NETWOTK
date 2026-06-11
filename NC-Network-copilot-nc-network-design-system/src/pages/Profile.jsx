@@ -1049,134 +1049,109 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
 
               {/* Media Showcase Grid */}
               <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-xl text-left">
-                <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-5">
-                  <div>
-                    <h3 className="text-lg font-bold text-white tracking-tight">Portfolio & Reels</h3>
-                    <p className="text-xs text-nc-muted">Manage your photo gallery and video showreels.</p>
+                {isOwnProfile && (
+                  <div className="flex justify-end mb-6">
+                    <button 
+                      onClick={() => document.getElementById('profile-media-upload')?.click()}
+                      disabled={isUploadingMedia}
+                      className="bg-nc-accent text-nc-darker text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUploadingMedia ? 'Uploading...' : 'Upload Media'}
+                    </button>
+                    <input 
+                      id="profile-media-upload"
+                      type="file" 
+                      multiple 
+                      accept="image/*,video/*"
+                      className="hidden" 
+                      onChange={handleMediaUpload}
+                    />
                   </div>
-                  {isOwnProfile && (
-                    <>
-                      <button 
-                        onClick={() => document.getElementById('profile-media-upload')?.click()}
-                        disabled={isUploadingMedia}
-                        className="bg-nc-accent text-nc-darker text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
+
+                {/* Gallery Photos Grid */}
+                {photos.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                    {photos.map((src, idx) => (
+                      <div 
+                        key={idx} 
+                        onClick={() => setFullscreenImage({ src, idx })}
+                        className="group relative aspect-[4/5] rounded-3xl overflow-hidden bg-nc-surface border border-nc-border shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer"
                       >
-                        {isUploadingMedia ? 'Uploading...' : 'Upload Media'}
-                      </button>
-                      <input 
-                        id="profile-media-upload"
-                        type="file" 
-                        multiple 
-                        accept="image/*,video/*"
-                        className="hidden" 
-                        onChange={handleMediaUpload}
-                      />
-                    </>
-                  )}
-                </div>
-
-                {/* Gallery Photos Section */}
-                <div className="space-y-4 mb-10">
-                  <div className="flex items-center justify-between border-b border-white/2 pb-2">
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      Gallery Photos
-                    </h4>
-                    <span className="text-[10px] font-black text-nc-muted bg-white/5 px-2.5 py-1 rounded-full">
-                      {photos.length} / {isPremium ? 50 : 10} photos
-                    </span>
-                  </div>
-                  
-                  {photos.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      {photos.map((src, idx) => (
-                        <div 
-                          key={idx} 
-                          onClick={() => setFullscreenImage({ src, idx })}
-                          className="group relative aspect-[4/5] rounded-3xl overflow-hidden bg-nc-surface border border-nc-border shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer"
-                        >
-                          <img 
-                            src={src} 
-                            alt={`Gallery asset ${idx + 1}`} 
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end justify-between p-4 backdrop-blur-[2px]">
-                            <span className="text-[9px] text-nc-accent font-black uppercase tracking-widest bg-nc-accent/10 border border-nc-accent/20 px-2.5 py-1 rounded-full">
-                              Fullscreen
-                            </span>
-                            {isOwnProfile && (
-                              <button 
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  try {
-                                    const updatedMedia = p.media.filter(url => url !== src);
-                                    await updateProfileData(user.uid, { media: updatedMedia });
-                                    showAlert('Deleted', 'info', 'Gallery photo removed.');
-                                  } catch (err) {
-                                    console.error("Error deleting image:", err);
-                                  }
-                                }}
-                                className="bg-black/60 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors shadow-lg"
-                                title="Delete Photo"
-                              >
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-nc-muted italic pl-1">No photos in gallery.</p>
-                  )}
-                </div>
-
-                {/* Showreel Videos Section */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-white/2 pb-2">
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      Showreel Videos
-                    </h4>
-                    <span className="text-[10px] font-black text-nc-muted bg-white/5 px-2.5 py-1 rounded-full">
-                      {videos.length} / {isPremium ? 5 : 1} videos
-                    </span>
-                  </div>
-                  
-                  {videos.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {videos.map((src, idx) => (
-                        <div 
-                          key={idx} 
-                          className="group relative aspect-video rounded-3xl overflow-hidden bg-nc-surface border border-nc-border shadow-lg"
-                        >
-                          <video src={src} controls className="w-full h-full object-cover" />
+                        <img 
+                          src={src} 
+                          alt={`Gallery asset ${idx + 1}`} 
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end justify-between p-4 backdrop-blur-[2px]">
+                          <span className="text-[9px] text-nc-accent font-black uppercase tracking-widest bg-nc-accent/10 border border-nc-accent/20 px-2.5 py-1 rounded-full">
+                            Fullscreen
+                          </span>
                           {isOwnProfile && (
                             <button 
-                              onClick={async () => {
+                              onClick={async (e) => {
+                                e.stopPropagation();
                                 try {
                                   const updatedMedia = p.media.filter(url => url !== src);
                                   await updateProfileData(user.uid, { media: updatedMedia });
-                                  showAlert('Deleted', 'info', 'Showreel video removed.');
+                                  showAlert('Deleted', 'info', 'Gallery photo removed.');
                                 } catch (err) {
-                                  console.error("Error deleting video:", err);
+                                  console.error("Error deleting image:", err);
                                 }
                               }}
-                              className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg"
-                              title="Delete Video"
+                              className="bg-black/60 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors shadow-lg"
+                              title="Delete Photo"
                             >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
                             </button>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-nc-muted italic pl-1">No videos in showreel.</p>
-                  )}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Showreel Videos Grid */}
+                {videos.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {videos.map((src, idx) => (
+                      <div 
+                        key={idx} 
+                        className="group relative aspect-video rounded-3xl overflow-hidden bg-nc-surface border border-nc-border shadow-lg"
+                      >
+                        <video src={src} controls className="w-full h-full object-cover" />
+                        {isOwnProfile && (
+                          <button 
+                            onClick={async () => {
+                              try {
+                                const updatedMedia = p.media.filter(url => url !== src);
+                                  await updateProfileData(user.uid, { media: updatedMedia });
+                                showAlert('Deleted', 'info', 'Showreel video removed.');
+                              } catch (err) {
+                                console.error("Error deleting video:", err);
+                              }
+                            }}
+                            className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg"
+                            title="Delete Video"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Clean empty state for no media */}
+                {photos.length === 0 && videos.length === 0 && !isUploadingMedia && (
+                  <div className="text-center py-8 text-xs text-nc-muted italic">
+                    No media items uploaded.
+                  </div>
+                )}
 
                 {/* Uploading Shimmer card */}
                 {isUploadingMedia && (
