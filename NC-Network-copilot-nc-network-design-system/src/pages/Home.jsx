@@ -436,7 +436,7 @@ export default function Home({ onNavigate, user }) {
                   onClick={() => onNavigate('profile', talent.id)}
                   className="bg-nc-card/30 hover:bg-nc-card/50 border border-white/5 rounded-3xl p-3 sm:p-4 transition-all cursor-pointer group flex items-center justify-between"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
                     <Avatar 
                       user={talent}
                       size="md"
@@ -444,17 +444,17 @@ export default function Home({ onNavigate, user }) {
                     />
 
                     {/* Basic Info */}
-                    <div className="space-y-1">
+                    <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-white text-base sm:text-lg leading-tight">{talent.name}</h3>
+                        <h3 className="font-bold text-white text-base sm:text-lg leading-tight truncate">{talent.name}</h3>
                       </div>
-                      <div className="flex items-center gap-2 text-nc-muted text-xs sm:text-sm">
-                        <span className="text-sky-400 font-medium">@{(talent.username || talent.name.toLowerCase().replace(/\s+/g, '')).replace(/^@/, '')}</span>
-                        <span>•</span>
-                        <span className="capitalize">{talent.location || 'Nepal'}</span>
+                      <div className="flex items-center gap-2 text-nc-muted text-xs sm:text-sm truncate">
+                        <span className="text-sky-400 font-medium truncate shrink-0">@{(talent.username || talent.name.toLowerCase().replace(/\s+/g, '')).replace(/^@/, '')}</span>
+                        <span className="shrink-0">•</span>
+                        <span className="capitalize truncate">{talent.location || 'Nepal'}</span>
                       </div>
-                      <div className="mt-2">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold text-nc-muted uppercase tracking-wider group-hover:border-nc-accent/20">
+                      <div className="mt-2 truncate">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold text-nc-muted uppercase tracking-wider group-hover:border-nc-accent/20 truncate max-w-full">
                           {talent.role?.split(',')[0]}
                         </span>
                       </div>
@@ -462,7 +462,7 @@ export default function Home({ onNavigate, user }) {
                   </div>
 
                   {/* Right Status */}
-                  <div className="text-right flex flex-col items-end gap-1 px-2">
+                  <div className="text-right flex flex-col items-end gap-1 px-2 shrink-0">
                     <span className="text-[10px] sm:text-xs font-black text-sky-400 tracking-widest uppercase animate-pulse">New</span>
                     <div className="mt-auto">
                       <p className="text-nc-muted text-[10px] sm:text-xs font-medium">

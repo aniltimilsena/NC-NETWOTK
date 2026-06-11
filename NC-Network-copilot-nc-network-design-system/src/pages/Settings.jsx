@@ -285,6 +285,15 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [isSaving, setIsSaving] = useState(false);
   const isSavingRef = useRef(false);
 
+  // Appearance Settings
+  const [fontSize, setFontSize] = useState(() => localStorage.getItem('nc_font_size') || 'medium');
+  const handleFontSizeChange = (size) => {
+    setFontSize(size);
+    localStorage.setItem('nc_font_size', size);
+    document.documentElement.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
+    document.documentElement.classList.add(`font-size-${size}`);
+  };
+
 
   // Identity States
   const [fName, setFName] = useState("");
@@ -672,6 +681,30 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                   </svg>
                 }
               />
+            </div>
+
+            {/* Display Preferences */}
+            <div className="pt-8 mt-8 border-t border-[#111]">
+              <h3 className="text-white font-bold mb-4">Display Preferences</h3>
+              <div className="mb-4">
+                <label className="block text-[#666] text-[10px] font-bold uppercase tracking-[0.15em] mb-3">Font Size</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {['small', 'medium', 'large'].map(size => (
+                    <button
+                      key={size}
+                      onClick={() => handleFontSizeChange(size)}
+                      className={`py-3 px-3 rounded-2xl border text-sm font-bold transition-all capitalize ${
+                        fontSize === size
+                          ? 'bg-sky-500/10 border-sky-500/50 text-sky-400'
+                          : 'bg-[#111] border-[#1E1E1E] text-[#888] hover:border-[#2A2A2A] hover:text-white'
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[#555] text-xs mt-3">Adjust the global text size for better readability.</p>
+              </div>
             </div>
           </div>
         );

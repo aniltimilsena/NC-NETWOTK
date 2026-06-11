@@ -581,6 +581,12 @@ export default function App() {
     navigate('/');
   };
 
+  // Apply font size preference
+  useEffect(() => {
+    const savedFontSize = localStorage.getItem('nc_font_size') || 'medium';
+    document.documentElement.classList.add(`font-size-${savedFontSize}`);
+  }, []);
+
   return (
     <PermissionProvider>
       <CallProvider user={user}>
