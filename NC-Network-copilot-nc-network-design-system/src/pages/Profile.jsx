@@ -1079,7 +1079,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                 <div className="space-y-4 mb-10">
                   <div className="flex items-center justify-between border-b border-white/2 pb-2">
                     <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      <span>🖼️</span> Gallery Photos
+                      Gallery Photos
                     </h4>
                     <span className="text-[10px] font-black text-nc-muted bg-white/5 px-2.5 py-1 rounded-full">
                       {photos.length} / {isPremium ? 50 : 10} photos
@@ -1136,7 +1136,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-white/2 pb-2">
                     <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      <span>🎬</span> Showreel Videos
+                      Showreel Videos
                     </h4>
                     <span className="text-[10px] font-black text-nc-muted bg-white/5 px-2.5 py-1 rounded-full">
                       {videos.length} / {isPremium ? 5 : 1} videos
