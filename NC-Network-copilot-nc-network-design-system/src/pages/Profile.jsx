@@ -6,6 +6,21 @@ import SkillBar from '../components/ui/SkillBar';
 import Avatar from '../components/ui/Avatar';
 import { subscribeToProfile, uploadProfileMedia, updateProfileData } from '../services/profile';
 import { usePermissionContext } from '../context/PermissionContext';
+import { 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  updateDoc, 
+  increment, 
+  serverTimestamp, 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  onSnapshot,
+  orderBy
+} from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 const isVideoUrl = (url) => {
   if (!url) return false;
@@ -20,6 +35,18 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [showFollowModal, setShowFollowModal] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  
+  // Follow list & reviews state
+  const [followList, setFollowList] = useState([]);
+  const [loadingFollowList, setLoadingFollowList] = useState(false);
+  const [reviewsList, setReviewsList] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+  
+  // Review inputs
+  const [ratingInput, setRatingInput] = useState(5);
+  const [reviewText, setReviewText] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [mediaUploadProgress, setMediaUploadProgress] = useState(0);
@@ -29,8 +56,11 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   const [introProgress, setIntroProgress] = useState(0);
   const { requestPermission } = usePermissionContext();
 
+  const targetUid = profileId || user?.uid;
+  const isOwnProfile = isLoggedIn && (!profileId || profileId === user?.uid);
+
+  // Subscribe to profile
   useEffect(() => {
-    const targetUid = profileId || user?.uid;
     if (!targetUid) {
       setLoading(false);
       return;
@@ -42,7 +72,219 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     });
 
     return () => unsubscribe();
-  }, [profileId, user?.uid]);
+  }, [targetUid]);
+
+  // Subscribe to real follows status
+  useEffect(() => {
+    if (!user || !profileId || profileId === user.uid) {
+      setIsFollowing(false);
+      return;
+    }
+    const followDocRef = doc(db, "follows", `${user.uid}_${profileId}`);
+    const unsub = onSnapshot(followDocRef, (snap) => {
+      setIsFollowing(snap.exists());
+    });
+    return () => unsub();
+  }, [user?.uid, profileId]);
+
+  // Subscribe to real reviews feed
+  useEffect(() => {
+    if (!targetUid) {
+      setLoadingReviews(false);
+      return;
+    }
+    const q = query(collection(db, "reviews"), where("targetUid", "==", targetUid), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const list = snap.docs.map(docSnap => {
+        const r = docSnap.data();
+        let dateStr = 'Just now';
+        if (r.createdAt) {
+          const date = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
+          dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        return {
+          id: docSnap.id,
+          ...r,
+          dateFormatted: dateStr
+        };
+      });
+      setReviewsList(list);
+      setLoadingReviews(false);
+    }, (err) => {
+      console.warn("Failed to subscribe to reviews:", err);
+      setLoadingReviews(false);
+    });
+    return () => unsub();
+  }, [targetUid]);
+
+  // Load followers/following list
+  useEffect(() => {
+    if (!showFollowModal || !targetUid) {
+      setFollowList([]);
+      return;
+    }
+
+    const loadFollowList = async () => {
+      setLoadingFollowList(true);
+      try {
+        const fieldName = showFollowModal === 'followers' ? 'followingId' : 'followerId';
+        const queryField = showFollowModal === 'followers' ? 'followerId' : 'followingId';
+
+        const q = query(collection(db, "follows"), where(fieldName, "==", targetUid));
+        const snap = await getDocs(q);
+
+        const userIds = snap.docs.map(doc => doc.data()[queryField]);
+        
+        if (userIds.length === 0) {
+          setFollowList([]);
+          return;
+        }
+
+        const fetchedProfiles = [];
+        for (const uid of userIds) {
+          const profileSnap = await getDocs(query(collection(db, "profiles"), where("__name__", "==", uid)));
+          if (!profileSnap.empty) {
+            const pData = profileSnap.docs[0].data();
+            fetchedProfiles.push({
+              id: uid,
+              name: pData.name || 'Discovery User',
+              image: pData.image || '',
+              role: pData.role || 'Talent'
+            });
+          }
+        }
+        setFollowList(fetchedProfiles);
+      } catch (err) {
+        console.error("Error loading follow list:", err);
+      } finally {
+        setLoadingFollowList(false);
+      }
+    };
+
+    loadFollowList();
+  }, [showFollowModal, targetUid]);
+
+  const handleFollowToggle = async () => {
+    if (!user) {
+      onNavigate('signin');
+      return;
+    }
+    if (!profileId || profileId === user.uid) return;
+    
+    const followId = `${user.uid}_${profileId}`;
+    const followDocRef = doc(db, "follows", followId);
+    try {
+      if (isFollowing) {
+        // Unfollow
+        await deleteDoc(followDocRef);
+        // Decrement counters
+        await updateDoc(doc(db, "profiles", profileId), { followers: increment(-1) });
+        await updateDoc(doc(db, "profiles", user.uid), { following: increment(-1) });
+        try {
+          await updateDoc(doc(db, "users", profileId), { followers: increment(-1) });
+          await updateDoc(doc(db, "users", user.uid), { following: increment(-1) });
+        } catch (e) {
+          console.warn("Could not sync follows stats to user doc:", e);
+        }
+      } else {
+        // Follow
+        await setDoc(followDocRef, {
+          followerId: user.uid,
+          followingId: profileId,
+          createdAt: serverTimestamp()
+        });
+        // Increment counters
+        await updateDoc(doc(db, "profiles", profileId), { followers: increment(1) });
+        await updateDoc(doc(db, "profiles", user.uid), { following: increment(1) });
+        try {
+          await updateDoc(doc(db, "users", profileId), { followers: increment(1) });
+          await updateDoc(doc(db, "users", user.uid), { following: increment(1) });
+        } catch (e) {
+          console.warn("Could not sync follows stats to user doc:", e);
+        }
+      }
+    } catch (err) {
+      console.error("Error toggling follow:", err);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user) {
+      onNavigate('signin');
+      return;
+    }
+    if (!reviewText.trim()) {
+      alert("Please enter review details.");
+      return;
+    }
+    if (targetUid === user.uid) {
+      alert("You cannot review your own profile.");
+      return;
+    }
+    
+    setIsSubmittingReview(true);
+    try {
+      const reviewId = `${user.uid}_${targetUid}`;
+      const reviewDocRef = doc(db, "reviews", reviewId);
+      
+      let reviewerName = user.displayName || 'Discovery Talent';
+      let reviewerPhoto = user.photoURL || '';
+      
+      try {
+        const userProfileSnap = await getDocs(query(collection(db, "profiles"), where("__name__", "==", user.uid)));
+        if (!userProfileSnap.empty) {
+          const upData = userProfileSnap.docs[0].data();
+          reviewerName = upData.name || reviewerName;
+          reviewerPhoto = upData.image || reviewerPhoto;
+        }
+      } catch (e) {
+        console.warn("Could not load reviewer profile:", e);
+      }
+      
+      await setDoc(reviewDocRef, {
+        reviewerId: user.uid,
+        reviewerName,
+        reviewerPhoto,
+        targetUid,
+        rating: ratingInput,
+        text: reviewText.trim(),
+        createdAt: serverTimestamp()
+      });
+      
+      // Recalculate average rating & reviews count
+      const q = query(collection(db, "reviews"), where("targetUid", "==", targetUid));
+      const snap = await getDocs(q);
+      const totalReviews = snap.size;
+      let totalRating = 0;
+      snap.docs.forEach(docSnap => {
+        totalRating += (docSnap.data().rating || 0);
+      });
+      const avgRating = totalReviews > 0 ? parseFloat((totalRating / totalReviews).toFixed(1)) : 0;
+      
+      await updateDoc(doc(db, "profiles", targetUid), {
+        rating: avgRating,
+        reviews: totalReviews
+      });
+      try {
+        await updateDoc(doc(db, "users", targetUid), {
+          rating: avgRating,
+          reviews: totalReviews
+        });
+      } catch (e) {
+        console.warn("Could not sync rating to users doc:", e);
+      }
+      
+      setShowReviewModal(false);
+      setReviewText('');
+      setRatingInput(5);
+      alert("Review submitted successfully!");
+    } catch (err) {
+      console.error("Error submitting review:", err);
+      alert("Failed to submit review.");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
   
   // Facebook-style Empty Placeholder Component
   const EmptyState = ({ title, description, icon, actionLabel, onAction }) => (
@@ -209,8 +451,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     }
   };
 
-  // Determine if we're viewing our own profile or another user's
-  const isOwnProfile = isLoggedIn && (!profileId || profileId === user?.uid);
+  // isOwnProfile defined at top of component
 
   const p = {
     // Prioritize saved Firestore profile data over Firebase Auth data
@@ -319,7 +560,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                       <div className="flex items-center gap-2 flex-wrap">
                         {isOtherUser && (
                           <button
-                            onClick={() => setIsFollowing(!isFollowing)}
+                            onClick={handleFollowToggle}
                             className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-wide transition-all active:scale-95 ${
                               isFollowing
                                 ? 'bg-white/10 text-white border border-white/10'
@@ -886,12 +1127,38 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           <div className="space-y-6 min-h-[400px]">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">Reviews ({p.reviews})</h2>
-              <Button size="sm" onClick={() => setShowReviewModal(true)}>Add Review</Button>
+              {isLoggedIn && !isOwnProfile && (
+                <Button size="sm" onClick={() => setShowReviewModal(true)}>Add Review</Button>
+              )}
             </div>
             
-            {p.reviews > 0 ? (
+            {loadingReviews ? (
+              <p className="text-xs text-nc-muted">Loading reviews feed...</p>
+            ) : reviewsList.length > 0 ? (
               <div className="space-y-4">
-                {/* Real reviews would be mapped here */}
+                {reviewsList.map((rev) => (
+                  <div key={rev.id} className="bg-nc-card border border-nc-border rounded-2xl p-5 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-nc-surface border border-nc-border overflow-hidden flex items-center justify-center font-bold text-nc-accent text-xs">
+                          {rev.reviewerPhoto ? (
+                            <img src={rev.reviewerPhoto} alt={rev.reviewerName} className="w-full h-full object-cover" />
+                          ) : (
+                            (rev.reviewerName || '?').charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-white text-sm">{rev.reviewerName || 'Discovery User'}</p>
+                          <p className="text-[10px] text-nc-muted uppercase">{rev.dateFormatted}</p>
+                        </div>
+                      </div>
+                      <div className="text-nc-accent text-sm">
+                        {'★'.repeat(rev.rating || 5)}{'☆'.repeat(5 - (rev.rating || 5))}
+                      </div>
+                    </div>
+                    <p className="text-xs text-nc-secondary leading-relaxed">{rev.text}</p>
+                  </div>
+                ))}
               </div>
             ) : (
               <EmptyState 
@@ -916,9 +1183,38 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
             <button onClick={() => setShowFollowModal(null)} className="text-nc-muted hover:text-white p-2">CLOSE</button>
           </div>
           <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
-            <div className="text-center py-8 text-nc-muted text-sm italic font-medium">
-              No members found
-            </div>
+            {loadingFollowList ? (
+              <p className="text-xs text-nc-muted text-center py-4">Loading members list...</p>
+            ) : followList.length > 0 ? (
+              <div className="space-y-3">
+                {followList.map(item => (
+                  <div 
+                    key={item.id} 
+                    onClick={() => {
+                      setShowFollowModal(null);
+                      onNavigate('profile', item.id);
+                    }}
+                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-nc-surface border border-nc-border overflow-hidden flex items-center justify-center font-bold text-xs text-nc-accent">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        item.name.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white leading-none">{item.name}</p>
+                      <p className="text-[10px] text-nc-muted uppercase mt-0.5">{item.role}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-nc-muted text-sm italic font-medium">
+                No members found
+              </div>
+            )}
           </div>
         </GlassCard>
       </div>
@@ -935,22 +1231,35 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           <div className="p-5 space-y-4">
             <div>
               <label className="block text-sm font-medium text-nc-secondary mb-2">Rating</label>
-              <div className="flex gap-2 text-2xl text-nc-accent cursor-pointer">
-                ★★★★★
+              <div className="flex gap-2 text-2xl cursor-pointer">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button 
+                    key={star} 
+                    type="button"
+                    onClick={() => setRatingInput(star)}
+                    className={`transition-colors ${star <= ratingInput ? 'text-nc-accent' : 'text-white/20'}`}
+                  >
+                    ★
+                  </button>
+                ))}
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-nc-secondary mb-2">Review Details</label>
               <textarea 
                 rows={4}
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
                 placeholder="Share your experience working with this talent..."
                 className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm resize-none"
               />
             </div>
           </div>
           <div className="p-5 border-t border-nc-border flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setShowReviewModal(false)}>Cancel</Button>
-            <Button onClick={() => setShowReviewModal(false)}>Submit Review</Button>
+            <Button variant="secondary" disabled={isSubmittingReview} onClick={() => setShowReviewModal(false)}>Cancel</Button>
+            <Button disabled={isSubmittingReview} onClick={handleSubmitReview}>
+              {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+            </Button>
           </div>
         </GlassCard>
       </div>

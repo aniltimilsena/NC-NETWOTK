@@ -27,12 +27,45 @@ import { subscribeToCastingCalls } from '../services/casting';
 
 import { getAvatar } from '../utils/avatars';
 import { db } from '../lib/firebase';
+import { 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  updateDoc, 
+  increment, 
+  serverTimestamp, 
+  collection, 
+  query, 
+  where, 
+  onSnapshot 
+} from 'firebase/firestore';
 
 export default function Home({ onNavigate, user }) {
   const isLoggedIn = !!user;
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [followedTalents, setFollowedTalents] = useState([]);
+  
+  // Real follows subscription
+  useEffect(() => {
+    if (!user) {
+      setFollowedTalents([]);
+      return;
+    }
+    
+    const q = query(
+      collection(db, "follows"),
+      where("followerId", "==", user.uid)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const ids = snap.docs.map(doc => doc.data().followingId);
+      setFollowedTalents(ids);
+    }, (err) => {
+      console.warn("Follows subscription in Home failed:", err);
+    });
+    
+    return () => unsub();
+  }, [user?.uid]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPremiumIdx, setCurrentPremiumIdx] = useState(0);
   const [talents, setTalents] = useState([]);
@@ -142,12 +175,48 @@ export default function Home({ onNavigate, user }) {
     return () => cancelAnimationFrame(animationId);
   }, [shouldScroll, castingCalls.length]);
 
-  const toggleFollow = (e, targetId) => {
+  const toggleFollow = async (e, targetId) => {
     e.preventDefault();
     e.stopPropagation();
-    setFollowedTalents(prev => 
-      prev.includes(targetId) ? prev.filter(id => id !== targetId) : [...prev, targetId]
-    );
+    if (!user) {
+      onNavigate('signin');
+      return;
+    }
+    const followId = `${user.uid}_${targetId}`;
+    const followDocRef = doc(db, "follows", followId);
+    const isCurrentlyFollowing = followedTalents.includes(targetId);
+    
+    try {
+      if (isCurrentlyFollowing) {
+        // Unfollow
+        await deleteDoc(followDocRef);
+        await updateDoc(doc(db, "profiles", targetId), { followers: increment(-1) });
+        await updateDoc(doc(db, "profiles", user.uid), { following: increment(-1) });
+        try {
+          await updateDoc(doc(db, "users", targetId), { followers: increment(-1) });
+          await updateDoc(doc(db, "users", user.uid), { following: increment(-1) });
+        } catch (err) {
+          console.warn("Could not sync user follow stats:", err);
+        }
+      } else {
+        // Follow
+        await setDoc(followDocRef, {
+          followerId: user.uid,
+          followingId: targetId,
+          createdAt: serverTimestamp()
+        });
+        await updateDoc(doc(db, "profiles", targetId), { followers: increment(1) });
+        await updateDoc(doc(db, "profiles", user.uid), { following: increment(1) });
+        try {
+          await updateDoc(doc(db, "users", targetId), { followers: increment(1) });
+          await updateDoc(doc(db, "users", user.uid), { following: increment(1) });
+        } catch (err) {
+          console.warn("Could not sync user follow stats:", err);
+        }
+      }
+    } catch (err) {
+      console.error("Error toggling follow in Home:", err);
+    }
   };
 
   useEffect(() => {
