@@ -25,7 +25,7 @@ import {
 import { auth, db } from '../../lib/firebase';
 import { logAdminAction } from '../../services/admin';
 import { CATEGORIES } from '../../constants/categories';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 
 
 export default function AdminSettings() {
@@ -37,7 +37,83 @@ export default function AdminSettings() {
   const [migrationStatus, setMigrationStatus] = useState<string | null>(null);
   const [isMigrating, setIsMigrating] = useState(false);
 
+  const [announcement, setAnnouncement] = useState({
+    title: '',
+    body: '',
+    type: 'system',
+    targetType: 'all',
+    specificUserId: ''
+  });
+  const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
+
   const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+
+  const handleSendAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!announcement.title.trim() || !announcement.body.trim()) {
+      alert("Please fill in title and message.");
+      return;
+    }
+    setSendingAnnouncement(true);
+    try {
+      let recipients: string[] = [];
+      if (announcement.targetType === 'all') {
+        const usersSnap = await getDocs(collection(db, "users"));
+        recipients = usersSnap.docs.map(doc => doc.id);
+      } else {
+        if (!announcement.specificUserId.trim()) {
+          alert("Please specify a User ID.");
+          setSendingAnnouncement(false);
+          return;
+        }
+        recipients = [announcement.specificUserId.trim()];
+      }
+
+      if (recipients.length === 0) {
+        alert("No recipient users found.");
+        setSendingAnnouncement(false);
+        return;
+      }
+
+      // Write notification for each recipient
+      const batchPromises = recipients.map(uid => {
+        return addDoc(collection(db, "notifications"), {
+          userId: uid,
+          recipientId: uid,
+          receiverId: uid,
+          senderId: "system",
+          senderName: "NC Network Team",
+          senderAvatar: "",
+          title: announcement.title.trim(),
+          body: announcement.body.trim(),
+          type: "system",
+          notificationType: "system",
+          isRead: false,
+          read: false,
+          createdAt: serverTimestamp(),
+          targetUrl: "/premium",
+          profileUrl: "/"
+        });
+      });
+
+      await Promise.all(batchPromises);
+      await logAdminAction(adminEmail, "Send Announcement", announcement.targetType, `Sent announcement "${announcement.title}" to ${recipients.length} users`);
+      
+      alert(`Announcement sent successfully to ${recipients.length} users!`);
+      setAnnouncement({
+        title: '',
+        body: '',
+        type: 'system',
+        targetType: 'all',
+        specificUserId: ''
+      });
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to send announcement: " + err.message);
+    } finally {
+      setSendingAnnouncement(false);
+    }
+  };
 
   const runDatabaseMigration = async () => {
     if (!window.confirm("Are you sure you want to scan and migrate all Users, Profiles, and Casting Calls to the 8 approved categories? This will modify legacy categories in Firestore.")) {
@@ -436,6 +512,103 @@ export default function AdminSettings() {
              </div>
           </div>
         </div>
+      </div>
+
+      {/* Send System Announcement / Alert Console */}
+      <div className="bg-admin-surface border border-admin-border rounded-2xl p-6">
+        <div className="flex justify-between items-center mb-6 border-b border-admin-border pb-3">
+          <h4 className="font-bold text-white flex items-center gap-2">
+            <Plus className="w-5 h-5 text-admin-secondary" />
+            Send System Announcement / Alert
+          </h4>
+          <span className="text-[10px] text-nc-muted font-bold uppercase tracking-widest">Broadcast Console</span>
+        </div>
+
+        <form onSubmit={handleSendAnnouncement} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest block">Notification Type</label>
+              <select
+                id="announcement-type"
+                name="announcement-type"
+                value={announcement.type}
+                onChange={(e) => setAnnouncement(prev => ({ ...prev, type: e.target.value }))}
+                className="w-full bg-admin-surface-light border border-admin-border text-white text-xs rounded-lg p-2 focus:outline-none focus:border-admin-primary"
+              >
+                <option value="system">System Announcement (System tab)</option>
+                <option value="casting">Casting-related Update (Casting tab)</option>
+                <option value="messages">Message-related Update (Messages tab)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest block">Target Audience</label>
+              <select
+                id="announcement-target-type"
+                name="announcement-target-type"
+                value={announcement.targetType}
+                onChange={(e) => setAnnouncement(prev => ({ ...prev, targetType: e.target.value }))}
+                className="w-full bg-admin-surface-light border border-admin-border text-white text-xs rounded-lg p-2 focus:outline-none focus:border-admin-primary"
+              >
+                <option value="all">All Registered Users</option>
+                <option value="specific">Specific User ID</option>
+              </select>
+            </div>
+
+            {announcement.targetType === 'specific' && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-white/40 uppercase tracking-widest block">Target User UID</label>
+                <input
+                  type="text"
+                  id="announcement-specific-user-id"
+                  name="announcement-specific-user-id"
+                  placeholder="Enter User UID..."
+                  value={announcement.specificUserId}
+                  onChange={(e) => setAnnouncement(prev => ({ ...prev, specificUserId: e.target.value }))}
+                  className="w-full bg-admin-surface-light border border-admin-border text-white text-xs rounded-lg p-2 focus:outline-none focus:border-admin-primary"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest block">Notification Title</label>
+              <input
+                type="text"
+                id="announcement-title"
+                name="announcement-title"
+                placeholder="Platform Update / Security Alert / System Maintenance..."
+                value={announcement.title}
+                onChange={(e) => setAnnouncement(prev => ({ ...prev, title: e.target.value }))}
+                className="w-full bg-admin-surface-light border border-admin-border text-white text-xs rounded-lg p-2 focus:outline-none focus:border-admin-primary"
+              />
+            </div>
+            
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest block">Notification Message / Body</label>
+              <textarea
+                id="announcement-body"
+                name="announcement-body"
+                placeholder="Detailed announcement details..."
+                value={announcement.body}
+                onChange={(e) => setAnnouncement(prev => ({ ...prev, body: e.target.value }))}
+                rows={2}
+                className="w-full bg-admin-surface-light border border-admin-border text-white text-xs rounded-lg p-2 focus:outline-none focus:border-admin-primary"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={sendingAnnouncement}
+              className="px-6 py-2.5 bg-admin-secondary text-black rounded-xl text-xs font-black uppercase shadow-lg shadow-admin-secondary/20 hover:bg-admin-secondary/85 transition-all disabled:opacity-50"
+            >
+              {sendingAnnouncement ? "Broadcasting..." : "Send Announcement 📢"}
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Admin Audit Logs Section */}

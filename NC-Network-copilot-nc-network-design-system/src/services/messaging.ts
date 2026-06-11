@@ -57,6 +57,58 @@ export const sendMessage = async (
       unread: true,
     });
 
+    // Send real-time notification to the recipient
+    const convoRef = doc(db, "conversations", convoId);
+    const convoSnap = await getDoc(convoRef);
+    if (convoSnap.exists()) {
+      const convoData = convoSnap.data();
+      const otherParticipantId = convoData.participants?.find(
+        (p: string) => p !== currentUserUid
+      );
+      if (otherParticipantId && !isSystem) {
+        let senderName = auth.currentUser?.displayName || "Someone";
+        let senderAvatar = auth.currentUser?.photoURL || "";
+        try {
+          const profileSnap = await getDoc(doc(db, "profiles", currentUserUid));
+          if (profileSnap.exists()) {
+            const pData = profileSnap.data();
+            senderName = pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || senderName;
+            senderAvatar = pData.image || pData.photoURL || pData.avatar || senderAvatar;
+          }
+        } catch (e) {
+          console.warn("Error fetching profile for notification:", e);
+        }
+
+        let title = "New Message";
+        let body = text;
+        if (type === "image") {
+          title = "Media received";
+          body = "Sent an image";
+        } else if (type === "video") {
+          title = "Media received";
+          body = "Sent a video";
+        }
+
+        await addDoc(collection(db, "notifications"), {
+          userId: otherParticipantId,
+          recipientId: otherParticipantId,
+          receiverId: otherParticipantId,
+          senderId: currentUserUid,
+          senderName,
+          senderAvatar,
+          title,
+          body,
+          type: "messages",
+          notificationType: "messages",
+          isRead: false,
+          read: false,
+          createdAt: serverTimestamp(),
+          targetUrl: `/messages/${currentUserUid}`,
+          profileUrl: `/messages/${currentUserUid}`
+        });
+      }
+    }
+
     return { success: true, error: null };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to send message";
@@ -328,6 +380,41 @@ export const createConversation = async (
       lastMessage: "",
       lastMessageAt: serverTimestamp(),
     });
+
+    // Send a new conversation notification to the other participant
+    const otherParticipantId = sorted.find((p) => p !== currentUserUid);
+    if (otherParticipantId) {
+      let senderName = auth.currentUser?.displayName || "Someone";
+      let senderAvatar = auth.currentUser?.photoURL || "";
+      try {
+        const profileSnap = await getDoc(doc(db, "profiles", currentUserUid));
+        if (profileSnap.exists()) {
+          const pData = profileSnap.data();
+          senderName = pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || senderName;
+          senderAvatar = pData.image || pData.photoURL || pData.avatar || senderAvatar;
+        }
+      } catch (e) {
+        console.warn("Error fetching profile for new convo notification:", e);
+      }
+
+      await addDoc(collection(db, "notifications"), {
+        userId: otherParticipantId,
+        recipientId: otherParticipantId,
+        receiverId: otherParticipantId,
+        senderId: currentUserUid,
+        senderName,
+        senderAvatar,
+        title: "New Conversation",
+        body: `${senderName} started a new conversation with you.`,
+        type: "messages",
+        notificationType: "messages",
+        isRead: false,
+        read: false,
+        createdAt: serverTimestamp(),
+        targetUrl: `/messages/${currentUserUid}`,
+        profileUrl: `/messages/${currentUserUid}`
+      });
+    }
 
     if (initialMessage) {
       await sendMessage(convoRef.id, "system", initialMessage, true);

@@ -15,6 +15,8 @@ import {
 import { playRingtone, stopRingtone, playEndCallSound } from "../utils/ringtone";
 import { findOrCreateConversation, sendMessage } from "../services/messaging";
 import { usePermissionContext } from "./PermissionContext";
+import { db } from "../lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 // ─── Context Types ──────────────────────────────────────────────────────────
 
@@ -153,6 +155,30 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
     stopRingtone();
     await updateCallStatus(incomingCall.id, "rejected");
+
+    // Send missed call notification
+    try {
+      await addDoc(collection(db, "notifications"), {
+        userId: incomingCall.calleeId,
+        recipientId: incomingCall.calleeId,
+        receiverId: incomingCall.calleeId,
+        senderId: incomingCall.callerId,
+        senderName: incomingCall.callerName,
+        senderAvatar: incomingCall.callerPhoto || "",
+        title: "Missed Call",
+        body: `Missed an ${incomingCall.callType} call from ${incomingCall.callerName}`,
+        type: "messages",
+        notificationType: "messages",
+        isRead: false,
+        read: false,
+        createdAt: serverTimestamp(),
+        targetUrl: `/messages/${incomingCall.callerId}`,
+        profileUrl: `/messages/${incomingCall.callerId}`
+      });
+    } catch (err) {
+      console.warn("Failed to write missed call notification:", err);
+    }
+
     setIncomingCall(null);
   }, [incomingCall]);
 
@@ -167,6 +193,31 @@ export function CallProvider({ children, user }: CallProviderProps) {
           ? `${Math.floor(webrtc.callDuration / 60)}m ${webrtc.callDuration % 60}s`
           : "Cancelled";
         await sendMessage(convoId, "system", `${activeCall.callType.charAt(0).toUpperCase() + activeCall.callType.slice(1)} call • ${durationText}`);
+      }
+
+      // If duration was 0, it was cancelled/unanswered. Send a missed call notification to callee
+      if (webrtc.callDuration === 0) {
+        try {
+          await addDoc(collection(db, "notifications"), {
+            userId: activeCall.calleeId,
+            recipientId: activeCall.calleeId,
+            receiverId: activeCall.calleeId,
+            senderId: activeCall.callerId,
+            senderName: activeCall.callerName,
+            senderAvatar: activeCall.callerPhoto || "",
+            title: "Missed Call",
+            body: `Missed an ${activeCall.callType} call from ${activeCall.callerName}`,
+            type: "messages",
+            notificationType: "messages",
+            isRead: false,
+            read: false,
+            createdAt: serverTimestamp(),
+            targetUrl: `/messages/${activeCall.callerId}`,
+            profileUrl: `/messages/${activeCall.callerId}`
+          });
+        } catch (err) {
+          console.warn("Failed to write missed call notification on hangup:", err);
+        }
       }
     }
     

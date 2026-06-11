@@ -132,6 +132,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     setApplyAlert({ type: null, message: null, detail: null });
 
     try {
+      const creatorId = call.creatorId || call.createdBy || '';
       await addDoc(collection(db, 'applications'), {
         castingId: call.id,
         castingTitle: call.title,
@@ -141,8 +142,33 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         userPhoto: user.profileImage || user.photoURL || '',
         appliedAt: serverTimestamp(),
         status: 'pending',
-        creatorId: call.creatorId || call.createdBy || '',
+        creatorId: creatorId,
       });
+
+      // Send casting notification to casting call creator
+      try {
+        if (creatorId) {
+          await addDoc(collection(db, 'notifications'), {
+            userId: creatorId,
+            recipientId: creatorId,
+            receiverId: creatorId,
+            senderId: user.uid,
+            senderName: user.displayName || 'Anonymous Talent',
+            senderAvatar: user.profileImage || user.photoURL || '',
+            title: "New Casting Application",
+            body: `${user.displayName || 'Someone'} applied to your casting call: "${call.title}"`,
+            type: "casting",
+            notificationType: "casting",
+            isRead: false,
+            read: false,
+            createdAt: serverTimestamp(),
+            targetUrl: `/casting/${call.id}`,
+            profileUrl: `/casting/${call.id}`
+          });
+        }
+      } catch (notifErr) {
+        console.warn("Could not send casting application notification:", notifErr);
+      }
 
       setApplied(true);
       setApplyAlert({
@@ -195,6 +221,34 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         updatedAt: serverTimestamp()
       });
       showAlert?.(`Application marked as ${newStatus}.`, 'success');
+
+      // Send status notification to the applicant
+      const app = apps.find(a => a.id === appId);
+      if (app && app.userId) {
+        try {
+          await addDoc(collection(db, 'notifications'), {
+            userId: app.userId,
+            recipientId: app.userId,
+            receiverId: app.userId,
+            senderId: user.uid,
+            senderName: user.displayName || 'Production',
+            senderAvatar: user.photoURL || '',
+            title: newStatus === 'accepted' ? "Application Accepted!" : "Application Update",
+            body: newStatus === 'accepted' 
+              ? `Your application for "${call.title}" has been ACCEPTED.` 
+              : `Your application for "${call.title}" has been rejected.`,
+            type: "casting",
+            notificationType: "casting",
+            isRead: false,
+            read: false,
+            createdAt: serverTimestamp(),
+            targetUrl: `/casting/${call.id}`,
+            profileUrl: `/casting/${call.id}`
+          });
+        } catch (notifErr) {
+          console.warn("Could not send application status notification:", notifErr);
+        }
+      }
     } catch (err) {
       console.error('Error updating application status:', err);
       showAlert?.('Failed to update application status.', 'error');

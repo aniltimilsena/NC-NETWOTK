@@ -18,7 +18,7 @@ import {
   User
 } from 'lucide-react';
 import { db, auth } from "../../lib/firebase";
-import { collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 import { logAdminAction } from '../../services/admin';
 import { CATEGORIES } from '../../constants/categories';
@@ -61,6 +61,31 @@ export default function AdminUsers() {
       
       const actionLabel = targetVerified ? "Verify User" : "Unverify User";
       await logAdminAction(adminEmail, actionLabel, userId, `Set verified to ${targetVerified}`);
+
+      // Send verification notification
+      try {
+        await addDoc(collection(db, "notifications"), {
+          userId: userId,
+          recipientId: userId,
+          receiverId: userId,
+          senderId: "system",
+          senderName: "NC Network Team",
+          senderAvatar: "",
+          title: targetVerified ? "Profile Verification Approved" : "Profile Verification Revoked",
+          body: targetVerified 
+            ? "Congratulations! Your profile has been verified by the NC Network Team." 
+            : "Your profile verification status has been updated. Please contact support.",
+          type: "system",
+          notificationType: "system",
+          isRead: false,
+          read: false,
+          createdAt: serverTimestamp(),
+          targetUrl: `/profile/${userId}`,
+          profileUrl: `/profile/${userId}`
+        });
+      } catch (notifErr) {
+        console.warn("Could not send verification notification:", notifErr);
+      }
       
       if (selectedUser?.id === userId) {
         setSelectedUser(prev => prev ? { ...prev, verified: targetVerified } : null);
@@ -78,6 +103,29 @@ export default function AdminUsers() {
       await updateDoc(doc(db, "profiles", userId), { status: nextStatus });
       
       await logAdminAction(adminEmail, `Update User Status`, userId, `Set status to ${nextStatus}`);
+
+      // Send account status update notification
+      try {
+        await addDoc(collection(db, "notifications"), {
+          userId: userId,
+          recipientId: userId,
+          receiverId: userId,
+          senderId: "system",
+          senderName: "NC Network Team",
+          senderAvatar: "",
+          title: `Account Status: ${nextStatus}`,
+          body: `Your account status has been updated to ${nextStatus} by the moderation team.`,
+          type: "system",
+          notificationType: "system",
+          isRead: false,
+          read: false,
+          createdAt: serverTimestamp(),
+          targetUrl: `/profile/${userId}`,
+          profileUrl: `/profile/${userId}`
+        });
+      } catch (notifErr) {
+        console.warn("Could not send status notification:", notifErr);
+      }
       
       if (selectedUser?.id === userId) {
         setSelectedUser(prev => prev ? { ...prev, status: nextStatus } : null);
@@ -120,6 +168,31 @@ export default function AdminUsers() {
       await updateDoc(doc(db, "profiles", userId), { premium: targetPremium });
       
       await logAdminAction(adminEmail, `Update Subscription`, userId, targetPremium ? `Granted PRO Membership` : `Revoked PRO Membership`);
+
+      // Send premium update notification
+      try {
+        await addDoc(collection(db, "notifications"), {
+          userId: userId,
+          recipientId: userId,
+          receiverId: userId,
+          senderId: "system",
+          senderName: "NC Network Team",
+          senderAvatar: "",
+          title: targetPremium ? "Premium Activated" : "Premium Subscription Ended",
+          body: targetPremium 
+            ? "Awesome! Your Premium PRO subscription is now active. Enjoy exclusive features!" 
+            : "Your Premium PRO subscription has ended. Upgrade to continue using pro features.",
+          type: "system",
+          notificationType: "system",
+          isRead: false,
+          read: false,
+          createdAt: serverTimestamp(),
+          targetUrl: "/premium",
+          profileUrl: "/premium"
+        });
+      } catch (notifErr) {
+        console.warn("Could not send premium status notification:", notifErr);
+      }
       
       if (selectedUser?.id === userId) {
         setSelectedUser(prev => prev ? { ...prev, premium: targetPremium } : null);
