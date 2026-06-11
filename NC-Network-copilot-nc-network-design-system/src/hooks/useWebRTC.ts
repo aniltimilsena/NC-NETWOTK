@@ -68,6 +68,7 @@ export function useWebRTC(): UseWebRTCReturn {
   const unsubsRef = useRef<Array<() => void>>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const noAnswerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const remoteCandidatesQueueRef = useRef<RTCIceCandidateInit[]>([]);
 
   // ─── Cleanup everything ──────────────────────────────────────────────────
 
@@ -106,6 +107,7 @@ export function useWebRTC(): UseWebRTCReturn {
     setIsMuted(false);
     setIsVideoOff(false);
     setErrorMessage("");
+    remoteCandidatesQueueRef.current = [];
   }, [localStream]);
 
   // ─── Get user media ──────────────────────────────────────────────────────
@@ -160,9 +162,13 @@ export function useWebRTC(): UseWebRTCReturn {
       setRemoteStream(remote);
 
       pc.ontrack = (event) => {
-        event.streams[0].getTracks().forEach((track) => {
-          remote.addTrack(track);
-        });
+        if (event.streams && event.streams[0]) {
+          event.streams[0].getTracks().forEach((track) => {
+            remote.addTrack(track);
+          });
+        } else if (event.track) {
+          remote.addTrack(event.track);
+        }
         setRemoteStream(new MediaStream(remote.getTracks()));
       };
 
@@ -186,7 +192,7 @@ export function useWebRTC(): UseWebRTCReturn {
         } else if (state === "disconnected") {
           // Give it a moment to reconnect before erroring
           setTimeout(() => {
-            if (pc.iceConnectionState === "disconnected") {
+            if (pc.iceConnectionState === "disconnected" && pcRef.current === pc) {
               setErrorMessage("Call disconnected due to network issues.");
               setCallState("error");
             }
@@ -210,6 +216,19 @@ export function useWebRTC(): UseWebRTCReturn {
 
         setCallState("creating-offer");
 
+        const candidateQueue: RTCIceCandidateInit[] = [];
+        // ICE candidate handler — set BEFORE setLocalDescription to catch early candidates
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            const cand = event.candidate.toJSON();
+            if (callIdRef.current) {
+              addIceCandidate(callIdRef.current, "caller", cand);
+            } else {
+              candidateQueue.push(cand);
+            }
+          }
+        };
+
         // Create offer
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -228,12 +247,10 @@ export function useWebRTC(): UseWebRTCReturn {
         roleRef.current = "caller";
         setCallState("calling");
 
-        // ICE candidate handler — send to Firestore
-        pc.onicecandidate = (event) => {
-          if (event.candidate) {
-            addIceCandidate(callId, "caller", event.candidate.toJSON());
-          }
-        };
+        // Flush queued local candidates
+        for (const cand of candidateQueue) {
+          addIceCandidate(callId, "caller", cand);
+        }
 
         // Listen for answer from callee
         const unsubCall = subscribeToCall(callId, async (callDoc) => {
@@ -251,6 +268,16 @@ export function useWebRTC(): UseWebRTCReturn {
                 new RTCSessionDescription(callDoc.answer)
               );
               setCallState("connecting");
+
+              // Process queued remote candidates
+              while (remoteCandidatesQueueRef.current.length > 0) {
+                const cand = remoteCandidatesQueueRef.current.shift();
+                if (cand) {
+                  await pc.addIceCandidate(new RTCIceCandidate(cand)).catch(err => {
+                    console.error("[WebRTC] failed to add queued candidate:", err);
+                  });
+                }
+              }
             } catch (err) {
               console.error("[WebRTC] setRemoteDescription error:", err);
             }
@@ -264,8 +291,10 @@ export function useWebRTC(): UseWebRTCReturn {
           "caller",
           async (candidate) => {
             try {
-              if (pc.remoteDescription) {
+              if (pc.remoteDescription && pc.remoteDescription.type) {
                 await pc.addIceCandidate(new RTCIceCandidate(candidate));
+              } else {
+                remoteCandidatesQueueRef.current.push(candidate);
               }
             } catch (err) {
               console.error("[WebRTC] addIceCandidate error:", err);
@@ -310,7 +339,24 @@ export function useWebRTC(): UseWebRTCReturn {
           await pc.setRemoteDescription(
             new RTCSessionDescription(callDoc.offer)
           );
+
+          // Process queued remote candidates
+          while (remoteCandidatesQueueRef.current.length > 0) {
+            const cand = remoteCandidatesQueueRef.current.shift();
+            if (cand) {
+              await pc.addIceCandidate(new RTCIceCandidate(cand)).catch(err => {
+                console.error("[WebRTC] failed to add queued candidate:", err);
+              });
+            }
+          }
         }
+
+        // ICE candidate handler — set BEFORE setLocalDescription to catch early candidates
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            addIceCandidate(callDoc.id, "callee", event.candidate.toJSON());
+          }
+        };
 
         // Create answer
         const answer = await pc.createAnswer();
@@ -322,21 +368,16 @@ export function useWebRTC(): UseWebRTCReturn {
           sdp: answer.sdp!,
         });
 
-        // ICE candidate handler
-        pc.onicecandidate = (event) => {
-          if (event.candidate) {
-            addIceCandidate(callDoc.id, "callee", event.candidate.toJSON());
-          }
-        };
-
         // Listen for caller ICE candidates
         const unsubICE = subscribeToIceCandidates(
           callDoc.id,
           "callee",
           async (candidate) => {
             try {
-              if (pc.remoteDescription) {
+              if (pc.remoteDescription && pc.remoteDescription.type) {
                 await pc.addIceCandidate(new RTCIceCandidate(candidate));
+              } else {
+                remoteCandidatesQueueRef.current.push(candidate);
               }
             } catch (err) {
               console.error("[WebRTC] addIceCandidate error:", err);

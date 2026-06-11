@@ -388,6 +388,38 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(false);
 
+  // Alert queue
+  const [alerts, setAlerts] = useState<AlertPayload[]>([]);
+
+
+  const showAlert = useCallback((
+    message: string,
+    type: AlertType = 'info',
+    detail?: string,
+    onAction?: () => void,
+  ) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setAlerts(prev => {
+      if (prev.some(a => a.message === message && a.type === type)) return prev;
+      const queue = prev.length >= 4 ? prev.slice(1) : prev;
+      return [...queue, { id, message, type, detail, onAction }];
+    });
+  }, []);
+
+  const dismissAlert = useCallback((id: string) => {
+    setAlerts(prev => prev.filter(a => a.id !== id));
+  }, []);
+
+  const showToast = useCallback((
+    message: string,
+    type: 'success' | 'logout' | 'info' | 'error' = 'info',
+  ) => showAlert(message, type), [showAlert]);
+
+  // Handle direct navigation conversions from hooks
+  const handleLegacyNavigate = useCallback((page: string, param: any = null) => {
+    navigate(getRoutePath(page, param));
+  }, [navigate]);
+
   // Version check logic
   const lastVersionCheckRef = useRef<number>(0);
   useEffect(() => {
@@ -470,38 +502,6 @@ export default function App() {
 
     checkVersionOnNav();
   }, [location.pathname, showAlert]);
-
-  // Alert queue
-  const [alerts, setAlerts] = useState<AlertPayload[]>([]);
-
-
-  const showAlert = useCallback((
-    message: string,
-    type: AlertType = 'info',
-    detail?: string,
-    onAction?: () => void,
-  ) => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    setAlerts(prev => {
-      if (prev.some(a => a.message === message && a.type === type)) return prev;
-      const queue = prev.length >= 4 ? prev.slice(1) : prev;
-      return [...queue, { id, message, type, detail, onAction }];
-    });
-  }, []);
-
-  const dismissAlert = useCallback((id: string) => {
-    setAlerts(prev => prev.filter(a => a.id !== id));
-  }, []);
-
-  const showToast = useCallback((
-    message: string,
-    type: 'success' | 'logout' | 'info' | 'error' = 'info',
-  ) => showAlert(message, type), [showAlert]);
-
-  // Handle direct navigation conversions from hooks
-  const handleLegacyNavigate = useCallback((page: string, param: any = null) => {
-    navigate(getRoutePath(page, param));
-  }, [navigate]);
 
   // Initialize Notifications
   useNotifications(user, showAlert, handleLegacyNavigate);

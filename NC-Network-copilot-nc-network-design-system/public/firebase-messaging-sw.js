@@ -35,15 +35,55 @@ const formatMessagePreview = (text) => {
   return text;
 };
 
+const resolveLinkToPath = (link) => {
+  if (!link) return '/';
+  if (link.startsWith('/') || link.startsWith('http://') || link.startsWith('https://')) return link;
+  
+  // Parse format "pageName" or "pageName:paramValue"
+  let page = link;
+  let param = null;
+  if (link.includes(':')) {
+    const parts = link.split(':');
+    page = parts[0];
+    param = parts[1];
+  }
+  
+  switch (page) {
+    case 'home': return '/';
+    case 'listing': return '/talents';
+    case 'profile': return param ? `/profile/${param}` : '/talents';
+    case 'casting': return '/casting';
+    case 'casting-detail': return `/casting/${param}`;
+    case 'signin': return '/signin';
+    case 'signup': return '/signup';
+    case 'profile-create': return '/profile/create';
+    case 'casting-create': return '/casting/create';
+    case 'premium': return '/premium';
+    case 'messages': return param ? `/messages/${param}` : '/messages';
+    case 'notifications': return '/notifications';
+    case 'settings': return param ? `/settings?tab=${param}` : '/settings';
+    case 'privacy': return '/privacy';
+    case 'terms': return '/terms';
+    case 'trust': return '/trust-safety';
+    default: return '/' + page;
+  }
+};
+
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  const notificationTitle = payload.notification.title;
+  const notificationTitle = payload.notification?.title || 'New Notification';
+  const link = payload.data?.link;
+  const resolvedLink = resolveLinkToPath(link);
+
   const notificationOptions = {
-    body: formatMessagePreview(payload.notification.body),
-    icon: payload.notification.icon || '/logo.png',
-    data: payload.data
+    body: formatMessagePreview(payload.notification?.body),
+    icon: payload.notification?.icon || '/logo.png',
+    data: {
+      ...payload.data,
+      link: resolvedLink
+    }
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
@@ -51,16 +91,32 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const urlToOpen = event.notification.data?.link || '/';
+  const relativeLink = event.notification.data?.link || '/';
+  
+  // Resolve relative link to an absolute URL on the same origin
+  const urlToOpen = new URL(relativeLink, self.location.origin).toString();
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // 1. Try to find a window already open on the exact path and focus it
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
-        if (client.url === urlToOpen && 'focus' in client) {
+        const clientUrl = new URL(client.url, self.location.origin).toString();
+        if (clientUrl === urlToOpen && 'focus' in client) {
           return client.focus();
         }
       }
+      
+      // 2. If no exact match but a site tab is open, navigate it to the link and focus it
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if ('navigate' in client && 'focus' in client) {
+          client.navigate(urlToOpen);
+          return client.focus();
+        }
+      }
+      
+      // 3. Otherwise, open a new window
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
