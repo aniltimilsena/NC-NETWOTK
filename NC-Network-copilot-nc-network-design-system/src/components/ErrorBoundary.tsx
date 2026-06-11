@@ -22,6 +22,24 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error in boundary:", error, errorInfo);
+    
+    // Check if the error is a dynamic import chunk load failure
+    const errorMsg = error?.message || "";
+    const isChunkLoadFailed = errorMsg.includes("Failed to fetch dynamically imported module") ||
+                              errorMsg.includes("Importing a module script failed") ||
+                              errorMsg.includes("error loading dynamically imported module");
+
+    if (isChunkLoadFailed) {
+      const lastReloaded = sessionStorage.getItem("chunk_fail_reload_time");
+      const now = Date.now();
+      
+      // If we haven't reloaded in the last 15 seconds, perform a hard reload
+      if (!lastReloaded || now - parseInt(lastReloaded, 10) > 15000) {
+        sessionStorage.setItem("chunk_fail_reload_time", now.toString());
+        console.warn("Dynamic import failed. Auto-reloading page to fetch latest version...");
+        window.location.reload();
+      }
+    }
   }
 
   // Reset error state when children change (i.e. route navigation)
