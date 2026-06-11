@@ -17,19 +17,21 @@ service cloud.firestore {
     // User Profiles
     match /profiles/{userId} {
       allow read: if true;
-      allow write: if isOwner(userId)
+      allow write: if (isOwner(userId)
         && (resource == null
             ? (request.resource.data.verified == false)
-            : (request.resource.data.verified == resource.data.verified));
+            : (request.resource.data.verified == resource.data.verified)))
+        || (isSignedIn() && getUserData().isAdmin == true);
     }
 
     // Users
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId)
+      allow write: if (isOwner(userId)
         && (resource == null
             ? ((request.resource.data.isAdmin == false || request.auth.token.email == 'aniltimilsena53@gmail.com') && request.resource.data.role in ['Talent', 'Agent', 'Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer'])
-            : ((request.resource.data.isAdmin == resource.data.isAdmin || request.auth.token.email == 'aniltimilsena53@gmail.com') && request.resource.data.role in ['Talent', 'Agent', 'Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer']));
+            : ((request.resource.data.isAdmin == resource.data.isAdmin || request.auth.token.email == 'aniltimilsena53@gmail.com') && request.resource.data.role in ['Talent', 'Agent', 'Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer'])))
+        || (isSignedIn() && getUserData().isAdmin == true);
     }
 
     // Conversations
@@ -106,6 +108,24 @@ service cloud.firestore {
       match /calleeCandidates/{candId} {
         allow read, write: if isSignedIn() && (get(/databases/$(database)/documents/calls/$(callId)).data.callerId == request.auth.uid || get(/databases/$(database)/documents/calls/$(callId)).data.calleeId == request.auth.uid);
       }
+    }
+
+    // Reports
+    match /reports/{reportId} {
+      allow read: if isSignedIn() && getUserData().isAdmin == true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && getUserData().isAdmin == true;
+    }
+
+    // Global Settings
+    match /settings/{settingsId} {
+      allow read: if true;
+      allow write: if isSignedIn() && getUserData().isAdmin == true;
+    }
+
+    // Admin Logs
+    match /admin_logs/{logId} {
+      allow read, write: if isSignedIn() && getUserData().isAdmin == true;
     }
 
     // Default Deny
