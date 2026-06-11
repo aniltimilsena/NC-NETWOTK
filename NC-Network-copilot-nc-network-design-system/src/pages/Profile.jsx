@@ -144,7 +144,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     return () => unsub();
   }, [targetUid]);
 
-  // Load followers/following list
+  // Load followers/following/projects list
   useEffect(() => {
     if (!showFollowModal || !targetUid) {
       setFollowList([]);
@@ -154,35 +154,51 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     const loadFollowList = async () => {
       setLoadingFollowList(true);
       try {
-        const fieldName = showFollowModal === 'followers' ? 'followingId' : 'followerId';
-        const queryField = showFollowModal === 'followers' ? 'followerId' : 'followingId';
+        if (showFollowModal === 'projects') {
+          const q = query(collection(db, "casting_calls"), where("createdBy", "==", targetUid));
+          const snap = await getDocs(q);
+          const list = snap.docs.map(docSnap => {
+            const data = docSnap.data();
+            return {
+              id: docSnap.id,
+              title: data.title || 'Untitled Project',
+              production: data.production || 'Independent',
+              status: data.status || 'Open',
+              location: data.location || 'Remote',
+            };
+          });
+          setFollowList(list);
+        } else {
+          const fieldName = showFollowModal === 'followers' ? 'followingId' : 'followerId';
+          const queryField = showFollowModal === 'followers' ? 'followerId' : 'followingId';
 
-        const q = query(collection(db, "follows"), where(fieldName, "==", targetUid));
-        const snap = await getDocs(q);
+          const q = query(collection(db, "follows"), where(fieldName, "==", targetUid));
+          const snap = await getDocs(q);
 
-        const userIds = snap.docs.map(doc => doc.data()[queryField]);
-        
-        if (userIds.length === 0) {
-          setFollowList([]);
-          return;
-        }
-
-        const fetchedProfiles = [];
-        for (const uid of userIds) {
-          const profileSnap = await getDocs(query(collection(db, "profiles"), where("__name__", "==", uid)));
-          if (!profileSnap.empty) {
-            const pData = profileSnap.docs[0].data();
-            fetchedProfiles.push({
-              id: uid,
-              name: pData.name || 'Discovery User',
-              image: pData.image || '',
-              role: pData.role || 'Talent'
-            });
+          const userIds = snap.docs.map(docSnap => docSnap.data()[queryField]);
+          
+          if (userIds.length === 0) {
+            setFollowList([]);
+            return;
           }
+
+          const fetchedProfiles = [];
+          for (const uid of userIds) {
+            const profileSnap = await getDocs(query(collection(db, "profiles"), where("__name__", "==", uid)));
+            if (!profileSnap.empty) {
+              const pData = profileSnap.docs[0].data();
+              fetchedProfiles.push({
+                id: uid,
+                name: pData.name || 'Discovery User',
+                image: pData.image || '',
+                role: pData.role || 'Talent'
+              });
+            }
+          }
+          setFollowList(fetchedProfiles);
         }
-        setFollowList(fetchedProfiles);
       } catch (err) {
-        console.error("Error loading follow list:", err);
+        console.error("Error loading list:", err);
       } finally {
         setLoadingFollowList(false);
       }
@@ -688,7 +704,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                   {[
                     { value: p.followers >= 1000 ? (p.followers / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : p.followers, label: 'Followers', clickable: true },
                     { value: p.following >= 1000 ? (p.following / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : p.following, label: 'Following', clickable: true },
-                    { value: p.projects, label: 'Projects' },
+                    { value: p.projects, label: 'Projects', clickable: true },
                     { value: p.rating || '—', label: `${p.reviews} Reviews` },
                   ].map(stat => (
                     <div
@@ -1216,48 +1232,103 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     </div>
 
     {/* Follow Modal Overlay */}
+    {/* Full-screen Follow/Following/Projects Modal */}
     {showFollowModal && (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0A0A0A]/80 backdrop-blur-sm">
-        <GlassCard strong className="w-full max-w-sm border border-nc-border bounce-in p-0 overflow-hidden">
-          <div className="flex justify-between items-center p-4 border-b border-nc-border">
-            <h3 className="font-bold text-white capitalize">{showFollowModal}</h3>
-            <button onClick={() => setShowFollowModal(null)} className="text-nc-muted hover:text-white p-2">CLOSE</button>
+      <div className="fixed inset-0 z-[100] bg-nc-dark overflow-y-auto flex flex-col animate-in fade-in duration-200">
+        <div className="w-full max-w-3xl mx-auto px-6 sm:px-8 py-10 flex-1 flex flex-col">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-5 shrink-0">
+            <h1 className="text-2xl font-black text-white capitalize tracking-tight">{showFollowModal}</h1>
+            <button
+              onClick={() => setShowFollowModal(null)}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+
+          {/* List Content */}
+          <div className="flex-1">
             {loadingFollowList ? (
-              <p className="text-xs text-nc-muted text-center py-4">Loading members list...</p>
-            ) : followList.length > 0 ? (
               <div className="space-y-3">
-                {followList.map(item => (
-                  <div 
-                    key={item.id} 
-                    onClick={() => {
-                      setShowFollowModal(null);
-                      onNavigate('profile', item.id);
-                    }}
-                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-nc-surface border border-nc-border overflow-hidden flex items-center justify-center font-bold text-xs text-nc-accent">
-                      {item.image ? (
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                      ) : (
-                        item.name.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white leading-none">{item.name}</p>
-                      <p className="text-[10px] text-nc-muted uppercase mt-0.5">{item.role}</p>
-                    </div>
-                  </div>
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-white/5 rounded-2xl p-5 animate-pulse h-20" />
                 ))}
               </div>
+            ) : followList.length > 0 ? (
+              showFollowModal === 'projects' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {followList.map(item => (
+                    <div 
+                      key={item.id} 
+                      onClick={() => {
+                        setShowFollowModal(null);
+                        onNavigate('casting-detail', item.id);
+                      }}
+                      className="flex flex-col justify-between p-5 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 cursor-pointer transition-all hover:scale-[1.01] group"
+                    >
+                      <div>
+                        <div className="flex justify-between items-start mb-3">
+                          <h3 className="text-base font-bold text-white leading-tight group-hover:text-nc-accent transition-colors">{item.title}</h3>
+                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider ${
+                            item.status === 'Approved' || item.status === 'Open'
+                              ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                              : 'bg-white/5 text-nc-muted border border-white/10'
+                          }`}>{item.status}</span>
+                        </div>
+                        <p className="text-xs text-nc-muted uppercase tracking-wider">Prod: {item.production}</p>
+                      </div>
+                      <div className="mt-4 flex items-center gap-1.5 text-xs text-nc-secondary">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        {item.location}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {followList.map(item => (
+                    <div 
+                      key={item.id} 
+                      onClick={() => {
+                        setShowFollowModal(null);
+                        onNavigate('profile', item.id);
+                      }}
+                      className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 cursor-pointer transition-all hover:scale-[1.01]"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-nc-surface border border-nc-border overflow-hidden flex items-center justify-center font-bold text-sm text-nc-accent shrink-0">
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          item.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-base font-bold text-white leading-tight truncate">{item.name}</p>
+                        <p className="text-xs text-nc-muted uppercase mt-1 tracking-wider">{item.role}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
             ) : (
-              <div className="text-center py-8 text-nc-muted text-sm italic font-medium">
-                No members found
+              <div className="text-center py-20">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4 text-[#555]">
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </div>
+                <p className="text-white font-bold text-lg">No items found</p>
+                <p className="text-nc-muted text-sm mt-1">There is nothing to display in this list.</p>
               </div>
             )}
           </div>
-        </GlassCard>
+        </div>
       </div>
     )}
 

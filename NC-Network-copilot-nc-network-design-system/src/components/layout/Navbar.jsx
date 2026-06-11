@@ -239,58 +239,17 @@ export default function Navbar({ onNavigate, currentPage, onBack, showBack, isAd
                 </svg>
               </button>
               
-              {/* Notifications Dropdown */}
-              <div className="relative group flex items-center">
-                <Link
-                  to="/notifications"
-                  className={`text-nc-secondary hover:text-white p-1.5 relative transition-colors ${isActionActive('notifications') ? 'text-white' : ''}`}
-                  aria-label="Notifications"
-                >
-                  <NotificationIcon size={24} color="currentColor" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#ef4444]" />
-                  )}
-                </Link>
-                
-                {/* Notifications Flyout Panel */}
-                <div className="absolute top-full right-0 mt-2 w-80 rounded-2xl bg-[#111] border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
-                  <div className="p-4 border-b border-white/5 flex justify-between items-center bg-black/40">
-                    <h3 className="font-bold text-white text-sm">Notifications</h3>
-                    <span className="text-xs text-nc-accent cursor-pointer hover:underline">Mark all as read</span>
-                  </div>
-                  <div className="max-h-[24rem] overflow-y-auto">
-                    {notifications.length > 0 ? (
-                      notifications.map((notif) => (
-                        <div 
-                          key={notif.id}
-                          onClick={() => navigate('/notifications')}
-                          className={`p-4 border-b border-white/5 flex gap-3 hover:bg-white/5 transition-colors cursor-pointer ${!notif.read ? 'bg-white/[0.02]' : ''}`}
-                        >
-                          <Avatar src={notif.senderImage} size="sm" className="shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-white leading-relaxed">
-                              <span className="font-bold">{notif.senderName}</span> {formatMessagePreview(notif.message)}
-                            </p>
-                            <p className="text-[10px] text-nc-muted mt-1">{formatTimeAgo(notif.createdAt)}</p>
-                          </div>
-                          {!notif.read && <div className="w-1.5 h-1.5 rounded-full bg-nc-accent mt-1" />}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-8 text-center">
-                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3 text-[#555]">
-                          <NotificationIcon size={24} color="currentColor" />
-                        </div>
-                        <p className="text-sm text-white font-medium">No new alerts</p>
-                        <p className="text-xs text-[#555] mt-1">We'll notify you about new casting calls and messages here.</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3 bg-black/40 text-center">
-                    <Link to="/notifications" className="text-xs text-white/70 hover:text-white font-medium block w-full py-1">View All Alerts</Link>
-                  </div>
-                </div>
-              </div>
+              {/* Notifications Link */}
+              <Link
+                to="/notifications"
+                className={`text-nc-secondary hover:text-white p-1.5 relative transition-colors ${isActionActive('notifications') ? 'text-white' : ''}`}
+                aria-label="Notifications"
+              >
+                <NotificationIcon size={24} color="currentColor" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#ef4444]" />
+                )}
+              </Link>
               <Link
                 to="/messages"
                 className={`text-nc-secondary hover:text-white p-1.5 relative transition-colors ${isActionActive('messages') ? 'text-white' : ''}`}
