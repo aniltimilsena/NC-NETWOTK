@@ -95,6 +95,21 @@ export function CallProvider({ children, user }: CallProviderProps) {
     }
   }, [webrtc.callState]);
 
+  // ─── Reset active/incoming call states when call ends ──────────────────
+
+  useEffect(() => {
+    if (webrtc.callState === "ended") {
+      setActiveCall(null);
+      setIncomingCall(null);
+      stopRingtone();
+      
+      const timer = setTimeout(() => {
+        webrtc.resetToIdle();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [webrtc.callState, webrtc.resetToIdle]);
+
   // ─── Listen for custom 'nc-call' events from non-context components ────
 
   useEffect(() => {

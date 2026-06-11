@@ -39,6 +39,7 @@ interface UseWebRTCReturn {
   toggleMute: () => void;
   toggleVideo: () => void;
   switchCamera: () => Promise<void>;
+  resetToIdle: () => void;
 }
 
 interface StartCallParams {
@@ -318,7 +319,7 @@ export function useWebRTC(): UseWebRTCReturn {
       } catch (err: any) {
         console.error("[WebRTC] startCall error:", err);
         if (callState !== "error") {
-          setErrorMessage(err.message || "Failed to start call");
+          setErrorMessage((prev) => prev || err.message || "Failed to start call");
           setCallState("error");
         }
       }
@@ -402,7 +403,7 @@ export function useWebRTC(): UseWebRTCReturn {
       } catch (err: any) {
         console.error("[WebRTC] answerCall error:", err);
         if (callState !== "error") {
-          setErrorMessage(err.message || "Failed to answer call");
+          setErrorMessage((prev) => prev || err.message || "Failed to answer call");
           setCallState("error");
         }
       }
@@ -481,6 +482,10 @@ export function useWebRTC(): UseWebRTCReturn {
     }
   }, [localStream]);
 
+  const resetToIdle = useCallback(() => {
+    setCallState("idle");
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -502,5 +507,6 @@ export function useWebRTC(): UseWebRTCReturn {
     toggleMute,
     toggleVideo,
     switchCamera,
+    resetToIdle,
   };
 }
