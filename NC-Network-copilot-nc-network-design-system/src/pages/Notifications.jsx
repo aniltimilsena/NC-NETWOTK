@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../lib/firebase';
-import { collection, query, where, orderBy, getDocs, limit, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, limit, doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { formatMessagePreview } from '../utils/format';
 
 export default function Notifications({ onNavigate, user }) {
@@ -18,38 +18,34 @@ export default function Notifications({ onNavigate, user }) {
   ];
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!user?.uid) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        const q = query(
-          collection(db, 'notifications'),
-          where('userId', '==', user.uid),
-          limit(100) // Fetch more to allow client-side sorting
-        );
-        const snapshot = await getDocs(q);
-        const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        
-        // Client-side sort by createdAt desc
-        items.sort((a, b) => {
-          const timeA = a.createdAt?.seconds || 0;
-          const timeB = b.createdAt?.seconds || 0;
-          return timeB - timeA;
-        });
+    if (!user?.uid) {
+      setNotifications([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', user.uid),
+      limit(100)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Sort by createdAt desc
+      items.sort((a, b) => {
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
+      setNotifications(items);
+      setLoading(false);
+    }, (err) => {
+      console.error('Failed to subscribe to notifications:', err);
+      setNotifications([]);
+      setLoading(false);
+    });
 
-        setNotifications(items);
-      } catch (err) {
-        console.error('Failed to fetch notifications:', err);
-        setNotifications([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNotifications();
+    return () => unsub();
   }, [user?.uid]);
 
   const getDemoNotifications = () => [];

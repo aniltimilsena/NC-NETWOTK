@@ -18,7 +18,8 @@ import {
   where, 
   getDocs, 
   onSnapshot,
-  orderBy
+  orderBy,
+  addDoc
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -35,6 +36,8 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [showFollowModal, setShowFollowModal] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   
   // Follow list & reviews state
   const [followList, setFollowList] = useState([]);
@@ -86,6 +89,30 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     });
     return () => unsub();
   }, [user?.uid, profileId]);
+
+  // Subscribe to real-time follower count
+  useEffect(() => {
+    if (!targetUid) return;
+    const q = query(collection(db, "follows"), where("followingId", "==", targetUid));
+    const unsub = onSnapshot(q, (snap) => {
+      setFollowerCount(snap.size);
+    }, (err) => {
+      console.warn("Followers count subscription failed:", err);
+    });
+    return () => unsub();
+  }, [targetUid]);
+
+  // Subscribe to real-time following count
+  useEffect(() => {
+    if (!targetUid) return;
+    const q = query(collection(db, "follows"), where("followerId", "==", targetUid));
+    const unsub = onSnapshot(q, (snap) => {
+      setFollowingCount(snap.size);
+    }, (err) => {
+      console.warn("Following count subscription failed:", err);
+    });
+    return () => unsub();
+  }, [targetUid]);
 
   // Subscribe to real reviews feed
   useEffect(() => {
@@ -193,6 +220,20 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           followingId: profileId,
           createdAt: serverTimestamp()
         });
+
+        // Send notification
+        try {
+          await addDoc(collection(db, "notifications"), {
+            userId: profileId,
+            title: "New Follower",
+            body: `${user.displayName || user.email || 'Someone'} started following you.`,
+            type: "system",
+            read: false,
+            createdAt: serverTimestamp()
+          });
+        } catch (nErr) {
+          console.warn("Could not send follow notification:", nErr);
+        }
         // Increment counters
         await updateDoc(doc(db, "profiles", profileId), { followers: increment(1) });
         await updateDoc(doc(db, "profiles", user.uid), { following: increment(1) });
@@ -463,8 +504,8 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     role: profile?.role || 'New User',
     location: profile?.location || 'Not Specified',
     bio: profile?.bio || 'No bio provided yet.',
-    followers: profile?.followers || 0,
-    following: profile?.following || 0,
+    followers: followerCount,
+    following: followingCount,
     projects: profile?.projects || 0,
     rating: profile?.rating || 0,
     reviews: profile?.reviews || 0,

@@ -37,7 +37,8 @@ import {
   collection, 
   query, 
   where, 
-  onSnapshot 
+  onSnapshot,
+  addDoc 
 } from 'firebase/firestore';
 
 export default function Home({ onNavigate, user }) {
@@ -205,6 +206,20 @@ export default function Home({ onNavigate, user }) {
           followingId: targetId,
           createdAt: serverTimestamp()
         });
+
+        // Send notification
+        try {
+          await addDoc(collection(db, "notifications"), {
+            userId: targetId,
+            title: "New Follower",
+            body: `${user.displayName || user.email || 'Someone'} started following you.`,
+            type: "system",
+            read: false,
+            createdAt: serverTimestamp()
+          });
+        } catch (nErr) {
+          console.warn("Could not send follow notification in Home:", nErr);
+        }
         await updateDoc(doc(db, "profiles", targetId), { followers: increment(1) });
         await updateDoc(doc(db, "profiles", user.uid), { following: increment(1) });
         try {

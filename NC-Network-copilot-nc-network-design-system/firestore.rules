@@ -21,7 +21,8 @@ service cloud.firestore {
         && (resource == null
             ? (request.resource.data.verified == false)
             : (request.resource.data.verified == resource.data.verified)))
-        || (isSignedIn() && getUserData().isAdmin == true);
+        || (isSignedIn() && getUserData().isAdmin == true)
+        || (isSignedIn() && resource != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followers']));
     }
 
     // Users
@@ -31,7 +32,8 @@ service cloud.firestore {
         && (resource == null
             ? ((request.resource.data.isAdmin == false || request.auth.token.email == 'aniltimilsena53@gmail.com') && request.resource.data.role in ['Talent', 'Agent', 'Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer'])
             : ((request.resource.data.isAdmin == resource.data.isAdmin || request.auth.token.email == 'aniltimilsena53@gmail.com') && request.resource.data.role in ['Talent', 'Agent', 'Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer'])))
-        || (isSignedIn() && getUserData().isAdmin == true);
+        || (isSignedIn() && getUserData().isAdmin == true)
+        || (isSignedIn() && resource != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followers']));
     }
 
     // Conversations
@@ -65,7 +67,7 @@ service cloud.firestore {
     // Notifications
     match /notifications/{notifId} {
       allow read, update: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn();
     }
 
     // Casting Calls
