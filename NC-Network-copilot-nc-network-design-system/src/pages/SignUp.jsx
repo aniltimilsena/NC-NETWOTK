@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { EyeToggleIcon } from "@/components/ui/animated-state-icons"
 import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
