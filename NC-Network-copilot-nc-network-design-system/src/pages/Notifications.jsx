@@ -1,21 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../lib/firebase';
-import { collection, query, where, orderBy, getDocs, limit, doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, limit, doc, updateDoc, onSnapshot, setDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { formatMessagePreview } from '../utils/format';
 
 export default function Notifications({ onNavigate, user }) {
   const [filter, setFilter] = useState('all');
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [followingIds, setFollowingIds] = useState(new Set());
 
   const filters = [
     { id: 'all', label: 'All' },
     { id: 'unread', label: 'Unread' },
+    { id: 'follow', label: 'Follows' },
     { id: 'messages', label: 'Messages' },
     { id: 'casting', label: 'Casting' },
     { id: 'system', label: 'System' },
   ];
+
+  // Subscribe to follows to track who the user is currently following back in real-time
+  useEffect(() => {
+    if (!user?.uid) {
+      setFollowingIds(new Set());
+      return;
+    }
+    const q = query(collection(db, 'follows'), where('followerId', '==', user.uid));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const ids = new Set(snapshot.docs.map(docSnap => docSnap.data().followingId));
+      setFollowingIds(ids);
+    }, (err) => {
+      if (err.code !== 'permission-denied') {
+        console.error("Follows subscription failed:", err);
+      }
+    });
+    return () => unsub();
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!user?.uid) {
@@ -52,19 +72,78 @@ export default function Notifications({ onNavigate, user }) {
 
   const markAsRead = async (notifId) => {
     setNotifications(prev =>
-      prev.map(n => n.id === notifId ? { ...n, read: true } : n)
+      prev.map(n => n.id === notifId ? { ...n, read: true, isRead: true } : n)
     );
     if (user?.uid) {
       try {
-        await updateDoc(doc(db, 'notifications', notifId), { read: true });
+        await updateDoc(doc(db, 'notifications', notifId), { read: true, isRead: true });
       } catch (err) {
         // Silently fail — already updated locally
       }
     }
   };
 
+  const handleNotificationClick = async (notif) => {
+    await markAsRead(notif.id);
+    if (notif.type === 'follow' && notif.senderId) {
+      onNavigate('profile', notif.senderId);
+    } else if (notif.profileUrl) {
+      const parts = notif.profileUrl.split('/');
+      const id = parts[parts.length - 1];
+      if (id) onNavigate('profile', id);
+    }
+  };
+
+  const handleFollowBack = async (e, senderId) => {
+    e.stopPropagation();
+    if (!user?.uid) return;
+
+    const followId = `${user.uid}_${senderId}`;
+    const followDocRef = doc(db, "follows", followId);
+
+    try {
+      // Create follow document
+      await setDoc(followDocRef, {
+        followerId: user.uid,
+        followingId: senderId,
+        createdAt: serverTimestamp()
+      });
+
+      // Send follow notification back (deterministic ID)
+      const notifId = `${user.uid}_${senderId}_follow`;
+      await setDoc(doc(db, "notifications", notifId), {
+        userId: senderId,
+        recipientId: senderId,
+        receiverId: senderId,
+        senderId: user.uid,
+        notificationType: "follow",
+        type: "follow",
+        isRead: false,
+        read: false,
+        createdAt: serverTimestamp(),
+        profileUrl: `/profile/${user.uid}`,
+        title: "New Follower",
+        body: `${user.displayName || user.email || 'Someone'} started following you.`,
+        senderName: user.displayName || 'Someone',
+        senderAvatar: user.photoURL || ''
+      }, { merge: true });
+
+      // Increment counters
+      await updateDoc(doc(db, "profiles", senderId), { followers: increment(1) });
+      await updateDoc(doc(db, "profiles", user.uid), { following: increment(1) });
+      try {
+        await updateDoc(doc(db, "users", senderId), { followers: increment(1) });
+        await updateDoc(doc(db, "users", user.uid), { following: increment(1) });
+      } catch (err) {
+        console.warn("Could not sync follows stats to user doc:", err);
+      }
+    } catch (err) {
+      console.error("Error following back:", err);
+    }
+  };
+
   const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications(prev => prev.map(n => ({ ...n, read: true, isRead: true })));
   };
 
   const filtered = notifications.filter(n => {
@@ -84,9 +163,7 @@ export default function Notifications({ onNavigate, user }) {
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
     if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
     return `${Math.floor(diff / 604800)}w ago`;
-  };
-
-  const typeIcon = (type) => {
+  };  const typeIcon = (type) => {
     switch (type) {
       case 'messages':
         return (
@@ -98,6 +175,12 @@ export default function Notifications({ onNavigate, user }) {
         return (
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+          </svg>
+        );
+      case 'follow':
+        return (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
           </svg>
         );
       default:
@@ -113,11 +196,11 @@ export default function Notifications({ onNavigate, user }) {
     switch (type) {
       case 'messages': return 'text-purple-400 bg-purple-400/10';
       case 'casting': return 'text-nc-accent bg-nc-accent/10';
+      case 'follow': return 'text-nc-accent bg-nc-accent/10';
       case 'system': return 'text-gray-400 bg-gray-400/10';
       default: return 'text-white bg-white/10';
     }
   };
-
   return (
     <div className="min-h-screen bg-nc-dark">
       {/* Header */}
@@ -209,7 +292,7 @@ export default function Notifications({ onNavigate, user }) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ delay: i * 0.03 }}
-                  onClick={() => markAsRead(notif.id)}
+                  onClick={() => handleNotificationClick(notif)}
                   className={`relative p-4 rounded-2xl cursor-pointer transition-all border ${
                     notif.read
                       ? 'bg-white/[0.02] border-white/5 hover:bg-white/5'
@@ -222,14 +305,22 @@ export default function Notifications({ onNavigate, user }) {
                   )}
 
                   <div className="flex items-start gap-4">
-                    {/* Icon */}
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${typeColor(notif.type)}`}>
-                      {typeIcon(notif.type)}
-                    </div>
+                    {/* Icon / Avatar */}
+                    {notif.type === 'follow' && notif.senderAvatar ? (
+                      <img 
+                        src={notif.senderAvatar} 
+                        alt={notif.senderName || 'Avatar'} 
+                        className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${typeColor(notif.type)}`}>
+                        {typeIcon(notif.type)}
+                      </div>
+                    )}
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center justify-between gap-2 mb-1">
                         <h3 className={`text-sm font-bold truncate ${notif.read ? 'text-[#aaa]' : 'text-white'}`}>
                           {notif.title}
                         </h3>
@@ -237,6 +328,28 @@ export default function Notifications({ onNavigate, user }) {
                       <p className={`text-xs leading-relaxed ${notif.read ? 'text-[#555]' : 'text-[#888]'}`}>
                         {formatMessagePreview(notif.body)}
                       </p>
+
+                      {/* Follow Back Button for follow notifications */}
+                      {notif.type === 'follow' && notif.senderId && (
+                        <div className="mt-3">
+                          {followingIds.has(notif.senderId) ? (
+                            <button
+                              disabled
+                              className="px-4 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[#555] text-xs font-bold uppercase tracking-wide cursor-not-allowed"
+                            >
+                              Following
+                            </button>
+                          ) : (
+                            <button
+                              onClick={(e) => handleFollowBack(e, notif.senderId)}
+                              className="px-4 py-1.5 rounded-xl bg-nc-accent hover:bg-sky-400 text-[#0A0A0A] text-xs font-black uppercase tracking-wide transition-all active:scale-95"
+                            >
+                              Follow Back
+                            </button>
+                          )}
+                        </div>
+                      )}
+
                       <span className="text-[10px] text-[#444] mt-2 block font-medium">
                         {timeAgo(notif.createdAt?.seconds)}
                       </span>

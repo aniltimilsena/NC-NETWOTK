@@ -237,19 +237,42 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           createdAt: serverTimestamp()
         });
 
-        // Send notification
+        // Send notification (deterministic ID to prevent duplicates)
         try {
-          await addDoc(collection(db, "notifications"), {
+          let senderName = user.displayName || 'Someone';
+          let senderAvatar = user.photoURL || '';
+          try {
+            const senderProfileSnap = await getDocs(query(collection(db, "profiles"), where("__name__", "==", user.uid)));
+            if (!senderProfileSnap.empty) {
+              const spData = senderProfileSnap.docs[0].data();
+              senderName = spData.name || senderName;
+              senderAvatar = spData.image || senderAvatar;
+            }
+          } catch (spErr) {
+            console.warn("Could not load sender profile:", spErr);
+          }
+
+          const notifId = `${user.uid}_${profileId}_follow`;
+          await setDoc(doc(db, "notifications", notifId), {
             userId: profileId,
-            title: "New Follower",
-            body: `${user.displayName || user.email || 'Someone'} started following you.`,
-            type: "system",
+            recipientId: profileId,
+            receiverId: profileId,
+            senderId: user.uid,
+            notificationType: "follow",
+            type: "follow",
+            isRead: false,
             read: false,
-            createdAt: serverTimestamp()
-          });
+            createdAt: serverTimestamp(),
+            profileUrl: `/profile/${user.uid}`,
+            title: "New Follower",
+            body: `${senderName} started following you.`,
+            senderName,
+            senderAvatar
+          }, { merge: true });
         } catch (nErr) {
           console.warn("Could not send follow notification:", nErr);
         }
+
         // Increment counters
         await updateDoc(doc(db, "profiles", profileId), { followers: increment(1) });
         await updateDoc(doc(db, "profiles", user.uid), { following: increment(1) });
