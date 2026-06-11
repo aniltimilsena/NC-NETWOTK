@@ -4,6 +4,7 @@ import { Bookmark, ClipboardList, SortDesc, ChevronDown, Check, Zap } from 'luci
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import { subscribeToCastingCalls } from '../services/casting';
+import { CATEGORIES } from '../constants/categories';
 
 export default function CastingCall({ onNavigate }) {
   const [filter, setFilter] = useState('All');
@@ -13,7 +14,7 @@ export default function CastingCall({ onNavigate }) {
   const [activeSort, setActiveSort] = useState('recent');
   const [isSortOpen, setIsSortOpen] = useState(false);
 
-  const types = ['All', 'Saved', 'Film', 'Commercial', 'Web Series', 'Theatre'];
+  const types = ['All', 'Saved', ...CATEGORIES];
   const sortOptions = [
     { id: 'recent', label: 'Latest Posted' },
     { id: 'budget', label: 'Highest Budget' },

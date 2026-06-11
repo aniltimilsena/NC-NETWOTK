@@ -7,6 +7,7 @@ import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import Tag from '../components/ui/Tag';
 import TalentCardSkeleton from '../components/ui/TalentCardSkeleton';
+import { CATEGORIES } from '../constants/categories';
 
 export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
   const [talents, setTalents] = useState([]);
@@ -20,7 +21,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [profilesReady, setProfilesReady] = useState(false);
 
-  const roles = ['All', 'Actors', 'Directors', 'Models', 'Dancers', 'Musicians', 'Voice Over', 'VFX', 'Writers'];
+  const roles = ['All', ...CATEGORIES];
   const sortOptions = [
     { id: 'recent', label: 'Recently Active' },
     { id: 'followers', label: 'Most Followers' },
@@ -63,8 +64,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         t.role?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesRole = activeRole === 'All' || 
-        t.role?.toLowerCase().includes(activeRole.toLowerCase().replace(/s$/, '')) ||
-        (activeRole === 'Actors' && t.role?.toLowerCase().includes('actor'));
+        t.role?.toLowerCase() === activeRole.toLowerCase();
         
       return matchesSearch && matchesRole;
     })

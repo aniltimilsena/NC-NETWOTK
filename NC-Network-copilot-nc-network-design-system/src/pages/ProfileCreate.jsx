@@ -4,6 +4,7 @@ import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import { updateProfileData } from '../services/profile';
 import { serverTimestamp } from 'firebase/firestore';
+import { CATEGORIES } from '../constants/categories';
 
 const STEPS = [
   { id: 1, title: 'Basic Info', icon: '' },
@@ -16,7 +17,7 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
   const [isLoading, setIsLoading] = useState(false);
   const [form, setForm] = useState({
     name: user?.displayName || '', 
-    role: '', 
+    role: 'Actors', 
     location: '', 
     bio: '', 
     languages: [], 
@@ -151,8 +152,16 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                   <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Your full name" className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm" />
                 </div>
                 <div className="flex-1 min-w-[200px]">
-                  <label className="block text-sm font-medium text-nc-secondary mb-2">Role / Profession *</label>
-                  <input type="text" value={form.role} onChange={e => setForm({...form, role: e.target.value})} placeholder="e.g. Actor, Director..." className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm" />
+                  <label className="block text-sm font-medium text-nc-secondary mb-2">Category / Profession *</label>
+                  <select 
+                    value={form.role} 
+                    onChange={e => setForm({...form, role: e.target.value})} 
+                    className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
+                  >
+                    {CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex-1 min-w-[200px]">
                   <label className="block text-sm font-medium text-nc-secondary mb-2">Location *</label>

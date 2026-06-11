@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/animated-state-icons"
 import { Plus, Check } from "lucide-react"
 import Avatar from '../components/ui/Avatar';
+import { CATEGORIES } from '../constants/categories';
 
 
 // Cinematic Toggle (now unified with the premium neon toggle style)
@@ -757,9 +758,9 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                   <GoldenToggle enabled={openToWork} onChange={(v) => { setOpenToWork(v); markDirty(); }} />
                 </div>
 
-                <EditInput
-                  label="Professional Title"
-                  placeholder="e.g. Lead Actor | Combat Trained"
+                <EditSelect
+                  label="Professional Category"
+                  options={CATEGORIES}
                   value={role}
                   onChange={(e) => { setRole(e.target.value); markDirty(); }}
                 />

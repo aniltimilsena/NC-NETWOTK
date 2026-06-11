@@ -22,8 +22,11 @@ import {
   GlobalSettings, 
   AdminLog 
 } from '../../services/admin';
-import { auth } from '../../lib/firebase';
+import { auth, db } from '../../lib/firebase';
 import { logAdminAction } from '../../services/admin';
+import { CATEGORIES } from '../../constants/categories';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState<GlobalSettings | null>(null);
@@ -31,8 +34,118 @@ export default function AdminSettings() {
   const [loading, setLoading] = useState(true);
   const [newCategory, setNewCategory] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [migrationStatus, setMigrationStatus] = useState<string | null>(null);
+  const [isMigrating, setIsMigrating] = useState(false);
 
   const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+
+  const runDatabaseMigration = async () => {
+    if (!window.confirm("Are you sure you want to scan and migrate all Users, Profiles, and Casting Calls to the 8 approved categories? This will modify legacy categories in Firestore.")) {
+      return;
+    }
+
+    setIsMigrating(true);
+    setMigrationStatus("Initializing migration...");
+
+    try {
+      // 1. Update settings/global
+      setMigrationStatus("Updating global settings categories...");
+      await updateGlobalSettings({ categories: [...CATEGORIES] });
+
+      const mappingFunction = (role: string | undefined | null): string => {
+        if (!role) return "Actors";
+        const clean = role.trim().toLowerCase();
+        if (clean === "actor" || clean === "actors") return "Actors";
+        if (clean === "director" || clean === "directors") return "Directors";
+        if (clean === "model" || clean === "models") return "Models";
+        if (clean === "dancer" || clean === "dancers") return "Dancers";
+        if (clean === "musician" || clean === "musicians") return "Musicians";
+        if (clean === "voice over" || clean === "voiceover" || clean === "voice-over" || clean === "voice artists" || clean === "voice artist") return "Voice Over";
+        if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
+        if (clean === "writer" || clean === "writers") return "Writers";
+        
+        if (clean === "photographer" || clean === "photographers") return "Models";
+        if (clean === "agent" || clean === "agents" || clean === "producer" || clean === "producers") return "Directors";
+        if (clean === "talent" || clean === "extras" || clean === "crew" || clean === "crew members") return "Actors";
+
+        for (const cat of CATEGORIES) {
+          if (cat.toLowerCase().startsWith(clean) || clean.startsWith(cat.toLowerCase().slice(0, -1))) {
+            return cat;
+          }
+        }
+        return "Actors";
+      };
+
+      const castingTypeMappingFunction = (type: string | undefined | null): string => {
+        if (!type) return "Actors";
+        const clean = type.trim().toLowerCase();
+        if (clean === "actor" || clean === "actors") return "Actors";
+        if (clean === "director" || clean === "directors") return "Directors";
+        if (clean === "model" || clean === "models") return "Models";
+        if (clean === "dancer" || clean === "dancers") return "Dancers";
+        if (clean === "musician" || clean === "musicians") return "Musicians";
+        if (clean === "voice over" || clean === "voiceover" || clean === "voice-over" || clean === "voice artist") return "Voice Over";
+        if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
+        if (clean === "writer" || clean === "writers") return "Writers";
+        if (clean === "film" || clean === "theatre" || clean === "commercial" || clean === "series" || clean === "short film") {
+          return "Actors";
+        }
+        return "Actors";
+      };
+
+      // 2. Migrate Users
+      setMigrationStatus("Scanning users...");
+      const usersSnap = await getDocs(collection(db, "users"));
+      let usersUpdated = 0;
+      for (const d of usersSnap.docs) {
+        const data = d.data();
+        if (!CATEGORIES.includes(data.role)) {
+          const newRole = mappingFunction(data.role);
+          await updateDoc(doc(db, "users", d.id), { role: newRole });
+          usersUpdated++;
+        }
+      }
+
+      // 3. Migrate Profiles
+      setMigrationStatus("Scanning profiles...");
+      const profilesSnap = await getDocs(collection(db, "profiles"));
+      let profilesUpdated = 0;
+      for (const d of profilesSnap.docs) {
+        const data = d.data();
+        if (!CATEGORIES.includes(data.role)) {
+          const newRole = mappingFunction(data.role);
+          await updateDoc(doc(db, "profiles", d.id), { role: newRole });
+          profilesUpdated++;
+        }
+      }
+
+      // 4. Migrate Casting Calls
+      setMigrationStatus("Scanning casting calls...");
+      const castingSnap = await getDocs(collection(db, "casting_calls"));
+      let castingUpdated = 0;
+      for (const d of castingSnap.docs) {
+        const data = d.data();
+        if (!CATEGORIES.includes(data.type)) {
+          const newType = castingTypeMappingFunction(data.type);
+          await updateDoc(doc(db, "casting_calls", d.id), { type: newType });
+          castingUpdated++;
+        }
+      }
+
+      const logMsg = `Migrated: ${usersUpdated} users, ${profilesUpdated} profiles, ${castingUpdated} casting calls.`;
+      await logAdminAction(adminEmail, "Database Category Migration", "global_settings", logMsg);
+
+      setMigrationStatus(`Success! Migrated ${usersUpdated} users, ${profilesUpdated} profiles, and ${castingUpdated} casting calls.`);
+      alert(`Migration completed!\n- Users updated: ${usersUpdated}\n- Profiles updated: ${profilesUpdated}\n- Casting Calls updated: ${castingUpdated}`);
+    } catch (err: any) {
+      console.error(err);
+      setMigrationStatus(`Error: ${err.message}`);
+      alert("Migration failed: " + err.message);
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
 
   useEffect(() => {
     // 1. Subscribe to Global Settings
@@ -94,6 +207,11 @@ export default function AdminSettings() {
     if (!settings || !newCategory.trim()) return;
 
     const trimmed = newCategory.trim();
+    if (!CATEGORIES.includes(trimmed as any)) {
+      alert(`Invalid category selection. Must be one of the approved categories: ${CATEGORIES.join(', ')}`);
+      return;
+    }
+
     if (settings.categories.includes(trimmed)) {
       alert("Category already exists.");
       return;
@@ -253,7 +371,25 @@ export default function AdminSettings() {
                 </div>
               ))}
             </div>
+
+            <div className="mt-4 pt-4 border-t border-admin-border space-y-2">
+              <button
+                type="button"
+                onClick={runDatabaseMigration}
+                disabled={isMigrating}
+                className="w-full py-2.5 bg-admin-primary/10 border border-admin-primary/20 hover:bg-admin-primary/20 text-admin-primary rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Database className="w-4 h-4" />
+                {isMigrating ? "Migrating Database..." : "Run Global Category Migration"}
+              </button>
+              {migrationStatus && (
+                <p className="text-[10px] text-nc-muted font-mono bg-admin-surface-light/50 border border-admin-border p-2 rounded-lg text-center break-all">
+                  {migrationStatus}
+                </p>
+              )}
+            </div>
           </div>
+
           
           <div className="pt-6 border-t border-admin-border space-y-4 mt-6">
              <div className="flex items-center justify-between">

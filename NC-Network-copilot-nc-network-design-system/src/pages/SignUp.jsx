@@ -7,9 +7,10 @@ import { auth, googleProvider } from '../lib/firebase';
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 
 import { signUpUser, ensureUserProfile } from '../services/auth';
+import { CATEGORIES } from '../constants/categories';
 
 export default function SignUp({ onNavigate, showAlert }) {
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', role: '', gender: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', role: 'Actors', gender: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
@@ -106,7 +107,7 @@ export default function SignUp({ onNavigate, showAlert }) {
       setIsLoading(false);
     }
   };
-  const roles = ['Actor', 'Director', 'Model', 'Cinematographer', 'Editor', 'Dancer', 'Writer', 'Agent'];
+  const roles = CATEGORIES;
 
   return (
     <div className="min-h-screen bg-nc-dark flex items-center justify-center p-4 relative overflow-hidden">

@@ -21,6 +21,7 @@ import { db, auth } from "../../lib/firebase";
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 import { logAdminAction } from '../../services/admin';
+import { CATEGORIES } from '../../constants/categories';
 
 type AdminUser = {
   id: string;
@@ -154,8 +155,12 @@ export default function AdminUsers() {
     if (!name) return;
     const email = prompt("Enter email address:");
     if (!email) return;
-    const role = prompt("Enter role (Talent, Agent, Director):", "Talent");
+    const role = prompt(`Enter category (${CATEGORIES.join(', ')}):`, "Actors");
     if (!role) return;
+    if (!CATEGORIES.includes(role as any)) {
+      alert(`Invalid category selection. Must be one of the approved categories.`);
+      return;
+    }
 
     try {
       const tempId = doc(collection(db, "users")).id;

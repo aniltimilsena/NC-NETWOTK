@@ -11,6 +11,8 @@ import {
   serverTimestamp,
   updateDoc
 } from "firebase/firestore";
+import { CATEGORIES } from "../constants/categories";
+
 
 export type AdminLog = {
   id: string;
@@ -70,7 +72,7 @@ const defaultSettings: GlobalSettings = {
     messaging: false,
     proScreenings: true
   },
-  categories: ['Actors', 'Directors', 'Editor/VFX', 'Dancers', 'Models', 'Musicians', 'Writers', 'Comedians']
+  categories: [...CATEGORIES]
 };
 
 // Subscribe to global platform settings

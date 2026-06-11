@@ -117,3 +117,15 @@ export const OpenBookIcon = ({ size = 24, className, ...rest }) => (
     <line x1="14" y1="13.5" x2="18" y2="13.5" stroke="currentColor" strokeWidth="0.9" opacity="0.22" />
   </svg>
 );
+
+export const CATEGORY_ICON_MAP = {
+  'Actors': SpotlightIcon,
+  'Directors': FilmReelIcon,
+  'Models': ApertureIcon,
+  'Dancers': DynamicMotionIcon,
+  'Musicians': EqualizerIcon,
+  'Voice Over': HeadphonesIcon,
+  'VFX': StackedLayersIcon,
+  'Writers': OpenBookIcon,
+};
+

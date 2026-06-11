@@ -144,7 +144,7 @@ const ProfileSchema = z.object({
   phone: z.string().optional(),
   gender: z.string().optional(),
   bio: z.string().max(500).optional(),
-  role: z.string().optional(),
+  role: z.enum(['Actors', 'Directors', 'Models', 'Dancers', 'Musicians', 'Voice Over', 'VFX', 'Writers']).optional(),
   location: z.string().optional(),
   languages: z.array(z.string()).optional(),
   skills: z.array(z.union([z.string(), z.record(z.string(), z.unknown())])).optional(),
@@ -162,7 +162,7 @@ const ProfileSchema = z.object({
 const CastingCallSchema = z.object({
   title: z.string().min(5),
   description: z.string().min(20),
-  type: z.enum(['Film', 'Commercial', 'Web Series', 'Theatre']),
+  type: z.enum(['Actors', 'Directors', 'Models', 'Dancers', 'Musicians', 'Voice Over', 'VFX', 'Writers']),
   budget: z.string().optional(),
   location: z.string(),
 });

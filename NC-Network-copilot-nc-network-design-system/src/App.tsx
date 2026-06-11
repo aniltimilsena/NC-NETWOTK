@@ -3,6 +3,8 @@ import { Routes, Route, useParams, useSearchParams, useLocation, useNavigate, us
 import { AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import ErrorBoundary from './components/ErrorBoundary';
+import { lazyWithRetry } from './utils/lazyWithRetry';
+
 
 // Providers and Overlays
 import { CallProvider } from './context/CallContext';
@@ -28,34 +30,35 @@ import { doc, getDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/fires
 import { useNotifications } from './hooks/useNotifications';
 
 // Lazy Loaded Pages
-const Home = lazy(() => import('./pages/Home'));
-const TalentListing = lazy(() => import('./pages/TalentListing'));
-const Profile = lazy(() => import('./pages/Profile'));
-const CastingCall = lazy(() => import('./pages/CastingCall'));
-const CastingCallDetail = lazy(() => import('./pages/CastingCallDetail'));
-const SignIn = lazy(() => import('./pages/SignIn'));
-const SignUp = lazy(() => import('./pages/SignUp'));
-const ProfileCreate = lazy(() => import('./pages/ProfileCreate'));
-const CastingCallCreate = lazy(() => import('./pages/CastingCallCreate'));
-const Premium = lazy(() => import('./pages/Premium'));
-const Messages = lazy(() => import('./pages/Messages'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const TrustSafety = lazy(() => import('./pages/TrustSafety'));
-const Notifications = lazy(() => import('./pages/Notifications'));
-const Settings = lazy(() => import('./pages/Settings'));
-const NotFound = lazy(() => import('./pages/NotFound'));
+const Home = lazyWithRetry(() => import('./pages/Home'));
+const TalentListing = lazyWithRetry(() => import('./pages/TalentListing'));
+const Profile = lazyWithRetry(() => import('./pages/Profile'));
+const CastingCall = lazyWithRetry(() => import('./pages/CastingCall'));
+const CastingCallDetail = lazyWithRetry(() => import('./pages/CastingCallDetail'));
+const SignIn = lazyWithRetry(() => import('./pages/SignIn'));
+const SignUp = lazyWithRetry(() => import('./pages/SignUp'));
+const ProfileCreate = lazyWithRetry(() => import('./pages/ProfileCreate'));
+const CastingCallCreate = lazyWithRetry(() => import('./pages/CastingCallCreate'));
+const Premium = lazyWithRetry(() => import('./pages/Premium'));
+const Messages = lazyWithRetry(() => import('./pages/Messages'));
+const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService'));
+const TrustSafety = lazyWithRetry(() => import('./pages/TrustSafety'));
+const Notifications = lazyWithRetry(() => import('./pages/Notifications'));
+const Settings = lazyWithRetry(() => import('./pages/Settings'));
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 
 // Admin pages
-const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
-const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
-const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
-const AdminContent = lazy(() => import('./pages/admin/AdminContent'));
-const AdminCasting = lazy(() => import('./pages/admin/AdminCasting'));
-const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
-const AdminPro = lazy(() => import('./pages/admin/AdminPro'));
-const AdminModeration = lazy(() => import('./pages/admin/AdminModeration'));
-const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
+const AdminOverview = lazyWithRetry(() => import('./pages/admin/AdminOverview'));
+const AdminUsers = lazyWithRetry(() => import('./pages/admin/AdminUsers'));
+const AdminAnalytics = lazyWithRetry(() => import('./pages/admin/AdminAnalytics'));
+const AdminContent = lazyWithRetry(() => import('./pages/admin/AdminContent'));
+const AdminCasting = lazyWithRetry(() => import('./pages/admin/AdminCasting'));
+const AdminMessages = lazyWithRetry(() => import('./pages/admin/AdminMessages'));
+const AdminPro = lazyWithRetry(() => import('./pages/admin/AdminPro'));
+const AdminModeration = lazyWithRetry(() => import('./pages/admin/AdminModeration'));
+const AdminSettings = lazyWithRetry(() => import('./pages/admin/AdminSettings'));
+
 
 // Navigation translate helper
 export function getRoutePath(page: string, param: any = null): string {
@@ -385,8 +388,92 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(false);
 
+  // Version check logic
+  const lastVersionCheckRef = useRef<number>(0);
+  useEffect(() => {
+    let localVersion = 'dev';
+    try {
+      localVersion = __BUILD_VERSION__;
+    } catch (e) {
+      console.warn("Build version not defined in environment");
+    }
+
+    const checkVersion = async () => {
+      try {
+        const res = await fetch(`/version.json?cb=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.version && data.version !== localVersion) {
+            console.log(`[Version Check] New build version detected: ${data.version} (Local: ${localVersion})`);
+            
+            // Clear any retry flags so next load is fresh
+            sessionStorage.clear();
+            
+            showAlert(
+              "System Update Available",
+              "info",
+              "A new version of NC Network is available. Click here to reload and fetch the latest features.",
+              () => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('reload', Date.now().toString());
+                window.location.href = url.toString();
+              }
+            );
+          }
+        }
+      } catch (err) {
+        console.debug("Failed to fetch version.json:", err);
+      }
+    };
+
+    // 1. Check on mount
+    checkVersion();
+
+    // 2. Check periodically (every 5 minutes)
+    const interval = setInterval(checkVersion, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [showAlert]);
+
+  // 3. Check on navigation (throttled to at most once a minute)
+  useEffect(() => {
+    const now = Date.now();
+    if (now - lastVersionCheckRef.current < 60000) return;
+    lastVersionCheckRef.current = now;
+
+    let localVersion = 'dev';
+    try {
+      localVersion = __BUILD_VERSION__;
+    } catch (e) {}
+
+    const checkVersionOnNav = async () => {
+      try {
+        const res = await fetch(`/version.json?cb=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.version && data.version !== localVersion) {
+            sessionStorage.clear();
+            showAlert(
+              "System Update Available",
+              "info",
+              "A new version of NC Network is available. Click here to reload and fetch the latest features.",
+              () => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('reload', Date.now().toString());
+                window.location.href = url.toString();
+              }
+            );
+          }
+        }
+      } catch (err) {}
+    };
+
+    checkVersionOnNav();
+  }, [location.pathname, showAlert]);
+
   // Alert queue
   const [alerts, setAlerts] = useState<AlertPayload[]>([]);
+
 
   const showAlert = useCallback((
     message: string,

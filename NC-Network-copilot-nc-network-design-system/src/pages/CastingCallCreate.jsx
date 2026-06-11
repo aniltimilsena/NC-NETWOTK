@@ -4,6 +4,7 @@ import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import { createCastingCall } from '../services/casting';
 import { uploadProfileMedia } from '../services/profile';
+import { CATEGORIES } from '../constants/categories';
 
 const STEPS = [
   { id: 1, title: 'Project Details', icon: '' },
@@ -17,7 +18,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState('');
   const [form, setForm] = useState({
-    title: '', type: 'Feature Film', location: '', description: '',
+    title: '', type: 'Actors', location: '', description: '',
     thumbnail: '',
     budget: '',
     deadline: '',
@@ -206,47 +207,16 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
                   <input type="text" value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="e.g. The Lost City" className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm" />
                 </div>
                 <div className="flex-1 min-w-[200px]">
-                  <label className="block text-sm font-medium text-nc-secondary mb-2">Project Type *</label>
-                  {!['Feature Film', 'Short Film', 'Commercial', 'Music Video'].includes(form.type) && form.type !== '' ? (
-                    <div className="relative group animate-in zoom-in-95 duration-200">
-                      <input 
-                        type="text" 
-                        value={form.type} 
-                        onChange={e => setForm({...form, type: e.target.value})} 
-                        placeholder="Specify project type..." 
-                        className="w-full bg-nc-surface border border-nc-accent rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none shadow-[0_0_15px_rgba(0,186,255,0.1)] transition-all text-sm pr-10" 
-                        autoFocus
-                      />
-                      <button 
-                        onClick={() => setForm({...form, type: 'Feature Film'})}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-nc-muted hover:text-nc-accent p-1 transition-colors"
-                        title="Back to list"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  ) : (
-                    <select 
-                      value={form.type === '' ? 'Other' : form.type} 
-                      onChange={e => {
-                        const val = e.target.value;
-                        if (val === 'Other') {
-                          setForm({...form, type: ' '}); // Set to space to trigger "Other" mode
-                        } else {
-                          setForm({...form, type: val});
-                        }
-                      }} 
-                      className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
-                    >
-                      <option value="Feature Film">Feature Film</option>
-                      <option value="Short Film">Short Film</option>
-                      <option value="Commercial">Commercial</option>
-                      <option value="Music Video">Music Video</option>
-                      <option value="Other">Other...</option>
-                    </select>
-                  )}
+                  <label className="block text-sm font-medium text-nc-secondary mb-2">Project Type / Target Category *</label>
+                  <select 
+                    value={form.type} 
+                    onChange={e => setForm({...form, type: e.target.value})} 
+                    className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
+                  >
+                    {CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="w-full">
                   <label className="block text-sm font-medium text-nc-secondary mb-2">Location *</label>

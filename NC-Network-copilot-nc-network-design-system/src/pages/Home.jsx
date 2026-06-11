@@ -6,16 +6,8 @@ import {
   Play,
   X
 } from 'lucide-react';
-import {
-  SpotlightIcon,
-  FilmReelIcon,
-  ApertureIcon,
-  DynamicMotionIcon,
-  EqualizerIcon,
-  HeadphonesIcon,
-  StackedLayersIcon,
-  OpenBookIcon,
-} from '../components/icons/CategoryIcons';
+import { CATEGORY_ICON_MAP } from '../components/icons/CategoryIcons';
+import { CATEGORIES } from '../constants/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 import GlassCard from '../components/ui/GlassCard';
 import CategorySkeleton from '../components/ui/CategorySkeleton';
@@ -77,16 +69,12 @@ export default function Home({ onNavigate, user }) {
 
 
 
-  const categories = [
-    { id: 1, name: 'Actors', icon: SpotlightIcon, count: 0 },
-    { id: 2, name: 'Directors', icon: FilmReelIcon, count: 0 },
-    { id: 3, name: 'Models', icon: ApertureIcon, count: 0 },
-    { id: 4, name: 'Dancers', icon: DynamicMotionIcon, count: 0 },
-    { id: 5, name: 'Musicians', icon: EqualizerIcon, count: 0 },
-    { id: 6, name: 'Voice Over', icon: HeadphonesIcon, count: 0 },
-    { id: 7, name: 'VFX', icon: StackedLayersIcon, count: 0 },
-    { id: 8, name: 'Writers', icon: OpenBookIcon, count: 0 },
-  ];
+  const categories = CATEGORIES.map((name, idx) => ({
+    id: idx + 1,
+    name,
+    icon: CATEGORY_ICON_MAP[name],
+    count: talents.filter(t => t.role?.toLowerCase() === name.toLowerCase()).length
+  }));
 
   const premiumTalents = talents.filter(t => t.premium || t.verified);
 
