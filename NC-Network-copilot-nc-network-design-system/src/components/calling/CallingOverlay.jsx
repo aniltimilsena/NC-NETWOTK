@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCall } from '../../context/CallContext';
+import { getProfile } from '../../services/profile';
 import Avatar from '../ui/Avatar';
 
 const formatDuration = (seconds) => {
@@ -24,12 +25,14 @@ export default function CallingOverlay() {
     toggleVideo,
     switchCamera,
     dismissError,
+    currentUser,
   } = useCall();
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
 
   const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
+  const [remoteProfile, setRemoteProfile] = useState(null);
 
   const toggleSpeakerMute = () => {
     setIsSpeakerMuted(prev => {
@@ -55,20 +58,54 @@ export default function CallingOverlay() {
     }
   }, [remoteStream, isSpeakerMuted]);
 
+  // Dynamic remote profile loading using getProfile
+  useEffect(() => {
+    if (!activeCall || !currentUser?.uid) {
+      setRemoteProfile(null);
+      return;
+    }
+    const isCaller = currentUser.uid === activeCall.callerId;
+    const remoteId = isCaller 
+      ? (activeCall.calleeId || activeCall.receiverId) 
+      : activeCall.callerId;
+
+    if (!remoteId) return;
+
+    let isMounted = true;
+    getProfile(remoteId).then((res) => {
+      if (isMounted && res.data) {
+        setRemoteProfile(res.data);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeCall, currentUser?.uid]);
+
   const isActive = callState !== 'idle' && callState !== 'ended' && activeCall;
   const isVideoCall = activeCall?.callType === 'video';
   const isConnected = callState === 'connected';
   const isError = callState === 'error';
 
-  // Determine the remote party's info
-  const remoteName = activeCall?.callerName || activeCall?.calleeName || 'Unknown';
-  const remotePhoto = activeCall?.callerPhoto || activeCall?.calleePhoto || '';
+  // Determine the remote party's info correctly
+  const isCaller = currentUser?.uid === activeCall?.callerId;
+  const docRemoteName = isCaller 
+    ? (activeCall?.calleeName || activeCall?.receiverName || 'Unknown') 
+    : (activeCall?.callerName || 'Unknown');
+  const docRemotePhoto = isCaller 
+    ? (activeCall?.calleePhoto || activeCall?.receiverAvatar || '') 
+    : (activeCall?.callerPhoto || activeCall?.callerAvatar || '');
+
+  const remoteName = remoteProfile?.name || docRemoteName;
+  const remotePhoto = remoteProfile?.image || remoteProfile?.avatar || remoteProfile?.photoURL || docRemotePhoto;
+  const remoteProfession = remoteProfile?.role || 'Talent';
 
   const statusText =
-    callState === 'requesting-media' ? 'Requesting access...' :
-    callState === 'creating-offer' ? 'Preparing...' :
-    callState === 'calling' ? 'Calling...' :
-    callState === 'ringing' ? 'Ringing...' :
+    callState === 'requesting-media' ? (isCaller ? 'Requesting access...' : 'Connecting...') :
+    callState === 'creating-offer' ? (isCaller ? 'Preparing...' : 'Connecting...') :
+    callState === 'calling' ? (isCaller ? 'Calling...' : 'Incoming Call') :
+    callState === 'ringing' ? (isCaller ? 'Ringing...' : 'Incoming Call') :
     callState === 'connecting' ? 'Connecting...' :
     callState === 'connected' ? formatDuration(callDuration) :
     callState === 'error' ? 'Call Failed' :
@@ -166,15 +203,25 @@ export default function CallingOverlay() {
             </div>
           </motion.div>
 
-          {/* Name & Status */}
+          {/* Name & Profession & Status */}
           <motion.h2
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="text-white text-2xl sm:text-3xl font-black tracking-tight mb-2"
+            className="text-white text-2xl sm:text-3xl font-black tracking-tight mb-0.5"
           >
             {remoteName}
           </motion.h2>
+          {remoteProfession && (
+            <motion.p
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.15 }}
+              className="text-white/60 text-xs sm:text-sm font-semibold tracking-wide uppercase mb-2"
+            >
+              {remoteProfession}
+            </motion.p>
+          )}
           <motion.p
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}

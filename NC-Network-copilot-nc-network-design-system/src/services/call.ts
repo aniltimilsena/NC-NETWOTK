@@ -30,11 +30,16 @@ export interface CallDoc {
   callerId: string;
   callerName: string;
   callerPhoto: string;
+  callerAvatar?: string;
   calleeId: string;
   calleeName: string;
   calleePhoto: string;
+  receiverId?: string;
+  receiverName?: string;
+  receiverAvatar?: string;
   callType: "audio" | "video";
   status: CallStatus;
+  callStatus?: CallStatus;
   offer?: RTCSessionDescriptionInit | null;
   answer?: RTCSessionDescriptionInit | null;
   createdAt: any;
@@ -64,9 +69,13 @@ export const createCall = async (params: {
   callerId: string;
   callerName: string;
   callerPhoto: string;
+  callerAvatar: string;
   calleeId: string;
   calleeName: string;
   calleePhoto: string;
+  receiverId: string;
+  receiverName: string;
+  receiverAvatar: string;
   callType: "audio" | "video";
   offer: RTCSessionDescriptionInit;
 }): Promise<{ callId: string | null; error: string | null }> => {
@@ -75,11 +84,16 @@ export const createCall = async (params: {
       callerId: params.callerId,
       callerName: params.callerName,
       callerPhoto: params.callerPhoto,
+      callerAvatar: params.callerAvatar,
       calleeId: params.calleeId,
       calleeName: params.calleeName,
       calleePhoto: params.calleePhoto,
+      receiverId: params.receiverId,
+      receiverName: params.receiverName,
+      receiverAvatar: params.receiverAvatar,
       callType: params.callType,
       status: "pending" as CallStatus,
+      callStatus: "pending" as CallStatus,
       offer: params.offer,
       answer: null,
       createdAt: serverTimestamp(),
@@ -99,7 +113,7 @@ export const updateCallStatus = async (
   status: CallStatus
 ): Promise<void> => {
   try {
-    const updates: any = { status };
+    const updates: any = { status, callStatus: status };
     if (status === "ended" || status === "rejected" || status === "no-answer") {
       updates.endedAt = serverTimestamp();
     }
@@ -120,6 +134,7 @@ export const setCallAnswer = async (
     await updateDoc(doc(db, "calls", callId), {
       answer,
       status: "accepted" as CallStatus,
+      callStatus: "accepted" as CallStatus,
     });
   } catch (err) {
     console.error("[CallService] setCallAnswer error:", err);

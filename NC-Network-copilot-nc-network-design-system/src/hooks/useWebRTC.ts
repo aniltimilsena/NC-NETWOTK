@@ -45,9 +45,13 @@ interface StartCallParams {
   callerId: string;
   callerName: string;
   callerPhoto: string;
+  callerAvatar: string;
   calleeId: string;
   calleeName: string;
   calleePhoto: string;
+  receiverId: string;
+  receiverName: string;
+  receiverAvatar: string;
   callType: "audio" | "video";
 }
 

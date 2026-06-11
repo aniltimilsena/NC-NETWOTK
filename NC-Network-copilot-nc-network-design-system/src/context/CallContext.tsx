@@ -12,6 +12,7 @@ import {
   updateCallStatus,
   type CallDoc,
 } from "../services/call";
+import { getProfile } from "../services/profile";
 import { playRingtone, stopRingtone, playEndCallSound } from "../utils/ringtone";
 import { findOrCreateConversation, sendMessage } from "../services/messaging";
 import { usePermissionContext } from "./PermissionContext";
@@ -31,6 +32,7 @@ interface CallContextValue {
   isVideoOff: boolean;
   callDuration: number;
   errorMessage: string;
+  currentUser: any;
 
   // Actions
   initiateCall: (params: {
@@ -117,17 +119,51 @@ export function CallProvider({ children, user }: CallProviderProps) {
     }) => {
       if (!user?.uid) return;
 
+      // Fetch caller and callee profile details dynamically from Firestore
+      let callerName = user.displayName || "Unknown";
+      let callerAvatar = user.photoURL || "";
+      let calleeName = params.calleeName;
+      let calleePhoto = params.calleePhoto;
+
+      try {
+        const callerRes = await getProfile(user.uid);
+        if (callerRes.data) {
+          callerName = callerRes.data.name || [callerRes.data.firstName, callerRes.data.lastName].filter(Boolean).join(' ') || callerRes.data.username || callerName;
+          callerAvatar = callerRes.data.image || callerRes.data.avatar || callerRes.data.photoURL || callerAvatar;
+        }
+      } catch (e) {
+        console.warn("Failed to fetch caller profile:", e);
+      }
+
+      try {
+        const calleeRes = await getProfile(params.calleeId);
+        if (calleeRes.data) {
+          calleeName = calleeRes.data.name || [calleeRes.data.firstName, calleeRes.data.lastName].filter(Boolean).join(' ') || calleeRes.data.username || calleeName;
+          calleePhoto = calleeRes.data.image || calleeRes.data.avatar || calleeRes.data.photoURL || calleePhoto;
+        }
+      } catch (e) {
+        console.warn("Failed to fetch callee profile:", e);
+      }
+
       const callParams = {
         callerId: user.uid,
-        callerName: user.displayName || "Unknown",
-        callerPhoto: user.photoURL || "",
-        ...params,
+        callerName,
+        callerPhoto: callerAvatar,
+        callerAvatar,
+        calleeId: params.calleeId,
+        calleeName,
+        calleePhoto,
+        receiverId: params.calleeId,
+        receiverName: calleeName,
+        receiverAvatar: calleePhoto,
+        callType: params.callType,
       };
 
       setActiveCall({
         id: "", // Will be set after creation
         ...callParams,
         status: "pending",
+        callStatus: "pending",
         createdAt: new Date(),
       } as any);
 
@@ -158,15 +194,25 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
     // Send missed call notification
     try {
+      let senderName = incomingCall.callerName;
+      let senderAvatar = incomingCall.callerPhoto || "";
+      const profileRes = await getProfile(incomingCall.callerId);
+      if (profileRes.data) {
+        senderName = profileRes.data.name || senderName;
+        senderAvatar = profileRes.data.image || senderAvatar;
+      }
+
+      const targetReceiverId = incomingCall.calleeId || incomingCall.receiverId;
+
       await addDoc(collection(db, "notifications"), {
-        userId: incomingCall.calleeId,
-        recipientId: incomingCall.calleeId,
-        receiverId: incomingCall.calleeId,
+        userId: targetReceiverId,
+        recipientId: targetReceiverId,
+        receiverId: targetReceiverId,
         senderId: incomingCall.callerId,
-        senderName: incomingCall.callerName,
-        senderAvatar: incomingCall.callerPhoto || "",
+        senderName,
+        senderAvatar,
         title: "Missed Call",
-        body: `Missed an ${incomingCall.callType} call from ${incomingCall.callerName}`,
+        body: `Missed an ${incomingCall.callType} call from ${senderName}`,
         type: "messages",
         notificationType: "messages",
         isRead: false,
@@ -187,7 +233,8 @@ export function CallProvider({ children, user }: CallProviderProps) {
   const hangUp = useCallback(async () => {
     if (activeCall) {
       // Log the call in chat history
-      const { id: convoId } = await findOrCreateConversation([activeCall.callerId, activeCall.calleeId]);
+      const targetReceiverId = activeCall.calleeId || activeCall.receiverId;
+      const { id: convoId } = await findOrCreateConversation([activeCall.callerId, targetReceiverId]);
       if (convoId) {
         const durationText = webrtc.callDuration > 0 
           ? `${Math.floor(webrtc.callDuration / 60)}m ${webrtc.callDuration % 60}s`
@@ -198,15 +245,23 @@ export function CallProvider({ children, user }: CallProviderProps) {
       // If duration was 0, it was cancelled/unanswered. Send a missed call notification to callee
       if (webrtc.callDuration === 0) {
         try {
+          let senderName = activeCall.callerName;
+          let senderAvatar = activeCall.callerPhoto || "";
+          const profileRes = await getProfile(activeCall.callerId);
+          if (profileRes.data) {
+            senderName = profileRes.data.name || senderName;
+            senderAvatar = profileRes.data.image || senderAvatar;
+          }
+
           await addDoc(collection(db, "notifications"), {
-            userId: activeCall.calleeId,
-            recipientId: activeCall.calleeId,
-            receiverId: activeCall.calleeId,
+            userId: targetReceiverId,
+            recipientId: targetReceiverId,
+            receiverId: targetReceiverId,
             senderId: activeCall.callerId,
-            senderName: activeCall.callerName,
-            senderAvatar: activeCall.callerPhoto || "",
+            senderName,
+            senderAvatar,
             title: "Missed Call",
-            body: `Missed an ${activeCall.callType} call from ${activeCall.callerName}`,
+            body: `Missed an ${activeCall.callType} call from ${senderName}`,
             type: "messages",
             notificationType: "messages",
             isRead: false,
@@ -245,6 +300,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     isVideoOff: webrtc.isVideoOff,
     callDuration: webrtc.callDuration,
     errorMessage: webrtc.errorMessage,
+    currentUser: user,
     initiateCall,
     acceptCall,
     rejectCall,

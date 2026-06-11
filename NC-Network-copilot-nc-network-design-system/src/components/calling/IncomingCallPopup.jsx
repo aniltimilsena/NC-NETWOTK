@@ -1,12 +1,36 @@
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCall } from '../../context/CallContext';
+import { getProfile } from '../../services/profile';
 
 export default function IncomingCallPopup() {
   const { incomingCall, acceptCall, rejectCall } = useCall();
+  const [callerProfile, setCallerProfile] = useState(null);
+
+  useEffect(() => {
+    if (!incomingCall?.callerId) {
+      setCallerProfile(null);
+      return;
+    }
+    let isMounted = true;
+    getProfile(incomingCall.callerId).then((res) => {
+      if (isMounted && res.data) {
+        setCallerProfile(res.data);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [incomingCall?.callerId]);
 
   if (!incomingCall) return null;
 
   const isVideo = incomingCall.callType === 'video';
+
+  // Resolve caller details dynamically
+  const callerName = callerProfile?.name || incomingCall?.callerName || 'Unknown Caller';
+  const callerPhoto = callerProfile?.image || callerProfile?.avatar || callerProfile?.photoURL || incomingCall?.callerPhoto || incomingCall?.callerAvatar || '';
+  const callerProfession = callerProfile?.role || 'Talent';
 
   return (
     <AnimatePresence>
@@ -28,15 +52,15 @@ export default function IncomingCallPopup() {
             <div className="relative flex-shrink-0">
               <div className="absolute -inset-1.5 rounded-full border-2 border-green-500/30 animate-ping" style={{ animationDuration: '1.5s' }} />
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-white/10 bg-[#1A1A1A]">
-                {incomingCall.callerPhoto ? (
+                {callerPhoto ? (
                   <img
-                    src={incomingCall.callerPhoto}
-                    alt={incomingCall.callerName}
+                    src={callerPhoto}
+                    alt={callerName}
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-lg sm:text-xl font-black text-white/30">
-                    {(incomingCall.callerName || '?').charAt(0).toUpperCase()}
+                    {callerName.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
@@ -44,8 +68,13 @@ export default function IncomingCallPopup() {
 
             <div className="flex-1 min-w-0">
               <h3 className="text-white font-black text-sm sm:text-base truncate">
-                {incomingCall.callerName || 'Unknown Caller'}
+                {callerName}
               </h3>
+              {callerProfession && (
+                <p className="text-white/50 text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate mb-0.5">
+                  {callerProfession}
+                </p>
+              )}
               <p className="text-nc-accent text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center gap-1.5">
                 {isVideo ? (
                   <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
