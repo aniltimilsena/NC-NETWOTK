@@ -9,8 +9,9 @@ import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase
 import { signUpUser, ensureUserProfile } from '../services/auth';
 
 export default function SignUp({ onNavigate, showAlert }) {
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: '', gender: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', role: '', gender: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -43,8 +44,13 @@ export default function SignUp({ onNavigate, showAlert }) {
 
   const handleSignUp = async (e) => {
     e?.preventDefault();
-    if (!form.name || !form.email || !form.password || !form.role || !form.gender) {
+    if (!form.name || !form.email || !form.password || !form.confirmPassword || !form.role || !form.gender) {
       setError('Please fill in all fields including your role and gender.');
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match.');
       return;
     }
 
@@ -138,6 +144,25 @@ export default function SignUp({ onNavigate, showAlert }) {
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-nc-muted hover:text-white transition-colors"
                 >
                   <EyeToggleIcon active={showPassword} size={20} color="currentColor" />
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-nc-secondary mb-2">Confirm Password</label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={form.confirmPassword}
+                  onChange={e => setForm({...form, confirmPassword: e.target.value})}
+                  placeholder="Repeat your password"
+                  className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-nc-muted hover:text-white transition-colors"
+                >
+                  <EyeToggleIcon active={showConfirmPassword} size={20} color="currentColor" />
                 </button>
               </div>
             </div>
