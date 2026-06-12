@@ -307,6 +307,8 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarProgress, setAvatarProgress] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarLastFile, setAvatarLastFile] = useState(null);
+  const [avatarUploadStatus, setAvatarUploadStatus] = useState("idle"); // 'idle' | 'uploading' | 'success' | 'error'
   const [isPremium, setIsPremium] = useState(false);
 
   // Profile States
@@ -340,6 +342,8 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     
     setIsUploadingAvatar(true);
     setAvatarProgress(0);
+    setAvatarUploadStatus("uploading");
+    setAvatarLastFile(file);
     
     try {
       const url = await uploadProfileMedia(user.uid, file, (progress) => {
@@ -358,21 +362,71 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
           if (auth.currentUser) {
             await updateProfile(auth.currentUser, { photoURL: url });
           }
+          setAvatarUploadStatus("success");
           showToast("Profile picture updated successfully!", "success");
+          setTimeout(() => {
+            setAvatarUploadStatus("idle");
+            setIsUploadingAvatar(false);
+          }, 1500);
         } else {
           console.error("Firestore update failed:", error);
+          setAvatarUploadStatus("error");
           showToast("Photo uploaded but failed to update profile record.", "error");
         }
       } else {
+        setAvatarUploadStatus("error");
         showToast("Failed to upload image to Cloudinary.", "error");
       }
     } catch (err) {
       console.error("Avatar upload error:", err);
+      setAvatarUploadStatus("error");
       showToast("Error updating profile picture.", "error");
     } finally {
-      setIsUploadingAvatar(false);
-      setAvatarProgress(0);
-      e.target.value = ''; // Reset input
+      if (e.target) e.target.value = ''; // Reset input
+    }
+  };
+
+  const handleRetryAvatarUpload = async () => {
+    if (!avatarLastFile || !user?.uid) return;
+    
+    setIsUploadingAvatar(true);
+    setAvatarProgress(0);
+    setAvatarUploadStatus("uploading");
+    
+    try {
+      const url = await uploadProfileMedia(user.uid, avatarLastFile, (progress) => {
+        setAvatarProgress(Math.round(progress));
+      });
+      
+      if (url) {
+        setAvatarUrl(url);
+        const { success, error } = await updateProfileData(user.uid, { 
+          image: url,
+          photoURL: url 
+        });
+
+        if (success) {
+          if (auth.currentUser) {
+            await updateProfile(auth.currentUser, { photoURL: url });
+          }
+          setAvatarUploadStatus("success");
+          showToast("Profile picture updated successfully!", "success");
+          setTimeout(() => {
+            setAvatarUploadStatus("idle");
+            setIsUploadingAvatar(false);
+          }, 1500);
+        } else {
+          setAvatarUploadStatus("error");
+          showToast("Photo uploaded but failed to update profile record.", "error");
+        }
+      } else {
+        setAvatarUploadStatus("error");
+        showToast("Failed to upload image to Cloudinary.", "error");
+      }
+    } catch (err) {
+      console.error("Avatar upload retry error:", err);
+      setAvatarUploadStatus("error");
+      showToast("Error updating profile picture.", "error");
     }
   };
 
@@ -590,8 +644,40 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                     name={displayName} 
                   />
                   {isUploadingAvatar && (
-                    <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center backdrop-blur-sm">
-                      <div className="text-nc-accent text-xs font-bold">{avatarProgress}%</div>
+                    <div className="absolute inset-0 bg-black/75 rounded-full flex flex-col items-center justify-center backdrop-blur-md z-20">
+                      {avatarUploadStatus === "uploading" && (
+                        <>
+                          <div className="w-6 h-6 border-2 border-nc-accent border-t-transparent rounded-full animate-spin mb-1" />
+                          <div className="text-nc-accent text-[10px] font-black">{avatarProgress}%</div>
+                        </>
+                      )}
+                      {avatarUploadStatus === "success" && (
+                        <div className="text-green-400 flex flex-col items-center">
+                          <svg className="w-7 h-7 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="text-[9px] font-bold uppercase tracking-wider mt-0.5">Updated</span>
+                        </div>
+                      )}
+                      {avatarUploadStatus === "error" && (
+                        <div className="text-red-400 flex flex-col items-center px-2 text-center">
+                          <svg className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleRetryAvatarUpload(); }}
+                            className="bg-white/10 hover:bg-white/20 text-white text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded-full border border-white/10 transition-all"
+                          >
+                            Retry
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setIsUploadingAvatar(false); setAvatarUploadStatus("idle"); }}
+                            className="text-white/40 hover:text-white/60 text-[8px] font-bold uppercase tracking-wider mt-1 transition-all"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

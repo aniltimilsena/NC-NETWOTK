@@ -141,16 +141,25 @@ export default function CastingCall({ onNavigate }) {
             });
             if (filteredCalls.length === 0) {
               return (
-                <div className="text-center py-20 bg-nc-card border border-nc-border rounded-2xl">
-                  <div className="text-NC-accent mb-4">
-                    <Bookmark size={48} className="mx-auto opacity-20" />
+                <div className="text-center py-20 bg-nc-card border border-nc-border rounded-2xl px-4">
+                  <div className="text-nc-accent mb-4 flex justify-center">
+                    <Bookmark size={48} className="opacity-20" />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2">No {filter === 'Saved' ? 'Saved Casting Calls' : 'Casting Calls Found'}</h3>
-                  <p className="text-nc-muted">
+                  <p className="text-nc-muted text-sm max-w-sm mx-auto mb-6">
                     {filter === 'Saved' 
                       ? "You haven't bookmarked any opportunities yet. Browse the board to save some!" 
-                      : "Try checking back later or adjusting your filters."}
+                      : "Be the first to post a casting call or check back later."}
                   </p>
+                  {filter !== 'Saved' && (
+                    <Button 
+                      size="sm" 
+                      onClick={() => onNavigate('casting-create')} 
+                      className="px-8 shadow-lg shadow-nc-accent/20"
+                    >
+                      Create Casting Call
+                    </Button>
+                  )}
                 </div>
               );
             }

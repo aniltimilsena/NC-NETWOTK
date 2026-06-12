@@ -35,11 +35,6 @@ export default function RouteLoader() {
         </div>
       </div>
 
-      {/* Loading telemetry tag */}
-      <div className="mt-6 flex items-center gap-2 text-white/40 text-[10px] font-black uppercase tracking-[0.2em] select-none">
-        <div className="w-2 h-2 rounded-full bg-nc-accent shadow-[0_0_8px_#38BDF8] animate-pulse"></div>
-        <span>Syncing Route</span>
-      </div>
     </div>
   );
 }

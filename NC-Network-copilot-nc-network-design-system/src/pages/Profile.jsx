@@ -70,6 +70,14 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   const [introProgress, setIntroProgress] = useState(0);
   const { requestPermission } = usePermissionContext();
 
+  // Upload feedback & retry states
+  const [mediaUploadError, setMediaUploadError] = useState(null);
+  const [mediaLastFiles, setMediaLastFiles] = useState([]);
+  const [introUploadError, setIntroUploadError] = useState(null);
+  const [introLastFile, setIntroLastFile] = useState(null);
+  const [showMediaSuccess, setShowMediaSuccess] = useState(false);
+  const [showIntroSuccess, setShowIntroSuccess] = useState(false);
+
   const targetUid = profileId || user?.uid;
   const isOwnProfile = isLoggedIn && (!profileId || profileId === user?.uid);
 
@@ -385,7 +393,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       </div>
       <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
       <p className="text-nc-muted text-sm max-w-xs mx-auto mb-8 leading-relaxed">{description}</p>
-      {isLoggedIn && actionLabel && (
+      {isOwnProfile && actionLabel && (
         <Button size="sm" onClick={onAction} className="px-8 shadow-lg shadow-nc-accent/20">
           {actionLabel}
         </Button>
@@ -393,9 +401,14 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     </div>
   );
 
-  const handleMediaUpload = async (e) => {
-    const files = e.target.files;
+  const handleMediaUpload = async (e, filesToUpload = null) => {
+    const files = filesToUpload || e?.target?.files;
     if (!files || files.length === 0 || !user) return;
+
+    // Save for retry
+    setMediaLastFiles(Array.from(files));
+    setMediaUploadError(null);
+    setShowMediaSuccess(false);
 
     const isOwnProfile = isLoggedIn && (!profileId || profileId === user?.uid);
     const isPremium = profile?.premium || (profile?.email === 'aniltimilsena53@gmail.com') || (isOwnProfile && isAdmin) || false;
@@ -433,13 +446,13 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     // Enforce count limits
     const photoLimit = isPremium ? 50 : 10;
     if (existingPhotosCount + newPhotosCount > photoLimit) {
-      showAlert('Limit Exceeded', 'error', `Gallery is limited to ${photoLimit} photos for ${isPremium ? 'PRO' : 'Free'} users. (Current: ${existingPhotosCount}, Uploading: ${newPhotosCount})`);
+      showAlert('Limit Exceeded', 'error', `Gallery is limited to ${photoLimit} photos for ${isPremium ? 'PRO' : 'Free'} users.`);
       return;
     }
 
     const videoLimit = isPremium ? 5 : 1;
     if (existingVideosCount + newVideosCount > videoLimit) {
-      showAlert('Limit Exceeded', 'error', `Showreel is limited to ${videoLimit} videos for ${isPremium ? 'PRO' : 'Free'} users. (Current: ${existingVideosCount}, Uploading: ${newVideosCount})`);
+      showAlert('Limit Exceeded', 'error', `Showreel is limited to ${videoLimit} videos for ${isPremium ? 'PRO' : 'Free'} users.`);
       return;
     }
     
@@ -448,30 +461,44 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       setMediaUploadProgress(0);
       try {
         const newMediaUrls = [];
+        let index = 0;
         for (const file of files) {
           const url = await uploadProfileMedia(user.uid, file, (progress) => {
-            setMediaUploadProgress(Math.round(progress));
+            const baseProgress = (index / files.length) * 100;
+            const itemProgress = progress / files.length;
+            setMediaUploadProgress(Math.round(baseProgress + itemProgress));
           });
-          if (url) newMediaUrls.push(url);
+          if (url) {
+            newMediaUrls.push(url);
+          } else {
+            throw new Error(`Failed to upload ${file.name}`);
+          }
+          index++;
         }
         
         if (newMediaUrls.length > 0) {
           const updatedMedia = [...(profile?.media || []), ...newMediaUrls];
           await updateProfileData(user.uid, { media: updatedMedia });
+          setShowMediaSuccess(true);
+          setTimeout(() => setShowMediaSuccess(false), 3000);
         }
       } catch (err) {
         console.error("Error uploading media", err);
+        setMediaUploadError(err.message || "Upload failed. Please check your connection.");
       } finally {
         setIsUploadingMedia(false);
-        setMediaUploadProgress(0);
-        e.target.value = '';
+        if (e?.target) e.target.value = '';
       }
     });
   };
 
-  const handleIntroVideoUpload = async (e) => {
-    const file = e.target.files?.[0];
+  const handleIntroVideoUpload = async (e, fileToUpload = null) => {
+    const file = fileToUpload || e?.target?.files?.[0];
     if (!file || !user) return;
+
+    setIntroLastFile(file);
+    setIntroUploadError(null);
+    setShowIntroSuccess(false);
 
     const isOwnProfile = isLoggedIn && (!profileId || profileId === user?.uid);
     const isPremium = profile?.premium || (profile?.email === 'aniltimilsena53@gmail.com') || (isOwnProfile && isAdmin) || false;
@@ -489,17 +516,17 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       });
       if (url) {
         await updateProfileData(user.uid, { introVideo: url });
-        showAlert('Success', 'success', 'Intro video uploaded successfully.');
+        setShowIntroSuccess(true);
+        setTimeout(() => setShowIntroSuccess(false), 3000);
       } else {
-        showAlert('Upload Failed', 'error', 'Failed to upload intro video.');
+        throw new Error("Failed to upload intro video.");
       }
     } catch (err) {
       console.error("Error uploading intro video:", err);
-      showAlert('Error', 'error', 'An error occurred during upload.');
+      setIntroUploadError(err.message || "Failed to upload intro video.");
     } finally {
       setIsUploadingIntro(false);
-      setIntroProgress(0);
-      e.target.value = '';
+      if (e?.target) e.target.value = '';
     }
   };
 
@@ -593,6 +620,100 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   const showContact = isOwnProfile || profile?.showContactInfo === true;
 
   const tabs = ['about', 'media', 'skills', 'experience', 'reviews'];
+
+  // Progressive profile completion calculation
+  const completionItems = [
+    {
+      id: 'photo',
+      label: 'Upload Profile Photo',
+      done: !!(p.image && p.image !== ''),
+      action: () => onNavigate('settings', 'about')
+    },
+    {
+      id: 'bio',
+      label: 'Add Bio',
+      done: !!(p.bio && p.bio.trim() !== '' && p.bio !== 'No bio yet.' && p.bio !== 'No bio added yet.' && p.bio !== 'No bio provided yet.'),
+      action: () => onNavigate('settings', 'about')
+    },
+    {
+      id: 'skills',
+      label: 'Add Skills',
+      done: !!(p.skills && p.skills.length > 0),
+      action: () => onNavigate('settings', 'skills')
+    },
+    {
+      id: 'portfolio',
+      label: 'Add Portfolio (Media)',
+      done: !!(p.media && p.media.length > 0),
+      action: () => setActiveTab('media')
+    },
+    {
+      id: 'introVideo',
+      label: 'Add Introduction Video',
+      done: !!(p.introVideo && p.introVideo.trim() !== ''),
+      action: () => setActiveTab('media')
+    },
+    {
+      id: 'verify',
+      label: 'Verify Account',
+      done: !!p.verified,
+      action: () => onNavigate('trust')
+    }
+  ];
+
+  const totalScore = completionItems.reduce((acc, item) => {
+    let weight = 15;
+    if (item.id === 'skills') weight = 20;
+    if (item.id === 'portfolio') weight = 20;
+    if (item.id === 'introVideo') weight = 20;
+    if (item.id === 'verify') weight = 10;
+    return acc + (item.done ? weight : 0);
+  }, 0);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-nc-dark pb-24 animate-pulse">
+        {/* Cover Skeleton */}
+        <div className="h-56 sm:h-72 bg-nc-card/30 relative" />
+        
+        {/* Profile Hero Glass Card Skeleton */}
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 relative -mt-20 sm:-mt-24 z-10">
+          <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.5rem] p-5 sm:p-7 shadow-2xl">
+            <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
+              <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 shrink-0" />
+              <div className="flex-1 space-y-3">
+                <div className="h-6 bg-white/5 rounded-full w-1/3" />
+                <div className="h-4 bg-white/5 rounded-full w-1/4" />
+                <div className="h-3 bg-white/5 rounded-full w-1/5" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 mt-8 space-y-6">
+          <div className="h-10 bg-white/5 rounded-full w-full" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-nc-card border border-nc-border rounded-3xl p-6 h-48 space-y-3">
+                <div className="h-5 bg-white/5 rounded-lg w-1/4" />
+                <div className="h-4 bg-white/5 rounded-lg w-full" />
+                <div className="h-4 bg-white/5 rounded-lg w-full" />
+                <div className="h-4 bg-white/5 rounded-lg w-3/4" />
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="bg-nc-card border border-nc-border rounded-2xl p-6 h-40 space-y-3">
+                <div className="h-5 bg-white/5 rounded-lg w-1/3" />
+                <div className="h-4 bg-white/5 rounded-lg w-full" />
+                <div className="h-4 bg-white/5 rounded-lg w-3/4" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -774,7 +895,66 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       </div>
 
       {/* Tabs & Content */}
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 mt-8">
+      <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 mt-8 animate-fade-in">
+        {/* Profile Completion Checklist */}
+        {isOwnProfile && totalScore < 100 && (
+          <GlassCard strong className="p-6 mb-8 border border-white/10 rounded-[2rem] bg-nc-card/30 backdrop-blur-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+              <div>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <span>📈</span> Profile Strength: {totalScore}%
+                </h3>
+                <p className="text-nc-muted text-xs mt-1">Complete your profile to increase your visibility on the marketplace.</p>
+              </div>
+              <div className="w-full md:w-64 h-2 bg-white/5 rounded-full overflow-hidden relative">
+                <div 
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-500 to-nc-accent transition-all duration-500 rounded-full"
+                  style={{ width: `${totalScore}%` }}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {completionItems.map((item) => (
+                <div 
+                  key={item.id}
+                  onClick={() => !item.done && item.action()}
+                  className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all duration-300 ${
+                    item.done 
+                      ? 'bg-green-500/5 border-green-500/20 text-green-400' 
+                      : 'bg-white/2 border-white/5 text-nc-secondary hover:bg-white/5 hover:border-white/10 cursor-pointer'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                      item.done ? 'bg-green-500 text-[#0E0E0E]' : 'bg-white/5 border border-white/10 text-white/40'
+                    }`}>
+                      {item.done ? '✓' : ''}
+                    </span>
+                    <span className="text-xs font-bold truncate">{item.label}</span>
+                  </div>
+                  {!item.done && (
+                    <span className="text-[10px] font-black text-nc-accent uppercase tracking-wider shrink-0">Add</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
+        
+        {isOwnProfile && totalScore === 100 && (
+          <GlassCard strong className="p-5 mb-8 border border-green-500/20 bg-green-500/5 rounded-[2rem] flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🚀</span>
+              <div>
+                <h4 className="text-sm font-bold text-green-400">Your profile is 100% complete!</h4>
+                <p className="text-[11px] text-green-400/75 mt-0.5">Enjoy maximum network visibility and priority listing placement.</p>
+              </div>
+            </div>
+            <span className="bg-green-500/10 border border-green-500/30 text-green-400 text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full">Boosted</span>
+          </GlassCard>
+        )}
+
         {/* Tabs */}
         <div className="flex gap-1 bg-nc-surface border border-nc-border rounded-full p-1 mb-8 overflow-x-auto">
           {tabs.map(tab => (
@@ -944,10 +1124,10 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
             ) : (
               <div className="w-full">
                 <EmptyState 
-                  title="No Skills Added Yet"
+                  title="No Skills Added"
                   description="Highlight your professional capabilities to attract more casting directors."
                   icon="✦"
-                  actionLabel="Add Skills"
+                  actionLabel="Add First Skill"
                   onAction={() => onNavigate('settings', 'skills')}
                 />
               </div>
@@ -1021,15 +1201,42 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                     )}
                   </div>
 
-                  {isUploadingIntro ? (
-                    <div className="py-12 text-center space-y-4 border border-dashed border-white/5 rounded-2xl bg-white/2">
-                      <div className="w-full max-w-xs mx-auto h-1.5 bg-white/5 rounded-full overflow-hidden relative">
-                        <div 
-                          className="absolute inset-y-0 left-0 bg-nc-accent transition-all duration-300" 
-                          style={{ width: `${introProgress}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-nc-accent font-bold tracking-widest uppercase">Uploading Intro Video: {introProgress}%</p>
+                  {isUploadingIntro || showIntroSuccess || introUploadError ? (
+                    <div className="py-10 px-6 text-center space-y-4 border border-dashed border-white/10 rounded-3xl bg-nc-card/30 backdrop-blur-sm">
+                      {isUploadingIntro && (
+                        <div className="max-w-xs mx-auto space-y-3">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-nc-accent font-bold animate-pulse">Uploading Intro Video...</span>
+                            <span className="text-white font-black">{introProgress}%</span>
+                          </div>
+                          <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden relative">
+                            <div 
+                              className="absolute inset-y-0 left-0 bg-nc-accent transition-all duration-300 rounded-full" 
+                              style={{ width: `${introProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {showIntroSuccess && (
+                        <div className="flex flex-col items-center justify-center gap-2 text-green-400">
+                          <span className="text-3xl font-bold">✓</span>
+                          <span className="text-xs font-bold">Introduction video uploaded successfully!</span>
+                        </div>
+                      )}
+                      {introUploadError && (
+                        <div className="flex flex-col items-center justify-center gap-4 text-center">
+                          <div className="flex flex-col items-center gap-1.5 text-red-400">
+                            <span className="text-3xl font-bold">✕</span>
+                            <span className="text-xs font-bold">{introUploadError}</span>
+                          </div>
+                          <button 
+                            onClick={() => handleIntroVideoUpload(null, introLastFile)}
+                            className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all"
+                          >
+                            Retry Upload
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : p.introVideo ? (
                     <div className="relative aspect-video rounded-3xl overflow-hidden bg-black/40 border border-white/5 shadow-inner">
@@ -1177,25 +1384,54 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
 
                 {/* Clean empty state for no media */}
                 {photos.length === 0 && videos.length === 0 && !isUploadingMedia && (
-                  <div className="text-center py-8 text-xs text-nc-muted italic">
-                    No media items uploaded.
+                  <div className="w-full">
+                    <EmptyState 
+                      title="No Portfolio Added"
+                      description="Upload photos and videos to showcase your talent to the network."
+                      icon="🖼️"
+                      actionLabel="Upload Portfolio"
+                      onAction={() => document.getElementById('profile-media-upload')?.click()}
+                    />
                   </div>
                 )}
 
-                {/* Uploading Shimmer card */}
-                {isUploadingMedia && (
-                  <div className="mt-8 group relative aspect-video sm:aspect-[4/1] rounded-3xl overflow-hidden bg-[#0A0A0A] border border-[#1A1A1A] shadow-lg flex items-center justify-center">
-                    <div className="w-full max-w-xs space-y-2 px-6">
-                      <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden relative">
-                         <div 
-                            className="absolute inset-y-0 left-0 bg-nc-accent transition-all duration-300" 
+                {/* Upload States */}
+                {(isUploadingMedia || showMediaSuccess || mediaUploadError) && (
+                  <div className="mt-4 p-5 rounded-3xl bg-nc-card/30 border border-white/10 backdrop-blur-sm">
+                    {isUploadingMedia && (
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-nc-accent font-bold animate-pulse">Uploading Showcase Media...</span>
+                          <span className="text-white font-black">{mediaUploadProgress}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden relative">
+                          <div 
+                            className="absolute inset-y-0 left-0 bg-nc-accent transition-all duration-300 rounded-full" 
                             style={{ width: `${mediaUploadProgress}%` }}
-                         />
+                          />
+                        </div>
                       </div>
-                      <p className="text-[9px] text-nc-accent font-black text-center uppercase tracking-widest animate-pulse">
-                        Uploading portfolio file: {mediaUploadProgress}%
-                      </p>
-                    </div>
+                    )}
+                    {showMediaSuccess && (
+                      <div className="flex items-center gap-3 text-green-400 text-xs font-bold py-1">
+                        <span className="text-lg">✓</span>
+                        <span>Showcase items uploaded successfully!</span>
+                      </div>
+                    )}
+                    {mediaUploadError && (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-1">
+                        <div className="flex items-center gap-3 text-red-400 text-xs font-bold">
+                          <span className="text-lg">✕</span>
+                          <span>{mediaUploadError}</span>
+                        </div>
+                        <button 
+                          onClick={() => handleMediaUpload(null, mediaLastFiles)}
+                          className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-wider px-4 py-2 rounded-xl transition-all self-start sm:self-auto"
+                        >
+                          Retry Upload
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

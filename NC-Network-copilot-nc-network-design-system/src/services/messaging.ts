@@ -55,6 +55,7 @@ export const sendMessage = async (
       lastMessageAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       unread: true,
+      lastSenderId: isSystem ? "system" : currentUserUid,
     });
 
     // Send real-time notification to the recipient
@@ -430,4 +431,17 @@ export const createConversation = async (
 
 export const findOrCreateConversation = async (participants: string[]) => {
   return createConversation(participants);
+};
+
+export const markConversationAsRead = async (convoId: string) => {
+  try {
+    await updateDoc(doc(db, "conversations", convoId), {
+      unread: false,
+    });
+    return { success: true, error: null };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to mark conversation as read";
+    console.error("markConversationAsRead error:", message);
+    return { success: false, error: message };
+  }
 };

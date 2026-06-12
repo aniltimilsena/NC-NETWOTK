@@ -4,12 +4,14 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useRef,
   type ReactNode,
 } from "react";
 import { useWebRTC, type CallState } from "../hooks/useWebRTC";
 import {
   subscribeToIncomingCalls,
   updateCallStatus,
+  subscribeToCall,
   type CallDoc,
 } from "../services/call";
 import { getProfile } from "../services/profile";
@@ -65,6 +67,95 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
   const webrtc = useWebRTC();
   const { requestPermission } = usePermissionContext();
+
+  const loggedCallsRef = useRef<Record<string, boolean>>({});
+
+  const logCallOutcome = useCallback(async (call: CallDoc, duration: number, finalStatus?: string) => {
+    const callId = call.id || call.createdAt?.toString() || "unknown";
+    if (!callId || loggedCallsRef.current[callId]) return;
+    loggedCallsRef.current[callId] = true;
+
+    try {
+      const targetReceiverId = call.calleeId || call.receiverId;
+      const callerId = call.callerId;
+      if (!targetReceiverId || !callerId) return;
+
+      const { id: convoId } = await findOrCreateConversation([callerId, targetReceiverId]);
+      if (!convoId) return;
+
+      const callTypeStr = call.callType || "audio";
+      const callLabel = callTypeStr.charAt(0).toUpperCase() + callTypeStr.slice(1);
+      let outcome = "";
+
+      if (finalStatus === "rejected") {
+        outcome = "Declined";
+      } else if (finalStatus === "busy") {
+        outcome = "Busy";
+      } else if (finalStatus === "no-answer") {
+        outcome = "Missed Call";
+      } else if (finalStatus === "offline") {
+        outcome = "Offline";
+      } else if (finalStatus === "network-error") {
+        outcome = "Network Error";
+      } else if (finalStatus === "cancelled") {
+        outcome = "Cancelled by Caller";
+      } else if (duration > 0) {
+        outcome = `${Math.floor(duration / 60)}m ${duration % 60}s`;
+      } else {
+        outcome = "Cancelled by Caller";
+      }
+
+      await sendMessage(convoId, "system", `${callLabel} call • ${outcome}`);
+    } catch (e) {
+      console.error("Error logging call outcome:", e);
+    }
+  }, []);
+
+  // ─── Listen to the active call document changes in Firestore ───────────
+  useEffect(() => {
+    const callId = webrtc.callId;
+    if (!callId || !user?.uid) return;
+
+    const unsub = subscribeToCall(callId, (callDoc) => {
+      if (callDoc) {
+        setActiveCall(callDoc);
+
+        // If this user is the caller, they are responsible for logging the outcome
+        const isCaller = callDoc.callerId === user.uid;
+        if (isCaller) {
+          if (callDoc.status === "rejected") {
+            logCallOutcome(callDoc, 0, "rejected");
+          } else if (callDoc.status === "busy") {
+            logCallOutcome(callDoc, 0, "busy");
+          } else if (callDoc.status === "no-answer") {
+            logCallOutcome(callDoc, 0, "no-answer");
+          } else if (callDoc.status === "ended") {
+            logCallOutcome(callDoc, webrtc.callDuration);
+          }
+        }
+      } else {
+        setActiveCall(null);
+      }
+    });
+
+    return () => unsub();
+  }, [webrtc.callId, user?.uid, webrtc.callDuration, logCallOutcome]);
+
+  // ─── Listen to WebRTC call state changes to detect errors ───────────────
+  useEffect(() => {
+    if (webrtc.callState === "error" && activeCall && activeCall.callerId === user?.uid) {
+      const isNetworkError = webrtc.errorMessage?.toLowerCase().includes("network") || 
+                             webrtc.errorMessage?.toLowerCase().includes("disconnect") || 
+                             webrtc.errorMessage?.toLowerCase().includes("failed");
+      const statusType = isNetworkError ? "network-error" : "offline";
+      logCallOutcome(activeCall, 0, statusType);
+      
+      // Update the call document in Firestore so the other side knows
+      if (activeCall.id) {
+        updateCallStatus(activeCall.id, "ended");
+      }
+    }
+  }, [webrtc.callState, webrtc.errorMessage, activeCall, user?.uid, logCallOutcome]);
 
   // ─── Listen for incoming calls ─────────────────────────────────────────
 
@@ -247,18 +338,9 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
   const hangUp = useCallback(async () => {
     if (activeCall) {
-      // Log the call in chat history
       const targetReceiverId = activeCall.calleeId || activeCall.receiverId;
-      const { id: convoId } = await findOrCreateConversation([activeCall.callerId, targetReceiverId]);
-      if (convoId) {
-        const durationText = webrtc.callDuration > 0 
-          ? `${Math.floor(webrtc.callDuration / 60)}m ${webrtc.callDuration % 60}s`
-          : "Cancelled";
-        await sendMessage(convoId, "system", `${activeCall.callType.charAt(0).toUpperCase() + activeCall.callType.slice(1)} call • ${durationText}`);
-      }
-
-      // If duration was 0, it was cancelled/unanswered. Send a missed call notification to callee
-      if (webrtc.callDuration === 0) {
+      // If duration was 0 and current user is caller, send a missed call notification to callee
+      if (webrtc.callDuration === 0 && activeCall.callerId === user?.uid) {
         try {
           let senderName = activeCall.callerName;
           let senderAvatar = activeCall.callerPhoto || "";
@@ -294,7 +376,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     playEndCallSound();
     await webrtc.endCall();
     setActiveCall(null);
-  }, [activeCall, webrtc.endCall, webrtc.callDuration]);
+  }, [activeCall, webrtc.endCall, webrtc.callDuration, user?.uid]);
 
   // ─── Dismiss error ────────────────────────────────────────────────────
 

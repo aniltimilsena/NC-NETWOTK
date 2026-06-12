@@ -27,6 +27,7 @@ export type CallState =
 
 interface UseWebRTCReturn {
   callState: CallState;
+  callId: string | null;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   isMuted: boolean;
@@ -60,6 +61,7 @@ interface StartCallParams {
 
 export function useWebRTC(): UseWebRTCReturn {
   const [callState, setCallState] = useState<CallState>("idle");
+  const [callId, setCallId] = useState<string | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isMuted, setIsMuted] = useState(false);
@@ -108,6 +110,7 @@ export function useWebRTC(): UseWebRTCReturn {
     }
     setLocalStream(null);
     setRemoteStream(null);
+    setCallId(null);
     setCallDuration(0);
     setIsMuted(false);
     setIsVideoOff(false);
@@ -249,6 +252,7 @@ export function useWebRTC(): UseWebRTCReturn {
         }
 
         callIdRef.current = callId;
+        setCallId(callId);
         roleRef.current = "caller";
         setCallState("calling");
 
@@ -259,9 +263,7 @@ export function useWebRTC(): UseWebRTCReturn {
 
         // Listen for answer from callee
         const unsubCall = subscribeToCall(callId, async (callDoc) => {
-          if (!callDoc) return;
-
-          if (callDoc.status === "rejected" || callDoc.status === "no-answer" || callDoc.status === "ended") {
+          if (!callDoc || callDoc.status === "rejected" || callDoc.status === "no-answer" || callDoc.status === "ended") {
             setCallState("ended");
             await cleanup();
             return;
@@ -336,6 +338,7 @@ export function useWebRTC(): UseWebRTCReturn {
         const pc = createPeerConnection(stream);
 
         callIdRef.current = callDoc.id;
+        setCallId(callDoc.id);
         roleRef.current = "callee";
         setCallState("connecting");
 
@@ -393,8 +396,7 @@ export function useWebRTC(): UseWebRTCReturn {
 
         // Monitor call status for remote hangup
         const unsubCall = subscribeToCall(callDoc.id, async (doc) => {
-          if (!doc) return;
-          if (doc.status === "ended") {
+          if (!doc || doc.status === "ended") {
             setCallState("ended");
             await cleanup();
           }
@@ -495,6 +497,7 @@ export function useWebRTC(): UseWebRTCReturn {
 
   return {
     callState,
+    callId,
     localStream,
     remoteStream,
     isMuted,

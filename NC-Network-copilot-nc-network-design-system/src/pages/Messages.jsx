@@ -17,7 +17,8 @@ import {
   updateMessage,
   deleteMessage,
   reactToMessage,
-  pinMessage
+  pinMessage,
+  markConversationAsRead
 } from '../services/messaging';
 import { uploadProfileMedia } from '../services/profile';
 import { formatMessagePreview } from '../utils/format';
@@ -299,6 +300,16 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     }
   }, [user?.uid, initialUserId]);
 
+  // Clear unread count when a conversation is opened
+  useEffect(() => {
+    if (activeChatId && user?.uid) {
+      const active = conversations.find(c => c.id === activeChatId);
+      if (active && active.unread && active.lastSenderId !== user.uid) {
+        markConversationAsRead(activeChatId);
+      }
+    }
+  }, [activeChatId, conversations, user?.uid]);
+
   useEffect(() => {
     if (activeChatId) {
       const unsubscribe = subscribeToMessages(activeChatId, (msgs) => {
@@ -386,13 +397,11 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                     </span>
                   </div>
                   <div className="flex justify-between items-center gap-2">
-                    <p className={`text-xs truncate ${chat.unread ? 'text-white font-medium' : 'text-nc-muted'}`}>
+                    <p className={`text-xs truncate ${(chat.unread && chat.lastSenderId !== user?.uid) ? 'text-white font-medium font-semibold' : 'text-nc-muted'}`}>
                       {formatMessagePreview(chat.lastMessage)}
                     </p>
-                    {chat.unread > 0 && (
-                      <span className="bg-nc-accent text-nc-darker text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
-                        {chat.unread}
-                      </span>
+                    {chat.unread && chat.lastSenderId !== user?.uid && (
+                      <span className="w-2.5 h-2.5 bg-nc-accent rounded-full shadow-lg shadow-nc-accent/50 shrink-0 animate-pulse" title="Unread" />
                     )}
                   </div>
                 </div>
@@ -504,9 +513,42 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                 const hasReactions = msg.reactions && Object.keys(msg.reactions).length > 0;
                 
                 if (msg.isSystem) {
+                  const textLower = msg.text.toLowerCase();
+                  const isCall = textLower.includes('call') || textLower.includes('missed') || textLower.includes('declined') || textLower.includes('busy');
+                  
+                  let icon = null;
+                  let pillClass = "bg-white/5 border-white/5 text-nc-muted";
+                  
+                  if (isCall) {
+                    if (textLower.includes('missed')) {
+                      pillClass = "bg-red-500/10 border-red-500/20 text-red-400";
+                      icon = (
+                        <svg className="w-3.5 h-3.5 text-red-400 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.516l2.257-1.13a1 1 0 00.502-1.21L9.228 3.684A1 1 0 008.28 3H5z" />
+                        </svg>
+                      );
+                    } else if (textLower.includes('declined') || textLower.includes('busy') || textLower.includes('cancelled') || textLower.includes('offline') || textLower.includes('error')) {
+                      pillClass = "bg-orange-500/10 border-orange-500/20 text-orange-400";
+                      icon = (
+                        <svg className="w-3.5 h-3.5 text-orange-400 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                      );
+                    } else {
+                      // Completed call
+                      pillClass = "bg-green-500/10 border-green-500/20 text-green-400";
+                      icon = (
+                        <svg className="w-3.5 h-3.5 text-green-400 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      );
+                    }
+                  }
+
                   return (
                     <div key={msg.id} className="flex justify-center my-4">
-                      <div className="bg-white/5 border border-white/5 px-4 py-1.5 rounded-full text-[11px] text-nc-muted font-medium tracking-wide backdrop-blur-sm">
+                      <div className={`border px-4 py-1.5 rounded-full text-[11px] font-medium tracking-wide backdrop-blur-sm flex items-center ${pillClass}`}>
+                        {icon}
                         {msg.text}
                       </div>
                     </div>
@@ -739,6 +781,25 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                   </button>
                 </div>
               )}
+
+              {/* Quick Replies */}
+              <div className="flex gap-2 overflow-x-auto pb-3 mb-1 scrollbar-none shrink-0 px-1">
+                {[
+                  "Available for Casting",
+                  "Send Availability",
+                  "Interested",
+                  "Not Available",
+                  "Request More Info"
+                ].map((text) => (
+                  <button
+                    key={text}
+                    onClick={() => setNewMessage(text)}
+                    className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white/80 hover:text-white transition-all whitespace-nowrap active:scale-95"
+                  >
+                    {text}
+                  </button>
+                ))}
+              </div>
 
               <div className="flex items-center gap-3">
                 <input 
