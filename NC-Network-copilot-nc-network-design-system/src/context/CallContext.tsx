@@ -66,7 +66,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
   const [incomingCall, setIncomingCall] = useState<CallDoc | null>(null);
 
   const webrtc = useWebRTC();
-  const { requestPermission } = usePermissionContext();
+  const { requestPermission } = usePermissionContext() as any;
 
   const loggedCallsRef = useRef<Record<string, boolean>>({});
 
@@ -217,7 +217,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
   // ─── Initiate an outgoing call ─────────────────────────────────────────
 
   const initiateCall = useCallback(
-    (params: {
+    async (params: {
       calleeId: string;
       calleeName: string;
       calleePhoto: string;
@@ -239,8 +239,9 @@ export function CallProvider({ children, user }: CallProviderProps) {
           try {
             const callerRes = await getProfile(user.uid);
             if (callerRes.data) {
-              callerName = callerRes.data.name || [callerRes.data.firstName, callerRes.data.lastName].filter(Boolean).join(' ') || callerRes.data.username || callerName;
-              callerAvatar = callerRes.data.image || callerRes.data.avatar || callerRes.data.photoURL || callerAvatar;
+              const callerData = callerRes.data as any;
+              callerName = callerData.name || [callerData.firstName, callerData.lastName].filter(Boolean).join(' ') || callerData.username || callerName;
+              callerAvatar = callerData.image || callerData.avatar || callerData.photoURL || callerAvatar;
             }
           } catch (e) {
             console.warn("Failed to fetch caller profile:", e);
@@ -249,8 +250,9 @@ export function CallProvider({ children, user }: CallProviderProps) {
           try {
             const calleeRes = await getProfile(params.calleeId);
             if (calleeRes.data) {
-              calleeName = calleeRes.data.name || [calleeRes.data.firstName, calleeRes.data.lastName].filter(Boolean).join(' ') || calleeRes.data.username || calleeName;
-              calleePhoto = calleeRes.data.image || calleeRes.data.avatar || calleeRes.data.photoURL || calleePhoto;
+              const calleeData = calleeRes.data as any;
+              calleeName = calleeData.name || [calleeData.firstName, calleeData.lastName].filter(Boolean).join(' ') || calleeData.username || calleeName;
+              calleePhoto = calleeData.image || calleeData.avatar || calleeData.photoURL || calleePhoto;
             }
           } catch (e) {
             console.warn("Failed to fetch callee profile:", e);
@@ -289,7 +291,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
   // ─── Accept incoming call ──────────────────────────────────────────────
 
-  const acceptCall = useCallback(() => {
+  const acceptCall = useCallback(async () => {
     if (!incomingCall) return;
 
     stopRingtone();
@@ -322,8 +324,9 @@ export function CallProvider({ children, user }: CallProviderProps) {
       let senderAvatar = incomingCall.callerPhoto || "";
       const profileRes = await getProfile(incomingCall.callerId);
       if (profileRes.data) {
-        senderName = profileRes.data.name || senderName;
-        senderAvatar = profileRes.data.image || senderAvatar;
+        const profileData = profileRes.data as any;
+        senderName = profileData.name || senderName;
+        senderAvatar = profileData.image || senderAvatar;
       }
 
       const targetReceiverId = incomingCall.calleeId || incomingCall.receiverId;
@@ -364,8 +367,9 @@ export function CallProvider({ children, user }: CallProviderProps) {
           let senderAvatar = activeCall.callerPhoto || "";
           const profileRes = await getProfile(activeCall.callerId);
           if (profileRes.data) {
-            senderName = profileRes.data.name || senderName;
-            senderAvatar = profileRes.data.image || senderAvatar;
+            const profileData = profileRes.data as any;
+            senderName = profileData.name || senderName;
+            senderAvatar = profileData.image || senderAvatar;
           }
 
           await addDoc(collection(db, "notifications"), {

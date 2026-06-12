@@ -271,7 +271,7 @@ export const subscribeToConversations = (
       );
 
       // Sort locally by lastMessageAt desc
-      convos.sort((a, b) => {
+      convos.sort((a: any, b: any) => {
         const timeA = a.lastMessageAt?.toMillis?.() || a.lastMessageAt?.seconds * 1000 || 0;
         const timeB = b.lastMessageAt?.toMillis?.() || b.lastMessageAt?.seconds * 1000 || 0;
         return timeB - timeA;

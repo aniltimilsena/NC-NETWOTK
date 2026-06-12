@@ -15,7 +15,7 @@ import { collection, query, where, onSnapshot, orderBy, Timestamp, limit } from 
 
 import { formatMessagePreview } from '../../utils/format';
 
-export default function Navbar({ onNavigate, currentPage, onBack, showBack, isAdmin, user, onLogout }) {
+export default function Navbar({ onNavigate, currentPage, onBack = () => {}, showBack = false, isAdmin = false, user = null, onLogout = () => {} }) {
   const isLoggedIn = !!user;
   const { pathname } = useLocation();
   const navigate = useNavigate();

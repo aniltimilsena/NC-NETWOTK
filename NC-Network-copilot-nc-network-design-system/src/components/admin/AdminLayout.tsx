@@ -1,7 +1,7 @@
 import React from 'react';
 import AdminSidebar from './AdminSidebar';
 
-export default function AdminLayout({ children, activeTab, onNavigate }) {
+export default function AdminLayout({ children, activeTab, onNavigate }: { children?: React.ReactNode; activeTab: any; onNavigate: any }) {
   return (
     <div className="flex h-screen bg-admin-bg font-display overflow-hidden text-nc-text">
       <AdminSidebar activeTab={activeTab} onNavigate={onNavigate} />

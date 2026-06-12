@@ -2,7 +2,7 @@ import React from 'react';
 import CuratorSidebar from './CuratorSidebar';
 import CuratorTopbar from './CuratorTopbar';
 
-export default function CuratorLayout({ children, onNavigate, currentPage }) {
+export default function CuratorLayout({ children, onNavigate, currentPage }: { children?: React.ReactNode; onNavigate: any; currentPage: any }) {
   return (
     <div className="flex min-h-screen bg-oc-bg">
       <CuratorSidebar onNavigate={onNavigate} currentPage={currentPage} />

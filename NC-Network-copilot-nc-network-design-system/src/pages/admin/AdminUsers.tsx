@@ -465,10 +465,14 @@ export default function AdminUsers() {
                           <div className="flex items-center gap-2">
                             <p className="font-bold text-white text-sm">{user.name ?? 'Unknown User'}</p>
                             {user.verified && (
-                              <ShieldCheck className="w-3.5 h-3.5 text-admin-success fill-admin-success/10" title="Verified" />
+                              <span title="Verified">
+                                <ShieldCheck className="w-3.5 h-3.5 text-admin-success fill-admin-success/10" />
+                              </span>
                             )}
                             {user.premium && (
-                              <Award className="w-3.5 h-3.5 text-admin-primary fill-admin-primary/10 animate-pulse" title="PRO Member" />
+                              <span title="PRO Member">
+                                <Award className="w-3.5 h-3.5 text-admin-primary fill-admin-primary/10 animate-pulse" />
+                              </span>
                             )}
                           </div>
                           <p className="text-xs text-nc-muted">{user.email ?? 'No email'}</p>

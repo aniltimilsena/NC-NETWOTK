@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function CuratorSidebar({ onNavigate, currentPage }) {
+export default function CuratorSidebar({ onNavigate, currentPage }: { onNavigate: any; currentPage: any }) {
   const menuItems = [
     { id: 'curator-overview', label: 'Overview', icon: 'dashboard' },
     { id: 'curator-users', label: 'Users', icon: 'group' },

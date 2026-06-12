@@ -16,7 +16,7 @@ apiClient.interceptors.request.use(async (config) => {
     if (config.headers instanceof AxiosHeaders) {
       config.headers.set('Authorization', `Bearer ${token}`);
     } else {
-      config.headers.Authorization = `Bearer ${token}`;
+      (config.headers as any).Authorization = `Bearer ${token}`;
     }
   }
   return config;

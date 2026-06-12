@@ -13,7 +13,7 @@ export interface UploadedFile {
   status: "uploading" | "completed" | "error";
 }
 
-interface FileUploadCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface FileUploadCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'> {
   files: UploadedFile[];
   onFilesChange: (files: File[]) => void;
   onFileRemove: (id: string) => void;
