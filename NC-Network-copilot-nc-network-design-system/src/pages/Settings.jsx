@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/animated-state-icons"
 import { Plus, Check } from "lucide-react"
 import Avatar from '../components/ui/Avatar';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { CATEGORIES } from '../constants/categories';
 
 
@@ -252,6 +253,17 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     }
   };
 
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: "",
+    description: "",
+    confirmText: "Confirm",
+    cancelText: "Cancel",
+    onConfirm: () => {},
+    type: "default",
+    isLoading: false
+  });
+
   const [activeTab, setActiveTab] = useState(() => {
     if (['about', 'skills', 'experience', 'media', 'reviews'].includes(initialTab)) {
       return 'profile';
@@ -456,20 +468,35 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     }
   };
 
-  const handleDeleteAvatar = async () => {
+  const handleDeleteAvatar = () => {
     if (!user?.uid) return;
     
-    try {
-      await updateProfileData(user.uid, { image: null });
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { photoURL: "" });
+    setConfirmConfig({
+      isOpen: true,
+      title: "Remove Profile Picture?",
+      description: "Are you sure you want to remove your profile picture? This action cannot be undone.",
+      confirmText: "Remove",
+      cancelText: "Cancel",
+      type: "danger",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          await updateProfileData(user.uid, { image: null });
+          if (auth.currentUser) {
+            await updateProfile(auth.currentUser, { photoURL: "" });
+          }
+          showToast("Profile picture removed.", "success");
+          createSystemNotification("Profile Picture Removed", "Your profile picture has been removed.");
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          console.error("Avatar delete error:", err);
+          showToast("Error removing profile picture.", "error");
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
       }
-      showToast("Profile picture removed.", "success");
-      createSystemNotification("Profile Picture Removed", "Your profile picture has been removed.");
-    } catch (err) {
-      console.error("Avatar delete error:", err);
-      showToast("Error removing profile picture.", "error");
-    }
+    });
   };
 
   useEffect(() => {
@@ -1392,7 +1419,12 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white pt-24 sm:pt-28 pb-32 md:pb-20 relative font-sans">
+    <>
+      <ConfirmDialog
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
+      <div className="min-h-screen bg-[#0A0A0A] text-white pt-24 sm:pt-28 pb-32 md:pb-20 relative font-sans">
       <div className="max-w-[1100px] mx-auto px-6 sm:px-8 md:px-8 flex flex-col md:flex-row items-start gap-8 md:gap-16">
         
         {/* LEFT SIDEBAR (Hidden on mobile if a detail view is active) */}
@@ -1486,5 +1518,6 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       )}
 
     </div>
+    </>
   );
 }

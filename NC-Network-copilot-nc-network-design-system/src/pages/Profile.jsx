@@ -555,13 +555,16 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     }
   };
 
-  const handleDeleteMedia = (idx) => {
+  const handleDeleteMedia = (src) => {
     if (!user || !profile) return;
+    const isVideo = isVideoUrl(src);
     
     setConfirmConfig({
       isOpen: true,
-      title: "Delete Showcase Item?",
-      description: "Are you sure you want to delete this photo from your media showcase? This action cannot be undone.",
+      title: isVideo ? "Delete Video?" : "Delete Photo?",
+      description: isVideo 
+        ? "Are you sure you want to delete this video from your showreel? This action cannot be undone." 
+        : "Are you sure you want to delete this photo from your media showcase? This action cannot be undone.",
       confirmText: "Delete",
       cancelText: "Cancel",
       type: "danger",
@@ -569,12 +572,39 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
         try {
-          const updatedMedia = p.media.filter((_, i) => i !== idx);
+          const updatedMedia = p.media.filter(url => url !== src);
           await updateProfileData(user.uid, { media: updatedMedia });
           setFullscreenImage(null);
+          showAlert('Deleted', 'info', isVideo ? 'Showreel video removed.' : 'Gallery photo removed.');
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         } catch (err) {
           console.error("Error deleting media:", err);
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
+  };
+
+  const handleDeleteIntroVideo = () => {
+    if (!user || !profile) return;
+    
+    setConfirmConfig({
+      isOpen: true,
+      title: "Remove Intro Video?",
+      description: "Are you sure you want to remove your introduction video? This action cannot be undone.",
+      confirmText: "Remove",
+      cancelText: "Cancel",
+      type: "danger",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          await updateProfileData(user.uid, { introVideo: null });
+          showAlert('Removed', 'info', 'Intro video removed.');
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          console.error("Error removing intro video:", err);
         } finally {
           setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
@@ -1244,14 +1274,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                       <video src={p.introVideo} controls className="w-full h-full object-cover" />
                       {isOwnProfile && (
                         <button 
-                          onClick={async () => {
-                            try {
-                              await updateProfileData(user.uid, { introVideo: null });
-                              showAlert('Removed', 'info', 'Intro video removed.');
-                            } catch (err) {
-                              console.error("Error removing intro video:", err);
-                            }
-                          }}
+                          onClick={handleDeleteIntroVideo}
                           className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg"
                           title="Remove Intro Video"
                         >
@@ -1326,15 +1349,9 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                           </span>
                           {isOwnProfile && (
                             <button 
-                              onClick={async (e) => {
+                              onClick={(e) => {
                                 e.stopPropagation();
-                                try {
-                                  const updatedMedia = p.media.filter(url => url !== src);
-                                  await updateProfileData(user.uid, { media: updatedMedia });
-                                  showAlert('Deleted', 'info', 'Gallery photo removed.');
-                                } catch (err) {
-                                  console.error("Error deleting image:", err);
-                                }
+                                handleDeleteMedia(src);
                               }}
                               className="bg-black/60 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors shadow-lg"
                               title="Delete Photo"
@@ -1361,15 +1378,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                         <video src={src} controls className="w-full h-full object-cover" />
                         {isOwnProfile && (
                           <button 
-                            onClick={async () => {
-                              try {
-                                const updatedMedia = p.media.filter(url => url !== src);
-                                  await updateProfileData(user.uid, { media: updatedMedia });
-                                showAlert('Deleted', 'info', 'Showreel video removed.');
-                              } catch (err) {
-                                console.error("Error deleting video:", err);
-                              }
-                            }}
+                            onClick={() => handleDeleteMedia(src)}
                             className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg"
                             title="Delete Video"
                           >
@@ -1659,7 +1668,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
         
         {isOwnProfile && (
           <button
-            onClick={() => handleDeleteMedia(fullscreenImage.idx)}
+            onClick={() => handleDeleteMedia(fullscreenImage.src)}
             className="mt-6 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full font-black uppercase tracking-wider text-xs shadow-lg shadow-red-600/30 flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
