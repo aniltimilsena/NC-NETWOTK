@@ -902,7 +902,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
               <div>
                 <h3 className="text-lg font-black text-white flex items-center gap-2">
-                  <span>📈</span> Profile Strength: {totalScore}%
+                  Profile Strength: {totalScore}%
                 </h3>
                 <p className="text-nc-muted text-xs mt-1">Complete your profile to increase your visibility on the marketplace.</p>
               </div>
