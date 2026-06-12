@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Briefcase, Image, Star } from 'lucide-react';
+import { Sparkles, Briefcase, Image, Star, Video } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
@@ -1285,9 +1285,9 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                       )}
                     </div>
                   ) : (
-                    <div className="py-12 text-center border border-dashed border-white/5 rounded-3xl bg-white/2">
-                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 mx-auto">
-                        <span className="text-2xl">🎥</span>
+                    <div className="py-12 text-center border border-dashed border-white/5 rounded-3xl bg-white/2 group hover:border-nc-accent/30 transition-all duration-500">
+                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 mx-auto group-hover:scale-110 group-hover:bg-nc-accent/10 transition-all duration-500">
+                        <Video className="w-6 h-6 text-white/20 group-hover:text-nc-accent transition-colors stroke-[1.5]" />
                       </div>
                       <p className="text-xs text-nc-muted max-w-xs mx-auto leading-relaxed">
                         {isOwnProfile 
