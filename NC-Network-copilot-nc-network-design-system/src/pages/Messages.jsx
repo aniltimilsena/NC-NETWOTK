@@ -709,23 +709,27 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                           </div>
                         )}
 
-                        <div className={`p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
-                          isMine 
-                            ? 'bg-nc-accent text-[#0A0A0A] rounded-tr-none font-medium' 
-                            : 'bg-nc-surface border border-white/5 text-white rounded-tl-none'
-                        }`}>
+                        <div className={
+                          msg.type === 'image' || msg.type === 'video'
+                            ? `rounded-2xl overflow-hidden shadow-sm max-w-full ${isMine ? 'rounded-tr-none' : 'rounded-tl-none'}`
+                            : `p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                                isMine 
+                                  ? 'bg-nc-accent text-[#0A0A0A] rounded-tr-none font-medium' 
+                                  : 'bg-nc-surface border border-white/5 text-white rounded-tl-none'
+                              }`
+                        }>
                           {msg.type === 'image' ? (
                             <img 
                               src={msg.text} 
                               alt="Shared Image" 
-                              className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer" 
+                              className="max-w-full max-h-60 object-contain cursor-pointer" 
                               onClick={() => window.open(msg.text, '_blank')} 
                             />
                           ) : msg.type === 'video' ? (
                             <video 
                               src={msg.text} 
                               controls 
-                              className="max-w-full rounded-lg max-h-60" 
+                              className="max-w-full max-h-60" 
                             />
                           ) : (
                             <>
