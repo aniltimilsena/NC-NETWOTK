@@ -757,7 +757,13 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       <div className="relative">
         {/* Cover Image */}
         <div className="h-56 sm:h-72 relative">
-          <img src={p.coverImage} alt="Cover" className="w-full h-full object-cover" />
+          <img 
+            src={p.coverImage} 
+            alt="Cover" 
+            className="w-full h-full object-cover select-none" 
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-nc-dark" />
         </div>
         
@@ -1271,7 +1277,13 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                     </div>
                   ) : p.introVideo ? (
                     <div className="relative aspect-video rounded-3xl overflow-hidden bg-black/40 border border-white/5 shadow-inner">
-                      <video src={p.introVideo} controls className="w-full h-full object-cover" />
+                      <video 
+                        src={p.introVideo} 
+                        controls 
+                        controlsList="nodownload"
+                        className="w-full h-full object-cover" 
+                        onContextMenu={(e) => e.preventDefault()}
+                      />
                       {isOwnProfile && (
                         <button 
                           onClick={handleDeleteIntroVideo}
@@ -1341,7 +1353,9 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                         <img 
                           src={src} 
                           alt={`Gallery asset ${idx + 1}`} 
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 select-none"
+                          onContextMenu={(e) => e.preventDefault()}
+                          onDragStart={(e) => e.preventDefault()}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end justify-between p-4 backdrop-blur-[2px]">
                           <span className="text-[9px] text-nc-accent font-black uppercase tracking-widest bg-nc-accent/10 border border-nc-accent/20 px-2.5 py-1 rounded-full">
@@ -1375,7 +1389,13 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                         key={idx} 
                         className="group relative aspect-video rounded-3xl overflow-hidden bg-nc-surface border border-nc-border shadow-lg"
                       >
-                        <video src={src} controls className="w-full h-full object-cover" />
+                        <video 
+                          src={src} 
+                          controls 
+                          controlsList="nodownload"
+                          className="w-full h-full object-cover" 
+                          onContextMenu={(e) => e.preventDefault()}
+                        />
                         {isOwnProfile && (
                           <button 
                             onClick={() => handleDeleteMedia(src)}
@@ -1662,7 +1682,9 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           <img 
             src={fullscreenImage.src} 
             alt="Fullscreen preview" 
-            className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/5" 
+            className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/5 select-none" 
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
           />
         </div>
         

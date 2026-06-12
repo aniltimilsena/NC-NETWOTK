@@ -722,14 +722,17 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                             <img 
                               src={msg.text} 
                               alt="Shared Image" 
-                              className="max-w-full max-h-60 object-contain cursor-pointer" 
-                              onClick={() => window.open(msg.text, '_blank')} 
+                              className="max-w-full max-h-60 object-contain select-none" 
+                              onContextMenu={(e) => e.preventDefault()}
+                              onDragStart={(e) => e.preventDefault()}
                             />
                           ) : msg.type === 'video' ? (
                             <video 
                               src={msg.text} 
                               controls 
+                              controlsList="nodownload"
                               className="max-w-full max-h-60" 
+                              onContextMenu={(e) => e.preventDefault()}
                             />
                           ) : (
                             <>
