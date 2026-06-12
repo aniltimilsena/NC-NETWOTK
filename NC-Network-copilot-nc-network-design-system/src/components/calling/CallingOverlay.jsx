@@ -55,6 +55,11 @@ export default function CallingOverlay() {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
       remoteVideoRef.current.muted = isSpeakerMuted;
+      
+      // Explicitly trigger play to bypass browser autoplay restrictions
+      remoteVideoRef.current.play().catch(err => {
+        console.warn("[CallingOverlay] Remote stream play failed or interrupted:", err);
+      });
     }
   }, [remoteStream, isSpeakerMuted]);
 
@@ -129,20 +134,21 @@ export default function CallingOverlay() {
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-nc-accent/5 rounded-full blur-[200px]" />
         </div>
 
+        {/* Remote video / audio output element (always present to play remote stream audio/video) */}
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 ${
+            isVideoCall && isConnected && remoteStream?.getVideoTracks().length > 0
+              ? 'opacity-100'
+              : 'opacity-0 pointer-events-none'
+          }`}
+        />
+
         {/* ── Video Layer ── */}
         {isVideoCall && (
           <>
-            {/* Remote video (full screen) */}
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 ${
-                isConnected && remoteStream?.getVideoTracks().length > 0
-                  ? 'opacity-100'
-                  : 'opacity-0'
-              }`}
-            />
             {/* Overlay gradient for controls visibility */}
             {isConnected && (
               <div className="absolute inset-0 z-20 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
