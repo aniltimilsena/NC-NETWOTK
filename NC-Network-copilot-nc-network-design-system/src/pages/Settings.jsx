@@ -482,7 +482,8 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
         try {
-          await updateProfileData(user.uid, { image: null });
+          await updateProfileData(user.uid, { image: null, photoURL: null });
+          setAvatarUrl("");
           if (auth.currentUser) {
             await updateProfile(auth.currentUser, { photoURL: "" });
           }
