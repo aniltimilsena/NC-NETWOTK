@@ -18,6 +18,11 @@ service cloud.firestore {
     match /profiles/{userId} {
       allow read: if true;
       allow write: if false;
+
+      // Sessions sub-collection (client-side active sessions track)
+      match /sessions/{sessionId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Users
