@@ -3,9 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Plus,
   Check,
-  Play,
-  X,
-  Search
+  Play
 } from 'lucide-react';
 import { CATEGORY_ICON_MAP } from '../components/icons/CategoryIcons';
 import { CATEGORIES } from '../constants/categories';
@@ -36,7 +34,6 @@ import {
 
 export default function Home({ onNavigate, user }) {
   const isLoggedIn = !!user;
-  const [searchQuery, setSearchQuery] = useState('');
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [followedTalents, setFollowedTalents] = useState([]);
   
@@ -353,100 +350,58 @@ export default function Home({ onNavigate, user }) {
             <section className="pt-10 pb-2 bg-nc-dark relative overflow-hidden">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                 {/* Header Block */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                  <div className="flex items-center gap-3 group/header">
-                    <div className="w-[4px] h-6 bg-sky-400 rounded-sm shadow-[0_0_10px_rgba(56,189,248,0.2)]"></div>
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-2xl font-bold text-white tracking-tight">Actors/Actress</h2>
-                      <span className="text-white text-lg font-medium opacity-80">&gt;</span>
-                      <button 
-                        onClick={() => onNavigate('listing', 'Actors')} 
-                        className="text-sky-400 text-[15px] font-medium hover:text-white transition-all ml-1"
-                      >
-                        View all
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Search Input for Actors */}
-                  <div className="relative group max-w-xs w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-nc-muted group-focus-within:text-nc-accent transition-colors" />
-                    <input 
-                      type="text" 
-                      placeholder="Search actor by name or location..." 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-nc-surface border border-nc-border rounded-full pl-9 pr-8 py-1.5 text-xs text-white placeholder-nc-muted focus:outline-none focus:border-nc-accent/50 focus:bg-nc-surface/80 transition-all shadow-xl"
-                    />
-                    {searchQuery && (
-                      <button 
-                        onClick={() => setSearchQuery('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-nc-muted hover:text-white"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
+                <div className="flex items-center gap-3 mb-8 group/header">
+                  <div className="w-[4px] h-6 bg-sky-400 rounded-sm shadow-[0_0_10px_rgba(56,189,248,0.2)]"></div>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-white tracking-tight">Actors/Actress</h2>
+                    <span className="text-white text-lg font-medium opacity-80">&gt;</span>
+                    <button 
+                      onClick={() => onNavigate('listing', 'Actors')} 
+                      className="text-sky-400 text-[15px] font-medium hover:text-white transition-all ml-1"
+                    >
+                      View all
+                    </button>
                   </div>
                 </div>
 
                 {/* Horizontal Scroll Area */}
-                {(() => {
-                  const filteredActors = talents
-                    .filter(t => t.role?.toLowerCase().includes('actor'))
-                    .filter(t => {
-                      if (!searchQuery) return true;
-                      const query = searchQuery.toLowerCase();
-                      return (
-                        t.name?.toLowerCase().includes(query) ||
-                        t.location?.toLowerCase().includes(query)
-                      );
-                    })
-                    .sort((a, b) => {
-                      const followersA = a.followers || 0;
-                      const followersB = b.followers || 0;
-                      if (followersB !== followersA) {
-                        return followersB - followersA;
-                      }
-                      const ratingA = parseFloat(a.rating) || 0;
-                      const ratingB = parseFloat(b.rating) || 0;
-                      return ratingB - ratingA;
-                    });
-
-                  if (filteredActors.length === 0) {
-                    return (
-                      <div className="py-8 text-center text-nc-muted text-sm w-full">
-                        No actors found matching "{searchQuery}"
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div className="relative group">
-                      <div className="flex gap-12 sm:gap-20 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
-                        {filteredActors.slice(0, 10).map((actor) => (
-                          <div 
-                            key={actor.id} 
-                            onClick={() => onNavigate('profile', actor.id)}
-                            className="flex flex-col items-center gap-4 min-w-[130px] sm:min-w-[180px] cursor-pointer transition-all duration-300 hover:scale-105"
-                          >
-                            <Avatar 
-                              user={actor}
-                              size="lg"
-                              name={actor.name}
-                              className="w-28 h-28 sm:w-36 sm:h-36 border-none"
-                            />
-                            <div className="text-center">
-                              <p className="text-white font-bold text-base sm:text-lg leading-tight">{actor.name}</p>
-                              <p className="text-[#888] text-xs sm:text-sm mt-1 font-medium">
-                                {actor.location || 'Nepal'}
-                              </p>
-                            </div>
+                <div className="relative group">
+                  <div className="flex gap-12 sm:gap-20 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
+                    {talents
+                      .filter(t => t.role?.toLowerCase().includes('actor'))
+                      .sort((a, b) => {
+                        const followersA = a.followers || 0;
+                        const followersB = b.followers || 0;
+                        if (followersB !== followersA) {
+                          return followersB - followersA;
+                        }
+                        const ratingA = parseFloat(a.rating) || 0;
+                        const ratingB = parseFloat(b.rating) || 0;
+                        return ratingB - ratingA;
+                      })
+                      .slice(0, 10)
+                      .map((actor) => (
+                        <div 
+                          key={actor.id} 
+                          onClick={() => onNavigate('profile', actor.id)}
+                          className="flex flex-col items-center gap-4 min-w-[130px] sm:min-w-[180px] cursor-pointer transition-all duration-300 hover:scale-105"
+                        >
+                          <Avatar 
+                            user={actor}
+                            size="lg"
+                            name={actor.name}
+                            className="w-28 h-28 sm:w-36 sm:h-36 border-none"
+                          />
+                          <div className="text-center">
+                            <p className="text-white font-bold text-base sm:text-lg leading-tight">{actor.name}</p>
+                            <p className="text-[#888] text-xs sm:text-sm mt-1 font-medium">
+                              {actor.location || 'Nepal'}
+                            </p>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
+                        </div>
+                      ))}
+                  </div>
+                </div>
               </div>
             </section>
           )}
