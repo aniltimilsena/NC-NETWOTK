@@ -245,7 +245,7 @@ export default function Navbar({ onNavigate, currentPage, onBack, showBack, isAd
                 className={`text-nc-secondary hover:text-white p-1.5 relative transition-colors ${isActionActive('notifications') ? 'text-white' : ''}`}
                 aria-label="Notifications"
               >
-                <NotificationIcon size={24} color="currentColor" />
+                <NotificationIcon size={24} color="currentColor" active={false} />
                 {unreadCount > 0 && (
                   <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#ef4444]" />
                 )}
