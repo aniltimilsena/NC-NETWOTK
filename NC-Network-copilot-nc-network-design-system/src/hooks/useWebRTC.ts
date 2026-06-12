@@ -34,13 +34,14 @@ interface UseWebRTCReturn {
   isVideoOff: boolean;
   callDuration: number;
   errorMessage: string;
-  startCall: (params: StartCallParams) => Promise<void>;
-  answerCall: (callDoc: CallDoc) => Promise<void>;
+  startCall: (params: StartCallParams, preAcquiredStream?: MediaStream) => Promise<void>;
+  answerCall: (callDoc: CallDoc, preAcquiredStream?: MediaStream) => Promise<void>;
   endCall: () => Promise<void>;
   toggleMute: () => void;
   toggleVideo: () => void;
   switchCamera: () => Promise<void>;
   resetToIdle: () => void;
+  getUserMedia: (callType: "audio" | "video") => Promise<MediaStream>;
 }
 
 interface StartCallParams {
@@ -217,9 +218,9 @@ export function useWebRTC(): UseWebRTCReturn {
   // ─── Start call (caller) ─────────────────────────────────────────────────
 
   const startCall = useCallback(
-    async (params: StartCallParams) => {
+    async (params: StartCallParams, preAcquiredStream?: MediaStream) => {
       try {
-        const stream = await getUserMedia(params.callType);
+        const stream = preAcquiredStream || await getUserMedia(params.callType);
         const pc = createPeerConnection(stream);
 
         setCallState("creating-offer");
@@ -332,9 +333,9 @@ export function useWebRTC(): UseWebRTCReturn {
   // ─── Answer call (callee) ────────────────────────────────────────────────
 
   const answerCall = useCallback(
-    async (callDoc: CallDoc) => {
+    async (callDoc: CallDoc, preAcquiredStream?: MediaStream) => {
       try {
-        const stream = await getUserMedia(callDoc.callType);
+        const stream = preAcquiredStream || await getUserMedia(callDoc.callType);
         const pc = createPeerConnection(stream);
 
         callIdRef.current = callDoc.id;
@@ -511,5 +512,6 @@ export function useWebRTC(): UseWebRTCReturn {
     toggleVideo,
     switchCamera,
     resetToIdle,
+    getUserMedia,
   };
 }

@@ -5,13 +5,14 @@ export const usePermissions = () => {
   const [permissionType, setPermissionType] = useState('media');
   const [pendingAction, setPendingAction] = useState(null);
 
-  const checkAndRequest = useCallback(async (type, action) => {
+  const checkAndRequest = useCallback((type, action) => {
     // Check if we've already granted/handled this on this device
     const hasHandled = localStorage.getItem(`nc_perm_${type}`);
     
     if (hasHandled) {
       // Just run the action, browser will handle if it's denied
-      return action();
+      action();
+      return;
     }
 
     // Show our premium modal first
