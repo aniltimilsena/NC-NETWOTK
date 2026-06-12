@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Sparkles, Briefcase, Image, Star } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
@@ -386,10 +387,10 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   };
   
   // Facebook-style Empty Placeholder Component
-  const EmptyState = ({ title, description, icon, actionLabel, onAction }) => (
+  const EmptyState = ({ title, description, icon: Icon, actionLabel, onAction }) => (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-nc-card/30 border border-dashed border-white/10 rounded-[2rem] backdrop-blur-sm animate-fade-in group hover:border-nc-accent/30 transition-all duration-500">
       <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-nc-accent/10 transition-all duration-500">
-        <span className="text-4xl text-white/20 group-hover:text-nc-accent transition-colors">{icon}</span>
+        {Icon && <Icon className="w-8 h-8 text-white/20 group-hover:text-nc-accent transition-colors stroke-[1.5]" />}
       </div>
       <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
       <p className="text-nc-muted text-sm max-w-xs mx-auto mb-8 leading-relaxed">{description}</p>
@@ -1126,7 +1127,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                 <EmptyState 
                   title="No Skills Added"
                   description="Highlight your professional capabilities to attract more casting directors."
-                  icon="✦"
+                  icon={Sparkles}
                   actionLabel="Add First Skill"
                   onAction={() => onNavigate('settings', 'skills')}
                 />
@@ -1168,7 +1169,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
               <EmptyState 
                 title="Your Timeline is Empty"
                 description="Showcase your professional journey and past projects to build trust."
-                icon="⌚"
+                icon={Briefcase}
                 actionLabel="Update Experience"
                 onAction={() => onNavigate('settings', 'experience')}
               />
@@ -1388,7 +1389,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                     <EmptyState 
                       title="No Portfolio Added"
                       description="Upload photos and videos to showcase your talent to the network."
-                      icon="🖼️"
+                      icon={Image}
                       actionLabel="Upload Portfolio"
                       onAction={() => document.getElementById('profile-media-upload')?.click()}
                     />
@@ -1484,7 +1485,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
               <EmptyState 
                 title="No Reviews Yet"
                 description="Once you start working on projects through NC Network, your reviews will appear here."
-                icon="⭐"
+                icon={Star}
                 actionLabel={isLoggedIn ? null : "Sign In to Review"}
                 onAction={() => onNavigate('signin')}
               />
