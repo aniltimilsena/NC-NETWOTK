@@ -1392,7 +1392,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white pt-24 pb-32 md:pb-20 relative font-sans">
+    <div className="min-h-screen bg-[#0A0A0A] text-white pt-24 sm:pt-28 pb-32 md:pb-20 relative font-sans">
       <div className="max-w-[1100px] mx-auto px-6 sm:px-8 md:px-8 flex flex-col md:flex-row items-start gap-8 md:gap-16">
         
         {/* LEFT SIDEBAR (Hidden on mobile if a detail view is active) */}

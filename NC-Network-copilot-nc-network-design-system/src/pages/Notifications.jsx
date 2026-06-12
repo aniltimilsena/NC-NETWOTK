@@ -420,7 +420,7 @@ export default function Notifications({ onNavigate, user }) {
   return (
     <div className="min-h-screen bg-nc-dark">
       {/* Header */}
-      <div className="max-w-3xl mx-auto px-6 sm:px-8 pt-32 pb-4">
+      <div className="max-w-3xl mx-auto px-6 sm:px-8 pt-24 sm:pt-28 pb-4">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <button
