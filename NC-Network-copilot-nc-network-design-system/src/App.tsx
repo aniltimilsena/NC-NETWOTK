@@ -388,6 +388,15 @@ export default function App() {
   const [userProfile, setUserProfile] = useState<Record<string, any> | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(false);
+  const [splashTimeElapsed, setSplashTimeElapsed] = useState(false);
+
+  // Enforce a minimum 3-second splash screen duration
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSplashTimeElapsed(true);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Alert queue
   const [alerts, setAlerts] = useState<AlertPayload[]>([]);
@@ -693,7 +702,7 @@ export default function App() {
     <PermissionProvider>
       <CallProvider user={user}>
         <AnimatePresence>
-          {!authReady && <SplashScreen />}
+          {(!authReady || !splashTimeElapsed) && <SplashScreen />}
         </AnimatePresence>
         <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
           <ErrorBoundary key={location.pathname}>
