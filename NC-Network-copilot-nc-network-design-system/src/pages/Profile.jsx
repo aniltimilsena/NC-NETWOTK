@@ -1195,7 +1195,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                     {isOwnProfile && !p.introVideo && !isUploadingIntro && (
                       <button 
                         onClick={() => document.getElementById('profile-intro-upload')?.click()}
-                        className="text-nc-accent text-[10px] font-black uppercase tracking-[0.2em] hover:brightness-125 transition-all"
+                        className="bg-nc-accent text-nc-darker text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl hover:brightness-110 transition-all"
                       >
                         Upload Video
                       </button>
