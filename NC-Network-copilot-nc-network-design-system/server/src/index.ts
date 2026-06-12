@@ -111,7 +111,26 @@ function formatMessagePreview(text: string): string {
   return text;
 }
 
-app.use(helmet());
+app.use(helmet({
+  frameguard: false, // Disable legacy X-Frame-Options in favor of Content-Security-Policy frame-ancestors
+  xssFilter: false,  // Disable deprecated X-XSS-Protection header
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      frameAncestors: ["'self'"],
+    },
+  },
+}));
+
+// Custom middleware to set proper cache-control and clear deprecated headers for all API responses
+app.use((_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, private');
+  res.removeHeader('Pragma');
+  res.removeHeader('Expires');
+  res.removeHeader('X-XSS-Protection');
+  next();
+});
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {

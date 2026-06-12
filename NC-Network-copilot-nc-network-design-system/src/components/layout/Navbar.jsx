@@ -179,7 +179,12 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
             {/* Logo & Back */}
             <div className="flex items-center gap-4 sm:gap-8">
               {showBack && (
-                <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10">
+                <button 
+                  onClick={onBack} 
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
+                  title="Go Back"
+                  aria-label="Go Back"
+                >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                   </svg>
@@ -307,6 +312,8 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
               <button
                 className="md:hidden text-nc-secondary hover:text-white p-1.5 -mr-1 flex items-center justify-center h-10 w-10"
                 onClick={() => setMenuOpen(!menuOpen)}
+                title="Toggle Menu"
+                aria-label="Toggle Menu"
               >
                 <MenuCloseIcon active={menuOpen} size={28} color="currentColor" />
               </button>
@@ -457,6 +464,8 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
             <button 
               onClick={() => setShowSearchOverlay(false)}
               className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 z-[110]"
+              title="Close Search"
+              aria-label="Close Search"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />

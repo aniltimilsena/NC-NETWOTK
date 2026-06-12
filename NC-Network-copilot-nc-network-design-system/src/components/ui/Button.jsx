@@ -1,4 +1,4 @@
-export default function Button({ children, variant = 'primary', size = 'md', className = '', onClick, type = 'button' }) {
+export default function Button({ children, variant = 'primary', size = 'md', className = '', onClick, type = 'button', ...props }) {
   const variants = {
     primary: 'bg-gradient-to-br from-sky-400 to-sky-600 text-black font-bold hover:from-sky-500 hover:to-sky-700 shadow-[0_4px_20px_rgba(56,189,248,0.25)] active:scale-[0.98]',
     secondary: 'bg-nc-surface border border-sky-400/30 text-sky-400 hover:bg-sky-400/10 hover:border-sky-400/50',
@@ -16,6 +16,7 @@ export default function Button({ children, variant = 'primary', size = 'md', cla
       type={type}
       onClick={onClick}
       className={`rounded-full transition-all duration-200 ${variants[variant]} ${sizes[size]} ${className}`}
+      {...props}
     >
       {children}
     </button>

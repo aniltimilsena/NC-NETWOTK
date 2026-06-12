@@ -784,6 +784,8 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                   <button
                     onClick={() => onNavigate('settings', 'about')}
                     className="absolute -bottom-1 -right-1 w-7 h-7 bg-nc-accent rounded-full flex items-center justify-center shadow-lg border-2 border-[#0E0E0E] hover:scale-110 transition-transform"
+                    title="Edit Profile Image"
+                    aria-label="Edit Profile Image"
                   >
                     <svg className="w-3.5 h-3.5 text-[#0A0A0A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -858,6 +860,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                             }}
                             className="w-8 h-8 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400 hover:bg-green-500/20 hover:border-green-500/30 transition-all active:scale-90"
                             title="Audio Call"
+                            aria-label="Audio Call"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -879,6 +882,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                             }}
                             className="w-8 h-8 rounded-full bg-nc-accent/10 border border-nc-accent/20 flex items-center justify-center text-nc-accent hover:bg-nc-accent/20 hover:border-nc-accent/30 transition-all active:scale-90"
                             title="Video Call"
+                            aria-label="Video Call"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -890,6 +894,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                           onClick={handleShare}
                           className="w-8 h-8 rounded-full bg-[#1A1A1A] border border-[#2A2A2A] flex items-center justify-center text-[#666] hover:text-white hover:border-white/20 transition-all"
                           title="Share Profile"
+                          aria-label="Share Profile"
                         >
                           {shareCopied ? (
                             <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1289,6 +1294,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                           onClick={handleDeleteIntroVideo}
                           className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg"
                           title="Remove Intro Video"
+                          aria-label="Remove Intro Video"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1369,6 +1375,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                               }}
                               className="bg-black/60 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors shadow-lg"
                               title="Delete Photo"
+                              aria-label="Delete Photo"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1401,6 +1408,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                             onClick={() => handleDeleteMedia(src)}
                             className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg"
                             title="Delete Video"
+                            aria-label="Delete Video"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1533,6 +1541,8 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
             <button
               onClick={() => setShowFollowModal(null)}
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
+              title="Close"
+              aria-label="Close"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -1675,6 +1685,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           onClick={() => setFullscreenImage(null)}
           className="absolute top-6 right-6 text-white/50 hover:text-white p-3 rounded-full hover:bg-white/5 transition-all text-xl font-bold"
           title="Close Preview"
+          aria-label="Close Preview"
         >
           ✕
         </button>

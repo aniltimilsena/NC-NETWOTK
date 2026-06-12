@@ -434,6 +434,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
               <button 
                 className="md:hidden p-2 -ml-2 text-nc-muted hover:text-white"
                 onClick={() => setActiveChatId(null)}
+                title="Back to Chats"
+                aria-label="Back to Chats"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -484,6 +486,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                 <button 
                   onClick={() => setShowChatMenu(!showChatMenu)}
                   className="text-nc-muted hover:text-white p-2"
+                  title="Chat Options"
+                  aria-label="Chat Options"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -781,6 +785,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                   <button 
                     onClick={() => { setReplyingTo(null); setEditingMessage(null); if(editingMessage) setNewMessage(''); }}
                     className="p-1 hover:text-white transition-colors"
+                    title="Cancel"
+                    aria-label="Cancel"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -822,6 +828,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingMedia || isSending}
                   className="text-nc-muted hover:text-nc-accent p-1 transition-colors disabled:opacity-50"
+                  title="Attach Media"
+                  aria-label="Attach Media"
                 >
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -854,6 +862,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim() || isSending}
                   className="w-12 h-12 rounded-full bg-nc-accent text-nc-darker flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale shadow-lg shadow-nc-accent/20"
+                  title="Send Message"
+                  aria-label="Send Message"
                 >
                   {isSending ? (
                     <div className="w-5 h-5 border-2 border-nc-darker border-t-transparent rounded-full animate-spin" />
@@ -889,6 +899,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
               <button 
                 onClick={() => { setShowNewChatModal(false); setNewChatSearch(''); }}
                 className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
+                title="Close"
+                aria-label="Close"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
