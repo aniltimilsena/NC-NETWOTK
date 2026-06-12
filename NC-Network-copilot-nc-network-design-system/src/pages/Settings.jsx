@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getProfile, updateProfileData, subscribeToProfile, uploadProfileMedia } from '../services/profile';
 import { updateProfile } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { FileUploadCard } from "@/components/ui/file-upload-card"
 import { InlineAlert } from '../components/ui/AlertBanner';
 import { 
@@ -228,6 +228,30 @@ const NotificationRow = ({ row, markDirty }) => {
 export default function Settings({ onNavigate, user, initialTab, showToast, isAdmin }) {
   const isUserAdmin = isAdmin || user?.email === 'aniltimilsena53@gmail.com';
 
+  const createSystemNotification = async (title, body) => {
+    if (!user?.uid) return;
+    try {
+      await addDoc(collection(db, 'notifications'), {
+        userId: user.uid,
+        recipientId: user.uid,
+        receiverId: user.uid,
+        senderId: 'system',
+        senderName: 'System',
+        senderAvatar: '',
+        title,
+        body,
+        type: 'system',
+        notificationType: 'system',
+        isRead: false,
+        read: false,
+        createdAt: serverTimestamp(),
+        targetUrl: '/settings'
+      });
+    } catch (err) {
+      console.warn("Failed to create system notification:", err);
+    }
+  };
+
   const [activeTab, setActiveTab] = useState(() => {
     if (['about', 'skills', 'experience', 'media', 'reviews'].includes(initialTab)) {
       return 'profile';
@@ -364,6 +388,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
           }
           setAvatarUploadStatus("success");
           showToast("Profile picture updated successfully!", "success");
+          createSystemNotification("Profile Picture Updated", "Your profile picture has been updated.");
           setTimeout(() => {
             setAvatarUploadStatus("idle");
             setIsUploadingAvatar(false);
@@ -411,6 +436,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
           }
           setAvatarUploadStatus("success");
           showToast("Profile picture updated successfully!", "success");
+          createSystemNotification("Profile Picture Updated", "Your profile picture has been updated.");
           setTimeout(() => {
             setAvatarUploadStatus("idle");
             setIsUploadingAvatar(false);
@@ -439,6 +465,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
         await updateProfile(auth.currentUser, { photoURL: "" });
       }
       showToast("Profile picture removed.", "success");
+      createSystemNotification("Profile Picture Removed", "Your profile picture has been removed.");
     } catch (err) {
       console.error("Avatar delete error:", err);
       showToast("Error removing profile picture.", "error");
@@ -519,6 +546,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       if (!error) {
         setHasChanges(false);
         showToast('Profile settings saved successfully!', 'success');
+        createSystemNotification("Profile Updated", "Your profile settings have been successfully updated.");
       } else {
         console.error('[Settings] save failed:', error);
         showToast(`Failed to save: ${error}`, 'error');
