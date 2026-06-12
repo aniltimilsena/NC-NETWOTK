@@ -8,11 +8,8 @@ import {
   orderBy,
   where,
   onSnapshot,
-  addDoc,
-  deleteDoc,
-  updateDoc,
-  serverTimestamp,
 } from "firebase/firestore";
+import apiClient from "../api/client";
 
 export const getCastingCalls = async (filter?: string) => {
   try {
@@ -82,13 +79,8 @@ export const createCastingCall = async (callData: any) => {
       return { id: null, error: "Authentication required" };
     }
 
-    const docRef = await addDoc(collection(db, "casting_calls"), {
-      ...callData,
-      createdAt: serverTimestamp(),
-      createdBy: currentUserUid,
-      status: 'Open',
-    });
-    return { id: docRef.id, error: null };
+    const response = await apiClient.post<{ id: string }>("/casting", callData);
+    return { id: response.data?.id || null, error: null };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to create casting call";
     console.error("createCastingCall error:", message);
@@ -98,7 +90,7 @@ export const createCastingCall = async (callData: any) => {
 
 export const deleteCastingCallAdmin = async (id: string) => {
   try {
-    await deleteDoc(doc(db, "casting_calls", id));
+    await apiClient.delete(`/casting/${id}`);
     return { success: true, error: null };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to delete casting call";
@@ -109,10 +101,7 @@ export const deleteCastingCallAdmin = async (id: string) => {
 
 export const setCastingPriorityAdmin = async (id: string, highPriority: boolean) => {
   try {
-    await updateDoc(doc(db, "casting_calls", id), {
-      highPriority,
-      updatedAt: serverTimestamp(),
-    });
+    await apiClient.put(`/casting/${id}/priority`, { highPriority });
     return { success: true, error: null };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to set casting priority";

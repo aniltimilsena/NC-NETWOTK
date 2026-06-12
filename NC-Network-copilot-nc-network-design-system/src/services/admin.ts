@@ -2,16 +2,13 @@ import { db } from "../lib/firebase";
 import { 
   collection, 
   doc, 
-  setDoc, 
-  addDoc, 
   query, 
   orderBy, 
   limit, 
   onSnapshot, 
-  serverTimestamp,
-  updateDoc
 } from "firebase/firestore";
 import { CATEGORIES } from "../constants/categories";
+import apiClient from "../api/client";
 
 
 export type AdminLog = {
@@ -37,13 +34,7 @@ export type GlobalSettings = {
 // Log admin action to firestore
 export const logAdminAction = async (adminEmail: string, action: string, targetId: string, details: string) => {
   try {
-    await addDoc(collection(db, "admin_logs"), {
-      adminEmail,
-      action,
-      targetId,
-      details,
-      timestamp: serverTimestamp()
-    });
+    await apiClient.post("/admin/log", { action, targetId, details });
   } catch (err) {
     console.error("Failed to write admin log:", err);
   }
@@ -82,10 +73,8 @@ export const subscribeToGlobalSettings = (callback: (settings: GlobalSettings) =
     if (snap.exists()) {
       callback(snap.data() as GlobalSettings);
     } else {
-      // Initialize with defaults if it doesn't exist yet
-      setDoc(settingsDocRef, defaultSettings)
-        .then(() => callback(defaultSettings))
-        .catch(err => console.error("Error initializing global settings:", err));
+      // Initialize with defaults - just callback defaultSettings since client-side setDoc is blocked under 3-tier
+      callback(defaultSettings);
     }
   }, (err) => {
     console.error("Error subscribing to global settings:", err);
@@ -95,11 +84,7 @@ export const subscribeToGlobalSettings = (callback: (settings: GlobalSettings) =
 // Update global settings
 export const updateGlobalSettings = async (settings: Partial<GlobalSettings>) => {
   try {
-    const settingsDocRef = doc(db, "settings", "global");
-    await updateDoc(settingsDocRef, {
-      ...settings,
-      updatedAt: serverTimestamp()
-    });
+    await apiClient.post("/admin/settings", settings);
     return { success: true, error: null };
   } catch (err: any) {
     console.error("Error updating global settings:", err);

@@ -7,10 +7,7 @@ service firebase.storage {
 
     match /{userId}/{allPaths=**} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated()
-        && request.auth.uid == userId
-        && request.resource.size < 50 * 1024 * 1024 // 50MB limit for images/videos
-        && ((request.resource.contentType.matches('image/.*') && request.resource.contentType != 'image/svg+xml') || request.resource.contentType.matches('video/.*'));
+      allow write: if false;
     }
 
     match /{allPaths=**} {

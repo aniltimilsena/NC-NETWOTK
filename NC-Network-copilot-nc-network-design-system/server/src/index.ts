@@ -9,6 +9,9 @@ import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import sharp from 'sharp';
 import * as admin from 'firebase-admin';
+import { v2 as cloudinary } from 'cloudinary';
+import axios from 'axios';
+import { Readable } from 'stream';
 
 import crypto from 'crypto';
 
@@ -88,7 +91,8 @@ const uploadLimiter = rateLimit({
 const MAX_FCM_TOKENS = 20;
 const FCM_TOKEN_LIMIT_REACHED = 'FCM_TOKEN_LIMIT_REACHED';
 
-const allowedUploadMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const allowedImageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const allowedVideoMimeTypes = new Set(['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime']);
 
 function formatMessagePreview(text: string): string {
   if (!text) return '';
@@ -126,10 +130,12 @@ app.use(morgan('dev'));
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit to support video uploads
   fileFilter: (_req, file, callback) => {
-    if (!allowedUploadMimeTypes.has(file.mimetype)) {
-      callback(new Error('Only image uploads are allowed'));
+    const isImage = allowedImageMimeTypes.has(file.mimetype);
+    const isVideo = allowedVideoMimeTypes.has(file.mimetype);
+    if (!isImage && !isVideo) {
+      callback(new Error('Only image and video uploads are allowed'));
       return;
     }
     callback(null, true);
@@ -169,7 +175,13 @@ const CastingCallSchema = z.object({
 
 const MessageSchema = z.object({
   text: z.string().min(1).max(2000),
-  type: z.enum(['text', 'image', 'file']).optional().default('text'),
+  type: z.enum(['text', 'image', 'file', 'video']).optional().default('text'),
+  isSystem: z.boolean().optional().default(false),
+  replyTo: z.object({
+    id: z.string(),
+    text: z.string(),
+    senderId: z.string(),
+  }).nullable().optional(),
 });
 const NotificationTokenSchema = z.object({
   token: z.string().min(50).max(4096),
@@ -213,6 +225,83 @@ const isAdmin = async (req: AuthedRequest, res: Response, next: NextFunction) =>
   res.status(403).send('Forbidden: Admin access required');
 };
 
+const uploadToCloudinary = (fileBuffer: Buffer, mimeType: string, folder: string): Promise<string> => {
+  return new Promise(async (resolve, reject) => {
+    const isVideo = mimeType.startsWith('video/');
+    const resourceType = isVideo ? 'video' : 'image';
+
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY || process.env.VITE_CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET || process.env.VITE_CLOUDINARY_API_SECRET;
+    const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || process.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    console.log(`[Cloudinary] Starting upload. Mime: ${mimeType}, Folder: ${folder}, CloudName: ${cloudName}, HasKey: ${!!apiKey}, HasSecret: ${!!apiSecret}, Preset: ${uploadPreset}`);
+
+    if (cloudName && apiKey && apiSecret && apiKey !== 'dummy' && apiSecret !== 'dummy') {
+      try {
+        // Global config update for this call
+        cloudinary.config({
+          cloud_name: cloudName,
+          api_key: apiKey,
+          api_secret: apiSecret,
+          secure: true,
+        });
+
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: folder,
+            resource_type: resourceType,
+          },
+          (error, result) => {
+            if (error) {
+              console.error('[Cloudinary SDK Error]:', error);
+              reject(new Error(error.message));
+            } else if (result && result.secure_url) {
+              console.log('[Cloudinary SDK Success]:', result.secure_url);
+              resolve(result.secure_url);
+            } else {
+              reject(new Error('Cloudinary upload failed: Empty result'));
+            }
+          }
+        );
+
+        const readableStream = new Readable();
+        readableStream.push(fileBuffer);
+        readableStream.push(null);
+        readableStream.pipe(uploadStream);
+      } catch (err: any) {
+        console.error('[Cloudinary SDK Catch Error]:', err);
+        reject(err);
+      }
+    } else if (cloudName && uploadPreset) {
+      try {
+        const base64Data = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
+        const response = await axios.post(
+          `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+          {
+            file: base64Data,
+            upload_preset: uploadPreset,
+            folder: folder,
+          }
+        );
+
+        if (response.data && response.data.secure_url) {
+          console.log('[Cloudinary Unsigned Success]:', response.data.secure_url);
+          resolve(response.data.secure_url);
+        } else {
+          reject(new Error('Cloudinary unsigned upload failed: secure_url not found in response'));
+        }
+      } catch (err: any) {
+        const errMsg = err.response?.data?.error?.message || err.message;
+        console.error('[Cloudinary Unsigned Error]:', errMsg);
+        reject(new Error(`Cloudinary unsigned upload failed: ${errMsg}`));
+      }
+    } else {
+      reject(new Error('Cloudinary is not configured on the server. Please define VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET or CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.'));
+    }
+  });
+};
+
 app.post('/api/upload', verifyToken, uploadLimiter, upload.single('file'), async (req: AuthedRequest, res: Response) => {
   if (!req.file || !req.user) {
     res.status(400).send('No file uploaded');
@@ -220,30 +309,41 @@ app.post('/api/upload', verifyToken, uploadLimiter, upload.single('file'), async
   }
 
   try {
-    const fileName = `${req.user.uid}/${Date.now()}_optimized.webp`;
-    const fileRef = bucket.file(fileName);
+    const { mimetype, buffer, size } = req.file;
+    const isVideo = allowedVideoMimeTypes.has(mimetype);
+    const isImage = allowedImageMimeTypes.has(mimetype);
 
-    const buffer = await sharp(req.file.buffer)
-      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 80 })
-      .toBuffer();
+    if (!isImage && !isVideo) {
+      res.status(400).send('Invalid file type. Only images and videos are allowed.');
+      return;
+    }
 
-    const blobStream = fileRef.createWriteStream({
-      metadata: {
-        contentType: 'image/webp',
-      },
-    });
+    // Validate size limit based on category
+    const maxAllowedSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (size > maxAllowedSize) {
+      res.status(400).send(`File size exceeds limit (${isVideo ? '50MB for videos' : '10MB for images'})`);
+      return;
+    }
 
-    blobStream.on('error', (err: Error) => res.status(500).json({ error: err.message }));
-    blobStream.on('finish', async () => {
-      const [signedUrl] = await fileRef.getSignedUrl({
-        action: 'read',
-        expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
-      });
-      res.json({ url: signedUrl });
-    });
+    let finalBuffer = buffer;
+    let finalMimeType = mimetype;
 
-    blobStream.end(buffer);
+    if (isImage) {
+      try {
+        finalBuffer = await sharp(buffer)
+          .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 80 })
+          .toBuffer();
+        finalMimeType = 'image/webp';
+      } catch (sharpError) {
+        console.warn('Sharp optimization failed, uploading original image:', sharpError);
+      }
+    }
+
+    const folder = `nc_network/users/${req.user.uid}`;
+    const secureUrl = await uploadToCloudinary(finalBuffer, finalMimeType, folder);
+
+    res.json({ url: secureUrl });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Upload failed';
     res.status(500).json({ error: message });
@@ -257,6 +357,39 @@ app.get('/api/admin/users', verifyToken, isAdmin, async (req: AuthedRequest, res
     res.json(users);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch users';
+    res.status(500).json({ error: message });
+  }
+});
+
+app.post('/api/admin/log', verifyToken, isAdmin, async (req: AuthedRequest, res: Response) => {
+  try {
+    const { action, targetId, details } = req.body as any;
+    const adminEmail = req.user?.email || "Unknown Admin";
+
+    await db.collection('admin_logs').add({
+      adminEmail,
+      action,
+      targetId,
+      details,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to write admin log';
+    res.status(500).json({ error: message });
+  }
+});
+
+app.post('/api/admin/settings', verifyToken, isAdmin, async (req: AuthedRequest, res: Response) => {
+  try {
+    const settings = req.body as any;
+    await db.collection('settings').doc('global').set({
+      ...settings,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to update global settings';
     res.status(500).json({ error: message });
   }
 });
@@ -288,6 +421,17 @@ app.post('/api/profile', verifyToken, async (req: AuthedRequest, res: Response) 
       ...validatedData,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
+
+    // Also update users/{uid} for shared fields to keep them in sync
+    const userUpdate: Record<string, any> = {};
+    if (validatedData.name !== undefined) userUpdate.name = validatedData.name;
+    if (validatedData.role !== undefined) userUpdate.role = validatedData.role;
+    if (validatedData.gender !== undefined) userUpdate.gender = validatedData.gender;
+
+    if (Object.keys(userUpdate).length > 0) {
+      await db.collection('users').doc(uid).set(userUpdate, { merge: true });
+    }
+
     res.json({ success: true });
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
@@ -343,6 +487,145 @@ app.post('/api/casting', verifyToken, isAdmin, async (req: AuthedRequest, res: R
   }
 });
 
+app.delete('/api/casting/:id', verifyToken, isAdmin, async (req: AuthedRequest<{ id: string }>, res: Response) => {
+  try {
+    await db.collection('casting_calls').doc(req.params.id).delete();
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to delete casting call';
+    res.status(500).json({ error: message });
+  }
+});
+
+app.put('/api/casting/:id/priority', verifyToken, isAdmin, async (req: AuthedRequest<{ id: string }>, res: Response) => {
+  try {
+    const { highPriority } = req.body as any;
+    await db.collection('casting_calls').doc(req.params.id).update({
+      highPriority: !!highPriority,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to set casting priority';
+    res.status(500).json({ error: message });
+  }
+});
+
+const ConversationSchema = z.object({
+  participants: z.array(z.string()).min(2),
+  initialMessage: z.string().optional(),
+});
+
+app.post('/api/messaging/conversations', verifyToken, async (req: AuthedRequest, res: Response) => {
+  try {
+    const { participants, initialMessage } = ConversationSchema.parse(req.body);
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+
+    const uniqueParticipants = Array.from(new Set(participants));
+    if (!uniqueParticipants.includes(uid)) {
+      res.status(400).json({ error: "Conversation must include the authenticated user" });
+      return;
+    }
+
+    const sorted = uniqueParticipants.slice().sort();
+
+    // Check if conversation already exists
+    const snapshot = await db.collection('conversations')
+      .where('participants', 'array-contains', uid)
+      .get();
+
+    const existing = snapshot.docs.find((doc) => {
+      const p = doc.data().participants;
+      if (!Array.isArray(p) || p.length !== sorted.length) {
+        return false;
+      }
+      const normalized = [...p].sort();
+      return normalized.every((item, index) => item === sorted[index]);
+    });
+
+    if (existing) {
+      res.json({ id: existing.id });
+      return;
+    }
+
+    const docRef = await db.collection('conversations').add({
+      participants: sorted,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastMessage: "",
+      lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Send a new conversation notification to the other participant
+    const otherParticipantId = sorted.find((p) => p !== uid);
+    if (otherParticipantId) {
+      const user = req.user!;
+      let senderName = (user as any).name || "Someone";
+      let senderAvatar = (user as any).picture || "";
+
+      try {
+        const profileSnap = await db.collection('profiles').doc(uid).get();
+        if (profileSnap.exists) {
+          const pData = profileSnap.data();
+          senderName = pData?.name || [pData?.firstName, pData?.lastName].filter(Boolean).join(' ') || pData?.username || senderName;
+          senderAvatar = pData?.image || pData?.photoURL || pData?.avatar || senderAvatar;
+        }
+      } catch (e) {
+        console.warn("Error fetching profile for new convo notification:", e);
+      }
+
+      await db.collection('notifications').add({
+        userId: otherParticipantId,
+        recipientId: otherParticipantId,
+        receiverId: otherParticipantId,
+        senderId: uid,
+        senderName,
+        senderAvatar,
+        title: "New Conversation",
+        body: `${senderName} started a new conversation with you.`,
+        type: "messages",
+        notificationType: "messages",
+        isRead: false,
+        read: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        targetUrl: `/messages/${uid}`,
+        profileUrl: `/messages/${uid}`
+      });
+    }
+
+    if (initialMessage) {
+      const newMessage = {
+        senderId: 'system',
+        text: initialMessage,
+        isSystem: true,
+        type: 'text',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      await db.collection('conversations').doc(docRef.id).collection('messages').add(newMessage);
+      await db.collection('conversations').doc(docRef.id).update({
+        lastMessage: initialMessage,
+        lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        unread: true,
+        lastSenderId: 'system',
+      });
+    }
+
+    res.json({ id: docRef.id });
+  } catch (error: unknown) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.issues });
+      return;
+    }
+    const message = error instanceof Error ? error.message : 'Failed to create conversation';
+    res.status(500).json({ error: message });
+  }
+});
+
 app.get('/api/messaging/conversations', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
     const uid = req.user?.uid;
@@ -358,6 +641,16 @@ app.get('/api/messaging/conversations', verifyToken, async (req: AuthedRequest, 
     res.json(convos);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch conversations';
+    res.status(500).json({ error: message });
+  }
+});
+
+app.delete('/api/messaging/:conversationId', verifyToken, async (req: AuthedRequest<{ conversationId: string }>, res: Response) => {
+  try {
+    await db.collection('conversations').doc(req.params.conversationId).delete();
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to delete conversation';
     res.status(500).json({ error: message });
   }
 });
@@ -414,9 +707,14 @@ app.post(
         return;
       }
 
+      const isSystem = validatedData.isSystem || uid === 'system';
       const newMessage = {
-        senderId: uid,
-        ...validatedData,
+        senderId: isSystem ? 'system' : uid,
+        text: validatedData.text,
+        type: validatedData.type,
+        isSystem,
+        replyTo: validatedData.replyTo || null,
+        reactions: {},
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
@@ -425,9 +723,66 @@ app.post(
         .collection('messages')
         .add(newMessage);
 
+      // Update conversation metadata
+      await db.collection('conversations')
+        .doc(req.params.conversationId)
+        .update({
+          lastMessage: validatedData.text,
+          lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          unread: true,
+          lastSenderId: isSystem ? 'system' : uid,
+        });
+
       // Trigger FCM to participants (except sender)
       const otherParticipants = participants.filter((p: string) => p !== uid);
       if (otherParticipants.length > 0) {
+        // Send notifications document in firestore for each recipient
+        for (const otherParticipantId of otherParticipants) {
+          const user = req.user!;
+          let senderName = (user as any).name || "Someone";
+          let senderAvatar = (user as any).picture || "";
+
+          try {
+            const profileSnap = await db.collection('profiles').doc(uid).get();
+            if (profileSnap.exists) {
+              const pData = profileSnap.data();
+              senderName = pData?.name || [pData?.firstName, pData?.lastName].filter(Boolean).join(' ') || pData?.username || senderName;
+              senderAvatar = pData?.image || pData?.photoURL || pData?.avatar || senderAvatar;
+            }
+          } catch (e) {
+            console.warn("Error fetching profile for notification:", e);
+          }
+
+          let title = "New Message";
+          let body = validatedData.text;
+          if (validatedData.type === "image") {
+            title = "Media received";
+            body = "Sent an image";
+          } else if (validatedData.type === "video") {
+            title = "Media received";
+            body = "Sent a video";
+          }
+
+          await db.collection('notifications').add({
+            userId: otherParticipantId,
+            recipientId: otherParticipantId,
+            receiverId: otherParticipantId,
+            senderId: uid,
+            senderName,
+            senderAvatar,
+            title,
+            body,
+            type: "messages",
+            notificationType: "messages",
+            isRead: false,
+            read: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            targetUrl: `/messages/${uid}`,
+            profileUrl: `/messages/${uid}`
+          });
+        }
+
         const tokensSnapshot = await db.collection('users')
           .where(admin.firestore.FieldPath.documentId(), 'in', otherParticipants)
           .get();
@@ -475,6 +830,146 @@ app.post(
     }
   },
 );
+
+app.put('/api/messaging/:conversationId/messages/:messageId', verifyToken, async (req: AuthedRequest<{ conversationId: string; messageId: string }>, res: Response) => {
+  try {
+    const { text } = req.body as any;
+    if (!text) {
+      res.status(400).send('Message text is required');
+      return;
+    }
+    await db.collection('conversations')
+      .doc(req.params.conversationId)
+      .collection('messages')
+      .doc(req.params.messageId)
+      .update({
+        text,
+        isEdited: true,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to update message';
+    res.status(500).json({ error: message });
+  }
+});
+
+app.delete('/api/messaging/:conversationId/messages/:messageId', verifyToken, async (req: AuthedRequest<{ conversationId: string; messageId: string }>, res: Response) => {
+  try {
+    await db.collection('conversations')
+      .doc(req.params.conversationId)
+      .collection('messages')
+      .doc(req.params.messageId)
+      .delete();
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to delete message';
+    res.status(500).json({ error: message });
+  }
+});
+
+app.post('/api/messaging/:conversationId/messages/:messageId/react', verifyToken, async (req: AuthedRequest<{ conversationId: string; messageId: string }>, res: Response) => {
+  try {
+    const { emoji } = req.body as any;
+    const uid = req.user?.uid;
+    if (!uid || !emoji) {
+      res.status(400).send('User ID and emoji are required');
+      return;
+    }
+
+    const messageRef = db.collection('conversations')
+      .doc(req.params.conversationId)
+      .collection('messages')
+      .doc(req.params.messageId);
+
+    const docSnap = await messageRef.get();
+    if (!docSnap.exists) {
+      res.status(404).send('Message not found');
+      return;
+    }
+
+    const messageData = docSnap.data();
+    const reactions = { ...(messageData?.reactions ?? {}) };
+
+    // Remove user's existing reaction under any emoji
+    Object.keys(reactions).forEach((emojiKey) => {
+      reactions[emojiKey] = (reactions[emojiKey] ?? []).filter((id: string) => id !== uid);
+      if (reactions[emojiKey].length === 0) {
+        delete reactions[emojiKey];
+      }
+    });
+
+    // Add user to the new emoji reaction
+    reactions[emoji] = [...(reactions[emoji] ?? []), uid];
+
+    await messageRef.update({
+      reactions,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to react to message';
+    res.status(500).json({ error: message });
+  }
+});
+
+app.put('/api/messaging/:conversationId/messages/:messageId/pin', verifyToken, async (req: AuthedRequest<{ conversationId: string; messageId: string }>, res: Response) => {
+  try {
+    const { isPinned } = req.body as any;
+    await db.collection('conversations')
+      .doc(req.params.conversationId)
+      .collection('messages')
+      .doc(req.params.messageId)
+      .update({
+        isPinned: !!isPinned,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to pin message';
+    res.status(500).json({ error: message });
+  }
+});
+
+app.put('/api/messaging/:conversationId/read', verifyToken, async (req: AuthedRequest<{ conversationId: string }>, res: Response) => {
+  try {
+    await db.collection('conversations')
+      .doc(req.params.conversationId)
+      .update({
+        unread: false,
+      });
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to mark conversation as read';
+    res.status(500).json({ error: message });
+  }
+});
+
+app.post('/api/users/block', verifyToken, async (req: AuthedRequest, res: Response) => {
+  try {
+    const { targetId } = req.body as any;
+    const uid = req.user?.uid;
+    if (!uid || !targetId) {
+      res.status(400).send('User ID and target ID are required');
+      return;
+    }
+    if (uid === targetId) {
+      res.status(400).send('Cannot block yourself');
+      return;
+    }
+
+    await db.collection('users').doc(uid).set({
+      blockedUsers: admin.firestore.FieldValue.arrayUnion(targetId),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to block user';
+    res.status(500).json({ error: message });
+  }
+});
 
 app.post('/api/notifications/register-token', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
@@ -612,7 +1107,7 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
     res.status(400).json({ error: error.message });
     return;
   }
-  if (error instanceof Error && error.message === 'Only image uploads are allowed') {
+  if (error instanceof Error && (error.message === 'Only image uploads are allowed' || error.message === 'Only image and video uploads are allowed')) {
     res.status(400).json({ error: error.message });
     return;
   }
