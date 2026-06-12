@@ -379,7 +379,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                     name={chat.name} 
                     size="md" 
                   />
-                  {chat.online && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1A1A1A]" />}
+                  {chat.online && <div className="absolute bottom-[2px] right-[2px] w-3 h-3 bg-green-500 rounded-full border-2 border-[#1A1A1A]" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-1">
