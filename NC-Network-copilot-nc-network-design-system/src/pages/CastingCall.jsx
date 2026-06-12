@@ -31,7 +31,7 @@ export default function CastingCall({ onNavigate }) {
   }, [filter]);
 
   return (
-    <div className="min-h-screen bg-nc-dark pt-16 pb-24">
+    <div className="min-h-screen bg-nc-dark pt-2 pb-24">
       {/* Header */}
       <div className="bg-nc-surface border-b border-nc-border">
         <div className="max-w-5xl mx-auto px-6 sm:px-8 py-8">

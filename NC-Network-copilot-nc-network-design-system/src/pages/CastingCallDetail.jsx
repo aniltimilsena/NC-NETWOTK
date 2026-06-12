@@ -305,7 +305,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-nc-dark pt-24 sm:pt-28 flex items-center justify-center">
+    <div className="min-h-screen bg-nc-dark pt-6 flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <div className="w-8 h-8 rounded-full border-2 border-nc-accent/30 border-t-nc-accent animate-spin" />
         <p className="text-white/40 text-sm">Loading project details...</p>
@@ -314,7 +314,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   );
 
   if (!call) return (
-    <div className="min-h-screen bg-nc-dark pt-24 sm:pt-28 text-center">
+    <div className="min-h-screen bg-nc-dark pt-6 text-center">
       <p className="text-white/60">Project not found.</p>
     </div>
   );
@@ -335,7 +335,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   };
 
   return (
-    <div className="min-h-screen bg-nc-dark pt-16 pb-24">
+    <div className="min-h-screen bg-nc-dark pt-2 pb-24">
       <ConfirmDialog
         {...confirmConfig}
         onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}

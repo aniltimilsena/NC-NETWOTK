@@ -28,18 +28,17 @@ export default function Breadcrumbs() {
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter((x) => x);
 
-  // Don't render breadcrumbs on home, messages, notifications, or settings pages
+  // Don't render breadcrumbs on home, profile, messages, notifications, settings, signin, signup, or premium pages
+  const excludedPaths = ['profile', 'signin', 'signup', 'premium', 'messages', 'notifications', 'settings'];
   if (
     pathnames.length === 0 || 
-    pathnames[0] === 'messages' || 
-    pathnames[0] === 'notifications' || 
-    pathnames[0] === 'settings'
+    excludedPaths.includes(pathnames[0])
   ) {
     return null;
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center space-x-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#555] select-none">
+    <nav aria-label="Breadcrumb" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-3 flex items-center space-x-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#888] select-none">
       <Link to="/" className="hover:text-white transition-colors">
         Home
       </Link>

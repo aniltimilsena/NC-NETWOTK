@@ -2,7 +2,7 @@ import SEO from '../components/SEO';
 
 export default function TrustSafety() {
   return (
-    <div className="min-h-screen bg-nc-dark pt-24 pb-24">
+    <div className="min-h-screen bg-nc-dark pt-2 pb-24">
       <SEO 
         title="Trust & Safety | Scam Prevention on NC Network" 
         description="Learn how NC Network protects actors from scams. Read our E-E-A-T verified trust and safety guidelines, how we verify casting directors, and tips for safe auditions."

@@ -381,7 +381,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
   );
 
   return (
-    <div className="min-h-screen bg-nc-dark pt-24 pb-20">
+    <div className="min-h-screen bg-nc-dark pt-2 pb-20">
       <SEO 
         title="Browse Professional Talent | NC Network" 
         description="Premium directory of cinema professionals in Nepal." 
