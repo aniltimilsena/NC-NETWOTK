@@ -97,6 +97,9 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
   // Calculate faceted count dynamically for any filter option
   const getFacetedCount = (filterKey, optionValue) => {
     return talents.filter(t => {
+      // Exclude deactivated profiles
+      if (t.deactivated === true) return false;
+
       // 1. Apply Search Query
       const matchesSearch = !searchQuery || 
         t.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -160,6 +163,9 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
 
   const filteredTalents = talents
     .filter(t => {
+      // Exclude deactivated profiles
+      if (t.deactivated === true) return false;
+
       // Search Input
       const matchesSearch = !searchQuery || 
         t.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 

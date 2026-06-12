@@ -71,10 +71,10 @@ export default function Home({ onNavigate, user }) {
     id: idx + 1,
     name,
     icon: CATEGORY_ICON_MAP[name],
-    count: talents.filter(t => t.role?.toLowerCase() === name.toLowerCase()).length
+    count: talents.filter(t => t.role?.toLowerCase() === name.toLowerCase() && !t.deactivated).length
   }));
 
-  const premiumTalents = talents.filter(t => t.premium || t.verified);
+  const premiumTalents = talents.filter(t => (t.premium || t.verified) && !t.deactivated);
 
   useEffect(() => {
     let unsubUsers = () => {};
@@ -346,7 +346,7 @@ export default function Home({ onNavigate, user }) {
       ) : (
         <>
           {/* Featured Actors Showcase (Per Image Reference) */}
-          {talents.filter(t => t.role?.toLowerCase().includes('actor')).length > 0 && (
+          {talents.filter(t => t.role?.toLowerCase().includes('actor') && !t.deactivated).length > 0 && (
             <section className="pt-10 pb-2 bg-nc-dark relative overflow-hidden">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                 {/* Header Block */}
@@ -368,7 +368,7 @@ export default function Home({ onNavigate, user }) {
                 <div className="relative group">
                   <div className="flex gap-12 sm:gap-20 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
                     {talents
-                      .filter(t => t.role?.toLowerCase().includes('actor'))
+                      .filter(t => t.role?.toLowerCase().includes('actor') && !t.deactivated)
                       .sort((a, b) => {
                         const followersA = a.followers || 0;
                         const followersB = b.followers || 0;
@@ -512,6 +512,7 @@ export default function Home({ onNavigate, user }) {
             </div>
             <div className="flex flex-col gap-3">
               {talents
+                .filter(t => !t.deactivated)
                 .slice()
                 .sort((a, b) => {
                   const followersA = a.followers || 0;

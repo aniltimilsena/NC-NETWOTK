@@ -15,6 +15,7 @@ import { AlertBanner, type AlertPayload, type AlertType } from './components/ui/
 import PullToRefresh from './components/ui/PullToRefresh';
 import RouteLoader from './components/RouteLoader';
 import PageTransition from './components/PageTransition';
+import SplashScreen from './components/SplashScreen';
 
 // Layouts and Protection
 import PublicLayout from './layouts/PublicLayout';
@@ -615,9 +616,23 @@ export default function App() {
       setUserProfile(null);
       return;
     }
-    const unsub = onSnapshot(doc(db, 'profiles', user.uid), (snap) => {
+    const unsub = onSnapshot(doc(db, 'profiles', user.uid), async (snap) => {
       if (snap.exists()) {
-        setUserProfile(snap.data());
+        const data = snap.data();
+        setUserProfile(data);
+
+        // Auto-reactivate if deactivated
+        if (data.deactivated === true) {
+          try {
+            await setDoc(doc(db, 'profiles', user.uid), {
+              deactivated: false,
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+            showAlert('Welcome Back!', 'success', 'Your deactivated profile has been automatically reactivated and is now visible.');
+          } catch (err) {
+            console.warn("Auto-reactivation failed:", err);
+          }
+        }
       }
     }, (err) => {
       if (err.code !== 'permission-denied') {
@@ -625,7 +640,7 @@ export default function App() {
       }
     });
     return () => unsub();
-  }, [user?.uid]);
+  }, [user?.uid, showAlert]);
 
   // Enriched user object for layouts/screens
   const enrichedUser = user ? {
@@ -677,6 +692,9 @@ export default function App() {
   return (
     <PermissionProvider>
       <CallProvider user={user}>
+        <AnimatePresence>
+          {!authReady && <SplashScreen />}
+        </AnimatePresence>
         <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
           <ErrorBoundary key={location.pathname}>
             <Suspense fallback={<RouteLoader />}>

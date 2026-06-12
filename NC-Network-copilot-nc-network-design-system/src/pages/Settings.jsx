@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getProfile, updateProfileData, subscribeToProfile, uploadProfileMedia } from '../services/profile';
 import { updateProfile } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp, getDocs, where, updateDoc } from 'firebase/firestore';
 import { FileUploadCard } from "@/components/ui/file-upload-card"
 import { InlineAlert } from '../components/ui/AlertBanner';
 import { 
@@ -329,6 +329,162 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     localStorage.setItem('nc_font_size', size);
     document.documentElement.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
     document.documentElement.classList.add(`font-size-${size}`);
+  };
+
+  // Data Control States/Functions
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleRequestDataArchive = async () => {
+    if (!user?.uid) return;
+    setIsExporting(true);
+    showToast("Preparing your data archive...", "info");
+    
+    try {
+      // 1. Fetch Profile Data
+      let profileData = {};
+      const profileSnap = await getDocs(query(collection(db, "profiles"), where("__name__", "==", user.uid)));
+      if (!profileSnap.empty) {
+        profileData = { id: user.uid, ...profileSnap.docs[0].data() };
+      }
+
+      // 2. Fetch Conversations and Messages
+      const conversationsData = [];
+      const convoSnap = await getDocs(
+        query(collection(db, "conversations"), where("participants", "array-contains", user.uid))
+      );
+      
+      for (const convoDoc of convoSnap.docs) {
+        const convoData = convoDoc.data();
+        const messagesSnap = await getDocs(
+          query(collection(db, "conversations", convoDoc.id, "messages"), orderBy("createdAt", "asc"))
+        );
+        const messages = messagesSnap.docs.map(mDoc => {
+          const mData = mDoc.data();
+          return {
+            id: mDoc.id,
+            senderId: mData.senderId,
+            text: mData.text,
+            isSystem: mData.isSystem || false,
+            type: mData.type || "text",
+            createdAt: mData.createdAt?.toDate?.()?.toISOString() || mData.createdAt || null
+          };
+        });
+        conversationsData.push({
+          id: convoDoc.id,
+          participants: convoData.participants,
+          lastMessage: convoData.lastMessage,
+          messages
+        });
+      }
+
+      // 3. Bundle Archive
+      const archive = {
+        exportedAt: new Date().toISOString(),
+        userId: user.uid,
+        userEmail: user.email,
+        profile: profileData,
+        conversations: conversationsData
+      };
+
+      // 4. Download JSON file
+      const blob = new Blob([JSON.stringify(archive, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `nc-data-archive-${user.displayName?.toLowerCase().replace(/\s+/g, '-') || 'user'}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      showToast("Data archive downloaded successfully!", "success");
+      await createSystemNotification("Data Archive Exported", "You successfully requested and downloaded your full data archive.");
+    } catch (err) {
+      console.error("Archive export failed:", err);
+      showToast("Failed to export archive. Please try again.", "error");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDeactivateAccount = () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Deactivate Profile?",
+      description: "Are you sure you want to temporarily deactivate your profile? It will be hidden from listings and search results. You can reactivate it anytime simply by logging back in.",
+      confirmText: "Deactivate",
+      cancelText: "Cancel",
+      type: "warning",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          // Update profile deactivated flag
+          await updateDoc(doc(db, "profiles", user.uid), {
+            deactivated: true,
+            updatedAt: serverTimestamp()
+          });
+
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+          showToast("Profile deactivated. Signing out...", "success");
+
+          // Sign out
+          setTimeout(async () => {
+            await auth.signOut();
+            onNavigate('home');
+          }, 1500);
+        } catch (err) {
+          console.error("Deactivation failed:", err);
+          showToast("Failed to deactivate profile.", "error");
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
+  };
+
+  const handleDeleteAccount = () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Delete Account Permanently?",
+      description: "WARNING: This will permanently erase your profile details, casting history, and media attachments. This action is irreversible and cannot be undone.",
+      confirmText: "Delete Permanently",
+      cancelText: "Cancel",
+      type: "danger",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          const uid = user.uid;
+
+          // 1. Delete Firestore user and profile documents
+          await deleteDoc(doc(db, "profiles", uid));
+          await deleteDoc(doc(db, "users", uid));
+
+          // 2. Clear confirm state
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+          showToast("Account deleted. Signing out...", "success");
+
+          // 3. Attempt to delete auth user, otherwise sign out
+          try {
+            if (auth.currentUser) {
+              await auth.currentUser.delete();
+            }
+          } catch (authErr) {
+            console.warn("Could not delete auth user immediately (requires recent login):", authErr);
+          }
+
+          // 4. Final sign out and redirect
+          setTimeout(async () => {
+            await auth.signOut();
+            onNavigate('home');
+          }, 1500);
+        } catch (err) {
+          console.error("Deletion failed:", err);
+          showToast("Failed to delete account completely.", "error");
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
   };
 
 
@@ -1378,8 +1534,12 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                     Export a JSON file of your entire profile, messages, and uploaded media attachments.
                   </p>
                 </div>
-                <button className="text-white bg-[#151515] border border-[#333] px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-[#222] transition-colors whitespace-nowrap">
-                  Request Data Archive
+                <button 
+                  onClick={handleRequestDataArchive}
+                  disabled={isExporting}
+                  className="text-white bg-[#151515] border border-[#333] px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-[#222] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isExporting ? "Exporting..." : "Request Data Archive"}
                 </button>
               </div>
               
@@ -1392,7 +1552,10 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                     Temporarily hide your profile. You can reactivate by signing back in at any time.
                   </p>
                 </div>
-                <button className="text-[#FFB8B8] bg-red-500/10 px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-red-500/20 transition-colors whitespace-nowrap">
+                <button 
+                  onClick={handleDeactivateAccount}
+                  className="text-[#FFB8B8] bg-red-500/10 px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-red-500/20 transition-colors whitespace-nowrap"
+                >
                   Deactivate Profile
                 </button>
               </div>
@@ -1406,7 +1569,10 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                     Permanently erase your identity. This cannot be undone and all media will be destroyed.
                   </p>
                 </div>
-                <button className="text-red-500 bg-red-500/10 border border-red-500/20 px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-red-500 hover:text-white transition-colors whitespace-nowrap">
+                <button 
+                  onClick={handleDeleteAccount}
+                  className="text-red-500 bg-red-500/10 border border-red-500/20 px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-red-500 hover:text-white transition-colors whitespace-nowrap"
+                >
                   Delete Permanently
                 </button>
               </div>
