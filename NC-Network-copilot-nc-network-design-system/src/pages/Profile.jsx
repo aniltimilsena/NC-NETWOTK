@@ -1390,8 +1390,6 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                       title="No Portfolio Added"
                       description="Upload photos and videos to showcase your talent to the network."
                       icon={Image}
-                      actionLabel="Upload Portfolio"
-                      onAction={() => document.getElementById('profile-media-upload')?.click()}
                     />
                   </div>
                 )}
