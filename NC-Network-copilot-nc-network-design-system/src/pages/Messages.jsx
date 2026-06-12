@@ -783,7 +783,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
               )}
 
               {/* Quick Replies */}
-              <div className="flex gap-2 overflow-x-auto pb-3 mb-1 scrollbar-none shrink-0 px-1">
+              <div className="flex gap-2 overflow-x-auto pb-3 mb-1 scrollbar-hide shrink-0 px-1">
                 {[
                   "Available for Casting",
                   "Send Availability",
