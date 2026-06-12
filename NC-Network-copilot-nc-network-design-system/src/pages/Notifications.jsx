@@ -15,6 +15,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { formatMessagePreview } from '../utils/format';
+import Avatar from '../components/ui/Avatar';
 
 export default function Notifications({ onNavigate, user }) {
   const [filter, setFilter] = useState('all');
@@ -335,11 +336,12 @@ export default function Notifications({ onNavigate, user }) {
 
             <div className="flex items-start gap-4">
               {/* Icon / Avatar */}
-              {notif.senderAvatar ? (
-                <img 
+              {notif.senderName || notif.senderAvatar ? (
+                <Avatar 
                   src={notif.senderAvatar} 
-                  alt={notif.senderName || 'Avatar'} 
-                  className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
+                  name={notif.senderName} 
+                  size="sm" 
+                  className="!w-10 !h-10 !rounded-xl border-none shrink-0" 
                 />
               ) : (
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${typeColor(notif)}`}>
@@ -351,7 +353,7 @@ export default function Notifications({ onNavigate, user }) {
               <div className="flex-1 min-w-0 pr-6">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <h3 className={`text-sm font-bold truncate ${notif.read ? 'text-[#aaa]' : 'text-white'}`}>
-                    {notif.title}
+                    {notif.senderName || notif.title}
                   </h3>
                 </div>
                 <p className={`text-xs leading-relaxed ${notif.read ? 'text-[#555]' : 'text-[#888]'}`}>
