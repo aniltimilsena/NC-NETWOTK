@@ -850,8 +850,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
         return (
           <div className="animate-fade-in text-left pb-10">
             <div className="border-b border-white/5 pb-6 mb-8">
-              <h2 className="text-3xl font-black text-white tracking-tight mb-2">Settings Dashboard</h2>
-              <p className="text-nc-secondary text-sm">Select a category to customize your account, profile, and system preferences.</p>
+              <h2 className="text-3xl font-black text-white tracking-tight">Settings Dashboard</h2>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
