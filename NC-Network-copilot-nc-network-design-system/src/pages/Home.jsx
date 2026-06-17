@@ -3,10 +3,10 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Plus,
   Check,
-  Play
+  Play,
+  ArrowRight
 } from 'lucide-react';
-import { CATEGORY_ICON_MAP } from '../components/icons/CategoryIcons';
-import { CATEGORIES } from '../constants/categories';
+import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 import GlassCard from '../components/ui/GlassCard';
 import CategorySkeleton from '../components/ui/CategorySkeleton';
@@ -31,6 +31,8 @@ import {
   onSnapshot,
   addDoc 
 } from 'firebase/firestore';
+
+// Category colors and icons are now sourced from src/config/categories.tsx
 
 export default function Home({ onNavigate, user }) {
   const isLoggedIn = !!user;
@@ -65,14 +67,66 @@ export default function Home({ onNavigate, user }) {
   const scrollRef = useRef(null);
   const [categoriesReady, setCategoriesReady] = useState(false);
 
+  const [showRightArrow, setShowRightArrow] = useState(false);
+  const actorsScrollRef = useRef(null);
+
+  const checkScrollPosition = () => {
+    const container = actorsScrollRef.current;
+    if (!container) return;
+    const canScrollRight = container.scrollWidth > container.clientWidth + container.scrollLeft + 10;
+    setShowRightArrow(canScrollRight);
+  };
+
+  const scrollRight = (e) => {
+    e.stopPropagation();
+    const container = actorsScrollRef.current;
+    if (!container) return;
+    container.scrollBy({ left: 300, behavior: 'smooth' });
+  };
+
+  const getActorYear = (actor) => {
+    if (actor.memberSince) return actor.memberSince;
+    if (actor.joined) return actor.joined;
+    if (actor.createdAt) {
+      const date = actor.createdAt.toDate ? actor.createdAt.toDate() : new Date(actor.createdAt);
+      if (date && !isNaN(date.getFullYear())) {
+        return date.getFullYear();
+      }
+    }
+    const hash = actor.id ? actor.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
+    return 2018 + (hash % 7);
+  };
+
+  useEffect(() => {
+    const container = actorsScrollRef.current;
+    if (!container) return;
+
+    checkScrollPosition();
+    container.addEventListener('scroll', checkScrollPosition);
+    window.addEventListener('resize', checkScrollPosition);
+
+    const timeout = setTimeout(checkScrollPosition, 500);
+
+    return () => {
+      container.removeEventListener('scroll', checkScrollPosition);
+      window.removeEventListener('resize', checkScrollPosition);
+      clearTimeout(timeout);
+    };
+  }, [talents]);
 
 
-  const categories = CATEGORIES.map((name, idx) => ({
-    id: idx + 1,
-    name,
-    icon: CATEGORY_ICON_MAP[name],
-    count: talents.filter(t => t.role?.toLowerCase() === name.toLowerCase() && !t.deactivated).length
-  }));
+
+  const categories = CATEGORIES.map((name, idx) => {
+    const cfg = getCategoryConfig(name);
+    return {
+      id: idx + 1,
+      name,
+      icon: cfg.icon,
+      color: cfg.color,
+      bgColor: cfg.bgColor,
+      count: talents.filter(t => t.role?.toLowerCase() === name.toLowerCase() && !t.deactivated).length
+    };
+  });
 
   const premiumTalents = talents.filter(t => (t.premium || t.verified) && !t.deactivated);
 
@@ -220,39 +274,61 @@ export default function Home({ onNavigate, user }) {
     }
   };
 
+  // Get top 10 trending talents for hero rotation
+  const trendingList = talents
+    .filter(t => !t.deactivated)
+    .sort((a, b) => {
+      const followersA = a.followers || 0;
+      const followersB = b.followers || 0;
+      if (followersB !== followersA) return followersB - followersA;
+      const ratingA = parseFloat(a.rating) || 0;
+      const ratingB = parseFloat(b.rating) || 0;
+      return ratingB - ratingA;
+    })
+    .slice(0, 10);
+
   useEffect(() => {
-    const featuredList = premiumTalents.length > 0 ? premiumTalents : talents;
-    if (featuredList.length <= 1) return;
+    if (trendingList.length <= 1) return;
     
     const interval = setInterval(() => {
-      setCurrentPremiumIdx(prev => (prev + 1) % featuredList.length);
+      setCurrentPremiumIdx(prev => {
+        let next = Math.floor(Math.random() * trendingList.length);
+        // Avoid repeating the same index if possible
+        if (trendingList.length > 1) {
+          while (next === prev) {
+            next = Math.floor(Math.random() * trendingList.length);
+          }
+        }
+        return next;
+      });
     }, 5000);
     return () => clearInterval(interval);
-  }, [premiumTalents.length, talents.length]);
+  }, [talents]);
 
-  const featuredList = premiumTalents.length > 0 ? premiumTalents : talents;
-  const currentPremiumUser = featuredList[currentPremiumIdx] || null;
+  const currentPremiumUser = trendingList[currentPremiumIdx] || trendingList[0] || null;
 
   return (
     <div className="min-h-screen bg-nc-dark">
       {/* Hero Section */}
-      <section className="relative min-h-[50vh] lg:min-h-[60vh] flex flex-col justify-center items-start overflow-hidden pt-20 pb-8 px-6 sm:px-8 lg:px-20">
+      <section className="relative min-h-[55vh] lg:min-h-[65vh] flex flex-col justify-center items-start overflow-hidden pt-24 pb-12 px-6 sm:px-8 lg:px-20">
         {/* Background */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 overflow-hidden">
           <img
             src="/hero-bg.png"
             alt="Hero Background"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover animate-kenburns"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-nc-dark via-transparent to-nc-dark/60" />
-          <div className="absolute inset-0 bg-gradient-to-r from-nc-dark/80 via-transparent to-transparent" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)' }} />
         </div>
 
+        {/* Animated gradient orb for depth */}
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-[#FACC15]/8 via-sky-400/5 to-transparent rounded-full blur-3xl z-[1] animate-pulse" style={{ animationDuration: '6s' }} />
+
         <div className="relative z-10 max-w-4xl space-y-2">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-sky-300 to-sky-500">
+          <h1 className="font-display italic font-bold text-[36px] text-[#00BFFF] hero-text-shadow leading-tight">
             Discover
           </h1>
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white max-w-2xl opacity-90">
+          <h2 className="text-[18px] font-bold text-white hero-text-shadow">
             Multiple Talents in one place
           </h2>
         </div>
@@ -265,34 +341,24 @@ export default function Home({ onNavigate, user }) {
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: -20, scale: 0.95 }}
             onClick={() => currentPremiumUser.id && onNavigate('profile', currentPremiumUser.id)}
-            className="relative z-30 mt-8 bg-nc-dark/40 backdrop-blur-md border border-white/10 rounded-[2.5rem] p-4 flex items-center gap-5 max-w-sm shadow-2xl transition-all duration-500 hover:border-sky-400/30 group animate-in fade-in slide-in-from-bottom-4 duration-700 cursor-pointer"
+            className="relative z-30 mt-8 rounded-xl p-4 flex items-center gap-4 w-full max-w-sm shadow-2xl transition-all duration-500 border border-white/5 cursor-pointer hover:border-[#00BFFF]/30 group"
+            style={{
+              background: 'rgba(0, 0, 0, 0.6)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)'
+            }}
           >
-            {/* Profile Image with Ring */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
-              <div className="w-full h-full rounded-full p-[2px] bg-gradient-to-tr from-sky-400 to-blue-600 shadow-lg shadow-sky-500/20">
-                <div className="w-full h-full rounded-full bg-nc-dark p-0.5">
-                  <Avatar 
-                    key={currentPremiumUser.image}
-                    user={currentPremiumUser}
-                    size="lg"
-                    name={currentPremiumUser.name}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                </div>
-              </div>
-            </div>
+            {/* Square profile photo on LEFT */}
+            <Avatar 
+              src={currentPremiumUser.photoURL || currentPremiumUser.profileImage || currentPremiumUser.image}
+              size={80}
+              name={currentPremiumUser.name}
+              className="!rounded-lg flex-shrink-0"
+            />
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-xl sm:text-2xl font-black text-white truncate tracking-tight">{currentPremiumUser.name}</h3>
-                {(currentPremiumUser.premium || currentPremiumUser.verified) && (
-                  <div className="flex items-center gap-1 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-full">
-                    <Check size={10} className="text-sky-400" strokeWidth={4} />
-                    <span className="text-[8px] font-black text-sky-400 uppercase tracking-widest">Pro</span>
-                  </div>
-                )}
-              </div>
-              <p className="text-nc-secondary font-bold text-sm sm:text-base mt-0.5 capitalize">{currentPremiumUser.category || 'Actor'}</p>
+              <h3 className="text-base font-bold text-white truncate">{currentPremiumUser.name}</h3>
+              <p className="text-nc-muted text-sm mt-0.5 capitalize">{currentPremiumUser.category || currentPremiumUser.role || 'Actor'}</p>
               
               <button 
                 type="button"
@@ -302,17 +368,11 @@ export default function Home({ onNavigate, user }) {
                     onNavigate('profile', currentPremiumUser.id);
                   }
                 }}
-                className="relative z-40 mt-3 flex items-center gap-1.5 text-sky-400 font-black text-xs tracking-wider uppercase group/btn hover:text-white transition-all cursor-pointer"
+                className="mt-2 text-[#00BFFF] hover:text-[#00BFFF]/80 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
               >
-                Browse profile
-                <div className="w-4 h-4 rounded-full bg-sky-400/10 flex items-center justify-center group-hover/btn:bg-white group-hover/btn:text-nc-dark transition-all">
-                    <Plus size={10} strokeWidth={3} />
-                </div>
+                Browse profile &gt;
               </button>
             </div>
-            
-            {/* Vertical Accent Line */}
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-sky-400 rounded-r-full shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
           </motion.div>
         )}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-nc-dark to-transparent z-10" />
@@ -321,52 +381,93 @@ export default function Home({ onNavigate, user }) {
 
 
       {isLoading ? (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-12 space-y-16">
-          {/* ── Premium category skeletons ─────────────────────── */}
-          <section className="pt-2 pb-8 lg:pt-4 lg:pb-12">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-[4px] h-6 bg-white/[0.06] rounded-sm" />
-                <div className="flex items-center gap-3">
-                  <div className="h-6 w-44 rounded-lg bg-white/[0.06] cat-skeleton-bone" />
-                  <div className="h-4 w-14 rounded-md bg-white/[0.04] cat-skeleton-bone" />
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20 py-14 space-y-12">
+          {/* 1. Actors/Actress Horizontal Showcase Skeleton */}
+          <section className="pt-2 pb-6">
+            <div className="flex items-center mb-6">
+              <div className="section-accent-bar"></div>
+              <div className="h-7 skeleton w-48" />
+            </div>
+            <div className="flex gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-hide">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div 
+                  key={idx} 
+                  className="flex flex-col items-center w-[120px] min-w-[120px] flex-shrink-0"
+                >
+                  <div className="w-[90px] h-[90px] rounded-full skeleton" />
+                  <div className="h-4 skeleton w-20 mt-3" />
+                  <div className="h-3.5 skeleton w-24 mt-1.5" />
                 </div>
-              </div>
-              <CategorySkeleton />
+              ))}
             </div>
           </section>
 
-          {/* ── Generic content skeletons below ────────────────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse w-full h-48 bg-nc-card rounded-2xl" />
-            ))}
-          </div>
+          {/* 2. Browse by Category Skeleton */}
+          <section className="py-6">
+            <div className="flex items-center mb-8">
+              <div className="section-accent-bar"></div>
+              <div className="h-7 skeleton w-56" />
+            </div>
+            <CategorySkeleton />
+          </section>
+
+          {/* 3. Trending Now Skeleton */}
+          <section className="py-6">
+            <div className="flex items-center mb-8">
+              <div className="section-accent-bar"></div>
+              <div className="h-7 skeleton w-40" />
+            </div>
+            <div className="flex flex-col gap-3 sm:gap-4">
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="bg-[#111] border border-white/5 rounded-3xl p-4 sm:p-5 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    {/* Rank Number Placeholder */}
+                    <div className="w-8 h-8 rounded-lg skeleton shrink-0" />
+                    {/* Avatar Placeholder */}
+                    <div className="w-12 h-12 rounded-full skeleton shrink-0" />
+                    {/* Basic Info Placeholder */}
+                    <div className="space-y-2 min-w-0 flex-1">
+                      <div className="h-4 skeleton w-1/3" />
+                      <div className="h-3.5 skeleton w-1/2" />
+                      <div className="h-5 skeleton w-20 mt-1" />
+                    </div>
+                  </div>
+                  {/* Arrow Button Placeholder */}
+                  <div className="w-8 h-8 rounded-full skeleton shrink-0" />
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
       ) : (
         <>
-          {/* Featured Actors Showcase (Per Image Reference) */}
+          {/* Featured Actors Showcase */}
           {talents.filter(t => t.role?.toLowerCase().includes('actor') && !t.deactivated).length > 0 && (
-            <section className="pt-10 pb-2 bg-nc-dark relative overflow-hidden">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                {/* Header Block */}
-                <div className="flex items-center gap-3 mb-8 group/header">
-                  <div className="w-[4px] h-6 bg-sky-400 rounded-sm shadow-[0_0_10px_rgba(56,189,248,0.2)]"></div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-bold text-white tracking-tight">Actors/Actress</h2>
-                    <span className="text-white text-lg font-medium opacity-80">&gt;</span>
-                    <button 
-                      onClick={() => onNavigate('listing', 'Actors')} 
-                      className="text-sky-400 text-[15px] font-medium hover:text-white transition-all ml-1"
-                    >
-                      View all
-                    </button>
+            <section className="pt-14 pb-8 bg-nc-dark relative overflow-hidden">
+              <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
+                {/* Editorial Header */}
+                <div className="flex items-center justify-between mb-10">
+                  <div className="flex items-center">
+                    <div className="section-accent-bar"></div>
+                    <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Actors/Actress</h2>
                   </div>
+                  <button 
+                    onClick={() => onNavigate('listing', 'Actors')} 
+                    className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
+                  >
+                    View all
+                  </button>
                 </div>
 
                 {/* Horizontal Scroll Area */}
                 <div className="relative group">
-                  <div className="flex gap-12 sm:gap-20 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
+                  <div 
+                    ref={actorsScrollRef}
+                    className="flex gap-6 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+                  >
                     {talents
                       .filter(t => t.role?.toLowerCase().includes('actor') && !t.deactivated)
                       .sort((a, b) => {
@@ -384,63 +485,93 @@ export default function Home({ onNavigate, user }) {
                         <div 
                           key={actor.id} 
                           onClick={() => onNavigate('profile', actor.id)}
-                          className="flex flex-col items-center gap-4 min-w-[130px] sm:min-w-[180px] cursor-pointer transition-all duration-300 hover:scale-105"
+                          className="flex flex-col items-center w-[120px] min-w-[120px] flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-1 group/actor"
                         >
                           <Avatar 
-                            user={actor}
-                            size="lg"
+                            src={actor.photoURL || actor.profileImage || actor.image}
+                            size={90}
                             name={actor.name}
-                            className="w-28 h-28 sm:w-36 sm:h-36 border-none"
+                            className="shadow-md"
                           />
-                          <div className="text-center">
-                            <p className="text-white font-bold text-base sm:text-lg leading-tight">{actor.name}</p>
-                            <p className="text-[#888] text-xs sm:text-sm mt-1 font-medium">
-                              {actor.location || 'Nepal'}
-                            </p>
-                          </div>
+                          <p className="text-white font-bold text-[13px] text-center mt-2 truncate w-full">{actor.name}</p>
+                          <p className="text-nc-muted text-xs text-center mt-0.5 font-medium truncate w-full">
+                            {actor.location || 'Nepal'} - Since {getActorYear(actor)}
+                          </p>
                         </div>
                       ))}
                   </div>
+
+                  {showRightArrow && (
+                    <button 
+                      onClick={scrollRight}
+                      className="absolute right-0 top-[45px] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#12121A]/90 border border-white/10 flex items-center justify-center text-white font-black text-lg hover:bg-nc-accent hover:border-nc-accent transition-all shadow-xl shadow-black/40"
+                    >
+                      &gt;
+                    </button>
+                  )}
                 </div>
               </div>
             </section>
           )}
 
           {/* Categories */}
-          <section className="pt-2 pb-8 lg:pt-4 lg:pb-12 bg-nc-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <div className="flex items-center gap-3 mb-8 group/header">
-            <div className="w-[4px] h-6 bg-sky-400 rounded-sm shadow-[0_0_10px_rgba(56,189,248,0.2)]"></div>
-            <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold text-white tracking-tight">Browse by Category</h2>
-              <span className="text-white text-lg font-medium opacity-80">&gt;</span>
+          <section className="pt-12 pb-10 lg:pt-16 lg:pb-14 bg-nc-dark">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
+            {/* Editorial Header */}
+            <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center">
+                <div className="section-accent-bar"></div>
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Browse by Category</h2>
+              </div>
               <button 
                 onClick={() => setShowAllCategories(!showAllCategories)} 
-                className="text-sky-400 text-[15px] font-medium hover:text-white transition-all ml-1"
+                className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
               >
                 {showAllCategories ? 'Show less' : 'View all'}
               </button>
             </div>
-          </div>
           {/* ── Category cards with staggered reveal ────────── */}
           {categoriesReady ? (
-            <div className="flex flex-wrap gap-3">
-              {categories?.map((cat, idx) => (
-                <button
-                  key={cat.id}
-                  onClick={() => onNavigate('listing', cat.name)}
-                  style={{ animationDelay: `${idx * 40}ms` }}
-                  className={`cat-card-reveal w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.57rem)] lg:w-[calc(12.5%-0.66rem)] bg-nc-card/50 backdrop-blur-sm border border-white/5 rounded-3xl p-5 flex-col items-center gap-3 hover:border-sky-400/40 hover:bg-sky-400/5 transition-all group relative overflow-hidden ${
-                    idx >= 4 && !showAllCategories ? 'hidden sm:flex' : 'flex'
-                  }`}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-sky-400/0 to-sky-400/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="relative z-10 w-10 h-10 flex items-center justify-center text-sky-400 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
-                    <cat.icon size={28} strokeWidth={2} />
-                  </div>
-                  <span className="text-sm font-bold text-white/70 group-hover:text-white transition-colors relative z-10">{cat.name}</span>
-                </button>
-              ))}
+            <div className="flex flex-wrap gap-3 sm:gap-4">
+              {categories?.map((cat, idx) => {
+                const categoryColor = cat.color;
+                const CatIcon = cat.icon; // must be capitalized for JSX
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => onNavigate('listing', cat.name)}
+                    style={{ animationDelay: `${idx * 40}ms` }}
+                    className={`cat-card-reveal category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(12.5%-0.875rem)] p-4 flex-col items-center gap-2.5 group ${
+                      idx >= 4 && !showAllCategories ? 'hidden sm:flex' : 'flex'
+                    }`}
+                  >
+                    {/* Circular glow background container with accent color at 15% opacity */}
+                    <div 
+                      className="relative z-10 w-14 h-14 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
+                      style={{ 
+                        backgroundColor: `${categoryColor}26`, 
+                        color: categoryColor,
+                        boxShadow: `0 0 15px ${categoryColor}15`
+                      }}
+                    >
+                      <CatIcon size={32} strokeWidth={1.5} />
+                    </div>
+                    
+                    <span className="text-xs sm:text-sm font-bold text-white/80 group-hover:text-white transition-colors relative z-10">{cat.name}</span>
+                    
+                    {/* Talent count or Be the first invite */}
+                    {cat.count === 0 ? (
+                      <span className="text-[10px] font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
+                        Be the first →
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold text-nc-muted relative z-10">
+                        {cat.count} {cat.count === 1 ? 'talent' : 'talents'}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           ) : (
             <CategorySkeleton />
@@ -448,40 +579,40 @@ export default function Home({ onNavigate, user }) {
 
           {/* CastingCall & Audition Update Strip */}
           {castingCalls.length > 0 && (
-            <div className="mt-10 lg:mt-14">
-              <div className="flex items-center gap-3 mb-8 group/header">
-                <div className="w-[4px] h-6 bg-sky-400 rounded-sm shadow-[0_0_10px_rgba(56,189,248,0.2)]"></div>
-                <div className="flex items-center gap-3">
-                  <h2 className="text-2xl font-bold text-white tracking-tight">CastingCall & Audition update</h2>
-                  <span className="text-white text-lg font-medium opacity-80">&gt;</span>
+            <div className="mt-14 lg:mt-16">
+                {/* Editorial Header */}
+                <div className="flex items-center justify-between mb-10">
+                  <div className="flex items-center">
+                    <div className="section-accent-bar"></div>
+                    <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Casting Calls & Auditions</h2>
+                  </div>
                   <button 
                     onClick={() => onNavigate('casting')} 
-                    className="text-sky-400 text-[15px] font-medium hover:text-white transition-all ml-1"
+                    className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
                   >
                     View all
                   </button>
                 </div>
-              </div>
-              
-               <div 
-                ref={scrollRef}
-                className={`flex overflow-x-auto gap-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pr-6 sm:pr-8 mx-[-1.5rem] sm:mx-0 px-6 sm:px-0 ${shouldScroll ? '' : 'justify-start sm:justify-center'}`}
-              >
-                {/* Only double the items if we actually need to loop to fill the screen */}
-                {(castingCalls.length > 3 ? [...castingCalls, ...castingCalls] : castingCalls)
-                ?.slice(0, 12)
-                ?.map((item, i) => (
-                  <div 
-                    key={i} 
-                    onClick={() => onNavigate('casting-detail', item.id)}
-                    className="flex-shrink-0 w-[240px] sm:w-[280px] bg-[#0A0A0A] rounded-2xl flex items-center p-2.5 gap-4 border border-[#222] snap-start hover:border-[#333] hover:bg-[#111] transition-all cursor-pointer group"
-                  >
-                    <div className="w-16 h-20 sm:w-16 sm:h-24 bg-nc-card overflow-hidden rounded-md shadow-md border border-[#222] group-hover:border-nc-accent/50 transition-colors">
+                
+                 <div 
+                  ref={scrollRef}
+                  className={`flex overflow-x-auto gap-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pr-6 sm:pr-8 mx-[-1.5rem] sm:mx-0 px-6 sm:px-0 ${shouldScroll ? '' : 'justify-start sm:justify-center'}`}
+                >
+                  {/* Only double the items if we actually need to loop to fill the screen */}
+                  {(castingCalls.length > 3 ? [...castingCalls, ...castingCalls] : castingCalls)
+                  ?.slice(0, 12)
+                  ?.map((item, i) => (
+                    <div 
+                      key={i} 
+                      onClick={() => onNavigate('casting-detail', item.id)}
+                      className="flex-shrink-0 w-[240px] sm:w-[280px] bg-nc-card rounded-3xl flex items-center p-3 gap-4 border border-transparent snap-start hover:brightness-110 transition-all duration-300 cursor-pointer group"
+                    >
+                    <div className="w-16 h-20 sm:w-16 sm:h-24 bg-nc-surface overflow-hidden rounded-xl shadow-md border border-white/[0.06] group-hover:border-nc-accent/30 transition-colors">
                       {item.img ? <img src={item.img} alt={item.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] text-nc-muted">LOGO</div>}
                     </div>
                     <div className="flex-1 min-w-0 pr-2">
-                      <h4 className="text-white font-bold leading-tight truncate">{item.title}</h4>
-                      <p className="text-[#888] text-xs mt-1 mb-2 line-clamp-2 leading-relaxed">{item.type}</p>
+                      <h4 className="text-white font-bold leading-tight truncate text-sm">{item.title}</h4>
+                      <p className="text-nc-muted text-xs mt-1 mb-2.5 line-clamp-2 leading-relaxed">{item.type}</p>
                       <button className="text-nc-accent text-[11px] font-bold uppercase tracking-wider hover:text-sky-300 self-start transition-colors hidden sm:block">View more</button>
                       <button className="text-nc-accent text-xs font-bold self-start sm:hidden">View more</button>
                     </div>
@@ -495,22 +626,22 @@ export default function Home({ onNavigate, user }) {
 
       {/* Trending Talents */}
       {talents.length > 0 && (
-        <section className="py-8 lg:py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-            <div className="flex items-center gap-3 mb-8 group/header">
-              <div className="w-[4px] h-6 bg-sky-400 rounded-sm shadow-[0_0_10px_rgba(56,189,248,0.2)]"></div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold text-white tracking-tight">Trending Now</h2>
-                <span className="text-white text-lg font-medium opacity-80">&gt;</span>
-                <button 
-                  onClick={() => onNavigate('listing')} 
-                  className="text-sky-400 text-[15px] font-medium hover:text-white transition-all ml-1"
-                >
-                  View all
-                </button>
+        <section className="py-12 lg:py-16">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
+            {/* Editorial Header */}
+            <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center">
+                <div className="section-accent-bar"></div>
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Trending Now</h2>
               </div>
+              <button 
+                onClick={() => onNavigate('listing')} 
+                className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
+              >
+                View all
+              </button>
             </div>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 sm:gap-4">
               {talents
                 .filter(t => !t.deactivated)
                 .slice()
@@ -529,9 +660,13 @@ export default function Home({ onNavigate, user }) {
                 <div
                   key={talent.id}
                   onClick={() => onNavigate('profile', talent.id)}
-                  className="bg-nc-card/30 hover:bg-nc-card/50 border border-white/5 rounded-3xl p-3 sm:p-4 transition-all cursor-pointer group flex items-center justify-between"
+                  className="bg-nc-card hover:brightness-110 border border-transparent rounded-3xl p-4 sm:p-5 transition-all duration-300 cursor-pointer group flex items-center justify-between"
                 >
                   <div className="flex items-center gap-4 min-w-0 flex-1">
+                    {/* Rank Number */}
+                    <span className="font-display text-2xl sm:text-3xl font-black text-white/10 group-hover:text-sky-400/30 transition-colors w-8 text-center shrink-0 select-none">
+                      {idx + 1}
+                    </span>
                     <Avatar 
                       user={talent}
                       size="md"
@@ -542,6 +677,9 @@ export default function Home({ onNavigate, user }) {
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="font-bold text-white text-base sm:text-lg leading-tight truncate">{talent.name}</h3>
+                        {talent.verified && (
+                          <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 text-nc-muted text-xs sm:text-sm truncate">
                         <span className="text-sky-400 font-medium truncate shrink-0">@{(talent.username || talent.name.toLowerCase().replace(/\s+/g, '')).replace(/^@/, '')}</span>
@@ -549,7 +687,7 @@ export default function Home({ onNavigate, user }) {
                         <span className="capitalize truncate">{talent.location || 'Nepal'}</span>
                       </div>
                       <div className="mt-2 truncate">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold text-nc-muted uppercase tracking-wider group-hover:border-nc-accent/20 truncate max-w-full">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/[0.06] text-[10px] font-bold text-nc-muted uppercase tracking-wider group-hover:border-nc-accent/20 truncate max-w-full">
                           {talent.role?.split(',')[0]}
                         </span>
                       </div>
@@ -583,15 +721,16 @@ export default function Home({ onNavigate, user }) {
 
       {/* CTA Section - Only show if not logged in */}
       {!isLoggedIn && (
-        <section className="py-8 sm:py-12 lg:py-16">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-            <GlassCard strong className="p-6 sm:p-12 relative overflow-hidden">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-nc-accent/10 rounded-full blur-3xl" />
-              <div className="relative z-10 space-y-4 sm:space-y-6">
-                <h2 className="text-3xl sm:text-4xl font-black text-white px-2">
+        <section className="py-12 sm:py-16 lg:py-20">
+          <div className="max-w-4xl mx-auto px-6">
+            <GlassCard strong className="p-8 sm:p-14 relative overflow-hidden">
+              <div className="absolute top-0 left-1/3 w-72 h-72 bg-nc-accent/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 right-1/4 w-56 h-56 bg-[#FACC15]/8 rounded-full blur-3xl" />
+              <div className="relative z-10 space-y-5 sm:space-y-7 text-center">
+                <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black text-white px-2 leading-tight">
                   Ready to Get Discovered?
                 </h2>
-                <p className="text-nc-secondary text-sm sm:text-lg max-w-xl mx-auto px-2">
+                <p className="text-nc-secondary text-sm sm:text-lg max-w-xl mx-auto px-2 leading-relaxed">
                   Join 25,000+ talents on NC Network. Create your profile and start getting noticed by top productions today.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-2">

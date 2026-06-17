@@ -85,7 +85,7 @@ export default function AdminUsers() {
           senderAvatar: "",
           title: targetVerified ? "Profile Verification Approved" : "Profile Verification Revoked",
           body: targetVerified 
-            ? "Congratulations! Your profile has been verified by the NC Network Team." 
+            ? "Congratulations! Your profile is now verified 🎉" 
             : "Your profile verification status has been updated. Please contact support.",
           type: "system",
           notificationType: "system",

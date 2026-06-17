@@ -1,6 +1,6 @@
-export const DEFAULT_AVATAR = "/assets/default-avatar.png";
-export const MALE_AVATAR = "/assets/default-male.png";
-export const FEMALE_AVATAR = "/assets/default-female.png";
+export const DEFAULT_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" stroke="%23222222" stroke-width="1.5" height="100" fill="%23111111" rx="50"/><path d="M50 25a15 15 0 1 0 15 15 15 15 0 0 0-15-15zm-25 50c0-10 15-15 25-15s25 5 25 15v5H25z" fill="%23888888"/></svg>`;
+export const MALE_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" stroke="%231a2c38" stroke-width="1.5" height="100" fill="%230c1720" rx="50"/><path d="M50 25a15 15 0 1 0 15 15 15 15 0 0 0-15-15zm-25 50c0-10 15-15 25-15s25 5 25 15v5H25z" fill="%2300bfff"/></svg>`;
+export const FEMALE_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" stroke="%232c1a38" stroke-width="1.5" height="100" fill="%23150c20" rx="50"/><path d="M50 25a15 15 0 1 0 15 15 15 15 0 0 0-15-15zm-25 50c0-10 15-15 25-15s25 5 25 15v5H25z" fill="%23ec4899"/></svg>`;
 
 /**
  * Enhanced avatar utility for NC Network
@@ -10,9 +10,17 @@ export const FEMALE_AVATAR = "/assets/default-female.png";
  * 3. Fallback to generic default
  * 4. Case-insensitivity for gender strings
  */
+const isDefaultImage = (url?: string | null) => {
+  if (!url) return true;
+  return url.includes('default-avatar.png') || 
+         url.includes('default-male.png') || 
+         url.includes('default-female.png') || 
+         url.includes('achyut.png');
+};
+
 export const getAvatar = (image?: string | null, gender?: string | null) => {
-  // 1. If valid image exists
-  if (image && typeof image === 'string' && image.trim() !== "") {
+  // 1. If valid image exists and is not a default placeholder
+  if (image && typeof image === 'string' && image.trim() !== "" && !isDefaultImage(image)) {
     return image;
   }
   

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { db } from '../lib/firebase';
 import { 
   collection, 
@@ -16,6 +16,284 @@ import {
 } from 'firebase/firestore';
 import { formatMessagePreview } from '../utils/format';
 import Avatar from '../components/ui/Avatar';
+import { 
+  ChevronLeft, 
+  MessageSquare, 
+  PhoneMissed, 
+  PhoneOff, 
+  UserPlus, 
+  Star, 
+  Settings, 
+  Trash2,
+  Check
+} from 'lucide-react';
+
+// Helpers for notification rendering logic
+const getNotificationDetails = (notif) => {
+  const type = (notif.type || notif.notificationType || '').toLowerCase();
+  const body = (notif.body || notif.message || '').toLowerCase();
+  const title = (notif.title || '').toLowerCase();
+  const senderName = notif.senderName || 'Someone';
+
+  // 1. Follow / New Follower
+  if (type === 'follow' || title.includes('follow') || body.includes('following you') || body.includes('started following')) {
+    return {
+      type: 'follow',
+      themeColor: 'emerald',
+      iconName: 'follow',
+      text: (
+        <span>
+          <span className="font-bold text-white mr-1">{senderName}</span>
+          started following you
+        </span>
+      ),
+    };
+  }
+
+  // 2. Casting alert
+  if (type === 'casting' || title.includes('casting') || title.includes('application') || body.includes('casting') || body.includes('applied')) {
+    let displayElement = (
+      <span>
+        New casting call matches your profile
+      </span>
+    );
+    if (body.includes('applied to') || body.includes('application')) {
+      const cleanBody = notif.body || notif.message || '';
+      const actionText = cleanBody.startsWith(senderName) 
+        ? cleanBody.substring(senderName.length) 
+        : ` applied to your casting call: "${notif.title || ''}"`;
+
+      displayElement = (
+        <span>
+          <span className="font-bold text-white mr-1">{senderName}</span>
+          {actionText}
+        </span>
+      );
+    }
+    return {
+      type: 'casting',
+      themeColor: 'yellow',
+      iconName: 'casting',
+      text: displayElement,
+    };
+  }
+
+  // 3. Messages & Calls
+  if (type === 'messages' || type === 'message') {
+    if (body.includes('missed') || title.includes('missed')) {
+      return {
+        type: 'missed_call',
+        themeColor: 'red',
+        iconName: 'missed_call',
+        text: (
+          <span>
+            Missed a video call from
+            <span className="font-bold text-white ml-1">{senderName}</span>
+          </span>
+        ),
+      };
+    }
+    if (body.includes('cancelled') || title.includes('cancelled')) {
+      return {
+        type: 'call_cancelled',
+        themeColor: 'amber',
+        iconName: 'call_cancelled',
+        text: (
+          <span>
+            Video call cancelled by caller
+          </span>
+        ),
+      };
+    }
+    // Message received
+    return {
+      type: 'message_received',
+      themeColor: 'blue',
+      iconName: 'message_received',
+      text: (
+        <span>
+          <span className="font-bold text-white mr-1">{senderName}</span>
+          sent you a message
+        </span>
+      ),
+    };
+  }
+
+  // 4. System / Default
+  return {
+    type: 'system',
+    themeColor: 'gray',
+    iconName: 'system',
+    text: (
+      <span>
+        {notif.body || notif.message || "System update"}
+      </span>
+    ),
+  };
+};
+
+const renderIconCircle = (iconName) => {
+  let IconComponent = Settings;
+  let colorClasses = 'bg-gray-500/10 border-gray-500/20 text-gray-400';
+
+  if (iconName === 'message_received') {
+    IconComponent = MessageSquare;
+    colorClasses = 'bg-blue-500/10 border-blue-500/20 text-blue-400';
+  } else if (iconName === 'missed_call') {
+    IconComponent = PhoneMissed;
+    colorClasses = 'bg-red-500/10 border-red-500/20 text-red-500';
+  } else if (iconName === 'call_cancelled') {
+    IconComponent = PhoneOff;
+    colorClasses = 'bg-amber-500/10 border-amber-500/20 text-amber-500';
+  } else if (iconName === 'follow') {
+    IconComponent = UserPlus;
+    colorClasses = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500';
+  } else if (iconName === 'casting') {
+    IconComponent = Star;
+    colorClasses = 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400';
+  } else if (iconName === 'system') {
+    IconComponent = Settings;
+    colorClasses = 'bg-gray-500/10 border-gray-500/20 text-gray-400';
+  }
+
+  return (
+    <div className={`w-10 h-10 rounded-full border flex items-center justify-center flex-shrink-0 ${colorClasses}`}>
+      <IconComponent className="w-5 h-5" />
+    </div>
+  );
+};
+
+// Swipable individual notification card component
+function NotificationCard({ 
+  notif, 
+  followingIds, 
+  handleFollowBack, 
+  markAsRead, 
+  deleteNotification, 
+  handleNotificationClick,
+  timeAgo
+}) {
+  const controls = useAnimation();
+  const [isSwiped, setIsSwiped] = useState(false);
+
+  const details = getNotificationDetails(notif);
+  const showAvatar = details.iconName === 'message_received' || details.iconName === 'missed_call' || details.iconName === 'call_cancelled';
+
+  // Handle snapping of the swipe card
+  const handleDragEnd = (event, info) => {
+    if (info.offset.x < -30) {
+      controls.start({ x: -80 });
+      setIsSwiped(true);
+    } else {
+      controls.start({ x: 0 });
+      setIsSwiped(false);
+    }
+  };
+
+  const handleCardClick = () => {
+    if (isSwiped) {
+      controls.start({ x: 0 });
+      setIsSwiped(false);
+    } else {
+      handleNotificationClick(notif);
+    }
+  };
+
+  // Styling properties
+  // Unread: slightly brighter bg (#1a2744), bold name text, blue left border (3px)
+  // Read: dark bg #111, normal text
+  const cardBgClass = notif.read 
+    ? 'bg-[#111111] border-l-[3px] border-l-transparent hover:bg-white/[0.02]' 
+    : 'bg-[#1a2744] border-l-[3px] border-l-[#00BFFF] hover:bg-[#203154]';
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-[#0a0a0a] w-full">
+      {/* Delete button (revealed underneath card when swiped left) */}
+      <div className="absolute inset-y-0 right-0 w-20 flex items-center justify-center bg-red-600 rounded-r-2xl z-0">
+        <button
+          onClick={(e) => deleteNotification(e, notif.id)}
+          className="w-full h-full flex items-center justify-center text-white transition-colors hover:bg-red-700 active:bg-red-800"
+          title="Delete"
+        >
+          <Trash2 className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Main draggable Card UI */}
+      <motion.div
+        drag="x"
+        dragDirectionLock
+        dragConstraints={{ left: -80, right: 0 }}
+        dragElastic={{ left: 0.1, right: 0 }}
+        animate={controls}
+        onDragEnd={handleDragEnd}
+        onClick={handleCardClick}
+        className={`relative z-10 p-4 cursor-pointer transition-colors duration-200 flex items-center gap-4 select-none ${cardBgClass} w-full`}
+      >
+        {/* Left icon / Avatar */}
+        {showAvatar && (notif.senderAvatar || notif.senderName) ? (
+          <Avatar 
+            src={notif.senderAvatar} 
+            name={notif.senderName} 
+            size="sm" 
+            className="!w-10 !h-10 !rounded-full border-none shrink-0" 
+          />
+        ) : (
+          renderIconCircle(details.iconName)
+        )}
+
+        {/* Middle content */}
+        <div className="flex-1 min-w-0 pr-2">
+          <div className={`text-sm leading-snug break-words ${notif.read ? 'text-[#888888] font-normal' : 'text-white font-semibold'}`}>
+            {details.text}
+          </div>
+
+          {/* Follow Back Button for follow notifications */}
+          {(notif.type === 'follow' || notif.notificationType === 'follow') && notif.senderId && (
+            <div className="mt-2">
+              {followingIds.has(notif.senderId) ? (
+                <button
+                  disabled
+                  className="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-500 text-xs font-bold uppercase tracking-wider cursor-not-allowed"
+                >
+                  Following
+                </button>
+              ) : (
+                <button
+                  onClick={(e) => handleFollowBack(e, notif.senderId)}
+                  className="px-3 py-1 rounded-xl bg-[#00BFFF] hover:bg-[#0099e6] text-[#0A0A0A] text-xs font-bold uppercase tracking-wider transition-all active:scale-95"
+                >
+                  Follow Back
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right side: Timestamp & Unread checkmark button */}
+        <div className="flex flex-col items-end gap-1.5 self-start pt-0.5 shrink-0">
+          <span className="text-[11px] text-nc-muted font-medium">
+            {timeAgo(notif.createdAt?.seconds)}
+          </span>
+          
+          {!notif.read && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                markAsRead(notif.id);
+              }}
+              className="group/btn relative w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+              title="Mark as read"
+            >
+              <span className="absolute w-2 h-2 rounded-full bg-[#00BFFF] group-hover/btn:opacity-0 transition-opacity" />
+              <Check className="w-3.5 h-3.5 text-[#00BFFF] opacity-0 group-hover/btn:opacity-100 transition-opacity shrink-0" />
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 export default function Notifications({ onNavigate, user }) {
   const [filter, setFilter] = useState('all');
@@ -245,7 +523,7 @@ export default function Notifications({ onNavigate, user }) {
   const grouped = groupNotifications(filtered);
 
   const timeAgo = (seconds) => {
-    if (!seconds) return '';
+    if (!seconds) return 'Just now';
     const now = Math.floor(Date.now() / 1000);
     const diff = now - seconds;
     if (diff < 60) return 'Just now';
@@ -265,55 +543,17 @@ export default function Notifications({ onNavigate, user }) {
     }
   };
 
-  const typeIcon = (notif) => {
-    const type = notif.type || notif.notificationType;
-    switch (type) {
-      case 'messages':
-        return (
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-        );
-      case 'casting':
-        return (
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-          </svg>
-        );
-      case 'follow':
-        return (
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-          </svg>
-        );
-      case 'system':
-        return (
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
-      default:
-        return (
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-        );
-    }
-  };
-
-  const typeColor = (notif) => {
-    const type = notif.type || notif.notificationType;
-    switch (type) {
-      case 'messages': return 'text-purple-400 bg-purple-400/10';
-      case 'casting': return 'text-nc-accent bg-nc-accent/10';
-      case 'follow': return 'text-nc-accent bg-nc-accent/10';
-      case 'system': return 'text-yellow-400 bg-yellow-400/10';
-      default: return 'text-white bg-white/10';
-    }
-  };
+  const renderSectionHeader = (label) => (
+    <div className="flex items-center gap-3 my-5">
+      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap">
+        {label}
+      </span>
+      <div className="h-[1px] w-full bg-white/5" />
+    </div>
+  );
 
   const renderGroupList = (groupItems) => (
-    <ul className="space-y-2">
+    <ul className="space-y-3 w-full">
       <AnimatePresence initial={false}>
         {groupItems.map((notif) => (
           <motion.li
@@ -322,97 +562,17 @@ export default function Notifications({ onNavigate, user }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            onClick={() => handleNotificationClick(notif)}
-            className={`relative p-4 rounded-2xl cursor-pointer transition-all border group ${
-              notif.read
-                ? 'bg-white/[0.02] border-white/5 hover:bg-white/[0.04]'
-                : 'bg-white/5 border-nc-accent/20 hover:bg-white/10'
-            }`}
+            className="w-full"
           >
-            {/* Unread dot */}
-            {!notif.read && (
-              <span className="absolute top-4 right-4 w-2.5 h-2.5 rounded-full bg-nc-accent shadow-[0_0_8px_rgba(0,200,255,0.4)]" />
-            )}
-
-            <div className="flex items-start gap-4">
-              {/* Icon / Avatar */}
-              {notif.senderName || notif.senderAvatar ? (
-                <Avatar 
-                  src={notif.senderAvatar} 
-                  name={notif.senderName} 
-                  size="sm" 
-                  className="!w-10 !h-10 !rounded-xl border-none shrink-0" 
-                />
-              ) : (
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${typeColor(notif)}`}>
-                  {typeIcon(notif)}
-                </div>
-              )}
-
-              {/* Content */}
-              <div className="flex-1 min-w-0 pr-6">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <h3 className={`text-sm font-bold truncate ${notif.read ? 'text-[#aaa]' : 'text-white'}`}>
-                    {notif.senderName || notif.title}
-                  </h3>
-                </div>
-                <p className={`text-xs leading-relaxed ${notif.read ? 'text-[#555]' : 'text-[#888]'}`}>
-                  {formatMessagePreview(notif.body || notif.message)}
-                </p>
-
-                {/* Follow Back Button for follow notifications */}
-                {(notif.type === 'follow' || notif.notificationType === 'follow') && notif.senderId && (
-                  <div className="mt-3">
-                    {followingIds.has(notif.senderId) ? (
-                      <button
-                        disabled
-                        className="px-4 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[#555] text-xs font-bold uppercase tracking-wide cursor-not-allowed"
-                      >
-                        Following
-                      </button>
-                    ) : (
-                      <button
-                        onClick={(e) => handleFollowBack(e, notif.senderId)}
-                        className="px-4 py-1.5 rounded-xl bg-nc-accent hover:bg-sky-400 text-[#0A0A0A] text-xs font-black uppercase tracking-wide transition-all active:scale-95"
-                      >
-                        Follow Back
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                <span className="text-[10px] text-[#444] mt-2 block font-medium">
-                  {timeAgo(notif.createdAt?.seconds)}
-                </span>
-              </div>
-
-              {/* Inline Action Controls (Mark read, Delete) */}
-              <div className="absolute right-4 bottom-4 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                {!notif.read && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      markAsRead(notif.id);
-                    }}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-nc-accent/15 text-nc-muted hover:text-nc-accent transition-colors"
-                    title="Mark as read"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </button>
-                )}
-                <button
-                  onClick={(e) => deleteNotification(e, notif.id)}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/15 text-nc-muted hover:text-red-400 transition-colors"
-                  title="Delete"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+            <NotificationCard
+              notif={notif}
+              followingIds={followingIds}
+              handleFollowBack={handleFollowBack}
+              markAsRead={markAsRead}
+              deleteNotification={deleteNotification}
+              handleNotificationClick={handleNotificationClick}
+              timeAgo={timeAgo}
+            />
           </motion.li>
         ))}
       </AnimatePresence>
@@ -420,59 +580,78 @@ export default function Notifications({ onNavigate, user }) {
   );
 
   return (
-    <div className="min-h-screen bg-nc-dark">
-      {/* Header */}
-      <div className="max-w-3xl mx-auto px-6 sm:px-8 pt-24 sm:pt-28 pb-4">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
+      {/* Header Container */}
+      <div className="max-w-3xl mx-auto px-6 sm:px-8 pt-4 sm:pt-6">
+        {/* Redesigned Header: Back Arrow on left, Centered title, Mark all read on right in cyan */}
+        <div className="grid grid-cols-3 items-center mb-6 pb-2">
+          <div className="flex justify-start">
             <button
               onClick={() => onNavigate('home')}
               className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+              aria-label="Back"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <div>
-              <h1 className="text-2xl font-black text-white tracking-tight">Notifications</h1>
-              {unreadCount > 0 && (
-                <p className="text-xs text-nc-accent font-medium">{unreadCount} unread</p>
-              )}
-            </div>
           </div>
-
-          {unreadCount > 0 && (
+          <div className="flex justify-center">
+            <h1 className="text-base font-bold text-white tracking-tight whitespace-nowrap">
+              Notifications
+            </h1>
+          </div>
+          <div className="flex justify-end">
             <button
               onClick={handleMarkAllRead}
-              className="text-xs font-bold text-nc-accent hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
+              disabled={unreadCount === 0}
+              className={`text-xs font-bold transition-colors px-3 py-1.5 rounded-lg ${
+                unreadCount > 0
+                  ? 'text-[#00BFFF] hover:text-[#0099e6] hover:bg-white/5 cursor-pointer'
+                  : 'text-gray-600 cursor-not-allowed'
+              }`}
             >
               Mark all read
             </button>
-          )}
+          </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {filters.map(f => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                filter === f.id
-                  ? 'bg-nc-accent text-black'
-                  : 'bg-white/5 text-[#888] hover:text-white hover:bg-white/10 border border-white/5'
-              }`}
-            >
-              {f.label}
-              {f.id === 'unread' && unreadCount > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-black/20 text-[10px]">{unreadCount}</span>
-              )}
-            </button>
-          ))}
+        {/* Filter Tabs Pills row: All | Unread | Messages | Casting | System */}
+        <div className="relative flex gap-2 border-b border-white/5 pb-3 overflow-x-auto scrollbar-hide">
+          {filters.map(f => {
+            const isActive = filter === f.id;
+            return (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={`relative px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-[#00BFFF] text-white shadow-[0_0_12px_rgba(0,191,255,0.25)]' 
+                    : 'bg-[#111111] text-gray-400 hover:text-white hover:bg-white/[0.02] border border-white/5'
+                }`}
+              >
+                <span className="relative z-10 flex items-center gap-1.5">
+                  {f.label}
+                  {f.id === 'unread' && unreadCount > 0 && (
+                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-black/20 text-white' : 'bg-[#1a2744] text-[#00BFFF]'}`}>
+                      {unreadCount}
+                    </span>
+                  )}
+                </span>
+
+                {/* Smooth slide underline transition */}
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTabUnderline"
+                    className="absolute bottom-[-13px] left-0 right-0 h-[2.5px] bg-[#00BFFF] rounded-full"
+                    transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Notification List */}
+      {/* Notification List Container */}
       <div className="max-w-3xl mx-auto px-6 sm:px-8 pb-24">
         {loading ? (
           <div className="space-y-3 mt-4">
@@ -490,31 +669,29 @@ export default function Notifications({ onNavigate, user }) {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4 text-[#555]">
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
+            <div className="w-16 h-16 rounded-2xl bg-[#111111] flex items-center justify-center mx-auto mb-4 text-[#555] border border-white/5">
+              <Settings className="w-8 h-8" />
             </div>
             <p className="text-white font-bold text-lg">{getEmptyStateText().title}</p>
             <p className="text-[#555] text-sm mt-1">{getEmptyStateText().desc}</p>
           </div>
         ) : (
-          <div className="space-y-6 mt-4">
+          <div className="space-y-6 mt-4 w-full">
             {grouped.today.length > 0 && (
               <div>
-                <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Today</h4>
+                {renderSectionHeader('Today')}
                 {renderGroupList(grouped.today)}
               </div>
             )}
             {grouped.yesterday.length > 0 && (
               <div>
-                <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Yesterday</h4>
+                {renderSectionHeader('Yesterday')}
                 {renderGroupList(grouped.yesterday)}
               </div>
             )}
             {grouped.earlier.length > 0 && (
               <div>
-                <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Earlier</h4>
+                {renderSectionHeader('Earlier')}
                 {renderGroupList(grouped.earlier)}
               </div>
             )}

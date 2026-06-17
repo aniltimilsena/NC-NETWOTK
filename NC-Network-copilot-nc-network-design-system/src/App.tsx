@@ -16,6 +16,7 @@ import PullToRefresh from './components/ui/PullToRefresh';
 import RouteLoader from './components/RouteLoader';
 import PageTransition from './components/PageTransition';
 import SplashScreen from './components/SplashScreen';
+import Onboarding from './components/Onboarding';
 
 // Layouts and Protection
 import PublicLayout from './layouts/PublicLayout';
@@ -26,9 +27,10 @@ import AdminRoute from './routes/AdminRoute';
 
 // Firebase
 import { auth, db } from './lib/firebase';
-import { onAuthStateChanged, type User } from 'firebase/auth';
-import { doc, getDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
+import { onAuthStateChanged, type User, updateProfile } from 'firebase/auth';
+import { doc, getDoc, onSnapshot, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useNotifications } from './hooks/useNotifications';
+import { UserContext } from './context/UserContext';
 
 // Lazy Loaded Pages
 const Home = lazyWithRetry(() => import('./pages/Home'));
@@ -47,6 +49,7 @@ const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService'));
 const TrustSafety = lazyWithRetry(() => import('./pages/TrustSafety'));
 const Notifications = lazyWithRetry(() => import('./pages/Notifications'));
 const Settings = lazyWithRetry(() => import('./pages/Settings'));
+const Trending = lazyWithRetry(() => import('./pages/Trending'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 
 // Admin pages
@@ -65,7 +68,7 @@ const AdminSettings = lazyWithRetry(() => import('./pages/admin/AdminSettings'))
 export function getRoutePath(page: string, param: any = null): string {
   switch (page) {
     case 'home': return '/';
-    case 'listing': return '/talents';
+    case 'listing': return param ? `/talents?category=${encodeURIComponent(param)}` : '/talents';
     case 'profile': return param ? `/profile/${param}` : '/talents';
     case 'casting': return '/casting';
     case 'casting-detail': return `/casting/${param}`;
@@ -80,6 +83,7 @@ export function getRoutePath(page: string, param: any = null): string {
     case 'privacy': return '/privacy';
     case 'terms': return '/terms';
     case 'trust': return '/trust-safety';
+    case 'trending': return '/trending';
     
     // Admin routes
     case 'admin-overview': return '/admin';
@@ -135,6 +139,19 @@ const TalentListingRoute = () => {
   );
 };
 
+const TrendingRoute = () => {
+  const { handleLegacyNavigate } = useLegacyNavigate();
+  return (
+    <PageTransition>
+      <Helmet>
+        <title>Trending Now | NC Network</title>
+        <meta name="description" content="Check out Nepal's trending professional talent, actors, directors, and models." />
+      </Helmet>
+      <Trending onNavigate={handleLegacyNavigate} />
+    </PageTransition>
+  );
+};
+
 const ProfileRoute = () => {
   const { id } = useParams();
   const { user, isAdmin } = useOutletContext<any>();
@@ -153,7 +170,7 @@ const SettingsRoute = () => {
   const { user, showToast, isAdmin } = useOutletContext<any>();
   const { handleLegacyNavigate } = useLegacyNavigate();
   const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab') || 'account';
+  const tab = searchParams.get('tab'); // null when no ?tab= in URL
   return (
     <PageTransition>
       <Helmet>
@@ -165,6 +182,7 @@ const SettingsRoute = () => {
 };
 
 const CastingCallRoute = () => {
+  const { user, isAdmin } = useOutletContext<any>();
   const { handleLegacyNavigate } = useLegacyNavigate();
   return (
     <PageTransition>
@@ -172,7 +190,7 @@ const CastingCallRoute = () => {
         <title>Casting Calls & Auditions | NC Network</title>
         <meta name="description" content="Find the latest auditions and casting calls in Nepal." />
       </Helmet>
-      <CastingCall onNavigate={handleLegacyNavigate} />
+      <CastingCall onNavigate={handleLegacyNavigate} user={user} isAdmin={isAdmin} />
     </PageTransition>
   );
 };
@@ -388,15 +406,7 @@ export default function App() {
   const [userProfile, setUserProfile] = useState<Record<string, any> | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(false);
-  const [splashTimeElapsed, setSplashTimeElapsed] = useState(false);
 
-  // Enforce a minimum 3-second splash screen duration
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSplashTimeElapsed(true);
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Alert queue
   const [alerts, setAlerts] = useState<AlertPayload[]>([]);
@@ -424,6 +434,17 @@ export default function App() {
     message: string,
     type: 'success' | 'logout' | 'info' | 'error' = 'info',
   ) => showAlert(message, type), [showAlert]);
+
+  useEffect(() => {
+    const handleCustomAlert = (e: Event) => {
+      const { message, type, detail, onAction } = (e as CustomEvent).detail || {};
+      if (message) {
+        showAlert(message, type || 'info', detail, onAction);
+      }
+    };
+    window.addEventListener('nc-alert', handleCustomAlert);
+    return () => window.removeEventListener('nc-alert', handleCustomAlert);
+  }, [showAlert]);
 
   // Handle direct navigation conversions from hooks
   const handleLegacyNavigate = useCallback((page: string, param: any = null) => {
@@ -660,7 +681,32 @@ export default function App() {
     gender: userProfile?.gender || '',
     profileImage: userProfile?.image || user.photoURL || '',
     premium: userProfile?.premium || (user.email === 'aniltimilsena53@gmail.com') || false,
+    role: userProfile?.role || '',
   } : null;
+
+  const updateAvatar = async (newUrl: string | null) => {
+    if (!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
+    await updateProfile(auth.currentUser, { photoURL: newUrl || '' });
+    await updateDoc(doc(db, 'profiles', uid), {
+      image: newUrl || null,
+      photoURL: newUrl || null,
+      updatedAt: serverTimestamp()
+    });
+    setUser({ ...auth.currentUser } as any);
+  };
+
+  const deleteAvatar = async () => {
+    if (!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
+    await updateProfile(auth.currentUser, { photoURL: '' });
+    await updateDoc(doc(db, 'profiles', uid), {
+      image: null,
+      photoURL: null,
+      updatedAt: serverTimestamp()
+    });
+    setUser({ ...auth.currentUser } as any);
+  };
 
   // Auth-driven status notifications
   const [lastUser, setLastUser] = useState<User | null>(null);
@@ -698,44 +744,30 @@ export default function App() {
     document.documentElement.classList.add(`font-size-${savedFontSize}`);
   }, []);
 
+  const showOnboarding = authReady && !!user && !!userProfile && userProfile.onboarded !== true;
+
   return (
     <PermissionProvider>
       <CallProvider user={user}>
-        <AnimatePresence>
-          {(!authReady || !splashTimeElapsed) && <SplashScreen />}
-        </AnimatePresence>
-        <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
-          <ErrorBoundary key={location.pathname}>
-            <Suspense fallback={<RouteLoader />}>
-              <AnimatePresence mode="wait">
-                <Routes location={location} key={location.pathname}>
-                {/* Public Route Group */}
-                <Route element={
-                  <PublicLayout 
-                    user={enrichedUser} 
-                    isAdmin={isAdmin} 
-                    onLogout={handleLogout} 
-                    showAlert={showAlert} 
-                    showToast={showToast} 
-                  />
-                }>
-                  <Route path="/" element={<HomeRoute />} />
-                  <Route path="/talents" element={<TalentListingRoute />} />
-                  <Route path="/profile/:id" element={<ProfileRoute />} />
-                  <Route path="/casting" element={<CastingCallRoute />} />
-                  <Route path="/casting/:id" element={<CastingDetailRoute />} />
-                  <Route path="/premium" element={<PremiumRoute />} />
-                  <Route path="/privacy" element={<PrivacyRoute />} />
-                  <Route path="/terms" element={<TermsRoute />} />
-                  <Route path="/trust-safety" element={<TrustRoute />} />
-                  <Route path="/signin" element={<SignInRoute />} />
-                  <Route path="/signup" element={<SignUpRoute />} />
-                </Route>
-
-                {/* Authenticated User Route Group */}
-                <Route element={<ProtectedRoute user={user} authReady={authReady} />}>
+        <UserContext.Provider value={{ user: enrichedUser, updateAvatar, deleteAvatar }}>
+          <AnimatePresence>
+            {!authReady && <SplashScreen />}
+            {showOnboarding && (
+              <Onboarding 
+                user={enrichedUser} 
+                profile={userProfile} 
+                onNavigate={handleLegacyNavigate} 
+              />
+            )}
+          </AnimatePresence>
+          <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
+            <ErrorBoundary key={location.pathname}>
+              <Suspense fallback={<RouteLoader />}>
+                <AnimatePresence mode="wait">
+                  <Routes location={location} key={location.pathname}>
+                  {/* Public Route Group */}
                   <Route element={
-                    <UserLayout 
+                    <PublicLayout 
                       user={enrichedUser} 
                       isAdmin={isAdmin} 
                       onLogout={handleLogout} 
@@ -743,46 +775,73 @@ export default function App() {
                       showToast={showToast} 
                     />
                   }>
-                    <Route path="/profile/create" element={<ProfileCreateRoute />} />
-                    <Route path="/casting/create" element={<CastingCreateRoute />} />
-                    <Route path="/messages" element={<MessagesRoute />} />
-                    <Route path="/messages/:id" element={<MessagesRoute />} />
-                    <Route path="/notifications" element={<NotificationsRoute />} />
-                    <Route path="/settings" element={<SettingsRoute />} />
+                    <Route path="/" element={<HomeRoute />} />
+                    <Route path="/talents" element={<TalentListingRoute />} />
+                    <Route path="/trending" element={<TrendingRoute />} />
+                    <Route path="/profile/:id" element={<ProfileRoute />} />
+                    <Route path="/talent/:id" element={<ProfileRoute />} />
+                    <Route path="/casting" element={<CastingCallRoute />} />
+                    <Route path="/casting/:id" element={<CastingDetailRoute />} />
+                    <Route path="/premium" element={<PremiumRoute />} />
+                    <Route path="/privacy" element={<PrivacyRoute />} />
+                    <Route path="/terms" element={<TermsRoute />} />
+                    <Route path="/trust-safety" element={<TrustRoute />} />
+                    <Route path="/signin" element={<SignInRoute />} />
+                    <Route path="/signup" element={<SignUpRoute />} />
                   </Route>
-                </Route>
 
-                {/* Admin Route Group */}
-                <Route element={
-                  <AdminRoute user={user} isAdmin={isAdmin} authReady={authReady} />
-                }>
-                  <Route element={<AdminLayout />}>
-                    <Route path="/admin" element={<AdminOverview />} />
-                    <Route path="/admin/users" element={<AdminUsers />} />
-                    <Route path="/admin/analytics" element={<AdminAnalytics />} />
-                    <Route path="/admin/content" element={<AdminContent />} />
-                    <Route path="/admin/casting" element={<AdminCasting />} />
-                    <Route path="/admin/messages" element={<AdminMessages />} />
-                    <Route path="/admin/pro" element={<AdminPro />} />
-                    <Route path="/admin/moderation" element={<AdminModeration />} />
-                    <Route path="/admin/settings" element={<AdminSettings />} />
+                  {/* Authenticated User Route Group */}
+                  <Route element={<ProtectedRoute user={user} authReady={authReady} />}>
+                    <Route element={
+                      <UserLayout 
+                        user={enrichedUser} 
+                        isAdmin={isAdmin} 
+                        onLogout={handleLogout} 
+                        showAlert={showAlert} 
+                        showToast={showToast} 
+                      />
+                    }>
+                      <Route path="/profile/create" element={<ProfileCreateRoute />} />
+                      <Route path="/casting/create" element={<CastingCreateRoute />} />
+                      <Route path="/messages" element={<MessagesRoute />} />
+                      <Route path="/messages/:id" element={<MessagesRoute />} />
+                      <Route path="/notifications" element={<NotificationsRoute />} />
+                      <Route path="/settings" element={<SettingsRoute />} />
+                    </Route>
                   </Route>
-                </Route>
 
-                {/* Fallback 404 Route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AnimatePresence>
-          </Suspense>
-          </ErrorBoundary>
+                  {/* Admin Route Group */}
+                  <Route element={
+                    <AdminRoute user={user} isAdmin={isAdmin} authReady={authReady} />
+                  }>
+                    <Route element={<AdminLayout />}>
+                      <Route path="/admin" element={<AdminOverview />} />
+                      <Route path="/admin/users" element={<AdminUsers />} />
+                      <Route path="/admin/analytics" element={<AdminAnalytics />} />
+                      <Route path="/admin/content" element={<AdminContent />} />
+                      <Route path="/admin/casting" element={<AdminCasting />} />
+                      <Route path="/admin/messages" element={<AdminMessages />} />
+                      <Route path="/admin/pro" element={<AdminPro />} />
+                      <Route path="/admin/moderation" element={<AdminModeration />} />
+                      <Route path="/admin/settings" element={<AdminSettings />} />
+                    </Route>
+                  </Route>
 
-          {/* Alert notifications banner */}
-          <AlertBanner alerts={alerts} onDismiss={dismissAlert} />
+                  {/* Fallback 404 Route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AnimatePresence>
+            </Suspense>
+            </ErrorBoundary>
 
-          {/* Calling capabilities UI */}
-          <CallingOverlay />
-          <IncomingCallPopup />
-        </div>
+            {/* Alert notifications banner */}
+            <AlertBanner alerts={alerts} onDismiss={dismissAlert} />
+
+            {/* Calling capabilities UI */}
+            <CallingOverlay />
+            <IncomingCallPopup />
+          </div>
+        </UserContext.Provider>
       </CallProvider>
     </PermissionProvider>
   );

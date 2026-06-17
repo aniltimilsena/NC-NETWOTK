@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import App from './App'
 import './index.css'
+import './config/i18n'
 
 // Handle Vite dynamic import chunk failures gracefully by auto-reloading to fetch the latest bundle version
 window.addEventListener('vite:preloadError', () => {

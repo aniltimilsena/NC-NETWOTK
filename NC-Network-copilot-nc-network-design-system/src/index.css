@@ -1,17 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@300;400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  * {
+    box-sizing: border-box;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
 
   body {
-    background-color: #0A0A0F;
-    color: #FFFFFF;
+    margin: 0;
+    padding: 0;
+    background-color: #0a0a0a;
+    color: #CCCCCC;
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -333,3 +339,104 @@ html.font-size-large { font-size: 18px; }
 .animate-slide-in-right {
   animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Ken Burns slow zoom animation for hero backgrounds */
+@keyframes kenburns {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.animate-kenburns {
+  animation: kenburns 30s ease-in-out infinite;
+}
+
+/* Subtle high-contrast text shadow for hero text readability */
+.hero-text-shadow {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Premium Category Cards Redesign (Cinematic Dark, borderless) */
+.category-card {
+  position: relative;
+  background: #111111 !important;
+  border: none !important;
+  border-radius: 20px !important;
+  transition: all 0.3s ease !important;
+  overflow: hidden;
+}
+
+.category-card:hover {
+  transform: translateY(-4px) !important;
+  filter: brightness(1.1) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Ripple effect on click */
+.category-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  border-radius: inherit;
+  opacity: 0;
+  transform: scale(0.3);
+  transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.category-card:active::after {
+  transform: scale(2.2);
+  opacity: 1;
+  transition: 0s;
+}
+
+/* Consistent section header accent bar */
+.section-accent-bar {
+  display: inline-block;
+  width: 3px;
+  height: 20px;
+  background-color: #FFD700;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, 
+    #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background-color: #00BFFF;
+  color: #0A0A0A;
+  font-size: 8px;
+  font-weight: 900;
+  border-radius: 50%;
+  margin-left: 6px;
+  cursor: help;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* Devanagari Language Styling Override */
+body.font-devanagari,
+body.font-devanagari * {
+  font-family: 'Noto Sans Devanagari', 'Inter', system-ui, sans-serif !important;
+}
+
+

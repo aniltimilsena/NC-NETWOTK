@@ -197,15 +197,13 @@ export default function CallingOverlay() {
                   <div className="absolute -inset-3 rounded-full border-2 border-nc-accent/10 animate-pulse" />
                 </>
               )}
-              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-white/10 shadow-2xl bg-[#1A1A1A]">
-                {remotePhoto ? (
-                  <img src={remotePhoto} alt={remoteName} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-4xl font-black text-white/30">
-                    {remoteName.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
+              <Avatar 
+                src={remotePhoto}
+                name={remoteName}
+                gender={remoteProfile?.gender}
+                size="none"
+                className="w-28 h-28 sm:w-32 sm:h-32 text-4xl border-4 border-white/10 shadow-2xl"
+              />
             </div>
           </motion.div>
 

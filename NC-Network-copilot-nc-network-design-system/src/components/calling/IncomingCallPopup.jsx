@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCall } from '../../context/CallContext';
 import { getProfile } from '../../services/profile';
+import Avatar from '../ui/Avatar';
 
 export default function IncomingCallPopup() {
   const { incomingCall, acceptCall, rejectCall } = useCall();
@@ -51,19 +52,13 @@ export default function IncomingCallPopup() {
             {/* Avatar with ring animation */}
             <div className="relative flex-shrink-0">
               <div className="absolute -inset-1.5 rounded-full border-2 border-green-500/30 animate-ping" style={{ animationDuration: '1.5s' }} />
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-white/10 bg-[#1A1A1A]">
-                {callerPhoto ? (
-                  <img
-                    src={callerPhoto}
-                    alt={callerName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-lg sm:text-xl font-black text-white/30">
-                    {callerName.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
+              <Avatar 
+                src={callerPhoto}
+                name={callerName}
+                gender={callerProfile?.gender}
+                size="none"
+                className="w-12 h-12 sm:w-14 sm:h-14 text-lg sm:text-xl border-2 border-white/10"
+              />
             </div>
 
             <div className="flex-1 min-w-0">

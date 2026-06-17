@@ -40,6 +40,7 @@ interface ProfileSuggestion {
     location?: string;
     image?: string;
     gender?: string;
+    verified?: boolean;
 }
 
 
@@ -73,6 +74,7 @@ export function ActionSearchBar({
                     location: doc.data().location as string | undefined,
                     image: (doc.data().image || doc.data().photoURL) as string | undefined,
                     gender: doc.data().gender as string | undefined,
+                    verified: !!doc.data().verified,
                 }));
                 setAllProfiles(loaded);
                 setHasLoaded(true);
@@ -198,12 +200,16 @@ export function ActionSearchBar({
                                                         }}
                                                         size="sm"
                                                         name={profile.name}
+                                                        verified={profile.verified}
                                                     />
                                                 </div>
 
                                                 <div>
-                                                    <div className="text-sm font-bold text-white group-hover:text-nc-accent transition-colors">
+                                                    <div className="text-sm font-bold text-white group-hover:text-nc-accent transition-colors flex items-center gap-1.5">
                                                         {profile.name}
+                                                        {profile.verified && (
+                                                            <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
+                                                        )}
                                                     </div>
                                                     <div className="text-xs text-gray-500 flex items-center gap-1">
                                                         <span>{profile.role}</span>

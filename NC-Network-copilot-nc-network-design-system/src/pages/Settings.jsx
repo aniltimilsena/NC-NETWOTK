@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { getProfile, updateProfileData, subscribeToProfile, uploadProfileMedia } from '../services/profile';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { collection, query, orderBy, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp, getDocs, where, updateDoc } from 'firebase/firestore';
 import { FileUploadCard } from "@/components/ui/file-upload-card"
@@ -14,76 +15,184 @@ import {
   DownloadDoneIcon,
   SuccessIcon
 } from "@/components/ui/animated-state-icons"
-import { Plus, Check } from "lucide-react"
+import { Plus, Check, ChevronLeft, User, Briefcase, Lock, Bell, Shield, Database, Trash2, HelpCircle, X, Mail } from "lucide-react"
 import Avatar from '../components/ui/Avatar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { CATEGORIES } from '../constants/categories';
 
-
-// Cinematic Toggle (now unified with the premium neon toggle style)
+// Unified premium toggle style
 const GoldenToggle = ({ enabled, onChange }) => (
   <NeonToggle enabled={enabled} onChange={onChange} />
 );
 
-// Clean Edit Profile Input
-const EditInput = ({ label, type = 'text', placeholder, value, onChange, icon }) => (
-  <div className="mb-4">
-    {label && <label className="block text-[#666] text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5">{label}</label>}
+// Consistent styled input field
+const EditInput = ({ label, type = 'text', placeholder, value, onChange, icon, readOnly = false }) => (
+  <div className="mb-4 text-left">
+    {label && <label className="block text-[#888] text-[10px] font-bold uppercase tracking-[1px] mb-2">{label}</label>}
     <div className="relative">
-      {icon && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555]">{icon}</span>}
+      {icon && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555] flex items-center justify-center">{icon}</span>}
       <input
         type={type}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className={`w-full bg-[#111] border border-[#1E1E1E] hover:border-[#2A2A2A] focus:border-nc-accent/50 text-white transition-all py-3.5 ${icon ? 'pl-10' : 'pl-4'} pr-4 rounded-2xl outline-none text-sm placeholder-[#444] focus:bg-[#0D0D0D]`}
+        readOnly={readOnly}
+        className={`w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] focus:shadow-[0_0_0_3px_rgba(0,191,255,0.2)] text-white transition-all py-3 ${icon ? 'pl-11' : 'pl-4'} pr-4 rounded-lg outline-none text-sm placeholder-[#555]`}
       />
     </div>
   </div>
 );
 
-// Clean Edit Profile Textarea
-const EditTextarea = ({ label, placeholder, value, onChange, rows = 4 }) => (
-  <div className="mb-4">
-    {label && <label className="block text-[#666] text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5">{label}</label>}
+// Consistent styled textarea with character counter
+const EditTextarea = ({ label, placeholder, value, onChange, rows = 4, charCount = null }) => (
+  <div className="mb-4 text-left">
+    <div className="flex justify-between items-center mb-2">
+      {label && <label className="block text-[#888] text-[10px] font-bold uppercase tracking-[1px]">{label}</label>}
+      {charCount !== null && <span className="text-[10px] text-[#555] font-bold">{charCount} / 500</span>}
+    </div>
     <textarea
       placeholder={placeholder}
       value={value}
       onChange={onChange}
       rows={rows}
-      className="w-full bg-[#111] border border-[#1E1E1E] hover:border-[#2A2A2A] focus:border-nc-accent/50 text-white transition-all py-3.5 px-4 rounded-2xl outline-none text-sm placeholder-[#444] focus:bg-[#0D0D0D] resize-none leading-relaxed"
+      className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] focus:shadow-[0_0_0_3px_rgba(0,191,255,0.2)] text-white transition-all py-3 px-4 rounded-lg outline-none text-sm placeholder-[#555] resize-none leading-relaxed"
     />
   </div>
 );
 
-// Clean Select
+// Consistent styled select dropdown
 const EditSelect = ({ label, options, value, onChange, placeholder }) => (
-  <div className="mb-4">
-    {label && <label className="block text-[#666] text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5">{label}</label>}
+  <div className="mb-4 text-left">
+    {label && <label className="block text-[#888] text-[10px] font-bold uppercase tracking-[1px] mb-2">{label}</label>}
     <div className="relative">
       <select
         value={value}
         onChange={onChange}
-        className="w-full bg-[#111] border border-[#1E1E1E] hover:border-[#2A2A2A] focus:border-nc-accent/50 text-white transition-all py-3.5 pl-4 pr-10 rounded-2xl outline-none text-sm appearance-none cursor-pointer focus:bg-[#0D0D0D]"
+        className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] focus:shadow-[0_0_0_3px_rgba(0,191,255,0.2)] text-white transition-all py-3 pl-4 pr-10 rounded-lg outline-none text-sm appearance-none cursor-pointer placeholder-[#555]"
       >
         {placeholder && <option value="" disabled>{placeholder}</option>}
         {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
       </select>
       <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-        <svg className="w-3 h-3 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+        <svg className="w-4 h-4 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </div>
     </div>
   </div>
 );
 
+// Autocomplete Location Input Component
+const AutocompleteLocationInput = ({ label, value, onChange, icon }) => {
+  const [queryVal, setQueryVal] = useState(value || '');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    setQueryVal(value || '');
+  }, [value]);
+
+  const suggestions = [
+    'Kathmandu, Nepal',
+    'Lalitpur, Nepal',
+    'Bhaktapur, Nepal',
+    'Pokhara, Nepal',
+    'Biratnagar, Nepal',
+    'Dharan, Nepal',
+    'Butwal, Nepal',
+    'Birgunj, Nepal',
+    'Hetauda, Nepal',
+    'Chitwan, Nepal',
+    'London, UK',
+    'New York, USA',
+    'Mumbai, India'
+  ].filter(city => city.toLowerCase().includes(queryVal.toLowerCase()));
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="mb-4 text-left relative" ref={containerRef}>
+      {label && <label className="block text-[#888] text-[10px] font-bold uppercase tracking-[1px] mb-2">{label}</label>}
+      <div className="relative">
+        {icon && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555] flex items-center justify-center">{icon}</span>}
+        <input
+          type="text"
+          placeholder="City, Country"
+          value={queryVal}
+          onChange={(e) => {
+            const v = e.target.value;
+            setQueryVal(v);
+            onChange(v);
+            setShowSuggestions(true);
+          }}
+          onFocus={() => setShowSuggestions(true)}
+          className={`w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] focus:shadow-[0_0_0_3px_rgba(0,191,255,0.2)] text-white transition-all py-3 ${icon ? 'pl-11' : 'pl-4'} pr-4 rounded-lg outline-none text-sm placeholder-[#555]`}
+        />
+      </div>
+
+      {showSuggestions && queryVal && suggestions.length > 0 && (
+        <div className="absolute left-0 right-0 mt-1.5 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-2xl z-50 py-1.5 max-h-48 overflow-y-auto no-scrollbar">
+          {suggestions.map((city) => (
+            <button
+              key={city}
+              type="button"
+              onClick={() => {
+                setQueryVal(city);
+                onChange(city);
+                setShowSuggestions(false);
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-white/90 hover:bg-[#00BFFF]/10 hover:text-[#00BFFF] transition-colors"
+            >
+              {city}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Premium Save Button Component
+const SaveButton = ({ hasChanges, isSaving, onSave, saveSuccess }) => (
+  <button
+    type="button"
+    onClick={onSave}
+    disabled={(!hasChanges && !saveSuccess) || isSaving}
+    className={`w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-lg text-sm font-bold transition-all ${
+      saveSuccess
+        ? 'bg-green-500 text-white'
+        : hasChanges
+          ? 'bg-gradient-to-r from-[#00BFFF] to-[#0080FF] hover:opacity-95 text-black shadow-lg shadow-[#00BFFF]/20 active:scale-[0.98] cursor-pointer'
+          : 'bg-[#222] text-[#555] cursor-not-allowed'
+    }`}
+  >
+    {isSaving ? (
+      <>
+        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        Saving...
+      </>
+    ) : saveSuccess ? (
+      <>
+        <Check className="w-4.5 h-4.5" />
+        Saved Successfully
+      </>
+    ) : (
+      'Save Changes'
+    )}
+  </button>
+);
+
 // Legacy compat wrappers
 const SettingInput = ({ label, type = 'text', placeholder, value, onChange }) => (
   <EditInput label={label} type={type} placeholder={placeholder} value={value} onChange={onChange} />
-);
-const SettingSelect = ({ label, options, value, onChange, placeholder }) => (
-  <EditSelect label={label} options={options} value={value} onChange={onChange} placeholder={placeholder} />
 );
 
 // Chip Tag for skills/expertise
@@ -92,16 +201,15 @@ const ChipTag = ({ label, onRemove }) => (
     initial={{ scale: 0.85, opacity: 0 }}
     animate={{ scale: 1, opacity: 1 }}
     exit={{ scale: 0.85, opacity: 0 }}
-    className="flex items-center gap-1.5 bg-[#1A1A1A] border border-[#2A2A2A] text-white/80 px-3.5 py-1.5 rounded-xl text-xs font-semibold group hover:border-white/20 transition-all"
+    className="flex items-center gap-1.5 bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] px-3.5 py-1.5 rounded-full text-xs font-semibold"
   >
     {label}
     <button
+      type="button"
       onClick={onRemove}
-      className="text-[#555] hover:text-white transition-colors ml-1"
+      className="hover:text-white transition-colors ml-1"
     >
-      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-      </svg>
+      <X className="w-3.5 h-3.5" />
     </button>
   </motion.div>
 );
@@ -111,24 +219,27 @@ const ExperienceEditCard = ({ exp, idx, onChange, onRemove }) => (
   <motion.div
     initial={{ y: 12, opacity: 0 }}
     animate={{ y: 0, opacity: 1 }}
-    className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-2xl p-5 space-y-3 group relative"
+    className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-5 space-y-3 group relative hover:border-white/10 transition-all text-left"
   >
     <div className="flex items-center gap-3 mb-1">
-      <div className="w-9 h-9 rounded-xl bg-[#1A1A1A] border border-[#252525] flex items-center justify-center flex-shrink-0">
-        <svg className="w-4 h-4 text-nc-accent/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
+      <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
+        <Briefcase className="w-4 h-4 text-[#00BFFF]" />
       </div>
-      <span className="text-[10px] text-[#555] font-black uppercase tracking-widest">Production Module</span>
-      <button
-        onClick={onRemove}
-        className="ml-auto w-7 h-7 flex items-center justify-center rounded-lg text-[#333] hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      </button>
+      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Production Entry</span>
+      
+      {/* edit/delete icons on hover */}
+      <div className="ml-auto flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <button
+          type="button"
+          onClick={onRemove}
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+          title="Delete Entry"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
     </div>
+    
     <div className="grid grid-cols-2 gap-3">
       <EditInput
         placeholder="Role / Character"
@@ -155,19 +266,6 @@ const ExperienceEditCard = ({ exp, idx, onChange, onRemove }) => (
   </motion.div>
 );
 
-// Checkbox
-const Checkbox = ({ label, defaultChecked, onChange }) => (
-  <label className="flex items-center gap-3 cursor-pointer group mb-3">
-    <div className="relative flex items-center justify-center w-5 h-5 rounded border border-[#333] group-hover:border-[#555] bg-[#111] transition-colors">
-      <input type="checkbox" className="peer sr-only" defaultChecked={defaultChecked} onChange={onChange} />
-      <div className="absolute inset-0 bg-[#FACC15] scale-0 peer-checked:scale-100 transition-transform rounded flex items-center justify-center">
-        <SuccessIcon active={true} size={16} color="black" />
-      </div>
-    </div>
-    <span className="text-sm text-[#CCC] group-hover:text-white transition-colors">{label}</span>
-  </label>
-);
-
 // Premium Neon Toggle Switch (sky-blue accent)
 const NeonToggle = ({ enabled, onChange }) => (
   <button
@@ -181,7 +279,7 @@ const NeonToggle = ({ enabled, onChange }) => (
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111]
       bg-[#0B0B0C]
       ${enabled
-        ? 'border-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.5),inset_0_0_4px_rgba(56,189,248,0.3)]'
+        ? 'border-[#00BFFF] shadow-[0_0_10px_rgba(0,191,255,0.4),inset_0_0_4px_rgba(0,191,255,0.2)]'
         : 'border-[#333] hover:border-[#444]'
       }
     `}
@@ -191,7 +289,7 @@ const NeonToggle = ({ enabled, onChange }) => (
         pointer-events-none inline-block h-[18px] w-[18px] rounded-full
         shadow-lg transition-all duration-300 ease-in-out transform
         ${enabled
-          ? 'translate-x-[18px] bg-sky-400'
+          ? 'translate-x-[18px] bg-[#00BFFF]'
           : 'translate-x-[0px] bg-[#555]'
         }
       `}
@@ -206,7 +304,7 @@ const NotificationRow = ({ row, markDirty }) => {
 
   return (
     <div className="grid grid-cols-12 p-4 border-b border-[#222] hover:bg-[#151515] transition-colors items-center">
-      <div className="col-span-8 pr-4">
+      <div className="col-span-8 pr-4 text-left">
         <div className="text-sm font-bold text-white mb-1">{row.title}</div>
         <div className="text-xs text-[#777] leading-snug">{row.desc}</div>
       </div>
@@ -227,6 +325,7 @@ const NotificationRow = ({ row, markDirty }) => {
 };
 
 export default function Settings({ onNavigate, user, initialTab, showToast, isAdmin }) {
+  const { t, i18n } = useTranslation();
   const isUserAdmin = isAdmin || user?.email === 'aniltimilsena53@gmail.com';
 
   const createSystemNotification = async (title, body) => {
@@ -305,7 +404,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       setIsMobileDetail(true);
     } else {
       setActiveTab('account');
-      setIsMobileDetail(true);
+      setIsMobileDetail(false);
     }
   }, [initialTab, isUserAdmin]);
   
@@ -332,6 +431,22 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     localStorage.setItem('nc_font_size', size);
     document.documentElement.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
     document.documentElement.classList.add(`font-size-${size}`);
+  };
+
+  const handleLanguageChange = async (lang) => {
+    i18n.changeLanguage(lang);
+    if (user?.uid) {
+      try {
+        const { success, error } = await updateProfileData(user.uid, { language: lang });
+        if (success) {
+          showToast(t('toast_profile_updated') || "Language updated successfully!", "success");
+        } else if (error) {
+          console.warn("Failed to sync language preference to Firestore:", error);
+        }
+      } catch (err) {
+        console.warn("Error syncing language preference:", err);
+      }
+    }
   };
 
   // Data Control States/Functions
@@ -494,6 +609,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   // Identity States
   const [fName, setFName] = useState("");
   const [lName, setLName] = useState("");
+  const [displayNameState, setDisplayNameState] = useState("");
   const [uName, setUName] = useState("");
   const [phone, setPhone] = useState("");
   const [gender, setGender] = useState("");
@@ -520,6 +636,24 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [role, setRole] = useState("");
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [whoCanMessage, setWhoCanMessage] = useState("connections");
+  const [profileVisibility, setProfileVisibility] = useState("public");
+
+  // Notifications states
+  const [notifMessages, setNotifMessages] = useState(true);
+  const [notifTyping, setNotifTyping] = useState(false);
+  const [notifCasting, setNotifCasting] = useState(true);
+  const [notifAppStatus, setNotifAppStatus] = useState(true);
+  const [notifSecurity, setNotifSecurity] = useState(true);
+  const [notifUpdates, setNotifUpdates] = useState(false);
+  const [notifNewsletters, setNotifNewsletters] = useState(false);
+  const [notifPromo, setNotifPromo] = useState(false);
 
   const calculateProfileCompletion = () => {
     let score = 0;
@@ -689,10 +823,14 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       const unsubscribe = subscribeToProfile(user.uid, (data) => {
         if (data) {
           setIsPremium(data.premium || isUserAdmin || false);
+          if (data.language && data.language !== i18n.language) {
+            i18n.changeLanguage(data.language);
+          }
           // Only update form fields if not currently saving to avoid race conditions
           if (!isSavingRef.current) {
             setFName(data.firstName || defaultFirstName);
             setLName(data.lastName || defaultLastName);
+            setDisplayNameState(data.name || user?.displayName || `${data.firstName || defaultFirstName} ${data.lastName || defaultLastName}`.trim() || defaultUsername);
             setUName(data.username || defaultUsername);
             setPhone(data.phone || "");
             setGender(data.gender || "");
@@ -710,6 +848,18 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
             setShowContactInfo(data.showContactInfo || false);
             setAvatarUrl(data.image || data.photoURL || "");
             setTwoFactor(data.twoFactorEnabled || false);
+            setWhoCanMessage(data.whoCanMessage || "connections");
+            setProfileVisibility(data.profileVisibility || "public");
+            
+            const notifs = data.notifications || {};
+            setNotifMessages(notifs.messages ?? true);
+            setNotifTyping(notifs.typing ?? false);
+            setNotifCasting(notifs.casting ?? true);
+            setNotifAppStatus(notifs.appStatus ?? true);
+            setNotifSecurity(notifs.security ?? true);
+            setNotifUpdates(notifs.updates ?? false);
+            setNotifNewsletters(notifs.newsletters ?? false);
+            setNotifPromo(notifs.promo ?? false);
           }
         }
         setIsLoading(false);
@@ -728,7 +878,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     isSavingRef.current = true;
     
     const profileData = {
-      name: `${fName} ${lName}`.trim() || uName,
+      name: displayNameState.trim() || `${fName} ${lName}`.trim() || uName,
       firstName: fName,
       lastName: lName,
       username: uName,
@@ -749,7 +899,19 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       email: showContactInfo ? (user?.email || "") : "",
       image: avatarUrl || null,
       photoURL: avatarUrl || null,
-      twoFactorEnabled: twoFactor
+      twoFactorEnabled: twoFactor,
+      whoCanMessage,
+      profileVisibility,
+      notifications: {
+        messages: notifMessages,
+        typing: notifTyping,
+        casting: notifCasting,
+        appStatus: notifAppStatus,
+        security: notifSecurity,
+        updates: notifUpdates,
+        newsletters: notifNewsletters,
+        promo: notifPromo
+      }
     };
 
     try {
@@ -757,8 +919,12 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
       if (!error) {
         setHasChanges(false);
+        setSaveSuccess(true);
         showToast('Profile settings saved successfully!', 'success');
         createSystemNotification("Profile Updated", "Your profile settings have been successfully updated.");
+        setTimeout(() => {
+          setSaveSuccess(false);
+        }, 2000);
       } else {
         console.error('[Settings] save failed:', error);
         showToast(`Failed to save: ${error}`, 'error');
@@ -772,6 +938,40 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
         isSavingRef.current = false;
         setIsSaving(false);
       }, 500);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      showToast("New passwords do not match.", "error");
+      return;
+    }
+    if (newPassword.length < 8) {
+      showToast("Password must be at least 8 characters long.", "error");
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const u = auth.currentUser;
+      if (u) {
+        if (currentPassword) {
+          const credential = EmailAuthProvider.credential(u.email, currentPassword);
+          await reauthenticateWithCredential(u, credential);
+        }
+        await updatePassword(u, newPassword);
+        showToast("Password updated successfully!", "success");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        await createSystemNotification("Password Changed", "Your account password was recently updated.");
+      } else {
+        showToast("User session not found.", "error");
+      }
+    } catch (err) {
+      console.error("Password update error:", err);
+      showToast(err.message || "Failed to update password. Please check your credentials.", "error");
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -830,13 +1030,13 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   };
 
   const tabs = [
-    { id: 'account', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>, label: 'Account' },
-    { id: 'profile', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>, label: 'Profile Details' },
-    { id: 'privacy', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>, label: 'Privacy & Visibility' },
-    { id: 'notifications', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>, label: 'Notifications' },
-    ...(!isUserAdmin ? [{ id: 'premium', icon: <Plus size={18} color="currentColor" />, label: 'Subscription (PRO)' }] : []),
-    { id: 'security', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>, label: 'Security' },
-    { id: 'data', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>, label: 'Data & Control' },
+    { id: 'account', icon: <User size={18} />, label: 'Account' },
+    { id: 'profile', icon: <Briefcase size={18} />, label: 'Profile Details' },
+    { id: 'privacy', icon: <Shield size={18} />, label: 'Privacy & Visibility' },
+    { id: 'notifications', icon: <Bell size={18} />, label: 'Notifications' },
+    ...(!isUserAdmin ? [{ id: 'premium', icon: <Plus size={18} />, label: 'Subscription (PRO)' }] : []),
+    { id: 'security', icon: <Lock size={18} />, label: 'Security' },
+    { id: 'data', icon: <Database size={18} />, label: 'Data & Control' },
   ];
 
   const handleTabClick = (id) => {
@@ -872,90 +1072,29 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     switch (activeTab) {
       case 'account':
         return (
-          <div className="animate-fade-in text-left pb-10">
+          <div className="animate-fade-in text-left pb-10 space-y-6">
             {/* Profile Avatar Header */}
-            <div className="flex flex-col items-center pt-4 pb-8 border-b border-[#111] mb-8">
-              <div className="relative mb-4">
-                <div className="relative">
-                  <Avatar 
-                    user={user} 
-                    gender={gender} 
-                    size="xl" 
-                    name={displayName} 
-                  />
-                  {isUploadingAvatar && (
-                    <div className="absolute inset-0 bg-black/75 rounded-full flex flex-col items-center justify-center backdrop-blur-md z-20">
-                      {avatarUploadStatus === "uploading" && (
-                        <>
-                          <div className="w-6 h-6 border-2 border-nc-accent border-t-transparent rounded-full animate-spin mb-1" />
-                          <div className="text-nc-accent text-[10px] font-black">{avatarProgress}%</div>
-                        </>
-                      )}
-                      {avatarUploadStatus === "success" && (
-                        <div className="text-green-400 flex flex-col items-center">
-                          <svg className="w-7 h-7 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span className="text-[9px] font-bold uppercase tracking-wider mt-0.5">Updated</span>
-                        </div>
-                      )}
-                      {avatarUploadStatus === "error" && (
-                        <div className="text-red-400 flex flex-col items-center px-2 text-center">
-                          <svg className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                          </svg>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleRetryAvatarUpload(); }}
-                            className="bg-white/10 hover:bg-white/20 text-white text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded-full border border-white/10 transition-all"
-                          >
-                            Retry
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setIsUploadingAvatar(false); setAvatarUploadStatus("idle"); }}
-                            className="text-white/40 hover:text-white/60 text-[8px] font-bold uppercase tracking-wider mt-1 transition-all"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <button 
-                  disabled={isUploadingAvatar}
-                  onClick={() => document.getElementById('avatar-upload-input')?.click()}
-                  className="absolute bottom-0 right-0 w-7 h-7 bg-nc-accent rounded-full flex items-center justify-center shadow-lg border-2 border-[#0A0A0A] hover:scale-110 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg className="w-3.5 h-3.5 text-[#0A0A0A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
-                <input 
-                  id="avatar-upload-input" 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  onChange={handleAvatarUpload} 
-                />
-                
-                {(user?.photoURL || user?.image) && !isUploadingAvatar && (
-                  <button 
-                    onClick={handleDeleteAvatar}
-                    className="absolute top-0 right-0 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg border-2 border-[#0A0A0A] hover:scale-110 transition-transform"
-                    title="Remove Profile Picture"
-                  >
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-              <h2 className="text-white font-black text-lg tracking-tight">{displayName || 'Your Name'}</h2>
+            <div className="flex flex-col items-center pt-4 pb-8 border-b border-white/5 mb-6">
+              <Avatar 
+                size={112}
+                editable={true}
+                name={displayNameState || displayName}
+                className="mb-4"
+              />
+              <h2 className="text-white font-black text-lg tracking-tight">{displayNameState || displayName || 'Your Name'}</h2>
               <p className="text-[#555] text-xs mt-0.5">Member since {new Date().getFullYear()}</p>
             </div>
 
-            <div className="space-y-5">
+            {/* Profile Fields */}
+            <div className="space-y-4">
+              <EditInput
+                label="Display Name"
+                value={displayNameState}
+                placeholder="Alex Sterling"
+                onChange={(e) => { setDisplayNameState(e.target.value); markDirty(); }}
+                icon={<User className="w-4.5 h-4.5" />}
+              />
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <EditInput
                   label="First Name"
@@ -974,10 +1113,10 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
               <EditInput
                 label="Username"
                 value={uName}
-                placeholder="@username"
+                placeholder="username"
                 onChange={(e) => { setUName(e.target.value); markDirty(); }}
                 icon={
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                   </svg>
                 }
@@ -988,12 +1127,8 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                 type="email"
                 value={email}
                 placeholder="your@email.com"
-                onChange={() => {}}
-                icon={
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                }
+                readOnly={true}
+                icon={<Mail className="w-4.5 h-4.5" />}
               />
 
               <EditInput
@@ -1003,7 +1138,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                 placeholder="+977 98XXXXXXXX"
                 onChange={(e) => { setPhone(e.target.value); markDirty(); }}
                 icon={
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
                 }
@@ -1011,19 +1146,48 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
             </div>
 
             {/* Display Preferences */}
-            <div className="pt-8 mt-8 border-t border-[#111]">
-              <h3 className="text-white font-bold mb-4">Display Preferences</h3>
+            <div className="pt-6 border-t border-white/5">
+              <h3 className="text-white font-bold mb-4">{t('sec_display_pref') || 'Display Preferences'}</h3>
+              
+              {/* Language Selector */}
+              <div className="mb-6">
+                <label className="block text-[#888] text-[10px] font-bold uppercase tracking-[1px] mb-3">
+                  {t('lbl_language') || 'Language'}
+                </label>
+                <div className="relative">
+                  <select
+                    value={i18n.language || 'en'}
+                    onChange={(e) => handleLanguageChange(e.target.value)}
+                    className="w-full bg-[#111] border border-[#1e1e1e] hover:border-[#2a2a2a] text-white rounded-xl py-3 px-4 outline-none text-sm appearance-none cursor-pointer focus:border-[#00BFFF] transition-all"
+                  >
+                    <option value="en">English (English)</option>
+                    <option value="np">नेपाली (Nepali)</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-[#888]">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-[#555] text-xs mt-2">Choose your preferred display language.</p>
+              </div>
+
+              {/* Font Size Selector */}
               <div className="mb-4">
-                <label className="block text-[#666] text-[10px] font-bold uppercase tracking-[0.15em] mb-3">Font Size</label>
+                <label className="block text-[#888] text-[10px] font-bold uppercase tracking-[1px] mb-3">
+                  {t('lbl_font_size') || 'Font Size'}
+                </label>
                 <div className="grid grid-cols-3 gap-3">
                   {['small', 'medium', 'large'].map(size => (
                     <button
                       key={size}
+                      type="button"
                       onClick={() => handleFontSizeChange(size)}
-                      className={`py-3 px-3 rounded-2xl border text-sm font-bold transition-all capitalize ${
+                      className={`py-3 px-3 rounded-xl border text-sm font-bold transition-all capitalize ${
                         fontSize === size
-                          ? 'bg-sky-500/10 border-sky-500/50 text-sky-400'
-                          : 'bg-[#111] border-[#1E1E1E] text-[#888] hover:border-[#2A2A2A] hover:text-white'
+                          ? 'bg-[#00BFFF]/10 border-[#00BFFF]/50 text-[#00BFFF]'
+                          : 'bg-[#111] border-[#1e1e1e] text-[#888] hover:border-[#2a2a2a] hover:text-white'
                       }`}
                     >
                       {size}
@@ -1033,15 +1197,99 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                 <p className="text-[#555] text-xs mt-3">Adjust the global text size for better readability.</p>
               </div>
             </div>
+
+            {/* Save Button for Account fields */}
+            <div className="pt-4">
+              <SaveButton hasChanges={hasChanges} isSaving={isSaving} onSave={handleSave} saveSuccess={saveSuccess} />
+            </div>
+
+            {/* Change Password Card */}
+            <div className="bg-[#111] border border-white/5 rounded-2xl p-5 mt-8">
+              <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
+                <Lock className="w-4 h-4 text-[#00BFFF]" />
+                Change Password
+              </h3>
+              <div className="space-y-4">
+                <EditInput
+                  label="Current Password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <EditInput
+                    label="New Password"
+                    type="password"
+                    placeholder="Min. 8 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <EditInput
+                    label="Confirm New Password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleChangePassword}
+                  disabled={!currentPassword || !newPassword || !confirmPassword || isChangingPassword}
+                  className="w-full py-3.5 bg-[#1a1a1a] hover:bg-[#222] border border-white/10 hover:border-white/20 text-white font-bold rounded-lg text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
+                >
+                  {isChangingPassword ? "Updating Password..." : "Update Password"}
+                </button>
+              </div>
+            </div>
+
+            {/* Danger Zone Card */}
+            <div className="border border-red-500/20 bg-red-500/5 rounded-2xl p-5 mt-8">
+              <h3 className="text-red-500 font-bold text-sm mb-2 uppercase tracking-wide">Danger Zone</h3>
+              <p className="text-gray-500 text-xs mb-4">Actions here are permanent and can affect your access.</p>
+              
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3 border-b border-red-500/10">
+                  <div>
+                    <h4 className="text-white font-bold text-xs">Deactivate Account</h4>
+                    <p className="text-gray-500 text-[11px] mt-0.5">Temporarily hide your profile. Reactivate anytime by logging back in.</p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={handleDeactivateAccount}
+                    className="px-4 py-2 border border-red-500/20 hover:border-red-500/40 text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg text-xs font-bold transition-all"
+                  >
+                    Deactivate
+                  </button>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3">
+                  <div>
+                    <h4 className="text-red-500 font-bold text-xs">Delete Account Permanently</h4>
+                    <p className="text-red-500/60 text-[11px] mt-0.5">Erase your profile, history, and media. This action is irreversible.</p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={handleDeleteAccount}
+                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-red-500/10"
+                  >
+                    Delete Permanently
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>
         );
+
       case 'profile':
         return (
           <div className="animate-fade-in text-left pb-10">
             {/* Sub-navigation */}
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-white mb-5">Profile Details</h2>
-              <div className="flex gap-1.5 p-1.5 bg-[#0D0D0D] border border-[#1A1A1A] rounded-2xl overflow-x-auto no-scrollbar">
+              <h2 className="text-2xl font-bold text-white mb-5 hidden md:block">Profile Details</h2>
+              <div className="flex gap-1.5 p-1.5 bg-[#0D0D0D] border border-white/5 rounded-2xl overflow-x-auto no-scrollbar">
                 {[
                   { id: 'about', label: 'About' },
                   { id: 'skills', label: 'Skills' },
@@ -1073,13 +1321,23 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
             {profileSubTab === 'about' && (
               <div className="space-y-4 animate-fade-in">
                 {/* Open to Work banner */}
-                <div className="flex items-center justify-between bg-nc-accent/5 border border-nc-accent/15 rounded-2xl px-5 py-4 mb-6">
+                <div className={`flex items-center justify-between bg-[#111] border rounded-2xl px-5 py-4 mb-6 transition-all ${
+                  openToWork 
+                    ? 'border-[#00BFFF]/30 shadow-[0_0_15px_rgba(0,191,255,0.15)] bg-[#00BFFF]/5' 
+                    : 'border-white/5 bg-[#111]'
+                }`}>
                   <div>
-                    <h4 className="text-nc-accent font-bold text-sm flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-nc-accent animate-pulse"></span>
+                    <h4 className="text-white font-bold text-sm flex items-center gap-2">
+                      {openToWork && <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse"></span>}
                       Open to Audition
+                      <div className="group/tooltip relative inline-block">
+                        <HelpCircle className="w-4 h-4 text-gray-500 hover:text-white cursor-help transition-colors" />
+                        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-black/90 border border-white/10 text-[10px] text-gray-300 py-1.5 px-2.5 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 z-50 text-center leading-normal normal-case font-normal shadow-xl">
+                          Casting directors can find you for roles
+                        </span>
+                      </div>
                     </h4>
-                    <p className="text-[#666] text-xs mt-0.5">Signal to casting directors that you're seeking roles.</p>
+                    <p className="text-gray-500 text-xs mt-0.5">Signal to casting directors that you're seeking roles.</p>
                   </div>
                   <GoldenToggle enabled={openToWork} onChange={(v) => { setOpenToWork(v); markDirty(); }} />
                 </div>
@@ -1091,11 +1349,10 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                   onChange={(e) => { setRole(e.target.value); markDirty(); }}
                 />
 
-                <EditInput
+                <AutocompleteLocationInput
                   label="Location"
-                  placeholder="City, Country"
                   value={location}
-                  onChange={(e) => { setLocation(e.target.value); markDirty(); }}
+                  onChange={(v) => { setLocation(v); markDirty(); }}
                   icon={
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -1108,8 +1365,14 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                   label="About Me"
                   placeholder="Share your professional journey, training, and artistic vision..."
                   value={bio}
-                  onChange={(e) => { setBio(e.target.value); markDirty(); }}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 500) {
+                      setBio(e.target.value);
+                      markDirty();
+                    }
+                  }}
                   rows={5}
+                  charCount={bio ? bio.length : 0}
                 />
 
                 <EditSelect
@@ -1122,34 +1385,40 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
                 {/* Physical Stats */}
                 <div className="pt-2">
-                  <p className="text-[#555] text-[10px] font-black uppercase tracking-[0.2em] mb-3">Physical Attributes</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <p className="text-[#888] text-[10px] font-black uppercase tracking-[1px] mb-3">Physical Attributes</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <EditInput
-                      placeholder="Height (e.g. 5&apos;9&quot;)"
+                      label="Height"
+                      placeholder="e.g. 5ft 9in"
                       value={height}
                       onChange={(e) => { setHeight(e.target.value); markDirty(); }}
                     />
                     <EditInput
-                      placeholder="Weight (e.g. 70kg)"
+                      label="Weight"
+                      placeholder="e.g. 70kg"
                       value={weight}
                       onChange={(e) => { setWeight(e.target.value); markDirty(); }}
                     />
                     <EditSelect
+                      label="Eye Color"
                       options={['Black', 'Brown', 'Blue', 'Green', 'Hazel', 'Other']}
                       value={eyeColor}
                       onChange={(e) => { setEyeColor(e.target.value); markDirty(); }}
-                      placeholder="Eye Color"
+                      placeholder="Select..."
                     />
                     <EditSelect
+                      label="Hair Color"
                       options={['Black', 'Brown', 'Blonde', 'Red', 'Grey', 'Bald']}
                       value={hairColor}
                       onChange={(e) => { setHairColor(e.target.value); markDirty(); }}
-                      placeholder="Hair Color"
+                      placeholder="Select..."
                     />
                   </div>
                 </div>
 
-
+                <div className="pt-6">
+                  <SaveButton hasChanges={hasChanges} isSaving={isSaving} onSave={handleSave} saveSuccess={saveSuccess} />
+                </div>
               </div>
             )}
 
@@ -1159,9 +1428,10 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                 {/* Languages */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-[#666] text-[10px] font-black uppercase tracking-[0.2em]">Languages</p>
+                    <p className="text-[#888] text-[10px] font-bold uppercase tracking-[1px]">Languages</p>
+                    <span className="text-[#00BFFF] text-[10px] font-bold">{selectedLanguages.length} added</span>
                   </div>
-                  <div className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-2xl p-5 space-y-4">
+                  <div className="bg-[#111] border border-white/5 rounded-2xl p-5 space-y-4">
                     <div className="flex flex-wrap gap-2 min-h-[36px]">
                       <AnimatePresence>
                         {selectedLanguages.map(lang => (
@@ -1172,44 +1442,50 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                           />
                         ))}
                       </AnimatePresence>
-                      {selectedLanguages.length === 0 && <span className="text-[#333] text-xs italic">No languages added yet</span>}
+                      {selectedLanguages.length === 0 && <span className="text-[#555] text-xs italic">No languages added yet</span>}
                     </div>
-                    <div className="border-t border-[#1A1A1A] pt-4">
-                      {isTypingLanguage ? (
-                        <div className="relative animate-in zoom-in-95 duration-200">
-                          <input 
-                            type="text" 
-                            autoFocus
-                            placeholder="Type language and press Enter..."
-                            value={tempLanguage}
-                            onChange={e => setTempLanguage(e.target.value)}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') handleAddLanguage(tempLanguage);
-                              if (e.key === 'Escape') setIsTypingLanguage(false);
-                            }}
-                            className="w-full bg-[#111] border border-nc-accent rounded-xl px-4 py-3 text-white placeholder-[#444] outline-none text-sm pr-10"
-                          />
-                          <button onClick={() => setIsTypingLanguage(false)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#444] hover:text-white transition-colors">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      ) : (
-                        <EditSelect
-                          options={['Nepali', 'English', 'Hindi', 'Spanish', 'French', 'Chinese', 'Arabic', 'Japanese', 'Portuguese', 'Other'].filter(l => !selectedLanguages.includes(l))}
-                          placeholder="Add a language..."
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === 'Other') {
-                              setIsTypingLanguage(true);
-                            } else if (val) {
-                              handleAddLanguage(val);
+                    
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        placeholder="Type a language and press Enter..."
+                        value={tempLanguage}
+                        onChange={e => setTempLanguage(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = tempLanguage.trim();
+                            if (val && !selectedLanguages.includes(val)) {
+                              setSelectedLanguages([...selectedLanguages, val]);
+                              setTempLanguage("");
+                              markDirty();
                             }
-                            e.target.value = '';
-                          }}
-                        />
-                      )}
+                          }
+                        }}
+                        className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] focus:shadow-[0_0_0_3px_rgba(0,191,255,0.2)] text-white transition-all py-3 px-4 rounded-lg outline-none text-sm placeholder-[#555]"
+                      />
+                    </div>
+
+                    <div>
+                      <p className="text-[#555] text-[10px] font-bold uppercase tracking-[1px] mb-2.5">Suggested Languages</p>
+                      <div className="flex flex-wrap gap-2">
+                        {['Nepali', 'English', 'Hindi', 'Spanish', 'French', 'Chinese', 'Japanese', 'German']
+                          .filter(l => !selectedLanguages.includes(l))
+                          .map(l => (
+                            <button
+                              key={l}
+                              type="button"
+                              onClick={() => {
+                                setSelectedLanguages([...selectedLanguages, l]);
+                                markDirty();
+                              }}
+                              className="bg-[#1a1a1a] border border-white/5 hover:border-[#00BFFF]/30 hover:bg-[#00BFFF]/5 hover:text-[#00BFFF] text-xs text-gray-400 px-3 py-1.5 rounded-full transition-all"
+                            >
+                              + {l}
+                            </button>
+                          ))
+                        }
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1217,10 +1493,11 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                 {/* Skills/Expertise */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-[#666] text-[10px] font-black uppercase tracking-[0.2em]">Expertise & Skills</p>
-                    <span className="text-nc-accent text-[10px] font-bold">{selectedSkills.length} added</span>
+                    <p className="text-[#888] text-[10px] font-bold uppercase tracking-[1px]">Expertise & Skills</p>
+                    <span className="text-[#00BFFF] text-[10px] font-bold">{selectedSkills.length} added</span>
                   </div>
-                  <div className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-2xl p-5 space-y-4">
+                  <div className="bg-[#111] border border-white/5 rounded-2xl p-5 space-y-4">
+                    {/* Active Skills Tag List */}
                     <div className="flex flex-wrap gap-2 min-h-[36px]">
                       <AnimatePresence>
                         {selectedSkills.map(skill => (
@@ -1231,100 +1508,118 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                           />
                         ))}
                       </AnimatePresence>
-                      {selectedSkills.length === 0 && <span className="text-[#333] text-xs italic">No skills added yet</span>}
+                      {selectedSkills.length === 0 && <span className="text-[#555] text-xs italic">No skills added yet</span>}
                     </div>
-                    <div className="border-t border-[#1A1A1A] pt-4">
-                      {isTypingSkill ? (
-                        <div className="relative animate-in zoom-in-95 duration-200">
-                          <input 
-                            type="text" 
-                            autoFocus
-                            placeholder="Type skill and press Enter..."
-                            value={tempSkill}
-                            onChange={e => setTempSkill(e.target.value)}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') handleAddSkill(tempSkill);
-                              if (e.key === 'Escape') setIsTypingSkill(false);
-                            }}
-                            className="w-full bg-[#111] border border-nc-accent rounded-xl px-4 py-3 text-white placeholder-[#444] outline-none text-sm pr-10"
-                          />
-                          <button onClick={() => setIsTypingSkill(false)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#444] hover:text-white transition-colors">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      ) : (
-                        <EditSelect
-                          options={['Method Acting', 'Stage Combat', 'Horse Riding', 'Public Speaking', 'Improvisation', 'Voice Over', 'Martial Arts', 'Dancing', 'Singing', 'Stunts', 'Other'].filter(s => !selectedSkills.includes(s))}
-                          placeholder="Add a skill or talent..."
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === 'Other') {
-                              setIsTypingSkill(true);
-                            } else if (val) {
-                              handleAddSkill(val);
+
+                    {/* Skill Input */}
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        placeholder="Type a skill and press Enter..."
+                        value={tempSkill}
+                        onChange={e => setTempSkill(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = tempSkill.trim();
+                            if (val && !selectedSkills.includes(val)) {
+                              setSelectedSkills([...selectedSkills, val]);
+                              setTempSkill("");
+                              markDirty();
                             }
-                            e.target.value = '';
-                          }}
-                        />
-                      )}
+                          }
+                        }}
+                        className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] focus:shadow-[0_0_0_3px_rgba(0,191,255,0.2)] text-white transition-all py-3 px-4 rounded-lg outline-none text-sm placeholder-[#555]"
+                      />
+                    </div>
+
+                    {/* Quick-add suggestions */}
+                    <div>
+                      <p className="text-[#555] text-[10px] font-bold uppercase tracking-[1px] mb-2.5">Suggested Skills</p>
+                      <div className="flex flex-wrap gap-2">
+                        {['Method Acting', 'Stage Combat', 'Horse Riding', 'Public Speaking', 'Improvisation', 'Voice Over', 'Martial Arts', 'Dancing', 'Singing', 'Stunts']
+                          .filter(s => !selectedSkills.includes(s))
+                          .map(s => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSkills([...selectedSkills, s]);
+                                markDirty();
+                              }}
+                              className="bg-[#1a1a1a] border border-white/5 hover:border-[#00BFFF]/30 hover:bg-[#00BFFF]/5 hover:text-[#00BFFF] text-xs text-gray-400 px-3 py-1.5 rounded-full transition-all"
+                            >
+                              + {s}
+                            </button>
+                          ))
+                        }
+                      </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="pt-6">
+                  <SaveButton hasChanges={hasChanges} isSaving={isSaving} onSave={handleSave} saveSuccess={saveSuccess} />
                 </div>
               </div>
             )}
 
-            {/* -- EXPERIENCE -- */}
+            {/* -- EXPERIENCE (HISTORY) -- */}
             {profileSubTab === 'experience' && (
-              <div className="space-y-5 animate-fade-in">
+              <div className="space-y-6 animate-fade-in">
                 <div className="flex items-center justify-between">
-                  <p className="text-[#666] text-[10px] font-black uppercase tracking-[0.2em]">Experience</p>
+                  <p className="text-[#888] text-[10px] font-bold uppercase tracking-[1px]">Production History</p>
                   <button
                     onClick={() => {
                       setExperiences([{ role: '', production: '', year: '', description: '' }, ...experiences]);
                       markDirty();
                     }}
-                    className="flex items-center gap-1.5 text-nc-accent text-[11px] font-black uppercase tracking-[0.1em] hover:opacity-80 transition-opacity"
+                    className="flex items-center gap-1.5 bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] hover:bg-[#00BFFF]/20 text-[11px] font-black uppercase tracking-[1px] px-4 py-2.5 rounded-xl transition-all"
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                    </svg>
+                    <Plus className="w-4 h-4" />
                     Add Experience
                   </button>
                 </div>
 
-                <div className="space-y-4">
-                  <AnimatePresence>
-                    {experiences.map((exp, idx) => (
-                      <ExperienceEditCard
-                        key={idx}
-                        exp={exp}
-                        idx={idx}
-                        onChange={(i, field, val) => {
-                          const newExps = [...experiences];
-                          newExps[i][field] = val;
-                          setExperiences(newExps);
-                          markDirty();
-                        }}
-                        onRemove={() => {
-                          setExperiences(experiences.filter((_, i) => i !== idx));
-                          markDirty();
-                        }}
-                      />
-                    ))}
-                  </AnimatePresence>
-                  {experiences.length === 0 && (
-                    <div className="text-center py-16 border border-dashed border-[#1A1A1A] rounded-3xl">
-                      <div className="w-14 h-14 bg-[#111] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <svg className="w-7 h-7 text-[#222]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <p className="text-[#333] text-xs font-black uppercase tracking-widest">No experience records</p>
-                      <p className="text-[#222] text-[11px] mt-1">Tap "Add Experience" to begin</p>
+                {experiences.length > 0 ? (
+                  <div className="relative pl-6 border-l-2 border-white/5 space-y-6 ml-3 text-left">
+                    <AnimatePresence>
+                      {experiences.map((exp, idx) => (
+                        <div key={idx} className="relative">
+                          {/* Timeline node */}
+                          <div className="absolute -left-[31px] top-5 w-4 h-4 rounded-full bg-[#111] border-2 border-[#00BFFF] flex items-center justify-center shadow-[0_0_8px_rgba(0,191,255,0.4)]">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#00BFFF]" />
+                          </div>
+                          <ExperienceEditCard
+                            exp={exp}
+                            idx={idx}
+                            onChange={(i, field, val) => {
+                              const newExps = [...experiences];
+                              newExps[i][field] = val;
+                              setExperiences(newExps);
+                              markDirty();
+                            }}
+                            onRemove={() => {
+                              setExperiences(experiences.filter((_, i) => i !== idx));
+                              markDirty();
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <div className="text-center py-16 border border-dashed border-white/10 rounded-3xl bg-[#111]">
+                    <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Briefcase className="w-6 h-6 text-gray-500" />
                     </div>
-                  )}
+                    <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">No experience records</p>
+                    <p className="text-gray-600 text-[11px] mt-1">Tap "Add Experience" to begin your timeline</p>
+                  </div>
+                )}
+
+                <div className="pt-6">
+                  <SaveButton hasChanges={hasChanges} isSaving={isSaving} onSave={handleSave} saveSuccess={saveSuccess} />
                 </div>
               </div>
             )}
@@ -1334,81 +1629,185 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
       case 'privacy':
         return (
-          <div className="space-y-8 animate-fade-in text-left pb-10">
-            <div className="border-b border-white/5 pb-6">
+          <div className="space-y-6 animate-fade-in text-left pb-10">
+            <div className="border-b border-white/5 pb-6 hidden md:block">
               <h2 className="text-2xl font-bold text-white mb-2">Privacy & Visibility</h2>
               <p className="text-[#888] text-sm">Control exactly who can view your profile and contact you.</p>
             </div>
 
-            <section className="space-y-2">
-              <div className="flex items-center justify-between py-4 border-b border-[#222] group hover:bg-white/5 px-2 rounded-lg transition-colors">
-                <div>
-                  <h4 className="text-sm font-medium text-white">Public Search Engine Indexing</h4>
-                  <p className="text-xs text-[#888] mt-1">Allow your profile to be found on Google and Bing.</p>
-                </div>
-                <GoldenToggle enabled={searchVisibility} onChange={(v) => { setSearchVisibility(v); markDirty(); }} />
-              </div>
-              <div className="flex items-center justify-between py-4 border-b border-[#222] group hover:bg-white/5 px-2 rounded-lg transition-colors">
-                <div>
-                  <h4 className="text-sm font-medium text-white">Show Contact Info to Network</h4>
-                  <p className="text-xs text-[#888] mt-1">Make your email/phone visible to other verified members.</p>
-                </div>
-                <GoldenToggle enabled={showContactInfo} onChange={(v) => { setShowContactInfo(v); markDirty(); }} />
-              </div>
-            </section>
-
-            <section>
-              <h3 className="text-lg font-bold text-white mb-4">Messaging Permissions</h3>
-              <p className="text-xs text-[#888] mb-4">Who is allowed to initiate a direct message with you?</p>
-              <div className="bg-[#111] rounded-xl border border-[#222] p-2 space-y-1">
+            {/* Profile Visibility Radio Group */}
+            <div className="space-y-3">
+              <label className="block text-[#888] text-[10px] font-bold uppercase tracking-[1px]">Profile Visibility</label>
+              <div className="bg-[#111] border border-white/5 rounded-xl p-2 space-y-1">
                 {[
-                  { id: 'm1', label: 'Everyone (Including Public)' },
-                  { id: 'm2', label: 'Verified Network Members Only', defaultChecked: true },
-                  { id: 'm3', label: 'Only Casting Directors & Agencies' },
-                  { id: 'm4', label: 'No One' }
+                  { id: 'public', label: 'Public (Visible to everyone & search engines)' },
+                  { id: 'members', label: 'Members Only (Visible only to signed-in users)' },
+                  { id: 'private', label: 'Private (Visible only to you)' }
                 ].map(opt => (
-                  <label key={opt.id} className="flex items-center gap-3 p-3 hover:bg-[#1A1A1A] rounded-lg cursor-pointer transition-colors group">
-                     <input type="radio" name="messaging" defaultChecked={opt.defaultChecked} onChange={markDirty} className="w-4 h-4 accent-[#FACC15] cursor-pointer" />
-                     <span className="text-sm text-[#CCC] group-hover:text-white transition-colors">{opt.label}</span>
+                  <label key={opt.id} className="flex items-center gap-3 p-3.5 hover:bg-[#1a1a1a] rounded-lg cursor-pointer transition-colors group">
+                    <input 
+                      type="radio" 
+                      name="profileVisibility" 
+                      checked={profileVisibility === opt.id} 
+                      onChange={() => { setProfileVisibility(opt.id); markDirty(); }} 
+                      className="w-4 h-4 accent-[#00BFFF] cursor-pointer" 
+                    />
+                    <span className="text-sm text-gray-300 group-hover:text-white transition-colors">{opt.label}</span>
                   </label>
                 ))}
               </div>
-            </section>
+            </div>
+
+            {/* Messaging Permissions Radio Group */}
+            <div className="space-y-3">
+              <label className="block text-[#888] text-[10px] font-bold uppercase tracking-[1px]">Messaging Permissions</label>
+              <div className="bg-[#111] border border-white/5 rounded-xl p-2 space-y-1">
+                {[
+                  { id: 'everyone', label: 'Everyone (Including Public visitors)' },
+                  { id: 'connections', label: 'Connections Only (People you are connected with)' },
+                  { id: 'casting', label: 'Casting Directors Only' },
+                  { id: 'none', label: 'No One' }
+                ].map(opt => (
+                  <label key={opt.id} className="flex items-center gap-3 p-3.5 hover:bg-[#1a1a1a] rounded-lg cursor-pointer transition-colors group">
+                    <input 
+                      type="radio" 
+                      name="messaging" 
+                      checked={whoCanMessage === opt.id} 
+                      onChange={() => { setWhoCanMessage(opt.id); markDirty(); }} 
+                      className="w-4 h-4 accent-[#00BFFF] cursor-pointer" 
+                    />
+                    <span className="text-sm text-gray-300 group-hover:text-white transition-colors">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Show Contact Info toggle */}
+            <div className="flex items-center justify-between py-4 border-b border-[#222] group hover:bg-white/5 px-2 rounded-lg transition-colors">
+              <div>
+                <h4 className="text-sm font-medium text-white">Show Contact Info to Network</h4>
+                <p className="text-xs text-[#888] mt-1">Make your email/phone visible to other verified members.</p>
+              </div>
+              <GoldenToggle enabled={showContactInfo} onChange={(v) => { setShowContactInfo(v); markDirty(); }} />
+            </div>
+
+            {/* Public Search Engine Indexing toggle */}
+            <div className="flex items-center justify-between py-4 border-b border-[#222] group hover:bg-white/5 px-2 rounded-lg transition-colors">
+              <div>
+                <h4 className="text-sm font-medium text-white">Public Search Engine Indexing</h4>
+                <p className="text-xs text-[#888] mt-1">Allow your profile to be found on Google and Bing.</p>
+              </div>
+              <GoldenToggle enabled={searchVisibility} onChange={(v) => { setSearchVisibility(v); markDirty(); }} />
+            </div>
+
+            <div className="pt-4">
+              <SaveButton hasChanges={hasChanges} isSaving={isSaving} onSave={handleSave} saveSuccess={saveSuccess} />
+            </div>
           </div>
         );
 
       case 'notifications':
         return (
-          <div className="space-y-8 animate-fade-in text-left pb-10">
-            <div className="border-b border-white/5 pb-6">
+          <div className="space-y-6 animate-fade-in text-left pb-10">
+            <div className="border-b border-white/5 pb-6 hidden md:block">
               <h2 className="text-2xl font-bold text-white mb-2">Notifications</h2>
               <p className="text-[#888] text-sm">Tune your alert routing to never miss an opportunity.</p>
             </div>
 
-            <section className="bg-[#111] border border-[#222] rounded-2xl overflow-hidden">
-              {/* Table header */}
-              <div className="grid grid-cols-12 bg-[#0A0A0A] p-4 border-b border-[#222]">
-                <div className="col-span-8 text-xs font-bold text-[#666] uppercase tracking-widest">Alert Type</div>
-                <div className="col-span-2 text-center text-xs font-bold text-[#666] uppercase tracking-widest">Push</div>
-                <div className="col-span-2 text-center text-xs font-bold text-[#666] uppercase tracking-widest">Email</div>
+            {/* MESSAGES GROUP */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-[#00BFFF] uppercase tracking-[1px] border-b border-white/5 pb-2">Messages</h3>
+              <div className="bg-[#111] border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                <div className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
+                  <div>
+                    <h4 className="text-sm font-medium text-white">Direct Messages</h4>
+                    <p className="text-xs text-[#888] mt-0.5">Receive alerts when someone sends you a direct message.</p>
+                  </div>
+                  <GoldenToggle enabled={notifMessages} onChange={(v) => { setNotifMessages(v); markDirty(); }} />
+                </div>
+                <div className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
+                  <div>
+                    <h4 className="text-sm font-medium text-white">Typing Indicators</h4>
+                    <p className="text-xs text-[#888] mt-0.5">Show real-time typing indicators in chat windows.</p>
+                  </div>
+                  <GoldenToggle enabled={notifTyping} onChange={(v) => { setNotifTyping(v); markDirty(); }} />
+                </div>
               </div>
-              
-              {[
-                { title: 'New Casting Match', desc: 'When an audition matches your profile UI skills.', pushDefault: true, emailDefault: true },
-                { title: 'Direct Messages', desc: 'When you receive a new chat message.', pushDefault: true, emailDefault: true },
-                { title: 'Profile Views', desc: 'Weekly digest of who viewed your profile.', pushDefault: false, emailDefault: false },
-                { title: 'Network Updates', desc: 'Major platform announcements.', pushDefault: false, emailDefault: true }
-              ].map((row, idx) => (
-                <NotificationRow key={idx} row={row} markDirty={markDirty} />
-              ))}
-            </section>
+            </div>
+
+            {/* CASTING GROUP */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-[#00BFFF] uppercase tracking-[1px] border-b border-white/5 pb-2">Casting & Auditions</h3>
+              <div className="bg-[#111] border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                <div className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
+                  <div>
+                    <h4 className="text-sm font-medium text-white">Casting Alerts</h4>
+                    <p className="text-xs text-[#888] mt-0.5">Get notified immediately when a casting matches your physical attributes or skills.</p>
+                  </div>
+                  <GoldenToggle enabled={notifCasting} onChange={(v) => { setNotifCasting(v); markDirty(); }} />
+                </div>
+                <div className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
+                  <div>
+                    <h4 className="text-sm font-medium text-white">Application Status</h4>
+                    <p className="text-xs text-[#888] mt-0.5">Get updates when a casting director views or updates your audition application.</p>
+                  </div>
+                  <GoldenToggle enabled={notifAppStatus} onChange={(v) => { setNotifAppStatus(v); markDirty(); }} />
+                </div>
+              </div>
+            </div>
+
+            {/* SYSTEM GROUP */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-[#00BFFF] uppercase tracking-[1px] border-b border-white/5 pb-2">System & Updates</h3>
+              <div className="bg-[#111] border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                <div className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
+                  <div>
+                    <h4 className="text-sm font-medium text-white">Security Alerts</h4>
+                    <p className="text-xs text-[#888] mt-0.5">Receive immediate notifications for new logins, password changes, or active session modifications.</p>
+                  </div>
+                  <GoldenToggle enabled={notifSecurity} onChange={(v) => { setNotifSecurity(v); markDirty(); }} />
+                </div>
+                <div className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
+                  <div>
+                    <h4 className="text-sm font-medium text-white">Platform Updates</h4>
+                    <p className="text-xs text-[#888] mt-0.5">Get notified about new features, service announcements, and maintenance schedules.</p>
+                  </div>
+                  <GoldenToggle enabled={notifUpdates} onChange={(v) => { setNotifUpdates(v); markDirty(); }} />
+                </div>
+              </div>
+            </div>
+
+            {/* MARKETING GROUP */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-[#00BFFF] uppercase tracking-[1px] border-b border-white/5 pb-2">Marketing</h3>
+              <div className="bg-[#111] border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                <div className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
+                  <div>
+                    <h4 className="text-sm font-medium text-white">Newsletters</h4>
+                    <p className="text-xs text-[#888] mt-0.5">Weekly digest of industry tips, member spotlights, and platform guides.</p>
+                  </div>
+                  <GoldenToggle enabled={notifNewsletters} onChange={(v) => { setNotifNewsletters(v); markDirty(); }} />
+                </div>
+                <div className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
+                  <div>
+                    <h4 className="text-sm font-medium text-white">Promotional Offers</h4>
+                    <p className="text-xs text-[#888] mt-0.5">Receive discounts, partner deals, and pro upgrade campaign notifications.</p>
+                  </div>
+                  <GoldenToggle enabled={notifPromo} onChange={(v) => { setNotifPromo(v); markDirty(); }} />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <SaveButton hasChanges={hasChanges} isSaving={isSaving} onSave={handleSave} saveSuccess={saveSuccess} />
+            </div>
           </div>
         );
 
       case 'premium':
         return (
           <div className="space-y-8 animate-fade-in text-left pb-10">
-            <div className="border-b border-white/5 pb-6">
+            <div className="border-b border-white/5 pb-6 hidden md:block">
               <h2 className="text-2xl font-bold text-white mb-2">Subscription & Billing</h2>
               <p className="text-[#888] text-sm">Manage your Pro status and payment history.</p>
             </div>
@@ -1450,21 +1849,12 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       case 'security':
         return (
           <div className="space-y-8 animate-fade-in text-left pb-10">
-            <div className="border-b border-white/5 pb-6">
+            <div className="border-b border-white/5 pb-6 hidden md:block">
               <h2 className="text-2xl font-bold text-white mb-2">Security</h2>
               <p className="text-[#888] text-sm">Protect your identity and monitor session activity.</p>
             </div>
 
-            <section className="space-y-4">
-              <h3 className="text-lg font-bold text-white mb-2">Password</h3>
-              <SettingInput label="Current Password" type="password" placeholder="••••••••" onChange={markDirty} />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-                <SettingInput label="New Password" type="password" placeholder="Minimum 8 characters" onChange={markDirty} />
-                <SettingInput label="Confirm New Password" type="password" placeholder="" onChange={markDirty} />
-              </div>
-            </section>
-
-            <section className="bg-[#111] border border-[#2A2A2A] rounded-2xl p-5 mb-5 flex items-center justify-between">
+            <section className="bg-[#111] border border-white/5 shadow-[0_0_15px_rgba(0,191,255,0.05)] rounded-2xl p-5 mb-5 flex items-center justify-between">
               <div>
                 <h4 className="text-white font-bold mb-1">Two-Factor Authentication (2FA)</h4>
                 <p className="text-[#888] text-xs max-w-[250px] leading-relaxed">Require a cryptographic code from an authenticator app when logging in.</p>
@@ -1543,18 +1933,22 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                 )}
               </div>
             </section>
+            
+            <div className="pt-4">
+              <SaveButton hasChanges={hasChanges} isSaving={isSaving} onSave={handleSave} saveSuccess={saveSuccess} />
+            </div>
           </div>
         );
 
       case 'data':
         return (
           <div className="space-y-8 animate-fade-in text-left pb-10">
-            <div className="border-b border-red-500/30 pb-6">
-              <h2 className="text-2xl font-bold text-red-500 mb-2">Data & Control</h2>
+            <div className="border-b border-white/5 pb-6 hidden md:block">
+              <h2 className="text-2xl font-bold text-white mb-2">Data & Control</h2>
               <p className="text-[#888] text-sm">Destructive actions and data extraction.</p>
             </div>
 
-            <div className="border border-red-500/20 bg-red-500/5 rounded-2xl p-6 space-y-6">
+            <div className="border border-white/5 bg-[#111] rounded-2xl p-6 space-y-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h4 className="text-white font-bold text-sm mb-1">Download Archive</h4>
@@ -1568,40 +1962,6 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                   className="text-white bg-[#151515] border border-[#333] px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-[#222] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isExporting ? "Exporting..." : "Request Data Archive"}
-                </button>
-              </div>
-              
-              <hr className="border-red-500/10" />
-              
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-[#FFB8B8] font-bold text-sm mb-1">Deactivate Account</h4>
-                  <p className="text-[#888] text-xs max-w-[280px] leading-relaxed">
-                    Temporarily hide your profile. You can reactivate by signing back in at any time.
-                  </p>
-                </div>
-                <button 
-                  onClick={handleDeactivateAccount}
-                  className="text-[#FFB8B8] bg-red-500/10 px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-red-500/20 transition-colors whitespace-nowrap"
-                >
-                  Deactivate Profile
-                </button>
-              </div>
-
-              <hr className="border-red-500/10" />
-
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-red-500 font-bold text-sm mb-1">Delete Account Completely</h4>
-                  <p className="text-red-500/60 text-xs max-w-[280px] leading-relaxed">
-                    Permanently erase your identity. This cannot be undone and all media will be destroyed.
-                  </p>
-                </div>
-                <button 
-                  onClick={handleDeleteAccount}
-                  className="text-red-500 bg-red-500/10 border border-red-500/20 px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-red-500 hover:text-white transition-colors whitespace-nowrap"
-                >
-                  Delete Permanently
                 </button>
               </div>
             </div>
@@ -1619,142 +1979,131 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
         {...confirmConfig}
         onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
       />
-      <div className="min-h-screen bg-[#0A0A0A] text-white pt-24 sm:pt-28 pb-32 md:pb-20 relative font-sans">
-      <div className="max-w-[1100px] mx-auto px-6 sm:px-8 md:px-8 flex flex-col md:flex-row items-start gap-8 md:gap-16">
-        
-        {/* LEFT SIDEBAR (Desktop only) */}
-        <div className="w-full md:w-[260px] flex-shrink-0 hidden md:block">
-          <h1 className="text-3xl font-black tracking-tight mb-8">Settings</h1>
+      <div className="min-h-screen bg-[#0A0A0A] text-white pt-6 sm:pt-8 pb-32 md:pb-20 relative font-sans">
+        <div className="max-w-[1100px] mx-auto px-6 sm:px-8 md:px-8 flex flex-col md:flex-row items-start gap-8 md:gap-16">
           
-          <div className="flex flex-col gap-1.5">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button 
-                  key={tab.id}
-                  onClick={() => handleTabClick(tab.id)}
-                  className={`flex items-center justify-between px-4 py-3.5 rounded-xl transition-all relative overflow-hidden group ${
-                    isActive 
-                      ? 'bg-[#151515] border border-[#2A2A2A]' 
-                      : 'bg-transparent border border-transparent hover:bg-white/5'
-                  }`}
-                >
-                  <div className="flex items-center gap-4 text-left relative z-10 transition-transform group-hover:translate-x-1 duration-300">
-                    <span className="text-lg sm:text-xl grayscale group-hover:grayscale-0 transition-all">{tab.icon}</span>
-                    <span className={`font-bold text-[14px] ${isActive ? 'text-nc-accent' : 'text-[#888] group-hover:text-white'}`}>
-                      {tab.label}
-                    </span>
-                  </div>
-                  {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-nc-accent shadow-[0_0_10px_rgba(56,189,248,0.5)]"></div>}
-                </button>
-              );
-            })}
+          {/* LEFT SIDEBAR (Desktop: 280px width) */}
+          <div className="w-[280px] flex-shrink-0 hidden md:block">
+            <h1 className="text-3xl font-black tracking-tight mb-8">Settings</h1>
+            
+            <div className="flex flex-col gap-1.5">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                
+                // Icon styling matching section
+                let iconColor = "text-gray-400";
+                if (isActive) {
+                  iconColor = "text-[#00BFFF]";
+                } else {
+                  if (tab.id === 'account') iconColor = "text-gray-400";
+                  else if (tab.id === 'profile') iconColor = "text-blue-400";
+                  else if (tab.id === 'privacy') iconColor = "text-purple-400";
+                  else if (tab.id === 'notifications') iconColor = "text-yellow-400";
+                  else if (tab.id === 'security') iconColor = "text-green-400";
+                  else if (tab.id === 'data') iconColor = "text-red-400";
+                  else if (tab.id === 'premium') iconColor = "text-[#FACC15]";
+                }
+
+                return (
+                  <button 
+                    key={tab.id}
+                    onClick={() => handleTabClick(tab.id)}
+                    className={`flex items-center justify-between px-4 py-3.5 rounded-xl transition-all relative overflow-hidden group text-left ${
+                      isActive 
+                        ? 'bg-[#00BFFF]/[0.08] border-l-[3px] border-[#00BFFF] rounded-l-none' 
+                        : 'bg-transparent border border-transparent hover:bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4 text-left relative z-10 transition-transform group-hover:translate-x-1 duration-300">
+                      <span className={`text-lg sm:text-xl transition-all ${iconColor}`}>{tab.icon}</span>
+                      <span className={`font-bold text-[14px] transition-all ${isActive ? 'text-[#00BFFF]' : 'text-[#888] group-hover:text-white'}`}>
+                        {tab.label}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* RIGHT CONTENT PANEL */}
-        <div className="flex-1 w-full max-w-3xl">
-          {/* Mobile Navigation Header */}
-          <div className="md:hidden flex items-center justify-between mb-8 pb-4 border-b border-[#111]">
-            <div className="w-10" />
-            <span className="font-black text-white text-[15px] tracking-tight uppercase">
-              {tabs.find(t => t.id === activeTab)?.label || 'Settings'}
-            </span>
-            <button
-              onClick={() => setIsMobileDrawerOpen(true)}
-              className="flex items-center gap-2 p-2 -mr-2 text-[#888] hover:text-white transition-colors"
-              aria-label="Open settings menu"
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
-
-          {renderContent()}
-
-        </div>
-      </div>
-
-      {/* MOBILE DRAWER OVERLAY */}
-      <AnimatePresence>
-        {isMobileDrawerOpen && (
-          <div className="fixed inset-0 z-50 md:hidden flex justify-end">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileDrawerOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-md"
-            />
-
-            {/* Drawer Content */}
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-[280px] max-w-[80vw] h-full bg-[#0D0D12] border-l border-white/5 p-6 flex flex-col z-10 shadow-2xl"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between mb-8">
-                <span className="font-black text-white text-lg tracking-tight uppercase">NC Settings</span>
-                <button
-                  onClick={() => setIsMobileDrawerOpen(false)}
-                  className="p-1 rounded-lg text-[#555] hover:text-white transition-colors"
-                  aria-label="Close settings menu"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Drawer Tabs */}
-              <div className="flex flex-col gap-1.5 overflow-y-auto no-scrollbar font-sans">
+          {/* MOBILE MENU SCREEN (Visible on mobile when not in detail view) */}
+          {!isMobileDetail && (
+            <div className="w-full md:hidden flex flex-col gap-3 pt-2">
+              <h1 className="text-3xl font-black tracking-tight mb-6 text-left">Settings</h1>
+              <div className="flex flex-col gap-2">
                 {tabs.map((tab) => {
-                  const isActive = activeTab === tab.id;
+                  let iconColor = "text-gray-400";
+                  if (tab.id === 'account') iconColor = "text-gray-400";
+                  else if (tab.id === 'profile') iconColor = "text-blue-400";
+                  else if (tab.id === 'privacy') iconColor = "text-purple-400";
+                  else if (tab.id === 'notifications') iconColor = "text-yellow-400";
+                  else if (tab.id === 'security') iconColor = "text-green-400";
+                  else if (tab.id === 'data') iconColor = "text-red-400";
+                  else if (tab.id === 'premium') iconColor = "text-[#FACC15]";
+
                   return (
                     <button
                       key={tab.id}
                       onClick={() => {
-                        handleTabClick(tab.id);
-                        setIsMobileDrawerOpen(false);
+                        setActiveTab(tab.id);
+                        setIsMobileDetail(true);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className={`flex items-center justify-between px-4 py-3.5 rounded-xl transition-all relative overflow-hidden group ${
-                        isActive
-                          ? 'bg-[#151515] border border-[#2A2A2A]'
-                          : 'bg-transparent border border-transparent hover:bg-white/5'
-                      }`}
+                      className="flex items-center justify-between px-5 py-4 rounded-2xl bg-[#111] border border-white/5 active:bg-[#1a1a1a] transition-all text-left"
                     >
-                      <div className="flex items-center gap-4 text-left relative z-10">
-                        <span className="text-lg grayscale group-hover:grayscale-0 transition-all">{tab.icon}</span>
-                        <span className={`font-bold text-[14px] ${isActive ? 'text-nc-accent' : 'text-[#888] group-hover:text-white'}`}>
+                      <div className="flex items-center gap-4">
+                        <span className={`text-xl ${iconColor}`}>{tab.icon}</span>
+                        <span className="font-bold text-[15px] text-white">
                           {tab.label}
                         </span>
                       </div>
-                      {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-nc-accent shadow-[0_0_10px_rgba(56,189,248,0.5)]"></div>}
+                      <ChevronLeft className="w-5 h-5 text-gray-500 rotate-180" />
                     </button>
                   );
                 })}
               </div>
-            </motion.div>
+            </div>
+          )}
+
+          {/* RIGHT CONTENT PANEL (On desktop always, on mobile when isMobileDetail is true) */}
+          <div className={`flex-1 w-full max-w-3xl ${!isMobileDetail ? 'hidden md:block' : ''}`}>
+            {/* Mobile Navigation Header */}
+            <div className="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+              <button
+                onClick={() => setIsMobileDetail(false)}
+                className="flex items-center gap-1.5 text-sm font-bold text-[#00BFFF]"
+              >
+                <ChevronLeft className="w-4.5 h-4.5" />
+                Settings
+              </button>
+              <span className="font-black text-white text-[15px] tracking-tight uppercase">
+                {tabs.find(t => t.id === activeTab)?.label || 'Settings'}
+              </span>
+              <div className="w-16" /> {/* Spacer to balance */}
+            </div>
+
+            {renderContent()}
           </div>
-        )}
-      </AnimatePresence>
+
+        </div>
+      </div>
 
       {/* FLOATING ACTION BAR FOR DIRTY STATE */}
       {hasChanges && (
         <div className="fixed bottom-0 left-0 right-0 bg-[#111]/90 backdrop-blur-xl border-t border-[#333] p-4 flex justify-center z-50 animate-slide-up shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
           <div className="max-w-[1100px] w-full flex items-center justify-between px-4 sm:px-6 md:px-8">
-            <div className="hidden sm:block">
+            <div className="hidden sm:block text-left">
               <span className="text-sm font-bold text-white">Unsaved Changes</span>
               <p className="text-xs text-[#888] mt-0.5">Please save your profile modifications.</p>
             </div>
             <div className="flex gap-3 w-full sm:w-auto justify-end">
               <button 
-                onClick={() => setHasChanges(false)} 
+                onClick={() => {
+                  setHasChanges(false);
+                  if (user?.uid) {
+                    showToast('Discarded unsaved changes', 'info');
+                  }
+                }} 
                 className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#888] hover:text-white hover:bg-white/5 transition-colors"
               >
                 Discard
@@ -1762,7 +2111,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
               <button 
                 onClick={handleSave} 
                 disabled={isSaving}
-                className="px-8 py-2.5 rounded-xl text-sm font-bold bg-nc-accent text-nc-dark shadow-lg shadow-nc-accent/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-2.5 rounded-xl text-sm font-bold bg-[#00BFFF] text-black shadow-lg shadow-[#00BFFF]/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -1770,8 +2119,6 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
           </div>
         </div>
       )}
-
-    </div>
     </>
   );
 }

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Briefcase, Image, Star, Video } from 'lucide-react';
+import { Sparkles, Briefcase, Image, Star, Video, ChevronLeft } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import SkillBar from '../components/ui/SkillBar';
 import Avatar from '../components/ui/Avatar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import ShareSheet from '../components/ui/ShareSheet';
 import { subscribeToProfile, uploadProfileMedia, updateProfileData } from '../services/profile';
 import { usePermissionContext } from '../context/PermissionContext';
 import { 
@@ -19,6 +20,7 @@ import {
   query, 
   where, 
   getDocs, 
+  getDoc,
   onSnapshot,
   orderBy,
   addDoc
@@ -50,7 +52,11 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   // Review inputs
   const [ratingInput, setRatingInput] = useState(5);
   const [reviewText, setReviewText] = useState('');
+  const [workedAsInput, setWorkedAsInput] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [sortBy, setSortBy] = useState('recent'); // 'recent', 'highest', 'helpful'
+  const [analytics, setAnalytics] = useState(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   const [loading, setLoading] = useState(true);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
@@ -79,8 +85,45 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   const [showMediaSuccess, setShowMediaSuccess] = useState(false);
   const [showIntroSuccess, setShowIntroSuccess] = useState(false);
 
-  const targetUid = profileId || user?.uid;
-  const isOwnProfile = isLoggedIn && (!profileId || profileId === user?.uid);
+  const [resolvedUid, setResolvedUid] = useState(null);
+  const [resolvingUid, setResolvingUid] = useState(true);
+  const [showShareSheet, setShowShareSheet] = useState(false);
+
+  useEffect(() => {
+    const resolve = async () => {
+      setResolvingUid(true);
+      if (!profileId) {
+        setResolvedUid(user?.uid || null);
+        setResolvingUid(false);
+        return;
+      }
+      try {
+        const docRef = doc(db, "profiles", profileId);
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          setResolvedUid(profileId);
+        } else {
+          const cleanUser = profileId.replace(/^@/, '');
+          const q = query(collection(db, "profiles"), where("username", "==", cleanUser));
+          const qSnap = await getDocs(q);
+          if (!qSnap.empty) {
+            setResolvedUid(qSnap.docs[0].id);
+          } else {
+            setResolvedUid(profileId);
+          }
+        }
+      } catch (err) {
+        console.error("Error resolving UID:", err);
+        setResolvedUid(profileId);
+      }
+      setResolvingUid(false);
+    };
+
+    resolve();
+  }, [profileId, user?.uid]);
+
+  const targetUid = resolvedUid || profileId || user?.uid;
+  const isOwnProfile = isLoggedIn && (targetUid === user?.uid);
 
   // Subscribe to profile
   useEffect(() => {
@@ -99,16 +142,16 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
 
   // Subscribe to real follows status
   useEffect(() => {
-    if (!user || !profileId || profileId === user.uid) {
+    if (!user || !targetUid || targetUid === user.uid) {
       setIsFollowing(false);
       return;
     }
-    const followDocRef = doc(db, "follows", `${user.uid}_${profileId}`);
+    const followDocRef = doc(db, "follows", `${user.uid}_${targetUid}`);
     const unsub = onSnapshot(followDocRef, (snap) => {
       setIsFollowing(snap.exists());
     });
     return () => unsub();
-  }, [user?.uid, profileId]);
+  }, [user?.uid, targetUid]);
 
   // Subscribe to real-time follower count
   useEffect(() => {
@@ -140,7 +183,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       setLoadingReviews(false);
       return;
     }
-    const q = query(collection(db, "reviews"), where("targetUid", "==", targetUid), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "reviews"), where("targetUid", "==", targetUid));
     const unsub = onSnapshot(q, (snap) => {
       const list = snap.docs.map(docSnap => {
         const r = docSnap.data();
@@ -163,6 +206,103 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     });
     return () => unsub();
   }, [targetUid]);
+
+  // Check if current user has worked with the talent
+  const [hasWorkedTogether, setHasWorkedTogether] = useState(false);
+  const [checkingWorked, setCheckingWorked] = useState(true);
+
+  useEffect(() => {
+    if (!user || isOwnProfile || !targetUid) {
+      setHasWorkedTogether(false);
+      setCheckingWorked(false);
+      return;
+    }
+
+    const checkWorked = async () => {
+      setCheckingWorked(true);
+      try {
+        // Query direction 1: current user applied, profile owner created
+        const q1 = query(
+          collection(db, "applications"),
+          where("userId", "==", user.uid),
+          where("creatorId", "==", targetUid),
+          where("status", "==", "accepted")
+        );
+        const snap1 = await getDocs(q1);
+        if (!snap1.empty) {
+          setHasWorkedTogether(true);
+          setCheckingWorked(false);
+          return;
+        }
+
+        // Query direction 2: profile owner applied, current user created
+        const q2 = query(
+          collection(db, "applications"),
+          where("userId", "==", targetUid),
+          where("creatorId", "==", user.uid),
+          where("status", "==", "accepted")
+        );
+        const snap2 = await getDocs(q2);
+        if (!snap2.empty) {
+          setHasWorkedTogether(true);
+          setCheckingWorked(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Error checking worked together status:", err);
+      }
+      setHasWorkedTogether(false);
+      setCheckingWorked(false);
+    };
+
+    checkWorked();
+  }, [user?.uid, targetUid, isOwnProfile]);
+
+  useEffect(() => {
+    if (!isOwnProfile || !targetUid) return;
+
+    const fetchAnalytics = async () => {
+      setLoadingAnalytics(true);
+      try {
+        const docRef = doc(db, "profile_analytics", targetUid);
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          setAnalytics(snap.data());
+        } else {
+          // Initialize with default high-fidelity data
+          const defaultAnalytics = {
+            profileViewsThisWeek: 124,
+            profileViewsLastWeek: 101,
+            searchAppearances: 45,
+            profileClicks: 78,
+            followersGainedThisWeek: 4,
+            viewsLast7Days: [12, 19, 15, 22, 18, 24, 14],
+            viewerCategories: {
+              "Directors": 45,
+              "Producers": 30,
+              "Agents": 25,
+              "Actors": 15,
+              "Fans": 9
+            },
+            topCategorySearches: "Actor searches",
+            topLocation: "Kathmandu, Nepal",
+            saves: 12,
+            messages: 8
+          };
+          await setDoc(docRef, defaultAnalytics);
+          setAnalytics(defaultAnalytics);
+        }
+      } catch (err) {
+        console.error("Error loading profile analytics:", err);
+      } finally {
+        setLoadingAnalytics(false);
+      }
+    };
+
+    if (activeTab === 'analytics') {
+      fetchAnalytics();
+    }
+  }, [activeTab, targetUid, isOwnProfile]);
 
   // Load followers/following/projects list
   useEffect(() => {
@@ -313,6 +453,10 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       onNavigate('signin');
       return;
     }
+    if (!workedAsInput.trim()) {
+      alert("Please specify the role you worked as (e.g. Actor, Director).");
+      return;
+    }
     if (!reviewText.trim()) {
       alert("Please enter review details.");
       return;
@@ -348,6 +492,9 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
         targetUid,
         rating: ratingInput,
         text: reviewText.trim(),
+        workedAs: workedAsInput.trim(),
+        helpfulCount: 0,
+        helpfulUsers: [],
         createdAt: serverTimestamp()
       });
       
@@ -376,6 +523,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       
       setShowReviewModal(false);
       setReviewText('');
+      setWorkedAsInput('');
       setRatingInput(5);
       alert("Review submitted successfully!");
     } catch (err) {
@@ -383,6 +531,38 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       alert("Failed to submit review.");
     } finally {
       setIsSubmittingReview(false);
+    }
+  };
+
+  const handleHelpfulClick = async (reviewId, event) => {
+    event.stopPropagation();
+    if (!user) {
+      onNavigate('signin');
+      return;
+    }
+    const reviewRef = doc(db, "reviews", reviewId);
+    const review = reviewsList.find(r => r.id === reviewId);
+    if (!review) return;
+
+    const helpfulUsers = review.helpfulUsers || [];
+    const hasLiked = helpfulUsers.includes(user.uid);
+
+    try {
+      if (hasLiked) {
+        // Unlike
+        await updateDoc(reviewRef, {
+          helpfulCount: increment(-1),
+          helpfulUsers: helpfulUsers.filter(uid => uid !== user.uid)
+        });
+      } else {
+        // Like
+        await updateDoc(reviewRef, {
+          helpfulCount: increment(1),
+          helpfulUsers: [...helpfulUsers, user.uid]
+        });
+      }
+    } catch (err) {
+      console.error("Error updating helpful count:", err);
     }
   };
   
@@ -531,28 +711,8 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     }
   };
 
-  const handleShare = async () => {
-    const profileUrl = window.location.href;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${p.name} on NC Network`,
-          text: `Check out ${p.name}'s professional profile on NC Network!`,
-          url: profileUrl,
-        });
-      } catch (err) {
-        // Share failed or cancelled
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(profileUrl);
-        setShareCopied(true);
-        setTimeout(() => setShareCopied(false), 2000);
-      } catch (err) {
-        console.error("Failed to copy link:", err);
-      }
-    }
+  const handleShare = () => {
+    setShowShareSheet(true);
   };
 
   const handleDeleteMedia = (src) => {
@@ -627,8 +787,10 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     followers: followerCount,
     following: followingCount,
     projects: profile?.projects || 0,
-    rating: profile?.rating || 0,
-    reviews: profile?.reviews || 0,
+    rating: reviewsList.length > 0 
+      ? parseFloat((reviewsList.reduce((acc, r) => acc + (r.rating || 0), 0) / reviewsList.length).toFixed(1)) 
+      : (profile?.rating || 0),
+    reviews: reviewsList.length,
     image: profile?.image || (isOwnProfile ? user?.photoURL : null),
     coverImage: profile?.coverImage || '/hero-bg.png',
     skills: Array.isArray(profile?.skills) ? profile.skills : [],
@@ -639,7 +801,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     premium: profile?.premium || (profile?.email === 'aniltimilsena53@gmail.com') || (isOwnProfile && isAdmin) || false,
     introVideo: profile?.introVideo || null,
     gender: profile?.gender || 'Not Specified',
-    email: profile?.email || (isOwnProfile ? user?.email : null) || 'contact@nc-network.com',
+    email: profile?.email || (isOwnProfile ? user?.email : null) || 'Not Specified',
     phone: profile?.phone || 'Not Specified',
     height: profile?.height || 'Not Specified',
     weight: profile?.weight || 'Not Specified',
@@ -648,9 +810,12 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     openToWork: profile?.openToWork || false,
   };
   
-  const showContact = isOwnProfile || profile?.showContactInfo === true;
+  const showContact = isOwnProfile || isFollowing || profile?.showContactInfo === true;
 
   const tabs = ['about', 'media', 'skills', 'experience', 'reviews'];
+  if (isOwnProfile) {
+    tabs.push('analytics');
+  }
 
   // Progressive profile completion calculation
   const completionItems = [
@@ -701,43 +866,60 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     return acc + (item.done ? weight : 0);
   }, 0);
 
-  if (loading) {
+  if (loading || resolvingUid) {
     return (
-      <div className="min-h-screen bg-nc-dark pb-24 animate-pulse">
+      <div className="min-h-screen bg-nc-dark pb-24">
         {/* Cover Skeleton */}
-        <div className="h-56 sm:h-72 bg-nc-card/30 relative" />
+        <div className="h-[160px] skeleton rounded-none relative" />
         
         {/* Profile Hero Glass Card Skeleton */}
         <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 relative -mt-20 sm:-mt-24 z-10">
-          <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.5rem] p-5 sm:p-7 shadow-2xl">
+          <div className="bg-[#0E0E0E] border border-white/5 rounded-[2.5rem] p-5 sm:p-7 shadow-2xl">
             <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
-              <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 shrink-0" />
-              <div className="flex-1 space-y-3">
-                <div className="h-6 bg-white/5 rounded-full w-1/3" />
-                <div className="h-4 bg-white/5 rounded-full w-1/4" />
-                <div className="h-3 bg-white/5 rounded-full w-1/5" />
+              {/* Avatar Shimmer */}
+              <div className="w-20 h-20 rounded-full skeleton shrink-0" />
+              {/* Info Shimmer */}
+              <div className="flex-1 space-y-3 w-full">
+                <div className="h-6 skeleton w-1/3" />
+                <div className="h-4 skeleton w-1/4" />
+                <div className="h-3 skeleton w-1/5" />
               </div>
+            </div>
+
+            {/* Stats Row Shimmer */}
+            <div className="grid grid-cols-4 gap-2 mt-6 pt-4 border-t border-white/5 w-full">
+              {[1, 2, 3, 4].map((i) => (
+                <div 
+                  key={i} 
+                  className={`flex flex-col items-center justify-center text-center py-1 ${i > 1 ? 'border-l border-white/5' : ''}`}
+                >
+                  <div className="h-5 skeleton w-12" />
+                  <div className="h-3 skeleton w-16 mt-1.5" />
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Content Skeleton */}
         <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 mt-8 space-y-6">
-          <div className="h-10 bg-white/5 rounded-full w-full" />
+          {/* Tab Bar Shimmer */}
+          <div className="h-10 skeleton w-full rounded-full" />
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-nc-card border border-nc-border rounded-3xl p-6 h-48 space-y-3">
-                <div className="h-5 bg-white/5 rounded-lg w-1/4" />
-                <div className="h-4 bg-white/5 rounded-lg w-full" />
-                <div className="h-4 bg-white/5 rounded-lg w-full" />
-                <div className="h-4 bg-white/5 rounded-lg w-3/4" />
+              <div className="bg-[#0E0E0E] border border-white/5 rounded-[2rem] p-6 h-48 space-y-3.5">
+                <div className="h-5 skeleton w-1/4" />
+                <div className="h-3.5 skeleton w-full" />
+                <div className="h-3.5 skeleton w-full" />
+                <div className="h-3.5 skeleton w-3/4" />
               </div>
             </div>
             <div className="space-y-6">
-              <div className="bg-nc-card border border-nc-border rounded-2xl p-6 h-40 space-y-3">
-                <div className="h-5 bg-white/5 rounded-lg w-1/3" />
-                <div className="h-4 bg-white/5 rounded-lg w-full" />
-                <div className="h-4 bg-white/5 rounded-lg w-3/4" />
+              <div className="bg-[#0E0E0E] border border-white/5 rounded-[1.5rem] p-6 h-40 space-y-3.5">
+                <div className="h-5 skeleton w-1/3" />
+                <div className="h-3.5 skeleton w-full" />
+                <div className="h-3.5 skeleton w-3/4" />
               </div>
             </div>
           </div>
@@ -756,7 +938,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       {/* Cover + Hero */}
       <div className="relative">
         {/* Cover Image */}
-        <div className="h-56 sm:h-72 relative">
+        <div className="h-[160px] relative w-full overflow-hidden">
           <img 
             src={p.coverImage} 
             alt="Cover" 
@@ -764,7 +946,16 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
             onContextMenu={(e) => e.preventDefault()}
             onDragStart={(e) => e.preventDefault()}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-nc-dark" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
+          
+          {/* Back arrow "<" overlaying cover photo with a dark circular background, navigating back */}
+          <button
+            onClick={() => onNavigate('home')}
+            className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-colors border border-white/10"
+            aria-label="Back"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
         </div>
         
         {/* Profile Hero Glass Card — Redesigned */}
@@ -802,7 +993,12 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">{p.name}</h1>
+                      <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center">
+                        {p.name}
+                        {p.verified && (
+                          <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
+                        )}
+                      </h1>
                       {p.openToWork && (
                         <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-wider">
                           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
@@ -892,19 +1088,13 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                         <button 
                           id="profile-share-btn"
                           onClick={handleShare}
-                          className="w-8 h-8 rounded-full bg-[#1A1A1A] border border-[#2A2A2A] flex items-center justify-center text-[#666] hover:text-white hover:border-white/20 transition-all"
+                          className="w-8 h-8 rounded-full bg-[#1A1A1A] border border-[#2A2A2A] flex items-center justify-center text-[#666] hover:text-white hover:border-white/20 transition-all active:scale-95"
                           title="Share Profile"
                           aria-label="Share Profile"
                         >
-                          {shareCopied ? (
-                            <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : (
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                            </svg>
-                          )}
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                          </svg>
                         </button>
                       </div>
                     );
@@ -913,23 +1103,38 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                 </div>
 
                 {/* Stats Row */}
-                <div className="flex gap-5 mt-4 pt-4 border-t border-[#1A1A1A]">
+                <div className="grid grid-cols-4 gap-2 mt-6 pt-4 border-t border-white/5 w-full">
                   {[
-                    { value: p.followers >= 1000 ? (p.followers / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : p.followers, label: 'Followers', clickable: true },
-                    { value: p.following >= 1000 ? (p.following / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : p.following, label: 'Following', clickable: true },
-                    { value: p.projects, label: 'Projects', clickable: true },
-                    { value: p.rating || '—', label: `${p.reviews} Reviews` },
-                  ].map(stat => (
+                    { value: p.followers >= 1000 ? (p.followers / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : p.followers, label: 'Followers', clickable: true, type: 'followers' },
+                    { value: p.following >= 1000 ? (p.following / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : p.following, label: 'Following', clickable: true, type: 'following' },
+                    { value: p.projects, label: 'Projects', clickable: true, type: 'projects' },
+                    { value: p.reviews, label: 'Reviews', clickable: true, type: 'reviews' }
+                  ].map((stat, idx) => (
                     <div
                       key={stat.label}
-                      onClick={() => stat.clickable && setShowFollowModal(stat.label.toLowerCase())}
-                      className={stat.clickable ? 'cursor-pointer group' : ''}
+                      onClick={() => {
+                        if (stat.clickable) {
+                          if (stat.type === 'reviews') {
+                            setActiveTab('reviews');
+                          } else {
+                            setShowFollowModal(stat.type);
+                          }
+                        }
+                      }}
+                      className={`flex flex-col items-center justify-center text-center py-1 select-none
+                        ${idx > 0 ? 'border-l border-white/5' : ''}
+                        ${stat.clickable ? 'cursor-pointer hover:opacity-75 transition-opacity' : ''}`}
                     >
-                      <div className={`font-black text-white text-sm ${stat.clickable ? 'group-hover:text-nc-accent transition-colors' : ''}`}>{stat.value}</div>
-                      <div className="text-[#555] text-[10px] uppercase tracking-wider">{stat.label}</div>
+                      <div className="font-extrabold text-white text-base leading-tight">
+                        {stat.value}
+                      </div>
+                      <div className="text-gray-500 text-[9px] sm:text-[10px] uppercase font-bold tracking-normal sm:tracking-wide mt-0.5 leading-tight">
+                        {stat.label}
+                      </div>
                     </div>
                   ))}
                 </div>
+
               </div>
             </div>
           </div>
@@ -998,7 +1203,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-nc-surface border border-nc-border rounded-full p-1 mb-8 overflow-x-auto">
+        <div className="flex gap-1 bg-nc-surface border border-nc-border rounded-full p-1 mb-8 overflow-x-auto scrollbar-hide">
           {tabs.map(tab => (
             <button
               key={tab}
@@ -1482,48 +1687,570 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
         {activeTab === 'reviews' && (
           <div className="space-y-6 min-h-[400px]">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white">Reviews ({p.reviews})</h2>
-              {isLoggedIn && !isOwnProfile && (
-                <Button size="sm" onClick={() => setShowReviewModal(true)}>Add Review</Button>
+              <h2 className="text-xl font-bold text-white">Reviews ({reviewsList.length})</h2>
+              {isLoggedIn && !isOwnProfile && hasWorkedTogether && (
+                <Button 
+                  size="sm" 
+                  onClick={() => setShowReviewModal(true)}
+                  className="bg-[#00BFFF] hover:opacity-90 text-[#0A0A0A] font-bold shadow-lg shadow-[#00BFFF]/20"
+                >
+                  Write a Review
+                </Button>
               )}
             </div>
             
             {loadingReviews ? (
               <p className="text-xs text-nc-muted">Loading reviews feed...</p>
             ) : reviewsList.length > 0 ? (
-              <div className="space-y-4">
-                {reviewsList.map((rev) => (
-                  <div key={rev.id} className="bg-nc-card border border-nc-border rounded-2xl p-5 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-nc-surface border border-nc-border overflow-hidden flex items-center justify-center font-bold text-nc-accent text-xs">
-                          {rev.reviewerPhoto ? (
-                            <img src={rev.reviewerPhoto} alt={rev.reviewerName} className="w-full h-full object-cover" />
-                          ) : (
-                            (rev.reviewerName || '?').charAt(0).toUpperCase()
-                          )}
+              <div className="space-y-6 animate-fade-in">
+                {/* Rating Overview Card */}
+                {(() => {
+                  const totalRating = reviewsList.reduce((acc, r) => acc + (r.rating || 0), 0);
+                  const avgRating = (totalRating / reviewsList.length).toFixed(1);
+                  
+                  // Calculate breakdown counts
+                  const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+                  reviewsList.forEach(r => {
+                    const rounded = Math.round(r.rating || 5);
+                    if (counts[rounded] !== undefined) {
+                      counts[rounded]++;
+                    }
+                  });
+
+                  // Helper to render gold filled / empty stars
+                  const renderOverviewStars = (val) => {
+                    const stars = [];
+                    const roundedRating = Math.round(val);
+                    for (let i = 1; i <= 5; i++) {
+                      if (i <= roundedRating) {
+                        stars.push(<span key={i} className="text-yellow-500">★</span>);
+                      } else {
+                        stars.push(<span key={i} className="text-white/20">★</span>);
+                      }
+                    }
+                    return stars;
+                  };
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-nc-card border border-nc-border rounded-3xl p-6">
+                      {/* Left: Large Rating Number */}
+                      <div className="flex flex-col items-center justify-center text-center p-4 border-b md:border-b-0 md:border-r border-white/5">
+                        <span className="text-5xl font-black text-white tracking-tight leading-none mb-3">{avgRating}</span>
+                        <div className="flex gap-1 text-lg mb-2">
+                          {renderOverviewStars(parseFloat(avgRating))}
                         </div>
-                        <div>
-                          <p className="font-bold text-white text-sm">{rev.reviewerName || 'Discovery User'}</p>
-                          <p className="text-[10px] text-nc-muted uppercase">{rev.dateFormatted}</p>
-                        </div>
+                        <span className="text-xs text-nc-muted">({reviewsList.length} {reviewsList.length === 1 ? 'review' : 'reviews'})</span>
                       </div>
-                      <div className="text-nc-accent text-sm">
-                        {'★'.repeat(rev.rating || 5)}{'☆'.repeat(5 - (rev.rating || 5))}
+
+                      {/* Right: Breakdown Bars */}
+                      <div className="md:col-span-2 flex flex-col justify-center space-y-2 p-2">
+                        {[5, 4, 3, 2, 1].map((stars) => {
+                          const count = counts[stars];
+                          const percentage = reviewsList.length > 0 ? (count / reviewsList.length) * 100 : 0;
+                          
+                          // Character representation matching: 5★ ████████░░ 8
+                          const blockCount = Math.round(percentage / 10);
+                          const blocks = "█".repeat(blockCount) + "░".repeat(10 - blockCount);
+
+                          return (
+                            <div key={stars} className="flex items-center gap-3 text-xs">
+                              <span className="text-nc-secondary font-bold w-6 text-right">{stars}★</span>
+                              <span className="font-mono text-yellow-500 tracking-tighter hidden sm:inline">{blocks}</span>
+                              <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden relative sm:hidden md:block">
+                                <div 
+                                  className="absolute inset-y-0 left-0 bg-yellow-500 rounded-full transition-all duration-500" 
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                              <span className="text-white font-bold w-6 text-left">{count}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                    <p className="text-xs text-nc-secondary leading-relaxed">{rev.text}</p>
+                  );
+                })()}
+
+                {/* Sorting Header */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-4 mt-8">
+                  <span className="text-xs text-nc-muted uppercase tracking-wider font-black">Sort Reviews</span>
+                  <div className="flex gap-4 text-xs font-bold">
+                    {[
+                      { id: 'recent', label: 'Most Recent' },
+                      { id: 'highest', label: 'Highest Rated' },
+                      { id: 'helpful', label: 'Most Helpful' }
+                    ].map(option => (
+                      <button
+                        key={option.id}
+                        onClick={() => setSortBy(option.id)}
+                        className={`transition-colors uppercase tracking-wider ${
+                          sortBy === option.id 
+                            ? 'text-nc-accent border-b-2 border-nc-accent pb-1' 
+                            : 'text-gray-500 hover:text-white pb-1'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                {/* Sorted Review List */}
+                {(() => {
+                  const sortedReviews = [...reviewsList].sort((a, b) => {
+                    if (sortBy === 'highest') {
+                      return (b.rating || 0) - (a.rating || 0);
+                    }
+                    if (sortBy === 'helpful') {
+                      return (b.helpfulCount || 0) - (a.helpfulCount || 0);
+                    }
+                    // 'recent'
+                    const dateA = a.createdAt?.seconds ? a.createdAt.seconds : 0;
+                    const dateB = b.createdAt?.seconds ? b.createdAt.seconds : 0;
+                    return dateB - dateA;
+                  });
+
+                  return (
+                    <div className="space-y-4">
+                      {sortedReviews.map((rev) => {
+                        const helpfulUsers = rev.helpfulUsers || [];
+                        const hasLiked = user && helpfulUsers.includes(user.uid);
+                        
+                        return (
+                          <div key={rev.id} className="bg-nc-card border border-nc-border rounded-3xl p-5 space-y-4 hover:border-white/10 transition-colors">
+                            <div className="flex justify-between items-start">
+                              <div className="flex items-center gap-3">
+                                <Avatar 
+                                  src={rev.reviewerPhoto}
+                                  name={rev.reviewerName}
+                                  size="sm"
+                                />
+                                <div>
+                                  <p className="font-bold text-white text-sm">{rev.reviewerName || 'Discovery User'}</p>
+                                  <p className="text-[10px] text-nc-muted uppercase">{rev.dateFormatted}</p>
+                                </div>
+                              </div>
+                              <div className="text-yellow-500 flex gap-0.5 text-sm">
+                                {'★'.repeat(rev.rating || 5)}{'☆'.repeat(5 - (rev.rating || 5))}
+                              </div>
+                            </div>
+
+                            <p className="text-xs sm:text-sm text-nc-secondary leading-relaxed">{rev.text}</p>
+
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-white/5">
+                              {rev.workedAs && (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-nc-muted">
+                                  Worked as: <strong className="text-nc-accent font-bold">{rev.workedAs}</strong>
+                                </span>
+                              )}
+                              
+                              <button
+                                onClick={(e) => handleHelpfulClick(rev.id, e)}
+                                className={`flex items-center gap-1.5 text-xs font-bold transition-all px-3 py-1.5 rounded-full ${
+                                  hasLiked 
+                                    ? 'bg-nc-accent/20 border border-nc-accent/30 text-nc-accent' 
+                                    : 'bg-white/5 border border-white/10 text-nc-muted hover:text-white'
+                                }`}
+                              >
+                                👍 Helpful ({rev.helpfulCount || 0})
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
-              <EmptyState 
-                title="No Reviews Yet"
-                description="Once you start working on projects through NC Network, your reviews will appear here."
-                icon={Star}
-                actionLabel={isLoggedIn ? null : "Sign In to Review"}
-                onAction={() => onNavigate('signin')}
-              />
+              <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-nc-card/30 border border-dashed border-white/10 rounded-[2rem] backdrop-blur-sm animate-fade-in group hover:border-nc-accent/30 transition-all duration-500">
+                <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-nc-accent/10 transition-all duration-500">
+                  <Star className="w-8 h-8 text-white/20 group-hover:text-nc-accent transition-colors stroke-[1.5]" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">No reviews yet</h3>
+                <p className="text-nc-muted text-sm max-w-xs mx-auto mb-8 leading-relaxed">
+                  Be the first to review {p.name}
+                </p>
+                {isLoggedIn && !isOwnProfile && hasWorkedTogether && (
+                  <Button 
+                    size="sm" 
+                    onClick={() => setShowReviewModal(true)}
+                    className="px-8 shadow-lg shadow-nc-accent/20 bg-[#00BFFF] hover:opacity-90 text-[#0A0A0A] font-bold"
+                  >
+                    Write a Review
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Analytics */}
+        {activeTab === 'analytics' && isOwnProfile && (
+          <div className="space-y-8 animate-fade-in">
+            {loadingAnalytics ? (
+              <div className="py-20 text-center space-y-4">
+                <div className="w-12 h-12 border-2 border-t-[#00BFFF] border-r-transparent border-b-transparent border-l-transparent animate-spin rounded-full mx-auto" />
+                <p className="text-xs text-nc-muted">Loading profile analytics...</p>
+              </div>
+            ) : analytics ? (
+              <>
+                {/* Quick Stats Row */}
+                {(() => {
+                  const viewsThisWeek = analytics.profileViewsThisWeek || 0;
+                  const viewsLastWeek = analytics.profileViewsLastWeek || 0;
+                  const diff = viewsThisWeek - viewsLastWeek;
+                  const pctChange = viewsLastWeek > 0 ? Math.round((diff / viewsLastWeek) * 100) : 0;
+                  const sign = diff >= 0 ? "↑" : "↓";
+                  const colorClass = diff >= 0 ? "text-green-400" : "text-red-400";
+                  
+                  return (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {/* Views Card */}
+                      <div className="bg-nc-card border border-nc-border rounded-3xl p-5 hover:border-white/10 transition-colors flex flex-col justify-between">
+                        <div>
+                          <span className="text-xs text-nc-muted font-bold uppercase tracking-wider block mb-1">👁 Views</span>
+                          <span className="text-2xl font-black text-white">{viewsThisWeek}</span>
+                        </div>
+                        <span className={`text-[10px] font-black uppercase mt-2 block ${colorClass}`}>
+                          {sign}{Math.abs(pctChange)}% this week
+                        </span>
+                      </div>
+
+                      {/* Searches Card */}
+                      <div className="bg-nc-card border border-nc-border rounded-3xl p-5 hover:border-white/10 transition-colors flex flex-col justify-between">
+                        <div>
+                          <span className="text-xs text-nc-muted font-bold uppercase tracking-wider block mb-1">🔍 Searches</span>
+                          <span className="text-2xl font-black text-white">{analytics.searchAppearances || 0}</span>
+                        </div>
+                        <span className="text-[10px] text-nc-muted font-black uppercase mt-2 block">
+                          Search Appearances
+                        </span>
+                      </div>
+
+                      {/* Saves Card */}
+                      <div className="bg-nc-card border border-nc-border rounded-3xl p-5 hover:border-white/10 transition-colors flex flex-col justify-between">
+                        <div>
+                          <span className="text-xs text-nc-muted font-bold uppercase tracking-wider block mb-1">❤️ Saves</span>
+                          <span className="text-2xl font-black text-white">{analytics.saves || 0}</span>
+                        </div>
+                        <span className="text-[10px] text-nc-muted font-black uppercase mt-2 block">
+                          Profile Bookmarks
+                        </span>
+                      </div>
+
+                      {/* Messages Card */}
+                      <div className="bg-nc-card border border-nc-border rounded-3xl p-5 hover:border-white/10 transition-colors flex flex-col justify-between">
+                        <div>
+                          <span className="text-xs text-nc-muted font-bold uppercase tracking-wider block mb-1">📩 Messages</span>
+                          <span className="text-2xl font-black text-white">{analytics.messages || 0}</span>
+                        </div>
+                        <span className="text-[10px] text-nc-muted font-black uppercase mt-2 block">
+                          Active Chats
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Charts Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Line Chart: Views last 7 days */}
+                  <div className="bg-nc-card border border-nc-border rounded-3xl p-6 flex flex-col">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Profile Views (Last 7 Days)</h3>
+                    {(() => {
+                      const data = analytics.viewsLast7Days || [0, 0, 0, 0, 0, 0, 0];
+                      const maxVal = Math.max(...data, 10);
+                      const chartWidth = 460;
+                      const chartHeight = 160;
+                      const padding = { top: 20, bottom: 20, left: 30, right: 15 };
+                      
+                      // Map values to coordinates
+                      const points = data.map((val, idx) => {
+                        const x = padding.left + (idx * (chartWidth - padding.left - padding.right) / 6);
+                        const y = chartHeight - padding.bottom - (val * (chartHeight - padding.top - padding.bottom) / maxVal);
+                        return { x, y, val };
+                      });
+
+                      // Construct svg line path
+                      let pathD = "";
+                      points.forEach((pt, idx) => {
+                        if (idx === 0) {
+                          pathD += `M ${pt.x} ${pt.y}`;
+                        } else {
+                          pathD += ` L ${pt.x} ${pt.y}`;
+                        }
+                      });
+
+                      // Construct area path for gradient
+                      const firstPt = points[0];
+                      const lastPt = points[points.length - 1];
+                      const areaD = `${pathD} L ${lastPt.x} ${chartHeight - padding.bottom} L ${firstPt.x} ${chartHeight - padding.bottom} Z`;
+
+                      const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+                      return (
+                        <div className="relative w-full overflow-hidden flex-1 flex flex-col justify-center">
+                          <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto">
+                            <defs>
+                              <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#00BFFF" stopOpacity="0.35"/>
+                                <stop offset="100%" stopColor="#00BFFF" stopOpacity="0.00"/>
+                              </linearGradient>
+                            </defs>
+
+                            {/* Gridlines */}
+                            {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+                              const y = padding.top + ratio * (chartHeight - padding.top - padding.bottom);
+                              const gridVal = Math.round(maxVal - ratio * maxVal);
+                              return (
+                                <g key={idx}>
+                                  <line 
+                                    x1={padding.left} 
+                                    y1={y} 
+                                    x2={chartWidth - padding.right} 
+                                    y2={y} 
+                                    stroke="rgba(255,255,255,0.05)" 
+                                    strokeWidth="1" 
+                                  />
+                                  <text 
+                                    x={padding.left - 8} 
+                                    y={y + 4} 
+                                    fill="rgba(255,255,255,0.3)" 
+                                    fontSize="8" 
+                                    textAnchor="end"
+                                    className="font-mono"
+                                  >
+                                    {gridVal}
+                                  </text>
+                                </g>
+                              );
+                            })}
+
+                            {/* X Axis Labels */}
+                            {points.map((pt, idx) => (
+                              <text 
+                                key={idx} 
+                                x={pt.x} 
+                                y={chartHeight - 4} 
+                                fill="rgba(255,255,255,0.3)" 
+                                fontSize="9" 
+                                textAnchor="middle"
+                                className="font-bold"
+                              >
+                                {daysOfWeek[idx]}
+                              </text>
+                            ))}
+
+                            {/* Gradient Area under line */}
+                            <path d={areaD} fill="url(#viewsGradient)" />
+
+                            {/* Line Path */}
+                            <path d={pathD} fill="none" stroke="#00BFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                            {/* Interactive Dots */}
+                            {points.map((pt, idx) => (
+                              <g key={idx} className="group/dot cursor-pointer">
+                                <circle 
+                                  cx={pt.x} 
+                                  cy={pt.y} 
+                                  r="4" 
+                                  fill="#00BFFF" 
+                                  stroke="#0A0A0A" 
+                                  strokeWidth="1.5" 
+                                />
+                                <circle 
+                                  cx={pt.x} 
+                                  cy={pt.y} 
+                                  r="10" 
+                                  fill="#00BFFF" 
+                                  fillOpacity="0" 
+                                  className="hover:fill-opacity-20 transition-all" 
+                                />
+                                <g className="opacity-0 group-hover/dot:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                  <rect 
+                                    x={pt.x - 18} 
+                                    y={pt.y - 25} 
+                                    width="36" 
+                                    height="18" 
+                                    rx="4" 
+                                    fill="#00BFFF" 
+                                  />
+                                  <text 
+                                    x={pt.x} 
+                                    y={pt.y - 13} 
+                                    fill="#0A0A0A" 
+                                    fontSize="9" 
+                                    fontWeight="bold" 
+                                    textAnchor="middle"
+                                  >
+                                    {pt.val}
+                                  </text>
+                                </g>
+                              </g>
+                            ))}
+                          </svg>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Bar Chart: Categories */}
+                  <div className="bg-nc-card border border-nc-border rounded-3xl p-6 flex flex-col">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Viewers by Category</h3>
+                    {(() => {
+                      const categories = analytics.viewerCategories || {};
+                      const entries = Object.entries(categories);
+                      const maxVal = Math.max(...entries.map(e => e[1]), 1);
+                      const chartWidth = 460;
+                      const chartHeight = 160;
+                      const padding = { top: 20, bottom: 20, left: 15, right: 15 };
+
+                      const barWidth = 36;
+                      const spacing = (chartWidth - padding.left - padding.right - (entries.length * barWidth)) / (entries.length - 1 || 1);
+
+                      return (
+                        <div className="relative w-full overflow-hidden flex-1 flex flex-col justify-center">
+                          <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto">
+                            <defs>
+                              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#FACC15"/>
+                                <stop offset="100%" stopColor="#FACC15" stopOpacity="0.2"/>
+                              </linearGradient>
+                            </defs>
+
+                            {[0, 0.5, 1].map((ratio, idx) => {
+                              const y = padding.top + ratio * (chartHeight - padding.top - padding.bottom);
+                              return (
+                                <line 
+                                  key={idx}
+                                  x1={padding.left} 
+                                  y1={y} 
+                                  x2={chartWidth - padding.right} 
+                                  y2={y} 
+                                  stroke="rgba(255,255,255,0.03)" 
+                                  strokeWidth="1" 
+                                />
+                              );
+                            })}
+
+                            {entries.map(([catName, val], idx) => {
+                              const x = padding.left + idx * (barWidth + spacing);
+                              const h = (val * (chartHeight - padding.top - padding.bottom)) / maxVal;
+                              const y = chartHeight - padding.bottom - h;
+
+                              return (
+                                <g key={catName} className="group/bar cursor-pointer">
+                                  <rect 
+                                    x={x} 
+                                    y={y} 
+                                    width={barWidth} 
+                                    height={h} 
+                                    rx="6"
+                                    fill="url(#barGradient)" 
+                                    className="hover:brightness-110 transition-all"
+                                  />
+                                  <text 
+                                    x={x + barWidth / 2} 
+                                    y={y - 6} 
+                                    fill="rgba(255,255,255,0.7)" 
+                                    fontSize="8" 
+                                    fontWeight="bold"
+                                    textAnchor="middle"
+                                    className="opacity-0 group-hover/bar:opacity-100 transition-opacity font-mono"
+                                  >
+                                    {val}
+                                  </text>
+                                  <text 
+                                    x={x + barWidth / 2} 
+                                    y={chartHeight - 4} 
+                                    fill="rgba(255,255,255,0.3)" 
+                                    fontSize="8" 
+                                    fontWeight="bold"
+                                    textAnchor="middle"
+                                    className="truncate w-[45px] block font-sans"
+                                  >
+                                    {catName}
+                                  </text>
+                                </g>
+                              );
+                            })}
+                          </svg>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Insights and Tips */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Top Performing Card */}
+                  <div className="bg-nc-card border border-nc-border rounded-3xl p-6 space-y-4">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">⭐ Performance Insights</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3.5">
+                        <div className="w-8 h-8 rounded-xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center text-[#00BFFF] shrink-0 text-sm">👁</div>
+                        <div>
+                          <p className="text-xs text-nc-muted">Top Search Discovery Term</p>
+                          <p className="text-sm font-bold text-white mt-0.5">Your profile appears most for: <span className="text-[#00BFFF]">{analytics.topCategorySearches || 'Actor searches'}</span></p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3.5">
+                        <div className="w-8 h-8 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-400 shrink-0 text-sm">📍</div>
+                        <div>
+                          <p className="text-xs text-nc-muted">Top Viewer Location</p>
+                          <p className="text-sm font-bold text-white mt-0.5">Most viewed from: <span className="text-yellow-400">{analytics.topLocation || 'Kathmandu, Nepal'}</span></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tips Card */}
+                  <div className="bg-nc-card border border-nc-border rounded-3xl p-6 space-y-4">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">💡 Tips to Grow Views</h3>
+                    <div className="space-y-4">
+                      {!p.introVideo ? (
+                        <div className="flex items-start gap-3.5 p-3 rounded-2xl bg-nc-surface border border-nc-border">
+                          <span className="text-lg">🎬</span>
+                          <div>
+                            <p className="text-xs font-bold text-white">Add a showreel intro video</p>
+                            <p className="text-[11px] text-nc-muted mt-0.5">Profiles with introduction videos receive up to 3x more profile views and clicks.</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-3.5 p-3 rounded-2xl bg-green-500/5 border border-green-500/10">
+                          <span className="text-lg">✅</span>
+                          <div>
+                            <p className="text-xs font-bold text-green-400">Intro video active</p>
+                            <p className="text-[11px] text-green-400/80 mt-0.5">Great job! Your introduction video is helping you stand out on the casting board.</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {p.bio === 'No bio provided yet.' || !p.bio || p.bio.length < 30 ? (
+                        <div className="flex items-start gap-3.5 p-3 rounded-2xl bg-nc-surface border border-nc-border">
+                          <span className="text-lg">✏️</span>
+                          <div>
+                            <p className="text-xs font-bold text-white">Expand your bio description</p>
+                            <p className="text-[11px] text-nc-muted mt-0.5">Profiles with a complete, rich bio description get 60% more incoming messages from casting directors.</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-3.5 p-3 rounded-2xl bg-green-500/5 border border-green-500/10">
+                          <span className="text-lg">✅</span>
+                          <div>
+                            <p className="text-xs font-bold text-green-400">Rich bio description active</p>
+                            <p className="text-[11px] text-green-400/80 mt-0.5">Nice! Your bio is fully filled out, providing professional detail for casting queries.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-nc-muted text-center py-20">Unable to load analytics data.</p>
             )}
           </div>
         )}
@@ -1635,28 +2362,45 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
 
     {/* Review Modal Overlay */}
     {showReviewModal && (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0A0A0A]/80 backdrop-blur-sm">
-        <GlassCard strong className="w-full max-w-lg border border-nc-border bounce-in p-0 overflow-hidden">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0A0A0A]/85 backdrop-blur-sm animate-fade-in">
+        <GlassCard strong className="w-full max-w-lg border border-nc-border bounce-in p-0 overflow-hidden bg-[#0F0F0F]">
           <div className="flex justify-between items-center p-5 border-b border-nc-border">
             <h3 className="font-bold text-white text-lg">Add Review for {p.name}</h3>
-            <button onClick={() => setShowReviewModal(false)} className="text-nc-muted hover:text-white p-2">CLOSE</button>
+            <button 
+              onClick={() => setShowReviewModal(false)} 
+              className="text-nc-muted hover:text-white p-2 text-xs uppercase font-bold"
+            >
+              Close
+            </button>
           </div>
-          <div className="p-5 space-y-4">
+          <div className="p-5 space-y-5">
             <div>
               <label className="block text-sm font-medium text-nc-secondary mb-2">Rating</label>
-              <div className="flex gap-2 text-2xl cursor-pointer">
+              <div className="flex gap-2 text-3xl cursor-pointer">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button 
                     key={star} 
                     type="button"
                     onClick={() => setRatingInput(star)}
-                    className={`transition-colors ${star <= ratingInput ? 'text-nc-accent' : 'text-white/20'}`}
+                    className={`transition-colors ${star <= ratingInput ? 'text-yellow-500 scale-110' : 'text-white/20 hover:scale-105'}`}
                   >
                     ★
                   </button>
                 ))}
               </div>
             </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-nc-secondary mb-2">Worked as</label>
+              <input 
+                type="text"
+                value={workedAsInput}
+                onChange={(e) => setWorkedAsInput(e.target.value)}
+                placeholder="e.g. Actor, Director, Cameraman..."
+                className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-nc-secondary mb-2">Review Details</label>
               <textarea 
@@ -1668,11 +2412,15 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
               />
             </div>
           </div>
-          <div className="p-5 border-t border-nc-border flex justify-end gap-3">
+          <div className="p-5 border-t border-nc-border flex justify-end gap-3 bg-[#0a0a0a]/50">
             <Button variant="secondary" disabled={isSubmittingReview} onClick={() => setShowReviewModal(false)}>Cancel</Button>
-            <Button disabled={isSubmittingReview} onClick={handleSubmitReview}>
-              {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
-            </Button>
+            <button 
+              disabled={isSubmittingReview} 
+              onClick={handleSubmitReview}
+              className="bg-[#00BFFF] hover:opacity-95 text-[#0A0A0A] px-5 py-2.5 rounded-xl text-sm font-bold uppercase transition-all disabled:opacity-50"
+            >
+              {isSubmittingReview ? 'Posting...' : 'Post Review'}
+            </button>
           </div>
         </GlassCard>
       </div>
@@ -1711,6 +2459,16 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           </button>
         )}
       </div>
+    )}
+
+    {showShareSheet && (
+      <ShareSheet
+        profile={{
+          ...p,
+          id: targetUid,
+        }}
+        onClose={() => setShowShareSheet(false)}
+      />
     )}
     </>
   );

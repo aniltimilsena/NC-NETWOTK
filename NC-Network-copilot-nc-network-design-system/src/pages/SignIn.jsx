@@ -1,22 +1,63 @@
 import { useState, useEffect } from 'react';
-import { EyeToggleIcon } from "@/components/ui/animated-state-icons"
-import GlassCard from '../components/ui/GlassCard';
-import Button from '../components/ui/Button';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Mail, Lock, Eye, EyeOff, Check, AlertCircle, ArrowLeft, Loader2, Sparkles
+} from 'lucide-react';
 import Logo from '../components/ui/Logo';
 import { auth, googleProvider, db } from '../lib/firebase';
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import SEO from '../components/SEO';
 
 import { signInUser, ensureUserProfile, logoutUser, sendPasswordReset } from '../services/auth';
 
 export default function SignIn({ onNavigate, showAlert }) {
+  const navigate = useNavigate();
+  // view states: 'signin' | 'forgot' | 'forgot_success'
+  const [view, setView] = useState('signin');
+  
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [lockoutTimeLeft, setLockoutTimeLeft] = useState(0);
 
-  // Handle redirect result for mobile (only if a redirect was initiated)
+  // Field validation states
+  const [validation, setValidation] = useState({
+    email: { valid: null, msg: '' },
+    password: { valid: null, msg: '' }
+  });
+
+  // Real-time validation handlers
+  const handleEmailChange = (val) => {
+    setForm(prev => ({ ...prev, email: val }));
+    if (!val) {
+      setValidation(prev => ({ ...prev, email: { valid: false, msg: 'Email is required.' } }));
+      return;
+    }
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regex.test(val)) {
+      setValidation(prev => ({ ...prev, email: { valid: false, msg: 'Please enter a valid email address.' } }));
+    } else {
+      setValidation(prev => ({ ...prev, email: { valid: true, msg: '' } }));
+    }
+  };
+
+  const handlePasswordChange = (val) => {
+    setForm(prev => ({ ...prev, password: val }));
+    if (!val) {
+      setValidation(prev => ({ ...prev, password: { valid: false, msg: 'Password is required.' } }));
+      return;
+    }
+    if (val.length < 8) {
+      setValidation(prev => ({ ...prev, password: { valid: false, msg: 'Password must be at least 8 characters.' } }));
+    } else {
+      setValidation(prev => ({ ...prev, password: { valid: true, msg: '' } }));
+    }
+  };
+
+  // Google redirect handler
   useEffect(() => {
     if (!sessionStorage.getItem('nc_google_redirect')) return;
     let isMounted = true;
@@ -48,7 +89,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     return () => { isMounted = false; };
   }, [onNavigate]);
 
-  // Handle countdown timer for lockout
+  // Lockout countdown timer
   useEffect(() => {
     const lockoutUntil = localStorage.getItem('login_lockout_until');
     if (lockoutUntil) {
@@ -63,7 +104,6 @@ export default function SignIn({ onNavigate, showAlert }) {
 
   useEffect(() => {
     if (lockoutTimeLeft <= 0) return;
-
     const interval = setInterval(() => {
       const lockoutUntil = localStorage.getItem('login_lockout_until');
       if (lockoutUntil) {
@@ -78,12 +118,10 @@ export default function SignIn({ onNavigate, showAlert }) {
         setLockoutTimeLeft(0);
       }
     }, 1000);
-
     return () => clearInterval(interval);
   }, [lockoutTimeLeft]);
 
-
-  // 2FA States
+  // 2FA states & verification
   const [show2fa, setShow2fa] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [correctCode, setCorrectCode] = useState('');
@@ -102,8 +140,13 @@ export default function SignIn({ onNavigate, showAlert }) {
       return;
     }
 
-    if (!form.email || !form.password) {
-      setError('Please enter both email and password.');
+    // Run validation on all fields
+    const emailVal = validateEmailLocally(form.email);
+    const passVal = validatePasswordLocally(form.password);
+    setValidation({ email: emailVal, password: passVal });
+
+    if (!emailVal.valid || !passVal.valid) {
+      setError('Please resolve validation errors before logging in.');
       return;
     }
 
@@ -114,18 +157,13 @@ export default function SignIn({ onNavigate, showAlert }) {
     
     if (authError) {
       setIsLoading(false);
-      
-      // Increment failed attempts count in localStorage
       const currentAttempts = parseInt(localStorage.getItem('login_attempts') || '0', 10) + 1;
       localStorage.setItem('login_attempts', currentAttempts.toString());
 
       if (currentAttempts >= 5) {
-        let duration = 60; // 1 minute
-        if (currentAttempts === 6) {
-          duration = 180; // 3 minutes
-        } else if (currentAttempts >= 7) {
-          duration = 600; // 10 minutes
-        }
+        let duration = 60;
+        if (currentAttempts === 6) duration = 180;
+        else if (currentAttempts >= 7) duration = 600;
         
         const lockoutTime = Date.now() + duration * 1000;
         localStorage.setItem('login_lockout_until', lockoutTime.toString());
@@ -139,40 +177,24 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
 
     if (user) {
-      // Clear login attempts on success
       localStorage.removeItem('login_attempts');
       localStorage.removeItem('login_lockout_until');
 
       try {
         const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
         if (profileSnap.exists() && profileSnap.data().twoFactorEnabled === true) {
-          // Two-Factor is enabled!
           const code = Math.floor(100000 + Math.random() * 900000).toString();
           setCorrectCode(code);
           setTempCredentials({ email: form.email, password: form.password });
           
-          // Request and trigger browser notification
           if (Notification.permission === 'granted') {
             new Notification("NC-Network Verification", {
               body: `Your Two-Factor Authentication (2FA) verification code is: ${code}`,
               icon: '/logo.png',
               requireInteraction: true
             });
-          } else if (Notification.permission !== 'denied') {
-            Notification.requestPermission().then(permission => {
-              if (permission === 'granted') {
-                new Notification("NC-Network Verification", {
-                  body: `Your Two-Factor Authentication (2FA) verification code is: ${code}`,
-                  icon: '/logo.png',
-                  requireInteraction: true
-                });
-              }
-            });
           }
-
-          // Sign out immediately so they aren't authenticated yet
           await logoutUser();
-          
           setShow2fa(true);
           setIsLoading(false);
           return;
@@ -180,9 +202,21 @@ export default function SignIn({ onNavigate, showAlert }) {
       } catch (err) {
         console.error("Error checking 2FA profile:", err);
       }
-      
       onNavigate('home');
     }
+  };
+
+  const validateEmailLocally = (val) => {
+    if (!val) return { valid: false, msg: 'Email is required.' };
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regex.test(val)) return { valid: false, msg: 'Please enter a valid email address.' };
+    return { valid: true, msg: '' };
+  };
+
+  const validatePasswordLocally = (val) => {
+    if (!val) return { valid: false, msg: 'Password is required.' };
+    if (val.length < 8) return { valid: false, msg: 'Password must be at least 8 characters.' };
+    return { valid: true, msg: '' };
   };
 
   const handleVerify2fa = async (e) => {
@@ -191,7 +225,6 @@ export default function SignIn({ onNavigate, showAlert }) {
       setTwoFactorError('Please enter the verification code.');
       return;
     }
-
     setIsLoading(true);
     setTwoFactorError('');
 
@@ -218,9 +251,7 @@ export default function SignIn({ onNavigate, showAlert }) {
       try {
         result = await signInWithPopup(auth, googleProvider);
       } catch (err) {
-        // If popup is blocked by the browser, fallback to redirect
         if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request')) {
-          console.warn("Popup blocked, falling back to redirect sign-in:", err);
           sessionStorage.setItem('nc_google_redirect', 'true');
           await signInWithRedirect(auth, googleProvider);
           return;
@@ -244,11 +275,16 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!form.email) {
-      setError('Please enter your email address to reset your password.');
+  const handleSendResetLink = async (e) => {
+    e?.preventDefault();
+    const emailVal = validateEmailLocally(form.email);
+    setValidation(prev => ({ ...prev, email: emailVal }));
+
+    if (!emailVal.valid) {
+      setError('Please enter a valid email address.');
       return;
     }
+
     setIsLoading(true);
     setError('');
     try {
@@ -256,47 +292,69 @@ export default function SignIn({ onNavigate, showAlert }) {
       if (resetError) {
         setError(resetError);
       } else {
-        showAlert('Password Reset Sent', 'success', `A password reset link has been sent to ${form.email}.`);
+        setView('forgot_success');
       }
     } catch (err) {
       console.error(err);
-      setError('Failed to send password reset email. Please try again.');
+      setError('Failed to send password reset link. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
+  // Helper validation class resolver
+  const getInputStyles = (field) => {
+    const status = validation[field]?.valid;
+    const common = "w-full bg-[#1a1a1a] text-white placeholder-gray-500 rounded-xl pl-10 pr-10 py-3 text-sm outline-none border transition-all duration-300 ";
+    if (status === true) {
+      return common + "border-green-500/50 focus:border-green-500 focus:shadow-[0_0_0_3px_rgba(34,197,94,0.15)]";
+    }
+    if (status === false) {
+      return common + "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]";
+    }
+    return common + "border-white/5 focus:border-[#00BFFF]/50 focus:shadow-[0_0_0_3px_rgba(0,191,255,0.15)]";
+  };
+
   if (show2fa) {
     return (
-      <div className="min-h-screen bg-nc-dark flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-nc-accent/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-nc-blue/5 rounded-full blur-3xl" />
-        
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 relative overflow-hidden font-sans">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#00BFFF]/5 rounded-full blur-3xl" />
         <div className="w-full max-w-md z-10">
-          <div className="text-center mb-10">
+          <div className="text-center mb-8">
             <Logo onNavigate={onNavigate} size="lg" className="mx-auto mb-6" />
             <h1 className="text-2xl font-black text-white">Two-Factor Verification</h1>
-            <p className="text-nc-muted mt-1">Check your system notifications for the security code</p>
+            <p className="text-gray-400 mt-1 text-sm">Check your system notifications for the security code</p>
           </div>
           
-          <GlassCard strong className="p-5 sm:p-8">
+          <div className="bg-[#111] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl">
             <form onSubmit={handleVerify2fa} className="space-y-6">
-              {twoFactorError && <div className="text-red-500 text-xs text-center bg-red-500/10 py-2 rounded-lg">{twoFactorError}</div>}
+              {twoFactorError && (
+                <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-lg border border-red-500/20">
+                  {twoFactorError}
+                </div>
+              )}
               
-              <div className="bg-sky-500/5 border border-sky-500/20 rounded-xl p-4 text-center">
-                <p className="text-xs text-sky-400 font-semibold leading-relaxed">
+              <div className="bg-[#00BFFF]/5 border border-[#00BFFF]/20 rounded-xl p-4 text-center">
+                <p className="text-xs text-[#00BFFF] font-semibold leading-relaxed">
                   A verification code has been dispatched. If you did not receive a system notification, please check your notification permissions.
                 </p>
                 {Notification.permission !== 'granted' && (
-                  <div className="mt-2 text-[11px] text-[#888] border-t border-sky-500/10 pt-2">
-                    Fallback code for testing (Notifications blocked): <span className="font-mono text-white font-bold select-all bg-white/10 px-1.5 py-0.5 rounded">{correctCode}</span>
+                  <div className="mt-2 text-[11px] text-[#666] border-t border-[#00BFFF]/10 pt-2">
+                    Testing fallback code: <span className="font-mono text-white font-bold select-all bg-white/10 px-1.5 py-0.5 rounded">{correctCode}</span>
                   </div>
                 )}
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-nc-secondary mb-2">Verification Code</label>
+                <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Verification Code</label>
                 <input
                   type="text"
                   pattern="\d{6}"
@@ -304,19 +362,18 @@ export default function SignIn({ onNavigate, showAlert }) {
                   value={verificationCode}
                   onChange={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                   placeholder="e.g. 123456"
-                  className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-center font-mono text-xl tracking-[0.3em] font-bold"
+                  className="w-full bg-[#1a1a1a] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 outline-none focus:border-[#00BFFF] transition-colors text-center font-mono text-xl tracking-[0.3em] font-bold"
                 />
               </div>
               
               <div className="space-y-3">
-                <Button 
-                  className="w-full justify-center" 
-                  size="lg"
+                <button
                   type="submit"
                   disabled={isLoading}
+                  className="w-full justify-center flex items-center gap-2 bg-gradient-to-r from-[#00bfff] to-[#0080ff] hover:opacity-95 text-black font-extrabold py-3.5 rounded-xl text-sm transition-all shadow-lg active:scale-[0.98] disabled:opacity-50"
                 >
-                  {isLoading ? 'Verifying...' : 'Verify & Sign In'}
-                </Button>
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify & Sign In'}
+                </button>
                 
                 <button
                   type="button"
@@ -326,148 +383,370 @@ export default function SignIn({ onNavigate, showAlert }) {
                     setTwoFactorError('');
                     setTempCredentials(null);
                   }}
-                  className="w-full text-center text-xs text-nc-muted hover:text-white transition-colors py-2"
+                  className="w-full text-center text-xs text-gray-500 hover:text-white transition-colors py-2"
                 >
                   Back to Sign In
                 </button>
               </div>
             </form>
-          </GlassCard>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-nc-dark flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-nc-accent/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-nc-blue/5 rounded-full blur-3xl" />
-      
-      <div className="w-full max-w-md z-10">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <Logo onNavigate={onNavigate} size="lg" className="mx-auto mb-6" />
-          <h1 className="text-2xl font-black text-white">Welcome back</h1>
-          <p className="text-nc-muted mt-1">Sign in to your account</p>
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col md:flex-row relative overflow-hidden font-sans">
+      <SEO 
+        title="Sign In | NC Network" 
+        description="Access your NC Network account to explore Nepali cinema casting opportunities and talent." 
+      />
+
+      {/* BACKGROUND DECORATION */}
+      <div className="absolute top-[-100px] right-[-100px] w-96 h-96 bg-[#00BFFF]/5 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute bottom-[-100px] left-[-100px] w-96 h-96 bg-purple-500/5 rounded-full blur-[120px] pointer-events-none z-0" />
+
+      {/* LEFT COLUMN: Cinematic Image (Desktop Only) */}
+      <div className="hidden md:flex md:w-1/2 relative flex-col justify-between p-16 bg-cover bg-center" style={{ backgroundImage: "url('/cinematic_backstage.png')" }}>
+        {/* Dark Cinematic Vignette overlay */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#0a0a0af5] via-[#0a0a0ad5] to-[#0a0a0a55] z-0"></div>
+        
+        <div className="flex-1" />
+        
+        <div className="relative z-10 max-w-md space-y-4 text-left">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-yellow-400 font-semibold w-max"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Nepal's Premier Cinema Platform
+          </motion.div>
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.15]"
+          >
+            Discover Multiple Talents in one place
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="text-gray-400 text-sm font-medium leading-relaxed"
+          >
+            Connect, apply to roles, manage casting calls, and present your premium portfolio to leading directors across the region.
+          </motion.p>
         </div>
         
-        <GlassCard strong className="p-5 sm:p-8">
-          <div className="space-y-4">
-            {lockoutTimeLeft > 0 ? (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-center space-y-3 relative overflow-hidden animate-pulse">
-                <div className="flex items-center justify-center gap-2 text-red-400 font-bold text-sm">
-                  <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  Login Rate Limited
-                </div>
-                <p className="text-xs text-nc-secondary leading-relaxed">
-                  Too many failed attempts. For your security, login has been locked.
-                </p>
-                <div className="text-2xl font-black text-red-500 tracking-wider">
-                  {Math.floor(lockoutTimeLeft / 60)}:{(lockoutTimeLeft % 60).toString().padStart(2, '0')}
-                </div>
-                {/* Countdown Progress Bar */}
-                <div className="w-full h-1 bg-nc-border rounded-full overflow-hidden absolute bottom-0 left-0">
-                  <div 
-                    className="h-full bg-red-500 transition-all duration-1000 ease-linear"
-                    style={{ 
-                      width: `${(lockoutTimeLeft / (
-                        parseInt(localStorage.getItem('login_attempts') || '5', 10) === 5 ? 60 : 
-                        parseInt(localStorage.getItem('login_attempts') || '5', 10) === 6 ? 180 : 600
-                      )) * 100}%` 
-                    }}
-                  />
-                </div>
-              </div>
-            ) : (
-              error && <div className="text-red-500 text-xs text-center bg-red-500/10 py-2 rounded-lg">{error}</div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-nc-secondary mb-2">Email address</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={e => setForm({...form, email: e.target.value})}
-                placeholder="you@example.com"
-                className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
-              />
-            </div>
-            <div>
-              <div className="flex justify-between mb-2">
-                <label className="text-sm font-medium text-nc-secondary">Password</label>
-                <button 
-                  type="button"
-                  onClick={handleForgotPassword}
-                  disabled={isLoading}
-                  className="text-nc-accent text-xs hover:text-sky-300 disabled:opacity-50"
-                >
-                  Forgot password?
-                </button>
-              </div>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={form.password}
-                  onChange={e => setForm({...form, password: e.target.value})}
-                  placeholder="••••••••"
-                  disabled={lockoutTimeLeft > 0}
-                  className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={lockoutTimeLeft > 0}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-nc-muted hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <EyeToggleIcon active={showPassword} size={20} color="currentColor" />
-                </button>
-              </div>
-            </div>
-            <Button 
-              className="w-full justify-center" 
-              size="lg"
-              onClick={handleSignIn}
-              disabled={isLoading || lockoutTimeLeft > 0}
-            >
-              {isLoading ? 'Signing in...' : lockoutTimeLeft > 0 ? 'Locked Out' : 'Sign In'}
-            </Button>
-            
-            <div className="relative flex items-center gap-3">
-              <div className="flex-1 h-px bg-nc-border" />
-              <span className="text-nc-muted text-xs">or continue with</span>
-              <div className="flex-1 h-px bg-nc-border" />
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button 
-                onClick={handleGoogleSignIn}
-                disabled={isLoading || lockoutTimeLeft > 0}
-                className="flex-1 flex items-center justify-center gap-2 bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-nc-secondary text-sm hover:border-nc-accent/30 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-4 h-4 text-white" viewBox="0 0 488 512" fill="currentColor"><path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/></svg>
-                Google
-              </button>
-              <button 
-                onClick={() => showAlert('Sign in with Apple is coming soon!', 'info')}
-                disabled={isLoading || lockoutTimeLeft > 0}
-                className="flex-1 flex items-center justify-center gap-2 bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-nc-secondary text-sm hover:border-nc-accent/30 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-4 h-4 text-white" viewBox="0 0 384 512" fill="currentColor"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
-                Apple
-              </button>
-            </div>
-          </div>
-        </GlassCard>
+        <div className="relative z-10 text-xs text-gray-600 text-left">
+          © 2026 NC Network. All rights reserved.
+        </div>
+      </div>
+
+      {/* RIGHT COLUMN: Interactive Form Container */}
+      <div className="w-full md:w-1/2 flex flex-col justify-start items-center p-6 sm:p-12 md:p-16 z-10 overflow-y-auto relative pt-4 md:pt-4">
         
-        <p className="text-center text-nc-muted text-sm mt-6">
-          Don't have an account?{' '}
-          <button onClick={() => onNavigate('signup')} className="text-nc-accent hover:text-sky-300 font-medium">
-            Sign up free
-          </button>
-        </p>
+        {/* Back Button */}
+        <button 
+          onClick={handleBack} 
+          className="absolute top-6 left-6 flex items-center gap-1.5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 rounded-full px-3.5 py-1.5 transition-all text-xs font-bold group cursor-pointer z-20"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+          <span>Back</span>
+        </button>
+
+        <div className="w-full max-w-[400px] flex flex-col items-center">
+          
+          {/* NC Logo (top center, horizontal) */}
+          <Link 
+            to="/" 
+            className="flex flex-row items-center justify-center gap-2.5 mb-8 mt-[40px] sm:mt-[48px] md:mt-[40px] group cursor-pointer text-center"
+          >
+            {/* Yellow circle with NC */}
+            <div 
+              className="w-14 h-14 rounded-xl flex items-center justify-center font-black text-[20px] text-black shadow-lg shadow-[#FFD700]/10 transition-transform group-hover:scale-105"
+              style={{ backgroundColor: '#FFD700' }}
+            >
+              NC
+            </div>
+            
+            {/* Network text side-by-side */}
+            <span className="text-white font-bold text-[18px] tracking-[0.5px]">
+              Network
+            </span>
+          </Link>
+          
+          <div className="w-full">
+            <AnimatePresence mode="wait">
+              {/* VIEW 1: SIGN IN FORM */}
+              {view === 'signin' && (
+                <motion.div
+                  key="signin"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-8 text-left w-full"
+                >
+                  <div className="text-center w-full">
+                    <h1 className="text-3xl font-black text-white tracking-tight text-center">Welcome Back</h1>
+                    <p className="text-sm text-gray-500 mt-1.5 font-medium text-center">Sign in to your NC Network account</p>
+                  </div>
+
+                {/* Error Banner */}
+                {lockoutTimeLeft > 0 ? (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-center space-y-2 relative overflow-hidden animate-pulse">
+                    <div className="flex items-center justify-center gap-2 text-red-400 font-bold text-xs">
+                      <AlertCircle className="w-4.5 h-4.5 text-red-500" />
+                      LOGIN RATE LIMITED
+                    </div>
+                    <p className="text-[11px] text-gray-400 leading-relaxed">
+                      Too many failed attempts. For your security, login is locked.
+                    </p>
+                    <div className="text-2xl font-black text-red-500 tracking-wider">
+                      {Math.floor(lockoutTimeLeft / 60)}:{(lockoutTimeLeft % 60).toString().padStart(2, '0')}
+                    </div>
+                  </div>
+                ) : (
+                  error && (
+                    <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-xl border border-red-500/20 font-bold">
+                      {error}
+                    </div>
+                  )
+                )}
+
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  {/* Email Input */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Email Address</label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                        <Mail className="w-4 h-4" />
+                      </span>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={e => handleEmailChange(e.target.value)}
+                        placeholder="you@example.com"
+                        disabled={lockoutTimeLeft > 0}
+                        className={getInputStyles('email')}
+                      />
+                      {validation.email.valid === true && (
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-green-500">
+                          <Check className="w-4.5 h-4.5" />
+                        </span>
+                      )}
+                      {validation.email.valid === false && (
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500">
+                          <AlertCircle className="w-4.5 h-4.5" />
+                        </span>
+                      )}
+                    </div>
+                    {validation.email.valid === false && (
+                      <p className="text-[10px] text-red-400 font-bold mt-1.5">{validation.email.msg}</p>
+                    )}
+                  </div>
+
+                  {/* Password Input */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold">Password</label>
+                      <button 
+                        type="button"
+                        onClick={() => setView('forgot')}
+                        disabled={isLoading}
+                        className="text-[#00BFFF] text-xs font-bold hover:underline underline-offset-4"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                        <Lock className="w-4 h-4" />
+                      </span>
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={form.password}
+                        onChange={e => handlePasswordChange(e.target.value)}
+                        placeholder="••••••••"
+                        disabled={lockoutTimeLeft > 0}
+                        className={getInputStyles('password')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        disabled={lockoutTimeLeft > 0}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-white transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                      </button>
+                    </div>
+                    {validation.password.valid === false && (
+                      <p className="text-[10px] text-red-400 font-bold mt-1.5">{validation.password.msg}</p>
+                    )}
+                  </div>
+
+                  {/* Sign In Button */}
+                  <button
+                    type="submit"
+                    disabled={isLoading || lockoutTimeLeft > 0}
+                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#00bfff] to-[#0080ff] hover:opacity-95 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg shadow-[#00bfff]/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : 'Sign In'}
+                  </button>
+                </form>
+
+                {/* Divider */}
+                <div className="relative flex items-center gap-3">
+                  <div className="flex-1 h-px bg-white/5" />
+                  <span className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">or continue with</span>
+                  <div className="flex-1 h-px bg-white/5" />
+                </div>
+
+                {/* Google Sign-in Button */}
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={isLoading || lockoutTimeLeft > 0}
+                  className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-black font-extrabold py-3 rounded-xl text-sm transition-all disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 488 512" fill="currentColor">
+                    <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" />
+                  </svg>
+                  Sign in with Google
+                </button>
+
+                {/* Footer link */}
+                <p className="text-center text-gray-500 text-sm mt-6">
+                  Don't have an account?{' '}
+                  <button 
+                    onClick={() => onNavigate('signup')} 
+                    className="text-[#00BFFF] hover:underline underline-offset-4 font-bold"
+                  >
+                    Sign up
+                  </button>
+                </p>
+              </motion.div>
+            )}
+
+            {/* VIEW 2: FORGOT PASSWORD */}
+            {view === 'forgot' && (
+              <motion.div
+                key="forgot"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-8 text-left"
+              >
+                <button
+                  onClick={() => {
+                    setView('signin');
+                    setError('');
+                  }}
+                  className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-white transition-colors uppercase tracking-wider"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Sign In
+                </button>
+
+                <div>
+                  <h1 className="text-3xl font-black text-white tracking-tight">Forgot Password</h1>
+                  <p className="text-sm text-gray-500 mt-1.5 font-medium">Enter your email to receive a password reset link</p>
+                </div>
+
+                {error && (
+                  <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-xl border border-red-500/20 font-bold">
+                    {error}
+                  </div>
+                )}
+
+                <form onSubmit={handleSendResetLink} className="space-y-4">
+                  {/* Email Input */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Email Address</label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                        <Mail className="w-4 h-4" />
+                      </span>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={e => handleEmailChange(e.target.value)}
+                        placeholder="you@example.com"
+                        className={getInputStyles('email')}
+                      />
+                      {validation.email.valid === true && (
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-green-500">
+                          <Check className="w-4.5 h-4.5" />
+                        </span>
+                      )}
+                      {validation.email.valid === false && (
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500">
+                          <AlertCircle className="w-4.5 h-4.5" />
+                        </span>
+                      )}
+                    </div>
+                    {validation.email.valid === false && (
+                      <p className="text-[10px] text-red-400 font-bold mt-1.5">{validation.email.msg}</p>
+                    )}
+                  </div>
+
+                  {/* Send Reset Link Button */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#00bfff] to-[#0080ff] hover:opacity-95 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : 'Send Reset Link'}
+                  </button>
+                </form>
+              </motion.div>
+            )}
+
+            {/* VIEW 3: FORGOT SUCCESS */}
+            {view === 'forgot_success' && (
+              <motion.div
+                key="forgot_success"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-8 text-center"
+              >
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  {/* Circular glowing green checkmark */}
+                  <div className="w-20 h-20 bg-green-500/10 border border-green-500/25 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.15)]">
+                    <Check className="w-10 h-10 text-green-400" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h1 className="text-3xl font-black text-white tracking-tight">Check your email</h1>
+                    <p className="text-sm text-gray-500 font-medium max-w-[320px] mx-auto leading-relaxed">
+                      A password reset link has been successfully dispatched to <span className="text-white font-bold">{form.email}</span>. Please verify your inbox and spam folders.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setView('signin');
+                    setError('');
+                    setForm(prev => ({ ...prev, password: '' }));
+                    setValidation({ email: { valid: null, msg: '' }, password: { valid: null, msg: '' } });
+                  }}
+                  className="inline-flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-white/5 hover:border-white/10 text-white font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-2xl transition-all shadow-lg active:scale-[0.98]"
+                >
+                  Back to Sign In
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
+  </div>
   );
 }

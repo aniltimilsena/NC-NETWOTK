@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/animated-state-icons";
 import Avatar from '../ui/Avatar';
 import { db } from '../../lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, Timestamp, limit } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, Timestamp, limit, updateDoc, doc } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
 
 import { formatMessagePreview } from '../../utils/format';
 
@@ -19,6 +20,19 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
   const isLoggedIn = !!user;
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || 'en';
+
+  const changeLang = async (lng) => {
+    i18n.changeLanguage(lng);
+    if (user?.uid) {
+      try {
+        await updateDoc(doc(db, "profiles", user.uid), { language: lng });
+      } catch (err) {
+        console.warn("Failed to sync language preference:", err);
+      }
+    }
+  };
 
   const resolveLegacyPath = (page, param = null) => {
     switch (page) {
@@ -38,6 +52,7 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
       case 'privacy': return '/privacy';
       case 'terms': return '/terms';
       case 'trust': return '/trust-safety';
+      case 'trending': return '/trending';
       default: return '/';
     }
   };
@@ -54,11 +69,12 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
       case 'notifications': return pathname === '/notifications';
       case 'settings': return pathname.startsWith('/settings');
       case 'premium': return pathname === '/premium';
+      case 'trending': return pathname === '/trending';
       default: return false;
     }
   };
 
-  const isDiscoverActive = isActionActive('listing') || isActionActive('home') || isActionActive('settings') || pathname.startsWith('/admin');
+  const isDiscoverActive = isActionActive('listing') || isActionActive('trending') || isActionActive('home') || isActionActive('settings') || pathname.startsWith('/admin');
   const isProjectsActive = isActionActive('casting') || isActionActive('casting-create');
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -117,10 +133,10 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
   };
   
   const navItems = [
-    { label: 'Home', page: 'home', icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
-    { label: 'Talent', page: 'listing', icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg> },
-    { label: 'Casting', page: 'casting', icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg> },
-    { label: 'Profile', page: 'profile', icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> },
+    { label: t('nav_home'), page: 'home', icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
+    { label: t('nav_talents'), page: 'listing', icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg> },
+    { label: t('nav_casting'), page: 'casting', icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg> },
+    { label: t('nav_profile'), page: 'profile', icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> },
   ];
 
   const menuSections = [
@@ -196,20 +212,21 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
             <div className="hidden md:flex items-center justify-center flex-1 mx-8 gap-8">
               <div className="relative group">
                 <button className={`flex items-center gap-1.5 py-2 text-sm font-medium transition-colors ${isDiscoverActive ? 'text-white' : 'text-[#888] hover:text-white'}`}>
-                  Discover
+                  {t('nav_discover')}
                   <svg className="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-48 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-50 py-2">
-                  <Link to="/talents" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">Talent Directory</Link>
-                  <Link to="/" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">Upcoming Movies</Link>
-                  <Link to="/settings" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">Settings</Link>
+                  <Link to="/talents" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_talent_directory')}</Link>
+                  <Link to="/trending" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_trending_now')}</Link>
+                  <Link to="/" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_upcoming_movies')}</Link>
+                  <Link to="/settings" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
                   {isAdmin && (
                     <>
                       <div className="mx-2 my-1 border-t border-white/5"></div>
                       <Link to="/admin" className="w-full text-left block px-4 py-2.5 text-[10px] uppercase tracking-widest font-black text-admin-primary hover:text-white hover:bg-admin-primary/20 transition-all flex items-center justify-between group/admin">
-                        <span>Admin</span>
+                        <span>{t('nav_admin')}</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-admin-primary shadow-[0_0_8px_#38bdf8] group-hover/admin:scale-125 transition-transform"></span>
                       </Link>
                     </>
@@ -219,20 +236,50 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
 
               <div className="relative group">
                 <button className={`flex items-center gap-1.5 py-2 text-sm font-medium transition-colors ${isProjectsActive ? 'text-white' : 'text-[#888] hover:text-white'}`}>
-                  Projects
+                  {t('nav_projects')}
                   <svg className="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-52 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-50 py-2">
-                  <Link to="/casting" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">Casting Calls Board</Link>
-                  <Link to="/casting/create" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">Post a Project</Link>
+                  <Link to="/casting" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_casting_calls')}</Link>
+                  <Link to="/casting/create" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_post_project')}</Link>
                 </div>
               </div>
             </div>
             
             {/* Actions */}
             <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+              {/* Language Switcher */}
+              <div className="relative group/lang flex items-center mr-1">
+                <button 
+                  className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-base transition-all active:scale-95 cursor-pointer"
+                  title="Switch Language / भाषा"
+                >
+                  {currentLang === 'np' ? '🇳🇵' : currentLang === 'hi' ? '🇮🇳' : '🇺🇸'}
+                </button>
+                <div className="absolute top-full right-0 mt-2 w-32 rounded-2xl bg-[#0A0A0A] border border-white/10 shadow-2xl opacity-0 invisible group-hover/lang:opacity-100 group-hover/lang:visible transition-all duration-200 translate-y-2 group-hover/lang:translate-y-0 z-[60] py-1.5 overflow-hidden">
+                  <button 
+                    onClick={() => changeLang('en')} 
+                    className={`w-full px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-white/5 flex items-center gap-2.5 ${currentLang === 'en' ? 'text-[#0099FF] bg-white/5' : 'text-gray-300'}`}
+                  >
+                    <span className="text-sm">🇺🇸</span> English
+                  </button>
+                  <button 
+                    onClick={() => changeLang('np')} 
+                    className={`w-full px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-white/5 flex items-center gap-2.5 ${currentLang === 'np' ? 'text-[#0099FF] bg-white/5' : 'text-gray-300'}`}
+                  >
+                    <span className="text-sm">🇳🇵</span> नेपाली
+                  </button>
+                  <button 
+                    onClick={() => changeLang('hi')} 
+                    className={`w-full px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-white/5 flex items-center gap-2.5 ${currentLang === 'hi' ? 'text-[#0099FF] bg-white/5' : 'text-gray-300'}`}
+                  >
+                    <span className="text-sm">🇮🇳</span> हिन्दी
+                  </button>
+                </div>
+              </div>
+
               {/* Removed redundant Sign In button as per user request */}
               <button
                 onClick={() => setShowSearchOverlay(true)}
@@ -272,7 +319,7 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
                       : 'text-nc-pro hover:bg-nc-pro/10 border border-nc-pro/20'
                   }`}
                 >
-                  Go PRO
+                  {t('nav_go_pro')}
                 </Link>
               )}
  
@@ -295,10 +342,10 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
                       <p className="text-white text-xs font-bold truncate">{user.displayName || 'Discovery Talent'}</p>
                       <p className="text-nc-muted text-[10px] truncate">{user.email}</p>
                     </div>
-                    <Link to={user ? `/profile/${user.uid}` : '/signin'} className="w-full text-left block px-4 py-2 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">My Profile</Link>
-                    <Link to="/settings?tab=about" className="w-full text-left block px-4 py-2 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">Edit Profile</Link>
+                    <Link to={user ? `/profile/${user.uid}` : '/signin'} className="w-full text-left block px-4 py-2 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_profile')}</Link>
+                    <Link to="/settings?tab=about" className="w-full text-left block px-4 py-2 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
                     <div className="mx-2 my-1 border-t border-white/5"></div>
-                    <button onClick={onLogout} className="w-full text-left block px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">Logout</button>
+                    <button onClick={onLogout} className="w-full text-left block px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">{t('nav_logout')}</button>
                   </div>
                 </div>
               ) : (
@@ -306,7 +353,7 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
                   to="/signup"
                   className="hidden md:block bg-nc-accent text-nc-darker text-sm px-4 py-1.5 rounded-lg font-bold hover:bg-sky-400 transition-all ml-1 shadow-lg shadow-nc-accent/20"
                 >
-                  Join Now
+                  {t('nav_signup')}
                 </Link>
               )}
               <button
@@ -340,6 +387,7 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
               {[
                 { name: "Home", path: "/", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/> },
                 { name: "Talent", path: "/talents", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
+                { name: "Trending", path: "/trending", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
                 { name: "Casting", path: "/casting", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
                 { name: "Create", path: "/casting/create", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /> },
                 { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
@@ -367,14 +415,81 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
                   </Link>
                 );
               })}
+
+              <hr className="border-white/5 my-4 mx-8" />
+
+              {/* Bottom Actions grouped into the same list layout */}
+              <Link 
+                to="/settings"
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center w-full relative px-8 py-3.5 transition-colors ${
+                  pathname === "/settings" ? "text-[#FACC15] bg-gradient-to-r from-transparent to-[#FACC15]/5" : "text-[#777] hover:text-[#CCC]"
+                }`}
+              >
+                <svg className="w-[22px] h-[22px] mr-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="font-bold text-[15px]">Settings</span>
+                {pathname === "/settings" && (
+                  <div className="absolute right-0 top-0 bottom-0 w-[2px] bg-nc-accent shadow-[-2px_0_10px_rgba(250,204,21,0.4)]"></div>
+                )}
+              </Link>
+
+              <Link 
+                to="/trust-safety"
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center w-full relative px-8 py-3.5 transition-colors ${
+                  pathname === "/trust-safety" ? "text-[#FACC15] bg-gradient-to-r from-transparent to-[#FACC15]/5" : "text-[#777] hover:text-[#CCC]"
+                }`}
+              >
+                <svg className="w-[22px] h-[22px] mr-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-bold text-[15px]">Support</span>
+                {pathname === "/trust-safety" && (
+                  <div className="absolute right-0 top-0 bottom-0 w-[2px] bg-nc-accent shadow-[-2px_0_10px_rgba(250,204,21,0.4)]"></div>
+                )}
+              </Link>
+
+              <hr className="border-white/5 my-4 mx-8" />
+
+              {isLoggedIn ? (
+                <button 
+                  onClick={() => { 
+                    onLogout();
+                    setMenuOpen(false); 
+                  }}
+                  className="flex items-center w-full relative px-8 py-3.5 transition-colors text-[#777] hover:text-white text-left"
+                >
+                  <svg className="w-[22px] h-[22px] mr-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="font-bold text-[15px]">Logout</span>
+                </button>
+              ) : (
+                <Link 
+                  to="/signin"
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center w-full relative px-8 py-3.5 transition-colors ${
+                    pathname === "/signin" ? "text-[#FACC15] bg-gradient-to-r from-transparent to-[#FACC15]/5" : "text-[#777] hover:text-white"
+                  }`}
+                >
+                  <svg className="w-[22px] h-[22px] mr-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="font-bold text-[15px]">Sign In</span>
+                  {pathname === "/signin" && (
+                    <div className="absolute right-0 top-0 bottom-0 w-[2px] bg-nc-accent shadow-[-2px_0_10px_rgba(250,204,21,0.4)]"></div>
+                  )}
+                </Link>
+              )}
             </div>
 
-            {!isAdmin && !user?.premium && <div className="flex-1"></div>}
-
-            <div className="px-6 pb-6">
-              {/* Premium Box Container */}
-              {!isAdmin && !user?.premium && (
-                <div className="bg-[#1C1C1C] rounded-[2rem] p-5 mb-5 border border-[#2A2A2A] relative overflow-hidden">
+            {/* Go PRO Card at the bottom */}
+            {!isAdmin && !user?.premium && (
+              <div className="px-6 pb-6 mt-auto">
+                <div className="bg-[#1C1C1C] rounded-[2rem] p-5 border border-[#2A2A2A] relative overflow-hidden">
                   <h4 className="text-white font-bold text-[15px] mb-1 relative z-10">Go PRO</h4>
                   <p className="text-[#888] text-[12px] leading-relaxed mb-4 max-w-[200px] relative z-10">
                     Unlock exclusive casting calls and AI talent matching.
@@ -387,69 +502,81 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
                   >
                     Go PRO
                   </Link>
-                  
-                  {/* Subtle top-right glow matching screenshot */}
                   <div className="absolute -top-10 -right-10 w-24 h-24 bg-nc-accent blur-3xl opacity-10 rounded-full"></div>
                 </div>
-              )}
-
-              {/* Bottom Actions Container */}
-              <div className="flex flex-col gap-1 px-2 mb-4">
-                <Link 
-                  to="/settings"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center text-[#777] hover:text-[#CCC] transition-colors py-3"
-                >
-                  <svg className="w-[18px] h-[18px] mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span className="font-semibold text-[14px]">Settings</span>
-                </Link>
-                <Link 
-                  to="/trust-safety"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center text-[#777] hover:text-[#CCC] transition-colors py-3"
-                >
-                  <svg className="w-[18px] h-[18px] mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="font-semibold text-[14px]">Support</span>
-                </Link>
-                
-                <hr className="border-white/5 my-2" />
-                
-                {isLoggedIn ? (
-                  <button 
-                    onClick={() => { 
-                      onLogout();
-                      setMenuOpen(false); 
-                    }}
-                    className="flex items-center text-[#777] hover:text-white transition-colors py-3 w-full text-left"
-                  >
-                    <svg className="w-[18px] h-[18px] mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    <span className="font-semibold text-[14px]">Logout</span>
-                  </button>
-                ) : (
-                  <Link 
-                    to="/signin"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center text-[#777] hover:text-white transition-colors py-3"
-                  >
-                    <svg className="w-[18px] h-[18px] mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    <span className="font-semibold text-[14px]">Sign In</span>
-                  </Link>
-                )}
               </div>
-            </div>
+            )}
             
           </div>
         </div>
       )}
+
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0f0f0f] border-t border-white/5 flex items-center justify-around z-40">
+        {[
+          {
+            label: 'Home',
+            path: '/',
+            isActive: pathname === '/',
+            icon: (
+              <svg className="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            )
+          },
+          {
+            label: 'Talents',
+            path: '/talents',
+            isActive: pathname.startsWith('/talents'),
+            icon: (
+              <svg className="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            )
+          },
+          {
+            label: 'Casting',
+            path: '/casting',
+            isActive: pathname.startsWith('/casting'),
+            icon: (
+              <svg className="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            )
+          },
+          {
+            label: 'Messages',
+            path: '/messages',
+            isActive: pathname.startsWith('/messages'),
+            icon: (
+              <svg className="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            )
+          },
+          {
+            label: 'Profile',
+            path: user ? `/profile/${user.uid}` : '/signin',
+            isActive: pathname.startsWith('/profile') || pathname === '/signin' || pathname === '/signup',
+            icon: (
+              <svg className="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            )
+          }
+        ].map((tab) => (
+          <Link
+            key={tab.label}
+            to={tab.path}
+            className={`flex flex-col items-center justify-center flex-1 h-full py-2 gap-1 text-[10px] font-bold transition-all ${
+              tab.isActive ? 'text-[#00BFFF]' : 'text-[#444444]'
+            }`}
+          >
+            {tab.icon}
+            <span>{tab.label}</span>
+          </Link>
+        ))}
+      </div>
 
       {/* Search Overlay */}
       <AnimatePresence>

@@ -8,6 +8,7 @@ import {
   onSnapshot,
   getDoc,
   getDocs,
+  updateDoc,
 } from "firebase/firestore";
 import apiClient from "../api/client";
 
@@ -153,11 +154,45 @@ export const subscribeToConversations = (
             }
           }
 
+          // ── Determine unread status for THIS user ─────────────────────────
+          // Log raw data in dev so we can see the exact field names
+          if (import.meta.env.DEV) {
+            console.debug('[messaging] convo', d.id, '| raw fields:', {
+              unread: data.unread,
+              readBy: data.readBy,
+              unreadCounts: data.unreadCounts,
+              lastSenderId: data.lastSenderId,
+            });
+          }
+
+          let isUnreadForMe = false;
+          const lastSender = data.lastSenderId;
+
+          if (lastSender && lastSender !== uid) {
+            if (data.readBy && typeof data.readBy === 'object' && !Array.isArray(data.readBy)) {
+              // readBy[uid] === false  →  this user hasn't read yet
+              isUnreadForMe = data.readBy[uid] === false;
+            } else if (data.unreadCounts && typeof data.unreadCounts === 'object') {
+              // unreadCounts[uid] > 0  →  unread for this user
+              isUnreadForMe = (data.unreadCounts[uid] || 0) > 0;
+            } else if (typeof data.unread === 'boolean') {
+              // legacy single boolean
+              isUnreadForMe = data.unread === true;
+            } else if (typeof data.unread === 'number') {
+              isUnreadForMe = data.unread > 0;
+            }
+          }
+          // Never show unread for the sender of the last message
+          if (lastSender === uid) isUnreadForMe = false;
+
           return {
             id: d.id,
             ...data,
             ...participantInfo,
+            // Expose a normalised isUnread flag for the UI
+            isUnreadForMe,
           };
+
         })
       );
 
@@ -238,11 +273,41 @@ export const findOrCreateConversation = async (participants: string[]) => {
 
 export const markConversationAsRead = async (convoId: string) => {
   try {
+    const uid = auth.currentUser?.uid;
+
+    // 1. Write directly to Firestore so the UI updates immediately
+    if (uid && convoId) {
+      const convoRef = doc(db, 'conversations', convoId);
+      const snap = await getDoc(convoRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        const updatePayload: Record<string, any> = {};
+
+        if (data.readBy && typeof data.readBy === 'object') {
+          // Per-user readBy map: mark this user as read
+          updatePayload[`readBy.${uid}`] = true;
+        } else if (data.unreadCounts && typeof data.unreadCounts === 'object') {
+          // Per-user unreadCounts map: zero out this user's count
+          updatePayload[`unreadCounts.${uid}`] = 0;
+        } else {
+          // Legacy boolean — only clear if we were the recipient
+          if (data.lastSenderId !== uid) {
+            updatePayload['unread'] = false;
+          }
+        }
+
+        if (Object.keys(updatePayload).length > 0) {
+          await updateDoc(convoRef, updatePayload);
+        }
+      }
+    }
+
+    // 2. Also call backend for server-side sync (best-effort)
     await apiClient.put(`/messaging/${convoId}/read`);
     return { success: true, error: null };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to mark conversation as read";
-    console.error("markConversationAsRead error:", message);
+    const message = error instanceof Error ? error.message : 'Failed to mark conversation as read';
+    console.error('markConversationAsRead error:', message);
     return { success: false, error: message };
   }
 };

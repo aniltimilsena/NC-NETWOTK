@@ -38,7 +38,7 @@ export default function Breadcrumbs() {
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-3 flex items-center space-x-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#888] select-none">
+    <nav aria-label="Breadcrumb" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center space-x-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#888] select-none">
       <Link to="/" className="hover:text-white transition-colors">
         Home
       </Link>

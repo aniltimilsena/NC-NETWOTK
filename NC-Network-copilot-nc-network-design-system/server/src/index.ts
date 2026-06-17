@@ -43,24 +43,40 @@ if (!admin.apps.length) {
       storageBucket: `${projectId}.appspot.com`,
     });
   } else {
-    console.warn("⚠️ Firebase Admin credentials are not fully configured in environment variables.");
-    console.warn("Initializing Firebase Admin with dynamically generated dummy credentials for local startup.");
-    
-    // Generate a structurally valid RSA private key PEM dynamically
-    const { privateKey: dummyPrivateKey } = crypto.generateKeyPairSync('rsa', {
-      modulusLength: 2048,
-      publicKeyEncoding: { type: 'spki', format: 'pem' },
-      privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
-    });
+    // Try to load credentials from Application Default Credentials (ADC)
+    let initialized = false;
+    try {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        projectId: projectId,
+        storageBucket: projectId ? `${projectId}.appspot.com` : undefined,
+      });
+      console.log("🚀 Firebase Admin initialized successfully using Application Default Credentials (ADC).");
+      initialized = true;
+    } catch (adcError) {
+      // Proceed to dummy cert initialization
+    }
 
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: projectId || 'nc-network-default',
-        clientEmail: clientEmail || 'dummy@example.com',
-        privateKey: dummyPrivateKey,
-      }),
-      storageBucket: `${projectId || 'nc-network-default'}.appspot.com`,
-    });
+    if (!initialized) {
+      console.warn("⚠️ Firebase Admin credentials are not fully configured in environment variables.");
+      console.warn("Initializing Firebase Admin with dynamically generated dummy credentials for local startup.");
+      
+      // Generate a structurally valid RSA private key PEM dynamically
+      const { privateKey: dummyPrivateKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+        privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
+      });
+
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: projectId || 'nc-network-default',
+          clientEmail: clientEmail || 'dummy@example.com',
+          privateKey: dummyPrivateKey,
+        }),
+        storageBucket: `${projectId || 'nc-network-default'}.appspot.com`,
+      });
+    }
   }
 }
 
@@ -72,6 +88,14 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+// Always allow standard local development origins
+if (!allowedOrigins.includes('http://localhost:5173')) {
+  allowedOrigins.push('http://localhost:5173');
+}
+if (!allowedOrigins.includes('http://127.0.0.1:5173')) {
+  allowedOrigins.push('http://127.0.0.1:5173');
+}
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -179,9 +203,12 @@ const ProfileSchema = z.object({
   weight: z.string().optional(),
   eyeColor: z.string().optional(),
   hairColor: z.string().optional(),
-  image: z.string().optional(),
-  coverImage: z.string().optional(),
-  email: z.string().email().optional(),
+  image: z.string().nullable().optional(),
+  photoURL: z.string().nullable().optional(),
+  coverImage: z.string().nullable().optional(),
+  email: z.union([z.string().email(), z.literal(''), z.null()]).optional(),
+  showContactInfo: z.boolean().optional(),
+  twoFactorEnabled: z.boolean().optional(),
 });
 
 const CastingCallSchema = z.object({
@@ -216,10 +243,11 @@ const verifyToken = async (req: AuthedRequest, res: Response, next: NextFunction
   }
 
   try {
-    const decodedToken = await admin.auth().verifyIdToken(token, true);
+    const decodedToken = await admin.auth().verifyIdToken(token);
     req.user = decodedToken;
     next();
-  } catch {
+  } catch (error) {
+    console.error('Token verification failed:', error);
     res.status(401).send('Invalid token');
   }
 };
@@ -453,6 +481,7 @@ app.post('/api/profile', verifyToken, async (req: AuthedRequest, res: Response) 
 
     res.json({ success: true });
   } catch (error: unknown) {
+    console.error('Profile update failed:', error);
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: error.issues });
       return;
@@ -1122,6 +1151,7 @@ app.post('/api/notifications/mark-as-read', verifyToken, async (req: AuthedReque
 });
 
 app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('[Unhandled Server Error]:', error);
   if (error instanceof multer.MulterError) {
     res.status(400).json({ error: error.message });
     return;
@@ -1134,7 +1164,7 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
     res.status(400).json({ error: error.issues });
     return;
   }
-  res.status(500).json({ error: 'Unexpected server error' });
+  res.status(500).json({ error: error instanceof Error ? error.message : 'Unexpected server error' });
 });
 
 app.listen(PORT, () => {

@@ -4,17 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        'nc-dark': '#0A0A0F',
-        'nc-darker': '#050507',
-        'nc-surface': '#12121A',
-        'nc-card': '#1A1A26',
-        'nc-border': '#2A2A3A',
-        'nc-accent': '#38BDF8',
-        'nc-pro': '#FACC15',
-        'nc-blue': '#4A90D9',
+        'nc-dark': '#0a0a0a',
+        'nc-darker': '#050505',
+        'nc-surface': '#111111',
+        'nc-card': '#1a1a1a',
+        'nc-border': '#222222',
+        'nc-accent': '#00BFFF',
+        'nc-pro': '#FFD700',
+        'nc-blue': '#00BFFF',
         'nc-text': '#FFFFFF',
-        'nc-secondary': '#B0B0C3',
-        'nc-muted': '#6B6B80',
+        'nc-secondary': '#CCCCCC',
+        'nc-muted': '#666666',
         // Admin Dashboard Semantic Colors
         'admin-primary': '#38BDF8',
         'admin-secondary': '#E0F2FE', // Very light sky blue/white
@@ -28,7 +28,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Inter', 'sans-serif'],
+        display: ['Outfit', 'sans-serif'],
       },
       backdropBlur: {
         xs: '2px',

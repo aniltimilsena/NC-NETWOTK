@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Breadcrumbs from '../components/Breadcrumbs';
+import MobileBottomNav from '../components/layout/MobileBottomNav';
 
 interface UserLayoutProps {
   user: any;
@@ -43,19 +44,24 @@ export default function UserLayout({
     }
   };
 
+  const showNavbar = !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications');
+
   return (
-    <div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
-      <Navbar
-        user={user}
-        isAdmin={isAdmin}
-        onLogout={onLogout}
-        currentPage={location.pathname}
-        onNavigate={handleLegacyNavigate}
-      />
-      <main className="flex-1">
+    <div className="flex flex-col min-h-screen bg-nc-dark text-nc-text pb-[60px] md:pb-0">
+      {showNavbar && (
+        <Navbar
+          user={user}
+          isAdmin={isAdmin}
+          onLogout={onLogout}
+          currentPage={location.pathname}
+          onNavigate={handleLegacyNavigate}
+        />
+      )}
+      <main className={`flex-1 ${showNavbar ? 'pt-16 sm:pt-20' : 'pt-0'}`}>
         <Breadcrumbs />
         <Outlet context={{ user, isAdmin, showAlert, showToast }} />
       </main>
+      <MobileBottomNav user={user} />
     </div>
   );
 }
