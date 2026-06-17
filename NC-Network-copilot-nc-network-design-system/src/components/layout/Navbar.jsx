@@ -324,12 +324,12 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
         
       {/* Mobile Menu Overlay */}
       {menuOpen && (
-        <div className="fixed inset-0 z-[100] md:hidden flex">
+        <div className="fixed inset-0 z-[100] md:hidden flex justify-end">
           {/* Backdrop Dimmer */}
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onClick={() => setMenuOpen(false)}></div>
           
           {/* Sidebar Drawer */}
-          <div className="relative w-[280px] h-full bg-[#0d0d0d] border-r border-[#2A2A2A] flex flex-col overflow-y-auto shadow-2xl z-10 animate-slide-in-right">
+          <div className="relative w-[280px] h-full bg-[#0d0d0d] border-l border-[#2A2A2A] flex flex-col overflow-y-auto shadow-2xl z-10 animate-slide-in-right">
             
             <div className="p-6 border-b border-white/5" onClick={() => setMenuOpen(false)}>
               <Logo size="sm" />
