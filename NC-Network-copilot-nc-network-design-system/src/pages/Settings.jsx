@@ -867,19 +867,9 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                     {tab.icon}
                   </div>
                   
-                  <h3 className="font-bold text-white text-base group-hover:text-nc-accent transition-colors mb-1.5 flex items-center gap-2">
+                  <h3 className="font-bold text-white text-base group-hover:text-nc-accent transition-colors mb-3 flex items-center gap-2">
                     {tab.label}
                   </h3>
-                  
-                  <p className="text-[#888] text-xs leading-relaxed mb-4 flex-grow">
-                    {tab.id === 'account' && "Manage your name, username, phone number, and display font preferences."}
-                    {tab.id === 'profile' && "Update your professional category, physical stats, training history, and skills."}
-                    {tab.id === 'privacy' && "Control search engine visibility, profile visibility, and contact permissions."}
-                    {tab.id === 'notifications' && "Set up email digests and real-time push notification routing."}
-                    {tab.id === 'premium' && "Upgrade to PRO, unlock AI matchmaking, and manage payment methods."}
-                    {tab.id === 'security' && "Configure 2FA, change passwords, and manage active logged-in sessions."}
-                    {tab.id === 'data' && "Download full data archives, deactivate your account, or permanently delete info."}
-                  </p>
                   
                   <div className="text-nc-accent text-xs font-black uppercase tracking-wider flex items-center gap-1 group-hover:translate-x-1 transition-all duration-300 mt-auto">
                     Manage
