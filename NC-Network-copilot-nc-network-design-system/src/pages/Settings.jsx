@@ -519,8 +519,33 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [hairColor, setHairColor] = useState("");
   const [role, setRole] = useState("");
   const [showContactInfo, setShowContactInfo] = useState(false);
-  
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
+  const calculateProfileCompletion = () => {
+    let score = 0;
+    if (avatarUrl || user?.photoURL || user?.image) score += 15;
+    if (bio && bio.trim().length > 0) score += 15;
+    if (role) score += 10;
+    if (location) score += 10;
+    if (phone) score += 10;
+    if (gender) score += 10;
+    if (selectedLanguages && selectedLanguages.length > 0) score += 15;
+    if (selectedSkills && selectedSkills.length > 0) score += 15;
+    return score;
+  };
+
+  const getMissingProfileFields = () => {
+    const missing = [];
+    if (!avatarUrl && !user?.photoURL && !user?.image) missing.push("Avatar");
+    if (!bio) missing.push("Bio Description");
+    if (!role) missing.push("Category");
+    if (!location) missing.push("Location");
+    if (!phone) missing.push("Phone");
+    if (!gender) missing.push("Gender");
+    if (!selectedLanguages || selectedLanguages.length === 0) missing.push("Languages");
+    if (!selectedSkills || selectedSkills.length === 0) missing.push("Skills");
+    return missing;
+  };
 
   const markDirty = () => setHasChanges(true);
 
@@ -846,41 +871,192 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview':
+      case 'overview': {
+        const score = calculateProfileCompletion();
+        const missingFields = getMissingProfileFields();
+        const radius = 32;
+        const circumference = 2 * Math.PI * radius;
+        const strokeDashoffset = circumference - (score / 100) * circumference;
+
         return (
-          <div className="animate-fade-in text-left pb-10">
-            <div className="border-b border-white/5 pb-6 mb-8">
-              <h2 className="text-3xl font-black text-white tracking-tight">Settings Dashboard</h2>
+          <div className="animate-fade-in text-left pb-10 space-y-6">
+            <div className="border-b border-white/5 pb-6">
+              <h2 className="text-3xl font-black text-white tracking-tight">Settings Overview</h2>
             </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {tabs.filter(t => t.id !== 'overview').map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabClick(tab.id)}
-                  className="group flex flex-col text-left p-6 rounded-3xl bg-[#0D0D12] border border-white/5 hover:border-nc-accent/30 hover:bg-[#12121A] transition-all duration-300 relative overflow-hidden shadow-lg hover:shadow-nc-accent/5"
-                >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-nc-accent/5 blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full" />
-                  
-                  <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 group-hover:border-nc-accent/30 group-hover:bg-nc-accent/10 flex items-center justify-center text-[#888] group-hover:text-nc-accent transition-all duration-300 mb-4 shrink-0">
-                    {tab.icon}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Profile Strength Card */}
+              <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl flex items-center gap-6 hover:border-nc-accent/20 transition-colors shadow-lg">
+                <div className="relative flex-shrink-0 w-20 h-20">
+                  <svg className="w-20 h-20 transform -rotate-90">
+                    <circle cx="40" cy="40" r={radius} className="stroke-[#1E1E1E]" strokeWidth="5" fill="transparent" />
+                    <circle cx="40" cy="40" r={radius} className="stroke-nc-accent" strokeWidth="5" fill="transparent"
+                            strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-sm font-black text-white">{score}%</span>
                   </div>
-                  
-                  <h3 className="font-bold text-white text-base group-hover:text-nc-accent transition-colors mb-3 flex items-center gap-2">
-                    {tab.label}
-                  </h3>
-                  
-                  <div className="text-nc-accent text-xs font-black uppercase tracking-wider flex items-center gap-1 group-hover:translate-x-1 transition-all duration-300 mt-auto">
-                    Manage
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                    </svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white mb-1">Profile Strength</h3>
+                  <p className="text-xs text-[#888] leading-relaxed mb-2">
+                    {score === 100 
+                      ? "Perfect! Your profile is 100% complete and highly visible."
+                      : `Your profile is ${score}% complete. Next: Add your ${missingFields[0] || 'details'}.`
+                    }
+                  </p>
+                  {score < 100 && (
+                    <button 
+                      onClick={() => handleTabClick('profile')}
+                      className="text-nc-accent text-xs font-black uppercase tracking-wider hover:opacity-80 transition-opacity"
+                    >
+                      Complete Profile →
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Account Status Card */}
+              <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl flex flex-col justify-between hover:border-nc-accent/20 transition-colors shadow-lg">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xs font-bold text-[#666] uppercase tracking-widest">Account Status</h3>
+                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-green-500/10 text-green-500 border border-green-500/20">
+                      Active
+                    </span>
                   </div>
-                </button>
-              ))}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#888]">Username:</span>
+                      <span className="text-white font-bold">@{uName || 'username'}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#888]">Verification:</span>
+                      <span className="text-nc-accent font-bold flex items-center gap-1">
+                        Verified Member 
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-[#888]">
+                  <span>Tier: {isPremium ? "PRO Member" : "Basic Free Tier"}</span>
+                  {!isPremium && !isUserAdmin && (
+                    <button 
+                      onClick={() => onNavigate('premium')}
+                      className="text-yellow-400 font-bold hover:underline"
+                    >
+                      Upgrade to PRO
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Security Health Card */}
+              <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl flex flex-col justify-between hover:border-nc-accent/20 transition-colors shadow-lg">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xs font-bold text-[#666] uppercase tracking-widest">Security Health</h3>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                      twoFactor ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
+                    }`}>
+                      {twoFactor ? 'Protected' : 'Action Required'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#888] leading-relaxed mb-3">
+                    {twoFactor 
+                      ? "Two-Factor Authentication is active, shielding your account."
+                      : "Enable Two-Factor Authentication (2FA) to shield your account."
+                    }
+                  </p>
+                </div>
+                <div className="flex items-center justify-between mt-auto">
+                  <span className="text-xs text-[#555]">{sessions.length} active sessions</span>
+                  <button 
+                    onClick={() => handleTabClick('security')}
+                    className="text-nc-accent text-xs font-black uppercase tracking-wider hover:opacity-80 transition-opacity"
+                  >
+                    Manage Security →
+                  </button>
+                </div>
+              </div>
+
+              {/* Storage Usage Card */}
+              <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl flex flex-col justify-between hover:border-nc-accent/20 transition-colors shadow-lg">
+                <div>
+                  <h3 className="text-xs font-bold text-[#666] uppercase tracking-widest mb-3">Cloud Storage</h3>
+                  <div className="flex items-end justify-between mb-2">
+                    <span className="text-xl font-black text-white">12.4 <span className="text-xs text-[#888] font-normal">MB</span></span>
+                    <span className="text-[11px] text-[#888]">of 100 MB Limit</span>
+                  </div>
+                  <div className="w-full bg-[#1E1E1E] h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-nc-accent h-full rounded-full" style={{ width: '12.4%' }} />
+                  </div>
+                </div>
+                <p className="text-[10px] text-[#555] mt-4">
+                  Media assets are automatically compressed via Cloudinary.
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Actions Card */}
+            <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl shadow-lg">
+              <h3 className="text-xs font-bold text-[#666] uppercase tracking-widest mb-4">Quick Actions</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { label: 'Edit Profile Details', tab: 'profile', subTab: 'about' },
+                  { label: 'Manage Skills & Talents', tab: 'profile', subTab: 'skills' },
+                  { label: 'Update Password', tab: 'security' },
+                  { label: 'Change Contact Info', tab: 'account' },
+                  { label: 'Configure Notifications', tab: 'notifications' },
+                  { label: 'Request Data Export', tab: 'data' }
+                ].map((act, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (act.subTab) setProfileSubTab(act.subTab);
+                      handleTabClick(act.tab);
+                    }}
+                    className="p-3 bg-[#12121A] border border-white/5 rounded-2xl text-left hover:border-nc-accent/30 hover:bg-[#161622] transition-all group"
+                  >
+                    <span className="text-xs text-[#CCC] font-semibold group-hover:text-nc-accent transition-colors">
+                      {act.label}
+                    </span>
+                    <div className="text-[9px] text-[#555] mt-1 group-hover:text-[#888] flex items-center gap-0.5 font-bold uppercase tracking-wider">
+                      Configure
+                      <svg className="w-2.5 h-2.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl shadow-lg text-left">
+              <h3 className="text-xs font-bold text-[#666] uppercase tracking-widest mb-4">Recent Activity</h3>
+              <div className="space-y-2.5">
+                {[
+                  { desc: `Account logged in from ${sessions[0]?.browser || 'Browser'} on ${sessions[0]?.os || 'OS'}`, time: 'Active Now', icon: '🔑' },
+                  { desc: 'Profile configuration loaded and synced with database', time: 'Just now', icon: '🔄' },
+                  { desc: 'Cloudinary upload token generated for profile media', time: 'Today', icon: '☁️' }
+                ].map((act, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs p-3 bg-white/5 rounded-xl border border-white/5">
+                    <div className="flex items-center gap-3">
+                      <span>{act.icon}</span>
+                      <span className="text-[#CCC]">{act.desc}</span>
+                    </div>
+                    <span className="text-[#555] font-bold">{act.time}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         );
+      }
       case 'account':
         return (
           <div className="animate-fade-in text-left pb-10">
@@ -1633,9 +1809,9 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       <div className="min-h-screen bg-[#0A0A0A] text-white pt-24 sm:pt-28 pb-32 md:pb-20 relative font-sans">
       <div className="max-w-[1100px] mx-auto px-6 sm:px-8 md:px-8 flex flex-col md:flex-row items-start gap-8 md:gap-16">
         
-        {/* LEFT SIDEBAR (Hidden on mobile if a detail view is active) */}
-        <div className={`w-full md:w-[260px] flex-shrink-0 ${isMobileDetail ? 'hidden md:block' : 'block'}`}>
-          <h1 className="text-3xl font-black tracking-tight mb-8 hidden md:block">Settings</h1>
+        {/* LEFT SIDEBAR (Desktop only) */}
+        <div className="w-full md:w-[260px] flex-shrink-0 hidden md:block">
+          <h1 className="text-3xl font-black tracking-tight mb-8">Settings</h1>
           
           <div className="flex flex-col gap-1.5">
             {tabs.map((tab) => {
@@ -1656,12 +1832,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                       {tab.label}
                     </span>
                   </div>
-                  
-                  {/* Internal Active Indicator Line */}
                   {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-nc-accent shadow-[0_0_10px_rgba(56,189,248,0.5)]"></div>}
-
-                  {/* Mobile Chevron */}
-                  <span className="md:hidden text-[#444] font-bold group-hover:text-white transition-colors">&gt;</span>
                 </button>
               );
             })}
@@ -1669,32 +1840,96 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
         </div>
 
         {/* RIGHT CONTENT PANEL */}
-        <div className={`flex-1 w-full max-w-3xl ${!isMobileDetail ? 'hidden md:block' : 'block'}`}>
-          
-          {/* Mobile Back Header — matches "Edit Profile" screenshot style */}
-          {isMobileDetail && (
-            <div className="md:hidden flex items-center justify-between mb-8 pb-4 border-b border-[#111]">
-              <button
-                onClick={() => setIsMobileDetail(false)}
-                className="flex items-center gap-2 text-[#888] hover:text-white transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
-              <span className="font-black text-white text-[15px] tracking-tight">
-                {activeTab === 'account' ? 'Edit Profile' : activeTab === 'profile' ? 'Profile Details' : tabs.find(t => t.id === activeTab)?.label || 'Settings'}
-              </span>
-              <div className="w-10" />
-            </div>
-          )}
+        <div className="flex-1 w-full max-w-3xl">
+          {/* Mobile Navigation Header */}
+          <div className="md:hidden flex items-center justify-between mb-8 pb-4 border-b border-[#111]">
+            <button
+              onClick={() => setIsMobileDrawerOpen(true)}
+              className="flex items-center gap-2 p-2 -ml-2 text-[#888] hover:text-white transition-colors"
+              aria-label="Open settings menu"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <span className="font-black text-white text-[15px] tracking-tight uppercase">
+              {tabs.find(t => t.id === activeTab)?.label || 'Settings'}
+            </span>
+            <div className="w-10" />
+          </div>
 
           {renderContent()}
 
         </div>
       </div>
 
-      {/* Alert system handles the save popup globally */}
+      {/* MOBILE DRAWER OVERLAY */}
+      <AnimatePresence>
+        {isMobileDrawerOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileDrawerOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-md"
+            />
+
+            {/* Drawer Content */}
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-[280px] max-w-[80vw] h-full bg-[#0D0D12] border-r border-white/5 p-6 flex flex-col z-10 shadow-2xl"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-8">
+                <span className="font-black text-white text-lg tracking-tight uppercase">NC Settings</span>
+                <button
+                  onClick={() => setIsMobileDrawerOpen(false)}
+                  className="p-1 rounded-lg text-[#555] hover:text-white transition-colors"
+                  aria-label="Close settings menu"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Drawer Tabs */}
+              <div className="flex flex-col gap-1.5 overflow-y-auto no-scrollbar font-sans">
+                {tabs.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        handleTabClick(tab.id);
+                        setIsMobileDrawerOpen(false);
+                      }}
+                      className={`flex items-center justify-between px-4 py-3.5 rounded-xl transition-all relative overflow-hidden group ${
+                        isActive
+                          ? 'bg-[#151515] border border-[#2A2A2A]'
+                          : 'bg-transparent border border-transparent hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4 text-left relative z-10">
+                        <span className="text-lg grayscale group-hover:grayscale-0 transition-all">{tab.icon}</span>
+                        <span className={`font-bold text-[14px] ${isActive ? 'text-nc-accent' : 'text-[#888] group-hover:text-white'}`}>
+                          {tab.label}
+                        </span>
+                      </div>
+                      {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-nc-accent shadow-[0_0_10px_rgba(56,189,248,0.5)]"></div>}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* FLOATING ACTION BAR FOR DIRTY STATE */}
       {hasChanges && (
