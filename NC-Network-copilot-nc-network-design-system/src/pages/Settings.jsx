@@ -269,9 +269,9 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       return 'profile';
     }
     if (initialTab === 'premium' && isUserAdmin) {
-      return 'account';
+      return 'overview';
     }
-    return initialTab || 'account';
+    return initialTab || 'overview';
   });
 
   const [profileSubTab, setProfileSubTab] = useState(() => {
@@ -288,7 +288,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   useEffect(() => {
     if (initialTab) {
       if (initialTab === 'premium' && isUserAdmin) {
-        setActiveTab('account');
+        setActiveTab('overview');
         setIsMobileDetail(true);
         return;
       }
@@ -302,6 +302,9 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       } else {
         setActiveTab(initialTab);
       }
+      setIsMobileDetail(true);
+    } else {
+      setActiveTab('overview');
       setIsMobileDetail(true);
     }
   }, [initialTab, isUserAdmin]);
@@ -802,6 +805,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   };
 
   const tabs = [
+    { id: 'overview', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>, label: 'Overview' },
     { id: 'account', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>, label: 'Account' },
     { id: 'profile', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>, label: 'Profile Details' },
     { id: 'privacy', icon: <EyeToggleIcon size={18} color="currentColor" />, label: 'Privacy & Visibility' },
@@ -842,6 +846,52 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'overview':
+        return (
+          <div className="animate-fade-in text-left pb-10">
+            <div className="border-b border-white/5 pb-6 mb-8">
+              <h2 className="text-3xl font-black text-white tracking-tight mb-2">Settings Dashboard</h2>
+              <p className="text-nc-secondary text-sm">Select a category to customize your account, profile, and system preferences.</p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {tabs.filter(t => t.id !== 'overview').map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabClick(tab.id)}
+                  className="group flex flex-col text-left p-6 rounded-3xl bg-[#0D0D12] border border-white/5 hover:border-nc-accent/30 hover:bg-[#12121A] transition-all duration-300 relative overflow-hidden shadow-lg hover:shadow-nc-accent/5"
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-nc-accent/5 blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full" />
+                  
+                  <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 group-hover:border-nc-accent/30 group-hover:bg-nc-accent/10 flex items-center justify-center text-[#888] group-hover:text-nc-accent transition-all duration-300 mb-4 shrink-0">
+                    {tab.icon}
+                  </div>
+                  
+                  <h3 className="font-bold text-white text-base group-hover:text-nc-accent transition-colors mb-1.5 flex items-center gap-2">
+                    {tab.label}
+                  </h3>
+                  
+                  <p className="text-[#888] text-xs leading-relaxed mb-4 flex-grow">
+                    {tab.id === 'account' && "Manage your name, username, phone number, and display font preferences."}
+                    {tab.id === 'profile' && "Update your professional category, physical stats, training history, and skills."}
+                    {tab.id === 'privacy' && "Control search engine visibility, profile visibility, and contact permissions."}
+                    {tab.id === 'notifications' && "Set up email digests and real-time push notification routing."}
+                    {tab.id === 'premium' && "Upgrade to PRO, unlock AI matchmaking, and manage payment methods."}
+                    {tab.id === 'security' && "Configure 2FA, change passwords, and manage active logged-in sessions."}
+                    {tab.id === 'data' && "Download full data archives, deactivate your account, or permanently delete info."}
+                  </p>
+                  
+                  <div className="text-nc-accent text-xs font-black uppercase tracking-wider flex items-center gap-1 group-hover:translate-x-1 transition-all duration-300 mt-auto">
+                    Manage
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
       case 'account':
         return (
           <div className="animate-fade-in text-left pb-10">

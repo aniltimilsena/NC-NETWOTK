@@ -153,7 +153,7 @@ const SettingsRoute = () => {
   const { user, showToast, isAdmin } = useOutletContext<any>();
   const { handleLegacyNavigate } = useLegacyNavigate();
   const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab') || 'account';
+  const tab = searchParams.get('tab') || 'overview';
   return (
     <PageTransition>
       <Helmet>
