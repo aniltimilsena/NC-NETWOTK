@@ -1656,19 +1656,19 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
         <div className="flex-1 w-full max-w-3xl">
           {/* Mobile Navigation Header */}
           <div className="md:hidden flex items-center justify-between mb-8 pb-4 border-b border-[#111]">
+            <div className="w-10" />
+            <span className="font-black text-white text-[15px] tracking-tight uppercase">
+              {tabs.find(t => t.id === activeTab)?.label || 'Settings'}
+            </span>
             <button
               onClick={() => setIsMobileDrawerOpen(true)}
-              className="flex items-center gap-2 p-2 -ml-2 text-[#888] hover:text-white transition-colors"
+              className="flex items-center gap-2 p-2 -mr-2 text-[#888] hover:text-white transition-colors"
               aria-label="Open settings menu"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <span className="font-black text-white text-[15px] tracking-tight uppercase">
-              {tabs.find(t => t.id === activeTab)?.label || 'Settings'}
-            </span>
-            <div className="w-10" />
           </div>
 
           {renderContent()}
@@ -1679,7 +1679,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       {/* MOBILE DRAWER OVERLAY */}
       <AnimatePresence>
         {isMobileDrawerOpen && (
-          <div className="fixed inset-0 z-50 md:hidden flex">
+          <div className="fixed inset-0 z-50 md:hidden flex justify-end">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -1691,11 +1691,11 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
             {/* Drawer Content */}
             <motion.div
-              initial={{ x: '-100%' }}
+              initial={{ x: '100%' }}
               animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
+              exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-[280px] max-w-[80vw] h-full bg-[#0D0D12] border-r border-white/5 p-6 flex flex-col z-10 shadow-2xl"
+              className="relative w-[280px] max-w-[80vw] h-full bg-[#0D0D12] border-l border-white/5 p-6 flex flex-col z-10 shadow-2xl"
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-8">
