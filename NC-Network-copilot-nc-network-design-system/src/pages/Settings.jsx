@@ -269,9 +269,9 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       return 'profile';
     }
     if (initialTab === 'premium' && isUserAdmin) {
-      return 'overview';
+      return 'account';
     }
-    return initialTab || 'overview';
+    return initialTab || 'account';
   });
 
   const [profileSubTab, setProfileSubTab] = useState(() => {
@@ -288,7 +288,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   useEffect(() => {
     if (initialTab) {
       if (initialTab === 'premium' && isUserAdmin) {
-        setActiveTab('overview');
+        setActiveTab('account');
         setIsMobileDetail(true);
         return;
       }
@@ -304,7 +304,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       }
       setIsMobileDetail(true);
     } else {
-      setActiveTab('overview');
+      setActiveTab('account');
       setIsMobileDetail(true);
     }
   }, [initialTab, isUserAdmin]);
@@ -830,7 +830,6 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   };
 
   const tabs = [
-    { id: 'overview', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>, label: 'Overview' },
     { id: 'account', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>, label: 'Account' },
     { id: 'profile', icon: <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>, label: 'Profile Details' },
     { id: 'privacy', icon: <EyeToggleIcon size={18} color="currentColor" />, label: 'Privacy & Visibility' },
@@ -871,192 +870,6 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': {
-        const score = calculateProfileCompletion();
-        const missingFields = getMissingProfileFields();
-        const radius = 32;
-        const circumference = 2 * Math.PI * radius;
-        const strokeDashoffset = circumference - (score / 100) * circumference;
-
-        return (
-          <div className="animate-fade-in text-left pb-10 space-y-6">
-            <div className="border-b border-white/5 pb-6">
-              <h2 className="text-3xl font-black text-white tracking-tight">Settings Overview</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Profile Strength Card */}
-              <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl flex items-center gap-6 hover:border-nc-accent/20 transition-colors shadow-lg">
-                <div className="relative flex-shrink-0 w-20 h-20">
-                  <svg className="w-20 h-20 transform -rotate-90">
-                    <circle cx="40" cy="40" r={radius} className="stroke-[#1E1E1E]" strokeWidth="5" fill="transparent" />
-                    <circle cx="40" cy="40" r={radius} className="stroke-nc-accent" strokeWidth="5" fill="transparent"
-                            strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-black text-white">{score}%</span>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-white mb-1">Profile Strength</h3>
-                  <p className="text-xs text-[#888] leading-relaxed mb-2">
-                    {score === 100 
-                      ? "Perfect! Your profile is 100% complete and highly visible."
-                      : `Your profile is ${score}% complete. Next: Add your ${missingFields[0] || 'details'}.`
-                    }
-                  </p>
-                  {score < 100 && (
-                    <button 
-                      onClick={() => handleTabClick('profile')}
-                      className="text-nc-accent text-xs font-black uppercase tracking-wider hover:opacity-80 transition-opacity"
-                    >
-                      Complete Profile →
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Account Status Card */}
-              <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl flex flex-col justify-between hover:border-nc-accent/20 transition-colors shadow-lg">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-bold text-[#666] uppercase tracking-widest">Account Status</h3>
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-green-500/10 text-green-500 border border-green-500/20">
-                      Active
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[#888]">Username:</span>
-                      <span className="text-white font-bold">@{uName || 'username'}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[#888]">Verification:</span>
-                      <span className="text-nc-accent font-bold flex items-center gap-1">
-                        Verified Member 
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-[#888]">
-                  <span>Tier: {isPremium ? "PRO Member" : "Basic Free Tier"}</span>
-                  {!isPremium && !isUserAdmin && (
-                    <button 
-                      onClick={() => onNavigate('premium')}
-                      className="text-yellow-400 font-bold hover:underline"
-                    >
-                      Upgrade to PRO
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Security Health Card */}
-              <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl flex flex-col justify-between hover:border-nc-accent/20 transition-colors shadow-lg">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-bold text-[#666] uppercase tracking-widest">Security Health</h3>
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
-                      twoFactor ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
-                    }`}>
-                      {twoFactor ? 'Protected' : 'Action Required'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#888] leading-relaxed mb-3">
-                    {twoFactor 
-                      ? "Two-Factor Authentication is active, shielding your account."
-                      : "Enable Two-Factor Authentication (2FA) to shield your account."
-                    }
-                  </p>
-                </div>
-                <div className="flex items-center justify-between mt-auto">
-                  <span className="text-xs text-[#555]">{sessions.length} active sessions</span>
-                  <button 
-                    onClick={() => handleTabClick('security')}
-                    className="text-nc-accent text-xs font-black uppercase tracking-wider hover:opacity-80 transition-opacity"
-                  >
-                    Manage Security →
-                  </button>
-                </div>
-              </div>
-
-              {/* Storage Usage Card */}
-              <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl flex flex-col justify-between hover:border-nc-accent/20 transition-colors shadow-lg">
-                <div>
-                  <h3 className="text-xs font-bold text-[#666] uppercase tracking-widest mb-3">Cloud Storage</h3>
-                  <div className="flex items-end justify-between mb-2">
-                    <span className="text-xl font-black text-white">12.4 <span className="text-xs text-[#888] font-normal">MB</span></span>
-                    <span className="text-[11px] text-[#888]">of 100 MB Limit</span>
-                  </div>
-                  <div className="w-full bg-[#1E1E1E] h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-nc-accent h-full rounded-full" style={{ width: '12.4%' }} />
-                  </div>
-                </div>
-                <p className="text-[10px] text-[#555] mt-4">
-                  Media assets are automatically compressed via Cloudinary.
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Actions Card */}
-            <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl shadow-lg">
-              <h3 className="text-xs font-bold text-[#666] uppercase tracking-widest mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[
-                  { label: 'Edit Profile Details', tab: 'profile', subTab: 'about' },
-                  { label: 'Manage Skills & Talents', tab: 'profile', subTab: 'skills' },
-                  { label: 'Update Password', tab: 'security' },
-                  { label: 'Change Contact Info', tab: 'account' },
-                  { label: 'Configure Notifications', tab: 'notifications' },
-                  { label: 'Request Data Export', tab: 'data' }
-                ].map((act, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      if (act.subTab) setProfileSubTab(act.subTab);
-                      handleTabClick(act.tab);
-                    }}
-                    className="p-3 bg-[#12121A] border border-white/5 rounded-2xl text-left hover:border-nc-accent/30 hover:bg-[#161622] transition-all group"
-                  >
-                    <span className="text-xs text-[#CCC] font-semibold group-hover:text-nc-accent transition-colors">
-                      {act.label}
-                    </span>
-                    <div className="text-[9px] text-[#555] mt-1 group-hover:text-[#888] flex items-center gap-0.5 font-bold uppercase tracking-wider">
-                      Configure
-                      <svg className="w-2.5 h-2.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-[#0D0D12] border border-white/5 p-6 rounded-3xl shadow-lg text-left">
-              <h3 className="text-xs font-bold text-[#666] uppercase tracking-widest mb-4">Recent Activity</h3>
-              <div className="space-y-2.5">
-                {[
-                  { desc: `Account logged in from ${sessions[0]?.browser || 'Browser'} on ${sessions[0]?.os || 'OS'}`, time: 'Active Now', icon: '🔑' },
-                  { desc: 'Profile configuration loaded and synced with database', time: 'Just now', icon: '🔄' },
-                  { desc: 'Cloudinary upload token generated for profile media', time: 'Today', icon: '☁️' }
-                ].map((act, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs p-3 bg-white/5 rounded-xl border border-white/5">
-                    <div className="flex items-center gap-3">
-                      <span>{act.icon}</span>
-                      <span className="text-[#CCC]">{act.desc}</span>
-                    </div>
-                    <span className="text-[#555] font-bold">{act.time}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-      }
       case 'account':
         return (
           <div className="animate-fade-in text-left pb-10">
