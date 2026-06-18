@@ -21,18 +21,6 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const currentLang = i18n.language || 'en';
-
-  const changeLang = async (lng) => {
-    i18n.changeLanguage(lng);
-    if (user?.uid) {
-      try {
-        await updateDoc(doc(db, "profiles", user.uid), { language: lng });
-      } catch (err) {
-        console.warn("Failed to sync language preference:", err);
-      }
-    }
-  };
 
   const resolveLegacyPath = (page, param = null) => {
     switch (page) {
@@ -296,35 +284,6 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
             
             {/* Actions */}
             <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
-              {/* Language Switcher */}
-              <div className="relative group/lang flex items-center mr-1">
-                <button 
-                  className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-base transition-all active:scale-95 cursor-pointer"
-                  title="Switch Language / भाषा"
-                >
-                  {currentLang === 'np' ? '🇳🇵' : currentLang === 'hi' ? '🇮🇳' : '🇺🇸'}
-                </button>
-                <div className="absolute top-full right-0 mt-2 w-32 rounded-2xl bg-[#0A0A0A] border border-white/10 shadow-2xl opacity-0 invisible group-hover/lang:opacity-100 group-hover/lang:visible transition-all duration-200 translate-y-2 group-hover/lang:translate-y-0 z-[60] py-1.5 overflow-hidden">
-                  <button 
-                    onClick={() => changeLang('en')} 
-                    className={`w-full px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-white/5 flex items-center gap-2.5 ${currentLang === 'en' ? 'text-[#0099FF] bg-white/5' : 'text-gray-300'}`}
-                  >
-                    <span className="text-sm">🇺🇸</span> English
-                  </button>
-                  <button 
-                    onClick={() => changeLang('np')} 
-                    className={`w-full px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-white/5 flex items-center gap-2.5 ${currentLang === 'np' ? 'text-[#0099FF] bg-white/5' : 'text-gray-300'}`}
-                  >
-                    <span className="text-sm">🇳🇵</span> नेपाली
-                  </button>
-                  <button 
-                    onClick={() => changeLang('hi')} 
-                    className={`w-full px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-white/5 flex items-center gap-2.5 ${currentLang === 'hi' ? 'text-[#0099FF] bg-white/5' : 'text-gray-300'}`}
-                  >
-                    <span className="text-sm">🇮🇳</span> हिन्दी
-                  </button>
-                </div>
-              </div>
 
               {/* Removed redundant Sign In button as per user request */}
               <button
