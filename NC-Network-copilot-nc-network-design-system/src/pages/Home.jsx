@@ -354,11 +354,11 @@ export default function Home({ onNavigate, user }) {
         {currentPremiumUser && (
           <motion.div 
             key={currentPremiumUser.id}
-            initial={{ opacity: 0, x: 20, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -20, scale: 0.95 }}
+            initial={{ opacity: 0, y: 15, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -15, scale: 0.95 }}
             onClick={() => currentPremiumUser.id && onNavigate('profile', currentPremiumUser.id)}
-            className="absolute bottom-0 left-0 z-30 cursor-pointer group"
+            className="relative z-30 cursor-pointer group mt-8 sm:mt-12"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -369,7 +369,7 @@ export default function Home({ onNavigate, user }) {
               WebkitBackdropFilter: 'none',
               padding: 0,
               boxShadow: 'none',
-              margin: '0 0 24px 16px'
+              margin: '0 0 12px 0'
             }}
           >
             {/* Tall portrait photo on LEFT */}
