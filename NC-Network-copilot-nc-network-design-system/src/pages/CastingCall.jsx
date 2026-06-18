@@ -116,8 +116,8 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
     return () => unsub();
   }, [user?.uid]);
 
-  // Check if current user can publish calls (Directors or Admin)
-  const canPostCall = user && (user.role === 'Directors' || isAdmin);
+  // Check if current user can publish calls (Directors/Director or Admin)
+  const canPostCall = user && (user.role === 'Director' || user.role === 'Directors' || isAdmin);
 
   // Filter casting calls
   const filteredCalls = calls

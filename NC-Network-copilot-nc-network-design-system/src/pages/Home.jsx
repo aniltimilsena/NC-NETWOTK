@@ -117,15 +117,15 @@ export default function Home({ onNavigate, user }) {
 
 
 
-  const categories = CATEGORIES.map((name, idx) => {
-    const cfg = getCategoryConfig(name);
+  const categories = CATEGORIES.map((catId, idx) => {
+    const cfg = getCategoryConfig(catId);
     return {
-      id: idx + 1,
-      name,
+      id: catId,
+      name: cfg.label,
       icon: cfg.icon,
       color: cfg.color,
       bgColor: cfg.bgColor,
-      count: talents.filter(t => t.role?.toLowerCase() === name.toLowerCase() && !t.deactivated).length
+      count: talents.filter(t => t.role?.toLowerCase() === catId.toLowerCase() && !t.deactivated).length
     };
   });
 
@@ -524,10 +524,10 @@ export default function Home({ onNavigate, user }) {
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center">
                     <div className="section-accent-bar"></div>
-                    <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Actors/Actress</h2>
+                    <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Actor & Actress</h2>
                   </div>
                   <button 
-                    onClick={() => onNavigate('listing', 'Actors')} 
+                    onClick={() => onNavigate('listing', 'actor')} 
                     className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
                   >
                     View all

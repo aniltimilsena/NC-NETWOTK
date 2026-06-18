@@ -8,35 +8,35 @@ dotenv.config();
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const APPROVED_CATEGORIES = [
-  "Actors",
-  "Directors",
-  "Models",
-  "Dancers",
-  "Musicians",
+  "Actor",
+  "Director",
+  "Model",
+  "Dancer",
+  "Musician",
   "Voice Over",
   "VFX",
-  "Writers"
+  "Writer"
 ];
 
 function mapRoleToApprovedCategory(role: string | undefined | null): string {
-  if (!role) return "Actors";
+  if (!role) return "Actor";
   
   const clean = role.trim().toLowerCase();
   
   // Direct matches
-  if (clean === "actor" || clean === "actors") return "Actors";
-  if (clean === "director" || clean === "directors") return "Directors";
-  if (clean === "model" || clean === "models") return "Models";
-  if (clean === "dancer" || clean === "dancers") return "Dancers";
-  if (clean === "musician" || clean === "musicians") return "Musicians";
+  if (clean === "actor" || clean === "actors") return "Actor";
+  if (clean === "director" || clean === "directors") return "Director";
+  if (clean === "model" || clean === "models") return "Model";
+  if (clean === "dancer" || clean === "dancers") return "Dancer";
+  if (clean === "musician" || clean === "musicians") return "Musician";
   if (clean === "voice over" || clean === "voiceover" || clean === "voice-over" || clean === "voice artists" || clean === "voice artist") return "Voice Over";
   if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
-  if (clean === "writer" || clean === "writers") return "Writers";
+  if (clean === "writer" || clean === "writers") return "Writer";
   
   // Legacy mappings
-  if (clean === "photographer" || clean === "photographers") return "Models";
-  if (clean === "agent" || clean === "agents" || clean === "producer" || clean === "producers") return "Directors";
-  if (clean === "talent" || clean === "extras" || clean === "crew" || clean === "crew members") return "Actors";
+  if (clean === "photographer" || clean === "photographers") return "Model";
+  if (clean === "agent" || clean === "agents" || clean === "producer" || clean === "producers") return "Director";
+  if (clean === "talent" || clean === "extras" || clean === "crew" || clean === "crew members") return "Actor";
   
   // Fuzzy match
   for (const cat of APPROVED_CATEGORIES) {
@@ -45,30 +45,30 @@ function mapRoleToApprovedCategory(role: string | undefined | null): string {
     }
   }
   
-  return "Actors";
+  return "Actor";
 }
 
 function mapCastingCallType(type: string | undefined | null): string {
-  if (!type) return "Actors";
+  if (!type) return "Actor";
   
   const clean = type.trim().toLowerCase();
   
   // Direct matches
-  if (clean === "actor" || clean === "actors") return "Actors";
-  if (clean === "director" || clean === "directors") return "Directors";
-  if (clean === "model" || clean === "models") return "Models";
-  if (clean === "dancer" || clean === "dancers") return "Dancers";
-  if (clean === "musician" || clean === "musicians") return "Musicians";
+  if (clean === "actor" || clean === "actors") return "Actor";
+  if (clean === "director" || clean === "directors") return "Director";
+  if (clean === "model" || clean === "models") return "Model";
+  if (clean === "dancer" || clean === "dancers") return "Dancer";
+  if (clean === "musician" || clean === "musicians") return "Musician";
   if (clean === "voice over" || clean === "voiceover" || clean === "voice-over" || clean === "voice artist") return "Voice Over";
   if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
-  if (clean === "writer" || clean === "writers") return "Writers";
+  if (clean === "writer" || clean === "writers") return "Writer";
   
   // Genre mappings (legacy)
   if (clean === "film" || clean === "theatre" || clean === "commercial" || clean === "series" || clean === "short film") {
-    return "Actors";
+    return "Actor";
   }
   
-  return "Actors";
+  return "Actor";
 }
 
 // Initialize Firebase Admin

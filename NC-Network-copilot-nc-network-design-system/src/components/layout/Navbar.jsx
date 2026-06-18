@@ -176,18 +176,18 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
   const menuSections = [
     {
       id: 'talent',
-      label: 'Talents',
+      label: 'Talent',
       action: 'listing',
       icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />,
       items: [
-        { label: 'Actors/Actress' },
-        { label: 'Directors' },
+        { label: 'Actor & Actress' },
+        { label: 'Director' },
         { label: 'Editor/VFX' },
-        { label: 'Dancers' },
-        { label: 'Models' },
-        { label: 'Musicians' },
-        { label: 'Writers' },
-        { label: 'Comedians' },
+        { label: 'Dancer' },
+        { label: 'Model' },
+        { label: 'Musician' },
+        { label: 'Writer' },
+        { label: 'Comedian' },
       ]
     },
     {

@@ -25,7 +25,7 @@ import {
 import { auth, db } from '../../lib/firebase';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { logAdminAction } from '../../services/admin';
-import { CATEGORIES } from '../../constants/categories';
+import { CATEGORIES, getCategoryConfig } from '../../constants/categories';
 import { collection, getDocs, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 
 
@@ -146,41 +146,44 @@ export default function AdminSettings() {
           await updateGlobalSettings({ categories: [...CATEGORIES] });
 
           const mappingFunction = (role: string | undefined | null): string => {
-            if (!role) return "Actors";
+            if (!role) return "Actor";
             const clean = role.trim().toLowerCase();
-            if (clean === "actor" || clean === "actors") return "Actors";
-            if (clean === "director" || clean === "directors") return "Directors";
-            if (clean === "model" || clean === "models") return "Models";
-            if (clean === "dancer" || clean === "dancers") return "Dancers";
-            if (clean === "musician" || clean === "musicians") return "Musicians";
+            if (clean === "actor" || clean === "actors") return "Actor";
+            if (clean === "director" || clean === "directors") return "Director";
+            if (clean === "model" || clean === "models") return "Model";
+            if (clean === "dancer" || clean === "dancers") return "Dancer";
+            if (clean === "musician" || clean === "musicians") return "Musician";
             if (clean === "voice over" || clean === "voiceover" || clean === "voice-over" || clean === "voice artist") return "Voice Over";
             if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
-            if (clean === "writer" || clean === "writers") return "Writers";
+            if (clean === "writer" || clean === "writers") return "Writer";
 
             for (const cat of CATEGORIES) {
-              if (cat.toLowerCase().startsWith(clean) || clean.startsWith(cat.toLowerCase().slice(0, -1))) {
-                return cat;
+              const cfg = getCategoryConfig(cat);
+              if (cfg.label.toLowerCase().startsWith(clean) || clean.startsWith(cfg.label.toLowerCase().slice(0, -1))) {
+                return cfg.label;
               }
             }
-            return "Actors";
+            return "Actor";
           };
 
           const castingTypeMappingFunction = (type: string | undefined | null): string => {
-            if (!type) return "Actors";
+            if (!type) return "Actor";
             const clean = type.trim().toLowerCase();
-            if (clean === "actor" || clean === "actors") return "Actors";
-            if (clean === "director" || clean === "directors") return "Directors";
-            if (clean === "model" || clean === "models") return "Models";
-            if (clean === "dancer" || clean === "dancers") return "Dancers";
-            if (clean === "musician" || clean === "musicians") return "Musicians";
+            if (clean === "actor" || clean === "actors") return "Actor";
+            if (clean === "director" || clean === "directors") return "Director";
+            if (clean === "model" || clean === "models") return "Model";
+            if (clean === "dancer" || clean === "dancers") return "Dancer";
+            if (clean === "musician" || clean === "musicians") return "Musician";
             if (clean === "voice over" || clean === "voiceover" || clean === "voice-over" || clean === "voice artist") return "Voice Over";
             if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
-            if (clean === "writer" || clean === "writers") return "Writers";
+            if (clean === "writer" || clean === "writers") return "Writer";
             if (clean === "film" || clean === "theatre" || clean === "commercial" || clean === "series" || clean === "short film") {
-              return "Actors";
+              return "Actor";
             }
-            return "Actors";
+            return "Actor";
           };
+
+          const approvedLabels = CATEGORIES.map(cat => getCategoryConfig(cat).label);
 
           // 2. Migrate Users
           setMigrationStatus("Scanning users...");
@@ -188,7 +191,7 @@ export default function AdminSettings() {
           let usersUpdated = 0;
           for (const d of usersSnap.docs) {
             const data = d.data();
-            if (!CATEGORIES.includes(data.role)) {
+            if (!approvedLabels.includes(data.role)) {
               const newRole = mappingFunction(data.role);
               await updateDoc(doc(db, "users", d.id), { role: newRole });
               usersUpdated++;
@@ -201,7 +204,7 @@ export default function AdminSettings() {
           let profilesUpdated = 0;
           for (const d of profilesSnap.docs) {
             const data = d.data();
-            if (!CATEGORIES.includes(data.role)) {
+            if (!approvedLabels.includes(data.role)) {
               const newRole = mappingFunction(data.role);
               await updateDoc(doc(db, "profiles", d.id), { role: newRole });
               profilesUpdated++;
@@ -214,7 +217,7 @@ export default function AdminSettings() {
           let castingUpdated = 0;
           for (const d of castingSnap.docs) {
             const data = d.data();
-            if (!CATEGORIES.includes(data.type)) {
+            if (!approvedLabels.includes(data.type)) {
               const newType = castingTypeMappingFunction(data.type);
               await updateDoc(doc(db, "casting_calls", d.id), { type: newType });
               castingUpdated++;

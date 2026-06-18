@@ -7,7 +7,7 @@ import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import { createCastingCall } from '../services/casting';
 import { uploadProfileMedia } from '../services/profile';
-import { CATEGORIES } from '../constants/categories';
+import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 import { collection, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -38,7 +38,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
   const [thumbnailPreview, setThumbnailPreview] = useState('');
   const [form, setForm] = useState({
     title: '', 
-    type: 'Actors', 
+    type: 'Actor', 
     category: 'Nepali Feature Film',
     location: '', 
     description: '',
@@ -292,9 +292,12 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
                       onChange={e => setForm({...form, type: e.target.value})} 
                       className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none transition-all text-sm font-bold cursor-pointer"
                     >
-                      {CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
+                      {CATEGORIES.map(catId => {
+                        const cfg = getCategoryConfig(catId);
+                        return (
+                          <option key={catId} value={cfg.label}>{cfg.label}</option>
+                        );
+                      })}
                     </select>
                   </div>
                   <div>

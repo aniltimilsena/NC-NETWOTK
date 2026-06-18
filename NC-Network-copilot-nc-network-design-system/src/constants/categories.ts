@@ -15,7 +15,7 @@ export type { CategoryConfig } from '../config/categories';
  */
 export const getCategoryConfig = (nameOrId: string) => {
   const meta = getCategoryMeta(nameOrId);
-  const icon = (CATEGORY_ICON_MAP as any)[meta.id] ?? (CATEGORY_ICON_MAP as any)['Actors'];
+  const icon = (CATEGORY_ICON_MAP as any)[meta.id] ?? (CATEGORY_ICON_MAP as any)['actor'];
   return { ...meta, icon };
 };
 

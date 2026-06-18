@@ -119,13 +119,13 @@ export const OpenBookIcon = ({ size = 24, className, ...rest }) => (
 );
 
 export const CATEGORY_ICON_MAP = {
-  'Actors': SpotlightIcon,
-  'Directors': FilmReelIcon,
-  'Models': ApertureIcon,
-  'Dancers': DynamicMotionIcon,
-  'Musicians': EqualizerIcon,
-  'Voice Over': HeadphonesIcon,
-  'VFX': StackedLayersIcon,
-  'Writers': OpenBookIcon,
+  'actor': SpotlightIcon,
+  'director': FilmReelIcon,
+  'model': ApertureIcon,
+  'dancer': DynamicMotionIcon,
+  'musician': EqualizerIcon,
+  'voiceover': HeadphonesIcon,
+  'vfx': StackedLayersIcon,
+  'writer': OpenBookIcon,
 };
 

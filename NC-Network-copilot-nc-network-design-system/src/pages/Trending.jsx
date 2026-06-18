@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
-import { CATEGORIES, getCategoryColor } from '../constants/categories';
+import { CATEGORIES, getCategoryColor, getCategoryConfig } from '../constants/categories';
 
 // Category colors are now sourced from src/config/categories.tsx
 
@@ -276,7 +276,7 @@ export default function Trending({ onNavigate }) {
                   : 'bg-[#111] border border-white/5 text-gray-400 hover:text-white hover:border-white/10'
               }`}
             >
-              {cat}
+              {getCategoryConfig(cat).label}
             </button>
           ))}
         </div>
@@ -404,7 +404,7 @@ export default function Trending({ onNavigate }) {
             {/* RANKED LIST OF CARDS */}
             <div className="space-y-4 max-w-4xl mx-auto">
               <h2 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 text-left">
-                {selectedCategory === 'All' ? 'All Ranked Talent' : `${selectedCategory} Rankings`}
+                {selectedCategory === 'All' ? 'All Ranked Talent' : `${getCategoryConfig(selectedCategory).label} Rankings`}
               </h2>
 
               <div className="flex flex-col gap-4 text-left">

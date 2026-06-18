@@ -18,7 +18,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     email: '', 
     password: '', 
     confirmPassword: '', 
-    role: 'Actors', 
+    role: 'Actor', 
     gender: 'Male' 
   });
   
@@ -478,7 +478,7 @@ export default function SignUp({ onNavigate, showAlert }) {
                   type="button"
                   onClick={() => {
                     setRoleGroup('talent');
-                    setForm(prev => ({ ...prev, role: 'Actors' })); // Reset to default sub-category
+                    setForm(prev => ({ ...prev, role: 'Actor' })); // Reset to default sub-category
                   }}
                   className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
                     roleGroup === 'talent'
@@ -539,7 +539,7 @@ export default function SignUp({ onNavigate, showAlert }) {
                     <div className="bg-[#111] border border-white/5 p-3 rounded-2xl space-y-2">
                       <p className="text-[9px] uppercase tracking-wider text-gray-500 font-bold">Select professional category:</p>
                       <div className="grid grid-cols-2 gap-1.5">
-                        {['Actors', 'Models', 'Dancers', 'Directors'].map(sub => (
+                        {['Actor', 'Model', 'Dancer', 'Director'].map(sub => (
                           <button
                             key={sub}
                             type="button"

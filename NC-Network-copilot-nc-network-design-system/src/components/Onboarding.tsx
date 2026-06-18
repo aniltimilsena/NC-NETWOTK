@@ -109,9 +109,12 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
   useEffect(() => {
     if (profile) {
       if (profile.role) {
-        if (['Actors', 'Directors', 'Models', 'Dancers', 'Musicians', 'Voice Over', 'VFX', 'Writers'].includes(profile.role)) {
+        const matchingCategory = CATEGORIES.find(
+          (cat) => getCategoryConfig(cat).label.toLowerCase() === profile.role.toLowerCase()
+        );
+        if (matchingCategory) {
           setSelectedRole('Talent');
-          setSelectedCategories([profile.role]);
+          setSelectedCategories([matchingCategory]);
         } else if (profile.role === 'Casting Director') {
           setSelectedRole('Casting');
         } else {
@@ -148,7 +151,8 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
       let finalRole = 'Fan/Viewer';
       if (selectedRole === 'Casting') finalRole = 'Casting Director';
       else if (selectedRole === 'Talent') {
-        finalRole = selectedCategories[0] || 'Actors';
+        const catId = selectedCategories[0] || 'actor';
+        finalRole = getCategoryConfig(catId).label || 'Actor';
       }
 
       await updateDoc(doc(db, 'profiles', user.uid), {
@@ -393,7 +397,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
                       >
                         <CatIcon size={24} />
                       </div>
-                      <span className="text-xs font-bold truncate w-full uppercase tracking-wider">{catName}</span>
+                      <span className="text-xs font-bold truncate w-full uppercase tracking-wider">{cfg.label}</span>
                     </button>
                   );
                 })}

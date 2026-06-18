@@ -21,7 +21,7 @@ import { db, auth } from "../../lib/firebase";
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 import { logAdminAction } from '../../services/admin';
-import { CATEGORIES } from '../../constants/categories';
+import { CATEGORIES, getCategoryConfig } from '../../constants/categories';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 type AdminUser = {
@@ -253,9 +253,10 @@ export default function AdminUsers() {
     if (!name) return;
     const email = prompt("Enter email address:");
     if (!email) return;
-    const role = prompt(`Enter category (${CATEGORIES.join(', ')}):`, "Actors");
+    const categoryLabels = CATEGORIES.map(cat => getCategoryConfig(cat).label);
+    const role = prompt(`Enter category (${categoryLabels.join(', ')}):`, "Actor");
     if (!role) return;
-    if (!CATEGORIES.includes(role as any)) {
+    if (!categoryLabels.includes(role)) {
       alert(`Invalid category selection. Must be one of the approved categories.`);
       return;
     }

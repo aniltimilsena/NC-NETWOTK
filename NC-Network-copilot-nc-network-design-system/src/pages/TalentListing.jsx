@@ -50,8 +50,20 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
   ];
 
   useEffect(() => {
-    if (initialCategory && initialCategory !== 'All' && CATEGORIES.includes(initialCategory)) {
-      setSelectedFilters(prev => ({ ...prev, category: initialCategory }));
+    const resolveCategory = (catStr) => {
+      if (!catStr) return null;
+      const clean = catStr.trim().toLowerCase();
+      return CATEGORIES.find(cat => 
+        cat.toLowerCase() === clean || 
+        cat.toLowerCase() + 's' === clean ||
+        cat.toLowerCase() === clean + 's' ||
+        (cat === 'voiceover' && (clean === 'voice over' || clean === 'voiceover'))
+      ) || null;
+    };
+
+    const resolved = resolveCategory(initialCategory);
+    if (resolved) {
+      setSelectedFilters(prev => ({ ...prev, category: resolved }));
       setViewMode('talents');
     } else if (initialCategory === 'All') {
       setSelectedFilters(prev => ({ ...prev, category: 'All' }));
@@ -291,7 +303,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                       </div>
 
                       <span className="text-xs sm:text-sm font-bold text-white/80 group-hover:text-white transition-colors relative z-10">
-                        {cat}
+                        {detail.label}
                       </span>
 
                       {count === 0 ? (
@@ -329,7 +341,9 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                 Back to Categories
               </button>
               <div className="text-right">
-                <h2 className="text-2xl font-black text-white">{selectedFilters.category}</h2>
+                <h2 className="text-2xl font-black text-white">
+                  {selectedFilters.category === 'All' ? 'All' : getCategoryConfig(selectedFilters.category).label}
+                </h2>
                 <p className="text-xs text-gray-500">{filteredTalents.length} {filteredTalents.length === 1 ? 'talent' : 'talents'} found</p>
               </div>
             </div>
@@ -341,7 +355,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <input
                   type="text"
-                  placeholder={`Search ${selectedFilters.category.toLowerCase()} by name or location...`}
+                  placeholder={`Search ${selectedFilters.category === 'All' ? 'talents' : getCategoryConfig(selectedFilters.category).pluralLabel.toLowerCase()} by name or location...`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#0099FF] rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-gray-500 outline-none transition-all focus:shadow-[0_0_0_3px_rgba(0,153,255,0.15)]"

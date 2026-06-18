@@ -4,7 +4,7 @@ import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import { updateProfileData } from '../services/profile';
 import { serverTimestamp } from 'firebase/firestore';
-import { CATEGORIES } from '../constants/categories';
+import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 
 const STEPS = [
   { id: 1, title: 'Basic Info', icon: '' },
@@ -17,7 +17,7 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
   const [isLoading, setIsLoading] = useState(false);
   const [form, setForm] = useState({
     name: user?.displayName || '', 
-    role: 'Actors', 
+    role: 'Actor', 
     location: '', 
     bio: '', 
     languages: [], 
@@ -158,9 +158,12 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                     onChange={e => setForm({...form, role: e.target.value})} 
                     className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
                   >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
+                    {CATEGORIES.map(catId => {
+                      const cfg = getCategoryConfig(catId);
+                      return (
+                        <option key={catId} value={cfg.label}>{cfg.label}</option>
+                      );
+                    })}
                   </select>
                 </div>
                 <div className="flex-1 min-w-[200px]">
