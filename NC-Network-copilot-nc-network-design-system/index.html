@@ -2,6 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      try {
+        var savedFontSize = localStorage.getItem('nc_font_size') || 'small';
+        document.documentElement.classList.add('font-size-' + savedFontSize);
+      } catch (e) {}
+    </script>
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NC Network — Talent Discovery Platform</title>

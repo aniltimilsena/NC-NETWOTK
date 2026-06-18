@@ -72,6 +72,7 @@ export function useWebRTC(): UseWebRTCReturn {
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const callIdRef = useRef<string | null>(null);
+  const callStateRef = useRef<CallState>("idle");
   const roleRef = useRef<"caller" | "callee">("caller");
   const unsubsRef = useRef<Array<() => void>>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -188,6 +189,7 @@ export function useWebRTC(): UseWebRTCReturn {
 
         if (state === "connected" || state === "completed") {
           setCallState("connected");
+          callStateRef.current = "connected";
           // Start duration timer
           if (!timerRef.current) {
             const start = Date.now();
@@ -256,6 +258,7 @@ export function useWebRTC(): UseWebRTCReturn {
         setCallId(callId);
         roleRef.current = "caller";
         setCallState("calling");
+        callStateRef.current = "calling";
 
         // Flush queued local candidates
         for (const cand of candidateQueue) {
@@ -276,6 +279,7 @@ export function useWebRTC(): UseWebRTCReturn {
                 new RTCSessionDescription(callDoc.answer)
               );
               setCallState("connecting");
+              callStateRef.current = "connecting";
 
               // Process queued remote candidates
               while (remoteCandidatesQueueRef.current.length > 0) {
@@ -313,9 +317,11 @@ export function useWebRTC(): UseWebRTCReturn {
 
         // No-answer timeout (30 seconds)
         noAnswerTimerRef.current = setTimeout(async () => {
-          if (callState === "calling") {
+          // Use ref instead of stale closure to get current call state
+          if (callStateRef.current === "calling") {
             await updateCallStatus(callId, "no-answer");
             setCallState("ended");
+            callStateRef.current = "ended";
             await cleanup();
           }
         }, 30000);
@@ -342,6 +348,7 @@ export function useWebRTC(): UseWebRTCReturn {
         setCallId(callDoc.id);
         roleRef.current = "callee";
         setCallState("connecting");
+        callStateRef.current = "connecting";
 
         // Set the remote description (offer)
         if (callDoc.offer) {
@@ -487,7 +494,13 @@ export function useWebRTC(): UseWebRTCReturn {
 
   const resetToIdle = useCallback(() => {
     setCallState("idle");
+    callStateRef.current = "idle";
   }, []);
+
+  // Keep callStateRef updated to avoid stale closure issues
+  useEffect(() => {
+    callStateRef.current = callState;
+  }, [callState]);
 
   // Cleanup on unmount
   useEffect(() => {

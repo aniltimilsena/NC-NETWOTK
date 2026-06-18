@@ -8,6 +8,8 @@ import Tag from '../components/ui/Tag';
 import { createCastingCall } from '../services/casting';
 import { uploadProfileMedia } from '../services/profile';
 import { CATEGORIES } from '../constants/categories';
+import { collection, doc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 const STEPS = [
   { id: 1, title: 'Project Details', icon: '' },
@@ -29,6 +31,7 @@ const CATEGORY_OPTIONS = [
 ];
 
 export default function CastingCallCreate({ onNavigate, user, showAlert }) {
+  const [castingId] = useState(() => doc(collection(db, 'casting_calls')).id);
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState(null);
@@ -65,7 +68,12 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
     try {
       let thumbnailUrl = form.thumbnail;
       if (thumbnailFile) {
-        thumbnailUrl = await uploadProfileMedia(user.uid, thumbnailFile);
+        thumbnailUrl = await uploadProfileMedia(
+          user.uid,
+          thumbnailFile,
+          undefined,
+          `castings/${castingId}/banner.jpg`
+        );
         if (!thumbnailUrl) {
           throw new Error('Failed to upload thumbnail image. Please check your connection or try another image.');
         }
@@ -86,6 +94,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
 
       const callData = {
         ...form,
+        id: castingId,
         thumbnail: thumbnailUrl,
         requirements: requirementList,
         production: user.displayName || 'Independent Production',

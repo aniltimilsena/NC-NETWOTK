@@ -6,7 +6,7 @@ import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { db } from '../lib/firebase';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, onSnapshot, writeBatch, query, where } from 'firebase/firestore';
 import { 
   subscribeToMessages, 
   sendMessage, 
@@ -27,6 +27,11 @@ import {
   Search, 
   MessageSquare, 
   Video, 
+  Phone,
+  PhoneIncoming,
+  PhoneOutgoing,
+  PhoneMissed,
+  PhoneOff,
   Settings, 
   Trash2, 
   Check, 
@@ -44,13 +49,17 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
   const [activeChatId, setActiveChatId] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [optimisticMessages, setOptimisticMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState(null);
   const [editingMessage, setEditingMessage] = useState(null);
   const [showOptionsId, setShowOptionsId] = useState(null);
-  const [activeMenu, setActiveMenu] = useState('main'); // 'main', 'emojis', 'more'
+  const [activeMenu, setActiveMenu] = useState('main');
+  const [activeTab, setActiveTab] = useState('chats'); // 'chats' | 'calls'
+  const [callHistory, setCallHistory] = useState([]);
+  const [callHistoryLoading, setCallHistoryLoading] = useState(true); // 'main', 'emojis', 'more'
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,
     title: '',
@@ -60,8 +69,13 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
   });
   const longPressTimer = useRef(null);
   const messagesEndRef = useRef(null);
+  const cleanupCallHistoryRef = useRef(null);
 
   const activeChat = conversations.find(c => c.id === activeChatId);
+  const [remoteProfile, setRemoteProfile] = useState(null);
+  const [lightboxUrl, setLightboxUrl] = useState(null);
+  const messagesContainerRef = useRef(null);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
 
   const [isSending, setIsSending] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -199,7 +213,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !activeChatId || isSending) return;
+    const textToSend = newMessage.trim();
+    if (!textToSend || !activeChatId) return;
     
     // Stop typing status instantly
     updateTypingStatus(false);
@@ -207,31 +222,59 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       clearTimeout(typingTimeoutRef);
     }
 
-    setIsSending(true);
-    try {
-      let result;
-      if (editingMessage) {
-        result = await updateMessage(activeChatId, editingMessage.id, newMessage);
+    if (editingMessage) {
+      setIsSending(true);
+      try {
+        const result = await updateMessage(activeChatId, editingMessage.id, textToSend);
         if (result.success) {
           setEditingMessage(null);
           setNewMessage('');
         } else {
           showAlert(result.error || 'Failed to update message', 'error');
         }
-      } else {
-        result = await sendMessage(activeChatId, user.uid, newMessage, false, replyingTo);
-        if (result.success) {
-          setReplyingTo(null);
-          setNewMessage('');
-        } else {
-          showAlert(result.error || 'Failed to send message', 'error');
-        }
+      } catch (err) {
+        showAlert('Failed to connect to messaging service. Please try again.', 'error');
+      } finally {
+        setIsSending(false);
       }
-    } catch (error) {
-      showAlert('Failed to connect to messaging service. Please try again.', 'error');
-      console.error("Send error:", error);
-    } finally {
-      setIsSending(false);
+    } else {
+      const clientMsgId = `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const optMsg = {
+        id: clientMsgId,
+        senderId: user.uid,
+        text: textToSend,
+        type: "text",
+        replyTo: replyingTo ? {
+          id: replyingTo.id,
+          text: replyingTo.text,
+          senderId: replyingTo.senderId
+        } : null,
+        createdAt: Date.now(),
+        isOptimistic: true,
+        status: 'sending'
+      };
+
+      setOptimisticMessages(prev => [...prev, optMsg]);
+      setNewMessage('');
+      setReplyingTo(null);
+      setTimeout(scrollToBottom, 50);
+
+      setIsSending(true);
+      sendMessage(activeChatId, user.uid, textToSend, false, replyingTo).then(result => {
+        setIsSending(false);
+        if (!result.success) {
+          setOptimisticMessages(prev => prev.map(m => m.id === clientMsgId ? { ...m, status: 'failed' } : m));
+          showAlert(result.error || 'Failed to send message', 'error');
+        } else {
+          setTimeout(() => {
+            setOptimisticMessages(prev => prev.filter(m => m.id !== clientMsgId));
+          }, 3000);
+        }
+      }).catch(err => {
+        setIsSending(false);
+        setOptimisticMessages(prev => prev.map(m => m.id === clientMsgId ? { ...m, status: 'failed' } : m));
+        showAlert('Failed to connect to messaging service.', 'error');
+      });
     }
   };
 
@@ -342,6 +385,43 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     });
   };
 
+  const getOnlineStatus = () => {
+    if (!remoteProfile) return { isOnline: false, label: 'Offline' };
+    
+    const lastActive = remoteProfile.lastActive?.toMillis?.() || remoteProfile.lastActive?.seconds * 1000 || (remoteProfile.lastActive ? new Date(remoteProfile.lastActive).getTime() : 0);
+    const lastSeen = remoteProfile.lastSeen?.toMillis?.() || remoteProfile.lastSeen?.seconds * 1000 || (remoteProfile.lastSeen ? new Date(remoteProfile.lastSeen).getTime() : 0);
+    const activeTime = Math.max(lastActive, lastSeen);
+    
+    const isOnline = remoteProfile.online === true && (Date.now() - activeTime < 180000);
+    if (isOnline) {
+      return { isOnline: true, label: 'Online' };
+    }
+    
+    if (activeTime > 0) {
+      const date = new Date(activeTime);
+      const now = new Date();
+      const diffSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+      
+      let timeLabel = '';
+      if (diffSeconds < 60) {
+        timeLabel = 'just now';
+      } else if (diffSeconds < 3600) {
+        timeLabel = `${Math.floor(diffSeconds / 60)}m ago`;
+      } else if (diffSeconds < 86400) {
+        timeLabel = `${Math.floor(diffSeconds / 3600)}h ago`;
+      } else if (diffSeconds < 172800) {
+        timeLabel = 'yesterday';
+      } else {
+        timeLabel = `on ${date.toLocaleDateString()}`;
+      }
+      return { isOnline: false, label: `Last seen ${timeLabel}` };
+    }
+    
+    return { isOnline: false, label: 'Offline' };
+  };
+
+  const { isOnline, label: presenceLabel } = getOnlineStatus();
+
   const [showChatMenu, setShowChatMenu] = useState(false);
 
   const filteredConversations = conversations.filter(chat => 
@@ -357,6 +437,29 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       });
       return () => unsubscribe();
     }
+  }, [user?.uid]);
+
+  // Subscribe to call history
+  useEffect(() => {
+    if (!user?.uid) return;
+    let cancelled = false;
+    setCallHistoryLoading(true);
+    
+    // Lazy-import to avoid circular deps
+    import('../services/call').then(({ subscribeToCallHistory }) => {
+      if (cancelled) return;
+      const unsub = subscribeToCallHistory(user.uid, (calls) => {
+        setCallHistory(calls);
+        setCallHistoryLoading(false);
+      });
+      // Store unsub for cleanup
+      cleanupCallHistoryRef.current = unsub;
+    });
+
+    return () => {
+      cancelled = true;
+      if (cleanupCallHistoryRef.current) cleanupCallHistoryRef.current();
+    };
   }, [user?.uid]);
 
   // Handle direct messaging from profile
@@ -394,8 +497,122 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     }
   }, [activeChatId]);
 
+  // Listen to remote participant profile in real-time for presence status
+  useEffect(() => {
+    if (!activeChatId || !user?.uid) {
+      setRemoteProfile(null);
+      return;
+    }
+    const active = conversations.find(c => c.id === activeChatId);
+    const otherId = active?.participants?.find(p => p !== user.uid);
+    if (!otherId) {
+      setRemoteProfile(null);
+      return;
+    }
+
+    const unsubscribe = onSnapshot(doc(db, 'profiles', otherId), (snap) => {
+      if (snap.exists()) {
+        setRemoteProfile(snap.data());
+      } else {
+        setRemoteProfile(null);
+      }
+    }, (err) => {
+      console.warn("Failed to listen to remote profile presence:", err);
+    });
+
+    return () => unsubscribe();
+  }, [activeChatId]);
+
+  // Update read receipts for incoming messages when chat changes or new messages arrive
+  useEffect(() => {
+    if (!activeChatId || !user?.uid || !messages.length) return;
+
+    const unreadMessages = messages.filter(
+      (msg) => msg.senderId !== user.uid && msg.read !== true && !msg.isSystem
+    );
+
+    if (unreadMessages.length === 0) return;
+
+    const updateIncomingMessagesRead = async () => {
+      try {
+        const batch = writeBatch(db);
+        unreadMessages.forEach((msg) => {
+          const msgRef = doc(db, 'conversations', activeChatId, 'messages', msg.id);
+          batch.update(msgRef, { read: true, delivered: true });
+        });
+        
+        // Update conversation metadata if the last message is read
+        const lastMsg = messages[messages.length - 1];
+        if (unreadMessages.some(m => m.id === lastMsg.id)) {
+          const convoRef = doc(db, 'conversations', activeChatId);
+          batch.update(convoRef, {
+            lastMessageRead: true,
+            lastMessageDelivered: true
+          });
+        }
+
+        await batch.commit();
+      } catch (err) {
+        console.warn("Failed to update read receipts:", err);
+      }
+    };
+
+    updateIncomingMessagesRead();
+  }, [activeChatId, messages, user?.uid]);
+
+  // Update delivery receipts for conversations where last message is undelivered
+  useEffect(() => {
+    if (!user?.uid || !conversations.length) return;
+
+    const undeliveredConvos = conversations.filter(
+      (c) => c.lastSenderId && c.lastSenderId !== user.uid && c.lastMessageDelivered === false
+    );
+
+    if (undeliveredConvos.length === 0) return;
+
+    const markUndeliveredAsDelivered = async () => {
+      try {
+        for (const convo of undeliveredConvos) {
+          // Fetch messages that are undelivered
+          const msgsQuery = query(
+            collection(db, 'conversations', convo.id, 'messages'),
+            where('senderId', '!=', user.uid)
+          );
+          const snap = await getDocs(msgsQuery);
+          const undeliveredMsgs = snap.docs.filter(d => d.data().delivered === false);
+
+          if (undeliveredMsgs.length > 0) {
+            const batch = writeBatch(db);
+            undeliveredMsgs.forEach(d => {
+              batch.update(d.ref, { delivered: true });
+            });
+            const convoRef = doc(db, 'conversations', convo.id);
+            batch.update(convoRef, { lastMessageDelivered: true });
+            await batch.commit();
+          } else {
+            const convoRef = doc(db, 'conversations', convo.id);
+            await updateDoc(convoRef, { lastMessageDelivered: true });
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to mark messages as delivered:", err);
+      }
+    };
+
+    markUndeliveredAsDelivered();
+  }, [conversations, user?.uid]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isScrolledUp = scrollHeight - scrollTop - clientHeight > 300;
+    setShowScrollBottom(isScrolledUp);
   };
 
   // Format date/times for conversation cards
@@ -445,35 +662,125 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
   const otherParticipantId = activeChat?.participants?.find(p => p !== user?.uid);
   const isOtherTyping = activeChat?.typing?.[otherParticipantId] === true;
 
-  // Render messages separating them by time groups
+  const getDeduplicatedMessages = () => {
+    return [
+      ...messages,
+      ...optimisticMessages.filter(opt => {
+        const isAlreadyInDb = messages.some(dbMsg => {
+          const dbTime = dbMsg.createdAt?.seconds ? dbMsg.createdAt.seconds * 1000 : (dbMsg.createdAt ? new Date(dbMsg.createdAt).getTime() : 0);
+          const timeDiff = Math.abs(dbTime - opt.createdAt);
+          return dbMsg.senderId === opt.senderId && dbMsg.text === opt.text && timeDiff < 10000;
+        });
+        return !isAlreadyInDb;
+      })
+    ];
+  };
+
+  const deduplicatedMessages = getDeduplicatedMessages();
+
+  const formatMessageTime = (timeMs) => {
+    if (!timeMs) return '';
+    const date = new Date(timeMs);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const renderTicks = (msg, darkBg = false) => {
+    const readColor = darkBg ? 'text-blue-400 font-bold' : 'text-blue-800 font-bold';
+    const tickColor = darkBg ? 'text-white/60 font-medium' : 'text-[#0A0A0A]/50 font-medium';
+    const clockColor = darkBg ? 'text-white/40' : 'text-[#0A0A0A]/40';
+    
+    if (msg.status === 'sending') {
+      return (
+        <svg className={`w-3 h-3 ${clockColor} animate-pulse shrink-0`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 3" />
+        </svg>
+      );
+    }
+    if (msg.status === 'failed') {
+      return (
+        <svg className="w-3 h-3 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      );
+    }
+    if (msg.read === true) {
+      return (
+        <div className="flex -space-x-1 items-center shrink-0">
+          <svg className={`w-3.5 h-3.5 ${readColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <svg className={`w-3.5 h-3.5 ${readColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      );
+    }
+    if (msg.delivered === true) {
+      return (
+        <div className="flex -space-x-1 items-center shrink-0">
+          <svg className={`w-3.5 h-3.5 ${tickColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <svg className={`w-3.5 h-3.5 ${tickColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      );
+    }
+    // Sent, but not delivered or read
+    return (
+      <svg className={`w-3.5 h-3.5 ${tickColor} shrink-0`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    );
+  };
+
+  // Render messages separating them by calendar date groups (Today, Yesterday, Date)
   const renderMessagesWithSeparators = () => {
     const elements = [];
-    let lastTimestamp = null;
+    let lastDateStr = null;
 
-    messages.forEach((msg, index) => {
-      const msgTime = msg.createdAt?.seconds ? msg.createdAt.seconds * 1000 : Date.now();
+    deduplicatedMessages.forEach((msg, index) => {
+      const msgTime = msg.createdAt?.seconds 
+        ? msg.createdAt.seconds * 1000 
+        : (msg.createdAt instanceof Date ? msg.createdAt.getTime() : Number(msg.createdAt) || Date.now());
+      
+      const date = new Date(msgTime);
+      const dateStr = date.toDateString();
       
       let showSeparator = false;
-      if (index === 0) {
+      if (index === 0 || dateStr !== lastDateStr) {
         showSeparator = true;
-      } else if (lastTimestamp) {
-        const diffMinutes = (msgTime - lastTimestamp) / (1000 * 60);
-        if (diffMinutes > 15) {
-          showSeparator = true;
-        }
       }
 
       if (showSeparator) {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
+        const msgTimeStartOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+
+        let label = '';
+        if (msgTimeStartOfDay === startOfToday) {
+          label = 'Today';
+        } else if (msgTimeStartOfDay === startOfYesterday) {
+          label = 'Yesterday';
+        } else {
+          label = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
         elements.push(
           <div key={`sep-${msg.id || index}`} className="flex justify-center my-4">
-            <span className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">
-              {formatSeparatorTime(msgTime)}
+            <span className="text-[10px] text-gray-500 font-bold tracking-widest uppercase bg-white/5 border border-white/5 px-3 py-1 rounded-full">
+              {label}
             </span>
           </div>
         );
       }
 
-      lastTimestamp = msgTime;
+      lastDateStr = dateStr;
       elements.push(renderMessageBubble(msg));
     });
 
@@ -484,6 +791,9 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
   const renderMessageBubble = (msg) => {
     const isMine = msg.senderId === user.uid;
     const hasReactions = msg.reactions && Object.keys(msg.reactions).length > 0;
+    const msgTime = msg.createdAt?.seconds 
+      ? msg.createdAt.seconds * 1000 
+      : (msg.createdAt instanceof Date ? msg.createdAt.getTime() : Number(msg.createdAt) || Date.now());
     
     if (msg.isSystem) {
       const textLower = msg.text.toLowerCase();
@@ -626,13 +936,15 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                       </button>
                     )}
 
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); setShowOptionsId(null); }}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
+                    {isMine && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); setShowOptionsId(null); }}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                    )}
                     
                     <div className="h-px bg-white/5 my-1" />
                     <button 
@@ -649,7 +961,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
             {/* Bubble alignment and styles */}
             <div className={
               msg.type === 'image' || msg.type === 'video'
-                ? `rounded-2xl overflow-hidden shadow-sm max-w-full ${isMine ? 'rounded-tr-none' : 'rounded-tl-none'}`
+                ? `rounded-2xl overflow-hidden shadow-sm max-w-full relative ${isMine ? 'rounded-tr-none' : 'rounded-tl-none'}`
                 : `p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
                     isMine 
                       ? 'bg-[#00BFFF] text-[#0A0A0A] rounded-tr-none font-medium' 
@@ -657,26 +969,49 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                   }`
             }>
               {msg.type === 'image' ? (
-                <img 
-                  src={msg.text} 
-                  alt="Shared Image" 
-                  className="max-w-full max-h-60 object-contain select-none" 
-                  onContextMenu={(e) => e.preventDefault()}
-                  onDragStart={(e) => e.preventDefault()}
-                />
+                <div 
+                  className="relative group/img cursor-pointer"
+                  onClick={() => setLightboxUrl(msg.text)}
+                >
+                  <img 
+                    src={msg.text} 
+                    alt="Shared Image" 
+                    className="max-w-full max-h-60 object-contain select-none hover:scale-[1.02] transition-transform duration-300" 
+                    onContextMenu={(e) => e.preventDefault()}
+                    onDragStart={(e) => e.preventDefault()}
+                  />
+                  <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] text-white/80 flex items-center gap-1 select-none font-semibold">
+                    <span>{formatMessageTime(msgTime)}</span>
+                    {isMine && renderTicks(msg, true)}
+                  </div>
+                </div>
               ) : msg.type === 'video' ? (
-                <video 
-                  src={msg.text} 
-                  controls 
-                  controlsList="nodownload"
-                  className="max-w-full max-h-60" 
-                  onContextMenu={(e) => e.preventDefault()}
-                />
+                <div className="relative">
+                  <video 
+                    src={msg.text} 
+                    controls 
+                    controlsList="nodownload"
+                    className="max-w-full max-h-60" 
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
+                  <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] text-white/80 flex items-center gap-1 select-none font-semibold">
+                    <span>{formatMessageTime(msgTime)}</span>
+                    {isMine && renderTicks(msg, true)}
+                  </div>
+                </div>
               ) : (
-                <>
-                  {msg.text}
-                  {msg.isEdited && <span className="text-[9px] opacity-50 ml-2">(edited)</span>}
-                </>
+                <div className="flex flex-col gap-1">
+                  <div className="break-words">
+                    {msg.text}
+                    {msg.isEdited && <span className="text-[9px] opacity-50 ml-2">(edited)</span>}
+                  </div>
+                  <div className={`flex items-center justify-end gap-1 text-[9px] mt-0.5 select-none font-bold tracking-wide ${
+                    isMine ? 'text-[#0A0A0A]/50' : 'text-nc-muted'
+                  }`}>
+                    <span>{formatMessageTime(msgTime)}</span>
+                    {isMine && renderTicks(msg, false)}
+                  </div>
+                </div>
               )}
             </div>
 
@@ -752,8 +1087,32 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
           </div>
         </div>
 
-        {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Chats / Calls Tabs */}
+        <div className="flex border-b border-white/5 shrink-0">
+          <button
+            onClick={() => setActiveTab('chats')}
+            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
+              activeTab === 'chats'
+                ? 'text-[#00BFFF] border-b-2 border-[#00BFFF]'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            Chats
+          </button>
+          <button
+            onClick={() => setActiveTab('calls')}
+            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
+              activeTab === 'calls'
+                ? 'text-[#00BFFF] border-b-2 border-[#00BFFF]'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            Calls
+          </button>
+        </div>
+
+        {/* Conversation List — shown when 'chats' tab is active */}
+        <div className={`flex-1 overflow-y-auto ${activeTab !== 'chats' ? 'hidden' : ''}`}>
           {filteredConversations.length > 0 ? (
             filteredConversations.map(chat => {
               const isUnread = chat.isUnreadForMe === true;
@@ -767,6 +1126,11 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                 ? 'font-semibold text-gray-100'
                 : 'text-gray-500 font-normal';
               const timeClass = isUnread ? 'text-[#00BFFF] font-semibold' : 'text-nc-muted font-medium';
+
+              const lastActive = chat.lastActive?.toMillis?.() || chat.lastActive?.seconds * 1000 || (chat.lastActive ? new Date(chat.lastActive).getTime() : 0);
+              const lastSeen = chat.lastSeen?.toMillis?.() || chat.lastSeen?.seconds * 1000 || (chat.lastSeen ? new Date(chat.lastSeen).getTime() : 0);
+              const activeTime = Math.max(lastActive, lastSeen);
+              const isChatOnline = chat.online === true && (Date.now() - activeTime < 180000);
 
               return (
                 <div
@@ -785,7 +1149,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                       size="md"
                       className="!w-12 !h-12 border-none shrink-0"
                     />
-                    {chat.online && (
+                    {isChatOnline && (
                       <span className="absolute bottom-[1px] right-[1px] w-3 h-3 bg-green-500 rounded-full border-2 border-[#0D0D12]" />
                     )}
                   </div>
@@ -844,6 +1208,141 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
             </div>
           )}
         </div>
+
+        {/* Call History — shown when 'calls' tab is active */}
+        <div className={`flex-1 overflow-y-auto ${activeTab !== 'calls' ? 'hidden' : ''}`}>
+          {callHistoryLoading ? (
+            Array.from({ length: 5 }).map((_, idx) => (
+              <div key={idx} className="p-4 flex gap-3 border-b border-white/5 items-center">
+                <div className="w-12 h-12 rounded-full skeleton shrink-0" />
+                <div className="flex-1 space-y-2 min-w-0">
+                  <div className="h-4 skeleton w-1/3" />
+                  <div className="h-3.5 skeleton w-2/3" />
+                </div>
+                <div className="h-3 skeleton w-10 shrink-0" />
+              </div>
+            ))
+          ) : callHistory.length > 0 ? (
+            callHistory.map(call => {
+              const isCaller = call.callerId === user?.uid;
+              const remoteName = isCaller 
+                ? (call.calleeName || call.receiverName || 'Unknown') 
+                : (call.callerName || 'Unknown');
+              const remotePhoto = isCaller 
+                ? (call.calleePhoto || call.receiverAvatar || '') 
+                : (call.callerPhoto || call.callerAvatar || '');
+              const remoteId = isCaller 
+                ? (call.calleeId || call.receiverId) 
+                : call.callerId;
+              const isVideo = call.callType === 'video';
+              const isMissed = call.status === 'no-answer' || call.status === 'rejected';
+              const wasAnswered = call.status === 'ended' || call.status === 'accepted';
+
+              let statusLabel = '';
+              let statusColor = 'text-gray-500';
+              let StatusIcon = isCaller ? PhoneOutgoing : PhoneIncoming;
+
+              if (call.status === 'no-answer') {
+                statusLabel = 'Missed';
+                statusColor = 'text-red-400';
+                StatusIcon = PhoneMissed;
+              } else if (call.status === 'rejected') {
+                statusLabel = 'Declined';
+                statusColor = 'text-red-400';
+                StatusIcon = PhoneOff;
+              } else if (call.status === 'busy') {
+                statusLabel = 'Busy';
+                statusColor = 'text-yellow-400';
+                StatusIcon = PhoneOff;
+              } else if (wasAnswered) {
+                statusLabel = isCaller ? 'Outgoing' : 'Incoming';
+                statusColor = 'text-green-400';
+              } else if (call.status === 'pending') {
+                statusLabel = 'Pending';
+                statusColor = 'text-yellow-400';
+              } else {
+                statusLabel = isCaller ? 'Outgoing' : 'Incoming';
+              }
+
+              const callTime = call.createdAt?.toDate?.() || (call.createdAt?.seconds ? new Date(call.createdAt.seconds * 1000) : null);
+              const timeStr = callTime ? formatConvoTime(callTime) : '';
+
+              return (
+                <div
+                  key={call.id}
+                  className="p-4 flex gap-3 cursor-pointer transition-colors border-b border-white/5 items-center hover:bg-white/[0.025]"
+                >
+                  {/* Avatar */}
+                  <div className="relative shrink-0">
+                    <Avatar
+                      src={remotePhoto}
+                      name={remoteName}
+                      size="md"
+                      className="!w-12 !h-12 border-none shrink-0"
+                    />
+                    {/* Call type badge on avatar */}
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#0D0D12] ${
+                      isMissed ? 'bg-red-500/80' : 'bg-[#00BFFF]/80'
+                    }`}>
+                      {isVideo ? (
+                        <Video className="w-2.5 h-2.5 text-white" />
+                      ) : (
+                        <Phone className="w-2.5 h-2.5 text-white" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`text-[15px] truncate mb-0.5 leading-snug ${isMissed ? 'text-red-400 font-bold' : 'text-white font-medium'}`}>
+                      {remoteName}
+                    </h3>
+                    <div className="flex items-center gap-1.5">
+                      <StatusIcon className={`w-3 h-3 ${statusColor} shrink-0`} />
+                      <span className={`text-xs ${statusColor}`}>
+                        {statusLabel} {isVideo ? 'video' : 'audio'} call
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right: time + re-call button */}
+                  <div className="flex flex-col items-end gap-1.5 self-center shrink-0">
+                    <span className="text-[11px] text-nc-muted font-medium">{timeStr}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (remoteId) {
+                          startCall({
+                            calleeId: remoteId,
+                            calleeName: remoteName,
+                            calleePhoto: remotePhoto,
+                            callType: call.callType || 'audio'
+                          });
+                        }
+                      }}
+                      className="w-8 h-8 rounded-full bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center text-[#00BFFF] hover:bg-[#00BFFF]/20 transition-all active:scale-90"
+                      title={`Call ${remoteName}`}
+                    >
+                      {isVideo ? (
+                        <Video className="w-3.5 h-3.5" />
+                      ) : (
+                        <Phone className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="p-8 text-center text-nc-muted text-sm">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
+                <Phone className="w-8 h-8 text-[#00BFFF]/40" />
+              </div>
+              <p className="font-semibold text-white/60 mb-1">No call history</p>
+              <p className="text-xs text-gray-500">Your recent calls will appear here</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Chat Area Container */}
@@ -886,7 +1385,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                   size="sm" 
                   className="!w-9 !h-9 border-none shrink-0" 
                 />
-                {activeChat.online && (
+                {isOnline && (
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border border-[#0d0d12]" />
                 )}
               </div>
@@ -894,15 +1393,21 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-white text-sm truncate leading-tight">{activeChat.name}</h3>
                 <p className="text-[11px] leading-none mt-0.5">
-                  {activeChat.online ? (
-                    <span className="text-[#00BFFF] font-semibold">Online</span>
-                  ) : (
-                    <span className="text-gray-500">Offline</span>
-                  )}
+                  <span className={isOnline ? "text-[#00BFFF] font-semibold animate-pulse" : "text-gray-500"}>
+                    {presenceLabel}
+                  </span>
                 </p>
               </div>
               
-              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
+                <button 
+                  onClick={() => handleStartCall('audio')}
+                  className="p-2 text-gray-400 hover:text-[#00BFFF] transition-colors"
+                  title="Audio Call"
+                  aria-label="Audio Call"
+                >
+                  <Phone className="w-5 h-5" />
+                </button>
                 <button 
                   onClick={() => handleStartCall('video')}
                   className="p-2 text-gray-400 hover:text-[#00BFFF] transition-colors"
@@ -940,7 +1445,11 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
             </div>
 
             {/* Chat Messages Panel with Separator Timestamps */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+            <div 
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 relative"
+            >
               {renderMessagesWithSeparators()}
               
               {/* Typing indicator bouncy dots */}
@@ -955,6 +1464,25 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                 </div>
               )}
               <div ref={messagesEndRef} />
+
+              {/* Floating scroll-to-bottom button */}
+              <AnimatePresence>
+                {showScrollBottom && (
+                  <motion.button
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    onClick={scrollToBottom}
+                    className="absolute bottom-6 right-6 z-30 w-11 h-11 rounded-full bg-[#00BFFF] hover:bg-[#0099e6] text-[#0A0A0A] hover:scale-105 active:scale-95 flex items-center justify-center shadow-lg shadow-[#00BFFF]/30 border border-white/10 transition-all"
+                    title="Scroll to bottom"
+                    aria-label="Scroll to bottom"
+                  >
+                    <svg className="w-5 h-5 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Bottom Message Input Panel */}
@@ -1167,6 +1695,48 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                 )}
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Image Lightbox */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxUrl(null)}
+            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 cursor-zoom-out select-none"
+          >
+            {/* Close button top right */}
+            <button
+              onClick={() => setLightboxUrl(null)}
+              className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:scale-105 active:scale-95 transition-all"
+              title="Close Image"
+              aria-label="Close Image"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Centered Image */}
+            <motion.img
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              src={lightboxUrl}
+              alt="Fullscreen view"
+              className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/5"
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {/* Instruction tooltip */}
+            <p className="text-xs text-nc-muted mt-4 font-semibold tracking-wider uppercase select-none pointer-events-none">
+              Click anywhere to dismiss
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

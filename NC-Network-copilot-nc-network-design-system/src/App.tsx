@@ -640,6 +640,63 @@ export default function App() {
     return () => unsub();
   }, [user?.uid, navigate, showAlert]);
 
+  // User presence system
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const profileRef = doc(db, 'profiles', user.uid);
+
+    const setOnlineStatus = async (isOnline: boolean) => {
+      try {
+        await setDoc(profileRef, {
+          online: isOnline,
+          lastActive: serverTimestamp(),
+          lastSeen: serverTimestamp(),
+        }, { merge: true });
+      } catch (err) {
+        console.warn("[Presence] Failed to update online status:", err);
+      }
+    };
+
+    // Mark online instantly on login/mount
+    setOnlineStatus(true);
+
+    // Heartbeat every 60 seconds
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setOnlineStatus(true);
+      }
+    }, 60000);
+
+    // Tab visibility changes
+    const handleVisibilityChange = () => {
+      setOnlineStatus(document.visibilityState === 'visible');
+    };
+
+    // Beforeunload tab close
+    const handleBeforeUnload = () => {
+      updateDoc(profileRef, {
+        online: false,
+        lastSeen: serverTimestamp()
+      }).catch(() => {});
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      
+      // Mark offline on unmount/logout
+      updateDoc(profileRef, {
+        online: false,
+        lastSeen: serverTimestamp()
+      }).catch(() => {});
+    };
+  }, [user?.uid]);
+
   // Subscribe to profile data
   useEffect(() => {
     if (!user?.uid) {
@@ -676,12 +733,12 @@ export default function App() {
   const enrichedUser = user ? {
     uid: user.uid,
     email: user.email,
-    displayName: user.displayName,
-    photoURL: user.photoURL,
+    displayName: userProfile?.name || user.displayName || '',
+    photoURL: userProfile?.photoURL || userProfile?.image || user.photoURL || '',
     gender: userProfile?.gender || '',
     profileImage: userProfile?.image || user.photoURL || '',
     premium: userProfile?.premium || (user.email === 'aniltimilsena53@gmail.com') || false,
-    role: userProfile?.role || '',
+    role: userProfile?.category || userProfile?.role || '',
   } : null;
 
   const updateAvatar = async (newUrl: string | null) => {
@@ -727,11 +784,39 @@ export default function App() {
         'success',
         'You are signed in to NC Network',
       );
+      if (localStorage.getItem('nc_suspicious_login') === 'true') {
+        showAlert(
+          "Suspicious Login Detected",
+          "error",
+          "We detected a successful login from a location that does not match your recent login history. Please check your active sessions."
+        );
+        localStorage.removeItem('nc_suspicious_login');
+      }
     } else if (!user && lastUser) {
       showAlert('You have been signed out', 'logout');
     }
     setLastUser(user);
   }, [user, authReady, showAlert, lastUser]);
+
+  const handleCancelDeletion = async () => {
+    if (!user?.uid) return;
+    try {
+      await updateDoc(doc(db, 'profiles', user.uid), {
+        deletionScheduled: false,
+        deletionScheduledAt: null,
+        deletionGracePeriodEndsAt: null,
+      });
+      await updateDoc(doc(db, 'users', user.uid), {
+        deletionScheduled: false,
+        deletionScheduledAt: null,
+        deletionGracePeriodEndsAt: null,
+      });
+      showToast("Account successfully restored!", "success");
+    } catch (err) {
+      console.error("Failed to cancel deletion:", err);
+      showToast("Failed to restore account. Please try again.", "error");
+    }
+  };
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -740,7 +825,8 @@ export default function App() {
 
   // Apply font size preference
   useEffect(() => {
-    const savedFontSize = localStorage.getItem('nc_font_size') || 'medium';
+    const savedFontSize = localStorage.getItem('nc_font_size') || 'small';
+    document.documentElement.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
     document.documentElement.classList.add(`font-size-${savedFontSize}`);
   }, []);
 
@@ -750,6 +836,42 @@ export default function App() {
     <PermissionProvider>
       <CallProvider user={user}>
         <UserContext.Provider value={{ user: enrichedUser, updateAvatar, deleteAvatar }}>
+          {user && userProfile?.deletionScheduled === true && (
+            <div className="fixed inset-0 z-[99999] bg-[#0A0A0A]/95 backdrop-blur-md flex items-center justify-center p-6 font-sans">
+              <div className="max-w-md w-full bg-[#111] border border-white/5 shadow-[0_0_50px_rgba(239,68,68,0.15)] rounded-3xl p-8 text-center space-y-6">
+                <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto">
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-xl font-bold text-white">Account Scheduled for Deletion</h2>
+                  <p className="text-gray-400 text-xs leading-relaxed">
+                    Your account is currently in a 30-day grace period and is scheduled for permanent deletion on{" "}
+                    <strong className="text-white">
+                      {userProfile.deletionGracePeriodEndsAt
+                        ? new Date(userProfile.deletionGracePeriodEndsAt.seconds ? userProfile.deletionGracePeriodEndsAt.seconds * 1000 : userProfile.deletionGracePeriodEndsAt).toLocaleDateString()
+                        : "30 days from request"}
+                    </strong>.
+                  </p>
+                </div>
+                <div className="pt-2 flex flex-col gap-2">
+                  <button
+                    onClick={handleCancelDeletion}
+                    className="w-full py-3 bg-[#00BFFF] hover:bg-[#009cdb] text-black font-black uppercase tracking-wider text-xs rounded-xl transition-all"
+                  >
+                    Cancel Deletion & Restore Account
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full py-3 border border-white/10 hover:bg-white/5 text-gray-400 hover:text-white font-bold text-xs rounded-xl transition-all"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <AnimatePresence>
             {!authReady && <SplashScreen />}
             {showOnboarding && (

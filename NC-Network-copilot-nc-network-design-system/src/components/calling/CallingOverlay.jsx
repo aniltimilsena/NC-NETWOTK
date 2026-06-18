@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCall } from '../../context/CallContext';
 import { getProfile } from '../../services/profile';
@@ -9,6 +9,110 @@ const formatDuration = (seconds) => {
   const s = (seconds % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
 };
+
+// ─── Voice Waveform Component ─────────────────────────────────────────────
+// Analyzes the remote audio stream and renders animated bars that react
+// to the remote peer's voice level during audio-only calls.
+
+function VoiceWaveform({ stream }) {
+  const [levels, setLevels] = useState(() => new Array(7).fill(0.15));
+  const analyserRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    if (!stream) return;
+
+    const audioTracks = stream.getAudioTracks();
+    if (!audioTracks.length) return;
+
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.8;
+      const source = ctx.createMediaStreamSource(stream);
+      source.connect(analyser);
+      audioCtxRef.current = ctx;
+      analyserRef.current = analyser;
+
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const BAR_COUNT = 7;
+
+      const tick = () => {
+        analyser.getByteFrequencyData(data);
+        // Sample BAR_COUNT frequency bins spread across the spectrum
+        const newLevels = [];
+        const step = Math.floor(data.length / BAR_COUNT);
+        for (let i = 0; i < BAR_COUNT; i++) {
+          const idx = Math.min(i * step + Math.floor(step / 2), data.length - 1);
+          // Normalize 0-255 to 0.15-1.0 range, minimum bar height is 15%
+          newLevels.push(Math.max(0.15, data[idx] / 255));
+        }
+        setLevels(newLevels);
+        rafRef.current = requestAnimationFrame(tick);
+      };
+
+      rafRef.current = requestAnimationFrame(tick);
+    } catch (err) {
+      console.warn('[VoiceWaveform] Failed to create audio analyser:', err);
+    }
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current = null;
+      }
+    };
+  }, [stream]);
+
+  return (
+    <div className="flex items-end justify-center gap-1 h-12 mt-4">
+      {levels.map((level, i) => (
+        <motion.div
+          key={i}
+          className="w-1.5 rounded-full bg-gradient-to-t from-[#00BFFF] to-[#00FFAA]"
+          animate={{ 
+            height: `${level * 48}px`,
+            opacity: 0.5 + level * 0.5,
+          }}
+          transition={{ 
+            type: 'spring',
+            stiffness: 400,
+            damping: 25,
+            mass: 0.5,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Calling Dots Animation ───────────────────────────────────────────────
+// Shows animated bouncing dots during the "Calling..." state
+
+function CallingDots() {
+  return (
+    <div className="flex items-center gap-1 ml-1">
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="w-1.5 h-1.5 rounded-full bg-[#00BFFF]"
+          animate={{ y: [0, -6, 0] }}
+          transition={{
+            duration: 0.8,
+            repeat: Infinity,
+            delay: i * 0.15,
+            ease: 'easeInOut',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Main Overlay ─────────────────────────────────────────────────────────
 
 export default function CallingOverlay() {
   const {
@@ -92,6 +196,7 @@ export default function CallingOverlay() {
   const isVideoCall = activeCall?.callType === 'video';
   const isConnected = callState === 'connected';
   const isError = callState === 'error';
+  const isCalling = callState === 'calling' || callState === 'ringing';
 
   // Determine the remote party's info correctly
   const isCaller = currentUser?.uid === activeCall?.callerId;
@@ -106,15 +211,16 @@ export default function CallingOverlay() {
   const remotePhoto = remoteProfile?.image || remoteProfile?.avatar || remoteProfile?.photoURL || docRemotePhoto;
   const remoteProfession = remoteProfile?.role || 'Talent';
 
-  const statusText =
-    callState === 'requesting-media' ? (isCaller ? 'Requesting access...' : 'Connecting...') :
-    callState === 'creating-offer' ? (isCaller ? 'Preparing...' : 'Connecting...') :
-    callState === 'calling' ? (isCaller ? 'Calling...' : 'Incoming Call') :
-    callState === 'ringing' ? (isCaller ? 'Ringing...' : 'Incoming Call') :
-    callState === 'connecting' ? 'Connecting...' :
-    callState === 'connected' ? formatDuration(callDuration) :
-    callState === 'error' ? 'Call Failed' :
-    '';
+  const statusText = useMemo(() => {
+    if (callState === 'requesting-media') return isCaller ? 'Requesting access...' : 'Connecting...';
+    if (callState === 'creating-offer') return isCaller ? 'Preparing...' : 'Connecting...';
+    if (callState === 'calling') return null; // We'll render CallingDots instead
+    if (callState === 'ringing') return isCaller ? null : 'Incoming Call'; // Dots for caller
+    if (callState === 'connecting') return 'Connecting...';
+    if (callState === 'connected') return formatDuration(callDuration);
+    if (callState === 'error') return 'Call Failed';
+    return '';
+  }, [callState, callDuration, isCaller]);
 
   if (!isActive && !isError) return null;
 
@@ -190,12 +296,16 @@ export default function CallingOverlay() {
             className="mb-6"
           >
             <div className="relative">
-              {/* Pulse ring animation */}
-              {(callState === 'calling' || callState === 'ringing') && (
+              {/* Pulse ring animation — only during calling/ringing */}
+              {isCalling && (
                 <>
                   <div className="absolute inset-0 rounded-full bg-nc-accent/20 animate-ping" style={{ animationDuration: '2s' }} />
                   <div className="absolute -inset-3 rounded-full border-2 border-nc-accent/10 animate-pulse" />
                 </>
+              )}
+              {/* Connected glow ring for audio calls */}
+              {!isVideoCall && isConnected && (
+                <div className="absolute -inset-2 rounded-full border-2 border-green-500/20 animate-pulse" style={{ animationDuration: '3s' }} />
               )}
               <Avatar 
                 src={remotePhoto}
@@ -226,18 +336,38 @@ export default function CallingOverlay() {
               {remoteProfession}
             </motion.p>
           )}
-          <motion.p
+
+          {/* Status text with animated dots for calling state */}
+          <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className={`text-sm font-bold uppercase tracking-widest ${
+            className={`flex items-center text-sm font-bold uppercase tracking-widest ${
               isConnected ? 'text-green-400' :
               isError ? 'text-red-400' :
               'text-nc-accent'
             }`}
           >
-            {statusText}
-          </motion.p>
+            {(callState === 'calling' || (callState === 'ringing' && isCaller)) ? (
+              <>
+                <span>Calling</span>
+                <CallingDots />
+              </>
+            ) : (
+              <span>{statusText}</span>
+            )}
+          </motion.div>
+
+          {/* Voice Waveform Animation — shown during connected audio calls */}
+          {!isVideoCall && isConnected && remoteStream && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <VoiceWaveform stream={remoteStream} />
+            </motion.div>
+          )}
 
           {/* Error message */}
           {isError && (
@@ -251,6 +381,36 @@ export default function CallingOverlay() {
             </motion.p>
           )}
         </div>
+
+        {/* ── Connected call info bar (top) for video calls ── */}
+        {isVideoCall && isConnected && (
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="absolute top-0 left-0 right-0 z-30 p-4 pt-12 sm:pt-6 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <Avatar 
+                src={remotePhoto}
+                name={remoteName}
+                gender={remoteProfile?.gender}
+                size="none"
+                className="w-8 h-8 text-sm border border-white/20"
+              />
+              <div>
+                <p className="text-white text-sm font-bold leading-tight">{remoteName}</p>
+                <p className="text-green-400 text-[10px] font-bold tracking-wider">{formatDuration(callDuration)}</p>
+              </div>
+            </div>
+            {/* Encrypted badge */}
+            <div className="flex items-center gap-1">
+              <svg className="w-3 h-3 text-green-500/60" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+              <span className="text-[10px] text-white/30 font-medium tracking-wider uppercase">Encrypted</span>
+            </div>
+          </motion.div>
+        )}
 
         {/* ── Controls bar ── */}
         <motion.div
@@ -354,8 +514,8 @@ export default function CallingOverlay() {
             </button>
           </div>
 
-          {/* Encrypted indicator */}
-          {isConnected && (
+          {/* Encrypted indicator — for audio calls */}
+          {!isVideoCall && isConnected && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

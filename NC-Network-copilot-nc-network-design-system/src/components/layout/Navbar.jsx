@@ -84,6 +84,7 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
   const [recentSearches, setRecentSearches] = useState(['Achyut', 'Kathmandu', 'Commercials']);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -109,6 +110,51 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
     }, (err) => {
       if (err.code !== 'permission-denied') {
         console.error("Notifications snapshot listener failed:", err);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setUnreadMessagesCount(0);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'conversations'),
+      where('participants', 'array-contains', user.uid)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      let count = 0;
+      snapshot.docs.forEach(d => {
+        const data = d.data();
+        const uid = user.uid;
+        const lastSender = data.lastSenderId;
+        
+        if (lastSender && lastSender !== uid) {
+          let isUnread = false;
+          if (data.readBy && typeof data.readBy === 'object' && !Array.isArray(data.readBy)) {
+            isUnread = data.readBy[uid] === false;
+          } else if (data.unreadCounts && typeof data.unreadCounts === 'object') {
+            isUnread = (data.unreadCounts[uid] || 0) > 0;
+          } else if (typeof data.unread === 'boolean') {
+            isUnread = data.unread === true;
+          } else if (typeof data.unread === 'number') {
+            isUnread = data.unread > 0;
+          }
+          
+          if (isUnread) {
+            count++;
+          }
+        }
+      });
+      setUnreadMessagesCount(count);
+    }, (err) => {
+      if (err.code !== 'permission-denied') {
+        console.error("Conversations snapshot listener failed in Navbar:", err);
       }
     });
 
@@ -308,6 +354,9 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
                 aria-label="Messages"
               >
                 <SendIcon size={24} color="currentColor" active={isActionActive('messages')} />
+                {unreadMessagesCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#00BFFF] rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#00BFFF]" />
+                )}
               </Link>
  
               {!isAdmin && !user?.premium && (
@@ -568,11 +617,16 @@ export default function Navbar({ onNavigate, currentPage, onBack = () => {}, sho
           <Link
             key={tab.label}
             to={tab.path}
-            className={`flex flex-col items-center justify-center flex-1 h-full py-2 gap-1 text-[10px] font-bold transition-all ${
+            className={`flex flex-col items-center justify-center flex-1 h-full py-2 gap-1 text-[10px] font-bold transition-all relative ${
               tab.isActive ? 'text-[#00BFFF]' : 'text-[#444444]'
             }`}
           >
-            {tab.icon}
+            <div className="relative">
+              {tab.icon}
+              {tab.label === 'Messages' && unreadMessagesCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#00BFFF] rounded-full border border-[#0f0f0f] animate-pulse shadow-[0_0_6px_#00BFFF]" />
+              )}
+            </div>
             <span>{tab.label}</span>
           </Link>
         ))}

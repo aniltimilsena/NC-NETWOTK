@@ -5,11 +5,29 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    match /{userId}/{allPaths=**} {
-      allow read: if isAuthenticated();
-      allow write: if false;
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Profiles folder (avatar and cover)
+    match /profiles/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+    }
+
+    // Media gallery showcase
+    match /media/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+    }
+
+    // Casting calls folder
+    match /castings/{castingId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Default Deny
     match /{allPaths=**} {
       allow read, write: if false;
     }

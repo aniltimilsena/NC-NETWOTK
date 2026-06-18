@@ -10,6 +10,8 @@ import {
   onSnapshot,
   query,
   where,
+  orderBy,
+  limit,
   serverTimestamp,
   getDocs,
   type Unsubscribe,
@@ -47,14 +49,32 @@ export interface CallDoc {
 }
 
 // ─── STUN/TURN Configuration ────────────────────────────────────────────────
+// TURN servers ensure calls work behind strict NATs, corporate firewalls,
+// and symmetric NATs where STUN alone fails (~15-20% of connections).
 
 export const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
+    // Google STUN servers (fast, reliable, free)
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun2.l.google.com:19302" },
-    { urls: "stun:stun3.l.google.com:19302" },
-    { urls: "stun:stun4.l.google.com:19302" },
+    // TURN relay servers for restrictive networks
+    // Using OpenRelay (free, open-source TURN service)
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
   ],
   iceCandidatePoolSize: 10,
 };
@@ -264,4 +284,118 @@ export const cleanupCall = async (callId: string): Promise<void> => {
   } catch (err) {
     console.error("[CallService] cleanupCall error:", err);
   }
+};
+
+// ─── Call History ───────────────────────────────────────────────────────────
+
+/**
+ * Fetch call history for a user (both as caller and callee).
+ * Runs two queries and merges + sorts by createdAt descending.
+ */
+export const getCallHistory = async (
+  userId: string,
+  maxResults: number = 50
+): Promise<CallDoc[]> => {
+  try {
+    // Query 1: Calls where user is the caller
+    const callerQuery = query(
+      collection(db, "calls"),
+      where("callerId", "==", userId),
+      orderBy("createdAt", "desc"),
+      limit(maxResults)
+    );
+
+    // Query 2: Calls where user is the callee
+    const calleeQuery = query(
+      collection(db, "calls"),
+      where("calleeId", "==", userId),
+      orderBy("createdAt", "desc"),
+      limit(maxResults)
+    );
+
+    const [callerSnap, calleeSnap] = await Promise.all([
+      getDocs(callerQuery),
+      getDocs(calleeQuery),
+    ]);
+
+    const callMap = new Map<string, CallDoc>();
+
+    callerSnap.docs.forEach((d) => {
+      callMap.set(d.id, { id: d.id, ...d.data() } as CallDoc);
+    });
+    calleeSnap.docs.forEach((d) => {
+      if (!callMap.has(d.id)) {
+        callMap.set(d.id, { id: d.id, ...d.data() } as CallDoc);
+      }
+    });
+
+    // Sort by createdAt descending
+    const allCalls = Array.from(callMap.values());
+    allCalls.sort((a, b) => {
+      const aTime = a.createdAt?.toMillis?.() || a.createdAt?.seconds * 1000 || 0;
+      const bTime = b.createdAt?.toMillis?.() || b.createdAt?.seconds * 1000 || 0;
+      return bTime - aTime;
+    });
+
+    return allCalls.slice(0, maxResults);
+  } catch (err) {
+    console.error("[CallService] getCallHistory error:", err);
+    return [];
+  }
+};
+
+/**
+ * Subscribe to call history changes in real-time.
+ */
+export const subscribeToCallHistory = (
+  userId: string,
+  callback: (calls: CallDoc[]) => void,
+  maxResults: number = 50
+): Unsubscribe => {
+  // We listen to calls where user is caller
+  const callerQ = query(
+    collection(db, "calls"),
+    where("callerId", "==", userId),
+    orderBy("createdAt", "desc"),
+    limit(maxResults)
+  );
+
+  const calleeQ = query(
+    collection(db, "calls"),
+    where("calleeId", "==", userId),
+    orderBy("createdAt", "desc"),
+    limit(maxResults)
+  );
+
+  let callerCalls: CallDoc[] = [];
+  let calleeCalls: CallDoc[] = [];
+
+  const merge = () => {
+    const callMap = new Map<string, CallDoc>();
+    callerCalls.forEach((c) => callMap.set(c.id, c));
+    calleeCalls.forEach((c) => { if (!callMap.has(c.id)) callMap.set(c.id, c); });
+
+    const sorted = Array.from(callMap.values()).sort((a, b) => {
+      const aTime = a.createdAt?.toMillis?.() || a.createdAt?.seconds * 1000 || 0;
+      const bTime = b.createdAt?.toMillis?.() || b.createdAt?.seconds * 1000 || 0;
+      return bTime - aTime;
+    });
+
+    callback(sorted.slice(0, maxResults));
+  };
+
+  const unsub1 = onSnapshot(callerQ, (snap) => {
+    callerCalls = snap.docs.map((d) => ({ id: d.id, ...d.data() } as CallDoc));
+    merge();
+  });
+
+  const unsub2 = onSnapshot(calleeQ, (snap) => {
+    calleeCalls = snap.docs.map((d) => ({ id: d.id, ...d.data() } as CallDoc));
+    merge();
+  });
+
+  return () => {
+    unsub1();
+    unsub2();
+  };
 };

@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { getProfile, updateProfileData, subscribeToProfile, uploadProfileMedia } from '../services/profile';
-import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword, GoogleAuthProvider, FacebookAuthProvider, linkWithPopup, unlink } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp, getDocs, where, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp, getDocs, where, updateDoc, limit } from 'firebase/firestore';
 import { FileUploadCard } from "@/components/ui/file-upload-card"
 import { InlineAlert } from '../components/ui/AlertBanner';
 import { 
@@ -15,10 +15,13 @@ import {
   DownloadDoneIcon,
   SuccessIcon
 } from "@/components/ui/animated-state-icons"
-import { Plus, Check, ChevronLeft, User, Briefcase, Lock, Bell, Shield, Database, Trash2, HelpCircle, X, Mail } from "lucide-react"
+import { Plus, Check, ChevronLeft, User, Briefcase, Lock, Bell, Shield, Database, Trash2, HelpCircle, X, Mail, Loader2, Monitor, Smartphone, Tablet, Eye, EyeOff, AlertTriangle } from "lucide-react"
+import { evaluatePasswordStrength } from '../utils/security';
 import Avatar from '../components/ui/Avatar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { CATEGORIES } from '../constants/categories';
+import OtpInput from '../components/ui/OtpInput';
+import apiClient from '../api/client';
 
 // Unified premium toggle style
 const GoldenToggle = ({ enabled, onChange }) => (
@@ -425,7 +428,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const isSavingRef = useRef(false);
 
   // Appearance Settings
-  const [fontSize, setFontSize] = useState(() => localStorage.getItem('nc_font_size') || 'medium');
+  const [fontSize, setFontSize] = useState(() => localStorage.getItem('nc_font_size') || 'small');
   const handleFontSizeChange = (size) => {
     setFontSize(size);
     localStorage.setItem('nc_font_size', size);
@@ -642,6 +645,23 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  
+  // Show/hide password toggles
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [signOutOthersAfterPasswordChange, setSignOutOthersAfterPasswordChange] = useState(false);
+
+  // Connected accounts and login history
+  const [providers, setProviders] = useState([]);
+  const [loginHistory, setLoginHistory] = useState([]);
+
+  // Account deletion states
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState("");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
   const [whoCanMessage, setWhoCanMessage] = useState("connections");
   const [profileVisibility, setProfileVisibility] = useState("public");
 
@@ -839,15 +859,18 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
             setSelectedLanguages(data.languages || []);
             setSelectedSkills(data.skills || []);
             setExperiences(data.experience || []);
-            setOpenToWork(data.openToWork || false);
+            setOpenToWork(data.openToAudition ?? data.openToWork ?? false);
             setHeight(data.height || "");
             setWeight(data.weight || "");
             setEyeColor(data.eyeColor || "");
             setHairColor(data.hairColor || "");
-            setRole(data.role || "");
+            setRole(data.category ?? data.role ?? "");
             setShowContactInfo(data.showContactInfo || false);
             setAvatarUrl(data.image || data.photoURL || "");
             setTwoFactor(data.twoFactorEnabled || false);
+            setTwoFactorMethod(data.twoFactorMethod || "");
+            setTwoFactorPhone(data.twoFactorPhone || "");
+            setTwoFactorEmail(data.twoFactorEmail || "");
             setWhoCanMessage(data.whoCanMessage || "connections");
             setProfileVisibility(data.profileVisibility || "public");
             
@@ -877,8 +900,10 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     setIsSaving(true);
     isSavingRef.current = true;
     
+    const newName = displayNameState.trim() || `${fName} ${lName}`.trim() || uName;
+
     const profileData = {
-      name: displayNameState.trim() || `${fName} ${lName}`.trim() || uName,
+      name: newName,
       firstName: fName,
       lastName: lName,
       username: uName,
@@ -890,11 +915,13 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       skills: selectedSkills,
       experience: experiences,
       openToWork,
+      openToAudition: openToWork,
       height,
       weight,
       eyeColor,
       hairColor,
       role,
+      category: role,
       showContactInfo,
       email: showContactInfo ? (user?.email || "") : "",
       image: avatarUrl || null,
@@ -918,20 +945,31 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       const { error } = await updateProfileData(user.uid, profileData);
 
       if (!error) {
+        if (auth.currentUser) {
+          try {
+            await updateProfile(auth.currentUser, {
+              displayName: newName,
+              photoURL: avatarUrl || null
+            });
+          } catch (authErr) {
+            console.warn("[Settings] Auth profile update failed:", authErr);
+          }
+        }
+
         setHasChanges(false);
         setSaveSuccess(true);
-        showToast('Profile settings saved successfully!', 'success');
+        showToast('Profile updated!', 'success');
         createSystemNotification("Profile Updated", "Your profile settings have been successfully updated.");
         setTimeout(() => {
           setSaveSuccess(false);
         }, 2000);
       } else {
         console.error('[Settings] save failed:', error);
-        showToast(`Failed to save: ${error}`, 'error');
+        showToast('Failed to save. Try again', 'error');
       }
     } catch (err) {
       console.error('[Settings] unexpected error during save:', err);
-      showToast('An unexpected error occurred while saving.', 'error');
+      showToast('Failed to save. Try again', 'error');
     } finally {
       // Small delay before allowing snapshot updates to avoid overwriting with stale data
       setTimeout(() => {
@@ -946,30 +984,40 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       showToast("New passwords do not match.", "error");
       return;
     }
-    if (newPassword.length < 8) {
-      showToast("Password must be at least 8 characters long.", "error");
+    const { strength } = evaluatePasswordStrength(newPassword);
+    if (strength === 'Weak') {
+      showToast("Please choose a stronger password meeting the security criteria.", "error");
       return;
     }
     setIsChangingPassword(true);
     try {
       const u = auth.currentUser;
-      if (u) {
-        if (currentPassword) {
-          const credential = EmailAuthProvider.credential(u.email, currentPassword);
-          await reauthenticateWithCredential(u, credential);
-        }
+      if (u && u.email) {
+        const credential = EmailAuthProvider.credential(u.email, currentPassword);
+        await reauthenticateWithCredential(u, credential);
+        
         await updatePassword(u, newPassword);
-        showToast("Password updated successfully!", "success");
+        showToast("Password changed successfully!", "success");
+        await createSystemNotification("Password Changed", "Your account password was recently updated.");
+        
+        if (signOutOthersAfterPasswordChange) {
+          await handleSignOutAllOthers();
+        }
+        
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        await createSystemNotification("Password Changed", "Your account password was recently updated.");
+        setSignOutOthersAfterPasswordChange(false);
       } else {
         showToast("User session not found.", "error");
       }
     } catch (err) {
       console.error("Password update error:", err);
-      showToast(err.message || "Failed to update password. Please check your credentials.", "error");
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        showToast("Current password incorrect", "error");
+      } else {
+        showToast(err.message || "Failed to update password. Please check your credentials.", "error");
+      }
     } finally {
       setIsChangingPassword(false);
     }
@@ -979,6 +1027,173 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [searchVisibility, setSearchVisibility] = useState(true);
   const [twoFactor, setTwoFactor] = useState(false);
   const [sessions, setSessions] = useState([]);
+
+  // 2FA states
+  const [twoFactorMethod, setTwoFactorMethod] = useState("");
+  const [twoFactorPhone, setTwoFactorPhone] = useState("");
+  const [twoFactorEmail, setTwoFactorEmail] = useState("");
+  const [twoFactorStep, setTwoFactorStep] = useState("status"); // 'status' | 'method' | 'setup_sms' | 'setup_email' | 'backup_codes' | 'disable_confirm' | 'disable_verify'
+  const [selected2faMethod, setSelected2faMethod] = useState("sms");
+  const [setupPhone, setSetupPhone] = useState("+977");
+  const [setupEmail, setSetupEmail] = useState("");
+  const [otpValue, setOtpValue] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+  const [resendActive, setResendActive] = useState(false);
+  const [backupCodes, setBackupCodes] = useState([]);
+  const [passwordToDisable, setPasswordToDisable] = useState("");
+  const [otpError, setOtpError] = useState("");
+
+  useEffect(() => {
+    if (otpSent && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (otpSent && countdown === 0) {
+      setResendActive(true);
+    }
+  }, [countdown, otpSent]);
+
+  const handleSendSetupOtp = async () => {
+    setIsSendingCode(true);
+    setOtpError('');
+    try {
+      const res = await apiClient.post('/2fa/send-setup-otp', {
+        method: selected2faMethod,
+        phone: selected2faMethod === 'sms' ? setupPhone : null,
+        email: selected2faMethod === 'email' ? setupEmail : null,
+      });
+      if (res.data.success) {
+        setOtpSent(true);
+        setCountdown(60);
+        setResendActive(false);
+        setOtpValue('');
+        if (res.data.code && Notification.permission === 'granted') {
+          new Notification("NC-Network Verification", {
+            body: `Your setup verification code is: ${res.data.code}`,
+            icon: '/logo.png',
+            requireInteraction: true
+          });
+        }
+        showToast('Verification code sent!', 'success');
+      } else {
+        setOtpError(res.data.error || 'Failed to send verification code.');
+      }
+    } catch (err) {
+      console.error("2FA send setup error:", err);
+      setOtpError(err.response?.data?.error || 'Error sending verification code.');
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  const handleVerifySetupOtp = async () => {
+    setIsVerifyingCode(true);
+    setOtpError('');
+    try {
+      const res = await apiClient.post('/2fa/verify-setup-otp', {
+        code: otpValue,
+        method: selected2faMethod,
+        phone: selected2faMethod === 'sms' ? setupPhone : null,
+        email: selected2faMethod === 'email' ? setupEmail : null,
+      });
+      if (res.data.success) {
+        setBackupCodes(res.data.backupCodes);
+        setTwoFactorStep('backup_codes');
+        showToast('Verification successful!', 'success');
+      } else {
+        setOtpError(res.data.error || 'Invalid code.');
+      }
+    } catch (err) {
+      console.error("2FA verify setup error:", err);
+      setOtpError(err.response?.data?.error || 'Verification failed.');
+    } finally {
+      setIsVerifyingCode(false);
+    }
+  };
+
+  const handleDownloadBackupCodes = () => {
+    const element = document.createElement("a");
+    const file = new Blob([
+      `NC NETWORK TWO-FACTOR AUTHENTICATION BACKUP CODES\n`,
+      `Keep these codes in a safe place. Each code can be used once.\n\n`,
+      backupCodes.map((code, idx) => `Code ${idx + 1}: ${code}`).join('\n')
+    ], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = "nc_backup_codes.txt";
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  const handleSendDisableOtp = async () => {
+    setIsSendingCode(true);
+    setOtpError('');
+    try {
+      if (!auth.currentUser || !auth.currentUser.email) {
+        showToast('Auth error. Log in again.', 'error');
+        return;
+      }
+      const credential = EmailAuthProvider.credential(auth.currentUser.email, passwordToDisable);
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      
+      const res = await apiClient.post('/2fa/send-setup-otp', {
+        method: twoFactorMethod,
+        phone: twoFactorMethod === 'sms' ? twoFactorPhone : null,
+        email: twoFactorMethod === 'email' ? twoFactorEmail : null,
+      });
+      
+      if (res.data.success) {
+        setOtpSent(true);
+        setCountdown(60);
+        setResendActive(false);
+        setOtpValue('');
+        setTwoFactorStep('disable_verify');
+        
+        if (res.data.code && Notification.permission === 'granted') {
+          new Notification("NC-Network Verification", {
+            body: `Your disable confirmation code is: ${res.data.code}`,
+            icon: '/logo.png',
+            requireInteraction: true
+          });
+        }
+        showToast('Verification code sent!', 'success');
+      } else {
+        setOtpError(res.data.error || 'Failed to send verification code.');
+      }
+    } catch (err) {
+      console.error("2FA send disable error:", err);
+      showToast('Invalid password. Please try again.', 'error');
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  const handleVerifyDisableOtp = async () => {
+    setIsVerifyingCode(true);
+    setOtpError('');
+    try {
+      const res = await apiClient.post('/2fa/disable', {
+        code: otpValue,
+      });
+      if (res.data.success) {
+        setTwoFactor(false);
+        setTwoFactorMethod('');
+        setTwoFactorPhone('');
+        setTwoFactorEmail('');
+        setTwoFactorStep('status');
+        showToast('2FA disabled', 'warning');
+      } else {
+        setOtpError(res.data.error || 'Invalid code.');
+      }
+    } catch (err) {
+      console.error("2FA disable verification error:", err);
+      setOtpError(err.response?.data?.error || 'Verification failed.');
+    } finally {
+      setIsVerifyingCode(false);
+    }
+  };
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -1028,6 +1243,137 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     const days = Math.floor(hours / 24);
     return `Active ${days} days ago`;
   };
+
+  const handleSignOutAllOthers = async () => {
+    if (!user?.uid) return;
+    try {
+      const currentSessionId = localStorage.getItem('nc_session_id');
+      const sessionsColRef = collection(db, 'profiles', user.uid, 'sessions');
+      const snap = await getDocs(sessionsColRef);
+      const batchPromises = snap.docs
+        .filter(d => d.id !== currentSessionId)
+        .map(d => deleteDoc(d.ref));
+      await Promise.all(batchPromises);
+      showToast("Signed out of all other devices successfully.", "success");
+    } catch (err) {
+      console.error("Failed to revoke other sessions:", err);
+      showToast("Failed to revoke other sessions.", "error");
+    }
+  };
+
+  useEffect(() => {
+    if (auth.currentUser) {
+      setProviders(auth.currentUser.providerData || []);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    
+    const historyColRef = collection(db, 'profiles', user.uid, 'login_history');
+    const q = query(historyColRef, orderBy('timestamp', 'desc'), limit(10));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setLoginHistory(list);
+    }, (error) => {
+      console.error("Error subscribing to login history:", error);
+    });
+    
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  const handleConnectProvider = async (providerName) => {
+    try {
+      if (!auth.currentUser) return;
+      let provider;
+      if (providerName === 'google') {
+        provider = new GoogleAuthProvider();
+      } else if (providerName === 'facebook') {
+        provider = new FacebookAuthProvider();
+      } else {
+        return;
+      }
+      
+      await linkWithPopup(auth.currentUser, provider);
+      await auth.currentUser.reload();
+      setProviders([...auth.currentUser.providerData]);
+      showToast(`${providerName === 'google' ? 'Google' : 'Facebook'} account linked successfully!`, 'success');
+    } catch (err) {
+      console.error(`Error linking ${providerName}:`, err);
+      showToast(err.message || `Failed to link ${providerName} account.`, 'error');
+    }
+  };
+
+  const handleDisconnectProvider = async (providerId) => {
+    try {
+      if (!auth.currentUser) return;
+      if (auth.currentUser.providerData.length <= 1) {
+        showToast("Cannot disconnect the last remaining login method.", "error");
+        return;
+      }
+      
+      await unlink(auth.currentUser, providerId);
+      await auth.currentUser.reload();
+      setProviders([...auth.currentUser.providerData]);
+      showToast(`Account disconnected successfully.`, 'success');
+    } catch (err) {
+      console.error(`Error unlinking ${providerId}:`, err);
+      showToast(err.message || `Failed to disconnect account.`, 'error');
+    }
+  };
+
+  const handleRequestAccountDeletion = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      showToast("Please type 'DELETE' to confirm.", "error");
+      return;
+    }
+    if (!deleteConfirmPassword) {
+      showToast("Please enter your password to confirm.", "error");
+      return;
+    }
+    setIsDeletingAccount(true);
+    try {
+      const u = auth.currentUser;
+      if (u && u.email) {
+        const credential = EmailAuthProvider.credential(u.email, deleteConfirmPassword);
+        await reauthenticateWithCredential(u, credential);
+        
+        const gracePeriodEndsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        await updateDoc(doc(db, 'profiles', u.uid), {
+          deletionScheduled: true,
+          deletionScheduledAt: serverTimestamp(),
+          deletionGracePeriodEndsAt: gracePeriodEndsAt
+        });
+        await updateDoc(doc(db, 'users', u.uid), {
+          deletionScheduled: true,
+          deletionScheduledAt: serverTimestamp(),
+          deletionGracePeriodEndsAt: gracePeriodEndsAt
+        });
+        
+        showToast("Account scheduled for deletion. Signing out...", "success");
+        setIsDeleteModalOpen(false);
+        
+        setTimeout(async () => {
+          await auth.signOut();
+          onNavigate('signin');
+        }, 1500);
+      }
+    } catch (err) {
+      console.error("Account deletion request error:", err);
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        showToast("Password incorrect.", "error");
+      } else {
+        showToast(err.message || "Failed to schedule account deletion.", "error");
+      }
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
 
   const tabs = [
     { id: 'account', icon: <User size={18} />, label: 'Account' },
@@ -1201,83 +1547,6 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
             {/* Save Button for Account fields */}
             <div className="pt-4">
               <SaveButton hasChanges={hasChanges} isSaving={isSaving} onSave={handleSave} saveSuccess={saveSuccess} />
-            </div>
-
-            {/* Change Password Card */}
-            <div className="bg-[#111] border border-white/5 rounded-2xl p-5 mt-8">
-              <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
-                <Lock className="w-4 h-4 text-[#00BFFF]" />
-                Change Password
-              </h3>
-              <div className="space-y-4">
-                <EditInput
-                  label="Current Password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <EditInput
-                    label="New Password"
-                    type="password"
-                    placeholder="Min. 8 characters"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                  <EditInput
-                    label="Confirm New Password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleChangePassword}
-                  disabled={!currentPassword || !newPassword || !confirmPassword || isChangingPassword}
-                  className="w-full py-3.5 bg-[#1a1a1a] hover:bg-[#222] border border-white/10 hover:border-white/20 text-white font-bold rounded-lg text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
-                >
-                  {isChangingPassword ? "Updating Password..." : "Update Password"}
-                </button>
-              </div>
-            </div>
-
-            {/* Danger Zone Card */}
-            <div className="border border-red-500/20 bg-red-500/5 rounded-2xl p-5 mt-8">
-              <h3 className="text-red-500 font-bold text-sm mb-2 uppercase tracking-wide">Danger Zone</h3>
-              <p className="text-gray-500 text-xs mb-4">Actions here are permanent and can affect your access.</p>
-              
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3 border-b border-red-500/10">
-                  <div>
-                    <h4 className="text-white font-bold text-xs">Deactivate Account</h4>
-                    <p className="text-gray-500 text-[11px] mt-0.5">Temporarily hide your profile. Reactivate anytime by logging back in.</p>
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={handleDeactivateAccount}
-                    className="px-4 py-2 border border-red-500/20 hover:border-red-500/40 text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg text-xs font-bold transition-all"
-                  >
-                    Deactivate
-                  </button>
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3">
-                  <div>
-                    <h4 className="text-red-500 font-bold text-xs">Delete Account Permanently</h4>
-                    <p className="text-red-500/60 text-[11px] mt-0.5">Erase your profile, history, and media. This action is irreversible.</p>
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={handleDeleteAccount}
-                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-red-500/10"
-                  >
-                    Delete Permanently
-                  </button>
-                </div>
-              </div>
             </div>
 
           </div>
@@ -1594,8 +1863,12 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                             exp={exp}
                             idx={idx}
                             onChange={(i, field, val) => {
-                              const newExps = [...experiences];
-                              newExps[i][field] = val;
+                              const newExps = experiences.map((item, index) => {
+                                if (index === i) {
+                                  return { ...item, [field]: val };
+                                }
+                                return item;
+                              });
                               setExperiences(newExps);
                               markDirty();
                             }}
@@ -1851,32 +2124,603 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
           <div className="space-y-8 animate-fade-in text-left pb-10">
             <div className="border-b border-white/5 pb-6 hidden md:block">
               <h2 className="text-2xl font-bold text-white mb-2">Security</h2>
-              <p className="text-[#888] text-sm">Protect your identity and monitor session activity.</p>
+              <p className="text-[#888] text-sm">Protect your identity, monitor session activity, and control connected services.</p>
             </div>
 
-            <section className="bg-[#111] border border-white/5 shadow-[0_0_15px_rgba(0,191,255,0.05)] rounded-2xl p-5 mb-5 flex items-center justify-between">
-              <div>
-                <h4 className="text-white font-bold mb-1">Two-Factor Authentication (2FA)</h4>
-                <p className="text-[#888] text-xs max-w-[250px] leading-relaxed">Require a cryptographic code from an authenticator app when logging in.</p>
+            {/* 1. Two-Factor Authentication (2FA) */}
+            <section className="bg-[#111] border border-white/5 shadow-[0_0_15px_rgba(0,191,255,0.05)] rounded-2xl p-6 mb-5">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+                <div>
+                  <h4 className="text-white font-bold text-sm">Two-Factor Authentication (2FA)</h4>
+                  <p className="text-[#888] text-xs mt-1 leading-relaxed">Secure your account by requiring an OTP code or backup recovery code during login.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${
+                    twoFactor ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                  }`}>
+                    {twoFactor ? 'ON' : 'OFF'}
+                  </span>
+                </div>
               </div>
-              <GoldenToggle 
-                enabled={twoFactor} 
-                onChange={async (v) => {
-                  if (v) {
-                    const permission = await Notification.requestPermission();
-                    if (permission !== 'granted') {
-                      showToast('Please enable browser system notifications to receive 2FA codes.', 'info');
-                    }
-                  }
-                  setTwoFactor(v);
-                  markDirty();
-                }} 
-              />
+
+              {/* Step Renderers */}
+              {twoFactorStep === 'status' && (
+                <div className="space-y-4">
+                  {twoFactor ? (
+                    <div className="text-left space-y-2">
+                      <p className="text-xs text-gray-300">
+                        2FA is active via <strong className="text-white uppercase">{twoFactorMethod}</strong>.
+                      </p>
+                      {twoFactorMethod === 'sms' && (
+                        <p className="text-[11px] text-gray-500 font-bold">Phone: {twoFactorPhone}</p>
+                      )}
+                      {twoFactorMethod === 'email' && (
+                        <p className="text-[11px] text-gray-500 font-bold font-mono">Email: {twoFactorEmail}</p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTwoFactorStep('disable_confirm');
+                          setPasswordToDisable('');
+                          setOtpValue('');
+                          setOtpError('');
+                          setOtpSent(false);
+                        }}
+                        className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-xs font-bold transition-all mt-2"
+                      >
+                        Disable 2FA
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTwoFactorStep('method');
+                          setSelected2faMethod('sms');
+                          setSetupPhone('+977');
+                          setSetupEmail(user?.email || '');
+                          setOtpValue('');
+                          setOtpError('');
+                          setOtpSent(false);
+                        }}
+                        className="px-5 py-2.5 bg-[#00BFFF] hover:bg-[#009cdb] text-black rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                      >
+                        Enable 2FA
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {twoFactorStep === 'method' && (
+                <div className="space-y-4 text-left">
+                  <p className="text-xs text-gray-400">Choose your primary authentication method:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${
+                      selected2faMethod === 'sms'
+                        ? 'border-[#00BFFF] bg-[#00BFFF]/5'
+                        : 'border-white/5 hover:bg-[#161617]'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="2fa_method"
+                        checked={selected2faMethod === 'sms'}
+                        onChange={() => setSelected2faMethod('sms')}
+                        className="mt-0.5 accent-[#00BFFF]"
+                      />
+                      <div>
+                        <span className="block text-white text-xs font-bold">SMS / Phone OTP</span>
+                        <span className="block text-gray-500 text-[10px] mt-0.5">Send a code to your Nepal phone number.</span>
+                      </div>
+                    </label>
+
+                    <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${
+                      selected2faMethod === 'email'
+                        ? 'border-[#00BFFF] bg-[#00BFFF]/5'
+                        : 'border-white/5 hover:bg-[#161617]'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="2fa_method"
+                        checked={selected2faMethod === 'email'}
+                        onChange={() => setSelected2faMethod('email')}
+                        className="mt-0.5 accent-[#00BFFF]"
+                      />
+                      <div>
+                        <span className="block text-white text-xs font-bold">Email OTP</span>
+                        <span className="block text-gray-500 text-[10px] mt-0.5">Send a code to your account email.</span>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setTwoFactorStep('status')}
+                      className="px-4 py-2 border border-white/10 text-gray-400 hover:text-white rounded-xl text-xs font-bold transition-all"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTwoFactorStep(selected2faMethod === 'sms' ? 'setup_sms' : 'setup_email');
+                      }}
+                      className="px-4 py-2 bg-[#00BFFF] hover:bg-[#009cdb] text-black rounded-xl text-xs font-bold transition-all"
+                    >
+                      Continue
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {twoFactorStep === 'setup_sms' && (
+                <div className="space-y-4 text-left">
+                  <p className="text-xs text-gray-400">Enter your phone number with country code (+977 for Nepal):</p>
+                  <div className="flex gap-2 max-w-sm">
+                    <input
+                      type="tel"
+                      value={setupPhone}
+                      onChange={(e) => setSetupPhone(e.target.value)}
+                      placeholder="+977XXXXXXXXXX"
+                      className="w-full bg-[#161617] border border-white/5 focus:border-[#00BFFF] text-white py-2.5 px-4 rounded-xl outline-none text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSendSetupOtp}
+                      disabled={isSendingCode}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center flex-shrink-0 gap-1.5"
+                    >
+                      {isSendingCode && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                      Send Code
+                    </button>
+                  </div>
+
+                  {otpSent && (
+                    <div className="space-y-4 pt-2">
+                      <p className="text-xs text-gray-400">Enter the 6-digit code sent to your phone:</p>
+                      <OtpInput value={otpValue} onChange={setOtpValue} error={!!otpError} />
+                      {otpError && <p className="text-red-500 text-[10px] font-bold">{otpError}</p>}
+
+                      <div className="flex items-center gap-4">
+                        <button
+                          type="button"
+                          onClick={handleVerifySetupOtp}
+                          disabled={otpValue.length !== 6 || isVerifyingCode}
+                          className="px-5 py-2.5 bg-[#00BFFF] disabled:bg-gray-600/30 disabled:text-gray-500 text-black rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                        >
+                          {isVerifyingCode && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                          Verify
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSendSetupOtp}
+                          disabled={!resendActive || isSendingCode}
+                          className="text-xs text-[#00BFFF] disabled:text-gray-600 font-bold transition-colors"
+                        >
+                          {resendActive ? 'Resend Code' : `Resend in ${countdown}s`}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {!otpSent && (
+                    <button
+                      type="button"
+                      onClick={() => setTwoFactorStep('method')}
+                      className="px-4 py-2 border border-white/10 text-gray-400 hover:text-white rounded-xl text-xs font-bold transition-all mt-2"
+                    >
+                      Back
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {twoFactorStep === 'setup_email' && (
+                <div className="space-y-4 text-left">
+                  <p className="text-xs text-gray-400">Confirm email address to receive OTP codes:</p>
+                  <div className="flex gap-2 max-w-sm">
+                    <input
+                      type="email"
+                      value={setupEmail}
+                      onChange={(e) => setSetupEmail(e.target.value)}
+                      placeholder="email@example.com"
+                      className="w-full bg-[#161617] border border-white/5 focus:border-[#00BFFF] text-white py-2.5 px-4 rounded-xl outline-none text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSendSetupOtp}
+                      disabled={isSendingCode}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center flex-shrink-0 gap-1.5"
+                    >
+                      {isSendingCode && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                      Send Code
+                    </button>
+                  </div>
+
+                  {otpSent && (
+                    <div className="space-y-4 pt-2">
+                      <p className="text-xs text-gray-400">Enter the 6-digit code sent to your email:</p>
+                      <OtpInput value={otpValue} onChange={setOtpValue} error={!!otpError} />
+                      {otpError && <p className="text-red-500 text-[10px] font-bold">{otpError}</p>}
+
+                      <div className="flex items-center gap-4">
+                        <button
+                          type="button"
+                          onClick={handleVerifySetupOtp}
+                          disabled={otpValue.length !== 6 || isVerifyingCode}
+                          className="px-5 py-2.5 bg-[#00BFFF] disabled:bg-gray-600/30 disabled:text-gray-500 text-black rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                        >
+                          {isVerifyingCode && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                          Verify
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSendSetupOtp}
+                          disabled={!resendActive || isSendingCode}
+                          className="text-xs text-[#00BFFF] disabled:text-gray-600 font-bold transition-colors"
+                        >
+                          {resendActive ? 'Resend Code' : `Resend in ${countdown}s`}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {!otpSent && (
+                    <button
+                      type="button"
+                      onClick={() => setTwoFactorStep('method')}
+                      className="px-4 py-2 border border-white/10 text-gray-400 hover:text-white rounded-xl text-xs font-bold transition-all mt-2"
+                    >
+                      Back
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {twoFactorStep === 'backup_codes' && (
+                <div className="space-y-4 text-left">
+                  <div className="flex items-center gap-2 text-green-400 font-bold text-xs uppercase tracking-wider">
+                    <Check className="w-4 h-4" />
+                    2FA is now enabled!
+                  </div>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Save these backup recovery codes. Each code can be used exactly once to log in if you lose access to your primary device.
+                  </p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-[#161617] border border-white/5 rounded-xl p-4 font-mono text-sm text-center text-white">
+                    {backupCodes.map((code) => (
+                      <span key={code} className="tracking-widest">{code}</span>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleDownloadBackupCodes}
+                      className="px-4 py-2 border border-[#00BFFF]/20 text-[#00BFFF] hover:bg-[#00BFFF]/5 rounded-xl text-xs font-bold transition-all"
+                    >
+                      Download Backup Codes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTwoFactorStep('status');
+                        setTwoFactor(true);
+                      }}
+                      className="px-4 py-2 bg-[#00BFFF] hover:bg-[#009cdb] text-black rounded-xl text-xs font-bold transition-all"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {twoFactorStep === 'disable_confirm' && (
+                <div className="space-y-4 text-left">
+                  <p className="text-xs text-red-400 font-bold">Disable Two-Factor Authentication</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Disabling 2FA reduces your account security. Please verify your current password to continue:
+                  </p>
+                  
+                  <div className="max-w-sm">
+                    <input
+                      type="password"
+                      value={passwordToDisable}
+                      onChange={(e) => setPasswordToDisable(e.target.value)}
+                      placeholder="Current Password"
+                      className="w-full bg-[#161617] border border-white/5 focus:border-[#00BFFF] text-white py-2.5 px-4 rounded-xl outline-none text-xs"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTwoFactorStep('status')}
+                      className="px-4 py-2 border border-white/10 text-gray-400 hover:text-white rounded-xl text-xs font-bold transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSendDisableOtp}
+                      disabled={!passwordToDisable || isSendingCode}
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                    >
+                      {isSendingCode && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                      Verify & Send Code
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {twoFactorStep === 'disable_verify' && (
+                <div className="space-y-4 text-left">
+                  <p className="text-xs text-gray-400">
+                    Enter the 6-digit OTP code sent to your configured device to finalize disabling 2FA:
+                  </p>
+                  <OtpInput value={otpValue} onChange={setOtpValue} error={!!otpError} />
+                  {otpError && <p className="text-red-500 text-[10px] font-bold">{otpError}</p>}
+
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={handleVerifyDisableOtp}
+                      disabled={otpValue.length !== 6 || isVerifyingCode}
+                      className="px-5 py-2.5 bg-red-500 disabled:bg-gray-600/30 disabled:text-gray-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                    >
+                      {isVerifyingCode && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                      Disable 2FA
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSendDisableOtp}
+                      disabled={!resendActive || isSendingCode}
+                      className="text-xs text-[#00BFFF] disabled:text-gray-600 font-bold transition-colors"
+                    >
+                      {resendActive ? 'Resend Code' : `Resend in ${countdown}s`}
+                    </button>
+                  </div>
+                </div>
+              )}
             </section>
 
-            <section>
-              <h3 className="text-lg font-bold text-white mb-4">Active Sessions</h3>
-              <div className="border border-[#222] bg-[#111] rounded-xl overflow-hidden divide-y divide-[#222]">
+            {/* 2. Change Password */}
+            <section className="bg-[#111] border border-white/5 rounded-2xl p-6 mb-5">
+              <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
+                <Lock className="w-4 h-4 text-[#00BFFF]" />
+                Change Password
+              </h3>
+              
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-gray-400 text-[10px] font-bold uppercase tracking-[1.5px] mb-2">
+                    Current Password
+                  </label>
+                  <div className="relative max-w-lg">
+                    <input
+                      type={showCurrentPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="w-full bg-[#161617] border border-white/5 focus:border-[#00BFFF] text-white py-3 px-4 pr-12 rounded-xl outline-none text-xs font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-white"
+                    >
+                      {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg">
+                  <div>
+                    <label className="block text-gray-400 text-[10px] font-bold uppercase tracking-[1.5px] mb-2">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full bg-[#161617] border border-white/5 focus:border-[#00BFFF] text-white py-3 px-4 pr-12 rounded-xl outline-none text-xs font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-white"
+                      >
+                        {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-400 text-[10px] font-bold uppercase tracking-[1.5px] mb-2">
+                      Confirm New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full bg-[#161617] border border-white/5 focus:border-[#00BFFF] text-white py-3 px-4 pr-12 rounded-xl outline-none text-xs font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-white"
+                      >
+                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {newPassword && (
+                  <div className="max-w-lg space-y-3 pt-2">
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
+                        <span className="text-gray-500">Password Strength:</span>
+                        <span className={
+                          strengthInfo.label === 'Strong' ? 'text-green-400' :
+                          strengthInfo.label === 'Medium' ? 'text-yellow-400' : 'text-red-400'
+                        }>
+                          {strengthInfo.label}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full ${strengthInfo.color} transition-all duration-300`} 
+                          style={{ width: `${strengthInfo.percent}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5">
+                      <RuleCheck label="At least 8 characters" checked={pwRules.length} />
+                      <RuleCheck label="One uppercase letter" checked={pwRules.uppercase} />
+                      <RuleCheck label="One number" checked={pwRules.number} />
+                      <RuleCheck label="One special character" checked={pwRules.special} />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2.5 pt-2">
+                  <input
+                    type="checkbox"
+                    id="signOutOthers"
+                    checked={signOutOthersAfterPasswordChange}
+                    onChange={(e) => setSignOutOthersAfterPasswordChange(e.target.checked)}
+                    className="rounded border-white/10 bg-[#161617] text-[#00BFFF] focus:ring-[#00BFFF] accent-[#00BFFF]"
+                  />
+                  <label htmlFor="signOutOthers" className="text-xs text-gray-400 cursor-pointer select-none">
+                    Sign out of all other active sessions after changing password
+                  </label>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={handleChangePassword}
+                    disabled={!currentPassword || !newPassword || !confirmPassword || isChangingPassword}
+                    className="px-6 py-3 bg-[#00BFFF] hover:bg-[#009cdb] text-black font-black uppercase tracking-wider text-xs rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isChangingPassword ? "Updating Password..." : "Update Password"}
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* 3. Connected Accounts */}
+            <section className="bg-[#111] border border-white/5 rounded-2xl p-6 mb-5">
+              <h3 className="text-white font-bold text-sm mb-2 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-purple-400" />
+                Connected Accounts
+              </h3>
+              <p className="text-[#888] text-xs mb-5">Link your social media accounts to sign in securely with one tap.</p>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border border-white/5 rounded-xl bg-[#161617]/50">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
+                    </svg>
+                    <div>
+                      <span className="block text-white text-xs font-bold">Google Account</span>
+                      <span className={`text-[10px] font-medium mt-0.5 inline-block ${
+                        providers.some(p => p.providerId === 'google.com') ? 'text-green-400' : 'text-gray-500'
+                      }`}>
+                        {providers.some(p => p.providerId === 'google.com') ? 'Connected' : 'Not Connected'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {providers.some(p => p.providerId === 'google.com') ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDisconnectProvider('google.com')}
+                      disabled={providers.length <= 1}
+                      className="px-3.5 py-1.5 border border-red-500/20 text-red-400 bg-red-500/5 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all"
+                      title={providers.length <= 1 ? "Cannot disconnect your last remaining login method." : ""}
+                    >
+                      Disconnect
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleConnectProvider('google')}
+                      className="px-4 py-1.5 bg-white text-black hover:bg-gray-200 rounded-lg text-xs font-bold transition-all"
+                    >
+                      Connect
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between p-4 border border-white/5 rounded-xl bg-[#161617]/50">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                    <div>
+                      <span className="block text-white text-xs font-bold">Facebook Account</span>
+                      <span className={`text-[10px] font-medium mt-0.5 inline-block ${
+                        providers.some(p => p.providerId === 'facebook.com') ? 'text-green-400' : 'text-gray-500'
+                      }`}>
+                        {providers.some(p => p.providerId === 'facebook.com') ? 'Connected' : 'Not Connected'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {providers.some(p => p.providerId === 'facebook.com') ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDisconnectProvider('facebook.com')}
+                      disabled={providers.length <= 1}
+                      className="px-3.5 py-1.5 border border-red-500/20 text-red-400 bg-red-500/5 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-xs font-bold transition-all"
+                      title={providers.length <= 1 ? "Cannot disconnect your last remaining login method." : ""}
+                    >
+                      Disconnect
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleConnectProvider('facebook')}
+                      className="px-4 py-1.5 bg-white text-black hover:bg-gray-200 rounded-lg text-xs font-bold transition-all"
+                    >
+                      Connect
+                    </button>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* 4. Active Sessions */}
+            <section className="bg-[#111] border border-white/5 rounded-2xl p-6 mb-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Monitor className="w-4 h-4 text-green-400" />
+                  Active Sessions
+                </h3>
+                {sessions.length > 1 && (
+                  <button 
+                    onClick={handleSignOutAllOthers}
+                    className="text-xs text-red-400 hover:text-red-300 font-bold px-3 py-1.5 rounded-lg border border-red-500/10 hover:border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-colors"
+                  >
+                    Sign Out All Other Devices
+                  </button>
+                )}
+              </div>
+              
+              <div className="border border-white/5 bg-[#161617]/20 rounded-xl overflow-hidden divide-y divide-white/5">
                 {sessions.map((sess) => {
                   const currentSessionId = localStorage.getItem('nc_session_id');
                   const isCurrent = sess.id === currentSessionId;
@@ -1886,40 +2730,36 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                     <div 
                       key={sess.id} 
                       className={`flex items-center justify-between p-4 ${
-                        isCurrent ? 'bg-[#151515]' : ''
+                        isCurrent ? 'bg-white/[0.02]' : ''
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        {isMobile ? (
-                          <svg className={`w-5 h-5 ${isCurrent ? 'text-green-500' : 'text-[#666]'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                        ) : (
-                          <svg className={`w-5 h-5 ${isCurrent ? 'text-green-500' : 'text-[#666]'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        )}
+                        <div className={`p-2.5 rounded-lg ${
+                          isCurrent ? 'bg-green-500/10 text-green-400' : 'bg-white/5 text-gray-500'
+                        }`}>
+                          {getDeviceIcon(sess.os)}
+                        </div>
                         <div>
-                          <p className={`text-sm font-bold ${isCurrent ? 'text-white' : 'text-[#CCC]'}`}>
+                          <p className={`text-xs font-bold ${isCurrent ? 'text-white' : 'text-gray-300'}`}>
                             {sess.os} • {sess.browser}
                           </p>
                           {isCurrent ? (
-                            <p className="text-xs text-green-500 font-medium tracking-wide border border-green-500/20 bg-green-500/10 px-2 py-0.5 rounded inline-block mt-1">Current Session</p>
+                            <p className="text-[10px] text-green-500 font-bold border border-green-500/20 bg-green-500/10 px-2 py-0.5 rounded inline-block mt-1">This Device</p>
                           ) : (
-                            <p className="text-xs text-[#666] mt-1">
+                            <p className="text-[10px] text-gray-500 mt-1">
                               {formatLastActive(sess.lastActive)}
                             </p>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <p className="text-xs text-[#666]">{sess.location || "Unknown Location"}</p>
+                        <p className="text-xs text-gray-400 font-medium">{sess.location || "Unknown Location"}</p>
                         {!isCurrent && (
                           <button 
                             onClick={() => handleRevokeSession(sess.id)}
-                            className="text-xs text-red-400 hover:text-red-300 font-bold px-3 py-1.5 rounded bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                            className="text-xs text-red-400 hover:text-red-300 font-bold px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-all"
                           >
-                            Revoke
+                            Sign Out
                           </button>
                         )}
                       </div>
@@ -1933,10 +2773,112 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                 )}
               </div>
             </section>
-            
-            <div className="pt-4">
-              <SaveButton hasChanges={hasChanges} isSaving={isSaving} onSave={handleSave} saveSuccess={saveSuccess} />
-            </div>
+
+            {/* 5. Login History */}
+            <section className="bg-[#111] border border-white/5 rounded-2xl p-6 mb-5">
+              <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
+                <Database className="w-4 h-4 text-yellow-400" />
+                Login History
+              </h3>
+              
+              {loginHistory.slice(0, 10).some(item => item.suspicious === true) && (
+                <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3 text-red-400 text-xs text-left">
+                  <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                  <div>
+                    <span className="font-bold block text-white">Suspicious Login Detected</span>
+                    We noticed a successful login attempt from an unrecognized location in your recent history. If this was not you, please change your password and revoke other active sessions immediately.
+                  </div>
+                </div>
+              )}
+
+              <div className="overflow-x-auto rounded-xl border border-white/5">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-white/5 text-gray-400 font-bold border-b border-white/5">
+                      <th className="p-3">Date & Time</th>
+                      <th className="p-3">Device & Browser</th>
+                      <th className="p-3">Location</th>
+                      <th className="p-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 bg-[#161617]/20">
+                    {loginHistory.slice(0, 10).map((log) => {
+                      const dt = log.timestamp?.toDate ? log.timestamp.toDate() : new Date(log.timestamp);
+                      const isSuccess = log.status === 'success';
+                      return (
+                        <tr key={log.id} className={log.suspicious ? "bg-red-500/[0.02]" : ""}>
+                          <td className="p-3 text-gray-300 font-mono">
+                            {dt.toLocaleString()}
+                          </td>
+                          <td className="p-3 text-gray-300">
+                            {log.os} • {log.browser}
+                          </td>
+                          <td className="p-3 text-gray-400">
+                            {log.location || 'Unknown Location'}
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2.5 py-0.5 rounded font-black text-[9px] uppercase tracking-wider ${
+                              isSuccess 
+                                ? log.suspicious ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-green-500/10 text-green-400' 
+                                : 'bg-red-500/10 text-red-400'
+                            }`}>
+                              {isSuccess ? log.suspicious ? 'Suspicious' : 'Success' : 'Failed'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {loginHistory.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-gray-500 italic">
+                          No login history available.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* 6. Danger Zone */}
+            <section className="border border-red-500/20 bg-red-500/[0.02] rounded-2xl p-6">
+              <h3 className="text-red-500 font-bold text-sm mb-2 uppercase tracking-wide">Danger Zone</h3>
+              <p className="text-gray-500 text-xs mb-5">Actions here are permanent and can affect your access.</p>
+              
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3 border-b border-red-500/10">
+                  <div>
+                    <h4 className="text-white font-bold text-xs">Deactivate Account</h4>
+                    <p className="text-gray-500 text-[11px] mt-0.5">Temporarily hide your profile. Reactivate anytime by logging back in.</p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={handleDeactivateAccount}
+                    className="px-4 py-2 border border-red-500/20 hover:border-red-500/40 text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg text-xs font-bold transition-all"
+                  >
+                    Deactivate
+                  </button>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3">
+                  <div>
+                    <h4 className="text-red-500 font-bold text-xs">Delete Account Permanently</h4>
+                    <p className="text-red-500/60 text-[11px] mt-0.5">Permanently schedule your account for deletion. Includes a 30-day grace period.</p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setIsDeleteModalOpen(true);
+                      setDeleteConfirmText("");
+                      setDeleteConfirmPassword("");
+                    }}
+                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-red-500/10"
+                  >
+                    Delete Account
+                  </button>
+                </div>
+              </div>
+            </section>
           </div>
         );
 
@@ -1979,6 +2921,73 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
         {...confirmConfig}
         onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
       />
+
+      {/* Account Deletion Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 font-sans">
+          <div className="bg-[#111] border border-red-500/20 max-w-md w-full rounded-2xl p-6 space-y-6 animate-scale-up text-left">
+            <div className="flex items-center gap-3 text-red-500">
+              <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+              <h3 className="text-lg font-bold text-white">Permanently Delete Account</h3>
+            </div>
+            
+            <p className="text-gray-300 text-xs leading-relaxed">
+              This will permanently delete your profile, media, messages, and all data. This action is irreversible. You will have a 30-day grace period to cancel the deletion before it becomes permanent.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 text-[10px] font-bold uppercase tracking-[1px] mb-2">
+                  Type "DELETE" to confirm
+                </label>
+                <input
+                  type="text"
+                  placeholder="DELETE"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  className="w-full bg-[#161617] border border-white/5 focus:border-red-500/50 text-white py-2.5 px-4 rounded-xl outline-none text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-400 text-[10px] font-bold uppercase tracking-[1px] mb-2">
+                  Enter password to confirm
+                </label>
+                <input
+                  type="password"
+                  placeholder="Current Password"
+                  value={deleteConfirmPassword}
+                  onChange={(e) => setDeleteConfirmPassword(e.target.value)}
+                  className="w-full bg-[#161617] border border-white/5 focus:border-red-500/50 text-white py-2.5 px-4 rounded-xl outline-none text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setDeleteConfirmText("");
+                  setDeleteConfirmPassword("");
+                }}
+                className="flex-1 py-3 border border-white/10 hover:bg-white/5 text-gray-400 hover:text-white font-bold text-xs rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRequestAccountDeletion}
+                disabled={deleteConfirmText !== "DELETE" || !deleteConfirmPassword || isDeletingAccount}
+                className="flex-1 py-3 bg-red-500 hover:bg-red-600 disabled:bg-gray-600/30 disabled:text-gray-500 text-white font-black uppercase tracking-wider text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"
+              >
+                {isDeletingAccount && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Confirm Deletion
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="min-h-screen bg-[#0A0A0A] text-white pt-6 sm:pt-8 pb-32 md:pb-20 relative font-sans">
         <div className="max-w-[1100px] mx-auto px-6 sm:px-8 md:px-8 flex flex-col md:flex-row items-start gap-8 md:gap-16">
           
@@ -2122,3 +3131,33 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     </>
   );
 }
+
+// Helper component to render password rule checklist item
+const RuleCheck = ({ label, checked }) => {
+  return (
+    <div className="flex items-center gap-2 text-xs py-0.5">
+      {checked ? (
+        <Check className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
+      ) : (
+        <div className="w-1.5 h-1.5 rounded-full bg-white/20 ml-1.5 mr-1.5 flex-shrink-0" />
+      )}
+      <span className={checked ? "text-green-400" : "text-gray-500 font-medium"}>
+        {label}
+      </span>
+    </div>
+  );
+};
+
+// Helper function to return device icon based on OS
+const getDeviceIcon = (os) => {
+  if (!os) return <Monitor className="w-4 h-4" />;
+  const lower = os.toLowerCase();
+  if (lower.includes('android') || lower.includes('ios') || lower.includes('iphone') || lower.includes('mobile') || lower.includes('phone')) {
+    return <Smartphone className="w-4 h-4" />;
+  }
+  if (lower.includes('ipad') || lower.includes('tablet') || lower.includes('kindle') || lower.includes('playbook')) {
+    return <Tablet className="w-4 h-4" />;
+  }
+  return <Monitor className="w-4 h-4" />;
+};
+

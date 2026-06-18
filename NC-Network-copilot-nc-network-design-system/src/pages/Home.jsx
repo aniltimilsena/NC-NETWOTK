@@ -66,6 +66,7 @@ export default function Home({ onNavigate, user }) {
   const [queryError, setQueryError] = useState(null);
   const scrollRef = useRef(null);
   const [categoriesReady, setCategoriesReady] = useState(false);
+  const [heroImageError, setHeroImageError] = useState(false);
 
   const [showRightArrow, setShowRightArrow] = useState(false);
   const actorsScrollRef = useRef(null);
@@ -307,6 +308,22 @@ export default function Home({ onNavigate, user }) {
 
   const currentPremiumUser = trendingList[currentPremiumIdx] || trendingList[0] || null;
 
+  useEffect(() => {
+    setHeroImageError(false);
+  }, [currentPremiumUser?.id]);
+
+  const isDefaultImage = (url) => {
+    if (!url) return true;
+    return url.includes('default-avatar.png') || 
+           url.includes('default-male.png') || 
+           url.includes('default-female.png') || 
+           url.includes('achyut.png') ||
+           url.startsWith('data:image/svg+xml');
+  };
+
+  const heroPhotoURL = currentPremiumUser?.photoURL || currentPremiumUser?.profileImage || currentPremiumUser?.image;
+  const hasHeroPhoto = heroPhotoURL && !isDefaultImage(heroPhotoURL) && !heroImageError;
+
   return (
     <div className="min-h-screen bg-nc-dark">
       {/* Hero Section */}
@@ -341,24 +358,70 @@ export default function Home({ onNavigate, user }) {
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: -20, scale: 0.95 }}
             onClick={() => currentPremiumUser.id && onNavigate('profile', currentPremiumUser.id)}
-            className="relative z-30 mt-8 rounded-xl p-4 flex items-center gap-4 w-full max-w-sm shadow-2xl transition-all duration-500 border border-white/5 cursor-pointer hover:border-[#00BFFF]/30 group"
+            className="absolute bottom-0 left-0 z-30 cursor-pointer group"
             style={{
-              background: 'rgba(0, 0, 0, 0.6)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)'
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              background: 'none',
+              border: 'none',
+              backdropFilter: 'none',
+              WebkitBackdropFilter: 'none',
+              padding: 0,
+              boxShadow: 'none',
+              margin: '0 0 24px 16px'
             }}
           >
-            {/* Square profile photo on LEFT */}
-            <Avatar 
-              src={currentPremiumUser.photoURL || currentPremiumUser.profileImage || currentPremiumUser.image}
-              size={80}
-              name={currentPremiumUser.name}
-              className="!rounded-lg flex-shrink-0"
-            />
+            {/* Tall portrait photo on LEFT */}
+            {hasHeroPhoto ? (
+              <img 
+                src={heroPhotoURL} 
+                alt={currentPremiumUser.name} 
+                onError={() => setHeroImageError(true)}
+                className="w-[70px] h-[110px] object-cover flex-shrink-0"
+                style={{
+                  borderRadius: '12px',
+                  border: '2px solid rgba(255,255,255,0.15)'
+                }}
+              />
+            ) : (
+              <div 
+                className="w-[70px] h-[110px] flex-shrink-0 flex items-center justify-center bg-[#3a3a3a]"
+                style={{
+                  borderRadius: '12px',
+                  border: '2px solid rgba(255,255,255,0.15)'
+                }}
+              >
+                <svg viewBox="0 0 100 100" fill="#888888" className="w-8 h-8">
+                  <circle cx="50" cy="35" r="20"/>
+                  <ellipse cx="50" cy="85" rx="35" ry="25"/>
+                </svg>
+              </div>
+            )}
 
-            <div className="flex-1 min-w-0">
-              <h3 className="text-base font-bold text-white truncate">{currentPremiumUser.name}</h3>
-              <p className="text-nc-muted text-sm mt-0.5 capitalize">{currentPremiumUser.category || currentPremiumUser.role || 'Actor'}</p>
+            <div className="flex flex-col justify-center min-w-0" style={{ gap: '4px' }}>
+              <h3 
+                className="font-bold text-white truncate" 
+                style={{ 
+                  fontSize: '16px', 
+                  background: 'none',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+                  lineHeight: '1.2'
+                }}
+              >
+                {currentPremiumUser.name}
+              </h3>
+              <p 
+                className="capitalize truncate" 
+                style={{ 
+                  color: '#999', 
+                  fontSize: '13px',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+                  lineHeight: '1.2'
+                }}
+              >
+                {currentPremiumUser.category || currentPremiumUser.role || 'Actor'}
+              </p>
               
               <button 
                 type="button"
@@ -368,7 +431,16 @@ export default function Home({ onNavigate, user }) {
                     onNavigate('profile', currentPremiumUser.id);
                   }
                 }}
-                className="mt-2 text-[#00BFFF] hover:text-[#00BFFF]/80 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                className="hover:text-[#00BFFF]/80 transition-all cursor-pointer text-left"
+                style={{
+                  color: '#00BFFF',
+                  fontSize: '13px',
+                  lineHeight: '1.2',
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  fontWeight: 'normal'
+                }}
               >
                 Browse profile &gt;
               </button>

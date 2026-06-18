@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Sparkles, Briefcase, Image, Star, Video, ChevronLeft } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Sparkles, Briefcase, Image, Star, Video, ChevronLeft, Camera } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
@@ -7,6 +7,7 @@ import SkillBar from '../components/ui/SkillBar';
 import Avatar from '../components/ui/Avatar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import ShareSheet from '../components/ui/ShareSheet';
+import CropModal from '../components/ui/CropModal';
 import { subscribeToProfile, uploadProfileMedia, updateProfileData } from '../services/profile';
 import { usePermissionContext } from '../context/PermissionContext';
 import { 
@@ -88,6 +89,14 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   const [resolvedUid, setResolvedUid] = useState(null);
   const [resolvingUid, setResolvingUid] = useState(true);
   const [showShareSheet, setShowShareSheet] = useState(false);
+
+  // Cover and Media Upload Queue States/Refs
+  const coverFileInputRef = useRef(null);
+  const activeUploadsRef = useRef({});
+  const [cropCoverSrc, setCropCoverSrc] = useState(null);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [coverUploadProgress, setCoverUploadProgress] = useState(0);
+  const [uploadQueue, setUploadQueue] = useState([]);
 
   useEffect(() => {
     const resolve = async () => {
@@ -582,49 +591,139 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     </div>
   );
 
-  const handleMediaUpload = async (e, filesToUpload = null) => {
-    const files = filesToUpload || e?.target?.files;
-    if (!files || files.length === 0 || !user) return;
+  const handleCoverFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    // Save for retry
-    setMediaLastFiles(Array.from(files));
-    setMediaUploadError(null);
-    setShowMediaSuccess(false);
+    if (file.size > 10 * 1024 * 1024) {
+      showAlert('File Too Large', 'error', 'Cover image exceeds the 10MB size limit.');
+      return;
+    }
 
-    const isOwnProfile = isLoggedIn && (!profileId || profileId === user?.uid);
-    const isPremium = profile?.premium || (profile?.email === 'aniltimilsena53@gmail.com') || (isOwnProfile && isAdmin) || false;
-    const existingPhotosCount = (profile?.media || []).filter(url => !isVideoUrl(url)).length;
-    const existingVideosCount = (profile?.media || []).filter(url => isVideoUrl(url)).length;
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      showAlert('Invalid Format', 'error', 'Only JPG, PNG, and WEBP formats are allowed for cover images.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropCoverSrc(reader.result);
+    };
+    reader.readAsDataURL(file);
+    if (e.target) e.target.value = '';
+  };
+
+  const handleCoverCropConfirm = async (croppedFile) => {
+    setCropCoverSrc(null);
+    if (!user) return;
+
+    setIsUploadingCover(true);
+    setCoverUploadProgress(0);
+
+    try {
+      const coverPath = `profiles/${user.uid}/cover.jpg`;
+      const downloadUrl = await uploadProfileMedia(user.uid, croppedFile, (progress) => {
+        setCoverUploadProgress(Math.round(progress));
+      }, coverPath);
+
+      if (downloadUrl) {
+        const updateRes = await updateProfileData(user.uid, { coverImage: downloadUrl });
+        if (updateRes.success) {
+          showAlert("Success", "success", "Cover photo updated successfully!");
+        } else {
+          throw new Error(updateRes.error || "Failed to update cover image in profile");
+        }
+      } else {
+        throw new Error("Failed to upload cover banner");
+      }
+    } catch (err) {
+      console.error(err);
+      showAlert("Upload Failed", "error", err.message || "Failed to upload cover photo. Please try again.");
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
+  const handleMediaSelect = (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const isPremium = p.premium;
+    const currentQueueLength = uploadQueue.length;
+    
+    if (currentQueueLength + files.length > 10) {
+      showAlert('Limit Exceeded', 'error', 'You can upload a maximum of 10 items at once.');
+      return;
+    }
+
+    const newItems = [];
+    for (const file of Array.from(files)) {
+      const isVideo = file.type.startsWith('video/');
+      const isImage = file.type.startsWith('image/');
+      
+      if (isImage) {
+        const sizeLimit = isPremium ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
+        if (file.size > sizeLimit) {
+          showAlert('File Too Large', 'error', `"${file.name}" exceeds the size limit of ${isPremium ? '10MB' : '5MB'}.`);
+          continue;
+        }
+      } else if (isVideo) {
+        if (file.type !== 'video/mp4') {
+          showAlert('Invalid File Type', 'error', `"${file.name}" is not a supported MP4 video format.`);
+          continue;
+        }
+        if (file.size > 50 * 1024 * 1024) {
+          showAlert('File Too Large', 'error', `"${file.name}" exceeds the 50MB video size limit.`);
+          continue;
+        }
+      } else {
+        showAlert('Unsupported Type', 'error', `"${file.name}" is not an image or video.`);
+        continue;
+      }
+
+      newItems.push({
+        id: Math.random().toString(36).substring(7),
+        file,
+        name: file.name,
+        size: file.size,
+        type: isVideo ? 'video' : 'image',
+        progress: 0,
+        status: 'pending',
+        caption: '',
+        previewUrl: URL.createObjectURL(file)
+      });
+    }
+
+    if (newItems.length > 0) {
+      setUploadQueue(prev => [...prev, ...newItems]);
+    }
+    if (e.target) e.target.value = '';
+  };
+
+  const startQueueUpload = async () => {
+    if (uploadQueue.length === 0) return;
+    
+    const itemsToUpload = uploadQueue.filter(item => item.status === 'pending');
+    if (itemsToUpload.length === 0) return;
+
+    const isPremium = p.premium;
+    const existingPhotosCount = (profile?.media || []).filter(item => {
+      const type = typeof item === 'string' ? (isVideoUrl(item) ? 'video' : 'image') : (item.type || 'image');
+      return type === 'image';
+    }).length;
+    const existingVideosCount = (profile?.media || []).filter(item => {
+      const type = typeof item === 'string' ? (isVideoUrl(item) ? 'video' : 'image') : (item.type || 'image');
+      return type === 'video';
+    }).length;
 
     let newPhotosCount = 0;
     let newVideosCount = 0;
-
-    // Validate all files first
-    for (const file of files) {
-      const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
-
-      if (isImage) {
-        newPhotosCount++;
-        const sizeLimit = isPremium ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
-        if (file.size > sizeLimit) {
-          showAlert('File Too Large', 'error', `Gallery photo "${file.name}" exceeds the size limit of ${isPremium ? '10MB' : '5MB'}.`);
-          return;
-        }
-      } else if (isVideo) {
-        newVideosCount++;
-        const sizeLimit = isPremium ? 500 * 1024 * 1024 : 100 * 1024 * 1024;
-        if (file.size > sizeLimit) {
-          showAlert('File Too Large', 'error', `Showreel video "${file.name}" exceeds the size limit of ${isPremium ? '500MB' : '100MB'}.`);
-          return;
-        }
-      } else {
-        showAlert('Invalid File Type', 'error', `File "${file.name}" is not a supported image or video format.`);
-        return;
-      }
+    for (const item of itemsToUpload) {
+      if (item.type === 'image') newPhotosCount++;
+      if (item.type === 'video') newVideosCount++;
     }
 
-    // Enforce count limits
     const photoLimit = isPremium ? 50 : 10;
     if (existingPhotosCount + newPhotosCount > photoLimit) {
       showAlert('Limit Exceeded', 'error', `Gallery is limited to ${photoLimit} photos for ${isPremium ? 'PRO' : 'Free'} users.`);
@@ -636,41 +735,79 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       showAlert('Limit Exceeded', 'error', `Showreel is limited to ${videoLimit} videos for ${isPremium ? 'PRO' : 'Free'} users.`);
       return;
     }
-    
-    requestPermission('photos', async () => {
-      setIsUploadingMedia(true);
-      setMediaUploadProgress(0);
+
+    setUploadQueue(prev => prev.map(item => 
+      item.status === 'pending' ? { ...item, status: 'uploading', progress: 0 } : item
+    ));
+
+    const uploadedMetadata = [];
+
+    for (const item of itemsToUpload) {
+      if (activeUploadsRef.current[item.id] === 'cancelled') {
+        continue;
+      }
+
       try {
-        const newMediaUrls = [];
-        let index = 0;
-        for (const file of files) {
-          const url = await uploadProfileMedia(user.uid, file, (progress) => {
-            const baseProgress = (index / files.length) * 100;
-            const itemProgress = progress / files.length;
-            setMediaUploadProgress(Math.round(baseProgress + itemProgress));
-          });
-          if (url) {
-            newMediaUrls.push(url);
-          } else {
-            throw new Error(`Failed to upload ${file.name}`);
+        const targetPath = `media/${user.uid}/${Date.now()}_${item.name}`;
+        const downloadUrl = await uploadProfileMedia(user.uid, item.file, (progress) => {
+          if (activeUploadsRef.current[item.id] === 'cancelled') {
+            return;
           }
-          index++;
+          setUploadQueue(prev => prev.map(qItem => 
+            qItem.id === item.id ? { ...qItem, progress: Math.round(progress) } : qItem
+          ));
+        }, targetPath);
+
+        if (activeUploadsRef.current[item.id] === 'cancelled') {
+          continue;
         }
-        
-        if (newMediaUrls.length > 0) {
-          const updatedMedia = [...(profile?.media || []), ...newMediaUrls];
-          await updateProfileData(user.uid, { media: updatedMedia });
-          setShowMediaSuccess(true);
-          setTimeout(() => setShowMediaSuccess(false), 3000);
+
+        if (downloadUrl) {
+          uploadedMetadata.push({
+            url: downloadUrl,
+            type: item.type,
+            timestamp: Date.now(),
+            caption: item.caption || ''
+          });
+          setUploadQueue(prev => prev.map(qItem => 
+            qItem.id === item.id ? { ...qItem, status: 'completed', progress: 100 } : qItem
+          ));
+        } else {
+          throw new Error('Upload failed');
         }
       } catch (err) {
-        console.error("Error uploading media", err);
-        setMediaUploadError(err.message || "Upload failed. Please check your connection.");
-      } finally {
-        setIsUploadingMedia(false);
-        if (e?.target) e.target.value = '';
+        console.error("Queue item upload failed", err);
+        setUploadQueue(prev => prev.map(qItem => 
+          qItem.id === item.id ? { ...qItem, status: 'failed' } : qItem
+        ));
       }
-    });
+    }
+
+    if (uploadedMetadata.length > 0) {
+      const currentMedia = Array.isArray(profile?.media) ? profile.media : [];
+      const updatedMedia = [...currentMedia, ...uploadedMetadata];
+      await updateProfileData(user.uid, { media: updatedMedia });
+      showAlert('Gallery Updated', 'success', `${uploadedMetadata.length} items published successfully!`);
+    }
+
+    setTimeout(() => {
+      setUploadQueue(prev => prev.filter(item => item.status !== 'completed'));
+    }, 2000);
+  };
+
+  const cancelQueueItem = (itemId) => {
+    activeUploadsRef.current[itemId] = 'cancelled';
+    const item = uploadQueue.find(i => i.id === itemId);
+    if (item?.previewUrl) {
+      URL.revokeObjectURL(item.previewUrl);
+    }
+    setUploadQueue(prev => prev.filter(i => i.id !== itemId));
+  };
+
+  const updateItemCaption = (itemId, caption) => {
+    setUploadQueue(prev => prev.map(item => 
+      item.id === itemId ? { ...item, caption } : item
+    ));
   };
 
   const handleIntroVideoUpload = async (e, fileToUpload = null) => {
@@ -951,11 +1088,52 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           {/* Back arrow "<" overlaying cover photo with a dark circular background, navigating back */}
           <button
             onClick={() => onNavigate('home')}
-            className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-colors border border-white/10"
+            className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white transition-colors border border-white/10"
             aria-label="Back"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
+
+          {/* Cover Photo camera edit button overlay */}
+          {isOwnProfile && (
+            <button
+              onClick={() => coverFileInputRef.current?.click()}
+              className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/85 text-white p-2.5 rounded-full border border-white/10 transition-colors shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 group/cover"
+              title="Change Cover Banner"
+            >
+              <Camera className="w-4 h-4 text-[#00BFFF] group-hover/cover:scale-110 transition-transform" />
+              <span className="text-[10px] uppercase tracking-wider font-black pr-1 hidden sm:inline">Edit Cover</span>
+            </button>
+          )}
+
+          {/* Cover Upload Progress Overlay */}
+          {isUploadingCover && (
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-10">
+              <div className="max-w-xs w-full px-6 space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-[#00BFFF] font-black animate-pulse uppercase tracking-wider">Uploading Cover...</span>
+                  <span className="text-white font-black">{coverUploadProgress}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden relative">
+                  <div
+                    className="absolute inset-y-0 left-0 bg-[#00BFFF] transition-all duration-150 rounded-full"
+                    style={{ width: `${coverUploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Hidden File Input */}
+          {isOwnProfile && (
+            <input
+              type="file"
+              ref={coverFileInputRef}
+              onChange={handleCoverFileChange}
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+            />
+          )}
         </div>
         
         {/* Profile Hero Glass Card — Redesigned */}
@@ -969,20 +1147,8 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                   gender={p.gender}
                   name={p.name}
                   size="lg"
+                  editable={isOwnProfile}
                 />
-
-                {isOwnProfile && (
-                  <button
-                    onClick={() => onNavigate('settings', 'about')}
-                    className="absolute -bottom-1 -right-1 w-7 h-7 bg-nc-accent rounded-full flex items-center justify-center shadow-lg border-2 border-[#0E0E0E] hover:scale-110 transition-transform"
-                    title="Edit Profile Image"
-                    aria-label="Edit Profile Image"
-                  >
-                    <svg className="w-3.5 h-3.5 text-[#0A0A0A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                )}
                 {p.verified && (
                   <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-nc-accent rounded-full flex items-center justify-center text-[#0A0A0A] text-[9px] font-black shadow ring-2 ring-[#0E0E0E]">✓</div>
                 )}
@@ -1423,10 +1589,26 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           </div>
         )}
 
-        {/* Media */}
         {activeTab === 'media' && (() => {
-          const photos = p.media.filter(url => !isVideoUrl(url));
-          const videos = p.media.filter(url => isVideoUrl(url));
+          const normalizedMedia = (p.media || []).map(item => {
+            if (typeof item === 'string') {
+              return {
+                url: item,
+                type: isVideoUrl(item) ? 'video' : 'image',
+                timestamp: Date.now(),
+                caption: ''
+              };
+            }
+            return {
+              url: item.url || '',
+              type: item.type || (isVideoUrl(item.url) ? 'video' : 'image'),
+              timestamp: item.timestamp || Date.now(),
+              caption: item.caption || ''
+            };
+          });
+
+          const photos = normalizedMedia.filter(item => item.type === 'image');
+          const videos = normalizedMedia.filter(item => item.type === 'video');
           const isPremium = p.premium;
           return (
             <div className="animate-fade-in min-h-[400px] space-y-8">
@@ -1536,10 +1718,10 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                   <div className="flex justify-end mb-6">
                     <button 
                       onClick={() => document.getElementById('profile-media-upload')?.click()}
-                      disabled={isUploadingMedia}
-                      className="bg-nc-accent text-nc-darker text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={uploadQueue.some(item => item.status === 'uploading')}
+                      className="bg-nc-accent text-[#0A0A0A] text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2.5 rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isUploadingMedia ? 'Uploading...' : 'Upload Media'}
+                      {uploadQueue.some(item => item.status === 'uploading') ? 'Uploading...' : 'Upload Media'}
                     </button>
                     <input 
                       id="profile-media-upload"
@@ -1547,46 +1729,166 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                       multiple 
                       accept="image/*,video/*"
                       className="hidden" 
-                      onChange={handleMediaUpload}
+                      onChange={handleMediaSelect}
                     />
+                  </div>
+                )}
+
+                {/* Upload Queue Section */}
+                {uploadQueue.length > 0 && (
+                  <div className="bg-[#121216] border border-white/10 rounded-3xl p-5 mb-6 space-y-4 animate-fade-in text-left">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                      <div>
+                        <h4 className="text-white font-black text-sm uppercase tracking-wider">Upload Queue</h4>
+                        <p className="text-[10px] text-nc-muted">Add captions and review files before publishing.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            uploadQueue.forEach(item => {
+                              if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+                            });
+                            setUploadQueue([]);
+                          }}
+                          className="bg-white/5 hover:bg-white/10 text-gray-400 text-[10px] font-black uppercase tracking-wider px-3.5 py-2 rounded-xl transition-all"
+                        >
+                          Clear
+                        </button>
+                        <button
+                          type="button"
+                          onClick={startQueueUpload}
+                          disabled={uploadQueue.every(i => i.status === 'uploading' || i.status === 'completed')}
+                          className="bg-[#00BFFF] hover:bg-[#0099e6] disabled:opacity-50 text-[#0A0A0A] text-[10px] font-black uppercase tracking-wider px-4 py-2 rounded-xl transition-all shadow-md shadow-[#00BFFF]/10"
+                        >
+                          Publish Queue ({uploadQueue.filter(i => i.status === 'pending').length})
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="max-h-[300px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                      {uploadQueue.map((item) => (
+                        <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 bg-white/2 border border-white/5 rounded-2xl">
+                          {/* Left info: thumbnail + details */}
+                          <div className="flex items-center gap-3 w-full sm:w-auto">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-white/10 relative">
+                              {item.type === 'video' ? (
+                                <video src={item.previewUrl} className="w-full h-full object-cover" />
+                              ) : (
+                                <img src={item.previewUrl} alt={item.name} className="w-full h-full object-cover" />
+                              )}
+                              {item.type === 'video' && (
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                  <Video className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-white text-xs font-bold truncate max-w-[150px]">{item.name}</p>
+                              <p className="text-[10px] text-nc-muted">{(item.size / (1024 * 1024)).toFixed(2)} MB • <span className="uppercase text-[9px] font-black text-[#00BFFF]">{item.type}</span></p>
+                            </div>
+                          </div>
+
+                          {/* Middle: Caption field */}
+                          {item.status === 'pending' ? (
+                            <div className="flex-1 w-full sm:max-w-xs">
+                              <input
+                                type="text"
+                                placeholder="Add a caption..."
+                                value={item.caption}
+                                onChange={(e) => updateItemCaption(item.id, e.target.value)}
+                                className="w-full px-3.5 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00BFFF] transition-colors"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex-1 w-full sm:max-w-xs text-xs italic text-gray-500 truncate">
+                              {item.caption ? `"${item.caption}"` : 'No caption'}
+                            </div>
+                          )}
+
+                          {/* Right: Progress / Actions */}
+                          <div className="flex items-center gap-3.5 w-full sm:w-auto justify-end">
+                            {item.status === 'uploading' && (
+                              <div className="flex items-center gap-3 w-28 sm:w-32">
+                                <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden relative">
+                                  <div 
+                                    className="absolute inset-y-0 left-0 bg-[#00BFFF] transition-all duration-150 rounded-full"
+                                    style={{ width: `${item.progress}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] text-[#00BFFF] font-black w-8 text-right">{item.progress}%</span>
+                              </div>
+                            )}
+
+                            {item.status === 'completed' && (
+                              <span className="text-[10px] text-green-400 font-bold uppercase tracking-wider">✓ Success</span>
+                            )}
+
+                            {item.status === 'failed' && (
+                              <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider">✕ Failed</span>
+                            )}
+
+                            {item.status === 'pending' && (
+                              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pending</span>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => cancelQueueItem(item.id)}
+                              className="text-gray-500 hover:text-red-400 p-1.5 rounded-full hover:bg-white/5 transition-colors"
+                              title="Cancel upload"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
                 {/* Gallery Photos Grid */}
                 {photos.length > 0 && (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                    {photos.map((src, idx) => (
+                    {photos.map((item, idx) => (
                       <div 
                         key={idx} 
-                        onClick={() => setFullscreenImage({ src, idx })}
+                        onClick={() => setFullscreenImage({ src: item.url, caption: item.caption, idx })}
                         className="group relative aspect-[4/5] rounded-3xl overflow-hidden bg-nc-surface border border-nc-border shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer"
                       >
                         <img 
-                          src={src} 
-                          alt={`Gallery asset ${idx + 1}`} 
+                          src={item.url} 
+                          alt={item.caption || `Gallery asset ${idx + 1}`} 
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 select-none"
                           onContextMenu={(e) => e.preventDefault()}
                           onDragStart={(e) => e.preventDefault()}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end justify-between p-4 backdrop-blur-[2px]">
-                          <span className="text-[9px] text-nc-accent font-black uppercase tracking-widest bg-nc-accent/10 border border-nc-accent/20 px-2.5 py-1 rounded-full">
-                            Fullscreen
-                          </span>
-                          {isOwnProfile && (
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteMedia(src);
-                              }}
-                              className="bg-black/60 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors shadow-lg"
-                              title="Delete Photo"
-                              aria-label="Delete Photo"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-4 backdrop-blur-[2px]">
+                          {item.caption && (
+                            <p className="text-white text-xs font-bold line-clamp-2 mb-2 text-left">{item.caption}</p>
                           )}
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-[9px] text-[#00BFFF] font-black uppercase tracking-widest bg-[#00BFFF]/10 border border-[#00BFFF]/20 px-2.5 py-1 rounded-full">
+                              Fullscreen
+                            </span>
+                            {isOwnProfile && (
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteMedia(item.url);
+                                }}
+                                className="bg-black/60 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors shadow-lg"
+                                title="Delete Photo"
+                                aria-label="Delete Photo"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1596,22 +1898,28 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                 {/* Showreel Videos Grid */}
                 {videos.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {videos.map((src, idx) => (
+                    {videos.map((item, idx) => (
                       <div 
                         key={idx} 
                         className="group relative aspect-video rounded-3xl overflow-hidden bg-nc-surface border border-nc-border shadow-lg"
                       >
                         <video 
-                          src={src} 
+                          src={item.url} 
                           controls 
                           controlsList="nodownload"
                           className="w-full h-full object-cover" 
                           onContextMenu={(e) => e.preventDefault()}
                         />
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-all duration-305 pointer-events-none">
+                          {item.caption && (
+                            <p className="text-white text-xs font-bold text-left">{item.caption}</p>
+                          )}
+                        </div>
                         {isOwnProfile && (
                           <button 
-                            onClick={() => handleDeleteMedia(src)}
-                            className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg"
+                            type="button"
+                            onClick={() => handleDeleteMedia(item.url)}
+                            className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-red-500 transition-colors shadow-lg z-10"
                             title="Delete Video"
                             aria-label="Delete Video"
                           >
@@ -1626,53 +1934,13 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                 )}
 
                 {/* Clean empty state for no media */}
-                {photos.length === 0 && videos.length === 0 && !isUploadingMedia && (
+                {photos.length === 0 && videos.length === 0 && uploadQueue.length === 0 && (
                   <div className="w-full">
                     <EmptyState 
                       title="No Portfolio Added"
                       description="Upload photos and videos to showcase your talent to the network."
                       icon={Image}
                     />
-                  </div>
-                )}
-
-                {/* Upload States */}
-                {(isUploadingMedia || showMediaSuccess || mediaUploadError) && (
-                  <div className="mt-4 p-5 rounded-3xl bg-nc-card/30 border border-white/10 backdrop-blur-sm">
-                    {isUploadingMedia && (
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-nc-accent font-bold animate-pulse">Uploading Showcase Media...</span>
-                          <span className="text-white font-black">{mediaUploadProgress}%</span>
-                        </div>
-                        <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden relative">
-                          <div 
-                            className="absolute inset-y-0 left-0 bg-nc-accent transition-all duration-300 rounded-full" 
-                            style={{ width: `${mediaUploadProgress}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {showMediaSuccess && (
-                      <div className="flex items-center gap-3 text-green-400 text-xs font-bold py-1">
-                        <span className="text-lg">✓</span>
-                        <span>Showcase items uploaded successfully!</span>
-                      </div>
-                    )}
-                    {mediaUploadError && (
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-1">
-                        <div className="flex items-center gap-3 text-red-400 text-xs font-bold">
-                          <span className="text-lg">✕</span>
-                          <span>{mediaUploadError}</span>
-                        </div>
-                        <button 
-                          onClick={() => handleMediaUpload(null, mediaLastFiles)}
-                          className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-wider px-4 py-2 rounded-xl transition-all self-start sm:self-auto"
-                        >
-                          Retry Upload
-                        </button>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -2437,7 +2705,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
         >
           ✕
         </button>
-        <div className="relative max-w-full max-h-[80vh] flex items-center justify-center">
+        <div className="relative max-w-full max-h-[80vh] flex flex-col items-center justify-center">
           <img 
             src={fullscreenImage.src} 
             alt="Fullscreen preview" 
@@ -2445,6 +2713,11 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
             onContextMenu={(e) => e.preventDefault()}
             onDragStart={(e) => e.preventDefault()}
           />
+          {fullscreenImage.caption && (
+            <p className="mt-4 text-white text-xs font-bold text-center max-w-md bg-black/60 px-4 py-2.5 rounded-xl border border-white/10 backdrop-blur-sm">
+              {fullscreenImage.caption}
+            </p>
+          )}
         </div>
         
         {isOwnProfile && (
@@ -2468,6 +2741,15 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           id: targetUid,
         }}
         onClose={() => setShowShareSheet(false)}
+      />
+    )}
+
+    {cropCoverSrc && (
+      <CropModal
+        imageSrc={cropCoverSrc}
+        isCircular={false}
+        onClose={() => setCropCoverSrc(null)}
+        onConfirm={handleCoverCropConfirm}
       />
     )}
     </>

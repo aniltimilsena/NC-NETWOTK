@@ -199,6 +199,8 @@ const ProfileSchema = z.object({
   skills: z.array(z.union([z.string(), z.record(z.string(), z.unknown())])).optional(),
   experience: z.array(z.any()).optional(),
   openToWork: z.boolean().optional(),
+  openToAudition: z.boolean().optional(),
+  category: z.string().optional(),
   height: z.string().optional(),
   weight: z.string().optional(),
   eyeColor: z.string().optional(),
@@ -217,6 +219,14 @@ const CastingCallSchema = z.object({
   type: z.enum(['Actors', 'Directors', 'Models', 'Dancers', 'Musicians', 'Voice Over', 'VFX', 'Writers']),
   budget: z.string().optional(),
   location: z.string(),
+  thumbnail: z.string().optional(),
+  requirements: z.array(z.string()).optional(),
+  deadline: z.string().optional(),
+  production: z.string().optional(),
+  creatorName: z.string().optional(),
+  creatorEmail: z.string().optional(),
+  roles: z.array(z.any()).optional(),
+  id: z.string().optional(),
 });
 
 const MessageSchema = z.object({
@@ -518,13 +528,25 @@ app.post('/api/casting', verifyToken, isAdmin, async (req: AuthedRequest, res: R
       return;
     }
 
-    const docRef = await db.collection('casting_calls').add({
-      ...validatedData,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdBy: uid,
-      status: 'Open',
-    });
-    res.json({ id: docRef.id });
+    const { id, ...dataToSave } = validatedData;
+
+    if (id) {
+      await db.collection('casting_calls').doc(id).set({
+        ...dataToSave,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: uid,
+        status: 'Open',
+      });
+      res.json({ id });
+    } else {
+      const docRef = await db.collection('casting_calls').add({
+        ...dataToSave,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: uid,
+        status: 'Open',
+      });
+      res.json({ id: docRef.id });
+    }
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: error.issues });
@@ -763,6 +785,8 @@ app.post(
         isSystem,
         replyTo: validatedData.replyTo || null,
         reactions: {},
+        read: false,
+        delivered: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
@@ -772,15 +796,38 @@ app.post(
         .add(newMessage);
 
       // Update conversation metadata
+      const convoUpdate: any = {
+        lastMessage: validatedData.text,
+        lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        unread: true,
+        lastSenderId: isSystem ? 'system' : uid,
+        lastMessageDelivered: false,
+        lastMessageRead: false,
+      };
+
+      // Update readBy map (sender read: true, others: false)
+      const readBy: Record<string, boolean> = {};
+      participants.forEach((pId: string) => {
+        readBy[pId] = pId === uid;
+      });
+      convoUpdate.readBy = readBy;
+
+      // Update unreadCounts map (increment for others)
+      const currentUnreadCounts = convoDoc.data()?.unreadCounts || {};
+      const newUnreadCounts: Record<string, number> = {};
+      participants.forEach((pId: string) => {
+        if (pId === uid) {
+          newUnreadCounts[pId] = 0;
+        } else {
+          newUnreadCounts[pId] = (currentUnreadCounts[pId] || 0) + 1;
+        }
+      });
+      convoUpdate.unreadCounts = newUnreadCounts;
+
       await db.collection('conversations')
         .doc(req.params.conversationId)
-        .update({
-          lastMessage: validatedData.text,
-          lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          unread: true,
-          lastSenderId: isSystem ? 'system' : uid,
-        });
+        .update(convoUpdate);
 
       // Trigger FCM to participants (except sender)
       const otherParticipants = participants.filter((p: string) => p !== uid);
@@ -1146,6 +1193,323 @@ app.post('/api/notifications/mark-as-read', verifyToken, async (req: AuthedReque
     res.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to update checked status';
+    res.status(500).json({ error: message });
+  }
+});
+
+// Helper function to verify credentials via Firebase REST API
+const verifyCredentials = async (email: string, password: string): Promise<boolean> => {
+  const apiKey = process.env.VITE_FIREBASE_API_KEY;
+  if (!apiKey) {
+    console.error("VITE_FIREBASE_API_KEY environment variable is not defined");
+    return false;
+  }
+  
+  try {
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: true }),
+    });
+    return res.status === 200;
+  } catch (error) {
+    console.error("Credentials verification failed:", error);
+    return false;
+  }
+};
+
+// 2FA Setup Send Code
+app.post('/api/2fa/send-setup-otp', verifyToken, async (req: AuthedRequest, res: Response) => {
+  try {
+    const { method, phone, email } = req.body as any;
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await db.collection('two_factor_otps').doc(uid).set({
+      code,
+      expiresAt,
+      method,
+      phone: phone || null,
+      email: email || null,
+    });
+
+    if (method === 'sms') {
+      console.log(`[2FA OTP SMS Setup] Code for phone ${phone}: ${code}`);
+    } else {
+      console.log(`[2FA OTP Email Setup] Code for email ${email}: ${code}`);
+    }
+
+    res.json({ success: true, code }); // Return code in response for development notification triggering
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to send setup OTP';
+    res.status(500).json({ error: message });
+  }
+});
+
+// 2FA Setup Verify and Enable
+app.post('/api/2fa/verify-setup-otp', verifyToken, async (req: AuthedRequest, res: Response) => {
+  try {
+    const { code, method, phone, email } = req.body as any;
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+
+    const otpDoc = await db.collection('two_factor_otps').doc(uid).get();
+    if (!otpDoc.exists) {
+      res.status(400).json({ error: 'No verification code found. Please request one.' });
+      return;
+    }
+
+    const otpData = otpDoc.data();
+    if (otpData?.code !== code || new Date() > otpData?.expiresAt.toDate()) {
+      res.status(400).json({ error: 'Invalid or expired verification code.' });
+      return;
+    }
+
+    // Generate 8 backup codes (8 digits each)
+    const backupCodes = Array.from({ length: 8 }, () => 
+      Math.floor(10000000 + Math.random() * 90000000).toString()
+    );
+
+    // Save configuration to profiles
+    await db.collection('profiles').doc(uid).set({
+      twoFactorEnabled: true,
+      twoFactorMethod: method,
+      twoFactorPhone: phone || null,
+      twoFactorEmail: email || null,
+      twoFactorBackupCodes: backupCodes,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    // Sync to users
+    await db.collection('users').doc(uid).set({
+      twoFactorEnabled: true,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    // Clean up OTP
+    await db.collection('two_factor_otps').doc(uid).delete();
+
+    res.json({ success: true, backupCodes });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to verify setup OTP';
+    res.status(500).json({ error: message });
+  }
+});
+
+// 2FA Send Code on Login
+app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+    
+    // 1. Verify password
+    const valid = await verifyCredentials(email, password);
+    if (!valid) {
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
+    // 2. Fetch user
+    const userRecord = await admin.auth().getUserByEmail(email);
+    const uid = userRecord.uid;
+
+    // 3. Check Lockout
+    const lockoutDoc = await db.collection('two_factor_attempts').doc(uid).get();
+    if (lockoutDoc.exists) {
+      const data = lockoutDoc.data();
+      if (data?.lockedUntil && new Date() < data.lockedUntil.toDate()) {
+        const remainingTime = Math.ceil((data.lockedUntil.toDate().getTime() - Date.now()) / 1000 / 60);
+        res.status(403).json({ error: `Account locked due to too many failed attempts. Try again in ${remainingTime} minutes.` });
+        return;
+      }
+    }
+
+    // 4. Check if 2FA enabled
+    const profileDoc = await db.collection('profiles').doc(uid).get();
+    if (!profileDoc.exists || !profileDoc.data()?.twoFactorEnabled) {
+      res.status(400).json({ error: 'Two-Factor Authentication is not enabled for this account.' });
+      return;
+    }
+
+    const profile = profileDoc.data();
+    const method = profile?.twoFactorMethod || 'sms';
+    const phone = profile?.twoFactorPhone || '';
+    const twoFactorEmail = profile?.twoFactorEmail || email;
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await db.collection('two_factor_otps').doc(uid).set({
+      code,
+      expiresAt,
+      method,
+      phone: phone || null,
+      email: twoFactorEmail || null,
+    });
+
+    if (method === 'sms') {
+      console.log(`[2FA OTP SMS Login] Code for phone ${phone}: ${code}`);
+    } else {
+      console.log(`[2FA OTP Email Login] Code for email ${twoFactorEmail}: ${code}`);
+    }
+
+    // Mask destination
+    let destination = '';
+    if (method === 'sms') {
+      const cleanPhone = phone || '';
+      destination = cleanPhone.length > 7
+        ? `${cleanPhone.slice(0, 4)}XXXX${cleanPhone.slice(-3)}`
+        : '+977-XXXXXXX';
+    } else {
+      const parts = twoFactorEmail.split('@');
+      destination = `${parts[0].slice(0, 2)}***@${parts[1]}`;
+    }
+
+    res.json({ success: true, method, destination, code }); // Code returned in development for client system Notification
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to send login OTP';
+    res.status(500).json({ error: message });
+  }
+});
+
+// 2FA Verify Code on Login
+app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
+  try {
+    const { email, code, useBackupCode } = req.body;
+    const userRecord = await admin.auth().getUserByEmail(email);
+    const uid = userRecord.uid;
+
+    // Check Lockout
+    const attemptsDoc = await db.collection('two_factor_attempts').doc(uid).get();
+    let currentAttempts = 0;
+    if (attemptsDoc.exists) {
+      const data = attemptsDoc.data();
+      if (data?.lockedUntil && new Date() < data.lockedUntil.toDate()) {
+        res.status(403).json({ error: 'Account is locked. Try again later.' });
+        return;
+      }
+      currentAttempts = data?.attempts || 0;
+    }
+
+    if (useBackupCode) {
+      const profileDoc = await db.collection('profiles').doc(uid).get();
+      const backupCodes = profileDoc.data()?.twoFactorBackupCodes || [];
+      
+      if (backupCodes.includes(code)) {
+        // Remove code from array
+        const updatedBackupCodes = backupCodes.filter((c: string) => c !== code);
+        await db.collection('profiles').doc(uid).set({
+          twoFactorBackupCodes: updatedBackupCodes
+        }, { merge: true });
+
+        // Reset attempts
+        await db.collection('two_factor_attempts').doc(uid).delete();
+        res.json({ success: true });
+        return;
+      }
+    } else {
+      const otpDoc = await db.collection('two_factor_otps').doc(uid).get();
+      if (otpDoc.exists) {
+        const otpData = otpDoc.data();
+        if (otpData?.code === code && new Date() <= otpData?.expiresAt.toDate()) {
+          // Success
+          await db.collection('two_factor_otps').doc(uid).delete();
+          await db.collection('two_factor_attempts').doc(uid).delete();
+          res.json({ success: true });
+          return;
+        }
+      }
+    }
+
+    // Invalid code -> track attempts
+    currentAttempts += 1;
+    if (currentAttempts >= 3) {
+      const lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 min lockout
+      await db.collection('two_factor_attempts').doc(uid).set({
+        attempts: currentAttempts,
+        lockedUntil,
+      });
+      res.status(400).json({ error: 'Invalid code. Too many failed attempts. Account locked for 15 minutes.' });
+    } else {
+      await db.collection('two_factor_attempts').doc(uid).set({
+        attempts: currentAttempts,
+        lockedUntil: null,
+      });
+      res.status(400).json({ error: `Invalid code. ${3 - currentAttempts} attempts remaining.` });
+    }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to verify login OTP';
+    res.status(500).json({ error: message });
+  }
+});
+
+// 2FA Disable
+app.post('/api/2fa/disable', verifyToken, async (req: AuthedRequest, res: Response) => {
+  try {
+    const { code } = req.body as any;
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+
+    let valid = false;
+    
+    // Try OTP first
+    const otpDoc = await db.collection('two_factor_otps').doc(uid).get();
+    if (otpDoc.exists) {
+      const otpData = otpDoc.data();
+      if (otpData?.code === code && new Date() <= otpData?.expiresAt.toDate()) {
+        valid = true;
+        await db.collection('two_factor_otps').doc(uid).delete();
+      }
+    }
+    
+    // Try backup code if OTP didn't match
+    if (!valid) {
+      const profileDoc = await db.collection('profiles').doc(uid).get();
+      const backupCodes = profileDoc.data()?.twoFactorBackupCodes || [];
+      if (backupCodes.includes(code)) {
+        valid = true;
+        const updatedBackupCodes = backupCodes.filter((c: string) => c !== code);
+        await db.collection('profiles').doc(uid).set({
+          twoFactorBackupCodes: updatedBackupCodes
+        }, { merge: true });
+      }
+    }
+
+    if (!valid) {
+      res.status(400).json({ error: 'Invalid verification code or backup code.' });
+      return;
+    }
+
+    // Disable 2FA in profiles
+    await db.collection('profiles').doc(uid).set({
+      twoFactorEnabled: false,
+      twoFactorMethod: null,
+      twoFactorPhone: null,
+      twoFactorEmail: null,
+      twoFactorBackupCodes: null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    // Sync to users
+    await db.collection('users').doc(uid).set({
+      twoFactorEnabled: false,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to disable 2FA';
     res.status(500).json({ error: message });
   }
 });

@@ -11,6 +11,9 @@ import { doc, getDoc } from 'firebase/firestore';
 import SEO from '../components/SEO';
 
 import { signInUser, ensureUserProfile, logoutUser, sendPasswordReset } from '../services/auth';
+import OtpInput from '../components/ui/OtpInput';
+import apiClient from '../api/client';
+import { logLoginAttempt } from '../utils/security';
 
 export default function SignIn({ onNavigate, showAlert }) {
   const navigate = useNavigate();
@@ -124,9 +127,99 @@ export default function SignIn({ onNavigate, showAlert }) {
   // 2FA states & verification
   const [show2fa, setShow2fa] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
-  const [correctCode, setCorrectCode] = useState('');
   const [tempCredentials, setTempCredentials] = useState(null);
   const [twoFactorError, setTwoFactorError] = useState('');
+  const [twoFactorMethod, setTwoFactorMethod] = useState('sms');
+  const [twoFactorDestination, setTwoFactorDestination] = useState('');
+  const [countdown, setCountdown] = useState(60);
+  const [resendActive, setResendActive] = useState(false);
+  const [useBackupCode, setUseBackupCode] = useState(false);
+  const [isShake, setIsShake] = useState(false);
+
+  useEffect(() => {
+    if (show2fa && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (show2fa && countdown === 0) {
+      setResendActive(true);
+    }
+  }, [countdown, show2fa]);
+
+  // Auto-submit when 6 digits are filled
+  useEffect(() => {
+    if (show2fa && !useBackupCode && verificationCode.length === 6 && !isLoading) {
+      const triggerVerify = async () => {
+        setIsLoading(true);
+        setTwoFactorError('');
+        try {
+          const res = await apiClient.post('/2fa/verify-login-otp', {
+            email: tempCredentials.email,
+            code: verificationCode,
+            useBackupCode: false
+          });
+
+          if (res.data.success) {
+            const { user: authedUser, error: authError } = await signInUser(tempCredentials.email, tempCredentials.password);
+            if (authError) {
+              setTwoFactorError(authError);
+              setIsLoading(false);
+            } else {
+              localStorage.removeItem('login_attempts');
+              localStorage.removeItem('login_lockout_until');
+              const logRes = await logLoginAttempt(tempCredentials.email, 'success');
+              if (logRes?.suspicious) {
+                localStorage.setItem('nc_suspicious_login', 'true');
+              }
+              onNavigate('home');
+            }
+          } else {
+            setTwoFactorError(res.data.error || 'Invalid code.');
+            setIsShake(true);
+            setTimeout(() => setIsShake(false), 500);
+            setIsLoading(false);
+          }
+        } catch (err) {
+          console.error("2FA verify login error:", err);
+          setTwoFactorError(err.response?.data?.error || 'Verification failed. Try again.');
+          setIsShake(true);
+          setTimeout(() => setIsShake(false), 500);
+          setIsLoading(false);
+        }
+      };
+      triggerVerify();
+    }
+  }, [verificationCode, useBackupCode, show2fa]);
+
+  const handleResend2faCode = async () => {
+    setIsLoading(true);
+    setTwoFactorError('');
+    try {
+      const res = await apiClient.post('/2fa/send-login-otp', {
+        email: tempCredentials.email,
+        password: tempCredentials.password
+      });
+      if (res.data.success) {
+        setCountdown(60);
+        setResendActive(false);
+        setVerificationCode('');
+        if (res.data.code && Notification.permission === 'granted') {
+          new Notification("NC-Network Verification", {
+            body: `Your Two-Factor Authentication (2FA) verification code is: ${res.data.code}`,
+            icon: '/logo.png',
+            requireInteraction: true
+          });
+        }
+        showAlert('Verification code resent!', 'success');
+      } else {
+        setTwoFactorError(res.data.error || 'Failed to resend code.');
+      }
+    } catch (err) {
+      console.error("2FA resend error:", err);
+      setTwoFactorError(err.response?.data?.error || 'Failed to resend code.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSignIn = async (e) => {
     e?.preventDefault();
@@ -157,6 +250,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     
     if (authError) {
       setIsLoading(false);
+      logLoginAttempt(form.email, 'failed').catch(() => {});
       const currentAttempts = parseInt(localStorage.getItem('login_attempts') || '0', 10) + 1;
       localStorage.setItem('login_attempts', currentAttempts.toString());
 
@@ -183,24 +277,47 @@ export default function SignIn({ onNavigate, showAlert }) {
       try {
         const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
         if (profileSnap.exists() && profileSnap.data().twoFactorEnabled === true) {
-          const code = Math.floor(100000 + Math.random() * 900000).toString();
-          setCorrectCode(code);
           setTempCredentials({ email: form.email, password: form.password });
           
-          if (Notification.permission === 'granted') {
-            new Notification("NC-Network Verification", {
-              body: `Your Two-Factor Authentication (2FA) verification code is: ${code}`,
-              icon: '/logo.png',
-              requireInteraction: true
-            });
-          }
           await logoutUser();
-          setShow2fa(true);
-          setIsLoading(false);
-          return;
+          
+          const res = await apiClient.post('/2fa/send-login-otp', {
+            email: form.email,
+            password: form.password
+          });
+          
+          if (res.data.success) {
+            setTwoFactorMethod(res.data.method);
+            setTwoFactorDestination(res.data.destination);
+            setCountdown(60);
+            setResendActive(false);
+            setVerificationCode('');
+            setTwoFactorError('');
+            setUseBackupCode(false);
+            
+            if (res.data.code && Notification.permission === 'granted') {
+              new Notification("NC-Network Verification", {
+                body: `Your Two-Factor Authentication (2FA) verification code is: ${res.data.code}`,
+                icon: '/logo.png',
+                requireInteraction: true
+              });
+            }
+            setShow2fa(true);
+            setIsLoading(false);
+            return;
+          } else {
+            setError(res.data.error || 'Failed to send verification code.');
+            setIsLoading(false);
+            return;
+          }
         }
       } catch (err) {
         console.error("Error checking 2FA profile:", err);
+      }
+      
+      const logRes = await logLoginAttempt(form.email, 'success');
+      if (logRes?.suspicious) {
+        localStorage.setItem('nc_suspicious_login', 'true');
       }
       onNavigate('home');
     }
@@ -221,25 +338,45 @@ export default function SignIn({ onNavigate, showAlert }) {
 
   const handleVerify2fa = async (e) => {
     e?.preventDefault();
-    if (!verificationCode) {
-      setTwoFactorError('Please enter the verification code.');
+    if (!verificationCode || verificationCode.length !== (useBackupCode ? 8 : 6)) {
+      setTwoFactorError(useBackupCode ? 'Please enter your 8-digit backup code.' : 'Please enter the 6-digit verification code.');
       return;
     }
     setIsLoading(true);
     setTwoFactorError('');
 
-    if (verificationCode.trim() === correctCode) {
-      const { user, error: authError } = await signInUser(tempCredentials.email, tempCredentials.password);
-      if (authError) {
-        setTwoFactorError(authError);
-        setIsLoading(false);
+    try {
+      const res = await apiClient.post('/2fa/verify-login-otp', {
+        email: tempCredentials.email,
+        code: verificationCode,
+        useBackupCode
+      });
+
+      if (res.data.success) {
+        const { user: authedUser, error: authError } = await signInUser(tempCredentials.email, tempCredentials.password);
+        if (authError) {
+          setTwoFactorError(authError);
+          setIsLoading(false);
+        } else {
+          localStorage.removeItem('login_attempts');
+          localStorage.removeItem('login_lockout_until');
+          const logRes = await logLoginAttempt(tempCredentials.email, 'success');
+          if (logRes?.suspicious) {
+            localStorage.setItem('nc_suspicious_login', 'true');
+          }
+          onNavigate('home');
+        }
       } else {
-        localStorage.removeItem('login_attempts');
-        localStorage.removeItem('login_lockout_until');
-        onNavigate('home');
+        setTwoFactorError(res.data.error || 'Invalid code.');
+        setIsShake(true);
+        setTimeout(() => setIsShake(false), 500);
+        setIsLoading(false);
       }
-    } else {
-      setTwoFactorError('Incorrect verification code. Please check your notifications.');
+    } catch (err) {
+      console.error("2FA verify login error:", err);
+      setTwoFactorError(err.response?.data?.error || 'Verification failed. Try again.');
+      setIsShake(true);
+      setTimeout(() => setIsShake(false), 500);
       setIsLoading(false);
     }
   };
@@ -266,6 +403,12 @@ export default function SignIn({ onNavigate, showAlert }) {
         }
         localStorage.removeItem('login_attempts');
         localStorage.removeItem('login_lockout_until');
+        if (result.user.email) {
+          const logRes = await logLoginAttempt(result.user.email, 'success');
+          if (logRes?.suspicious) {
+            localStorage.setItem('nc_suspicious_login', 'true');
+          }
+        }
         onNavigate('home');
       }
     } catch (err) {
@@ -331,10 +474,15 @@ export default function SignIn({ onNavigate, showAlert }) {
           <div className="text-center mb-8">
             <Logo onNavigate={onNavigate} size="lg" className="mx-auto mb-6" />
             <h1 className="text-2xl font-black text-white">Two-Factor Verification</h1>
-            <p className="text-gray-400 mt-1 text-sm">Check your system notifications for the security code</p>
+            <p className="text-gray-400 mt-1 text-sm">
+              {useBackupCode ? 'Enter one of your 8-digit recovery backup codes' : `Enter the 6-digit code sent to ${twoFactorDestination}`}
+            </p>
           </div>
           
-          <div className="bg-[#111] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl">
+          <motion.div 
+            animate={isShake ? { x: [-10, 10, -10, 10, -5, 5, 0], transition: { duration: 0.4 } } : {}}
+            className="bg-[#111] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl"
+          >
             <form onSubmit={handleVerify2fa} className="space-y-6">
               {twoFactorError && (
                 <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-lg border border-red-500/20">
@@ -342,54 +490,76 @@ export default function SignIn({ onNavigate, showAlert }) {
                 </div>
               )}
               
-              <div className="bg-[#00BFFF]/5 border border-[#00BFFF]/20 rounded-xl p-4 text-center">
-                <p className="text-xs text-[#00BFFF] font-semibold leading-relaxed">
-                  A verification code has been dispatched. If you did not receive a system notification, please check your notification permissions.
-                </p>
-                {Notification.permission !== 'granted' && (
-                  <div className="mt-2 text-[11px] text-[#666] border-t border-[#00BFFF]/10 pt-2">
-                    Testing fallback code: <span className="font-mono text-white font-bold select-all bg-white/10 px-1.5 py-0.5 rounded">{correctCode}</span>
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Verification Code</label>
-                <input
-                  type="text"
-                  pattern="\d{6}"
-                  maxLength={6}
-                  value={verificationCode}
-                  onChange={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                  placeholder="e.g. 123456"
-                  className="w-full bg-[#1a1a1a] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 outline-none focus:border-[#00BFFF] transition-colors text-center font-mono text-xl tracking-[0.3em] font-bold"
-                />
-              </div>
+              {!useBackupCode ? (
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2 text-center">Verification Code</label>
+                  <OtpInput value={verificationCode} onChange={setVerificationCode} error={!!twoFactorError} />
+                </div>
+              ) : (
+                <div className="text-left">
+                  <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2 text-center">Backup Code</label>
+                  <input
+                    type="text"
+                    maxLength={8}
+                    value={verificationCode}
+                    onChange={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                    placeholder="8-digit code"
+                    className="w-full bg-[#1a1a1a] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 outline-none focus:border-[#00BFFF] transition-colors text-center font-mono text-xl tracking-[0.3em] font-bold"
+                  />
+                </div>
+              )}
               
               <div className="space-y-3">
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || (useBackupCode ? verificationCode.length !== 8 : verificationCode.length !== 6)}
                   className="w-full justify-center flex items-center gap-2 bg-gradient-to-r from-[#00bfff] to-[#0080ff] hover:opacity-95 text-black font-extrabold py-3.5 rounded-xl text-sm transition-all shadow-lg active:scale-[0.98] disabled:opacity-50"
                 >
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify & Sign In'}
                 </button>
+
+                {!useBackupCode && (
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={handleResend2faCode}
+                      disabled={!resendActive || isLoading}
+                      className="text-xs text-[#00BFFF] disabled:text-gray-600 font-bold transition-colors py-1"
+                    >
+                      {resendActive ? 'Resend Code' : `Resend code in ${countdown}s`}
+                    </button>
+                  </div>
+                )}
                 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShow2fa(false);
-                    setVerificationCode('');
-                    setTwoFactorError('');
-                    setTempCredentials(null);
-                  }}
-                  className="w-full text-center text-xs text-gray-500 hover:text-white transition-colors py-2"
-                >
-                  Back to Sign In
-                </button>
+                <div className="flex flex-col gap-2 pt-2 border-t border-white/5 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseBackupCode(!useBackupCode);
+                      setVerificationCode('');
+                      setTwoFactorError('');
+                    }}
+                    className="text-center text-xs text-[#00BFFF] hover:underline transition-colors py-1"
+                  >
+                    {useBackupCode ? 'Use verification code instead' : 'Use backup code instead'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShow2fa(false);
+                      setVerificationCode('');
+                      setTwoFactorError('');
+                      setTempCredentials(null);
+                    }}
+                    className="w-full text-center text-xs text-gray-500 hover:text-white transition-colors py-1"
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
               </div>
             </form>
-          </div>
+          </motion.div>
         </div>
       </div>
     );

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useUserContext } from '../../context/UserContext';
 import { uploadProfileMedia } from '../../services/profile';
 import ConfirmDialog from './ConfirmDialog';
+import CropModal from './CropModal';
 
 interface AvatarProps {
   src?: string | null;
@@ -40,6 +41,7 @@ export default function Avatar({
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -102,28 +104,34 @@ export default function Avatar({
       return;
     }
 
+    // Open crop tool
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropSrc(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    if (e.target) e.target.value = '';
+  };
+
+  const handleCropConfirm = async (croppedFile: File) => {
+    setCropSrc(null);
+    if (!user?.uid || !updateAvatar) return;
+
     // Generate local preview immediately
     const reader = new FileReader();
     reader.onload = () => {
       setPreviewSrc(reader.result as string);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(croppedFile);
 
     setUploading(true);
     setProgress(0);
 
     try {
-      if (!user?.uid) {
-        throw new Error("No user UID available");
-      }
-      if (!updateAvatar) {
-        throw new Error("updateAvatar context function not available");
-      }
-
-      // Secure upload via service
-      const downloadUrl = await uploadProfileMedia(user.uid, file, (percent) => {
+      const avatarPath = `profiles/${user.uid}/avatar.jpg`;
+      const downloadUrl = await uploadProfileMedia(user.uid, croppedFile, (percent) => {
         setProgress(Math.round(percent));
-      });
+      }, avatarPath);
 
       if (downloadUrl) {
         await updateAvatar(downloadUrl);
@@ -133,12 +141,10 @@ export default function Avatar({
       }
     } catch (err) {
       console.error(err);
-      // Revert preview on failure
       setPreviewSrc(null);
       triggerToast("Upload failed, please try again", "error");
     } finally {
       setUploading(false);
-      if (e.target) e.target.value = '';
     }
   };
 
@@ -194,8 +200,22 @@ export default function Avatar({
 
           {/* Upload Spinner Ring */}
           {uploading && (
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center rounded-full z-10">
-              <div className="w-1/2 h-1/2 border-2 border-t-[#00BFFF] border-r-transparent border-b-transparent border-l-transparent animate-spin rounded-full" />
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex flex-col items-center justify-center rounded-full z-10 animate-fade-in">
+              <svg className="w-10 h-10 transform -rotate-90">
+                <circle cx="20" cy="20" r="16" stroke="rgba(255,255,255,0.1)" strokeWidth="3" fill="transparent" />
+                <circle 
+                  cx="20" 
+                  cy="20" 
+                  r="16" 
+                  stroke="#00BFFF" 
+                  strokeWidth="3" 
+                  fill="transparent" 
+                  strokeDasharray={2 * Math.PI * 16}
+                  strokeDashoffset={2 * Math.PI * 16 * (1 - progress / 100)}
+                  className="transition-all duration-150"
+                />
+              </svg>
+              <span className="text-[10px] text-white font-black mt-1">{progress}%</span>
             </div>
           )}
         </div>
@@ -277,6 +297,15 @@ export default function Avatar({
         onClose={() => setConfirmDeleteOpen(false)}
         onConfirm={handleConfirmDelete}
       />
+
+      {cropSrc && (
+        <CropModal
+          imageSrc={cropSrc}
+          isCircular={true}
+          onClose={() => setCropSrc(null)}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </>
   );
 }

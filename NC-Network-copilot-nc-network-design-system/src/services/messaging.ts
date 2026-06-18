@@ -150,6 +150,9 @@ export const subscribeToConversations = (
                 name: pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || pData.displayName || "User",
                 avatar: pData.image || pData.photoURL || pData.avatar || "",
                 gender: pData.gender || "unknown",
+                online: pData.online || false,
+                lastActive: pData.lastActive || null,
+                lastSeen: pData.lastSeen || null,
               };
             }
           }
