@@ -327,7 +327,7 @@ export default function Home({ onNavigate, user }) {
   return (
     <div className="min-h-screen bg-nc-dark">
       {/* Hero Section */}
-      <section className="relative min-h-[55vh] lg:min-h-[65vh] flex flex-col justify-center items-start overflow-hidden pt-24 pb-12 px-6 sm:px-8 lg:px-20">
+      <section className="relative min-h-[55vh] lg:min-h-[65vh] flex flex-col justify-start items-start overflow-hidden pt-28 pb-12 px-6 sm:px-8 lg:px-20">
         {/* Background */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <img
