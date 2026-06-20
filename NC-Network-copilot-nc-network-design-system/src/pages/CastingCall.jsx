@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bookmark, ClipboardList, SortDesc, ChevronDown, Check, Zap, 
-  MapPin, Calendar, DollarSign, Plus, Search, Eye, AlertCircle, Clock 
+  MapPin, Calendar, Plus, Search, Eye, AlertCircle, Clock 
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -416,7 +416,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
                           {/* Pay: shown if specified */}
                           {call.budget && (
                             <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                              <DollarSign className="w-3.5 h-3.5 shrink-0" />
+                              <span className="text-gray-500 text-[10px] font-black shrink-0">Rs.</span>
                               {call.budget}
                             </span>
                           )}

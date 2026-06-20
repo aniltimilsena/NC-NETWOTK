@@ -39,10 +39,35 @@ export default function PermissionModal({ isOpen, onClose, onGrant, type = 'medi
         { label: 'Photo Library', detail: 'Select and upload existing media' },
         { label: 'Storage', detail: 'Save project files and assets' }
       ]
+    },
+    'media-blocked': {
+      title: 'Permissions Blocked',
+      description: 'Camera and microphone access is blocked in your browser settings. Please allow access in your browser address bar to make video and audio calls.',
+      icon: (
+        <div className="flex gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+          </div>
+        </div>
+      ),
+      permissions: [
+        { label: '1. Click Address Bar Icon', detail: 'Click the lock or site settings icon next to the URL.' },
+        { label: '2. Change to Allow', detail: 'Set Camera and Microphone permissions to "Allow".' }
+      ]
     }
   };
 
   const config = configs[type] || configs.media;
+  const isBlocked = type === 'media-blocked';
+  const grantLabel = isBlocked ? 'Try Again' : 'Enable Access';
+  const closeLabel = isBlocked ? 'Close' : 'Maybe Later';
 
   return (
     <AnimatePresence>
@@ -94,13 +119,13 @@ export default function PermissionModal({ isOpen, onClose, onGrant, type = 'medi
                   onClick={onClose}
                   className="flex-1 py-3 rounded-xl border border-white/10 text-xs font-bold text-nc-muted hover:text-white hover:bg-white/5 transition-all"
                 >
-                  Maybe Later
+                  {closeLabel}
                 </button>
                 <button 
                   onClick={onGrant}
                   className="flex-1 py-3 rounded-xl bg-nc-accent hover:bg-nc-accent/90 text-black text-xs font-bold shadow-lg shadow-nc-accent/15 transition-all active:scale-[0.98]"
                 >
-                  Enable Access
+                  {grantLabel}
                 </button>
               </div>
             </div>

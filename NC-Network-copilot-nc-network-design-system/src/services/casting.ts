@@ -8,6 +8,8 @@ import {
   orderBy,
   where,
   onSnapshot,
+  setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import apiClient from "../api/client";
 
@@ -83,8 +85,30 @@ export const createCastingCall = async (callData: any) => {
     return { id: response.data?.id || null, error: null };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to create casting call";
-    console.error("createCastingCall error:", message);
-    return { id: null, error: message };
+    console.warn("Backend createCastingCall failed, attempting client-side fallback write:", message);
+    
+    // Client-side fallback direct write to Firestore
+    try {
+      const currentUserUid = auth.currentUser?.uid;
+      if (!currentUserUid) {
+        return { id: null, error: "Authentication required" };
+      }
+
+      const { id, ...dataToSave } = callData;
+      const finalId = id || doc(collection(db, "casting_calls")).id;
+
+      await setDoc(doc(db, "casting_calls", finalId), {
+        ...dataToSave,
+        createdAt: serverTimestamp(),
+        createdBy: currentUserUid,
+        status: dataToSave.status || "Open",
+      });
+
+      return { id: finalId, error: null };
+    } catch (clientError: any) {
+      console.error("Client fallback createCastingCall error:", clientError.message);
+      return { id: null, error: clientError.message || "Failed to create casting call on client" };
+    }
   }
 };
 

@@ -214,9 +214,9 @@ const ProfileSchema = z.object({
 });
 
 const CastingCallSchema = z.object({
-  title: z.string().min(5),
-  description: z.string().min(20),
-  type: z.enum(['Actors', 'Directors', 'Models', 'Dancers', 'Musicians', 'Voice Over', 'VFX', 'Writers']),
+  title: z.string().min(2),
+  description: z.string().optional().or(z.string().min(0)),
+  type: z.string(),
   budget: z.string().optional(),
   location: z.string(),
   thumbnail: z.string().optional(),
@@ -519,7 +519,7 @@ app.get('/api/casting', async (req: Request<{}, unknown, unknown, { filter?: str
   }
 });
 
-app.post('/api/casting', verifyToken, isAdmin, async (req: AuthedRequest, res: Response) => {
+app.post('/api/casting', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
     const validatedData = CastingCallSchema.parse(req.body);
     const uid = req.user?.uid;

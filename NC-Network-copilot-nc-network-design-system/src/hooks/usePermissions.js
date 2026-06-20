@@ -1,41 +1,105 @@
 import { useState, useCallback } from 'react';
 
+const getBrowserPermissionState = async (type) => {
+  if (!navigator.permissions || !navigator.permissions.query) {
+    return 'prompt';
+  }
+  try {
+    const promises = [];
+    if (type === 'video' || type === 'media') {
+      promises.push(navigator.permissions.query({ name: 'camera' }));
+    }
+    if (type === 'audio' || type === 'video' || type === 'media') {
+      promises.push(navigator.permissions.query({ name: 'microphone' }));
+    }
+    
+    const results = await Promise.all(promises);
+    const states = results.map(r => r.state);
+    
+    if (states.includes('denied')) {
+      return 'denied';
+    }
+    if (states.every(s => s === 'granted')) {
+      return 'granted';
+    }
+    return 'prompt';
+  } catch (e) {
+    console.warn("Failed to query permissions:", e);
+    return 'prompt';
+  }
+};
+
 export const usePermissions = () => {
   const [showModal, setShowModal] = useState(false);
   const [permissionType, setPermissionType] = useState('media');
   const [pendingAction, setPendingAction] = useState(null);
 
   const checkAndRequest = useCallback((type, action) => {
-    // Check if we've already granted/handled this on this device
-    const hasHandled = localStorage.getItem(`nc_perm_${type}`);
-    
-    if (hasHandled) {
-      // Just run the action, browser will handle if it's denied
-      action();
-      return;
-    }
+    const isMedia = type === 'media' || type === 'audio' || type === 'video';
+    if (isMedia) {
+      const hasHandled = localStorage.getItem('nc_perm_media');
+      
+      // If blocked in localStorage, show blocked modal directly
+      if (hasHandled === 'denied') {
+        setPermissionType('media-blocked');
+        setPendingAction(() => action);
+        setShowModal(true);
+        return;
+      }
+      
+      // If granted or skipped, run synchronously to preserve user gesture context
+      if (hasHandled === 'granted' || hasHandled === 'skipped') {
+        action();
+        return;
+      }
+      
+      // Otherwise query state asynchronously
+      getBrowserPermissionState(type).then((browserState) => {
+        if (browserState === 'granted') {
+          localStorage.setItem('nc_perm_media', 'granted');
+          action();
+          return;
+        }
+        
+        if (browserState === 'denied') {
+          localStorage.setItem('nc_perm_media', 'denied');
+          setPermissionType('media-blocked');
+          setPendingAction(() => action);
+          setShowModal(true);
+          return;
+        }
 
-    // Show our premium modal first
-    setPermissionType(type);
-    setPendingAction(() => action);
-    setShowModal(true);
+        // Show our premium modal first
+        setPermissionType('media');
+        setPendingAction(() => action);
+        setShowModal(true);
+      });
+    } else {
+      const hasHandled = localStorage.getItem(`nc_perm_${type}`);
+      if (hasHandled) {
+        action();
+        return;
+      }
+      setPermissionType(type);
+      setPendingAction(() => action);
+      setShowModal(true);
+    }
   }, []);
 
   const handleGrant = useCallback(async () => {
     setShowModal(false);
-    localStorage.setItem(`nc_perm_${permissionType}`, 'granted');
+    const baseType = permissionType.startsWith('media') ? 'media' : permissionType;
+    localStorage.setItem(`nc_perm_${baseType}`, 'granted');
     
     if (pendingAction) {
-      // Trigger the actual browser permission request by running the action
       pendingAction();
     }
   }, [permissionType, pendingAction]);
 
   const handleClose = useCallback(() => {
     setShowModal(false);
-    // Even if they skip, we mark it so we don't nag them immediately every time
-    // But we could also leave it null to ask again later
-    localStorage.setItem(`nc_perm_${permissionType}`, 'skipped');
+    const baseType = permissionType.startsWith('media') ? 'media' : permissionType;
+    localStorage.setItem(`nc_perm_${baseType}`, 'skipped');
   }, [permissionType]);
 
   return {

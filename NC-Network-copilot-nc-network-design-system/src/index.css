@@ -439,4 +439,34 @@ body.font-devanagari * {
   font-family: 'Noto Sans Devanagari', 'Inter', system-ui, sans-serif !important;
 }
 
+/* Custom Camera Navigation Animations */
+@keyframes shutter-glow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(0, 191, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(0, 191, 255, 0.55), inset 0 0 8px rgba(255, 255, 255, 0.2);
+  }
+}
+.animate-shutter-glow {
+  animation: shutter-glow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-red-led {
+  0%, 100% {
+    opacity: 0.4;
+    box-shadow: 0 0 2px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 1);
+  }
+}
+.animate-pulse-red {
+  animation: pulse-red-led 1.5s infinite ease-in-out;
+}
+.glow-orange {
+  box-shadow: 0 0 8px rgba(255, 140, 0, 0.9), 0 0 15px rgba(255, 140, 0, 0.5);
+}
+
 

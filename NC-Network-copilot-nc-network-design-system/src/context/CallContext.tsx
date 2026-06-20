@@ -225,7 +225,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     }) => {
       if (!user?.uid) return;
 
-      requestPermission("media", async () => {
+      requestPermission(params.callType, async () => {
         try {
           // Immediately pre-acquire media stream inside user gesture event loop
           const stream = await webrtc.getUserMedia(params.callType);
@@ -298,7 +298,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     setActiveCall(incomingCall);
     setIncomingCall(null);
 
-    requestPermission("media", async () => {
+    requestPermission(incomingCall.callType, async () => {
       try {
         // Immediately pre-acquire media stream inside user gesture event loop
         const stream = await webrtc.getUserMedia(incomingCall.callType);

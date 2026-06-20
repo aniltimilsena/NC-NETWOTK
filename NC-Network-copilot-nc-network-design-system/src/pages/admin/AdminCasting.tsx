@@ -12,7 +12,6 @@ import {
   CheckCircle,
   XCircle,
   Calendar,
-  DollarSign,
   AlertTriangle,
   FolderOpen
 } from 'lucide-react';
@@ -401,8 +400,8 @@ export default function AdminCasting() {
 
                   {/* Details tags */}
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-admin-bg/20 p-2.5 rounded-lg border border-admin-border text-center">
-                      <DollarSign className="w-4 h-4 text-admin-primary mx-auto mb-1" />
+                    <div className="bg-admin-bg/20 p-2.5 rounded-lg border border-admin-border text-center flex flex-col items-center justify-center">
+                      <span className="text-admin-primary font-black text-xs h-4 leading-none mb-1">Rs.</span>
                       <span className="text-[9px] font-black text-nc-muted uppercase block">Budget</span>
                       <span className="text-xs font-bold text-white truncate block">{selectedCall.budget || 'N/A'}</span>
                     </div>

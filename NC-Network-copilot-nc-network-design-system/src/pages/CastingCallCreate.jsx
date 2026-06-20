@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { 
-  MapPin, Clock, DollarSign, Info, Plus, X, Upload, Check, ChevronLeft 
+  MapPin, Clock, Info, Plus, X, Upload, Check, ChevronLeft 
 } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
@@ -561,7 +561,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
                       Deadline: {form.deadline || 'N/A'}
                     </span>
                     <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                      <DollarSign size={13} className="text-gray-500" />
+                      <span className="text-gray-500 text-xs font-black">Rs.</span>
                       Pay: {form.budget || 'Competitive'}
                     </span>
                   </div>

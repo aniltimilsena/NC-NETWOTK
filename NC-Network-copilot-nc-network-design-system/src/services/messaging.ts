@@ -289,10 +289,13 @@ export const subscribeToConversations = (
           const data = d.data();
           const otherParticipantId = data.participants.find((p: string) => p !== uid);
 
-          let participantInfo = {
+          let participantInfo: any = {
             name: "User",
             avatar: "",
             gender: "unknown",
+            online: false,
+            lastActive: null,
+            lastSeen: null,
           };
 
           if (otherParticipantId) {

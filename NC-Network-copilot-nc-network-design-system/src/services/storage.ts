@@ -1,6 +1,7 @@
 import { auth, storage } from "../lib/firebase";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import imageCompression from "browser-image-compression";
+import apiClient from "../api/client";
 
 export const uploadFile = async (
   file: File,
@@ -82,30 +83,28 @@ export const uploadFile = async (
     }
   }
 
-  const storageRef = ref(storage, path);
-  const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
+  const formData = new FormData();
+  formData.append("file", fileToUpload);
 
-  return new Promise((resolve, reject) => {
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        );
-        onProgress?.(progress);
+  try {
+    const response = await apiClient.post<{ url: string }>("/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
       },
-      (error) => {
-        console.error("Storage upload task failed:", error);
-        reject(new Error("Upload failed. Check your connection and try again"));
-      },
-      async () => {
-        try {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve(url);
-        } catch (urlError) {
-          reject(new Error("Failed to retrieve upload download URL"));
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress?.(percent);
         }
-      }
-    );
-  });
+      },
+    });
+
+    if (response.data && response.data.url) {
+      return response.data.url;
+    }
+    throw new Error("Invalid response from upload server");
+  } catch (error: any) {
+    console.error("Backend secure upload failed:", error);
+    throw new Error(error.response?.data || error.message || "Upload failed");
+  }
 };

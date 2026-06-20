@@ -139,9 +139,15 @@ export function useWebRTC(): UseWebRTCReturn {
         };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         setLocalStream(stream);
+        localStorage.setItem("nc_perm_media", "granted");
         return stream;
       } catch (err: any) {
         console.error("[WebRTC] getUserMedia error:", err);
+        
+        if (err.name === "NotAllowedError") {
+          localStorage.setItem("nc_perm_media", "denied");
+        }
+        
         const msg =
           err.name === "NotAllowedError"
             ? "Camera/microphone permission denied. Please allow access in your browser settings."

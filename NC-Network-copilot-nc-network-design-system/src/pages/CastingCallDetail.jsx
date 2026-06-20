@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  ChevronLeft, Clock, MapPin, User, Calendar, DollarSign, 
+  ChevronLeft, Clock, MapPin, User, Calendar, 
   AlertCircle, CheckCircle, MessageSquare, Award, Info, Trash2, X, Bookmark, Share2 
 } from 'lucide-react';
 import Button from '../components/ui/Button';
@@ -602,7 +602,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               <div className="space-y-3.5 border-t border-b border-white/5 py-4 text-xs font-semibold">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 uppercase tracking-wider">Pay / Budget</span>
-                  <span className="text-white font-bold">{call.budget || 'Competitive'}</span>
+                  <span className="text-white font-bold flex items-center gap-1">
+                    {call.budget && !call.budget.toLowerCase().includes('competitive') && !call.budget.toLowerCase().includes('rs') && (
+                      <span className="text-gray-500 text-xs font-black">Rs.</span>
+                    )}
+                    {call.budget || 'Competitive'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 uppercase tracking-wider">Location</span>

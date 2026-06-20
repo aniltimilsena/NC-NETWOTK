@@ -23,6 +23,11 @@ service cloud.firestore {
       match /sessions/{sessionId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Login History sub-collection (client-side logins audit track)
+      match /login_history/{logId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Users
@@ -61,20 +66,23 @@ service cloud.firestore {
 
     // Notifications
     match /notifications/{notifId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow write: if false;
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid || resource.data.receiverId == request.auth.uid);
     }
 
     // Casting Calls
     match /casting_calls/{callId} {
       allow read: if true;
-      allow write: if false;
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
     }
 
     // Applications
     match /applications/{appId} {
       allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.creatorId == request.auth.uid);
-      allow write: if false;
+      allow create, delete: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.creatorId == request.auth.uid);
     }
 
     // Saved Calls
@@ -116,13 +124,15 @@ service cloud.firestore {
     // Follows
     match /follows/{followId} {
       allow read: if true;
-      allow write: if false;
+      allow create: if isSignedIn() && request.resource.data.followerId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.followerId == request.auth.uid;
     }
 
     // Reviews
     match /reviews/{reviewId} {
       allow read: if true;
-      allow write: if false;
+      allow create: if isSignedIn() && request.resource.data.reviewerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.reviewerId == request.auth.uid;
     }
 
     // Default Deny

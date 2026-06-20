@@ -3,6 +3,7 @@ import { auth } from '../lib/firebase';
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  timeout: 10000,
 });
 
 // Interceptor to attach Firebase Token
