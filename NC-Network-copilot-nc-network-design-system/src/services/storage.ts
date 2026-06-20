@@ -83,6 +83,7 @@ export const uploadFile = async (
     }
   }
 
+  // Try uploading to backend API first
   const formData = new FormData();
   formData.append("file", fileToUpload);
 
@@ -104,7 +105,39 @@ export const uploadFile = async (
     }
     throw new Error("Invalid response from upload server");
   } catch (error: any) {
-    console.error("Backend secure upload failed:", error);
-    throw new Error(error.response?.data || error.message || "Upload failed");
+    console.warn("Backend upload failed, attempting client-side Firebase Storage upload fallback:", error);
+    
+    // Direct Firebase Storage client-side upload fallback
+    try {
+      const storageRef = ref(storage, path);
+      const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
+
+      return new Promise<string>((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress = Math.round(
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            );
+            onProgress?.(progress);
+          },
+          (err) => {
+            console.error("Firebase Storage direct upload error:", err);
+            reject(new Error(err.message || "Firebase Storage upload failed"));
+          },
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(downloadURL);
+            } catch (urlErr: any) {
+              reject(urlErr);
+            }
+          }
+        );
+      });
+    } catch (fallbackError: any) {
+      console.error("Firebase Storage direct fallback failed:", fallbackError);
+      throw new Error(fallbackError.message || "Upload failed");
+    }
   }
 };
