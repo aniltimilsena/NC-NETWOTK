@@ -327,7 +327,7 @@ export default function Home({ onNavigate, user }) {
   return (
     <div className="min-h-screen bg-nc-dark">
       {/* Hero Section */}
-      <section className="relative min-h-[40vh] lg:min-h-[45vh] flex flex-col justify-start items-start overflow-hidden pt-28 pb-12 px-6 sm:px-8 lg:px-20">
+      <section className="relative flex flex-col justify-start items-start overflow-hidden pt-16 pb-4 px-6 sm:px-8 lg:px-20">
         {/* Background */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <img
@@ -358,7 +358,7 @@ export default function Home({ onNavigate, user }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -15, scale: 0.95 }}
             onClick={() => currentPremiumUser.id && onNavigate('profile', currentPremiumUser.id)}
-            className="relative z-30 cursor-pointer group mt-8 sm:mt-12"
+            className="relative z-30 cursor-pointer group mt-16 sm:mt-20"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -369,7 +369,7 @@ export default function Home({ onNavigate, user }) {
               WebkitBackdropFilter: 'none',
               padding: 0,
               boxShadow: 'none',
-              margin: '0 0 12px 0'
+              marginBottom: '12px'
             }}
           >
             {/* Tall portrait photo on LEFT */}
@@ -518,7 +518,7 @@ export default function Home({ onNavigate, user }) {
         <>
           {/* Featured Actors Showcase */}
           {talents.filter(t => t.role?.toLowerCase().includes('actor') && !t.deactivated).length > 0 && (
-            <section className="pt-14 pb-8 bg-nc-dark relative overflow-hidden">
+            <section className="pt-2 pb-8 bg-nc-dark relative overflow-hidden">
               <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
                 {/* Editorial Header */}
                 <div className="flex items-center justify-between mb-10">
