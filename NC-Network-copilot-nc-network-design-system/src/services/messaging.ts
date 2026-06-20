@@ -35,7 +35,7 @@ export const sendMessage = async (
             senderId: replyTo.senderId,
           }
         : null,
-    });
+    }, { timeout: 1500 });
     return { success: true, error: null };
   } catch (apiError: any) {
     console.warn("Backend sendMessage failed, attempting client-side fallback write:", apiError);
@@ -44,6 +44,13 @@ export const sendMessage = async (
       return { success: false, error: "Authentication required" };
     }
     try {
+      const convoRef = doc(db, "conversations", convoId);
+      const convoSnap = await getDoc(convoRef);
+      let participants: string[] = [];
+      if (convoSnap.exists()) {
+        participants = convoSnap.data().participants || [];
+      }
+
       await addDoc(collection(db, "conversations", convoId, "messages"), {
         senderId: isSystem ? "system" : currentUserUid,
         text,
@@ -61,13 +68,85 @@ export const sendMessage = async (
         delivered: false,
         createdAt: serverTimestamp(),
       });
-      await updateDoc(doc(db, "conversations", convoId), {
+
+      const convoUpdate: Record<string, any> = {
         lastMessage: text,
         lastMessageAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         unread: true,
         lastSenderId: isSystem ? "system" : currentUserUid,
-      });
+        lastMessageDelivered: false,
+        lastMessageRead: false,
+      };
+
+      if (participants.length > 0) {
+        const readBy: Record<string, boolean> = {};
+        participants.forEach((pId: string) => {
+          readBy[pId] = pId === currentUserUid;
+        });
+        convoUpdate.readBy = readBy;
+
+        const currentUnreadCounts = convoSnap.data()?.unreadCounts || {};
+        const newUnreadCounts: Record<string, number> = {};
+        participants.forEach((pId: string) => {
+          if (pId === currentUserUid) {
+            newUnreadCounts[pId] = 0;
+          } else {
+            newUnreadCounts[pId] = (currentUnreadCounts[pId] || 0) + 1;
+          }
+        });
+        convoUpdate.unreadCounts = newUnreadCounts;
+      }
+
+      await updateDoc(convoRef, convoUpdate);
+
+      const otherParticipants = participants.filter((p: string) => p !== currentUserUid);
+      if (otherParticipants.length > 0) {
+        let senderName = auth.currentUser?.displayName || "Someone";
+        let senderAvatar = auth.currentUser?.photoURL || "";
+
+        try {
+          const profileSnap = await getDoc(doc(db, "profiles", currentUserUid));
+          if (profileSnap.exists()) {
+            const pData = profileSnap.data();
+            senderName = pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || senderName;
+            senderAvatar = pData.image || pData.photoURL || pData.avatar || senderAvatar;
+          }
+        } catch (e) {
+          console.warn("Error fetching profile for fallback notification:", e);
+        }
+
+        let title = "New Message";
+        let body = text;
+        if (type === "image") {
+          title = "Media received";
+          body = "Sent an image";
+        } else if (type === "video") {
+          title = "Media received";
+          body = "Sent a video";
+        }
+
+        for (const otherParticipantId of otherParticipants) {
+          await addDoc(collection(db, "notifications"), {
+            userId: otherParticipantId,
+            recipientId: otherParticipantId,
+            receiverId: otherParticipantId,
+            senderId: currentUserUid,
+            senderName,
+            senderAvatar,
+            title,
+            body,
+            type: "messages",
+            notificationType: "messages",
+            isRead: false,
+            read: false,
+            createdAt: serverTimestamp(),
+            targetUrl: `/messages/${currentUserUid}`,
+            profileUrl: `/messages/${currentUserUid}`
+          });
+        }
+      }
+
       return { success: true, error: null };
     } catch (fallbackError: any) {
       console.error("SendMessage fallback failed:", fallbackError);
@@ -82,7 +161,7 @@ export const updateMessage = async (
   newText: string
 ) => {
   try {
-    await apiClient.put(`/messaging/${convoId}/messages/${messageId}`, { text: newText });
+    await apiClient.put(`/messaging/${convoId}/messages/${messageId}`, { text: newText }, { timeout: 1500 });
     return { success: true, error: null };
   } catch (apiError: any) {
     console.warn("Backend updateMessage failed, attempting client-side fallback:", apiError);
@@ -102,7 +181,7 @@ export const updateMessage = async (
 
 export const deleteMessage = async (convoId: string, messageId: string) => {
   try {
-    await apiClient.delete(`/messaging/${convoId}/messages/${messageId}`);
+    await apiClient.delete(`/messaging/${convoId}/messages/${messageId}`, { timeout: 1500 });
     return { success: true, error: null };
   } catch (apiError: any) {
     console.warn("Backend deleteMessage failed, attempting client-side fallback:", apiError);
@@ -123,7 +202,7 @@ export const reactToMessage = async (
   userId: string
 ) => {
   try {
-    await apiClient.post(`/messaging/${convoId}/messages/${messageId}/react`, { emoji });
+    await apiClient.post(`/messaging/${convoId}/messages/${messageId}/react`, { emoji }, { timeout: 1500 });
     return { success: true, error: null };
   } catch (apiError: any) {
     console.warn("Backend reactToMessage failed, attempting client-side fallback:", apiError);
@@ -151,7 +230,7 @@ export const reactToMessage = async (
 
 export const pinMessage = async (convoId: string, messageId: string, pinned: boolean) => {
   try {
-    await apiClient.put(`/messaging/${convoId}/messages/${messageId}/pin`, { isPinned: pinned });
+    await apiClient.put(`/messaging/${convoId}/messages/${messageId}/pin`, { isPinned: pinned }, { timeout: 1500 });
     return { success: true, error: null };
   } catch (apiError: any) {
     console.warn("Backend pinMessage failed, attempting client-side fallback:", apiError);
@@ -307,7 +386,7 @@ export const getConversations = async (uid: string) => {
 
 export const deleteConversation = async (convoId: string) => {
   try {
-    await apiClient.delete(`/messaging/${convoId}`);
+    await apiClient.delete(`/messaging/${convoId}`, { timeout: 1500 });
     return { success: true, error: null };
   } catch (apiError: any) {
     console.warn("Backend deleteConversation failed, attempting client-side fallback:", apiError);
@@ -340,7 +419,7 @@ export const createConversation = async (
     const response = await apiClient.post<{ id: string }>("/messaging/conversations", {
       participants,
       initialMessage,
-    });
+    }, { timeout: 1500 });
     return { id: response.data?.id || null, error: null };
   } catch (apiError: any) {
     console.warn("Backend createConversation failed, attempting client-side fallback:", apiError);
@@ -466,7 +545,7 @@ export const markConversationAsRead = async (convoId: string) => {
     }
 
     // 2. Also call backend for server-side sync (best-effort)
-    await apiClient.put(`/messaging/${convoId}/read`);
+    await apiClient.put(`/messaging/${convoId}/read`, {}, { timeout: 1500 });
     return { success: true, error: null };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to mark conversation as read';

@@ -77,7 +77,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
   const messagesContainerRef = useRef(null);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
 
-  const [isSending, setIsSending] = useState(false);
+
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [allProfiles, setAllProfiles] = useState([]);
   const [newChatSearch, setNewChatSearch] = useState('');
@@ -223,7 +223,6 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     }
 
     if (editingMessage) {
-      setIsSending(true);
       try {
         const result = await updateMessage(activeChatId, editingMessage.id, textToSend);
         if (result.success) {
@@ -234,8 +233,6 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
         }
       } catch (err) {
         showAlert('Failed to connect to messaging service. Please try again.', 'error');
-      } finally {
-        setIsSending(false);
       }
     } else {
       const clientMsgId = `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -259,9 +256,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       setReplyingTo(null);
       setTimeout(scrollToBottom, 50);
 
-      setIsSending(true);
       sendMessage(activeChatId, user.uid, textToSend, false, replyingTo).then(result => {
-        setIsSending(false);
         if (!result.success) {
           setOptimisticMessages(prev => prev.map(m => m.id === clientMsgId ? { ...m, status: 'failed' } : m));
           showAlert(result.error || 'Failed to send message', 'error');
@@ -271,7 +266,6 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
           }, 3000);
         }
       }).catch(err => {
-        setIsSending(false);
         setOptimisticMessages(prev => prev.map(m => m.id === clientMsgId ? { ...m, status: 'failed' } : m));
         showAlert('Failed to connect to messaging service.', 'error');
       });
@@ -667,9 +661,16 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       ...messages,
       ...optimisticMessages.filter(opt => {
         const isAlreadyInDb = messages.some(dbMsg => {
-          const dbTime = dbMsg.createdAt?.seconds ? dbMsg.createdAt.seconds * 1000 : (dbMsg.createdAt ? new Date(dbMsg.createdAt).getTime() : 0);
+          const dbTime = dbMsg.createdAt?.seconds 
+            ? dbMsg.createdAt.seconds * 1000 
+            : (dbMsg.createdAt?.toDate ? dbMsg.createdAt.toDate().getTime() : (dbMsg.createdAt ? new Date(dbMsg.createdAt).getTime() : null));
+          
+          if (dbTime === null || dbTime === 0) {
+            return dbMsg.senderId === opt.senderId && dbMsg.text === opt.text;
+          }
+          
           const timeDiff = Math.abs(dbTime - opt.createdAt);
-          return dbMsg.senderId === opt.senderId && dbMsg.text === opt.text && timeDiff < 10000;
+          return dbMsg.senderId === opt.senderId && dbMsg.text === opt.text && timeDiff < 30000;
         });
         return !isAlreadyInDb;
       })
@@ -1548,7 +1549,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                 
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploadingMedia || isSending}
+                  disabled={isUploadingMedia}
                   className="text-nc-muted hover:text-[#00BFFF] p-1 transition-colors disabled:opacity-50"
                   title="Attach Media"
                   aria-label="Attach Media"
@@ -1577,7 +1578,6 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                       value={newMessage}
                       onChange={handleInputChange}
                       onKeyDown={handleKeyDown}
-                      disabled={isSending}
                     />
                   )}
                 </div>
@@ -1585,18 +1585,14 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                 {/* Cyan Send button */}
                 <button
                   onClick={handleSendMessage}
-                  disabled={!newMessage.trim() || isSending}
+                  disabled={!newMessage.trim()}
                   className="w-12 h-12 rounded-full bg-[#00BFFF] text-nc-darker flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale shadow-lg shadow-[#00BFFF]/20 shrink-0"
                   title="Send Message"
                   aria-label="Send Message"
                 >
-                  {isSending ? (
-                    <div className="w-5 h-5 border-2 border-nc-darker border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  )}
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
                 </button>
               </div>
             </div>
