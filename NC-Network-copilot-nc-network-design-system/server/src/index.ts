@@ -916,6 +916,7 @@ app.post(
 
       res.json({ success: true });
     } catch (error: unknown) {
+      console.error("Error in POST /api/messaging/:conversationId/messages:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: error.issues });
         return;
