@@ -81,7 +81,7 @@ export const createCastingCall = async (callData: any) => {
       return { id: null, error: "Authentication required" };
     }
 
-    const response = await apiClient.post<{ id: string }>("/casting", callData);
+    const response = await apiClient.post<{ id: string }>("/casting", callData, { timeout: 2000 });
     return { id: response.data?.id || null, error: null };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to create casting call";
