@@ -301,7 +301,6 @@ export const getCallHistory = async (
     const callerQuery = query(
       collection(db, "calls"),
       where("callerId", "==", userId),
-      orderBy("createdAt", "desc"),
       limit(maxResults)
     );
 
@@ -309,7 +308,6 @@ export const getCallHistory = async (
     const calleeQuery = query(
       collection(db, "calls"),
       where("calleeId", "==", userId),
-      orderBy("createdAt", "desc"),
       limit(maxResults)
     );
 
@@ -356,14 +354,12 @@ export const subscribeToCallHistory = (
   const callerQ = query(
     collection(db, "calls"),
     where("callerId", "==", userId),
-    orderBy("createdAt", "desc"),
     limit(maxResults)
   );
 
   const calleeQ = query(
     collection(db, "calls"),
     where("calleeId", "==", userId),
-    orderBy("createdAt", "desc"),
     limit(maxResults)
   );
 
@@ -384,15 +380,25 @@ export const subscribeToCallHistory = (
     callback(sorted.slice(0, maxResults));
   };
 
-  const unsub1 = onSnapshot(callerQ, (snap) => {
-    callerCalls = snap.docs.map((d) => ({ id: d.id, ...d.data() } as CallDoc));
-    merge();
-  });
+  const unsub1 = onSnapshot(callerQ, 
+    (snap) => {
+      callerCalls = snap.docs.map((d) => ({ id: d.id, ...d.data() } as CallDoc));
+      merge();
+    },
+    (err) => {
+      console.warn("[CallService] callerQ subscription failed (likely missing index):", err);
+    }
+  );
 
-  const unsub2 = onSnapshot(calleeQ, (snap) => {
-    calleeCalls = snap.docs.map((d) => ({ id: d.id, ...d.data() } as CallDoc));
-    merge();
-  });
+  const unsub2 = onSnapshot(calleeQ, 
+    (snap) => {
+      calleeCalls = snap.docs.map((d) => ({ id: d.id, ...d.data() } as CallDoc));
+      merge();
+    },
+    (err) => {
+      console.warn("[CallService] calleeQ subscription failed (likely missing index):", err);
+    }
+  );
 
   return () => {
     unsub1();
