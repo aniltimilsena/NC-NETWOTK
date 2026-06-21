@@ -560,7 +560,7 @@ export default function Home({ onNavigate, user }) {
                           className="flex flex-col items-center w-[120px] min-w-[120px] flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-1 group/actor"
                         >
                           <Avatar 
-                            src={actor.photoURL || actor.profileImage || actor.image}
+                            user={actor}
                             size={90}
                             name={actor.name}
                             className="shadow-md"

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Firestore Test Tool</title>
+  <style>
+    body { background: #0A0A0A; color: white; font-family: sans-serif; padding: 20px; }
+    pre { background: #111; border: 1px solid #333; padding: 15px; border-radius: 8px; overflow-x: auto; }
+    h2 { color: #00BFFF; }
+  </style>
+</head>
+<body>
+  <h1>Firestore Database Contents</h1>
+  <div id="output">Loading data from Firestore...</div>
+
+  <!-- Firebase App & Firestore -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCdJ4qLa1jksuCQIMd7hRii5mgx1l5h48E",
+      authDomain: "nc-network-10d0b.firebaseapp.com",
+      projectId: "nc-network-10d0b",
+      storageBucket: "nc-network-10d0b.firebasestorage.app",
+      messagingSenderId: "825161490464",
+      appId: "1:825161490464:web:c74f7a95bc4e5de6729c45",
+      databaseURL: "https://nc-network-10d0b-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function loadData() {
+      const outputDiv = document.getElementById("output");
+      try {
+        let html = "";
+        
+        // Load Profiles
+        html += "<h2>Profiles Collection</h2>";
+        const profilesSnap = await getDocs(collection(db, "profiles"));
+        html += `<p>Found ${profilesSnap.size} documents in 'profiles':</p>`;
+        profilesSnap.forEach(doc => {
+          html += `<pre><strong>Document ID: ${doc.id}</strong>\n${JSON.stringify(doc.data(), null, 2)}</pre>`;
+        });
+
+        // Load Users
+        html += "<h2>Users Collection</h2>";
+        const usersSnap = await getDocs(collection(db, "users"));
+        html += `<p>Found ${usersSnap.size} documents in 'users':</p>`;
+        usersSnap.forEach(doc => {
+          html += `<pre><strong>Document ID: ${doc.id}</strong>\n${JSON.stringify(doc.data(), null, 2)}</pre>`;
+        });
+
+        outputDiv.innerHTML = html;
+      } catch (err) {
+        outputDiv.innerHTML = `<p style="color: red;">Error: ${err.message}</p><pre>${err.stack}</pre>`;
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

@@ -332,13 +332,21 @@ const uploadToCloudinary = (fileBuffer: Buffer, mimeType: string, folder: string
       }
     } else if (cloudName && uploadPreset) {
       try {
-        const base64Data = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
+        const formData = new FormData();
+        const blob = new Blob([fileBuffer], { type: mimeType });
+        const ext = mimeType.split('/')[1] || 'bin';
+        const fileName = `upload.${ext}`;
+        formData.append('file', blob, fileName);
+        formData.append('upload_preset', uploadPreset);
+        formData.append('folder', folder);
+
         const response = await axios.post(
           `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+          formData,
           {
-            file: base64Data,
-            upload_preset: uploadPreset,
-            folder: folder,
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
           }
         );
 

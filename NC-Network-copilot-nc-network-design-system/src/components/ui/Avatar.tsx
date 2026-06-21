@@ -14,15 +14,17 @@ interface AvatarProps {
   user?: any;
 }
 
-export default function Avatar({ 
-  src: propSrc, 
-  size = 'md', 
-  editable = false,
-  name,
-  className = '',
-  verified = false,
-  user: propUser
-}: AvatarProps) {
+export default function Avatar(props: AvatarProps) {
+  const { 
+    src: propSrc, 
+    size = 'md', 
+    editable = false,
+    name,
+    className = '',
+    verified = false,
+    user: propUser
+  } = props;
+
   // Try to read user and functions from context if available
   let context: any = null;
   try {
@@ -31,7 +33,9 @@ export default function Avatar({
     // Context might not be available in all locations (like splash screen)
   }
 
-  const user = propUser || context?.user;
+  // If user, src, or name is explicitly passed (even if undefined), do not automatically fall back to the logged-in user context
+  const isExplicit = 'user' in props || 'src' in props || 'name' in props;
+  const user = propUser || (isExplicit ? null : context?.user);
   const updateAvatar = context?.updateAvatar;
   const deleteAvatar = context?.deleteAvatar;
 
