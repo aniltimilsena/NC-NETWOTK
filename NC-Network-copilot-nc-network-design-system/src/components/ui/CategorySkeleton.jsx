@@ -18,7 +18,7 @@ const SkeletonCard = memo(function SkeletonCard() {
   return (
     <div
       /* Same sizing / responsive classes as the real category card */
-      className="w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(12.5%-0.875rem)] h-[116px] skeleton rounded-[20px]"
+      className="w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] h-[116px] skeleton rounded-[20px]"
       aria-hidden="true"
     />
   );

@@ -288,7 +288,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.04 }}
-                      className="category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(12.5%-0.875rem)] p-4 flex flex-col items-center gap-2.5 group cursor-pointer"
+                      className="category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-4 flex flex-col items-center gap-2.5 group cursor-pointer"
                     >
                       {/* Circular icon — same as Home */}
                       <div

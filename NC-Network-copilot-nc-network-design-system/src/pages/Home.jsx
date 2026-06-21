@@ -613,7 +613,7 @@ export default function Home({ onNavigate, user }) {
                     key={cat.id}
                     onClick={() => onNavigate('listing', cat.name)}
                     style={{ animationDelay: `${idx * 40}ms` }}
-                    className={`cat-card-reveal category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(12.5%-0.875rem)] p-4 flex-col items-center gap-2.5 group ${
+                    className={`cat-card-reveal category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-4 flex-col items-center gap-2.5 group ${
                       idx >= 4 && !showAllCategories ? 'hidden sm:flex' : 'flex'
                     }`}
                   >
