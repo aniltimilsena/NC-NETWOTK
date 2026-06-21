@@ -413,7 +413,18 @@ export default function SignIn({ onNavigate, showAlert }) {
       }
     } catch (err) {
       console.error(err);
-      setError('Google Sign-In failed: ' + (err instanceof Error ? err.message : String(err)));
+      let friendlyMessage = err instanceof Error ? err.message : String(err);
+      if (err && typeof err === 'object') {
+        const code = err.code;
+        if (code === 'auth/popup-closed-by-user') {
+          friendlyMessage = 'Sign-in cancelled. The Google sign-in window was closed.';
+        } else if (code === 'auth/popup-blocked') {
+          friendlyMessage = 'The Google login popup was blocked by your browser. Please allow popups for this site.';
+        } else if (code === 'auth/cancelled-popup-request') {
+          friendlyMessage = 'The sign-in window was closed because another popup request was opened.';
+        }
+      }
+      setError('Google Sign-In failed: ' + friendlyMessage);
       setIsLoading(false);
     }
   };

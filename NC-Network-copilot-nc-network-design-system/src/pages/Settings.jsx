@@ -1304,7 +1304,20 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       showToast(`${providerName === 'google' ? 'Google' : 'Facebook'} account linked successfully!`, 'success');
     } catch (err) {
       console.error(`Error linking ${providerName}:`, err);
-      showToast(err.message || `Failed to link ${providerName} account.`, 'error');
+      let friendlyMessage = `Failed to link ${providerName} account.`;
+      if (err && typeof err === 'object') {
+        const code = err.code;
+        if (code === 'auth/popup-closed-by-user') {
+          friendlyMessage = `Linking cancelled. The authentication window was closed before completion.`;
+        } else if (code === 'auth/popup-blocked') {
+          friendlyMessage = `The authentication popup was blocked by your browser. Please check your browser settings or allow popups.`;
+        } else if (code === 'auth/cancelled-popup-request') {
+          friendlyMessage = `The linking request was cancelled because another window was opened.`;
+        } else if (err.message) {
+          friendlyMessage = err.message;
+        }
+      }
+      showToast(friendlyMessage, 'error');
     }
   };
 

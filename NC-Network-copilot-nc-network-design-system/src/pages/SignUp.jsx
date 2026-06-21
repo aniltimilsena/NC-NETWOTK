@@ -209,7 +209,18 @@ export default function SignUp({ onNavigate, showAlert }) {
       }
     } catch (err) {
       console.error(err);
-      setError('Google Registration failed: ' + (err instanceof Error ? err.message : String(err)));
+      let friendlyMessage = err instanceof Error ? err.message : String(err);
+      if (err && typeof err === 'object') {
+        const code = err.code;
+        if (code === 'auth/popup-closed-by-user') {
+          friendlyMessage = 'Sign-up cancelled. The Google authentication window was closed.';
+        } else if (code === 'auth/popup-blocked') {
+          friendlyMessage = 'The Google authentication popup was blocked by your browser. Please allow popups for this site.';
+        } else if (code === 'auth/cancelled-popup-request') {
+          friendlyMessage = 'The authentication window was closed because another popup request was opened.';
+        }
+      }
+      setError('Google Registration failed: ' + friendlyMessage);
       setIsLoading(false);
     }
   };
