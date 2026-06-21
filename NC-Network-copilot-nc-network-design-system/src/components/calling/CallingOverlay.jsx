@@ -256,7 +256,7 @@ export default function CallingOverlay() {
           autoPlay
           playsInline
           className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 ${
-            isVideoCall && isConnected && remoteStream?.getVideoTracks().length > 0
+            isVideoCall && isConnected && remoteStream
               ? 'opacity-100'
               : 'opacity-0 pointer-events-none'
           }`}
