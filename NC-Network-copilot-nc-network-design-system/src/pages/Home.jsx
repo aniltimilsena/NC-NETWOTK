@@ -490,7 +490,7 @@ export default function Home({ onNavigate, user }) {
               <div className="h-7 skeleton w-40" />
             </div>
             <div className="flex flex-col gap-3 sm:gap-4">
-              {Array.from({ length: 5 }).map((_, idx) => (
+              {Array.from({ length: 3 }).map((_, idx) => (
                 <div
                   key={idx}
                   className="bg-[#111] border border-white/5 rounded-3xl p-4 sm:p-5 flex items-center justify-between"
@@ -727,7 +727,7 @@ export default function Home({ onNavigate, user }) {
                   const ratingB = parseFloat(b.rating) || 0;
                   return ratingB - ratingA;
                 })
-                .slice(0, 5)
+                .slice(0, 3)
                 .map((talent, idx) => (
                 <div
                   key={talent.id}
