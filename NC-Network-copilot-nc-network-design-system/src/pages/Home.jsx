@@ -680,7 +680,7 @@ export default function Home({ onNavigate, user }) {
                       className="flex-shrink-0 w-[240px] sm:w-[280px] bg-nc-card rounded-3xl flex items-center p-3 gap-4 border border-transparent snap-start hover:brightness-110 transition-all duration-300 cursor-pointer group"
                     >
                     <div className="w-16 h-20 sm:w-16 sm:h-24 bg-nc-surface overflow-hidden rounded-xl shadow-md border border-white/[0.06] group-hover:border-nc-accent/30 transition-colors">
-                      {item.img ? <img src={item.img} alt={item.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] text-nc-muted">LOGO</div>}
+                      <img src={item.thumbnail || '/movie-banner.png'} alt={item.title} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0 pr-2">
                       <h4 className="text-white font-bold leading-tight truncate text-sm">{item.title}</h4>
