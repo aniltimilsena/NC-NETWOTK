@@ -3,7 +3,6 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Breadcrumbs from '../components/Breadcrumbs';
-import MobileBottomNav from '../components/layout/MobileBottomNav';
 
 interface PublicLayoutProps {
   user: any;
@@ -50,7 +49,7 @@ export default function PublicLayout({
   const showNavbar = !isAuthPage && !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications');
 
   return (
-    <div className="flex flex-col min-h-screen bg-nc-dark text-nc-text pb-[60px] md:pb-0">
+    <div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
       {showNavbar && (
         <Navbar
           user={user}
@@ -65,7 +64,6 @@ export default function PublicLayout({
         <Outlet context={{ user, isAdmin, showAlert, showToast }} />
       </main>
       {!isAuthPage && location.pathname === '/' && <Footer user={user} />}
-      {!isAuthPage && <MobileBottomNav user={user} />}
     </div>
   );
 }
