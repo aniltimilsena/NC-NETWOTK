@@ -839,56 +839,64 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   };
 
   useEffect(() => {
+    let isMounted = true;
     if (user?.uid) {
-      const unsubscribe = subscribeToProfile(user.uid, (data) => {
-        if (data) {
+      setIsLoading(true);
+      getProfile(user.uid).then(({ data }) => {
+        if (isMounted && data) {
           setIsPremium(data.premium || isUserAdmin || false);
           if (data.language && data.language !== i18n.language) {
             i18n.changeLanguage(data.language);
           }
-          // Only update form fields if not currently saving to avoid race conditions
-          if (!isSavingRef.current) {
-            setFName(data.firstName || defaultFirstName);
-            setLName(data.lastName || defaultLastName);
-            setDisplayNameState(data.name || user?.displayName || `${data.firstName || defaultFirstName} ${data.lastName || defaultLastName}`.trim() || defaultUsername);
-            setUName(data.username || defaultUsername);
-            setPhone(data.phone || "");
-            setGender(data.gender || "");
-            setBio(data.bio || "");
-            setLocation(data.location || "");
-            setSelectedLanguages(data.languages || []);
-            setSelectedSkills(data.skills || []);
-            setExperiences(data.experience || []);
-            setOpenToWork(data.openToAudition ?? data.openToWork ?? false);
-            setHeight(data.height || "");
-            setWeight(data.weight || "");
-            setEyeColor(data.eyeColor || "");
-            setHairColor(data.hairColor || "");
-            setRole(data.category ?? data.role ?? "");
-            setShowContactInfo(data.showContactInfo || false);
-            setAvatarUrl(data.image || data.photoURL || "");
-            setTwoFactor(data.twoFactorEnabled || false);
-            setTwoFactorMethod(data.twoFactorMethod || "");
-            setTwoFactorPhone(data.twoFactorPhone || "");
-            setTwoFactorEmail(data.twoFactorEmail || "");
-            setWhoCanMessage(data.whoCanMessage || "connections");
-            setProfileVisibility(data.profileVisibility || "public");
-            
-            const notifs = data.notifications || {};
-            setNotifMessages(notifs.messages ?? true);
-            setNotifTyping(notifs.typing ?? false);
-            setNotifCasting(notifs.casting ?? true);
-            setNotifAppStatus(notifs.appStatus ?? true);
-            setNotifSecurity(notifs.security ?? true);
-            setNotifUpdates(notifs.updates ?? false);
-            setNotifNewsletters(notifs.newsletters ?? false);
-            setNotifPromo(notifs.promo ?? false);
-          }
+          setFName(data.firstName || defaultFirstName);
+          setLName(data.lastName || defaultLastName);
+          setDisplayNameState(data.name || user?.displayName || `${data.firstName || defaultFirstName} ${data.lastName || defaultLastName}`.trim() || defaultUsername);
+          setUName(data.username || defaultUsername);
+          setPhone(data.phone || "");
+          setGender(data.gender || "");
+          setBio(data.bio || "");
+          setLocation(data.location || "");
+          setSelectedLanguages(data.languages || []);
+          setSelectedSkills(data.skills || []);
+          setExperiences(data.experience || []);
+          setOpenToWork(data.openToAudition ?? data.openToWork ?? false);
+          setHeight(data.height || "");
+          setWeight(data.weight || "");
+          setEyeColor(data.eyeColor || "");
+          setHairColor(data.hairColor || "");
+          setRole(data.category ?? data.role ?? "");
+          setShowContactInfo(data.showContactInfo || false);
+          setAvatarUrl(data.image || data.photoURL || "");
+          setTwoFactor(data.twoFactorEnabled || false);
+          setTwoFactorMethod(data.twoFactorMethod || "");
+          setTwoFactorPhone(data.twoFactorPhone || "");
+          setTwoFactorEmail(data.twoFactorEmail || "");
+          setWhoCanMessage(data.whoCanMessage || "connections");
+          setProfileVisibility(data.profileVisibility || "public");
+          
+          const notifs = data.notifications || {};
+          setNotifMessages(notifs.messages ?? true);
+          setNotifTyping(notifs.typing ?? false);
+          setNotifCasting(notifs.casting ?? true);
+          setNotifAppStatus(notifs.appStatus ?? true);
+          setNotifSecurity(notifs.security ?? true);
+          setNotifUpdates(notifs.updates ?? false);
+          setNotifNewsletters(notifs.newsletters ?? false);
+          setNotifPromo(notifs.promo ?? false);
         }
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }).catch((err) => {
+        console.error("Failed to load settings profile:", err);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       });
-      return () => unsubscribe();
     }
+    return () => {
+      isMounted = false;
+    };
   }, [user?.uid]);
 
   const handleSave = async () => {
