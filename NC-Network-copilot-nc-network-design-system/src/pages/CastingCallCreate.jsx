@@ -58,7 +58,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
       return;
     }
 
-    if (!form.title || !form.type || !form.location || !form.thumbnail || !form.budget || !form.deadline) {
+    if (!form.title || !form.type || !form.location || !form.budget || !form.deadline) {
       showAlert('Missing Information', 'error', 'Please fill in all required details, including budget/paying range and deadline.');
       setStep(1);
       return;
@@ -127,8 +127,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
 
   const handleNext = () => {
     if (step === 1) {
-      if (!form.title || !form.type || !form.location || !form.thumbnail || !form.budget || !form.deadline) {
-        showAlert('Required Fields', 'error', 'Please fill in all required fields: Title, Type, Location, Thumbnail, Budget, and Deadline.');
+      if (!form.title || !form.type || !form.location || !form.budget || !form.deadline) {
+        showAlert('Required Fields', 'error', 'Please fill in all required fields: Title, Type, Location, Budget, and Deadline.');
         return;
       }
     }
@@ -223,7 +223,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
                 
                 {/* Poster upload */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Project Poster / Photo *</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Project Poster / Photo</label>
                   <div className="flex flex-col sm:flex-row gap-5 items-start">
                     <div className="w-full sm:w-48 h-32 bg-[#1a1a1a] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative group hover:border-[#00BFFF] transition-all cursor-pointer">
                       {thumbnailPreview || form.thumbnail ? (
