@@ -3097,37 +3097,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
         </div>
       </div>
 
-      {/* FLOATING ACTION BAR FOR DIRTY STATE */}
-      {hasChanges && (
-        <div className="fixed bottom-0 left-0 right-0 bg-[#111]/90 backdrop-blur-xl border-t border-[#333] p-4 flex justify-center z-50 animate-slide-up shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-          <div className="max-w-[1100px] w-full flex items-center justify-between px-4 sm:px-6 md:px-8">
-            <div className="hidden sm:block text-left">
-              <span className="text-sm font-bold text-white">Unsaved Changes</span>
-              <p className="text-xs text-[#888] mt-0.5">Please save your profile modifications.</p>
-            </div>
-            <div className="flex gap-3 w-full sm:w-auto justify-end">
-              <button 
-                onClick={() => {
-                  setHasChanges(false);
-                  if (user?.uid) {
-                    showToast('Discarded unsaved changes', 'info');
-                  }
-                }} 
-                className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#888] hover:text-white hover:bg-white/5 transition-colors"
-              >
-                Discard
-              </button>
-              <button 
-                onClick={handleSave} 
-                disabled={isSaving}
-                className="px-8 py-2.5 rounded-xl text-sm font-bold bg-[#00BFFF] text-black shadow-lg shadow-[#00BFFF]/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </>
   );
 }
