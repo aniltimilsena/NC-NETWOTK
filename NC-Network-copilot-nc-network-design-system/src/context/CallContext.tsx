@@ -98,11 +98,11 @@ export function CallProvider({ children, user }: CallProviderProps) {
       } else if (finalStatus === "network-error") {
         outcome = "Network Error";
       } else if (finalStatus === "cancelled") {
-        outcome = "Cancelled by Caller";
+        outcome = `Cancelled by ${callerId}`;
       } else if (duration > 0) {
         outcome = `${Math.floor(duration / 60)}m ${duration % 60}s`;
       } else {
-        outcome = "Cancelled by Caller";
+        outcome = `Cancelled by ${callerId}`;
       }
 
       await sendMessage(convoId, "system", `${callLabel} call • ${outcome}`);

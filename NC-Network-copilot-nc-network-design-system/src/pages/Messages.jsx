@@ -46,6 +46,23 @@ import {
 
 export default function Messages({ onNavigate, user, initialUserId, showAlert }) {
   const { initiateCall: startCall } = useCall();
+  const formatCallOutcomeText = (text, chatItem) => {
+    if (!text || typeof text !== 'string') return text;
+    if (text.includes("Cancelled by ")) {
+      const parts = text.split("Cancelled by ");
+      const prefix = parts[0]; // e.g., "Video call • " or "Audio call • "
+      const identifier = parts[1]; // UserID or "Caller"
+      
+      if (identifier === user?.uid) {
+        return `${prefix}Cancelled by you`;
+      } else if (identifier !== "Caller") {
+        const otherName = chatItem?.name || "them";
+        const firstName = otherName.split(" ")[0];
+        return `${prefix}Cancelled by ${firstName}`;
+      }
+    }
+    return text;
+  };
   const [activeChatId, setActiveChatId] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -816,11 +833,13 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
         }
       }
 
+      const displayText = formatCallOutcomeText(msg.text, activeChat);
+
       return (
         <div key={msg.id} className="flex justify-center my-4">
           <div className={`border px-4 py-1.5 rounded-full text-[11px] font-medium tracking-wide backdrop-blur-sm flex items-center ${pillClass}`}>
             {icon}
-            {msg.text}
+            {displayText}
           </div>
         </div>
       );
@@ -1164,7 +1183,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                       )}
                     </h3>
                     <p className={`text-xs truncate leading-normal ${previewTextClass}`}>
-                      {formatMessagePreview(chat.lastMessage)}
+                      {formatMessagePreview(formatCallOutcomeText(chat.lastMessage, chat))}
                     </p>
                   </div>
 
