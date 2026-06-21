@@ -1183,6 +1183,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                       )}
                     </h3>
                     <p className={`text-xs truncate leading-normal ${previewTextClass}`}>
+                      {chat.lastSenderId === user?.uid && chat.lastMessage ? 'You: ' : ''}
                       {formatMessagePreview(formatCallOutcomeText(chat.lastMessage, chat))}
                     </p>
                   </div>
