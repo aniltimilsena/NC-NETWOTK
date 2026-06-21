@@ -302,16 +302,16 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                         <Icon size={26} strokeWidth={1.5} />
                       </div>
 
-                      <span className="text-xs sm:text-sm font-bold text-white/80 group-hover:text-white transition-colors relative z-10">
+                      <span className="text-sm sm:text-base font-extrabold text-white/90 group-hover:text-white transition-colors relative z-10">
                         {detail.label}
                       </span>
 
                       {count === 0 ? (
-                        <span className="text-[10px] font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
+                        <span className="text-xs sm:text-sm font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
                           Be the first →
                         </span>
                       ) : (
-                        <span className="text-[10px] font-semibold text-nc-muted relative z-10">
+                        <span className="text-xs sm:text-sm font-semibold text-nc-muted relative z-10">
                           {count} {count === 1 ? 'talent' : 'talents'}
                         </span>
                       )}
