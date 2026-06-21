@@ -192,24 +192,21 @@ export function useWebRTC(): UseWebRTCReturn {
     (stream: MediaStream): RTCPeerConnection => {
       const pc = new RTCPeerConnection(ICE_SERVERS);
 
-      // Add local tracks to connection
+      // Ensure all local tracks are enabled and add them to connection
       stream.getTracks().forEach((track) => {
+        if (!track.enabled) {
+          track.enabled = true;
+        }
         pc.addTrack(track, stream);
+        console.log("[WebRTC] Added local track to peer connection:", track.kind, "enabled:", track.enabled);
       });
 
-      // Listen for remote tracks
-      const remote = new MediaStream();
-      setRemoteStream(remote);
-
+      // Listen for remote tracks and bind directly to the remote stream
       pc.ontrack = (event) => {
+        console.log("[WebRTC] Received remote track:", event.track.kind);
         if (event.streams && event.streams[0]) {
-          event.streams[0].getTracks().forEach((track) => {
-            remote.addTrack(track);
-          });
-        } else if (event.track) {
-          remote.addTrack(event.track);
+          setRemoteStream(event.streams[0]);
         }
-        setRemoteStream(new MediaStream(remote.getTracks()));
       };
 
       // Connection state monitoring
@@ -282,6 +279,13 @@ export function useWebRTC(): UseWebRTCReturn {
 
         if (error || !callId) {
           throw new Error(error || "Failed to create call");
+        }
+
+        if (callStateRef.current === "ended") {
+          console.log("[WebRTC] Call was ended during setup. Cleaning up created Firestore call:", callId);
+          await updateCallStatus(callId, "ended");
+          cleanupCall(callId);
+          return;
         }
 
         callIdRef.current = callId;
@@ -357,13 +361,13 @@ export function useWebRTC(): UseWebRTCReturn {
         }, 30000);
       } catch (err: any) {
         console.error("[WebRTC] startCall error:", err);
-        if (callState !== "error") {
+        if (callStateRef.current !== "ended") {
           setErrorMessage((prev) => prev || err.message || "Failed to start call");
           setCallState("error");
         }
       }
     },
-    [getUserMedia, createPeerConnection, cleanup, callState]
+    [getUserMedia, createPeerConnection, cleanup]
   );
 
   // ─── Answer call (callee) ────────────────────────────────────────────────

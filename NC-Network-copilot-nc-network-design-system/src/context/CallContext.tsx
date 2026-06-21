@@ -225,64 +225,84 @@ export function CallProvider({ children, user }: CallProviderProps) {
     }) => {
       if (!user?.uid) return;
 
-      try {
-        // Immediately pre-acquire media stream inside user gesture event loop
-        const stream = await webrtc.getUserMedia(params.callType);
+      // 1. Immediately show Calling overlay using cached and passed profile data (0ms delay)
+      const initialActiveCall = {
+        id: "",
+        callerId: user.uid,
+        callerName: user.displayName || "Unknown",
+        callerPhoto: user.photoURL || "",
+        callerAvatar: user.photoURL || "",
+        calleeId: params.calleeId,
+        calleeName: params.calleeName,
+        calleePhoto: params.calleePhoto,
+        receiverId: params.calleeId,
+        receiverName: params.calleeName,
+        receiverAvatar: params.calleePhoto,
+        callType: params.callType,
+        status: "pending",
+        callStatus: "pending",
+        createdAt: new Date(),
+      };
+      setActiveCall(initialActiveCall as any);
 
-        // Fetch caller and callee profile details dynamically from Firestore
-        let callerName = user.displayName || "Unknown";
-        let callerAvatar = user.photoURL || "";
-        let calleeName = params.calleeName;
-        let calleePhoto = params.calleePhoto;
+      // 2. Synchronously invoke getUserMedia to keep the call inside the original user gesture event stack (preventing NotAllowedError)
+      const streamPromise = webrtc.getUserMedia(params.callType);
 
+      // 3. Perform profile fetching, peer connection, and signaling asynchronously in the background
+      (async () => {
         try {
-          const callerRes = await getProfile(user.uid);
-          if (callerRes.data) {
-            const callerData = callerRes.data as any;
+          const stream = await streamPromise;
+
+          let callerName = user.displayName || "Unknown";
+          let callerAvatar = user.photoURL || "";
+          let calleeName = params.calleeName;
+          let calleePhoto = params.calleePhoto;
+
+          // Fetch full profile info concurrently
+          const [callerRes, calleeRes] = await Promise.allSettled([
+            getProfile(user.uid),
+            getProfile(params.calleeId)
+          ]);
+
+          if (callerRes.status === "fulfilled" && callerRes.value.data) {
+            const callerData = callerRes.value.data as any;
             callerName = callerData.name || [callerData.firstName, callerData.lastName].filter(Boolean).join(' ') || callerData.username || callerName;
             callerAvatar = callerData.image || callerData.avatar || callerData.photoURL || callerAvatar;
           }
-        } catch (e) {
-          console.warn("Failed to fetch caller profile:", e);
-        }
 
-        try {
-          const calleeRes = await getProfile(params.calleeId);
-          if (calleeRes.data) {
-            const calleeData = calleeRes.data as any;
+          if (calleeRes.status === "fulfilled" && calleeRes.value.data) {
+            const calleeData = calleeRes.value.data as any;
             calleeName = calleeData.name || [calleeData.firstName, calleeData.lastName].filter(Boolean).join(' ') || calleeData.username || calleeName;
             calleePhoto = calleeData.image || calleeData.avatar || calleeData.photoURL || calleePhoto;
           }
-        } catch (e) {
-          console.warn("Failed to fetch callee profile:", e);
+
+          const callParams = {
+            callerId: user.uid,
+            callerName,
+            callerPhoto: callerAvatar,
+            callerAvatar,
+            calleeId: params.calleeId,
+            calleeName,
+            calleePhoto,
+            receiverId: params.calleeId,
+            receiverName: calleeName,
+            receiverAvatar: calleePhoto,
+            callType: params.callType,
+          };
+
+          // Update activeCall details once profile lookup is done
+          setActiveCall((prev) => prev ? {
+            ...prev,
+            ...callParams,
+          } as any : null);
+
+          await webrtc.startCall(callParams, stream);
+        } catch (err: any) {
+          console.error("Failed to start call:", err);
+          // If webrtc error state was not set, clean up here
+          setActiveCall(null);
         }
-
-        const callParams = {
-          callerId: user.uid,
-          callerName,
-          callerPhoto: callerAvatar,
-          callerAvatar,
-          calleeId: params.calleeId,
-          calleeName,
-          calleePhoto,
-          receiverId: params.calleeId,
-          receiverName: calleeName,
-          receiverAvatar: calleePhoto,
-          callType: params.callType,
-        };
-
-        setActiveCall({
-          id: "", // Will be set after creation
-          ...callParams,
-          status: "pending",
-          callStatus: "pending",
-          createdAt: new Date(),
-        } as any);
-
-        await webrtc.startCall(callParams, stream);
-      } catch (err: any) {
-        console.error("Failed to start call:", err);
-      }
+      })();
     },
     [user, webrtc.getUserMedia, webrtc.startCall]
   );
