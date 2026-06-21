@@ -68,20 +68,22 @@ export const useNotifications = (
   const registerFCMToken = useCallback(async () => {
     if (!messaging || !user?.uid) return;
 
-    const localApiKey = import.meta.env.VITE_FIREBASE_API_KEY;
-    
+    if (!VAPID_KEY) {
+      console.warn('Skipping FCM registration: VITE_FCM_VAPID_KEY is not defined.');
+      return;
+    }
+
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      console.warn('Skipping FCM registration: Service Workers are not supported in this browser.');
+      return;
+    }
+
     // Skip on localhost in local development ONLY if explicitly disabled
-    const isLocalhost = typeof window !== 'undefined' && 
-      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const disableFCMOnLocalhost = import.meta.env.VITE_DISABLE_FCM_LOCALHOST === 'true';
     
     if (isLocalhost && disableFCMOnLocalhost) {
       console.log('Skipping FCM registration on localhost (VITE_DISABLE_FCM_LOCALHOST is true)');
-      return;
-    }
-
-    if (localStorage.getItem('nc_fcm_unauthorized_key') === localApiKey) {
-      console.log('Skipping FCM registration: FCM is unconfigured or unauthorized for this API key.');
       return;
     }
 
@@ -98,6 +100,7 @@ export const useNotifications = (
         };
         const configStr = encodeURIComponent(JSON.stringify(config));
         
+        // Pass dynamic config query parameter. Service worker has fallback for when this is omitted.
         const registration = await navigator.serviceWorker.register(
           `/firebase-messaging-sw.js?config=${configStr}`
         );
@@ -106,21 +109,27 @@ export const useNotifications = (
           vapidKey: VAPID_KEY,
           serviceWorkerRegistration: registration 
         });
+
         if (token) {
-          await callSecureFunction<{ token: string }, { success: boolean }>('registerNotificationToken', { token });
-          console.log('FCM Token registered');
+          const { data, error: registerError } = await callSecureFunction<{ token: string }, { success: boolean }>(
+            'registerNotificationToken', 
+            { token }
+          );
+          if (registerError) {
+            console.error('Failed to register FCM Token on backend database:', registerError);
+          } else if (data?.success) {
+            console.log('FCM Token successfully saved to database');
+          } else {
+            console.log('FCM Token registration returned without explicit success flag');
+          }
+        } else {
+          console.warn('FCM token generation succeeded but returned empty token');
         }
+      } else {
+        console.warn('FCM registration skipped: Notification permission denied or not granted');
       }
     } catch (error: any) {
-      console.debug('FCM subscription skipped or failed:', error);
-      const isUnauthorized = error && (
-        error.code === 'messaging/token-subscribe-failed' || 
-        String(error).includes('authentication credential') || 
-        String(error).includes('401')
-      );
-      if (isUnauthorized) {
-        localStorage.setItem('nc_fcm_unauthorized_key', import.meta.env.VITE_FIREBASE_API_KEY || 'dummy');
-      }
+      console.error('FCM subscription failed:', error);
     }
   }, [user?.uid]);
 

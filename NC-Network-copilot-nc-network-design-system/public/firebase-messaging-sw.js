@@ -1,10 +1,20 @@
 importScripts('https://www.gstatic.com/firebasejs/12.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/12.12.0/firebase-messaging-compat.js');
 
-// Parse configuration from the script's URL query parameter
-// This allows us to keep keys in .env without hardcoding them in this public file.
+// Parse configuration from the script's URL query parameter.
+// If not provided or fails to parse, we fall back to the hardcoded default config.
 const urlParams = new URLSearchParams(self.location.search);
 const configParam = urlParams.get('config');
+
+const defaultFirebaseConfig = {
+  apiKey: "AIzaSyCdJ4qLa1jksuCQIMd7hRii5mgx1l5h48E",
+  authDomain: "nc-network-10d0b.firebaseapp.com",
+  projectId: "nc-network-10d0b",
+  storageBucket: "nc-network-10d0b.firebasestorage.app",
+  messagingSenderId: "825161490464",
+  appId: "1:825161490464:web:c74f7a95bc4e5de6729c45",
+  databaseURL: "https://nc-network-10d0b-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
 
 if (configParam) {
   try {
@@ -12,10 +22,12 @@ if (configParam) {
     firebase.initializeApp(firebaseConfig);
     console.log('[firebase-messaging-sw.js] Initialized with dynamic config');
   } catch (e) {
-    console.error('[firebase-messaging-sw.js] Failed to parse dynamic config', e);
+    console.error('[firebase-messaging-sw.js] Failed to parse dynamic config, falling back to default:', e);
+    firebase.initializeApp(defaultFirebaseConfig);
   }
 } else {
-  console.warn('[firebase-messaging-sw.js] No config provided in query params');
+  console.log('[firebase-messaging-sw.js] No config query param, using hardcoded default config');
+  firebase.initializeApp(defaultFirebaseConfig);
 }
 
 const formatMessagePreview = (text) => {

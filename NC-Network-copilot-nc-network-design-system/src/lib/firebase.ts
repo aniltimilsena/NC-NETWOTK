@@ -28,7 +28,26 @@ export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
-export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
-export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+let messagingInstance = null;
+let analyticsInstance = null;
+
+try {
+  if (typeof window !== 'undefined') {
+    messagingInstance = getMessaging(app);
+  }
+} catch (error) {
+  console.warn("Firebase Messaging is not supported in this environment:", error);
+}
+
+try {
+  if (typeof window !== 'undefined') {
+    analyticsInstance = getAnalytics(app);
+  }
+} catch (error) {
+  console.warn("Firebase Analytics is not supported in this environment:", error);
+}
+
+export const messaging = messagingInstance;
+export const analytics = analyticsInstance;
 
 export default app;
