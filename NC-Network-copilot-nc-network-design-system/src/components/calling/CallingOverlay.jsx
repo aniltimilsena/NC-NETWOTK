@@ -144,6 +144,11 @@ export default function CallingOverlay() {
       if (remoteVideoRef.current) {
         remoteVideoRef.current.muted = next;
       }
+      if (remoteStream) {
+        remoteStream.getAudioTracks().forEach(track => {
+          track.enabled = !next;
+        });
+      }
       return next;
     });
   };
@@ -159,6 +164,11 @@ export default function CallingOverlay() {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
       remoteVideoRef.current.muted = isSpeakerMuted;
+      
+      // Ensure all remote audio tracks are in sync with the speaker muted state
+      remoteStream.getAudioTracks().forEach(track => {
+        track.enabled = !isSpeakerMuted;
+      });
       
       // Explicitly trigger play to bypass browser autoplay restrictions
       remoteVideoRef.current.play().catch(err => {
@@ -417,9 +427,9 @@ export default function CallingOverlay() {
           initial={{ y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3, type: 'spring', stiffness: 300, damping: 30 }}
-          className="relative z-30 px-6 pb-12 sm:pb-16"
+          className="mt-auto relative z-30 px-6 pb-12 sm:pb-16"
         >
-          <div className="flex items-center justify-center gap-4 sm:gap-6 max-w-md mx-auto">
+          <div className="flex items-center justify-center gap-4 sm:gap-6 max-w-lg mx-auto bg-[#111111]/60 backdrop-blur-xl border border-white/10 p-4 sm:p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
             {/* Mute */}
             <button
               onClick={toggleMute}
