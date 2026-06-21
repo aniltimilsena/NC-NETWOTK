@@ -125,38 +125,62 @@ export function useWebRTC(): UseWebRTCReturn {
   const getUserMedia = useCallback(
     async (callType: "audio" | "video"): Promise<MediaStream> => {
       setCallState("requesting-media");
+
+      if (typeof window !== "undefined") {
+        console.log("[WebRTC] Secure context status:", window.isSecureContext);
+        if (!window.isSecureContext) {
+          console.warn("[WebRTC] Not running in a secure context. getUserMedia will likely fail.");
+        }
+      }
+
+      const constraints: MediaStreamConstraints = {
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video:
+          callType === "video"
+            ? { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
+            : false,
+      };
+
       try {
-        const constraints: MediaStreamConstraints = {
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-          video:
-            callType === "video"
-              ? { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
-              : false,
-        };
+        console.log("[WebRTC] Requesting media stream with constraints:", constraints);
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         setLocalStream(stream);
         localStorage.setItem("nc_perm_media", "granted");
         return stream;
       } catch (err: any) {
-        console.error("[WebRTC] getUserMedia error:", err);
+        console.warn("[WebRTC] getUserMedia with advanced constraints failed. Trying basic fallback constraints. Error:", err);
         
-        if (err.name === "NotAllowedError") {
-          localStorage.setItem("nc_perm_media", "denied");
+        try {
+          const fallbackConstraints: MediaStreamConstraints = {
+            audio: true,
+            video: callType === "video" ? true : false,
+          };
+          console.log("[WebRTC] Requesting fallback media stream with constraints:", fallbackConstraints);
+          const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+          setLocalStream(stream);
+          localStorage.setItem("nc_perm_media", "granted");
+          return stream;
+        } catch (fallbackErr: any) {
+          console.error("[WebRTC] getUserMedia fallback failed. Error:", fallbackErr);
+          
+          if (fallbackErr.name === "NotAllowedError") {
+            localStorage.setItem("nc_perm_media", "denied");
+          }
+          
+          const msg =
+            fallbackErr.name === "NotAllowedError"
+              ? "Camera/microphone permission denied. Please allow access in your browser settings."
+              : fallbackErr.name === "NotFoundError"
+              ? "No camera or microphone found on this device."
+              : `Media error: ${fallbackErr.message}`;
+          setErrorMessage(msg);
+          setCallState("error");
+          throw fallbackErr;
         }
-        
-        const msg =
-          err.name === "NotAllowedError"
-            ? "Camera/microphone permission denied. Please allow access in your browser settings."
-            : err.name === "NotFoundError"
-            ? "No camera or microphone found on this device."
-            : `Media error: ${err.message}`;
-        setErrorMessage(msg);
-        setCallState("error");
-        throw err;
       }
     },
     []

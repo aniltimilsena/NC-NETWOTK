@@ -225,68 +225,66 @@ export function CallProvider({ children, user }: CallProviderProps) {
     }) => {
       if (!user?.uid) return;
 
-      requestPermission(params.callType, async () => {
+      try {
+        // Immediately pre-acquire media stream inside user gesture event loop
+        const stream = await webrtc.getUserMedia(params.callType);
+
+        // Fetch caller and callee profile details dynamically from Firestore
+        let callerName = user.displayName || "Unknown";
+        let callerAvatar = user.photoURL || "";
+        let calleeName = params.calleeName;
+        let calleePhoto = params.calleePhoto;
+
         try {
-          // Immediately pre-acquire media stream inside user gesture event loop
-          const stream = await webrtc.getUserMedia(params.callType);
-
-          // Fetch caller and callee profile details dynamically from Firestore
-          let callerName = user.displayName || "Unknown";
-          let callerAvatar = user.photoURL || "";
-          let calleeName = params.calleeName;
-          let calleePhoto = params.calleePhoto;
-
-          try {
-            const callerRes = await getProfile(user.uid);
-            if (callerRes.data) {
-              const callerData = callerRes.data as any;
-              callerName = callerData.name || [callerData.firstName, callerData.lastName].filter(Boolean).join(' ') || callerData.username || callerName;
-              callerAvatar = callerData.image || callerData.avatar || callerData.photoURL || callerAvatar;
-            }
-          } catch (e) {
-            console.warn("Failed to fetch caller profile:", e);
+          const callerRes = await getProfile(user.uid);
+          if (callerRes.data) {
+            const callerData = callerRes.data as any;
+            callerName = callerData.name || [callerData.firstName, callerData.lastName].filter(Boolean).join(' ') || callerData.username || callerName;
+            callerAvatar = callerData.image || callerData.avatar || callerData.photoURL || callerAvatar;
           }
-
-          try {
-            const calleeRes = await getProfile(params.calleeId);
-            if (calleeRes.data) {
-              const calleeData = calleeRes.data as any;
-              calleeName = calleeData.name || [calleeData.firstName, calleeData.lastName].filter(Boolean).join(' ') || calleeData.username || calleeName;
-              calleePhoto = calleeData.image || calleeData.avatar || calleeData.photoURL || calleePhoto;
-            }
-          } catch (e) {
-            console.warn("Failed to fetch callee profile:", e);
-          }
-
-          const callParams = {
-            callerId: user.uid,
-            callerName,
-            callerPhoto: callerAvatar,
-            callerAvatar,
-            calleeId: params.calleeId,
-            calleeName,
-            calleePhoto,
-            receiverId: params.calleeId,
-            receiverName: calleeName,
-            receiverAvatar: calleePhoto,
-            callType: params.callType,
-          };
-
-          setActiveCall({
-            id: "", // Will be set after creation
-            ...callParams,
-            status: "pending",
-            callStatus: "pending",
-            createdAt: new Date(),
-          } as any);
-
-          await webrtc.startCall(callParams, stream);
-        } catch (err: any) {
-          console.error("Failed to start call after media grant:", err);
+        } catch (e) {
+          console.warn("Failed to fetch caller profile:", e);
         }
-      });
+
+        try {
+          const calleeRes = await getProfile(params.calleeId);
+          if (calleeRes.data) {
+            const calleeData = calleeRes.data as any;
+            calleeName = calleeData.name || [calleeData.firstName, calleeData.lastName].filter(Boolean).join(' ') || calleeData.username || calleeName;
+            calleePhoto = calleeData.image || calleeData.avatar || calleeData.photoURL || calleePhoto;
+          }
+        } catch (e) {
+          console.warn("Failed to fetch callee profile:", e);
+        }
+
+        const callParams = {
+          callerId: user.uid,
+          callerName,
+          callerPhoto: callerAvatar,
+          callerAvatar,
+          calleeId: params.calleeId,
+          calleeName,
+          calleePhoto,
+          receiverId: params.calleeId,
+          receiverName: calleeName,
+          receiverAvatar: calleePhoto,
+          callType: params.callType,
+        };
+
+        setActiveCall({
+          id: "", // Will be set after creation
+          ...callParams,
+          status: "pending",
+          callStatus: "pending",
+          createdAt: new Date(),
+        } as any);
+
+        await webrtc.startCall(callParams, stream);
+      } catch (err: any) {
+        console.error("Failed to start call:", err);
+      }
     },
-    [user, webrtc.getUserMedia, webrtc.startCall, requestPermission]
+    [user, webrtc.getUserMedia, webrtc.startCall]
   );
 
   // ─── Accept incoming call ──────────────────────────────────────────────
@@ -298,17 +296,15 @@ export function CallProvider({ children, user }: CallProviderProps) {
     setActiveCall(incomingCall);
     setIncomingCall(null);
 
-    requestPermission(incomingCall.callType, async () => {
-      try {
-        // Immediately pre-acquire media stream inside user gesture event loop
-        const stream = await webrtc.getUserMedia(incomingCall.callType);
-        // Answer call with the pre-acquired stream
-        await webrtc.answerCall(incomingCall, stream);
-      } catch (err: any) {
-        console.error("Failed to answer call after media grant:", err);
-      }
-    });
-  }, [incomingCall, webrtc.getUserMedia, webrtc.answerCall, requestPermission]);
+    try {
+      // Immediately pre-acquire media stream inside user gesture event loop
+      const stream = await webrtc.getUserMedia(incomingCall.callType);
+      // Answer call with the pre-acquired stream
+      await webrtc.answerCall(incomingCall, stream);
+    } catch (err: any) {
+      console.error("Failed to answer call:", err);
+    }
+  }, [incomingCall, webrtc.getUserMedia, webrtc.answerCall]);
 
   // ─── Reject incoming call ─────────────────────────────────────────────
 
