@@ -147,7 +147,7 @@ export function ActionSearchBar({
                     >
                         <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
                             {!query && (
-                                <div className="mb-4">
+                                <div className="mb-4 hidden md:block">
                                     <div className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 mb-2">
                                         Quick Navigation
                                     </div>
