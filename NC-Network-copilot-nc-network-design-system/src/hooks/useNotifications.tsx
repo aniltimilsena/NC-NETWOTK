@@ -4,6 +4,7 @@ import { getToken, onMessage } from 'firebase/messaging';
 import { playNotificationSound } from '../utils/notification-sound';
 import { callSecureFunction } from '../api/functionsClient';
 import { formatMessagePreview } from '../utils/format';
+import apiClient from '../api/client';
 
 // VAPID key is required for FCM Web
 const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY;
@@ -111,16 +112,31 @@ export const useNotifications = (
         });
 
         if (token) {
-          const { data, error: registerError } = await callSecureFunction<{ token: string }, { success: boolean }>(
-            'registerNotificationToken', 
-            { token }
-          );
-          if (registerError) {
-            console.error('Failed to register FCM Token on backend database:', registerError);
-          } else if (data?.success) {
-            console.log('FCM Token successfully saved to database');
-          } else {
-            console.log('FCM Token registration returned without explicit success flag');
+          // Try registering with the local Express backend first
+          let registeredLocally = false;
+          try {
+            const response = await apiClient.post('/notifications/register-token', { token }, { timeout: 2000 });
+            if (response.data?.success) {
+              console.log('FCM Token successfully saved to local Express database');
+              registeredLocally = true;
+            }
+          } catch (backendError) {
+            console.warn('Local Express backend FCM registration failed, attempting Cloud Function fallback:', backendError);
+          }
+
+          if (!registeredLocally) {
+            // Fallback to Firebase Cloud Function
+            const { data, error: registerError } = await callSecureFunction<{ token: string }, { success: boolean }>(
+              'registerNotificationToken', 
+              { token }
+            );
+            if (registerError) {
+              console.error('Failed to register FCM Token on backend database:', registerError);
+            } else if (data?.success) {
+              console.log('FCM Token successfully saved to database via Cloud Function');
+            } else {
+              console.log('FCM Token registration returned without explicit success flag');
+            }
           }
         } else {
           console.warn('FCM token generation succeeded but returned empty token');
