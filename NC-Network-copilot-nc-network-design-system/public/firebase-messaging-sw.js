@@ -85,24 +85,58 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  const notificationTitle = payload.notification?.title || 'New Notification';
+
+  const isCall = payload.data?.type === 'incoming_call';
+  const notificationTitle = isCall 
+    ? `Incoming Call` 
+    : (payload.notification?.title || 'New Notification');
+
   const link = payload.data?.link;
   const resolvedLink = resolveLinkToPath(link);
 
-  const notificationOptions = {
-    body: formatMessagePreview(payload.notification?.body),
-    icon: payload.notification?.icon || '/logo.png',
-    data: {
-      ...payload.data,
-      link: resolvedLink
-    }
-  };
+  let notificationOptions = {};
+
+  if (isCall) {
+    const callerName = payload.data?.callerName || 'Someone';
+    const callType = payload.data?.callType || 'audio';
+    notificationOptions = {
+      body: `Incoming ${callType} call from ${callerName}`,
+      icon: payload.data?.callerAvatar || '/logo.png',
+      tag: `call_${payload.data?.callId}`,
+      requireInteraction: true,
+      renotify: true,
+      actions: [
+        { action: 'answer', title: 'Answer' },
+        { action: 'decline', title: 'Decline' }
+      ],
+      data: {
+        ...payload.data,
+        link: resolvedLink
+      }
+    };
+  } else {
+    notificationOptions = {
+      body: formatMessagePreview(payload.notification?.body),
+      icon: payload.notification?.icon || '/logo.png',
+      data: {
+        ...payload.data,
+        link: resolvedLink
+      }
+    };
+  }
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
+  // If the user declined the call, stop here
+  if (event.action === 'decline') {
+    console.log('[firebase-messaging-sw.js] Call declined by user');
+    return;
+  }
+
   const relativeLink = event.notification.data?.link || '/';
   
   // Resolve relative link to an absolute URL on the same origin

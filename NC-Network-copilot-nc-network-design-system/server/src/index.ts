@@ -333,7 +333,7 @@ const uploadToCloudinary = (fileBuffer: Buffer, mimeType: string, folder: string
     } else if (cloudName && uploadPreset) {
       try {
         const formData = new FormData();
-        const blob = new Blob([fileBuffer], { type: mimeType });
+        const blob = new Blob([fileBuffer as any], { type: mimeType });
         const ext = mimeType.split('/')[1] || 'bin';
         const fileName = `upload.${ext}`;
         formData.append('file', blob, fileName);
@@ -671,8 +671,43 @@ app.post('/api/messaging/conversations', verifyToken, async (req: AuthedRequest,
         read: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         targetUrl: `/messages/${uid}`,
-        profileUrl: `/messages/${uid}`
+        profileUrl: `/messages/${uid}`,
+        pushSent: true
       });
+
+      const tokensSnapshot = await db.collection('users')
+        .where(admin.firestore.FieldPath.documentId(), 'in', [otherParticipantId])
+        .get();
+
+      const allTokens: string[] = [];
+      tokensSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.fcmTokens && Array.isArray(data.fcmTokens)) {
+          allTokens.push(...data.fcmTokens);
+        }
+      });
+
+      if (allTokens.length > 0) {
+        const messagePayload = {
+          notification: {
+            title: 'New Conversation',
+            body: `${senderName} started a new conversation with you.`,
+            icon: '/logo.png',
+          },
+          data: {
+            link: `/messages/${uid}`,
+          },
+          tokens: allTokens,
+        };
+
+        admin.messaging().sendEachForMulticast(messagePayload)
+          .then(response => {
+            console.log(`${response.successCount} conversation notifications were sent successfully`);
+          })
+          .catch(err => {
+            console.error('Failed to send multicast conversation notifications:', err);
+          });
+      }
     }
 
     if (initialMessage) {
@@ -882,7 +917,8 @@ app.post(
             read: false,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             targetUrl: `/messages/${uid}`,
-            profileUrl: `/messages/${uid}`
+            profileUrl: `/messages/${uid}`,
+            pushSent: true
           });
         }
 
@@ -1540,6 +1576,164 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: error instanceof Error ? error.message : 'Unexpected server error' });
 });
 
+const startupTime = admin.firestore.Timestamp.now();
+
+function startFirestoreListeners() {
+  console.log("🔥 Starting background Firestore listeners for Push Notifications...");
+
+  // 1. Listen to new notifications in Firestore
+  db.collection('notifications')
+    .where('createdAt', '>', startupTime)
+    .onSnapshot((snapshot) => {
+      snapshot.docChanges().forEach(async (change) => {
+        if (change.type === 'added') {
+          const docId = change.doc.id;
+          const notif = change.doc.data();
+
+          if (notif.pushSent === true || notif.read === true || notif.isRead === true) return;
+
+          try {
+            const recipientId = notif.recipientId || notif.userId || notif.receiverId;
+            if (!recipientId) return;
+
+            const userDoc = await db.collection('users').doc(recipientId).get();
+            const fcmTokens = userDoc.data()?.fcmTokens;
+
+            if (fcmTokens && Array.isArray(fcmTokens) && fcmTokens.length > 0) {
+              const payload = {
+                notification: {
+                  title: notif.title || 'New Notification',
+                  body: notif.body || '',
+                  icon: notif.senderAvatar || '/logo.png',
+                },
+                data: {
+                  link: notif.targetUrl || '/',
+                },
+                tokens: fcmTokens,
+              };
+
+              const response = await admin.messaging().sendEachForMulticast(payload);
+              console.log(`[Push Notification] Sent ${response.successCount} pushes for notification ${docId}`);
+            }
+
+            // Mark as pushSent: true in the database
+            await db.collection('notifications').doc(docId).update({ pushSent: true });
+          } catch (err) {
+            console.error(`[Push Notification] Error sending for notification ${docId}:`, err);
+          }
+        }
+      });
+    }, (error) => {
+      console.error("[Push Notification] Notifications listener error:", error);
+    });
+
+  // 2. Listen to new calls in Firestore
+  db.collection('calls')
+    .where('createdAt', '>', startupTime)
+    .onSnapshot((snapshot) => {
+      snapshot.docChanges().forEach(async (change) => {
+        if (change.type === 'added') {
+          const docId = change.doc.id;
+          const call = change.doc.data();
+
+          if (call.status !== 'pending' && call.callStatus !== 'pending') return;
+
+          try {
+            const calleeId = call.calleeId;
+            if (!calleeId) return;
+
+            const userDoc = await db.collection('users').doc(calleeId).get();
+            const fcmTokens = userDoc.data()?.fcmTokens;
+
+            if (fcmTokens && Array.isArray(fcmTokens) && fcmTokens.length > 0) {
+              const payload = {
+                data: {
+                  type: 'incoming_call',
+                  callId: docId,
+                  callerName: call.callerName || 'Someone',
+                  callerAvatar: call.callerPhoto || call.callerAvatar || '/logo.png',
+                  callType: call.callType || 'audio',
+                  link: `/call/${docId}`,
+                },
+                tokens: fcmTokens,
+              };
+
+              const response = await admin.messaging().sendEachForMulticast(payload);
+              console.log(`[Call Push] Sent ${response.successCount} call alert pushes for call ${docId}`);
+            }
+          } catch (err) {
+            console.error(`[Call Push] Error sending alert for call ${docId}:`, err);
+          }
+        }
+      });
+    }, (error) => {
+      console.error("[Call Push] Calls listener error:", error);
+    });
+
+  // 3. Listen to new casting calls in Firestore
+  db.collection('casting_calls')
+    .where('createdAt', '>', startupTime)
+    .onSnapshot((snapshot) => {
+      snapshot.docChanges().forEach(async (change) => {
+        if (change.type === 'added') {
+          const docId = change.doc.id;
+          const casting = change.doc.data();
+
+          try {
+            const castingType = casting.type;
+            if (!castingType) return;
+
+            // Query profiles to find matching role category or skills
+            const profilesSnap = await db.collection('profiles').get();
+            const matchingProfiles = profilesSnap.docs.filter(doc => {
+              const data = doc.data();
+              const userSkills = data.skills || [];
+              const userRole = data.role || "";
+
+              const roleMatches = typeof userRole === 'string' && userRole.toLowerCase() === castingType.toLowerCase();
+              const skillMatches = Array.isArray(userSkills) && userSkills.some((skill: any) =>
+                typeof skill === 'string' && skill.toLowerCase() === castingType.toLowerCase()
+              );
+
+              return roleMatches || skillMatches;
+            });
+
+            console.log(`[Casting Alert] Found ${matchingProfiles.length} matching profiles for casting type "${castingType}"`);
+
+            for (const profileDoc of matchingProfiles) {
+              const recipientId = profileDoc.id;
+              if (recipientId === casting.createdBy) continue; // Don't notify the creator
+
+              // Write a notification document to Firestore
+              await db.collection('notifications').add({
+                userId: recipientId,
+                recipientId: recipientId,
+                receiverId: recipientId,
+                senderId: casting.createdBy || 'system',
+                senderName: casting.creatorName || casting.production || 'NC Network',
+                senderAvatar: casting.thumbnail || '/logo.png',
+                title: 'Matching Casting Call',
+                body: `New ${castingType} casting call: "${casting.title}" in ${casting.location}`,
+                type: 'casting',
+                notificationType: 'casting',
+                isRead: false,
+                read: false,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                targetUrl: `/casting/${docId}`,
+                profileUrl: `/casting/${docId}`,
+              });
+            }
+          } catch (err) {
+            console.error(`[Casting Alert] Error creating notifications for casting call ${docId}:`, err);
+          }
+        }
+      });
+    }, (error) => {
+      console.error("[Casting Alert] Casting calls listener error:", error);
+    });
+}
+
 app.listen(PORT, () => {
   console.log(`NC Network Secure API running on http://localhost:${PORT}`);
+  startFirestoreListeners();
 });
