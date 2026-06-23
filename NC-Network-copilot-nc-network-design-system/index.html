@@ -19,6 +19,9 @@
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "a9962176-972c-4874-8161-ec84428e9036",
+          notifyButton: {
+            enable: false,
+          },
         });
       });
     </script>
