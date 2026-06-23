@@ -145,6 +145,44 @@ export const sendMessage = async (
             profileUrl: `/messages/${currentUserUid}`
           });
         }
+
+        // Call our Vercel Serverless Function to securely trigger OneSignal notification
+        try {
+          const idToken = await auth.currentUser?.getIdToken();
+          if (idToken) {
+            let previewText = body;
+            if (type === "image") {
+              previewText = "📷 Sent a photo";
+            } else if (type === "video") {
+              previewText = "🎥 Sent a video";
+            }
+
+            fetch("/api/send-notification", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${idToken}`
+              },
+              body: JSON.stringify({
+                convoId,
+                senderName,
+                previewText,
+                otherParticipants
+              })
+            }).then(async (res) => {
+              if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                console.warn("OneSignal serverless function trigger failed:", errData);
+              } else {
+                console.log("OneSignal push notification successfully queued via serverless function");
+              }
+            }).catch((err) => {
+              console.warn("Error calling OneSignal serverless function:", err);
+            });
+          }
+        } catch (tokenError) {
+          console.warn("Failed to get idToken for push notification:", tokenError);
+        }
       }
 
       return { success: true, error: null };
@@ -498,6 +536,37 @@ export const createConversation = async (
           targetUrl: `/messages/${currentUserUid}`,
           profileUrl: `/messages/${currentUserUid}`
         });
+
+        // Call our Vercel Serverless Function to securely trigger OneSignal notification
+        try {
+          const idToken = await auth.currentUser?.getIdToken();
+          if (idToken) {
+            fetch("/api/send-notification", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${idToken}`
+              },
+              body: JSON.stringify({
+                convoId: convoRef.id,
+                senderName,
+                previewText: `${senderName} started a new conversation with you.`,
+                otherParticipants: [otherParticipantId]
+              })
+            }).then(async (res) => {
+              if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                console.warn("OneSignal serverless function trigger failed:", errData);
+              } else {
+                console.log("OneSignal push notification for new convo successfully queued");
+              }
+            }).catch((err) => {
+              console.warn("Error calling OneSignal serverless function:", err);
+            });
+          }
+        } catch (tokenError) {
+          console.warn("Failed to get idToken for push notification:", tokenError);
+        }
       }
 
       if (initialMessage) {
