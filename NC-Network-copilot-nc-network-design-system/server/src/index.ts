@@ -135,6 +135,55 @@ function formatMessagePreview(text: string): string {
   return text;
 }
 
+interface OneSignalNotificationPayload {
+  userIds: string[];
+  title: string;
+  body: string;
+  url?: string;
+}
+
+async function sendOneSignalNotification({ userIds, title, body, url }: OneSignalNotificationPayload) {
+  const appId = process.env.ONESIGNAL_APP_ID || "a9962176-972c-4874-8161-ec84428e9036";
+  const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
+
+  if (!restApiKey || restApiKey === 'your_onesignal_rest_api_key_here') {
+    console.warn("⚠️ OneSignal Notification skipped: ONESIGNAL_REST_API_KEY is placeholder or not defined.");
+    return;
+  }
+
+  try {
+    const payload = {
+      app_id: appId,
+      contents: { en: body },
+      headings: { en: title },
+      url: url ? `${process.env.APP_URL || 'http://localhost:5173'}${url}` : undefined,
+      include_aliases: {
+        external_id: userIds
+      },
+      target_channel: "push"
+    };
+
+    const response = await fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Authorization": `Basic ${restApiKey}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      console.error("❌ OneSignal Notification failed:", data);
+    } else {
+      console.log("🚀 OneSignal Notification sent successfully:", data);
+    }
+  } catch (error) {
+    console.error("❌ Failed to send OneSignal notification:", error);
+  }
+}
+
+
 app.use(helmet({
   frameguard: false, // Disable legacy X-Frame-Options in favor of Content-Security-Policy frame-ancestors
   xssFilter: false,  // Disable deprecated X-XSS-Protection header
@@ -708,6 +757,14 @@ app.post('/api/messaging/conversations', verifyToken, async (req: AuthedRequest,
             console.error('Failed to send multicast conversation notifications:', err);
           });
       }
+
+      // Also send via OneSignal push notification
+      sendOneSignalNotification({
+        userIds: [otherParticipantId],
+        title: 'New Conversation',
+        body: `${senderName} started a new conversation with you.`,
+        url: `/messages/${uid}`
+      });
     }
 
     if (initialMessage) {
@@ -956,6 +1013,15 @@ app.post(
               console.error('Failed to send multicast notifications:', err);
             });
         }
+
+        // Also send via OneSignal push notification
+        const preview = formatMessagePreview(validatedData.text);
+        sendOneSignalNotification({
+          userIds: otherParticipants,
+          title: 'New Message',
+          body: preview.length > 50 ? `${preview.substring(0, 47)}...` : preview,
+          url: `/messages/${req.params.conversationId}`
+        });
       }
 
       res.json({ success: true });

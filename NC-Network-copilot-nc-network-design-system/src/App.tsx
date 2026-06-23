@@ -554,6 +554,17 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
+        
+        // Log in to OneSignal
+        try {
+          const OneSignalDeferred = (window as any).OneSignalDeferred || [];
+          OneSignalDeferred.push(async function(OneSignal: any) {
+            await OneSignal.login(firebaseUser.uid);
+          });
+        } catch (e) {
+          console.warn("OneSignal login failed:", e);
+        }
+
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           
@@ -582,6 +593,16 @@ export default function App() {
         setUser(null);
         setUserProfile(null);
         setIsAdmin(false);
+
+        // Log out from OneSignal
+        try {
+          const OneSignalDeferred = (window as any).OneSignalDeferred || [];
+          OneSignalDeferred.push(async function(OneSignal: any) {
+            await OneSignal.logout();
+          });
+        } catch (e) {
+          console.warn("OneSignal logout failed:", e);
+        }
       }
       setAuthReady(true);
     });

@@ -2092,6 +2092,20 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
               </div>
             </div>
 
+            {/* PUSH NOTIFICATIONS (ONESIGNAL) */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-[#00BFFF] uppercase tracking-[1px] border-b border-white/5 pb-2">Web Push Subscription</h3>
+              <div className="bg-[#111] border border-white/5 rounded-2xl p-5 flex flex-col gap-3">
+                <div>
+                  <h4 className="text-sm font-medium text-white">Browser Push Notifications</h4>
+                  <p className="text-xs text-[#888] mt-1 leading-relaxed">
+                    Toggle system notifications for casting matches, direct messages, and security updates directly in your browser.
+                  </p>
+                </div>
+                <div className="onesignal-customlink-container min-h-[30px] pt-1"></div>
+              </div>
+            </div>
+
             <div className="pt-4">
               <SaveButton hasChanges={hasChanges} isSaving={isSaving} onSave={handleSave} saveSuccess={saveSuccess} />
             </div>
