@@ -1,3 +1,4 @@
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 importScripts('https://www.gstatic.com/firebasejs/12.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/12.12.0/firebase-messaging-compat.js');
 
