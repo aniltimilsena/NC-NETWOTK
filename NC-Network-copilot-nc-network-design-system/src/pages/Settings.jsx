@@ -908,21 +908,11 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       const OneSignal = window.OneSignal;
       if (OneSignal && OneSignal.User && OneSignal.User.PushSubscription) {
         setNotifOneSignalSubscribed(OneSignal.User.PushSubscription.optedIn);
-        
-        // Listen to changes
-        try {
-          OneSignal.User.PushSubscription.addEventListener("change", (event) => {
-            setNotifOneSignalSubscribed(event.current.optedIn);
-          });
-          clearInterval(checkInterval);
-        } catch (e) {
-          console.warn("OneSignal change listener failed:", e);
-        }
       }
     };
 
-    // Poll for OneSignal object
-    checkInterval = setInterval(checkSubscription, 1000);
+    // Poll every 2 seconds to keep React state perfectly synced with OneSignal
+    checkInterval = setInterval(checkSubscription, 2000);
     checkSubscription();
 
     return () => {
@@ -940,9 +930,16 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     try {
       if (notifOneSignalSubscribed) {
         await OneSignal.User.PushSubscription.optOut();
+        setNotifOneSignalSubscribed(false); // Update React UI immediately
         showToast("Successfully unsubscribed from push notifications.", "success");
       } else {
         await OneSignal.User.PushSubscription.optIn();
+        // Check state after a brief delay
+        setTimeout(() => {
+          if (OneSignal && OneSignal.User && OneSignal.User.PushSubscription) {
+            setNotifOneSignalSubscribed(OneSignal.User.PushSubscription.optedIn);
+          }
+        }, 1500);
       }
     } catch (err) {
       console.error("OneSignal subscription toggle failed:", err);
