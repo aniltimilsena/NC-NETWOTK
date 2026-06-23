@@ -933,11 +933,21 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
         setNotifOneSignalSubscribed(false); // Update React UI immediately
         showToast("Successfully unsubscribed from push notifications.", "success");
       } else {
+        // Request native notification permission first
+        if (OneSignal.Notifications) {
+          await OneSignal.Notifications.requestPermission();
+        }
         await OneSignal.User.PushSubscription.optIn();
         // Check state after a brief delay
         setTimeout(() => {
           if (OneSignal && OneSignal.User && OneSignal.User.PushSubscription) {
-            setNotifOneSignalSubscribed(OneSignal.User.PushSubscription.optedIn);
+            const isSubbed = OneSignal.User.PushSubscription.optedIn;
+            setNotifOneSignalSubscribed(isSubbed);
+            if (isSubbed) {
+              showToast("Successfully subscribed to push notifications.", "success");
+            } else {
+              showToast("Subscription pending. Make sure notifications are allowed in browser settings.", "warning");
+            }
           }
         }, 1500);
       }

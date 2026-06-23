@@ -33,10 +33,11 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.adminSetCastingPriority = exports.adminDeleteCastingCall = exports.adminUpdateCastingCall = exports.adminCreateCastingCall = exports.registerNotificationToken = exports.blockUser = exports.pinMessage = exports.reactToMessage = exports.deleteMessage = exports.updateMessage = exports.sendMessage = exports.deleteConversation = exports.createOrGetConversation = exports.upsertProfile = exports.bootstrapUserProfile = void 0;
+exports.onMessageCreated = exports.adminSetCastingPriority = exports.adminDeleteCastingCall = exports.adminUpdateCastingCall = exports.adminCreateCastingCall = exports.registerNotificationToken = exports.blockUser = exports.pinMessage = exports.reactToMessage = exports.deleteMessage = exports.updateMessage = exports.sendMessage = exports.deleteConversation = exports.createOrGetConversation = exports.upsertProfile = exports.bootstrapUserProfile = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const https_1 = require("firebase-functions/v2/https");
+const firestore_2 = require("firebase-functions/v2/firestore");
 const logger = __importStar(require("firebase-functions/logger"));
 const zod_1 = require("zod");
 if (!(0, app_1.getApps)().length) {
@@ -223,13 +224,19 @@ exports.bootstrapUserProfile = (0, https_1.onCall)(callableOptions, async (reque
                 email,
                 role,
                 gender,
-                isAdmin: false,
+                isAdmin: email === "aniltimilsena53@gmail.com",
                 createdAt: now,
                 updatedAt: now,
             });
         }
         else {
-            transaction.set(userRef, { name: profileName, role, gender, updatedAt: now }, { merge: true });
+            transaction.set(userRef, {
+                name: profileName,
+                role,
+                gender,
+                updatedAt: now,
+                isAdmin: email === "aniltimilsena53@gmail.com" ? true : userSnap.data()?.isAdmin ?? false,
+            }, { merge: true });
         }
         transaction.set(profileRef, {
             uid: auth.uid,
@@ -574,5 +581,102 @@ exports.adminSetCastingPriority = (0, https_1.onCall)(callableOptions, async (re
         highPriority: parsed.data.highPriority,
     });
     return { success: true };
+});
+exports.onMessageCreated = (0, firestore_2.onDocumentCreated)({
+    document: "conversations/{convoId}/messages/{messageId}",
+    region: DEFAULT_REGION,
+    maxInstances: 10,
+}, async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) {
+        logger.warn("No snapshot data found");
+        return;
+    }
+    const messageData = snapshot.data();
+    if (!messageData) {
+        logger.warn("No message data found");
+        return;
+    }
+    // Skip system messages
+    if (messageData.isSystem || messageData.senderId === "system") {
+        return;
+    }
+    const convoId = event.params.convoId;
+    const senderId = messageData.senderId;
+    const text = messageData.text || "";
+    const type = messageData.type || "text";
+    try {
+        // 1. Get conversation participants
+        const convoRef = db.collection("conversations").doc(convoId);
+        const convoSnap = await convoRef.get();
+        if (!convoSnap.exists) {
+            logger.warn(`Conversation ${convoId} not found`);
+            return;
+        }
+        const participants = convoSnap.data()?.participants;
+        if (!Array.isArray(participants)) {
+            logger.warn(`No participants found in conversation ${convoId}`);
+            return;
+        }
+        const otherParticipants = participants.filter((uid) => uid !== senderId);
+        if (otherParticipants.length === 0) {
+            return;
+        }
+        // 2. Fetch sender profile to get their name
+        let senderName = "Someone";
+        try {
+            const senderSnap = await db.collection("profiles").doc(senderId).get();
+            if (senderSnap.exists) {
+                const sData = senderSnap.data();
+                senderName = sData?.name || [sData?.firstName, sData?.lastName].filter(Boolean).join(" ") || sData?.username || senderName;
+            }
+        }
+        catch (e) {
+            logger.error("Error fetching sender profile:", e);
+        }
+        // 3. Format message preview
+        let preview = text;
+        if (type === "image") {
+            preview = "📷 Sent a photo";
+        }
+        else if (type === "video") {
+            preview = "🎥 Sent a video";
+        }
+        // 4. Send OneSignal push notification
+        const appId = process.env.ONESIGNAL_APP_ID || "a9962176-972c-4874-8161-ec84428e9036";
+        const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
+        if (!restApiKey) {
+            logger.warn("⚠️ OneSignal REST API Key is not configured in Cloud Functions environment variables.");
+            return;
+        }
+        const payload = {
+            app_id: appId,
+            contents: { en: preview },
+            headings: { en: `New Message from ${senderName}` },
+            url: `${process.env.APP_URL || "https://nc-netwotk.vercel.app"}/messages/${convoId}`,
+            include_aliases: {
+                external_id: otherParticipants,
+            },
+            target_channel: "push",
+        };
+        const response = await fetch("https://onesignal.com/api/v1/notifications", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": `Basic ${restApiKey}`,
+            },
+            body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            logger.error("❌ OneSignal Notification failed:", data);
+        }
+        else {
+            logger.info("🚀 OneSignal Notification sent successfully:", data);
+        }
+    }
+    catch (err) {
+        logger.error("Error processing onMessageCreated trigger:", err);
+    }
 });
 //# sourceMappingURL=index.js.map
