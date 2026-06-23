@@ -674,6 +674,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [notifUpdates, setNotifUpdates] = useState(false);
   const [notifNewsletters, setNotifNewsletters] = useState(false);
   const [notifPromo, setNotifPromo] = useState(false);
+  const [notifOneSignalSubscribed, setNotifOneSignalSubscribed] = useState(false);
 
   const calculateProfileCompletion = () => {
     let score = 0;
@@ -898,6 +899,56 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       isMounted = false;
     };
   }, [user?.uid]);
+
+  // OneSignal Push Subscription state listener
+  useEffect(() => {
+    let checkInterval;
+
+    const checkSubscription = () => {
+      const OneSignal = window.OneSignal;
+      if (OneSignal && OneSignal.User && OneSignal.User.PushSubscription) {
+        setNotifOneSignalSubscribed(OneSignal.User.PushSubscription.optedIn);
+        
+        // Listen to changes
+        try {
+          OneSignal.User.PushSubscription.addEventListener("change", (event) => {
+            setNotifOneSignalSubscribed(event.current.optedIn);
+          });
+          clearInterval(checkInterval);
+        } catch (e) {
+          console.warn("OneSignal change listener failed:", e);
+        }
+      }
+    };
+
+    // Poll for OneSignal object
+    checkInterval = setInterval(checkSubscription, 1000);
+    checkSubscription();
+
+    return () => {
+      clearInterval(checkInterval);
+    };
+  }, []);
+
+  const handleToggleOneSignal = async () => {
+    const OneSignal = window.OneSignal;
+    if (!OneSignal || !OneSignal.User || !OneSignal.User.PushSubscription) {
+      showToast("OneSignal is still loading. Please try again in a moment.", "info");
+      return;
+    }
+
+    try {
+      if (notifOneSignalSubscribed) {
+        await OneSignal.User.PushSubscription.optOut();
+        showToast("Successfully unsubscribed from push notifications.", "success");
+      } else {
+        await OneSignal.User.PushSubscription.optIn();
+      }
+    } catch (err) {
+      console.error("OneSignal subscription toggle failed:", err);
+      showToast("Failed to toggle subscription. Please check your browser permissions.", "error");
+    }
+  };
 
   const handleSave = async () => {
     if (!user?.uid) {
@@ -2095,14 +2146,33 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
             {/* PUSH NOTIFICATIONS (ONESIGNAL) */}
             <div className="space-y-4">
               <h3 className="text-xs font-bold text-[#00BFFF] uppercase tracking-[1px] border-b border-white/5 pb-2">Web Push Subscription</h3>
-              <div className="bg-[#111] border border-white/5 rounded-2xl p-5 flex flex-col gap-3">
+              <div className="bg-[#111] border border-white/5 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h4 className="text-sm font-medium text-white">Browser Push Notifications</h4>
-                  <p className="text-xs text-[#888] mt-1 leading-relaxed">
-                    Toggle system notifications for casting matches, direct messages, and security updates directly in your browser.
+                  <h4 className="text-sm font-medium text-white flex items-center gap-2">
+                    Browser Push Notifications
+                    {notifOneSignalSubscribed && (
+                      <span className="text-[9px] bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                        Active
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-xs text-[#888] mt-1 leading-relaxed max-w-md">
+                    Receive instant system alerts for casting matches, direct messages, and security updates directly in your browser.
                   </p>
                 </div>
-                <div className="onesignal-customlink-container min-h-[30px] pt-1"></div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleToggleOneSignal}
+                    className={`w-full md:w-auto px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                      notifOneSignalSubscribed
+                        ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20'
+                        : 'bg-[#00BFFF] hover:bg-[#009cdb] text-black shadow-lg shadow-[#00BFFF]/10'
+                    }`}
+                  >
+                    {notifOneSignalSubscribed ? 'Unsubscribe' : 'Subscribe Now'}
+                  </button>
+                </div>
               </div>
             </div>
 
