@@ -14,6 +14,9 @@ import axios from 'axios';
 import { Readable } from 'stream';
 
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+import * as nodemailer from 'nodemailer';
+import twilio from 'twilio';
 
 // Load env from current directory first, then fallback to parent directory
 dotenv.config();
@@ -134,6 +137,65 @@ function formatMessagePreview(text: string): string {
   }
   return text;
 }
+
+const maskDestination = (method: string, phone: string, email: string) => {
+  if (method === 'email') {
+    const [name, domain] = (email || '').split('@');
+    if (!name || !domain) return 'your email';
+    const masked = name[0] + '*'.repeat(Math.max(name.length - 2, 1)) + name.slice(-1);
+    return `${masked}@${domain}`;
+  }
+  if (method === 'sms') {
+    const cleanPhone = phone || '';
+    return `+${'*'.repeat(Math.max(cleanPhone.length - 4, 3))}${cleanPhone.slice(-4)}`;
+  }
+  return 'your device';
+};
+
+// Send OTP via Email
+const sendOTPEmail = async (email: string, code: string) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from: `"NC Network" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: 'Your NC Network Verification Code',
+    html: `
+      <div style="font-family: Arial; max-width: 400px; margin: 0 auto;">
+        <h2 style="color: #FFD700;">NC Network</h2>
+        <p>Your verification code is:</p>
+        <h1 style="letter-spacing: 8px; color: #00BFFF; font-size: 36px;">
+          ${code}
+        </h1>
+        <p>This code expires in <strong>10 minutes</strong>.</p>
+        <p style="color: #999; font-size: 12px;">
+          If you didn't request this, please ignore this email.
+        </p>
+      </div>
+    `,
+  });
+};
+
+// Send OTP via SMS (using Twilio)
+const sendOTPSMS = async (phone: string, code: string) => {
+  const client = twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+  );
+
+  await client.messages.create({
+    body: `Your NC Network verification code: ${code}. Expires in 10 minutes.`,
+    from: process.env.TWILIO_PHONE_NUMBER,
+    to: phone,
+  });
+};
+
 
 interface OneSignalNotificationPayload {
   userIds: string[];
@@ -330,6 +392,57 @@ const isAdmin = async (req: AuthedRequest, res: Response, next: NextFunction) =>
   }
   res.status(403).send('Forbidden: Admin access required');
 };
+
+const assertConversationParticipant = async (
+  conversationId: string,
+  userId: string,
+  res: Response
+): Promise<admin.firestore.DocumentSnapshot | null> => {
+  const convoDoc = await db
+    .collection('conversations')
+    .doc(conversationId)
+    .get();
+
+  if (!convoDoc.exists) {
+    res.status(404).json({ error: 'Conversation not found' });
+    return null;
+  }
+
+  const participants = convoDoc.data()?.participants || [];
+  if (!participants.includes(userId)) {
+    res.status(403).json({ error: 'Forbidden: Not a participant' });
+    return null;
+  }
+
+  return convoDoc;
+};
+
+const assertMessageOwner = async (
+  conversationId: string,
+  messageId: string,
+  userId: string,
+  res: Response
+): Promise<admin.firestore.DocumentSnapshot | null> => {
+  const msgDoc = await db
+    .collection('conversations')
+    .doc(conversationId)
+    .collection('messages')
+    .doc(messageId)
+    .get();
+
+  if (!msgDoc.exists) {
+    res.status(404).json({ error: 'Message not found' });
+    return null;
+  }
+
+  if (msgDoc.data()?.senderId !== userId) {
+    res.status(403).json({ error: 'Forbidden: Not message owner' });
+    return null;
+  }
+
+  return msgDoc;
+};
+
 
 const uploadToCloudinary = (fileBuffer: Buffer, mimeType: string, folder: string): Promise<string> => {
   return new Promise(async (resolve, reject) => {
@@ -817,6 +930,14 @@ app.get('/api/messaging/conversations', verifyToken, async (req: AuthedRequest, 
 
 app.delete('/api/messaging/:conversationId', verifyToken, async (req: AuthedRequest<{ conversationId: string }>, res: Response) => {
   try {
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    if (!convo) return;
+
     await db.collection('conversations').doc(req.params.conversationId).delete();
     res.json({ success: true });
   } catch (error: unknown) {
@@ -1044,15 +1165,23 @@ app.put('/api/messaging/:conversationId/messages/:messageId', verifyToken, async
       res.status(400).send('Message text is required');
       return;
     }
-    await db.collection('conversations')
-      .doc(req.params.conversationId)
-      .collection('messages')
-      .doc(req.params.messageId)
-      .update({
-        text,
-        isEdited: true,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+
+    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    if (!convo) return;
+
+    const msg = await assertMessageOwner(req.params.conversationId, req.params.messageId, uid, res);
+    if (!msg) return;
+
+    await msg.ref.update({
+      text,
+      isEdited: true,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
     res.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to update message';
@@ -1062,11 +1191,19 @@ app.put('/api/messaging/:conversationId/messages/:messageId', verifyToken, async
 
 app.delete('/api/messaging/:conversationId/messages/:messageId', verifyToken, async (req: AuthedRequest<{ conversationId: string; messageId: string }>, res: Response) => {
   try {
-    await db.collection('conversations')
-      .doc(req.params.conversationId)
-      .collection('messages')
-      .doc(req.params.messageId)
-      .delete();
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+
+    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    if (!convo) return;
+
+    const msg = await assertMessageOwner(req.params.conversationId, req.params.messageId, uid, res);
+    if (!msg) return;
+
+    await msg.ref.delete();
     res.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to delete message';
@@ -1082,6 +1219,9 @@ app.post('/api/messaging/:conversationId/messages/:messageId/react', verifyToken
       res.status(400).send('User ID and emoji are required');
       return;
     }
+
+    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    if (!convo) return;
 
     const messageRef = db.collection('conversations')
       .doc(req.params.conversationId)
@@ -1123,6 +1263,15 @@ app.post('/api/messaging/:conversationId/messages/:messageId/react', verifyToken
 app.put('/api/messaging/:conversationId/messages/:messageId/pin', verifyToken, async (req: AuthedRequest<{ conversationId: string; messageId: string }>, res: Response) => {
   try {
     const { isPinned } = req.body as any;
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+
+    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    if (!convo) return;
+
     await db.collection('conversations')
       .doc(req.params.conversationId)
       .collection('messages')
@@ -1140,6 +1289,15 @@ app.put('/api/messaging/:conversationId/messages/:messageId/pin', verifyToken, a
 
 app.put('/api/messaging/:conversationId/read', verifyToken, async (req: AuthedRequest<{ conversationId: string }>, res: Response) => {
   try {
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+
+    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    if (!convo) return;
+
     await db.collection('conversations')
       .doc(req.params.conversationId)
       .update({
@@ -1329,41 +1487,232 @@ const verifyCredentials = async (email: string, password: string): Promise<boole
   }
 };
 
-// 2FA Setup Send Code
+// ─── SEND SETUP OTP ───────────────────
 app.post('/api/2fa/send-setup-otp', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
-    const { method, phone, email } = req.body as any;
-    const uid = req.user?.uid;
-    if (!uid) {
+    const userId = req.user?.uid;
+    if (!userId) {
       res.status(401).send('Unauthorized');
       return;
     }
+    const { method, phone, email } = req.body as any; // 'email' or 'sms'
 
+    // Rate limiting — prevent OTP spam
+    const existingOTP = await db.collection('otpCodes').doc(userId).get();
+    if (existingOTP.exists) {
+      const existingData = existingOTP.data();
+      if (existingData?.createdAt) {
+        const timeSinceLastOTP = Date.now() - existingData.createdAt.toMillis();
+        if (timeSinceLastOTP < 60 * 1000) { // 60 second cooldown
+          res.status(429).json({
+            error: 'Please wait before requesting another code',
+            waitSeconds: Math.ceil((60000 - timeSinceLastOTP) / 1000),
+          });
+          return;
+        }
+      }
+    }
+
+    // Generate 6-digit OTP
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    await db.collection('two_factor_otps').doc(uid).set({
-      code,
-      expiresAt,
+    // Hash it before storing — never store plain OTP
+    const hashedCode = await bcrypt.hash(code, 10);
+
+    // Store hashed OTP in Firestore with expiry
+    await db.collection('otpCodes').doc(userId).set({
+      hashedCode,
       method,
       phone: phone || null,
       email: email || null,
+      expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+      attempts: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    if (method === 'sms') {
-      console.log(`[2FA OTP SMS Setup] Code for phone ${phone}: ${code}`);
-    } else {
-      console.log(`[2FA OTP Email Setup] Code for email ${email}: ${code}`);
+    // Get user data to find email/phone
+    const userDoc = await db.collection('users').doc(userId).get();
+    const userData = userDoc.data() || {};
+    const targetEmail = email || userData.email || '';
+    const targetPhone = phone || userData.phone || '';
+
+    // Send code via email or SMS — NEVER in response
+    if (method === 'email') {
+      await sendOTPEmail(targetEmail, code);
+    } else if (method === 'sms') {
+      await sendOTPSMS(targetPhone, code);
     }
 
-    res.json({ success: true, code }); // Return code in response for development notification triggering
+    // Local debug print (safe console-only, never sent to client)
+    console.log(`[2FA OTP Setup] Method: ${method}, Destination: ${method === 'email' ? targetEmail : targetPhone}, Code: ${code}`);
+
+    res.json({
+      success: true,
+      method,
+      destination: maskDestination(method, targetPhone, targetEmail),
+      expiresIn: 600, // seconds
+    });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to send setup OTP';
+    console.error('Send setup OTP error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to send verification code';
     res.status(500).json({ error: message });
   }
 });
 
-// 2FA Setup Verify and Enable
+// ─── SEND LOGIN OTP ───────────────────
+app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
+  try {
+    const { email, password, method } = req.body;
+
+    // Verify credentials first (password auth)
+    const valid = await verifyCredentials(email, password);
+    if (!valid) {
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
+    // Fetch user
+    const userRecord = await admin.auth().getUserByEmail(email);
+    const userId = userRecord.uid;
+
+    // Verify 2FA is actually enabled for this user
+    const userDoc = await db.collection('users').doc(userId).get();
+    const userData = userDoc.data() || {};
+    const profileDoc = await db.collection('profiles').doc(userId).get();
+    const profileData = profileDoc.data() || {};
+
+    const twoFactorEnabled = userData.twoFactorEnabled || profileData.twoFactorEnabled;
+    if (!twoFactorEnabled) {
+      res.status(400).json({ error: '2FA not enabled for this account' });
+      return;
+    }
+
+    const twoFactorMethod = method || profileData.twoFactorMethod || userData.twoFactorMethod || 'sms';
+    const targetEmail = profileData.twoFactorEmail || userData.email || email;
+    const targetPhone = profileData.twoFactorPhone || userData.phone || '';
+
+    // Rate limiting — prevent OTP spam
+    const existingOTP = await db.collection('otpCodes').doc(userId).get();
+    if (existingOTP.exists) {
+      const existingData = existingOTP.data();
+      if (existingData?.createdAt) {
+        const timeSinceLastOTP = Date.now() - existingData.createdAt.toMillis();
+        if (timeSinceLastOTP < 60 * 1000) { // 60 second cooldown
+          res.status(429).json({
+            error: 'Please wait before requesting another code',
+            waitSeconds: Math.ceil((60000 - timeSinceLastOTP) / 1000),
+          });
+          return;
+        }
+      }
+    }
+
+    // Generate and hash OTP
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedCode = await bcrypt.hash(code, 10);
+
+    // Store hashed OTP
+    await db.collection('otpCodes').doc(userId).set({
+      hashedCode,
+      method: twoFactorMethod,
+      phone: targetPhone || null,
+      email: targetEmail || null,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+      attempts: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Send via email or SMS only
+    if (twoFactorMethod === 'email') {
+      await sendOTPEmail(targetEmail, code);
+    } else {
+      await sendOTPSMS(targetPhone, code);
+    }
+
+    // Local debug print (safe console-only, never sent to client)
+    console.log(`[2FA OTP Login] Method: ${twoFactorMethod}, Destination: ${twoFactorMethod === 'email' ? targetEmail : targetPhone}, Code: ${code}`);
+
+    res.json({
+      success: true,
+      method: twoFactorMethod,
+      destination: maskDestination(twoFactorMethod, targetPhone, targetEmail),
+    });
+  } catch (error: unknown) {
+    console.error('Send login OTP error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to send verification code';
+    res.status(500).json({ error: message });
+  }
+});
+
+// ─── VERIFY OTP (NEW MERGED ENDPOINT) ───
+app.post('/api/2fa/verify-otp', async (req: Request, res: Response) => {
+  try {
+    const { userId, code } = req.body;
+
+    if (!userId || !code) {
+      res.status(400).json({ error: 'Missing userId or code' });
+      return;
+    }
+
+    const otpDoc = await db.collection('otpCodes').doc(userId).get();
+    if (!otpDoc.exists) {
+      res.status(400).json({ error: 'No verification code found. Request a new one.' });
+      return;
+    }
+
+    const otpData = otpDoc.data() || {};
+
+    // Check expiry
+    if (Date.now() > otpData.expiresAt) {
+      await db.collection('otpCodes').doc(userId).delete();
+      res.status(400).json({ error: 'Code expired. Please request a new one.' });
+      return;
+    }
+
+    // Check max attempts — brute force protection
+    if (otpData.attempts >= 3) {
+      await db.collection('otpCodes').doc(userId).delete();
+      res.status(429).json({
+        error: 'Too many failed attempts. Please request a new code.',
+      });
+      return;
+    }
+
+    // Verify code against hash
+    const isValid = await bcrypt.compare(code.toString(), otpData.hashedCode);
+    if (!isValid) {
+      // Increment failed attempt counter
+      await db.collection('otpCodes').doc(userId).update({
+        attempts: otpData.attempts + 1,
+      });
+      const remaining = 2 - otpData.attempts;
+      res.status(400).json({
+        error: `Invalid code. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`,
+      });
+      return;
+    }
+
+    // Code is valid — delete it immediately (one-time use)
+    await db.collection('otpCodes').doc(userId).delete();
+
+    // If this is login 2FA, generate a custom token for the client
+    const customToken = await admin.auth().createCustomToken(userId, {
+      twoFactorVerified: true,
+    });
+
+    res.json({
+      success: true,
+      verified: true,
+      customToken, // client uses this to complete sign-in
+    });
+  } catch (error: unknown) {
+    console.error('Verify OTP error:', error);
+    const message = error instanceof Error ? error.message : 'Verification failed';
+    res.status(500).json({ error: message });
+  }
+});
+
+// ─── VERIFY SETUP OTP (BACKWARDS COMPATIBILITY) ───
 app.post('/api/2fa/verify-setup-otp', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
     const { code, method, phone, email } = req.body as any;
@@ -1373,14 +1722,17 @@ app.post('/api/2fa/verify-setup-otp', verifyToken, async (req: AuthedRequest, re
       return;
     }
 
-    const otpDoc = await db.collection('two_factor_otps').doc(uid).get();
+    const otpDoc = await db.collection('otpCodes').doc(uid).get();
     if (!otpDoc.exists) {
       res.status(400).json({ error: 'No verification code found. Please request one.' });
       return;
     }
 
-    const otpData = otpDoc.data();
-    if (otpData?.code !== code || new Date() > otpData?.expiresAt.toDate()) {
+    const otpData = otpDoc.data() || {};
+    const isExpired = Date.now() > otpData.expiresAt;
+    const isValid = await bcrypt.compare(code.toString(), otpData.hashedCode);
+
+    if (!isValid || isExpired) {
       res.status(400).json({ error: 'Invalid or expired verification code.' });
       return;
     }
@@ -1407,91 +1759,17 @@ app.post('/api/2fa/verify-setup-otp', verifyToken, async (req: AuthedRequest, re
     }, { merge: true });
 
     // Clean up OTP
-    await db.collection('two_factor_otps').doc(uid).delete();
+    await db.collection('otpCodes').doc(uid).delete();
 
     res.json({ success: true, backupCodes });
   } catch (error: unknown) {
+    console.error('Verify setup OTP compatibility error:', error);
     const message = error instanceof Error ? error.message : 'Failed to verify setup OTP';
     res.status(500).json({ error: message });
   }
 });
 
-// 2FA Send Code on Login
-app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-    
-    // 1. Verify password
-    const valid = await verifyCredentials(email, password);
-    if (!valid) {
-      res.status(401).json({ error: 'Invalid email or password' });
-      return;
-    }
-
-    // 2. Fetch user
-    const userRecord = await admin.auth().getUserByEmail(email);
-    const uid = userRecord.uid;
-
-    // 3. Check Lockout
-    const lockoutDoc = await db.collection('two_factor_attempts').doc(uid).get();
-    if (lockoutDoc.exists) {
-      const data = lockoutDoc.data();
-      if (data?.lockedUntil && new Date() < data.lockedUntil.toDate()) {
-        const remainingTime = Math.ceil((data.lockedUntil.toDate().getTime() - Date.now()) / 1000 / 60);
-        res.status(403).json({ error: `Account locked due to too many failed attempts. Try again in ${remainingTime} minutes.` });
-        return;
-      }
-    }
-
-    // 4. Check if 2FA enabled
-    const profileDoc = await db.collection('profiles').doc(uid).get();
-    if (!profileDoc.exists || !profileDoc.data()?.twoFactorEnabled) {
-      res.status(400).json({ error: 'Two-Factor Authentication is not enabled for this account.' });
-      return;
-    }
-
-    const profile = profileDoc.data();
-    const method = profile?.twoFactorMethod || 'sms';
-    const phone = profile?.twoFactorPhone || '';
-    const twoFactorEmail = profile?.twoFactorEmail || email;
-
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-    await db.collection('two_factor_otps').doc(uid).set({
-      code,
-      expiresAt,
-      method,
-      phone: phone || null,
-      email: twoFactorEmail || null,
-    });
-
-    if (method === 'sms') {
-      console.log(`[2FA OTP SMS Login] Code for phone ${phone}: ${code}`);
-    } else {
-      console.log(`[2FA OTP Email Login] Code for email ${twoFactorEmail}: ${code}`);
-    }
-
-    // Mask destination
-    let destination = '';
-    if (method === 'sms') {
-      const cleanPhone = phone || '';
-      destination = cleanPhone.length > 7
-        ? `${cleanPhone.slice(0, 4)}XXXX${cleanPhone.slice(-3)}`
-        : '+977-XXXXXXX';
-    } else {
-      const parts = twoFactorEmail.split('@');
-      destination = `${parts[0].slice(0, 2)}***@${parts[1]}`;
-    }
-
-    res.json({ success: true, method, destination, code }); // Code returned in development for client system Notification
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to send login OTP';
-    res.status(500).json({ error: message });
-  }
-});
-
-// 2FA Verify Code on Login
+// ─── VERIFY LOGIN OTP (BACKWARDS COMPATIBILITY) ───
 app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
   try {
     const { email, code, useBackupCode } = req.body;
@@ -1527,12 +1805,14 @@ app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
         return;
       }
     } else {
-      const otpDoc = await db.collection('two_factor_otps').doc(uid).get();
+      const otpDoc = await db.collection('otpCodes').doc(uid).get();
       if (otpDoc.exists) {
-        const otpData = otpDoc.data();
-        if (otpData?.code === code && new Date() <= otpData?.expiresAt.toDate()) {
+        const otpData = otpDoc.data() || {};
+        const isExpired = Date.now() > otpData.expiresAt;
+        const isValid = await bcrypt.compare(code.toString(), otpData.hashedCode);
+        if (isValid && !isExpired) {
           // Success
-          await db.collection('two_factor_otps').doc(uid).delete();
+          await db.collection('otpCodes').doc(uid).delete();
           await db.collection('two_factor_attempts').doc(uid).delete();
           res.json({ success: true });
           return;
@@ -1557,53 +1837,78 @@ app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
       res.status(400).json({ error: `Invalid code. ${3 - currentAttempts} attempts remaining.` });
     }
   } catch (error: unknown) {
+    console.error('Verify login OTP compatibility error:', error);
     const message = error instanceof Error ? error.message : 'Failed to verify login OTP';
     res.status(500).json({ error: message });
   }
 });
 
-// 2FA Disable
+// ─── ENABLE 2FA AFTER SETUP ───────────
+app.post('/api/2fa/enable', verifyToken, async (req: AuthedRequest, res: Response) => {
+  try {
+    const userId = req.user?.uid;
+    if (!userId) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+    const { method, verificationCode } = req.body as any;
+
+    // Verify the setup code first
+    const otpDoc = await db.collection('otpCodes').doc(userId).get();
+    if (!otpDoc.exists) {
+      res.status(400).json({ error: 'No pending verification found' });
+      return;
+    }
+
+    const otpData = otpDoc.data() || {};
+    if (Date.now() > otpData.expiresAt) {
+      res.status(400).json({ error: 'Verification code expired' });
+      return;
+    }
+
+    const isValid = await bcrypt.compare(
+      verificationCode.toString(),
+      otpData.hashedCode
+    );
+
+    if (!isValid) {
+      res.status(400).json({ error: 'Invalid verification code' });
+      return;
+    }
+
+    // Clean up OTP
+    await db.collection('otpCodes').doc(userId).delete();
+
+    // Enable 2FA on user's profile and user record
+    await db.collection('profiles').doc(userId).set({
+      twoFactorEnabled: true,
+      twoFactorMethod: method,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    await db.collection('users').doc(userId).set({
+      twoFactorEnabled: true,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    res.json({ success: true, message: '2FA enabled successfully' });
+  } catch (error: unknown) {
+    console.error('Enable 2FA error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to enable 2FA';
+    res.status(500).json({ error: message });
+  }
+});
+
+// ─── DISABLE 2FA ──────────────────────
 app.post('/api/2fa/disable', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
-    const { code } = req.body as any;
-    const uid = req.user?.uid;
-    if (!uid) {
+    const userId = req.user?.uid;
+    if (!userId) {
       res.status(401).send('Unauthorized');
       return;
     }
 
-    let valid = false;
-    
-    // Try OTP first
-    const otpDoc = await db.collection('two_factor_otps').doc(uid).get();
-    if (otpDoc.exists) {
-      const otpData = otpDoc.data();
-      if (otpData?.code === code && new Date() <= otpData?.expiresAt.toDate()) {
-        valid = true;
-        await db.collection('two_factor_otps').doc(uid).delete();
-      }
-    }
-    
-    // Try backup code if OTP didn't match
-    if (!valid) {
-      const profileDoc = await db.collection('profiles').doc(uid).get();
-      const backupCodes = profileDoc.data()?.twoFactorBackupCodes || [];
-      if (backupCodes.includes(code)) {
-        valid = true;
-        const updatedBackupCodes = backupCodes.filter((c: string) => c !== code);
-        await db.collection('profiles').doc(uid).set({
-          twoFactorBackupCodes: updatedBackupCodes
-        }, { merge: true });
-      }
-    }
-
-    if (!valid) {
-      res.status(400).json({ error: 'Invalid verification code or backup code.' });
-      return;
-    }
-
-    // Disable 2FA in profiles
-    await db.collection('profiles').doc(uid).set({
+    await db.collection('profiles').doc(userId).set({
       twoFactorEnabled: false,
       twoFactorMethod: null,
       twoFactorPhone: null,
@@ -1612,14 +1917,14 @@ app.post('/api/2fa/disable', verifyToken, async (req: AuthedRequest, res: Respon
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
-    // Sync to users
-    await db.collection('users').doc(uid).set({
+    await db.collection('users').doc(userId).set({
       twoFactorEnabled: false,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
-    res.json({ success: true });
+    res.json({ success: true, message: '2FA disabled' });
   } catch (error: unknown) {
+    console.error('Disable 2FA error:', error);
     const message = error instanceof Error ? error.message : 'Failed to disable 2FA';
     res.status(500).json({ error: message });
   }
