@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import Logo from '../components/ui/Logo';
 import { auth, googleProvider, db } from '../lib/firebase';
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCustomToken } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import SEO from '../components/SEO';
 
@@ -128,6 +128,7 @@ export default function SignIn({ onNavigate, showAlert }) {
   const [show2fa, setShow2fa] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [tempCredentials, setTempCredentials] = useState(null);
+  const [pendingUserId, setPendingUserId] = useState(null);
   const [twoFactorError, setTwoFactorError] = useState('');
   const [twoFactorMethod, setTwoFactorMethod] = useState('sms');
   const [twoFactorDestination, setTwoFactorDestination] = useState('');
@@ -152,26 +153,20 @@ export default function SignIn({ onNavigate, showAlert }) {
         setIsLoading(true);
         setTwoFactorError('');
         try {
-          const res = await apiClient.post('/2fa/verify-login-otp', {
-            email: tempCredentials.email,
-            code: verificationCode,
-            useBackupCode: false
+          const res = await apiClient.post('/2fa/verify-otp', {
+            userId: pendingUserId,
+            code: verificationCode
           });
 
-          if (res.data.success) {
-            const { user: authedUser, error: authError } = await signInUser(tempCredentials.email, tempCredentials.password);
-            if (authError) {
-              setTwoFactorError(authError);
-              setIsLoading(false);
-            } else {
-              localStorage.removeItem('login_attempts');
-              localStorage.removeItem('login_lockout_until');
-              const logRes = await logLoginAttempt(tempCredentials.email, 'success');
-              if (logRes?.suspicious) {
-                localStorage.setItem('nc_suspicious_login', 'true');
-              }
-              onNavigate('home');
+          if (res.data.success && res.data.customToken) {
+            await signInWithCustomToken(auth, res.data.customToken);
+            localStorage.removeItem('login_attempts');
+            localStorage.removeItem('login_lockout_until');
+            const logRes = await logLoginAttempt(tempCredentials.email, 'success');
+            if (logRes?.suspicious) {
+              localStorage.setItem('nc_suspicious_login', 'true');
             }
+            onNavigate('home');
           } else {
             setTwoFactorError(res.data.error || 'Invalid code.');
             setIsShake(true);
@@ -188,27 +183,20 @@ export default function SignIn({ onNavigate, showAlert }) {
       };
       triggerVerify();
     }
-  }, [verificationCode, useBackupCode, show2fa]);
+  }, [verificationCode, useBackupCode, show2fa, pendingUserId]);
 
   const handleResend2faCode = async () => {
     setIsLoading(true);
     setTwoFactorError('');
     try {
       const res = await apiClient.post('/2fa/send-login-otp', {
-        email: tempCredentials.email,
-        password: tempCredentials.password
+        userId: pendingUserId,
+        method: twoFactorMethod
       });
       if (res.data.success) {
         setCountdown(60);
         setResendActive(false);
         setVerificationCode('');
-        if (res.data.code && Notification.permission === 'granted') {
-          new Notification("NC-Network Verification", {
-            body: `Your Two-Factor Authentication (2FA) verification code is: ${res.data.code}`,
-            icon: '/logo.png',
-            requireInteraction: true
-          });
-        }
         showAlert('Verification code resent!', 'success');
       } else {
         setTwoFactorError(res.data.error || 'Failed to resend code.');
@@ -278,16 +266,17 @@ export default function SignIn({ onNavigate, showAlert }) {
         const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
         if (profileSnap.exists() && profileSnap.data().twoFactorEnabled === true) {
           setTempCredentials({ email: form.email, password: form.password });
+          setPendingUserId(user.uid);
           
           await logoutUser();
           
           const res = await apiClient.post('/2fa/send-login-otp', {
-            email: form.email,
-            password: form.password
+            userId: user.uid,
+            method: profileSnap.data().twoFactorMethod || 'sms'
           });
           
           if (res.data.success) {
-            setTwoFactorMethod(res.data.method);
+            setTwoFactorMethod(res.data.method || 'sms');
             setTwoFactorDestination(res.data.destination);
             setCountdown(60);
             setResendActive(false);
@@ -295,13 +284,6 @@ export default function SignIn({ onNavigate, showAlert }) {
             setTwoFactorError('');
             setUseBackupCode(false);
             
-            if (res.data.code && Notification.permission === 'granted') {
-              new Notification("NC-Network Verification", {
-                body: `Your Two-Factor Authentication (2FA) verification code is: ${res.data.code}`,
-                icon: '/logo.png',
-                requireInteraction: true
-              });
-            }
             setShow2fa(true);
             setIsLoading(false);
             return;
@@ -346,26 +328,20 @@ export default function SignIn({ onNavigate, showAlert }) {
     setTwoFactorError('');
 
     try {
-      const res = await apiClient.post('/2fa/verify-login-otp', {
-        email: tempCredentials.email,
-        code: verificationCode,
-        useBackupCode
+      const res = await apiClient.post('/2fa/verify-otp', {
+        userId: pendingUserId,
+        code: verificationCode
       });
 
-      if (res.data.success) {
-        const { user: authedUser, error: authError } = await signInUser(tempCredentials.email, tempCredentials.password);
-        if (authError) {
-          setTwoFactorError(authError);
-          setIsLoading(false);
-        } else {
-          localStorage.removeItem('login_attempts');
-          localStorage.removeItem('login_lockout_until');
-          const logRes = await logLoginAttempt(tempCredentials.email, 'success');
-          if (logRes?.suspicious) {
-            localStorage.setItem('nc_suspicious_login', 'true');
-          }
-          onNavigate('home');
+      if (res.data.success && res.data.customToken) {
+        await signInWithCustomToken(auth, res.data.customToken);
+        localStorage.removeItem('login_attempts');
+        localStorage.removeItem('login_lockout_until');
+        const logRes = await logLoginAttempt(tempCredentials.email, 'success');
+        if (logRes?.suspicious) {
+          localStorage.setItem('nc_suspicious_login', 'true');
         }
+        onNavigate('home');
       } else {
         setTwoFactorError(res.data.error || 'Invalid code.');
         setIsShake(true);

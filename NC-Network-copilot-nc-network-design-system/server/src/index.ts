@@ -1654,6 +1654,37 @@ app.post('/api/2fa/verify-otp', async (req: Request, res: Response) => {
       return;
     }
 
+    // Backup code check (8 digits)
+    if (code.toString().length === 8) {
+      const profileDoc = await db.collection('profiles').doc(userId).get();
+      if (profileDoc.exists) {
+        const backupCodes = profileDoc.data()?.twoFactorBackupCodes || [];
+        if (backupCodes.includes(code.toString())) {
+          // Remove used code
+          const updatedBackupCodes = backupCodes.filter((c: string) => c !== code.toString());
+          await db.collection('profiles').doc(userId).set({
+            twoFactorBackupCodes: updatedBackupCodes
+          }, { merge: true });
+
+          // Reset attempts
+          await db.collection('two_factor_attempts').doc(userId).delete();
+
+          const customToken = await admin.auth().createCustomToken(userId, {
+            twoFactorVerified: true,
+          });
+
+          res.json({
+            success: true,
+            verified: true,
+            customToken,
+          });
+          return;
+        }
+      }
+      res.status(400).json({ error: 'Invalid backup code.' });
+      return;
+    }
+
     const otpDoc = await db.collection('otpCodes').doc(userId).get();
     if (!otpDoc.exists) {
       res.status(400).json({ error: 'No verification code found. Request a new one.' });
