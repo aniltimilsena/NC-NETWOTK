@@ -20,10 +20,20 @@ firebase-debug.log
 **/.env
 **/.env.local
 **/.env.*
+!.env.example
+!**/.env.example
 
 # Logs
 *.log
 **/*.log
+
+# Certificates and keys
+*.pem
+*.key
+**/*.pem
+**/*.key
+service-account*.json
+**/service-account*.json
 
 # IDEs and OS files
 .vscode/
