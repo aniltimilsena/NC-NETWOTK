@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+  
     function isSignedIn() {
       return request.auth != null;
     }
@@ -10,21 +10,19 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    function isAdmin() {
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // User Profiles
+    // Public Profiles
     match /profiles/{userId} {
       allow read: if true;
       allow write: if isOwner(userId);
 
-      // Sessions sub-collection (client-side active sessions track)
       match /sessions/{sessionId} {
         allow read, write: if isOwner(userId);
       }
-
-      // Login History sub-collection (client-side logins audit track)
       match /login_history/{logId} {
         allow read, write: if isOwner(userId);
       }
@@ -32,107 +30,187 @@ service cloud.firestore {
 
     // Users
     match /users/{userId} {
-      allow read: if isSignedIn();
+      allow read: if true; // public basic info
       allow write: if isOwner(userId);
+      
+      // Sensitive private data in subcollection
+      match /private/{document} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Conversations
     match /conversations/{convoId} {
-      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
-      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participants;
-      allow update: if isSignedIn() && request.auth.uid in resource.data.participants;
-      allow delete: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow read: if isSignedIn() && 
+        request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn() && 
+        request.auth.uid in request.resource.data.participants;
+        
+      // ✅ FIX: Prevent participants array manipulation
+      allow update: if isSignedIn() && 
+        request.auth.uid in resource.data.participants &&
+        request.resource.data.participants == resource.data.participants;
+        
+      // ✅ FIX: Only creator can delete entire conversation
+      allow delete: if isSignedIn() && 
+        resource.data.createdBy == request.auth.uid;
 
-      // Messages sub-collection
       match /messages/{messageId} {
-        allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants;
-        allow create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && request.resource.data.senderId == request.auth.uid;
-        allow update: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants;
-        allow delete: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && resource.data.senderId == request.auth.uid;
+        allow read: if isSignedIn() && 
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants;
+        allow create: if isSignedIn() && 
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
+          request.resource.data.senderId == request.auth.uid;
+        allow update: if isSignedIn() && 
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
+          resource.data.senderId == request.auth.uid;
+        allow delete: if isSignedIn() && 
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
+          resource.data.senderId == request.auth.uid;
       }
     }
 
-    // Story Collections
+    // Stories
     match /stories/{storyId} {
       allow read: if true;
-      allow write: if false;
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && 
+        resource.data.userId == request.auth.uid;
     }
 
     // Story Replies
     match /story_replies/{replyId} {
-      allow read: if isSignedIn() && (resource.data.recipientId == request.auth.uid || resource.data.senderId == request.auth.uid);
-      allow write: if false;
+      allow read: if isSignedIn() && 
+        (resource.data.recipientId == request.auth.uid || 
+         resource.data.senderId == request.auth.uid);
+      allow create: if isSignedIn() && 
+        request.resource.data.senderId == request.auth.uid;
+      allow delete: if isSignedIn() && 
+        resource.data.senderId == request.auth.uid;
     }
 
     // Notifications
     match /notifications/{notifId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid || resource.data.receiverId == request.auth.uid);
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow read: if isSignedIn() && 
+        (resource.data.userId == request.auth.uid || 
+         resource.data.recipientId == request.auth.uid || 
+         resource.data.receiverId == request.auth.uid);
+         
+      // ✅ FIX: Validate schema + type
+      allow create: if isSignedIn() && 
+        request.resource.data.senderId == request.auth.uid &&
+        request.resource.data.recipientId is string &&
+        request.resource.data.type in [
+          'message', 'follow', 'casting_match',
+          'review', 'call_missed', 'call_ended'
+        ];
+        
+      allow update, delete: if isSignedIn() && 
+        (resource.data.userId == request.auth.uid || 
+         resource.data.recipientId == request.auth.uid || 
+         resource.data.receiverId == request.auth.uid);
     }
 
     // Casting Calls
     match /casting_calls/{callId} {
       allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
+      allow create: if isSignedIn() && 
+        request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isSignedIn() && 
+        resource.data.createdBy == request.auth.uid;
     }
 
     // Applications
     match /applications/{appId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.creatorId == request.auth.uid);
-      allow create, delete: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.creatorId == request.auth.uid);
+      allow read: if isSignedIn() && 
+        (resource.data.userId == request.auth.uid || 
+         resource.data.creatorId == request.auth.uid);
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && 
+        (resource.data.userId == request.auth.uid || 
+         resource.data.creatorId == request.auth.uid);
+      allow delete: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid;
     }
 
     // Saved Calls
     match /saved_calls/{saveId} {
-      allow read, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isSignedIn() && 
+        resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid;
     }
 
     // WebRTC Calls
     match /calls/{callId} {
-      allow read, update, delete: if isSignedIn() && (resource.data.callerId == request.auth.uid || resource.data.calleeId == request.auth.uid);
-      allow create: if isSignedIn() && request.resource.data.callerId == request.auth.uid;
+      allow read, update, delete: if isSignedIn() && 
+        (resource.data.callerId == request.auth.uid || 
+         resource.data.calleeId == request.auth.uid);
+      allow create: if isSignedIn() && 
+        request.resource.data.callerId == request.auth.uid;
 
       match /callerCandidates/{candId} {
-        allow read, write: if isSignedIn() && (get(/databases/$(database)/documents/calls/$(callId)).data.callerId == request.auth.uid || get(/databases/$(database)/documents/calls/$(callId)).data.calleeId == request.auth.uid);
+        allow read, write: if isSignedIn() && 
+          (get(/databases/$(database)/documents/calls/$(callId)).data.callerId == request.auth.uid || 
+           get(/databases/$(database)/documents/calls/$(callId)).data.calleeId == request.auth.uid);
       }
-
       match /calleeCandidates/{candId} {
-        allow read, write: if isSignedIn() && (get(/databases/$(database)/documents/calls/$(callId)).data.callerId == request.auth.uid || get(/databases/$(database)/documents/calls/$(callId)).data.calleeId == request.auth.uid);
+        allow read, write: if isSignedIn() && 
+          (get(/databases/$(database)/documents/calls/$(callId)).data.callerId == request.auth.uid || 
+           get(/databases/$(database)/documents/calls/$(callId)).data.calleeId == request.auth.uid);
       }
+    }
+
+    // OTP Codes (2FA)
+    match /otpCodes/{userId} {
+      allow read, write: if isOwner(userId);
     }
 
     // Reports
     match /reports/{reportId} {
-      allow read, write: if false;
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && 
+        request.resource.data.reporterId == request.auth.uid &&
+        request.resource.data.targetType in [
+          'user', 'casting', 'message'
+        ] &&
+        request.resource.data.reason in [
+          'spam', 'harassment', 'inappropriate',
+          'fake_profile', 'scam', 'other'
+        ];
+      allow update, delete: if false;
     }
 
     // Global Settings
     match /settings/{settingsId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
     // Admin Logs
     match /admin_logs/{logId} {
-      allow read, write: if false;
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // Follows
     match /follows/{followId} {
       allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.followerId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.followerId == request.auth.uid;
+      allow create: if isSignedIn() && 
+        request.resource.data.followerId == request.auth.uid;
+      allow delete: if isSignedIn() && 
+        resource.data.followerId == request.auth.uid;
     }
 
     // Reviews
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.reviewerId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.reviewerId == request.auth.uid;
+      allow create: if isSignedIn() && 
+        request.resource.data.reviewerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && 
+        request.resource.data.reviewerId == request.auth.uid;
     }
 
     // Default Deny
