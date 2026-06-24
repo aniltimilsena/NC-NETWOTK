@@ -393,28 +393,33 @@ const isAdmin = async (req: AuthedRequest, res: Response, next: NextFunction) =>
   res.status(403).send('Forbidden: Admin access required');
 };
 
-const assertConversationParticipant = async (
+const assertParticipant = async (
   conversationId: string,
   userId: string,
   res: Response
 ): Promise<admin.firestore.DocumentSnapshot | null> => {
-  const convoDoc = await db
-    .collection('conversations')
-    .doc(conversationId)
-    .get();
+  try {
+    const convoDoc = await db
+      .collection('conversations')
+      .doc(conversationId)
+      .get();
 
-  if (!convoDoc.exists) {
-    res.status(404).json({ error: 'Conversation not found' });
+    if (!convoDoc.exists) {
+      res.status(404).json({ error: 'Conversation not found' });
+      return null;
+    }
+
+    const participants = convoDoc.data()?.participants || [];
+    if (!participants.includes(userId)) {
+      res.status(403).json({ error: 'Forbidden: You are not a participant' });
+      return null;
+    }
+
+    return convoDoc;
+  } catch (error) {
+    res.status(500).json({ error: 'Authorization check failed' });
     return null;
   }
-
-  const participants = convoDoc.data()?.participants || [];
-  if (!participants.includes(userId)) {
-    res.status(403).json({ error: 'Forbidden: Not a participant' });
-    return null;
-  }
-
-  return convoDoc;
 };
 
 const assertMessageOwner = async (
@@ -423,24 +428,31 @@ const assertMessageOwner = async (
   userId: string,
   res: Response
 ): Promise<admin.firestore.DocumentSnapshot | null> => {
-  const msgDoc = await db
-    .collection('conversations')
-    .doc(conversationId)
-    .collection('messages')
-    .doc(messageId)
-    .get();
+  try {
+    // First verify participant
+    const convo = await assertParticipant(conversationId, userId, res);
+    if (!convo) return null;
 
-  if (!msgDoc.exists) {
-    res.status(404).json({ error: 'Message not found' });
+    const msgDoc = await db
+      .collection('conversations').doc(conversationId)
+      .collection('messages').doc(messageId)
+      .get();
+
+    if (!msgDoc.exists) {
+      res.status(404).json({ error: 'Message not found' });
+      return null;
+    }
+
+    if (msgDoc.data()?.senderId !== userId) {
+      res.status(403).json({ error: 'Forbidden: You did not send this message' });
+      return null;
+    }
+
+    return msgDoc;
+  } catch (error) {
+    res.status(500).json({ error: 'Authorization check failed' });
     return null;
   }
-
-  if (msgDoc.data()?.senderId !== userId) {
-    res.status(403).json({ error: 'Forbidden: Not message owner' });
-    return null;
-  }
-
-  return msgDoc;
 };
 
 
@@ -935,10 +947,17 @@ app.delete('/api/messaging/:conversationId', verifyToken, async (req: AuthedRequ
       res.status(401).send('Unauthorized');
       return;
     }
-    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    const convo = await assertParticipant(req.params.conversationId, uid, res);
     if (!convo) return;
 
-    await db.collection('conversations').doc(req.params.conversationId).delete();
+    const convoData = convo.data();
+    if (convoData?.createdBy === uid) {
+      await convo.ref.delete();
+    } else {
+      await convo.ref.update({
+        [`deletedFor.${uid}`]: true
+      });
+    }
     res.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to delete conversation';
@@ -1161,8 +1180,12 @@ app.post(
 app.put('/api/messaging/:conversationId/messages/:messageId', verifyToken, async (req: AuthedRequest<{ conversationId: string; messageId: string }>, res: Response) => {
   try {
     const { text } = req.body as any;
-    if (!text) {
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
       res.status(400).send('Message text is required');
+      return;
+    }
+    if (text.length > 2000) {
+      res.status(400).send('Message text exceeds 2000 characters');
       return;
     }
     const uid = req.user?.uid;
@@ -1171,7 +1194,7 @@ app.put('/api/messaging/:conversationId/messages/:messageId', verifyToken, async
       return;
     }
 
-    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    const convo = await assertParticipant(req.params.conversationId, uid, res);
     if (!convo) return;
 
     const msg = await assertMessageOwner(req.params.conversationId, req.params.messageId, uid, res);
@@ -1179,7 +1202,8 @@ app.put('/api/messaging/:conversationId/messages/:messageId', verifyToken, async
 
     await msg.ref.update({
       text,
-      isEdited: true,
+      edited: true,
+      editedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     res.json({ success: true });
@@ -1197,13 +1221,18 @@ app.delete('/api/messaging/:conversationId/messages/:messageId', verifyToken, as
       return;
     }
 
-    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    const convo = await assertParticipant(req.params.conversationId, uid, res);
     if (!convo) return;
 
     const msg = await assertMessageOwner(req.params.conversationId, req.params.messageId, uid, res);
     if (!msg) return;
 
-    await msg.ref.delete();
+    await msg.ref.update({
+      text: '',
+      deleted: true,
+      deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
     res.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to delete message';
@@ -1215,12 +1244,22 @@ app.post('/api/messaging/:conversationId/messages/:messageId/react', verifyToken
   try {
     const { emoji } = req.body as any;
     const uid = req.user?.uid;
-    if (!uid || !emoji) {
-      res.status(400).send('User ID and emoji are required');
+    if (!uid) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+    if (!emoji) {
+      res.status(400).send('Emoji is required');
       return;
     }
 
-    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    const ALLOWED_EMOJIS = ['❤️', '😂', '😮', '😢', '😡', '👍', '👎'];
+    if (!ALLOWED_EMOJIS.includes(emoji)) {
+      res.status(400).send('Invalid emoji');
+      return;
+    }
+
+    const convo = await assertParticipant(req.params.conversationId, uid, res);
     if (!convo) return;
 
     const messageRef = db.collection('conversations')
@@ -1234,22 +1273,8 @@ app.post('/api/messaging/:conversationId/messages/:messageId/react', verifyToken
       return;
     }
 
-    const messageData = docSnap.data();
-    const reactions = { ...(messageData?.reactions ?? {}) };
-
-    // Remove user's existing reaction under any emoji
-    Object.keys(reactions).forEach((emojiKey) => {
-      reactions[emojiKey] = (reactions[emojiKey] ?? []).filter((id: string) => id !== uid);
-      if (reactions[emojiKey].length === 0) {
-        delete reactions[emojiKey];
-      }
-    });
-
-    // Add user to the new emoji reaction
-    reactions[emoji] = [...(reactions[emoji] ?? []), uid];
-
     await messageRef.update({
-      reactions,
+      [`reactions.${uid}`]: emoji,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
@@ -1260,26 +1285,71 @@ app.post('/api/messaging/:conversationId/messages/:messageId/react', verifyToken
   }
 });
 
-app.put('/api/messaging/:conversationId/messages/:messageId/pin', verifyToken, async (req: AuthedRequest<{ conversationId: string; messageId: string }>, res: Response) => {
+app.delete('/api/messaging/:conversationId/messages/:messageId/react', verifyToken, async (req: AuthedRequest<{ conversationId: string; messageId: string }>, res: Response) => {
   try {
-    const { isPinned } = req.body as any;
     const uid = req.user?.uid;
     if (!uid) {
       res.status(401).send('Unauthorized');
       return;
     }
 
-    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    const convo = await assertParticipant(req.params.conversationId, uid, res);
     if (!convo) return;
 
-    await db.collection('conversations')
+    const messageRef = db.collection('conversations')
       .doc(req.params.conversationId)
       .collection('messages')
-      .doc(req.params.messageId)
-      .update({
-        isPinned: !!isPinned,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      .doc(req.params.messageId);
+
+    const docSnap = await messageRef.get();
+    if (!docSnap.exists) {
+      res.status(404).send('Message not found');
+      return;
+    }
+
+    await messageRef.update({
+      [`reactions.${uid}`]: admin.firestore.FieldValue.delete(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to remove reaction';
+    res.status(500).json({ error: message });
+  }
+});
+
+app.put('/api/messaging/:conversationId/messages/:messageId/pin', verifyToken, async (req: AuthedRequest<{ conversationId: string; messageId: string }>, res: Response) => {
+  try {
+    const { pinned } = req.body as any;
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).send('Unauthorized');
+      return;
+    }
+
+    const convo = await assertParticipant(req.params.conversationId, uid, res);
+    if (!convo) return;
+
+    const messageRef = db.collection('conversations')
+      .doc(req.params.conversationId)
+      .collection('messages')
+      .doc(req.params.messageId);
+
+    const docSnap = await messageRef.get();
+    if (!docSnap.exists) {
+      res.status(404).send('Message not found');
+      return;
+    }
+
+    const shouldPin = !!pinned;
+
+    await messageRef.update({
+      pinned: shouldPin,
+      pinnedBy: shouldPin ? uid : null,
+      pinnedAt: shouldPin ? admin.firestore.FieldValue.serverTimestamp() : null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
     res.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to pin message';
@@ -1295,13 +1365,14 @@ app.put('/api/messaging/:conversationId/read', verifyToken, async (req: AuthedRe
       return;
     }
 
-    const convo = await assertConversationParticipant(req.params.conversationId, uid, res);
+    const convo = await assertParticipant(req.params.conversationId, uid, res);
     if (!convo) return;
 
     await db.collection('conversations')
       .doc(req.params.conversationId)
       .update({
-        unread: false,
+        [`unreadCount.${uid}`]: 0,
+        [`lastReadAt.${uid}`]: admin.firestore.FieldValue.serverTimestamp(),
       });
     res.json({ success: true });
   } catch (error: unknown) {
