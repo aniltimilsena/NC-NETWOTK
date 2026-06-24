@@ -24,7 +24,9 @@ service firebase.storage {
     // Casting calls folder
     match /castings/{castingId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+        (!firestore.exists(/databases/$(database)/documents/casting_calls/$(castingId)) ||
+         firestore.get(/databases/$(database)/documents/casting_calls/$(castingId)).data.createdBy == request.auth.uid);
     }
 
     // Default Deny
