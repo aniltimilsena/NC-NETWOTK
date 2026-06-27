@@ -280,11 +280,33 @@ app.use(helmet({
 }));
 
 // Custom middleware to set proper cache-control and clear deprecated headers for all API responses
-app.use((_req, res, next) => {
-  res.setHeader('Cache-Control', 'no-cache, private');
-  res.removeHeader('Pragma');
-  res.removeHeader('Expires');
+app.use((req, res, next) => {
+  const path = req.path;
+  
+  // STEP 3: Strict no-store caching headers for sensitive API endpoints (2FA and admin actions)
+  if (path.startsWith('/api/2fa') || path.startsWith('/api/admin')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  } else {
+    res.setHeader('Cache-Control', 'no-cache, private');
+    res.removeHeader('Pragma');
+    res.removeHeader('Expires');
+  }
+  
   res.removeHeader('X-XSS-Protection');
+
+  // STEP 4: Global production error sanitization for 500 Internal Server Errors
+  const originalJson = res.json;
+  res.json = function (body: any) {
+    if (res.statusCode === 500 && body && body.error) {
+      if (process.env.NODE_ENV === 'production') {
+        body.error = 'Something went wrong. Please try again.';
+      }
+    }
+    return originalJson.call(this, body);
+  };
+
   next();
 });
 

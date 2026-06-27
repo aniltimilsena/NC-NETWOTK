@@ -55,3 +55,7 @@
 - `[x]` 38. Replace console.log statements with logger.log in usePermissions.js
 - `[x]` 39. Replace console.log statements with logger.log in useNotifications.tsx
 - `[x]` 40. Replace console.log statements with logger.log in App.tsx
+
+## Proxying and Response Security
+- `[x]` 41. Implement anti-caching response headers on sensitive routes (/api/2fa and /api/admin)
+- `[x]` 42. Implement global production error sanitization middleware for 500 status codes
