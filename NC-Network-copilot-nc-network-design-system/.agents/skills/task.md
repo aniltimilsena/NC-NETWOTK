@@ -47,3 +47,11 @@
 ## Hardcoded Credentials Elimination
 - `[x]` 33. Delete the orphaned public/test-firestore.html file
 - `[x]` 34. Secure public/firebase-messaging-sw.js by removing hardcoded fallback configurations
+
+## Production Console Logs Stripping
+- `[x]` 35. Configure Vite/Terser to strip console.log, console.warn, and console.info from production builds
+- `[x]` 36. Replace console.log statements with logger.log in messaging.ts
+- `[x]` 37. Replace console.log statements with logger.log in useWebRTC.ts
+- `[x]` 38. Replace console.log statements with logger.log in usePermissions.js
+- `[x]` 39. Replace console.log statements with logger.log in useNotifications.tsx
+- `[x]` 40. Replace console.log statements with logger.log in App.tsx

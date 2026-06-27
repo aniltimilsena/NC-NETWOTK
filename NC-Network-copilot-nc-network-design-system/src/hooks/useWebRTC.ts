@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { logger } from "../utils/logger";
 import {
   ICE_SERVERS,
   createCall,
@@ -127,9 +128,9 @@ export function useWebRTC(): UseWebRTCReturn {
       setCallState("requesting-media");
 
       if (typeof window !== "undefined") {
-        console.log("[WebRTC] Secure context status:", window.isSecureContext);
+        logger.log("[WebRTC] Secure context status:", window.isSecureContext);
         if (!window.isSecureContext) {
-          console.warn("[WebRTC] Not running in a secure context. getUserMedia will likely fail.");
+          logger.warn("[WebRTC] Not running in a secure context. getUserMedia will likely fail.");
         }
       }
 
@@ -146,20 +147,20 @@ export function useWebRTC(): UseWebRTCReturn {
       };
 
       try {
-        console.log("[WebRTC] Requesting media stream with constraints:", constraints);
+        logger.log("[WebRTC] Requesting media stream with constraints:", constraints);
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         setLocalStream(stream);
         localStorage.setItem("nc_perm_media", "granted");
         return stream;
       } catch (err: any) {
-        console.warn("[WebRTC] getUserMedia with advanced constraints failed. Trying basic fallback constraints. Error:", err);
+        logger.warn("[WebRTC] getUserMedia with advanced constraints failed. Trying basic fallback constraints. Error:", err);
         
         try {
           const fallbackConstraints: MediaStreamConstraints = {
             audio: true,
             video: callType === "video" ? true : false,
           };
-          console.log("[WebRTC] Requesting fallback media stream with constraints:", fallbackConstraints);
+          logger.log("[WebRTC] Requesting fallback media stream with constraints:", fallbackConstraints);
           const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
           setLocalStream(stream);
           localStorage.setItem("nc_perm_media", "granted");
@@ -198,12 +199,12 @@ export function useWebRTC(): UseWebRTCReturn {
           track.enabled = true;
         }
         pc.addTrack(track, stream);
-        console.log("[WebRTC] Added local track to peer connection:", track.kind, "enabled:", track.enabled);
+        logger.log("[WebRTC] Added local track to peer connection:", track.kind, "enabled:", track.enabled);
       });
 
       // Listen for remote tracks and bind directly to the remote stream
       pc.ontrack = (event) => {
-        console.log("[WebRTC] Received remote track:", event.track.kind);
+        logger.log("[WebRTC] Received remote track:", event.track.kind);
         if (event.streams && event.streams[0]) {
           setRemoteStream(event.streams[0]);
         }
@@ -212,7 +213,7 @@ export function useWebRTC(): UseWebRTCReturn {
       // Connection state monitoring
       pc.oniceconnectionstatechange = () => {
         const state = pc.iceConnectionState;
-        console.log("[WebRTC] ICE state:", state);
+        logger.log("[WebRTC] ICE state:", state);
 
         if (state === "connected" || state === "completed") {
           setCallState("connected");
@@ -282,7 +283,7 @@ export function useWebRTC(): UseWebRTCReturn {
         }
 
         if (callStateRef.current === "ended") {
-          console.log("[WebRTC] Call was ended during setup. Cleaning up created Firestore call:", callId);
+          logger.log("[WebRTC] Call was ended during setup. Cleaning up created Firestore call:", callId);
           await updateCallStatus(callId, "ended");
           cleanupCall(callId);
           return;

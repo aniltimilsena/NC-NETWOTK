@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import ErrorBoundary from './components/ErrorBoundary';
 import { lazyWithRetry } from './utils/lazyWithRetry';
+import { logger } from './utils/logger';
 
 
 // Providers and Overlays
@@ -458,7 +459,7 @@ export default function App() {
     try {
       localVersion = __BUILD_VERSION__;
     } catch (e) {
-      console.warn("Build version not defined in environment");
+      logger.warn("Build version not defined in environment");
     }
 
     const checkVersion = async () => {
@@ -467,7 +468,7 @@ export default function App() {
         if (res.ok) {
           const data = await res.json();
           if (data && data.version && data.version !== localVersion) {
-            console.log(`[Version Check] New build version detected: ${data.version} (Local: ${localVersion})`);
+            logger.log(`[Version Check] New build version detected: ${data.version} (Local: ${localVersion})`);
             
             // Clear any retry flags so next load is fresh
             sessionStorage.clear();
@@ -542,7 +543,7 @@ export default function App() {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission()
         .then((permission) => {
-          console.log('Notification permission requested on mount:', permission);
+          logger.log('Notification permission requested on mount:', permission);
         })
         .catch((err) => {
           console.error('Error requesting notification permission on mount:', err);

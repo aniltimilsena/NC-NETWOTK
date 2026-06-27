@@ -1,4 +1,5 @@
 import { db, auth } from "../lib/firebase";
+import { logger } from "../utils/logger";
 import {
   collection,
   doc,
@@ -176,12 +177,12 @@ export const sendMessage = async (
             }).then(async (res) => {
               if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
-                console.warn("OneSignal serverless function trigger failed:", errData);
+                logger.warn("OneSignal serverless function trigger failed:", errData);
               } else {
-                console.log("OneSignal push notification successfully queued via serverless function");
+                logger.log("OneSignal push notification successfully queued via serverless function");
               }
             }).catch((err) => {
-              console.warn("Error calling OneSignal serverless function:", err);
+              logger.warn("Error calling OneSignal serverless function:", err);
             });
           }
         } catch (tokenError) {
@@ -560,16 +561,16 @@ export const createConversation = async (
             }).then(async (res) => {
               if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
-                console.warn("OneSignal serverless function trigger failed:", errData);
+                logger.warn("OneSignal serverless function trigger failed:", errData);
               } else {
-                console.log("OneSignal push notification for new convo successfully queued");
+                logger.log("OneSignal push notification for new convo successfully queued");
               }
             }).catch((err) => {
-              console.warn("Error calling OneSignal serverless function:", err);
+              logger.warn("Error calling OneSignal serverless function:", err);
             });
           }
         } catch (tokenError) {
-          console.warn("Failed to get idToken for push notification:", tokenError);
+          logger.warn("Failed to get idToken for push notification:", tokenError);
         }
       }
 

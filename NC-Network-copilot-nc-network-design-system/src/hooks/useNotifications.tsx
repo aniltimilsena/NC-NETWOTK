@@ -5,6 +5,7 @@ import { playNotificationSound } from '../utils/notification-sound';
 import { callSecureFunction } from '../api/functionsClient';
 import { formatMessagePreview } from '../utils/format';
 import apiClient from '../api/client';
+import { logger } from '../utils/logger';
 
 // VAPID key is required for FCM Web
 const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY;
@@ -84,7 +85,7 @@ export const useNotifications = (
     const disableFCMOnLocalhost = import.meta.env.VITE_DISABLE_FCM_LOCALHOST === 'true';
     
     if (isLocalhost && disableFCMOnLocalhost) {
-      console.log('Skipping FCM registration on localhost (VITE_DISABLE_FCM_LOCALHOST is true)');
+      logger.log('Skipping FCM registration on localhost (VITE_DISABLE_FCM_LOCALHOST is true)');
       return;
     }
 
@@ -117,11 +118,11 @@ export const useNotifications = (
           try {
             const response = await apiClient.post('/notifications/register-token', { token }, { timeout: 2000 });
             if (response.data?.success) {
-              console.log('FCM Token successfully saved to local Express database');
+              logger.log('FCM Token successfully saved to local Express database');
               registeredLocally = true;
             }
           } catch (backendError) {
-            console.warn('Local Express backend FCM registration failed, attempting Cloud Function fallback:', backendError);
+            logger.warn('Local Express backend FCM registration failed, attempting Cloud Function fallback:', backendError);
           }
 
           if (!registeredLocally) {
@@ -133,16 +134,16 @@ export const useNotifications = (
             if (registerError) {
               console.error('Failed to register FCM Token on backend database:', registerError);
             } else if (data?.success) {
-              console.log('FCM Token successfully saved to database via Cloud Function');
+              logger.log('FCM Token successfully saved to database via Cloud Function');
             } else {
-              console.log('FCM Token registration returned without explicit success flag');
+              logger.log('FCM Token registration returned without explicit success flag');
             }
           }
         } else {
-          console.warn('FCM token generation succeeded but returned empty token');
+          logger.warn('FCM token generation succeeded but returned empty token');
         }
       } else {
-        console.warn('FCM registration skipped: Notification permission denied or not granted');
+        logger.warn('FCM registration skipped: Notification permission denied or not granted');
       }
     } catch (error: any) {
       if (import.meta.env.DEV) {
@@ -161,7 +162,7 @@ export const useNotifications = (
     if (!messaging) return;
 
     const unsubscribe = onMessage(messaging, (payload) => {
-      console.log('Foreground message received:', payload);
+      logger.log('Foreground message received:', payload);
       
       const { title, body, icon } = payload.notification || {};
       const { link } = payload.data || {};

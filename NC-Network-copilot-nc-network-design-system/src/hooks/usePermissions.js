@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
+import { logger } from '../utils/logger';
 
 const getBrowserPermissionState = async (type) => {
   if (!navigator.permissions || !navigator.permissions.query) {
-    console.log("[Permissions] navigator.permissions.query is NOT supported in this browser.");
+    logger.log("[Permissions] navigator.permissions.query is NOT supported in this browser.");
     return 'prompt';
   }
   try {
@@ -18,12 +19,12 @@ const getBrowserPermissionState = async (type) => {
     
     if (type === 'video' || type === 'media') {
       const cam = results[0];
-      console.log("[Permissions] Camera permission query state:", cam?.state);
+      logger.log("[Permissions] Camera permission query state:", cam?.state);
     }
     if (type === 'audio' || type === 'video' || type === 'media') {
       const idx = (type === 'video' || type === 'media') ? 1 : 0;
       const mic = results[idx];
-      console.log("[Permissions] Microphone permission query state:", mic?.state);
+      logger.log("[Permissions] Microphone permission query state:", mic?.state);
     }
 
     const states = results.map(r => r.state);
@@ -36,7 +37,7 @@ const getBrowserPermissionState = async (type) => {
     }
     return 'prompt';
   } catch (e) {
-    console.warn("[Permissions] Failed to query permissions:", e);
+    logger.warn("[Permissions] Failed to query permissions:", e);
     return 'prompt';
   }
 };
