@@ -494,10 +494,10 @@ exports.registerNotificationToken = (0, https_1.onCall)(callableOptions, async (
         throw new https_1.HttpsError("invalid-argument", "Invalid notification token payload");
     }
     await enforceRateLimit(auth.uid, "registerNotificationToken", 20, 300);
-    const userRef = db.collection("users").doc(auth.uid);
+    const privateSettingsRef = db.collection("users").doc(auth.uid).collection("private").doc("settings");
     await db.runTransaction(async (transaction) => {
-        const userSnapshot = await transaction.get(userRef);
-        const existingRaw = userSnapshot.data()?.fcmTokens;
+        const settingsSnapshot = await transaction.get(privateSettingsRef);
+        const existingRaw = settingsSnapshot.data()?.fcmTokens;
         const existingTokens = Array.isArray(existingRaw)
             ? existingRaw.filter((item) => typeof item === "string")
             : [];
@@ -507,7 +507,7 @@ exports.registerNotificationToken = (0, https_1.onCall)(callableOptions, async (
         if (existingTokens.length >= MAX_FCM_TOKENS) {
             throw new https_1.HttpsError("resource-exhausted", `FCM token limit reached (${MAX_FCM_TOKENS})`);
         }
-        transaction.set(userRef, {
+        transaction.set(privateSettingsRef, {
             fcmTokens: firestore_1.FieldValue.arrayUnion(parsed.data.token),
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
         }, { merge: true });

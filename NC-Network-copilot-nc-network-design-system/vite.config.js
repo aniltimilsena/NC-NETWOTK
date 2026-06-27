@@ -37,12 +37,27 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
       '/__/auth': {
         target: 'https://nc-network-10d0b.firebaseapp.com',
         changeOrigin: true,
         secure: true,
       }
     }
+  },
+  build: {
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
   }
 })
 

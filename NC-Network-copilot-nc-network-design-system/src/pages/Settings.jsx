@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { getProfile, updateProfileData, subscribeToProfile, uploadProfileMedia } from '../services/profile';
+import { verifyUserPassword } from '../services/auth';
+import { COLLECTIONS } from '../constants/collections';
 import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword, GoogleAuthProvider, FacebookAuthProvider, linkWithPopup, unlink } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { collection, query, orderBy, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp, getDocs, where, updateDoc, limit } from 'firebase/firestore';
@@ -453,78 +455,71 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   };
 
   // Data Control States/Functions
-  const [isExporting, setIsExporting] = useState(false);
+  const [latestDataRequest, setLatestDataRequest] = useState(null);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [verificationPassword, setVerificationPassword] = useState('');
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
+
+  // Subscribe to latest data export request
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(
+      collection(db, COLLECTIONS.DATA_EXPORT_REQUESTS),
+      where('uid', '==', user.uid),
+      orderBy('createdAt', 'desc'),
+      limit(1)
+    );
+    const unsubscribe = onSnapshot(q, (snap) => {
+      if (!snap.empty) {
+        setLatestDataRequest({ id: snap.docs[0].id, ...snap.docs[0].data() });
+      } else {
+        setLatestDataRequest(null);
+      }
+    }, (error) => {
+      console.error("Error subscribing to data export request:", error);
+    });
+    return () => unsubscribe();
+  }, [user?.uid]);
 
   const handleRequestDataArchive = async () => {
+    setIsPasswordModalOpen(true);
+    setVerificationPassword('');
+  };
+
+  const handleVerifyPasswordAndSubmitRequest = async (e) => {
+    e.preventDefault();
+    if (!verificationPassword.trim()) {
+      showToast("Please enter your password", "error");
+      return;
+    }
     if (!user?.uid) return;
-    setIsExporting(true);
-    showToast("Preparing your data archive...", "info");
-    
+
+    setIsVerifyingPassword(true);
     try {
-      // 1. Fetch Profile Data
-      let profileData = {};
-      const profileSnap = await getDocs(query(collection(db, "profiles"), where("__name__", "==", user.uid)));
-      if (!profileSnap.empty) {
-        profileData = { id: user.uid, ...profileSnap.docs[0].data() };
+      const isValid = await verifyUserPassword(verificationPassword);
+      if (!isValid) {
+        showToast("Incorrect password. Please try again.", "error");
+        setIsVerifyingPassword(false);
+        return;
       }
 
-      // 2. Fetch Conversations and Messages
-      const conversationsData = [];
-      const convoSnap = await getDocs(
-        query(collection(db, "conversations"), where("participants", "array-contains", user.uid))
-      );
-      
-      for (const convoDoc of convoSnap.docs) {
-        const convoData = convoDoc.data();
-        const messagesSnap = await getDocs(
-          query(collection(db, "conversations", convoDoc.id, "messages"), orderBy("createdAt", "asc"))
-        );
-        const messages = messagesSnap.docs.map(mDoc => {
-          const mData = mDoc.data();
-          return {
-            id: mDoc.id,
-            senderId: mData.senderId,
-            text: mData.text,
-            isSystem: mData.isSystem || false,
-            type: mData.type || "text",
-            createdAt: mData.createdAt?.toDate?.()?.toISOString() || mData.createdAt || null
-          };
-        });
-        conversationsData.push({
-          id: convoDoc.id,
-          participants: convoData.participants,
-          lastMessage: convoData.lastMessage,
-          messages
-        });
-      }
+      // Password validated successfully, create pending request in Firestore
+      await addDoc(collection(db, COLLECTIONS.DATA_EXPORT_REQUESTS), {
+        uid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || '',
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
 
-      // 3. Bundle Archive
-      const archive = {
-        exportedAt: new Date().toISOString(),
-        userId: user.uid,
-        userEmail: user.email,
-        profile: profileData,
-        conversations: conversationsData
-      };
-
-      // 4. Download JSON file
-      const blob = new Blob([JSON.stringify(archive, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `nc-data-archive-${user.displayName?.toLowerCase().replace(/\s+/g, '-') || 'user'}-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      showToast("Data archive downloaded successfully!", "success");
-      await createSystemNotification("Data Archive Exported", "You successfully requested and downloaded your full data archive.");
+      showToast("Data export request submitted successfully!", "success");
+      setIsPasswordModalOpen(false);
     } catch (err) {
-      console.error("Archive export failed:", err);
-      showToast("Failed to export archive. Please try again.", "error");
+      console.error("Failed to verify password and request export:", err);
+      showToast("An error occurred. Please try again.", "error");
     } finally {
-      setIsExporting(false);
+      setIsVerifyingPassword(false);
     }
   };
 
@@ -3209,7 +3204,56 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
         </div>
       </div>
 
+      {/* Password Verification Modal for Data Request */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 font-sans">
+          <form 
+            onSubmit={handleVerifyPasswordAndSubmitRequest}
+            className="bg-[#111] border border-white/5 max-w-sm w-full rounded-2xl p-6 space-y-6 animate-scale-up text-left"
+          >
+            <div className="flex items-center gap-3 text-yellow-500">
+              <LockUnlockIcon className="w-5 h-5 flex-shrink-0 text-[#00BFFF]" />
+              <h3 className="text-base font-bold text-white">Verify Password</h3>
+            </div>
+            
+            <p className="text-gray-400 text-xs leading-relaxed">
+              For security reasons, please enter your password to authorize the data archive export request.
+            </p>
 
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-500 text-[10px] font-bold uppercase tracking-[1px] mb-2">
+                  Enter password to confirm
+                </label>
+                <input
+                  type="password"
+                  placeholder="Your Password"
+                  value={verificationPassword}
+                  onChange={(e) => setVerificationPassword(e.target.value)}
+                  className="w-full bg-[#161617] border border-white/5 focus:border-[#00BFFF]/50 text-white py-2.5 px-4 rounded-xl outline-none text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsPasswordModalOpen(false)}
+                className="flex-1 py-3 border border-white/10 hover:bg-white/5 text-gray-400 hover:text-white font-bold text-xs rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isVerifyingPassword}
+                className="flex-1 py-3 bg-[#00BFFF] hover:bg-[#00BFFF]/80 disabled:bg-gray-600/30 disabled:text-gray-500 text-black font-black uppercase tracking-wider text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"
+              >
+                {isVerifyingPassword ? "Verifying..." : "Verify & Request"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </>
   );
 }

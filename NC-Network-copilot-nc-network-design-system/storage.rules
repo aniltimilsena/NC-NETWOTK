@@ -9,24 +9,42 @@ service firebase.storage {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // SECURITY FIX: Added file size and content type restrictions
+    function isValidImage() {
+      return request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    function isValidMedia() {
+      return request.resource.size < 100 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*')
+         || request.resource.contentType.matches('video/.*'));
+    }
+
     // Profiles folder (avatar and cover)
     match /profiles/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidImage();
     }
 
     // Media gallery showcase
     match /media/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidMedia();
     }
 
     // Casting calls folder
     match /castings/{castingId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isAuthenticated() && 
+      allow write: if isAuthenticated() && isValidMedia() &&
         (!firestore.exists(/databases/$(database)/documents/casting_calls/$(castingId)) ||
          firestore.get(/databases/$(database)/documents/casting_calls/$(castingId)).data.createdBy == request.auth.uid);
+    }
+
+    // SECURITY FIX: Private chat attachments are restricted to conversation participants only
+    match /conversations/{convoId}/attachments/{fileId} {
+      allow read, write: if isAuthenticated() && isValidMedia() &&
+        request.auth.uid in firestore.get(/databases/$(database)/documents/conversations/$(convoId)).data.participants;
     }
 
     // Default Deny

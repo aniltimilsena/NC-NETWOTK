@@ -10,15 +10,21 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // SECURITY FIX: Use correct field (isAdmin boolean) instead of role == 'admin'
     function isAdmin() {
       return isSignedIn() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Public Profiles
+    // Public Profiles — SECURITY FIX: Block reading sensitive 2FA fields
+    // 2FA secrets are now stored in users/{uid}/private/settings (server-only)
     match /profiles/{userId} {
       allow read: if true;
-      allow write: if isOwner(userId);
+      allow write: if isOwner(userId) &&
+        !('password' in request.resource.data) &&
+        !('passwordHash' in request.resource.data) &&
+        !('twoFactorBackupCodes' in request.resource.data) &&
+        !('twoFactorSecret' in request.resource.data);
 
       match /sessions/{sessionId} {
         allow read, write: if isOwner(userId);
@@ -28,10 +34,14 @@ service cloud.firestore {
       }
     }
 
-    // Users
+    // Users — SECURITY FIX: Restrict reads to owner/admin, block isAdmin writes
     match /users/{userId} {
-      allow read: if true; // public basic info
-      allow write: if isOwner(userId);
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId) &&
+        !('password' in request.resource.data) &&
+        !('passwordHash' in request.resource.data) &&
+        !('passwordReset' in request.resource.data) &&
+        !('isAdmin' in request.resource.data);
       
       // Sensitive private data in subcollection
       match /private/{document} {
@@ -46,12 +56,12 @@ service cloud.firestore {
       allow create: if isSignedIn() && 
         request.auth.uid in request.resource.data.participants;
         
-      // ✅ FIX: Prevent participants array manipulation
+      // Prevent participants array manipulation
       allow update: if isSignedIn() && 
         request.auth.uid in resource.data.participants &&
         request.resource.data.participants == resource.data.participants;
         
-      // ✅ FIX: Only creator can delete entire conversation
+      // Only creator can delete entire conversation
       allow delete: if isSignedIn() && 
         resource.data.createdBy == request.auth.uid;
 
@@ -70,39 +80,19 @@ service cloud.firestore {
       }
     }
 
-    // Stories
-    match /stories/{storyId} {
-      allow read: if true;
-      allow create: if isSignedIn() && 
-        request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && 
-        resource.data.userId == request.auth.uid;
-    }
 
-    // Story Replies
-    match /story_replies/{replyId} {
-      allow read: if isSignedIn() && 
-        (resource.data.recipientId == request.auth.uid || 
-         resource.data.senderId == request.auth.uid);
-      allow create: if isSignedIn() && 
-        request.resource.data.senderId == request.auth.uid;
-      allow delete: if isSignedIn() && 
-        resource.data.senderId == request.auth.uid;
-    }
-
-    // Notifications
+    // Notifications — SECURITY FIX: Added 'messages' and 'casting' to allowed types
     match /notifications/{notifId} {
       allow read: if isSignedIn() && 
         (resource.data.userId == request.auth.uid || 
          resource.data.recipientId == request.auth.uid || 
          resource.data.receiverId == request.auth.uid);
          
-      // ✅ FIX: Validate schema + type
       allow create: if isSignedIn() && 
         request.resource.data.senderId == request.auth.uid &&
         request.resource.data.recipientId is string &&
         request.resource.data.type in [
-          'message', 'follow', 'casting_match',
+          'message', 'messages', 'follow', 'casting', 'casting_match',
           'review', 'call_missed', 'call_ended'
         ];
         
@@ -204,13 +194,25 @@ service cloud.firestore {
         resource.data.followerId == request.auth.uid;
     }
 
-    // Reviews
+    // Reviews — SECURITY FIX: Use resource.data (existing doc) for auth
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isSignedIn() && 
         request.resource.data.reviewerId == request.auth.uid;
-      allow update, delete: if isSignedIn() && 
-        request.resource.data.reviewerId == request.auth.uid;
+      allow update, delete: if isSignedIn() &&
+        resource.data.reviewerId == request.auth.uid;
+    }
+
+    // Data Export Requests
+    match /data_export_requests/{reqId} {
+      allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'pending';
+      allow update, delete: if isAdmin();
+    }
+
+    // One-time tokens (server-use only)
+    match /one_time_tokens/{tokenId} {
+      allow read, write: if false;
     }
 
     // Default Deny

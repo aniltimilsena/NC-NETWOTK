@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { CATEGORIES } from "../constants/categories";
 import apiClient from "../api/client";
+import { COLLECTIONS } from "../constants/collections";
 
 
 export type AdminLog = {
@@ -42,7 +43,7 @@ export const logAdminAction = async (adminEmail: string, action: string, targetI
 
 // Subscribe to admin logs (limit to 50 for display)
 export const subscribeToAdminLogs = (callback: (logs: AdminLog[]) => void) => {
-  const q = query(collection(db, "admin_logs"), orderBy("timestamp", "desc"), limit(50));
+  const q = query(collection(db, COLLECTIONS.ADMIN_LOGS), orderBy("timestamp", "desc"), limit(50));
   return onSnapshot(q, (snap) => {
     const logs = snap.docs.map(doc => ({
       id: doc.id,
@@ -68,7 +69,7 @@ const defaultSettings: GlobalSettings = {
 
 // Subscribe to global platform settings
 export const subscribeToGlobalSettings = (callback: (settings: GlobalSettings) => void) => {
-  const settingsDocRef = doc(db, "settings", "global");
+  const settingsDocRef = doc(db, COLLECTIONS.SETTINGS, "global");
   return onSnapshot(settingsDocRef, (snap) => {
     if (snap.exists()) {
       callback(snap.data() as GlobalSettings);

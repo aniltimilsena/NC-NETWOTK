@@ -11,6 +11,7 @@ import axios from "axios";
 import apiClient from "../api/client";
 import { callSecureFunction } from "../api/functionsClient";
 import { uploadFile } from "./storage";
+import { COLLECTIONS } from "../constants/collections";
 
 export type ProfileData = {
   [key: string]: unknown;
@@ -26,7 +27,7 @@ type ProfileResponse = {
  */
 export const getProfile = async (uid: string): Promise<ProfileResponse> => {
   try {
-    const snap = await getDoc(doc(db, "profiles", uid));
+    const snap = await getDoc(doc(db, COLLECTIONS.PROFILES, uid));
     if (snap.exists()) {
       return { data: snap.data() as ProfileData, error: null };
     }
@@ -56,7 +57,7 @@ export const updateProfileData = async (
     }, {} as ProfileData);
 
     // 1. Write directly to profiles/{uid} document
-    const profileRef = doc(db, "profiles", uid);
+    const profileRef = doc(db, COLLECTIONS.PROFILES, uid);
     await setDoc(profileRef, {
       ...cleanData,
       updatedAt: serverTimestamp()
@@ -78,7 +79,7 @@ export const updateProfileData = async (
     if (cleanData.experience !== undefined) userUpdate.experience = cleanData.experience;
 
     if (Object.keys(userUpdate).length > 0) {
-      const userRef = doc(db, "users", uid);
+      const userRef = doc(db, COLLECTIONS.USERS, uid);
       await setDoc(userRef, {
         ...userUpdate,
         updatedAt: serverTimestamp()
@@ -102,7 +103,7 @@ export const subscribeToProfile = (
   callback: (data: ProfileData | null) => void,
 ) => {
   return onSnapshot(
-    doc(db, "profiles", uid),
+    doc(db, COLLECTIONS.PROFILES, uid),
     (snap) => {
       callback(snap.exists() ? (snap.data() as ProfileData) : null);
     },

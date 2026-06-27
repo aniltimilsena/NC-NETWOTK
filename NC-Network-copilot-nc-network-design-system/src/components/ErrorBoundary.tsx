@@ -41,16 +41,18 @@ export default class ErrorBoundary extends Component<Props, State> {
       localVersion = __BUILD_VERSION__;
     } catch (e) {}
 
-    // Detailed diagnostics logging
-    console.error("NC Network ErrorBoundary caught an uncaught error:", {
-      message: errorMsg,
-      chunkUrl,
-      route: window.location.pathname,
-      userAgent: navigator.userAgent,
-      version: localVersion,
-      stack: error?.stack || "No stack trace available",
-      errorInfo: errorInfo.componentStack
-    });
+    // Detailed diagnostics logging in development only
+    if (import.meta.env.DEV) {
+      console.error("NC Network ErrorBoundary caught an uncaught error:", {
+        message: errorMsg,
+        chunkUrl,
+        route: window.location.pathname,
+        userAgent: navigator.userAgent,
+        version: localVersion,
+        stack: error?.stack || "No stack trace available",
+        errorInfo: errorInfo.componentStack
+      });
+    }
 
     if (isChunkLoadFailed) {
       const lastReloaded = sessionStorage.getItem("chunk_fail_reload_time");
@@ -154,47 +156,49 @@ export default class ErrorBoundary extends Component<Props, State> {
               </Button>
             </div>
 
-            {/* Diagnostics Section */}
-            <div className="pt-4 border-t border-white/5">
-              <button
-                type="button"
-                onClick={this.toggleDetails}
-                className="text-xs text-nc-secondary hover:text-white transition-colors flex items-center gap-1 mx-auto font-medium focus:outline-none"
-              >
-                <span>{this.state.showDetails ? "Hide" : "Show"} diagnostics</span>
-                <svg
-                  className={`w-3.5 h-3.5 transform transition-transform ${this.state.showDetails ? "rotate-180" : ""}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+            {/* Diagnostics Section - DEV ONLY */}
+            {import.meta.env.DEV && (
+              <div className="pt-4 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={this.toggleDetails}
+                  className="text-xs text-nc-secondary hover:text-white transition-colors flex items-center gap-1 mx-auto font-medium focus:outline-none"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+                  <span>{this.state.showDetails ? "Hide" : "Show"} diagnostics</span>
+                  <svg
+                    className={`w-3.5 h-3.5 transform transition-transform ${this.state.showDetails ? "rotate-180" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-              {this.state.showDetails && (
-                <div className="text-left mt-4 p-4 rounded-2xl bg-black/45 text-nc-secondary font-mono text-[10px] space-y-2 overflow-x-auto max-h-48 border border-white/5 scrollbar-thin">
-                  <div className="flex justify-between border-b border-white/5 pb-1">
-                    <span className="text-white/40 uppercase font-black text-[8px] tracking-wider">Route</span>
-                    <span className="text-white/80">{window.location.pathname}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-white/5 pb-1">
-                    <span className="text-white/40 uppercase font-black text-[8px] tracking-wider">Version</span>
-                    <span className="text-white/80">{localVersion}</span>
-                  </div>
-                  <div className="flex flex-col border-b border-white/5 pb-1">
-                    <span className="text-white/40 uppercase font-black text-[8px] tracking-wider mb-1">User Agent</span>
-                    <span className="text-white/80 break-all leading-normal">{navigator.userAgent}</span>
-                  </div>
-                  {this.state.error && (
-                    <div className="flex flex-col pt-1">
-                      <span className="text-white/40 uppercase font-black text-[8px] tracking-wider mb-1">Error Trace</span>
-                      <span className="text-red-400/90 whitespace-pre-wrap leading-normal break-all">{this.state.error.stack || this.state.error.toString()}</span>
+                {this.state.showDetails && (
+                  <div className="text-left mt-4 p-4 rounded-2xl bg-black/45 text-nc-secondary font-mono text-[10px] space-y-2 overflow-x-auto max-h-48 border border-white/5 scrollbar-thin">
+                    <div className="flex justify-between border-b border-white/5 pb-1">
+                      <span className="text-white/40 uppercase font-black text-[8px] tracking-wider">Route</span>
+                      <span className="text-white/80">{window.location.pathname}</span>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
+                    <div className="flex justify-between border-b border-white/5 pb-1">
+                      <span className="text-white/40 uppercase font-black text-[8px] tracking-wider">Version</span>
+                      <span className="text-white/80">{localVersion}</span>
+                    </div>
+                    <div className="flex flex-col border-b border-white/5 pb-1">
+                      <span className="text-white/40 uppercase font-black text-[8px] tracking-wider mb-1">User Agent</span>
+                      <span className="text-white/80 break-all leading-normal">{navigator.userAgent}</span>
+                    </div>
+                    {this.state.error && (
+                      <div className="flex flex-col pt-1">
+                        <span className="text-white/40 uppercase font-black text-[8px] tracking-wider mb-1">Error Trace</span>
+                        <span className="text-red-400/90 whitespace-pre-wrap leading-normal break-all">{this.state.error.stack || this.state.error.toString()}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       );

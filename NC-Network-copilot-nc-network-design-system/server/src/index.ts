@@ -18,9 +18,12 @@ import bcrypt from 'bcryptjs';
 import * as nodemailer from 'nodemailer';
 import twilio from 'twilio';
 
-// Load env from current directory first, then fallback to parent directory
+// Load env from current directory first, then fallback to server and parent directories
 dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../../.env.server') });
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env.server') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 type AuthedRequest<
   TParams = Record<string, string>,
@@ -85,6 +88,25 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 const bucket = admin.storage().bucket();
+
+const configureCloudinary = () => {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (cloudName && apiKey && apiSecret) {
+    cloudinary.config({
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret,
+    });
+    console.log("🚀 Cloudinary initialized successfully on server boot.");
+  } else {
+    console.warn("⚠️ Cloudinary credentials are not fully configured in environment variables.");
+  }
+};
+configureCloudinary();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
@@ -461,10 +483,10 @@ const uploadToCloudinary = (fileBuffer: Buffer, mimeType: string, folder: string
     const isVideo = mimeType.startsWith('video/');
     const resourceType = isVideo ? 'video' : 'image';
 
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.VITE_CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY || process.env.VITE_CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET || process.env.VITE_CLOUDINARY_API_SECRET;
-    const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || process.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
 
     console.log(`[Cloudinary] Starting upload. Mime: ${mimeType}, Folder: ${folder}, CloudName: ${cloudName}, HasKey: ${!!apiKey}, HasSecret: ${!!apiSecret}, Preset: ${uploadPreset}`);
 
@@ -536,7 +558,7 @@ const uploadToCloudinary = (fileBuffer: Buffer, mimeType: string, folder: string
         reject(new Error(`Cloudinary unsigned upload failed: ${errMsg}`));
       }
     } else {
-      reject(new Error('Cloudinary is not configured on the server. Please define VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET or CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.'));
+      reject(new Error('Cloudinary is not configured on the server. Please define CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET or CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.'));
     }
   });
 };
@@ -589,10 +611,198 @@ app.post('/api/upload', verifyToken, uploadLimiter, upload.single('file'), async
   }
 });
 
+// Upload avatar
+app.post('/api/upload/avatar', verifyToken, uploadLimiter, upload.single('avatar'), async (req: AuthedRequest, res: Response) => {
+  try {
+    if (!req.file || !req.user) {
+      res.status(400).json({ error: 'No file provided' });
+      return;
+    }
+
+    const userId = req.user.uid;
+
+    // Convert buffer to base64
+    const b64 = Buffer.from(req.file.buffer).toString('base64');
+    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+
+    // Upload to Cloudinary with auto-optimization
+    const result = await cloudinary.uploader.upload(dataURI, {
+      folder: `nc-network/avatars/${userId}`,
+      public_id: 'profile',
+      overwrite: true,
+      transformation: [
+        { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+        { quality: 'auto', fetch_format: 'auto' },
+      ],
+    });
+
+    // Save URL to Firestore in both users and profiles collections
+    const userRef = db.collection('users').doc(userId);
+    const profileRef = db.collection('profiles').doc(userId);
+
+    await db.runTransaction(async (transaction) => {
+      transaction.update(userRef, { photoURL: result.secure_url, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+      transaction.update(profileRef, { image: result.secure_url, photoURL: result.secure_url, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+    });
+
+    res.json({ 
+      success: true, 
+      url: result.secure_url 
+    });
+  } catch (error: any) {
+    console.error('Avatar upload error:', error);
+    res.status(500).json({ error: error.message || 'Upload failed' });
+  }
+});
+
+// Upload casting banner
+app.post('/api/upload/casting/:castingId', verifyToken, upload.single('banner'), async (req: AuthedRequest, res: Response) => {
+  try {
+    if (!req.file || !req.user) {
+      res.status(400).json({ error: 'No file provided' });
+      return;
+    }
+
+    const { castingId } = req.params;
+    const userId = req.user.uid;
+
+    // Verify ownership
+    if (castingId !== 'new') {
+      const castingDoc = await db.collection('casting_calls').doc(castingId).get();
+      if (!castingDoc.exists) {
+        res.status(404).json({ error: 'Casting call not found' });
+        return;
+      }
+      if (castingDoc.data()?.createdBy !== userId) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+    }
+
+    const b64 = Buffer.from(req.file.buffer).toString('base64');
+    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+
+    const result = await cloudinary.uploader.upload(dataURI, {
+      folder: `nc-network/castings/${castingId}`,
+      public_id: 'banner',
+      overwrite: true,
+      transformation: [
+        { width: 1200, height: 600, crop: 'fill' },
+        { quality: 'auto', fetch_format: 'auto' },
+      ],
+    });
+
+    res.json({ 
+      success: true, 
+      url: result.secure_url 
+    });
+  } catch (error: any) {
+    console.error('Casting banner upload error:', error);
+    res.status(500).json({ error: error.message || 'Upload failed' });
+  }
+});
+
+// Upload media (photos + videos)
+app.post('/api/upload/media', verifyToken, uploadLimiter, upload.array('media', 10), async (req: AuthedRequest, res: Response) => {
+  try {
+    if (!req.files || !req.user) {
+      res.status(400).json({ error: 'No files provided' });
+      return;
+    }
+
+    const files = req.files as Express.Multer.File[];
+    const userId = req.user.uid;
+    const results = [];
+
+    for (const file of files) {
+      const b64 = Buffer.from(file.buffer).toString('base64');
+      const dataURI = `data:${file.mimetype};base64,${b64}`;
+      
+      const isVideo = file.mimetype.startsWith('video/');
+      
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder: `nc-network/media/${userId}`,
+        resource_type: isVideo ? 'video' : 'image',
+        transformation: isVideo ? [] : [
+          { width: 1080, quality: 'auto', fetch_format: 'auto' }
+        ],
+      });
+
+      // Save to Firestore users -> media subcollection
+      const mediaRef = await db
+        .collection('users').doc(userId)
+        .collection('media').add({
+          url: result.secure_url,
+          publicId: result.public_id,
+          type: isVideo ? 'video' : 'image',
+          width: result.width,
+          height: result.height,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      results.push({ 
+        id: mediaRef.id, 
+        url: result.secure_url 
+      });
+    }
+
+    res.json({ success: true, files: results });
+  } catch (error: any) {
+    console.error('Media upload error:', error);
+    res.status(500).json({ error: error.message || 'Upload failed' });
+  }
+});
+
+// Delete media
+app.delete('/api/upload/media/:mediaId', verifyToken, async (req: AuthedRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const userId = req.user.uid;
+    const { mediaId } = req.params;
+
+    const mediaDoc = await db
+      .collection('users').doc(userId)
+      .collection('media').doc(mediaId).get();
+
+    if (!mediaDoc.exists) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+
+    const publicId = mediaDoc.data()?.publicId;
+    const mediaType = mediaDoc.data()?.type || 'image';
+
+    // Delete from Cloudinary
+    if (publicId) {
+      await cloudinary.uploader.destroy(publicId, {
+        resource_type: mediaType === 'video' ? 'video' : 'image'
+      });
+    }
+
+    // Delete from Firestore
+    await mediaDoc.ref.delete();
+
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Media deletion error:', error);
+    res.status(500).json({ error: error.message || 'Delete failed' });
+  }
+});
+
 app.get('/api/admin/users', verifyToken, isAdmin, async (req: AuthedRequest, res: Response) => {
   try {
     const snapshot = await db.collection('profiles').get();
-    const users = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const users = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      // Remove sensitive properties
+      delete data.twoFactorBackupCodes;
+      delete data.twoFactorSecret;
+      return { id: doc.id, ...data };
+    });
     res.json(users);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch users';
@@ -600,36 +810,58 @@ app.get('/api/admin/users', verifyToken, isAdmin, async (req: AuthedRequest, res
   }
 });
 
+const AdminLogSchema = z.object({
+  action: z.string().min(1).max(200),
+  targetId: z.string().max(200).optional(),
+  details: z.record(z.string(), z.unknown()).optional(),
+});
+
 app.post('/api/admin/log', verifyToken, isAdmin, async (req: AuthedRequest, res: Response) => {
   try {
-    const { action, targetId, details } = req.body as any;
+    const validated = AdminLogSchema.parse(req.body);
     const adminEmail = req.user?.email || "Unknown Admin";
 
     await db.collection('admin_logs').add({
       adminEmail,
-      action,
-      targetId,
-      details,
+      action: validated.action,
+      targetId: validated.targetId || null,
+      details: validated.details || {},
       timestamp: admin.firestore.FieldValue.serverTimestamp()
     });
     res.json({ success: true });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to write admin log';
-    res.status(500).json({ error: message });
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.issues });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to write admin log' });
   }
 });
 
+const AdminSettingsSchema = z.object({
+  maintenanceMode: z.boolean().optional(),
+  registrationOpen: z.boolean().optional(),
+  maxUploadSizeMB: z.number().min(1).max(100).optional(),
+  allowedFileTypes: z.array(z.string().max(50)).max(20).optional(),
+  siteName: z.string().max(200).optional(),
+  supportEmail: z.string().email().optional(),
+  maxMessageLength: z.number().min(1).max(10000).optional(),
+}).passthrough();
+
 app.post('/api/admin/settings', verifyToken, isAdmin, async (req: AuthedRequest, res: Response) => {
   try {
-    const settings = req.body as any;
+    const settings = AdminSettingsSchema.parse(req.body);
     await db.collection('settings').doc('global').set({
       ...settings,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     res.json({ success: true });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to update global settings';
-    res.status(500).json({ error: message });
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.issues });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to update global settings' });
   }
 });
 
@@ -640,7 +872,13 @@ app.get('/api/profile/:uid', verifyToken, async (req: AuthedRequest<{ uid: strin
       res.status(404).send('Profile not found');
       return;
     }
-    res.json(docRef.data());
+    const data = docRef.data();
+    if (data) {
+      // Remove sensitive properties
+      delete data.twoFactorBackupCodes;
+      delete data.twoFactorSecret;
+    }
+    res.json(data);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch profile';
     res.status(500).json({ error: message });
@@ -683,14 +921,26 @@ app.post('/api/profile', verifyToken, async (req: AuthedRequest, res: Response) 
   }
 });
 
-app.get('/api/casting', async (req: Request<{}, unknown, unknown, { filter?: string }>, res: Response) => {
+app.get('/api/casting', async (req: Request, res: Response) => {
   try {
-    const filter = req.query.filter;
+    const filter = req.query.filter as string | undefined;
+    const limitVal = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10), 100) : 50;
+    const lastDocId = req.query.lastDocId as string | undefined;
+
     let castingQuery = db.collection('casting_calls').orderBy('createdAt', 'desc');
 
     if (filter && filter !== 'All' && filter !== 'Saved') {
       castingQuery = castingQuery.where('type', '==', filter);
     }
+
+    if (lastDocId) {
+      const lastDoc = await db.collection('casting_calls').doc(lastDocId).get();
+      if (lastDoc.exists) {
+        castingQuery = castingQuery.startAfter(lastDoc);
+      }
+    }
+
+    castingQuery = castingQuery.limit(limitVal);
 
     const snapshot = await castingQuery.get();
     const calls = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -713,6 +963,12 @@ app.post('/api/casting', verifyToken, async (req: AuthedRequest, res: Response) 
     const { id, ...dataToSave } = validatedData;
 
     if (id) {
+      // SECURITY FIX: Verify ownership before overwriting existing casting call
+      const existingDoc = await db.collection('casting_calls').doc(id).get();
+      if (existingDoc.exists && existingDoc.data()?.createdBy !== uid) {
+        res.status(403).json({ error: 'Forbidden: You do not own this casting call' });
+        return;
+      }
       await db.collection('casting_calls').doc(id).set({
         ...dataToSave,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -849,17 +1105,14 @@ app.post('/api/messaging/conversations', verifyToken, async (req: AuthedRequest,
         pushSent: true
       });
 
-      const tokensSnapshot = await db.collection('users')
-        .where(admin.firestore.FieldPath.documentId(), 'in', [otherParticipantId])
-        .get();
-
+      const tokenDoc = await db.collection('users').doc(otherParticipantId).collection('private').doc('settings').get();
       const allTokens: string[] = [];
-      tokensSnapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.fcmTokens && Array.isArray(data.fcmTokens)) {
+      if (tokenDoc.exists) {
+        const data = tokenDoc.data();
+        if (data?.fcmTokens && Array.isArray(data.fcmTokens)) {
           allTokens.push(...data.fcmTokens);
         }
-      });
+      }
 
       if (allTokens.length > 0) {
         const messagePayload = {
@@ -1046,24 +1299,16 @@ app.post(
         lastMessageRead: false,
       };
 
-      // Update readBy map (sender read: true, others: false)
-      const readBy: Record<string, boolean> = {};
-      participants.forEach((pId: string) => {
-        readBy[pId] = pId === uid;
-      });
-      convoUpdate.readBy = readBy;
+      // SECURITY & PERFORMANCE FIX: Use atomic FieldValue.increment and dot notation to prevent race conditions
+      convoUpdate[`readBy.${uid}`] = true;
+      convoUpdate[`unreadCounts.${uid}`] = 0;
 
-      // Update unreadCounts map (increment for others)
-      const currentUnreadCounts = convoDoc.data()?.unreadCounts || {};
-      const newUnreadCounts: Record<string, number> = {};
       participants.forEach((pId: string) => {
-        if (pId === uid) {
-          newUnreadCounts[pId] = 0;
-        } else {
-          newUnreadCounts[pId] = (currentUnreadCounts[pId] || 0) + 1;
+        if (pId !== uid) {
+          convoUpdate[`readBy.${pId}`] = false;
+          convoUpdate[`unreadCounts.${pId}`] = admin.firestore.FieldValue.increment(1);
         }
       });
-      convoUpdate.unreadCounts = newUnreadCounts;
 
       await db.collection('conversations')
         .doc(req.params.conversationId)
@@ -1119,17 +1364,16 @@ app.post(
           });
         }
 
-        const tokensSnapshot = await db.collection('users')
-          .where(admin.firestore.FieldPath.documentId(), 'in', otherParticipants)
-          .get();
-
         const allTokens: string[] = [];
-        tokensSnapshot.forEach(doc => {
-          const data = doc.data();
-          if (data.fcmTokens && Array.isArray(data.fcmTokens)) {
-            allTokens.push(...data.fcmTokens);
+        await Promise.all(otherParticipants.map(async (pId) => {
+          const tokenDoc = await db.collection('users').doc(pId).collection('private').doc('settings').get();
+          if (tokenDoc.exists) {
+            const data = tokenDoc.data();
+            if (data?.fcmTokens && Array.isArray(data.fcmTokens)) {
+              allTokens.push(...data.fcmTokens);
+            }
           }
-        });
+        }));
 
         if (allTokens.length > 0) {
           const preview = formatMessagePreview(validatedData.text);
@@ -1368,10 +1612,12 @@ app.put('/api/messaging/:conversationId/read', verifyToken, async (req: AuthedRe
     const convo = await assertParticipant(req.params.conversationId, uid, res);
     if (!convo) return;
 
+    // SECURITY FIX: Use correct field name 'unreadCounts' (with 's') to match message send code
     await db.collection('conversations')
       .doc(req.params.conversationId)
       .update({
-        [`unreadCount.${uid}`]: 0,
+        [`unreadCounts.${uid}`]: 0,
+        [`readBy.${uid}`]: true,
         [`lastReadAt.${uid}`]: admin.firestore.FieldValue.serverTimestamp(),
       });
     res.json({ success: true });
@@ -1414,10 +1660,10 @@ app.post('/api/notifications/register-token', verifyToken, async (req: AuthedReq
       return;
     }
 
-    const userRef = db.collection('users').doc(req.user.uid);
+    const privateSettingsRef = db.collection('users').doc(req.user.uid).collection('private').doc('settings');
     await db.runTransaction(async (transaction) => {
-      const userSnapshot = await transaction.get(userRef);
-      const existingRaw = userSnapshot.data()?.fcmTokens;
+      const settingsSnapshot = await transaction.get(privateSettingsRef);
+      const existingRaw = settingsSnapshot.data()?.fcmTokens;
       const existingTokens = Array.isArray(existingRaw)
         ? existingRaw.filter((item): item is string => typeof item === 'string')
         : [];
@@ -1430,7 +1676,7 @@ app.post('/api/notifications/register-token', verifyToken, async (req: AuthedReq
         throw new Error(FCM_TOKEN_LIMIT_REACHED);
       }
 
-      transaction.set(userRef, {
+      transaction.set(privateSettingsRef, {
         fcmTokens: admin.firestore.FieldValue.arrayUnion(token),
       }, { merge: true });
     });
@@ -1615,7 +1861,8 @@ app.post('/api/2fa/send-setup-otp', verifyToken, async (req: AuthedRequest, res:
     }
 
     // Local debug print (safe console-only, never sent to client)
-    console.log(`[2FA OTP Setup] Method: ${method}, Destination: ${method === 'email' ? targetEmail : targetPhone}, Code: ${code}`);
+    // SECURITY FIX: Never log OTP codes — log only that an OTP was sent
+    console.log(`[2FA OTP Setup] Method: ${method}, Destination: ${method === 'email' ? targetEmail : targetPhone}, OTP sent successfully`);
 
     res.json({
       success: true,
@@ -1649,18 +1896,20 @@ app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
     // Verify 2FA is actually enabled for this user
     const userDoc = await db.collection('users').doc(userId).get();
     const userData = userDoc.data() || {};
-    const profileDoc = await db.collection('profiles').doc(userId).get();
-    const profileData = profileDoc.data() || {};
+    
+    // SECURITY FIX: Read 2FA settings from private settings document
+    const privateSettingsDoc = await db.collection('users').doc(userId).collection('private').doc('settings').get();
+    const privateSettingsData = privateSettingsDoc.data() || {};
 
-    const twoFactorEnabled = userData.twoFactorEnabled || profileData.twoFactorEnabled;
+    const twoFactorEnabled = userData.twoFactorEnabled || privateSettingsData.twoFactorEnabled;
     if (!twoFactorEnabled) {
       res.status(400).json({ error: '2FA not enabled for this account' });
       return;
     }
 
-    const twoFactorMethod = method || profileData.twoFactorMethod || userData.twoFactorMethod || 'sms';
-    const targetEmail = profileData.twoFactorEmail || userData.email || email;
-    const targetPhone = profileData.twoFactorPhone || userData.phone || '';
+    const twoFactorMethod = method || privateSettingsData.twoFactorMethod || userData.twoFactorMethod || 'sms';
+    const targetEmail = privateSettingsData.twoFactorEmail || userData.email || email;
+    const targetPhone = privateSettingsData.twoFactorPhone || userData.phone || '';
 
     // Rate limiting — prevent OTP spam
     const existingOTP = await db.collection('otpCodes').doc(userId).get();
@@ -1701,7 +1950,8 @@ app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
     }
 
     // Local debug print (safe console-only, never sent to client)
-    console.log(`[2FA OTP Login] Method: ${twoFactorMethod}, Destination: ${twoFactorMethod === 'email' ? targetEmail : targetPhone}, Code: ${code}`);
+    // SECURITY FIX: Never log OTP codes — log only that an OTP was sent
+    console.log(`[2FA OTP Login] Method: ${twoFactorMethod}, Destination: ${twoFactorMethod === 'email' ? targetEmail : targetPhone}, OTP sent successfully`);
 
     res.json({
       success: true,
@@ -1716,24 +1966,28 @@ app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
 });
 
 // ─── VERIFY OTP (NEW MERGED ENDPOINT) ───
-app.post('/api/2fa/verify-otp', async (req: Request, res: Response) => {
+// SECURITY FIX: Require authentication to prevent arbitrary userId submission
+app.post('/api/2fa/verify-otp', verifyToken, async (req: AuthedRequest<any, any>, res: Response) => {
   try {
-    const { userId, code } = req.body;
+    // SECURITY FIX: Use authenticated user's UID instead of client-supplied userId
+    const userId = req.user?.uid;
+    const { code } = req.body;
 
     if (!userId || !code) {
-      res.status(400).json({ error: 'Missing userId or code' });
+      res.status(400).json({ error: 'Missing authentication or code' });
       return;
     }
 
     // Backup code check (8 digits)
     if (code.toString().length === 8) {
-      const profileDoc = await db.collection('profiles').doc(userId).get();
-      if (profileDoc.exists) {
-        const backupCodes = profileDoc.data()?.twoFactorBackupCodes || [];
+      const privateSettingsRef = db.collection('users').doc(userId).collection('private').doc('settings');
+      const privateSettingsDoc = await privateSettingsRef.get();
+      if (privateSettingsDoc.exists) {
+        const backupCodes = privateSettingsDoc.data()?.twoFactorBackupCodes || [];
         if (backupCodes.includes(code.toString())) {
           // Remove used code
           const updatedBackupCodes = backupCodes.filter((c: string) => c !== code.toString());
-          await db.collection('profiles').doc(userId).set({
+          await privateSettingsRef.set({
             twoFactorBackupCodes: updatedBackupCodes
           }, { merge: true });
 
@@ -1844,8 +2098,8 @@ app.post('/api/2fa/verify-setup-otp', verifyToken, async (req: AuthedRequest, re
       Math.floor(10000000 + Math.random() * 90000000).toString()
     );
 
-    // Save configuration to profiles
-    await db.collection('profiles').doc(uid).set({
+    // SECURITY FIX: Save configuration to private settings
+    await db.collection('users').doc(uid).collection('private').doc('settings').set({
       twoFactorEnabled: true,
       twoFactorMethod: method,
       twoFactorPhone: phone || null,
@@ -1874,7 +2128,19 @@ app.post('/api/2fa/verify-setup-otp', verifyToken, async (req: AuthedRequest, re
 // ─── VERIFY LOGIN OTP (BACKWARDS COMPATIBILITY) ───
 app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
   try {
-    const { email, code, useBackupCode } = req.body;
+    const { email, password, code, useBackupCode } = req.body;
+
+    // SECURITY FIX: Re-verify password alongside OTP to prevent blind brute-force
+    if (!email || !password) {
+      res.status(400).json({ error: 'Email and password are required' });
+      return;
+    }
+    const credentialsValid = await verifyCredentials(email, password);
+    if (!credentialsValid) {
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
     const userRecord = await admin.auth().getUserByEmail(email);
     const uid = userRecord.uid;
 
@@ -1891,13 +2157,14 @@ app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
     }
 
     if (useBackupCode) {
-      const profileDoc = await db.collection('profiles').doc(uid).get();
-      const backupCodes = profileDoc.data()?.twoFactorBackupCodes || [];
+      const privateSettingsRef = db.collection('users').doc(uid).collection('private').doc('settings');
+      const privateSettingsDoc = await privateSettingsRef.get();
+      const backupCodes = privateSettingsDoc.data()?.twoFactorBackupCodes || [];
       
       if (backupCodes.includes(code)) {
         // Remove code from array
         const updatedBackupCodes = backupCodes.filter((c: string) => c !== code);
-        await db.collection('profiles').doc(uid).set({
+        await privateSettingsRef.set({
           twoFactorBackupCodes: updatedBackupCodes
         }, { merge: true });
 
@@ -1981,8 +2248,8 @@ app.post('/api/2fa/enable', verifyToken, async (req: AuthedRequest, res: Respons
     // Clean up OTP
     await db.collection('otpCodes').doc(userId).delete();
 
-    // Enable 2FA on user's profile and user record
-    await db.collection('profiles').doc(userId).set({
+    // Enable 2FA on user's private settings
+    await db.collection('users').doc(userId).collection('private').doc('settings').set({
       twoFactorEnabled: true,
       twoFactorMethod: method,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -2010,7 +2277,8 @@ app.post('/api/2fa/disable', verifyToken, async (req: AuthedRequest, res: Respon
       return;
     }
 
-    await db.collection('profiles').doc(userId).set({
+    // SECURITY FIX: Disable 2FA in private settings
+    await db.collection('users').doc(userId).collection('private').doc('settings').set({
       twoFactorEnabled: false,
       twoFactorMethod: null,
       twoFactorPhone: null,
@@ -2046,7 +2314,9 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
     res.status(400).json({ error: error.issues });
     return;
   }
-  res.status(500).json({ error: error instanceof Error ? error.message : 'Unexpected server error' });
+  // SECURITY FIX: Never expose internal error details to the client
+  console.error('[Unhandled Error Detail]:', error instanceof Error ? error.message : error);
+  res.status(500).json({ error: 'An unexpected error occurred. Please try again later.' });
 });
 
 const startupTime = admin.firestore.Timestamp.now();
@@ -2069,8 +2339,8 @@ function startFirestoreListeners() {
             const recipientId = notif.recipientId || notif.userId || notif.receiverId;
             if (!recipientId) return;
 
-            const userDoc = await db.collection('users').doc(recipientId).get();
-            const fcmTokens = userDoc.data()?.fcmTokens;
+            const settingsDoc = await db.collection('users').doc(recipientId).collection('private').doc('settings').get();
+            const fcmTokens = settingsDoc.data()?.fcmTokens;
 
             if (fcmTokens && Array.isArray(fcmTokens) && fcmTokens.length > 0) {
               const payload = {
@@ -2115,8 +2385,8 @@ function startFirestoreListeners() {
             const calleeId = call.calleeId;
             if (!calleeId) return;
 
-            const userDoc = await db.collection('users').doc(calleeId).get();
-            const fcmTokens = userDoc.data()?.fcmTokens;
+            const settingsDoc = await db.collection('users').doc(calleeId).collection('private').doc('settings').get();
+            const fcmTokens = settingsDoc.data()?.fcmTokens;
 
             if (fcmTokens && Array.isArray(fcmTokens) && fcmTokens.length > 0) {
               const payload = {
@@ -2205,6 +2475,186 @@ function startFirestoreListeners() {
       console.error("[Casting Alert] Casting calls listener error:", error);
     });
 }
+
+// ─── Data Export Endpoints ───────────────────────────────────────────────────────
+
+// 1. Admin Approve request: generate secure random token, store in one_time_tokens, send email with link
+app.post('/api/admin/data-export/approve', verifyToken, isAdmin, async (req: AuthedRequest<any, any>, res: Response) => {
+  try {
+    const { requestId } = req.body;
+    if (!requestId || typeof requestId !== 'string') {
+      res.status(400).send('Bad Request: Missing requestId');
+      return;
+    }
+
+    const requestRef = db.collection('data_export_requests').doc(requestId);
+    const requestDoc = await requestRef.get();
+
+    if (!requestDoc.exists) {
+      res.status(404).send('Not Found: Request not found');
+      return;
+    }
+
+    const requestData = requestDoc.data();
+    if (requestData?.status !== 'pending') {
+      res.status(400).send('Bad Request: Request is not in pending status');
+      return;
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours from now
+
+    // Store secure one-time token
+    await db.collection('one_time_tokens').doc(token).set({
+      uid: requestData.uid,
+      email: requestData.email,
+      requestId: requestId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      expiresAt: expiresAt,
+      used: false,
+    });
+
+    // Update data request status
+    await requestRef.update({
+      status: 'approved',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Send email with secure tokenized link
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const downloadLink = `${frontendUrl}/api/data-export/download?token=${token}`;
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"NC Network Security" <${process.env.EMAIL_USER}>`,
+      to: requestData.email,
+      subject: 'Your Data Archive is Ready for Download',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px; background-color: #0b0b0c; color: #fff;">
+          <h2 style="color: #FFD700;">NC Network</h2>
+          <p style="color: #ccc;">Your request to download your account data has been approved.</p>
+          <p style="color: #ccc;">You can download your archive by clicking the button below. This link is valid for <strong>24 hours</strong> and can only be used <strong>once</strong>.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${downloadLink}" style="background-color: #00BFFF; color: #000; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 6px; display: inline-block;">
+              Download Data Archive
+            </a>
+          </div>
+          <p style="color: #999; font-size: 11px;">
+            If the button doesn't work, copy and paste this link into your browser:<br/>
+            <a href="${downloadLink}" style="color: #00BFFF;">${downloadLink}</a>
+          </p>
+          <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;"/>
+          <p style="color: #666; font-size: 11px;">
+            If you did not request this data export, please contact support and update your security settings immediately.
+          </p>
+        </div>
+      `,
+    });
+
+    res.send({ success: true });
+  } catch (error: any) {
+    console.error('Data export approval error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// 2. Download endpoint (Public link, authenticated via token query parameter)
+app.get('/api/data-export/download', async (req: Request, res: Response) => {
+  try {
+    const token = req.query.token;
+    if (!token || typeof token !== 'string') {
+      res.status(400).send('Bad Request: Missing secure token');
+      return;
+    }
+
+    const tokenRef = db.collection('one_time_tokens').doc(token);
+    const tokenDoc = await tokenRef.get();
+
+    if (!tokenDoc.exists) {
+      res.status(403).send('Forbidden: Invalid secure token');
+      return;
+    }
+
+    const tokenData = tokenDoc.data();
+    if (!tokenData) {
+      res.status(403).send('Forbidden: Invalid secure token data');
+      return;
+    }
+
+    if (tokenData.used === true) {
+      res.status(403).send('Forbidden: Token has already been used');
+      return;
+    }
+
+    if (tokenData.expiresAt < Date.now()) {
+      res.status(403).send('Forbidden: Token has expired');
+      return;
+    }
+
+    // Invalidate token immediately to guarantee single use
+    await tokenRef.update({ used: true });
+
+    const uid = tokenData.uid;
+
+    // Fetch Profile
+    const profileDoc = await db.collection('profiles').doc(uid).get();
+    const profileData = profileDoc.exists ? { id: uid, ...profileDoc.data() } : null;
+
+    // Fetch Conversations & Messages
+    const convoSnap = await db.collection('conversations')
+      .where('participants', 'array-contains', uid)
+      .get();
+
+    const conversationsData = [];
+    for (const convoDoc of convoSnap.docs) {
+      const convoData = convoDoc.data();
+      const messagesSnap = await convoDoc.ref.collection('messages')
+        .orderBy('createdAt', 'asc')
+        .get();
+
+      const messages = messagesSnap.docs.map((mDoc) => {
+        const mData = mDoc.data();
+        return {
+          id: mDoc.id,
+          senderId: mData.senderId,
+          text: mData.text,
+          isSystem: mData.isSystem || false,
+          type: mData.type || 'text',
+          createdAt: mData.createdAt?.toDate?.()?.toISOString() || mData.createdAt || null,
+        };
+      });
+
+      conversationsData.push({
+        id: convoDoc.id,
+        participants: convoData.participants,
+        lastMessage: convoData.lastMessage,
+        messages,
+      });
+    }
+
+    const archive = {
+      exportedAt: new Date().toISOString(),
+      userId: uid,
+      userEmail: tokenData.email,
+      profile: profileData,
+      conversations: conversationsData,
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="nc-data-archive-${uid}-${new Date().toISOString().split('T')[0]}.json"`);
+    res.send(JSON.stringify(archive, null, 2));
+  } catch (error: any) {
+    console.error('Data export download error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`NC Network Secure API running on http://localhost:${PORT}`);

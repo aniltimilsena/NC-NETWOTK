@@ -163,9 +163,11 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     setUploadProgress(0);
 
     try {
+      // SECURITY FIX: Upload private chat attachments to a conversation-specific directory path
+      const targetPath = `conversations/${activeChatId}/attachments/${Date.now()}_${file.name}`;
       const url = await uploadProfileMedia(user.uid, file, (progress) => {
         setUploadProgress(Math.round(progress));
-      });
+      }, targetPath);
 
       if (url) {
         const fileType = file.type.startsWith('video/') ? 'video' : 'image';

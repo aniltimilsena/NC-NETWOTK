@@ -1,5 +1,6 @@
 import { collection, addDoc, query, where, getDocs, limit, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { COLLECTIONS } from '../constants/collections';
 
 export interface PasswordRules {
   length: boolean;
@@ -71,7 +72,7 @@ export async function fetchLocation() {
 
 export async function logLoginAttempt(email: string, status: 'success' | 'failed') {
   try {
-    const usersRef = collection(db, 'users');
+    const usersRef = collection(db, COLLECTIONS.USERS);
     const q = query(usersRef, where('email', '==', email.trim().toLowerCase()));
     const snap = await getDocs(q);
     
@@ -87,7 +88,7 @@ export async function logLoginAttempt(email: string, status: 'success' | 'failed
     // Check if this is a suspicious location
     let suspicious = false;
     if (status === 'success' && location !== 'Unknown Location') {
-      const historyRef = collection(db, 'profiles', uid, 'login_history');
+      const historyRef = collection(db, COLLECTIONS.PROFILES, uid, 'login_history');
       const historyQuery = query(
         historyRef, 
         where('status', '==', 'success'), 
@@ -104,7 +105,7 @@ export async function logLoginAttempt(email: string, status: 'success' | 'failed
       }
     }
     
-    const historyRef = collection(db, 'profiles', uid, 'login_history');
+    const historyRef = collection(db, COLLECTIONS.PROFILES, uid, 'login_history');
     await addDoc(historyRef, {
       timestamp: serverTimestamp(),
       os,

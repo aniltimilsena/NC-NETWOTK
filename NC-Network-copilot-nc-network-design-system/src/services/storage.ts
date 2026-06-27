@@ -17,8 +17,9 @@ export const uploadFile = async (
   const isProfilePath = path.startsWith(`profiles/${uid}/`);
   const isMediaPath = path.startsWith(`media/${uid}/`);
   const isCastingPath = path.startsWith(`castings/`);
+  const isConversationPath = path.startsWith(`conversations/`) && path.includes(`/attachments/`);
 
-  if (!isProfilePath && !isMediaPath && !isCastingPath) {
+  if (!isProfilePath && !isMediaPath && !isCastingPath && !isConversationPath) {
     throw new Error("Upload failed. Unauthorized upload path or target directory.");
   }
 
@@ -66,6 +67,14 @@ export const uploadFile = async (
     }
     if (file.size > 10 * 1024 * 1024) {
       throw new Error("File too large. Maximum banner size is 10MB");
+    }
+  } else if (isConversationPath) {
+    if (!isImage && !isVideo) {
+      throw new Error("Invalid file type. Only images and videos are allowed as message attachments");
+    }
+    const maxAllowedSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxAllowedSize) {
+      throw new Error(`File too large. Maximum size is ${isVideo ? '50MB' : '10MB'}`);
     }
   }
 

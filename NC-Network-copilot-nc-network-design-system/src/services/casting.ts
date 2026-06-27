@@ -12,18 +12,19 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import apiClient from "../api/client";
+import { COLLECTIONS } from "../constants/collections";
 
 export const getCastingCalls = async (filter?: string) => {
   try {
     let q;
     if (filter && filter.toLowerCase() !== "all") {
       q = query(
-        collection(db, "casting_calls"),
+        collection(db, COLLECTIONS.CASTING_CALLS),
         where("type", "==", filter),
         orderBy("createdAt", "desc")
       );
     } else {
-      q = query(collection(db, "casting_calls"), orderBy("createdAt", "desc"));
+      q = query(collection(db, COLLECTIONS.CASTING_CALLS), orderBy("createdAt", "desc"));
     }
     const snapshot = await getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -40,12 +41,12 @@ export const subscribeToCastingCalls = (
   let q;
   if (filter && filter.toLowerCase() !== "all") {
     q = query(
-      collection(db, "casting_calls"),
+      collection(db, COLLECTIONS.CASTING_CALLS),
       where("type", "==", filter),
       orderBy("createdAt", "desc")
     );
   } else {
-    q = query(collection(db, "casting_calls"), orderBy("createdAt", "desc"));
+    q = query(collection(db, COLLECTIONS.CASTING_CALLS), orderBy("createdAt", "desc"));
   }
 
   return onSnapshot(
@@ -63,7 +64,7 @@ export const subscribeToCastingCalls = (
 
 export const getCastingCallById = async (id: string) => {
   try {
-    const snap = await getDoc(doc(db, "casting_calls", id));
+    const snap = await getDoc(doc(db, COLLECTIONS.CASTING_CALLS, id));
     if (snap.exists()) {
       return { id: snap.id, ...snap.data() };
     }
@@ -95,9 +96,9 @@ export const createCastingCall = async (callData: any) => {
       }
 
       const { id, ...dataToSave } = callData;
-      const finalId = id || doc(collection(db, "casting_calls")).id;
+      const finalId = id || doc(collection(db, COLLECTIONS.CASTING_CALLS)).id;
 
-      await setDoc(doc(db, "casting_calls", finalId), {
+      await setDoc(doc(db, COLLECTIONS.CASTING_CALLS, finalId), {
         ...dataToSave,
         createdAt: serverTimestamp(),
         createdBy: currentUserUid,

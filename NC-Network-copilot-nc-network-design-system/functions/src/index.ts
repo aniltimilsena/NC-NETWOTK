@@ -401,8 +401,7 @@ export const sendMessage = onCall(callableOptions, async (request) => {
     logger.error("SendMessage: Internal Error", { 
       message: error.message, 
       code: error.code,
-      stack: error.stack,
-      data: request.data
+      // SECURITY FIX: Do not log user input (request.data) in production
     });
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", error.message || "Message sending failed");
@@ -571,10 +570,10 @@ export const registerNotificationToken = onCall(callableOptions, async (request)
 
   await enforceRateLimit(auth.uid, "registerNotificationToken", 20, 300);
 
-  const userRef = db.collection("users").doc(auth.uid);
+  const privateSettingsRef = db.collection("users").doc(auth.uid).collection("private").doc("settings");
   await db.runTransaction(async (transaction) => {
-    const userSnapshot = await transaction.get(userRef);
-    const existingRaw = userSnapshot.data()?.fcmTokens;
+    const settingsSnapshot = await transaction.get(privateSettingsRef);
+    const existingRaw = settingsSnapshot.data()?.fcmTokens;
     const existingTokens = Array.isArray(existingRaw)
       ? existingRaw.filter((item): item is string => typeof item === "string")
       : [];
@@ -587,7 +586,7 @@ export const registerNotificationToken = onCall(callableOptions, async (request)
     }
 
     transaction.set(
-      userRef,
+      privateSettingsRef,
       {
         fcmTokens: FieldValue.arrayUnion(parsed.data.token),
         updatedAt: FieldValue.serverTimestamp(),

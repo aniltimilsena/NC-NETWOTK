@@ -1,3 +1,10 @@
+const path = require('path');
+try {
+  require('dotenv').config({ path: path.resolve(__dirname, '../.env.server') });
+  require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+} catch (e) {
+  console.warn('dotenv not loaded:', e);
+}
 const admin = require('firebase-admin');
 
 // Initialize admin SDK using the project ID
@@ -8,13 +15,21 @@ if (!admin.apps.length) {
 }
 
 module.exports = async (req, res) => {
-  // Set CORS headers
+  // SECURITY FIX: Restrict CORS to known origins instead of wildcard
+  const allowedOrigins = [
+    'https://nc-netwotk.vercel.app',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+  ];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+    'Content-Type, Authorization'
   );
 
   if (req.method === 'OPTIONS') {

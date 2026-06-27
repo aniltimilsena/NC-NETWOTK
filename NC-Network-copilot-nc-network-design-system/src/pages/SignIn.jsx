@@ -35,6 +35,7 @@ export default function SignIn({ onNavigate, showAlert }) {
   // Real-time validation handlers
   const handleEmailChange = (val) => {
     setForm(prev => ({ ...prev, email: val }));
+    setError('');
     if (!val) {
       setValidation(prev => ({ ...prev, email: { valid: false, msg: 'Email is required.' } }));
       return;
@@ -49,6 +50,7 @@ export default function SignIn({ onNavigate, showAlert }) {
 
   const handlePasswordChange = (val) => {
     setForm(prev => ({ ...prev, password: val }));
+    setError('');
     if (!val) {
       setValidation(prev => ({ ...prev, password: { valid: false, msg: 'Password is required.' } }));
       return;
@@ -669,8 +671,9 @@ export default function SignIn({ onNavigate, showAlert }) {
                   </div>
                 ) : (
                   error && (
-                    <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-xl border border-red-500/20 font-bold">
-                      {error}
+                    <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-xl p-3.5 text-[#EF4444] text-xs sm:text-sm font-bold w-full">
+                      <span>⚠️</span>
+                      <span>{error}</span>
                     </div>
                   )
                 )}

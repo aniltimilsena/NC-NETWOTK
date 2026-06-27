@@ -16,6 +16,7 @@ import {
   getDocs,
   type Unsubscribe,
 } from "firebase/firestore";
+import { COLLECTIONS } from "../constants/collections";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ export const createCall = async (params: {
   offer: RTCSessionDescriptionInit;
 }): Promise<{ callId: string | null; error: string | null }> => {
   try {
-    const callRef = await addDoc(collection(db, "calls"), {
+    const callRef = await addDoc(collection(db, COLLECTIONS.CALLS), {
       callerId: params.callerId,
       callerName: params.callerName,
       callerPhoto: params.callerPhoto,
@@ -137,7 +138,7 @@ export const updateCallStatus = async (
     if (status === "ended" || status === "rejected" || status === "no-answer") {
       updates.endedAt = serverTimestamp();
     }
-    await updateDoc(doc(db, "calls", callId), updates);
+    await updateDoc(doc(db, COLLECTIONS.CALLS, callId), updates);
   } catch (err) {
     console.error("[CallService] updateCallStatus error:", err);
   }
@@ -151,7 +152,7 @@ export const setCallAnswer = async (
   answer: RTCSessionDescriptionInit
 ): Promise<void> => {
   try {
-    await updateDoc(doc(db, "calls", callId), {
+    await updateDoc(doc(db, COLLECTIONS.CALLS, callId), {
       answer,
       status: "accepted" as CallStatus,
       callStatus: "accepted" as CallStatus,
@@ -172,7 +173,7 @@ export const addIceCandidate = async (
   try {
     const subCol =
       role === "caller" ? "callerCandidates" : "calleeCandidates";
-    await addDoc(collection(db, "calls", callId, subCol), candidate);
+    await addDoc(collection(db, COLLECTIONS.CALLS, callId, subCol), candidate);
   } catch (err) {
     console.error("[CallService] addIceCandidate error:", err);
   }
@@ -187,7 +188,7 @@ export const subscribeToIncomingCalls = (
   callback: (call: CallDoc | null) => void
 ): Unsubscribe => {
   const q = query(
-    collection(db, "calls"),
+    collection(db, COLLECTIONS.CALLS),
     where("calleeId", "==", userId),
     where("status", "==", "pending")
   );
@@ -218,7 +219,7 @@ export const subscribeToCall = (
   callback: (call: CallDoc | null) => void
 ): Unsubscribe => {
   return onSnapshot(
-    doc(db, "calls", callId),
+    doc(db, COLLECTIONS.CALLS, callId),
     (snapshot) => {
       if (!snapshot.exists()) {
         callback(null);
@@ -246,7 +247,7 @@ export const subscribeToIceCandidates = (
     role === "caller" ? "calleeCandidates" : "callerCandidates";
 
   return onSnapshot(
-    collection(db, "calls", callId, subCol),
+    collection(db, COLLECTIONS.CALLS, callId, subCol),
     (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
@@ -267,20 +268,20 @@ export const cleanupCall = async (callId: string): Promise<void> => {
   try {
     // Delete caller candidates
     const callerCands = await getDocs(
-      collection(db, "calls", callId, "callerCandidates")
+      collection(db, COLLECTIONS.CALLS, callId, "callerCandidates")
     );
     for (const d of callerCands.docs) {
       await deleteDoc(d.ref);
     }
     // Delete callee candidates
     const calleeCands = await getDocs(
-      collection(db, "calls", callId, "calleeCandidates")
+      collection(db, COLLECTIONS.CALLS, callId, "calleeCandidates")
     );
     for (const d of calleeCands.docs) {
       await deleteDoc(d.ref);
     }
     // Finally delete the call document
-    await deleteDoc(doc(db, "calls", callId));
+    await deleteDoc(doc(db, COLLECTIONS.CALLS, callId));
   } catch (err) {
     console.error("[CallService] cleanupCall error:", err);
   }
@@ -299,14 +300,14 @@ export const getCallHistory = async (
   try {
     // Query 1: Calls where user is the caller
     const callerQuery = query(
-      collection(db, "calls"),
+      collection(db, COLLECTIONS.CALLS),
       where("callerId", "==", userId),
       limit(maxResults)
     );
 
     // Query 2: Calls where user is the callee
     const calleeQuery = query(
-      collection(db, "calls"),
+      collection(db, COLLECTIONS.CALLS),
       where("calleeId", "==", userId),
       limit(maxResults)
     );
@@ -352,13 +353,13 @@ export const subscribeToCallHistory = (
 ): Unsubscribe => {
   // We listen to calls where user is caller
   const callerQ = query(
-    collection(db, "calls"),
+    collection(db, COLLECTIONS.CALLS),
     where("callerId", "==", userId),
     limit(maxResults)
   );
 
   const calleeQ = query(
-    collection(db, "calls"),
+    collection(db, COLLECTIONS.CALLS),
     where("calleeId", "==", userId),
     limit(maxResults)
   );

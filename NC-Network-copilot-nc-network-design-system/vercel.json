@@ -5,6 +5,14 @@
       "destination": "https://nc-network-10d0b.firebaseapp.com/__/auth/:match*"
     },
     {
+      "source": "/api/send-notification",
+      "destination": "/api/send-notification"
+    },
+    {
+      "source": "/api/:match*",
+      "destination": "/api/proxy"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -22,8 +30,28 @@
           "value": "nosniff"
         },
         {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=self, microphone=self"
+        },
+        {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'self'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; connect-src 'self' https://*.firebaseio.com https://*.firebase.com https://*.googleapis.com https://freeipapi.com https://api.cloudinary.com https://onesignal.com; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com; worker-src 'self';"
         }
       ]
     },
@@ -42,4 +70,3 @@
     }
   ]
 }
-

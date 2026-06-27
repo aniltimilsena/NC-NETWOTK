@@ -5,22 +5,24 @@ import {
   updateProfile,
   sendPasswordResetEmail,
   type User,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
 } from "firebase/auth";
 import { auth, db } from "../lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { COLLECTIONS } from "../constants/collections";
 
 export const ensureUserProfile = async (user: User) => {
   try {
-    const userRef = doc(db, "users", user.uid);
-    const profileRef = doc(db, "profiles", user.uid);
+    const userRef = doc(db, COLLECTIONS.USERS, user.uid);
+    const profileRef = doc(db, COLLECTIONS.PROFILES, user.uid);
 
-    // Bootstrap user document
+    // Bootstrap user document — SECURITY: isAdmin is server-only (Cloud Functions)
     await setDoc(userRef, {
       uid: user.uid,
       name: user.displayName || "NC User",
       email: user.email,
       role: "Actor",
-      isAdmin: user.email === "aniltimilsena53@gmail.com",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }, { merge: true });
@@ -69,16 +71,16 @@ export const signUpUser = async (
 
     await updateProfile(user, { displayName: name });
 
-    const userRef = doc(db, "users", user.uid);
-    const profileRef = doc(db, "profiles", user.uid);
+    const userRef = doc(db, COLLECTIONS.USERS, user.uid);
+    const profileRef = doc(db, COLLECTIONS.PROFILES, user.uid);
 
+    // SECURITY: isAdmin is server-only (Cloud Functions / Admin SDK)
     await setDoc(userRef, {
       uid: user.uid,
       name,
       email,
       role: role || "Actor",
       gender: gender || "",
-      isAdmin: email === "aniltimilsena53@gmail.com",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }, { merge: true });
@@ -108,8 +110,36 @@ export const signInUser = async (email: string, password: string): Promise<AuthR
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { user: userCredential.user, error: null };
-  } catch (error: unknown) {
-    return { user: null, error: getErrorMessage(error) };
+  } catch (error: any) {
+    console.error('Login error code:', error?.code); // log for debugging
+
+    // These all show the SAME generic message to the user:
+    const invalidCredentialCodes = [
+      'auth/user-not-found',      // email doesn't exist
+      'auth/wrong-password',      // password wrong
+      'auth/invalid-credential',  // Firebase v9+ combined error
+      'auth/invalid-email',       // malformed email
+      'auth/user-mismatch',       // credential mismatch
+    ];
+
+    if (error?.code && invalidCredentialCodes.includes(error.code)) {
+      return { user: null, error: 'Invalid credentials. Please check your email and password.' };
+    }
+
+    // Specific messages for other error cases:
+    let message = 'Something went wrong. Please try again.';
+    switch (error?.code) {
+      case 'auth/too-many-requests':
+        message = 'Too many failed attempts. Please try again later or reset your password.';
+        break;
+      case 'auth/user-disabled':
+        message = 'This account has been disabled. Please contact support.';
+        break;
+      case 'auth/network-request-failed':
+        message = 'Network error. Please check your internet connection.';
+        break;
+    }
+    return { user: null, error: message };
   }
 };
 
@@ -128,5 +158,18 @@ export const sendPasswordReset = async (email: string): Promise<{ error: string 
     return { error: null };
   } catch (error: unknown) {
     return { error: getErrorMessage(error) };
+  }
+};
+
+export const verifyUserPassword = async (password: string): Promise<boolean> => {
+  const currentUser = auth.currentUser;
+  if (!currentUser || !currentUser.email) return false;
+  try {
+    const credential = EmailAuthProvider.credential(currentUser.email, password);
+    await reauthenticateWithCredential(currentUser, credential);
+    return true;
+  } catch (error) {
+    console.error("Re-authentication failed:", error);
+    return false;
   }
 };

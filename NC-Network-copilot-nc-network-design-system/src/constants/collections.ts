@@ -1,0 +1,21 @@
+/**
+ * Centralized Firestore collection name constants.
+ * Abstracting raw collection strings prevents database structure exposure across the codebase.
+ */
+export const COLLECTIONS = {
+  USERS: "users",
+  PROFILES: "profiles",
+  CASTING_CALLS: "casting_calls",
+  CONVERSATIONS: "conversations",
+  MESSAGES: "messages",
+  NOTIFICATIONS: "notifications",
+  CALLS: "calls",
+  APPLICATIONS: "applications",
+  SAVED_CALLS: "saved_calls",
+  REPORTS: "reports",
+  SETTINGS: "settings",
+  ADMIN_LOGS: "admin_logs",
+  FOLLOWS: "follows",
+  REVIEWS: "reviews",
+  DATA_EXPORT_REQUESTS: "data_export_requests",
+} as const;

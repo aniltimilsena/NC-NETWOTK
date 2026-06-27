@@ -14,6 +14,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import apiClient from "../api/client";
+import { COLLECTIONS } from "../constants/collections";
 
 export const sendMessage = async (
   convoId: string,
@@ -44,14 +45,14 @@ export const sendMessage = async (
       return { success: false, error: "Authentication required" };
     }
     try {
-      const convoRef = doc(db, "conversations", convoId);
+      const convoRef = doc(db, COLLECTIONS.CONVERSATIONS, convoId);
       const convoSnap = await getDoc(convoRef);
       let participants: string[] = [];
       if (convoSnap.exists()) {
         participants = convoSnap.data().participants || [];
       }
 
-      await addDoc(collection(db, "conversations", convoId, "messages"), {
+      await addDoc(collection(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES), {
         senderId: isSystem ? "system" : currentUserUid,
         text,
         type,
@@ -127,7 +128,7 @@ export const sendMessage = async (
         }
 
         for (const otherParticipantId of otherParticipants) {
-          await addDoc(collection(db, "notifications"), {
+          await addDoc(collection(db, COLLECTIONS.NOTIFICATIONS), {
             userId: otherParticipantId,
             recipientId: otherParticipantId,
             receiverId: otherParticipantId,
@@ -204,7 +205,7 @@ export const updateMessage = async (
   } catch (apiError: any) {
     console.warn("Backend updateMessage failed, attempting client-side fallback:", apiError);
     try {
-      await updateDoc(doc(db, "conversations", convoId, "messages", messageId), {
+      await updateDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES, messageId), {
         text: newText,
         isEdited: true,
         updatedAt: serverTimestamp(),
@@ -224,7 +225,7 @@ export const deleteMessage = async (convoId: string, messageId: string) => {
   } catch (apiError: any) {
     console.warn("Backend deleteMessage failed, attempting client-side fallback:", apiError);
     try {
-      await deleteDoc(doc(db, "conversations", convoId, "messages", messageId));
+      await deleteDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES, messageId));
       return { success: true, error: null };
     } catch (fallbackError: any) {
       console.error("DeleteMessage fallback failed:", fallbackError);
@@ -245,7 +246,7 @@ export const reactToMessage = async (
   } catch (apiError: any) {
     console.warn("Backend reactToMessage failed, attempting client-side fallback:", apiError);
     try {
-      const messageRef = doc(db, "conversations", convoId, "messages", messageId);
+      const messageRef = doc(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES, messageId);
       const snap = await getDoc(messageRef);
       if (snap.exists()) {
         const reactions = { ...(snap.data().reactions ?? {}) };
@@ -273,7 +274,7 @@ export const pinMessage = async (convoId: string, messageId: string, pinned: boo
   } catch (apiError: any) {
     console.warn("Backend pinMessage failed, attempting client-side fallback:", apiError);
     try {
-      await updateDoc(doc(db, "conversations", convoId, "messages", messageId), {
+      await updateDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES, messageId), {
         isPinned: pinned,
         updatedAt: serverTimestamp(),
       });
@@ -290,7 +291,7 @@ export const subscribeToMessages = (
   callback: (msgs: any) => void
 ) => {
   const q = query(
-    collection(db, "conversations", conversationId, "messages"),
+    collection(db, COLLECTIONS.CONVERSATIONS, conversationId, COLLECTIONS.MESSAGES),
     orderBy("createdAt", "asc")
   );
 
@@ -315,7 +316,7 @@ export const subscribeToConversations = (
   callback: (convos: any[]) => void
 ) => {
   const q = query(
-    collection(db, "conversations"),
+    collection(db, COLLECTIONS.CONVERSATIONS),
     where("participants", "array-contains", uid)
   );
 
@@ -413,7 +414,7 @@ export const getConversations = async (uid: string) => {
   // Keep as a one-time fetch if needed elsewhere
   try {
     const q = query(
-      collection(db, "conversations"),
+      collection(db, COLLECTIONS.CONVERSATIONS),
       where("participants", "array-contains", uid),
       orderBy("lastMessageAt", "desc")
     );
@@ -432,7 +433,7 @@ export const deleteConversation = async (convoId: string) => {
   } catch (apiError: any) {
     console.warn("Backend deleteConversation failed, attempting client-side fallback:", apiError);
     try {
-      await deleteDoc(doc(db, "conversations", convoId));
+      await deleteDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId));
       return { success: true, error: null };
     } catch (fallbackError: any) {
       console.error("DeleteConversation fallback failed:", fallbackError);
@@ -479,7 +480,7 @@ export const createConversation = async (
 
     try {
       const q = query(
-        collection(db, "conversations"),
+        collection(db, COLLECTIONS.CONVERSATIONS),
         where("participants", "array-contains", currentUserUid)
       );
       const snapshot = await getDocs(q);
@@ -496,7 +497,7 @@ export const createConversation = async (
         return { id: existing.id, error: null };
       }
 
-      const convoRef = await addDoc(collection(db, "conversations"), {
+      const convoRef = await addDoc(collection(db, COLLECTIONS.CONVERSATIONS), {
         participants: sorted,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -509,7 +510,7 @@ export const createConversation = async (
         let senderName = auth.currentUser?.displayName || "Someone";
         let senderAvatar = auth.currentUser?.photoURL || "";
         try {
-          const profileSnap = await getDoc(doc(db, "profiles", currentUserUid));
+          const profileSnap = await getDoc(doc(db, COLLECTIONS.PROFILES, currentUserUid));
           if (profileSnap.exists()) {
             const pData = profileSnap.data();
             senderName = pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || senderName;
@@ -519,7 +520,7 @@ export const createConversation = async (
           console.warn("Error fetching profile for new convo notification:", e);
         }
 
-        await addDoc(collection(db, "notifications"), {
+        await addDoc(collection(db, COLLECTIONS.NOTIFICATIONS), {
           userId: otherParticipantId,
           recipientId: otherParticipantId,
           receiverId: otherParticipantId,
@@ -591,7 +592,7 @@ export const markConversationAsRead = async (convoId: string) => {
 
     // 1. Write directly to Firestore so the UI updates immediately
     if (uid && convoId) {
-      const convoRef = doc(db, 'conversations', convoId);
+      const convoRef = doc(db, COLLECTIONS.CONVERSATIONS, convoId);
       const snap = await getDoc(convoRef);
       if (snap.exists()) {
         const data = snap.data();
