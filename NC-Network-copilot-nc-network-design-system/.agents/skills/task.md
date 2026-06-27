@@ -35,7 +35,7 @@
 - `[x]` 26. Remove user input from Cloud Functions error logs
 
 ## Optimistic Media Upload Feature
-- `[ ]` 27. Add clientMsgId to backend MessageSchema and messages database record
-- `[ ]` 28. Add clientMsgId support to frontend sendMessage service
-- `[ ]` 29. Implement optimistic sendImageMessage and retry uploads in Messages.jsx
-- `[ ]` 30. Implement circular SVG progress overlay and failed retry bubble styling in Messages.jsx
+- `[x]` 27. Add clientMsgId to backend MessageSchema and messages database record
+- `[x]` 28. Add clientMsgId support to frontend sendMessage service
+- `[x]` 29. Implement optimistic sendImageMessage and retry uploads in Messages.jsx
+- `[x]` 30. Implement circular SVG progress overlay and failed retry bubble styling in Messages.jsx
