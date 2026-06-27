@@ -59,3 +59,7 @@
 ## Proxying and Response Security
 - `[x]` 41. Implement anti-caching response headers on sensitive routes (/api/2fa and /api/admin)
 - `[x]` 42. Implement global production error sanitization middleware for 500 status codes
+
+## Vercel Security Headers
+- `[x]` 43. Update Content-Security-Policy header in vercel.json with added domains and directives
+- `[x]` 44. Update Permissions-Policy header in vercel.json to support geolocation
