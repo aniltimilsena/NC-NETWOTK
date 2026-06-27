@@ -98,10 +98,10 @@ export const useNotifications = (
           storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
           messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
           appId: import.meta.env.VITE_FIREBASE_APP_ID,
+          databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || `https://${import.meta.env.VITE_FIREBASE_PROJECT_ID}-default-rtdb.asia-southeast1.firebasedatabase.app/`,
         };
         const configStr = encodeURIComponent(JSON.stringify(config));
         
-        // Pass dynamic config query parameter. Service worker has fallback for when this is omitted.
         const registration = await navigator.serviceWorker.register(
           `/firebase-messaging-sw.js?config=${configStr}`
         );
@@ -145,7 +145,9 @@ export const useNotifications = (
         console.warn('FCM registration skipped: Notification permission denied or not granted');
       }
     } catch (error: any) {
-      console.error('FCM subscription failed:', error);
+      if (import.meta.env.DEV) {
+        console.error('FCM subscription failed:', error);
+      }
     }
   }, [user?.uid]);
 

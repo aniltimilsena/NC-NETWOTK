@@ -39,3 +39,7 @@
 - `[x]` 28. Add clientMsgId support to frontend sendMessage service
 - `[x]` 29. Implement optimistic sendImageMessage and retry uploads in Messages.jsx
 - `[x]` 30. Implement circular SVG progress overlay and failed retry bubble styling in Messages.jsx
+
+## Service Worker Security
+- `[x]` 31. Secure firebase-messaging-sw.js by parsing dynamic config parameter and removing hardcoded defaults
+- `[x]` 32. Update SW registration hook useNotifications.tsx to include databaseURL and setup environment conditional logs
