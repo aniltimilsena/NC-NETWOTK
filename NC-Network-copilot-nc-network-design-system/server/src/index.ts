@@ -565,8 +565,14 @@ const uploadToCloudinary = (fileBuffer: Buffer, mimeType: string, folder: string
 };
 
 app.get('/api/config/cloudinary', verifyToken, (req: AuthedRequest, res: Response) => {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  if (!cloudName) {
+    res.status(500).json({ error: 'Cloudinary is not configured on the server.' });
+    return;
+  }
   res.json({
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    cloudName,
+    apiKey: process.env.CLOUDINARY_API_KEY,
     uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET,
   });
 });
