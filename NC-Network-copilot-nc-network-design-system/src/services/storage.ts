@@ -1,5 +1,6 @@
 import { auth } from "../lib/firebase";
 import imageCompression from "browser-image-compression";
+import axios from "axios";
 import apiClient from "../api/client";
 
 export const uploadFile = async (
@@ -91,12 +92,29 @@ export const uploadFile = async (
     }
   }
 
-  // Try uploading to backend API first
-  const formData = new FormData();
-  formData.append("file", fileToUpload);
-
   try {
-    const response = await apiClient.post<{ url: string }>("/upload", formData, {
+    // 1. Fetch Cloudinary config from the backend
+    const configResponse = await apiClient.get<{ cloudName: string; uploadPreset: string }>("/config/cloudinary");
+    const { cloudName, uploadPreset } = configResponse.data;
+
+    if (!cloudName || !uploadPreset) {
+      throw new Error("Cloudinary configuration missing from server");
+    }
+
+    // 2. Perform direct upload to Cloudinary CDN
+    const formData = new FormData();
+    formData.append("file", fileToUpload);
+    formData.append("upload_preset", uploadPreset);
+
+    // Cloudinary folder destination
+    const folder = `nc_network/users/${uid}`;
+    formData.append("folder", folder);
+
+    const resourceType = isVideo ? "video" : "image";
+    const url = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
+
+    // Note: Use standard axios to avoid attaching Firebase Auth token to Cloudinary public servers
+    const response = await axios.post(url, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -108,12 +126,12 @@ export const uploadFile = async (
       },
     });
 
-    if (response.data && response.data.url) {
-      return response.data.url;
+    if (response.data && response.data.secure_url) {
+      return response.data.secure_url;
     }
-    throw new Error("Invalid response from upload server");
+    throw new Error("Invalid response from Cloudinary API");
   } catch (error: any) {
-    console.error("Cloudinary upload via backend failed:", error);
-    throw new Error(error.response?.data?.error || error.message || "Upload failed");
+    console.error("Direct Cloudinary upload failed:", error);
+    throw new Error(error.response?.data?.error?.message || error.message || "Upload failed");
   }
 };

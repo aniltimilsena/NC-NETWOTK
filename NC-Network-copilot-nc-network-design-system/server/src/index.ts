@@ -563,6 +563,13 @@ const uploadToCloudinary = (fileBuffer: Buffer, mimeType: string, folder: string
   });
 };
 
+app.get('/api/config/cloudinary', verifyToken, (req: AuthedRequest, res: Response) => {
+  res.json({
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET,
+  });
+});
+
 app.post('/api/upload', verifyToken, uploadLimiter, upload.single('file'), async (req: AuthedRequest, res: Response) => {
   if (!req.file || !req.user) {
     res.status(400).send('No file uploaded');
