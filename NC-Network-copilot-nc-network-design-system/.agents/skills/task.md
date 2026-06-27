@@ -43,3 +43,7 @@
 ## Service Worker Security
 - `[x]` 31. Secure firebase-messaging-sw.js by parsing dynamic config parameter and removing hardcoded defaults
 - `[x]` 32. Update SW registration hook useNotifications.tsx to include databaseURL and setup environment conditional logs
+
+## Hardcoded Credentials Elimination
+- `[x]` 33. Delete the orphaned public/test-firestore.html file
+- `[x]` 34. Secure public/firebase-messaging-sw.js by removing hardcoded fallback configurations
