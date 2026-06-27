@@ -1,5 +1,4 @@
-import { auth, storage } from "../lib/firebase";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { auth } from "../lib/firebase";
 import imageCompression from "browser-image-compression";
 import apiClient from "../api/client";
 
@@ -114,39 +113,7 @@ export const uploadFile = async (
     }
     throw new Error("Invalid response from upload server");
   } catch (error: any) {
-    console.warn("Backend upload failed, attempting client-side Firebase Storage upload fallback:", error);
-    
-    // Direct Firebase Storage client-side upload fallback
-    try {
-      const storageRef = ref(storage, path);
-      const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
-
-      return new Promise<string>((resolve, reject) => {
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            const progress = Math.round(
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-            );
-            onProgress?.(progress);
-          },
-          (err) => {
-            console.error("Firebase Storage direct upload error:", err);
-            reject(new Error(err.message || "Firebase Storage upload failed"));
-          },
-          async () => {
-            try {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(downloadURL);
-            } catch (urlErr: any) {
-              reject(urlErr);
-            }
-          }
-        );
-      });
-    } catch (fallbackError: any) {
-      console.error("Firebase Storage direct fallback failed:", fallbackError);
-      throw new Error(fallbackError.message || "Upload failed");
-    }
+    console.error("Cloudinary upload via backend failed:", error);
+    throw new Error(error.response?.data?.error || error.message || "Upload failed");
   }
 };
