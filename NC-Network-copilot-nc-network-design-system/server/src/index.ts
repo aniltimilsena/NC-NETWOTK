@@ -371,6 +371,7 @@ const MessageSchema = z.object({
     text: z.string(),
     senderId: z.string(),
   }).nullable().optional(),
+  clientMsgId: z.string().optional().nullable(),
 });
 const NotificationTokenSchema = z.object({
   token: z.string().min(50).max(4096),
@@ -1287,6 +1288,7 @@ app.post(
         reactions: {},
         read: false,
         delivered: false,
+        clientMsgId: validatedData.clientMsgId || null,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 

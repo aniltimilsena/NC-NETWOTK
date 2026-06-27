@@ -155,36 +155,110 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     };
   }, [activeChatId]);
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !activeChatId || !user?.uid) return;
+  const pendingFilesRef = useRef(new Map());
 
-    setIsUploadingMedia(true);
-    setUploadProgress(0);
+  const sendImageMessage = async (file) => {
+    if (!activeChatId || !user?.uid) return;
 
+    // Generate optimistic temp id
+    const tempId = `opt-media-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Generate local preview URL
+    const localPreviewUrl = URL.createObjectURL(file);
+
+    // Save file in pending files ref for retry logic
+    const fileType = file.type.startsWith('video/') ? 'video' : 'image';
+    pendingFilesRef.current.set(tempId, { file, fileType, localPreviewUrl });
+
+    // Create optimistic message object
+    const optimisticMessage = {
+      id: tempId,
+      senderId: user.uid,
+      text: localPreviewUrl, // local blob URL
+      type: fileType,
+      createdAt: Date.now(),
+      isOptimistic: true,
+      uploading: true,
+      uploadProgress: 0,
+      failed: false,
+    };
+
+    // Add to optimisticMessages state
+    setOptimisticMessages(prev => [...prev, optimisticMessage]);
+    setTimeout(scrollToBottom, 50);
+
+    // Trigger upload in background
+    runBackgroundUpload(tempId, file, fileType, localPreviewUrl);
+  };
+
+  const runBackgroundUpload = async (tempId, file, fileType, localPreviewUrl) => {
     try {
-      // SECURITY FIX: Upload private chat attachments to a conversation-specific directory path
       const targetPath = `conversations/${activeChatId}/attachments/${Date.now()}_${file.name}`;
+      
       const url = await uploadProfileMedia(user.uid, file, (progress) => {
-        setUploadProgress(Math.round(progress));
+        // Update ONLY the uploadProgress of this specific message
+        setOptimisticMessages(prev => prev.map(msg => 
+          msg.id === tempId ? { ...msg, uploadProgress: Math.round(progress) } : msg
+        ));
       }, targetPath);
 
-      if (url) {
-        const fileType = file.type.startsWith('video/') ? 'video' : 'image';
-        const result = await sendMessage(activeChatId, user.uid, url, false, null, fileType);
-        if (!result.success) {
-          showAlert(result.error || 'Failed to send file', 'error');
-        }
-      } else {
-        showAlert('Failed to upload file. Please try again.', 'error');
+      if (!url) {
+        throw new Error("Upload failed: No URL returned");
       }
+
+      // Send the real message via database
+      const result = await sendMessage(activeChatId, user.uid, url, false, null, fileType, tempId);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to send message after upload");
+      }
+
+      // Success: clean up from pending files and optimistic state
+      pendingFilesRef.current.delete(tempId);
+      setOptimisticMessages(prev => prev.filter(msg => msg.id !== tempId));
+      
+      // Clean up object URL to prevent memory leaks
+      try {
+        URL.revokeObjectURL(localPreviewUrl);
+      } catch (e) {
+        console.warn("Error revoking object URL:", e);
+      }
+
     } catch (err) {
-      console.error("File upload error:", err);
-      showAlert('Error uploading file.', 'error');
-    } finally {
-      setIsUploadingMedia(false);
-      setUploadProgress(0);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      console.error(`Media upload/send failed for temp message ${tempId}:`, err);
+      // Mark as failed in optimistic messages state
+      setOptimisticMessages(prev => prev.map(msg => 
+        msg.id === tempId ? { ...msg, uploading: false, failed: true } : msg
+      ));
+    }
+  };
+
+  const handleRetryUpload = async (tempMsg) => {
+    const pending = pendingFilesRef.current.get(tempMsg.id);
+    if (!pending) {
+      showAlert("Cannot retry. Upload session has expired. Please select the file again.", "error");
+      setOptimisticMessages(prev => prev.filter(msg => msg.id !== tempMsg.id));
+      return;
+    }
+
+    // Set status back to uploading
+    setOptimisticMessages(prev => prev.map(msg => 
+      msg.id === tempMsg.id ? { ...msg, uploading: true, uploadProgress: 0, failed: false } : msg
+    ));
+
+    // Restart upload
+    runBackgroundUpload(tempMsg.id, pending.file, pending.fileType, pending.localPreviewUrl);
+  };
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    files.forEach(file => {
+      sendImageMessage(file);
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -502,6 +576,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
 
   useEffect(() => {
     if (activeChatId) {
+      setOptimisticMessages([]);
       const unsubscribe = subscribeToMessages(activeChatId, (msgs) => {
         setMessages(msgs);
         setTimeout(scrollToBottom, 100);
@@ -679,6 +754,9 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     return [
       ...messages,
       ...optimisticMessages.filter(opt => {
+        const hasMatchingClientMsgId = messages.some(dbMsg => dbMsg.clientMsgId === opt.id);
+        if (hasMatchingClientMsgId) return false;
+
         const isAlreadyInDb = messages.some(dbMsg => {
           const dbTime = dbMsg.createdAt?.seconds 
             ? dbMsg.createdAt.seconds * 1000 
@@ -993,33 +1071,117 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
               {msg.type === 'image' ? (
                 <div 
                   className="relative group/img cursor-pointer"
-                  onClick={() => setLightboxUrl(msg.text)}
+                  onClick={() => {
+                    if (!msg.uploading && !msg.failed) {
+                      setLightboxUrl(msg.text);
+                    }
+                  }}
                 >
                   <img 
                     src={msg.text} 
                     alt="Shared Image" 
-                    className="max-w-full max-h-60 object-contain select-none hover:scale-[1.02] transition-transform duration-300" 
+                    className={`max-w-full max-h-60 object-contain select-none transition-all duration-300 ${msg.uploading || msg.failed ? 'blur-[2px]' : 'hover:scale-[1.02]'}`}
                     onContextMenu={(e) => e.preventDefault()}
                     onDragStart={(e) => e.preventDefault()}
                   />
-                  <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] text-white/80 flex items-center gap-1 select-none font-semibold">
-                    <span>{formatMessageTime(msgTime)}</span>
-                    {isMine && renderTicks(msg, true)}
-                  </div>
+                  {msg.uploading && (
+                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2 select-none">
+                      <svg width="48" height="48" className="-rotate-90">
+                        <circle
+                          cx="24" cy="24" r="20"
+                          fill="none"
+                          stroke="rgba(255,255,255,0.2)"
+                          strokeWidth="3.5"
+                        />
+                        <circle
+                          cx="24" cy="24" r="20"
+                          fill="none"
+                          stroke="#00BFFF"
+                          strokeWidth="3.5"
+                          strokeDasharray={2 * Math.PI * 20}
+                          strokeDashoffset={2 * Math.PI * 20 - (msg.uploadProgress / 100) * (2 * Math.PI * 20)}
+                          strokeLinecap="round"
+                          className="transition-[stroke-dashoffset] duration-200"
+                        />
+                      </svg>
+                      <span className="text-white text-xs font-bold">{msg.uploadProgress}%</span>
+                    </div>
+                  )}
+                  {msg.failed && (
+                    <div className="absolute inset-0 bg-red-950/65 flex flex-col items-center justify-center gap-1.5 select-none text-center p-2">
+                      <span className="text-lg">⚠️</span>
+                      <span className="text-white text-xs font-semibold">Failed to send</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRetryUpload(msg);
+                        }}
+                        className="bg-white text-red-600 border-none rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-md mt-1"
+                      >
+                        Tap to retry
+                      </button>
+                    </div>
+                  )}
+                  {!msg.uploading && !msg.failed && (
+                    <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] text-white/80 flex items-center gap-1 select-none font-semibold">
+                      <span>{formatMessageTime(msgTime)}</span>
+                      {isMine && renderTicks(msg, true)}
+                    </div>
+                  )}
                 </div>
               ) : msg.type === 'video' ? (
                 <div className="relative">
                   <video 
                     src={msg.text} 
-                    controls 
+                    controls={!msg.uploading && !msg.failed}
                     controlsList="nodownload"
-                    className="max-w-full max-h-60" 
+                    className={`max-w-full max-h-60 ${msg.uploading || msg.failed ? 'blur-[2px] pointer-events-none' : ''}`}
                     onContextMenu={(e) => e.preventDefault()}
                   />
-                  <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] text-white/80 flex items-center gap-1 select-none font-semibold">
-                    <span>{formatMessageTime(msgTime)}</span>
-                    {isMine && renderTicks(msg, true)}
-                  </div>
+                  {msg.uploading && (
+                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2 select-none">
+                      <svg width="48" height="48" className="-rotate-90">
+                        <circle
+                          cx="24" cy="24" r="20"
+                          fill="none"
+                          stroke="rgba(255,255,255,0.2)"
+                          strokeWidth="3.5"
+                        />
+                        <circle
+                          cx="24" cy="24" r="20"
+                          fill="none"
+                          stroke="#00BFFF"
+                          strokeWidth="3.5"
+                          strokeDasharray={2 * Math.PI * 20}
+                          strokeDashoffset={2 * Math.PI * 20 - (msg.uploadProgress / 100) * (2 * Math.PI * 20)}
+                          strokeLinecap="round"
+                          className="transition-[stroke-dashoffset] duration-200"
+                        />
+                      </svg>
+                      <span className="text-white text-xs font-bold">{msg.uploadProgress}%</span>
+                    </div>
+                  )}
+                  {msg.failed && (
+                    <div className="absolute inset-0 bg-red-950/65 flex flex-col items-center justify-center gap-1.5 select-none text-center p-2">
+                      <span className="text-lg">⚠️</span>
+                      <span className="text-white text-xs font-semibold">Failed to send</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRetryUpload(msg);
+                        }}
+                        className="bg-white text-red-600 border-none rounded-full px-3 py-1 text-[10px] font-bold cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-md mt-1"
+                      >
+                        Tap to retry
+                      </button>
+                    </div>
+                  )}
+                  {!msg.uploading && !msg.failed && (
+                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] text-white/80 flex items-center gap-1 select-none font-semibold">
+                      <span>{formatMessageTime(msgTime)}</span>
+                      {isMine && renderTicks(msg, true)}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col gap-1">
@@ -1567,12 +1729,12 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                   className="hidden" 
                   onChange={handleFileUpload} 
                   accept="image/*,video/*" 
+                  multiple={true}
                 />
                 
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploadingMedia}
-                  className="text-nc-muted hover:text-[#00BFFF] p-1 transition-colors disabled:opacity-50"
+                  className="text-nc-muted hover:text-[#00BFFF] p-1 transition-colors"
                   title="Attach Media"
                   aria-label="Attach Media"
                 >
@@ -1582,26 +1744,16 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                 </button>
 
                 <div className="flex-1 relative">
-                  {isUploadingMedia ? (
-                    <div className="w-full bg-nc-surface border border-nc-border rounded-[2rem] px-5 py-3.5 text-sm text-[#00BFFF] flex items-center justify-between">
-                      <span className="font-semibold flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-[#00BFFF] border-t-transparent rounded-full animate-spin" />
-                        Uploading media...
-                      </span>
-                      <span className="font-black text-xs">{uploadProgress}%</span>
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      id="messages-new-message"
-                      name="messages-new-message"
-                      placeholder="Type a message..."
-                      className="w-full bg-nc-surface border border-nc-border rounded-[2rem] px-5 py-3.5 text-sm text-white placeholder-nc-muted outline-none focus:border-[#00BFFF] transition-all"
-                      value={newMessage}
-                      onChange={handleInputChange}
-                      onKeyDown={handleKeyDown}
-                    />
-                  )}
+                  <input
+                    type="text"
+                    id="messages-new-message"
+                    name="messages-new-message"
+                    placeholder="Type a message..."
+                    className="w-full bg-nc-surface border border-nc-border rounded-[2rem] px-5 py-3.5 text-sm text-white placeholder-nc-muted outline-none focus:border-[#00BFFF] transition-all"
+                    value={newMessage}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                  />
                 </div>
 
                 {/* Cyan Send button */}

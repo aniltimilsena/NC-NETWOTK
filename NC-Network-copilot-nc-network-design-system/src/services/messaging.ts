@@ -22,13 +22,15 @@ export const sendMessage = async (
   text: string,
   isSystem: boolean = false,
   replyTo?: any,
-  type: "text" | "image" | "video" = "text"
+  type: "text" | "image" | "video" = "text",
+  clientMsgId?: string
 ) => {
   try {
     await apiClient.post(`/messaging/${convoId}/messages`, {
       text,
       type,
       isSystem,
+      clientMsgId,
       replyTo: replyTo
         ? {
             id: replyTo.id,
@@ -57,6 +59,7 @@ export const sendMessage = async (
         text,
         type,
         isSystem,
+        clientMsgId: clientMsgId || null,
         replyTo: replyTo
           ? {
               id: replyTo.id,

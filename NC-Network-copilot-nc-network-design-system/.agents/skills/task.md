@@ -33,3 +33,9 @@
 - `[x]` 24. Remove `firebase-admin` and `multer` from frontend `package.json`
 - `[x]` 25. Add `worker-src 'self'` to CSP
 - `[x]` 26. Remove user input from Cloud Functions error logs
+
+## Optimistic Media Upload Feature
+- `[ ]` 27. Add clientMsgId to backend MessageSchema and messages database record
+- `[ ]` 28. Add clientMsgId support to frontend sendMessage service
+- `[ ]` 29. Implement optimistic sendImageMessage and retry uploads in Messages.jsx
+- `[ ]` 30. Implement circular SVG progress overlay and failed retry bubble styling in Messages.jsx
