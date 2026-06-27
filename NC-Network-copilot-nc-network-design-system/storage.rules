@@ -37,14 +37,14 @@ service firebase.storage {
     match /castings/{castingId}/{allPaths=**} {
       allow read: if true;
       allow write: if isAuthenticated() && isValidMedia() &&
-        (!firestore.exists(/databases/$(database)/documents/casting_calls/$(castingId)) ||
-         firestore.get(/databases/$(database)/documents/casting_calls/$(castingId)).data.createdBy == request.auth.uid);
+        (!firestore.exists(/databases/(default)/documents/casting_calls/$(castingId)) ||
+         firestore.get(/databases/(default)/documents/casting_calls/$(castingId)).data.createdBy == request.auth.uid);
     }
 
     // SECURITY FIX: Private chat attachments are restricted to conversation participants only
     match /conversations/{convoId}/attachments/{fileId} {
       allow read, write: if isAuthenticated() && isValidMedia() &&
-        request.auth.uid in firestore.get(/databases/$(database)/documents/conversations/$(convoId)).data.participants;
+        request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(convoId)).data.participants;
     }
 
     // Default Deny
