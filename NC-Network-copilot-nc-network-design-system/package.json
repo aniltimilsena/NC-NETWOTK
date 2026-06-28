@@ -23,6 +23,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",
     "firebase": "^12.13.0",
+    "firebase-admin": "^14.1.0",
     "form-data": "^4.0.6",
     "framer-motion": "^12.38.0",
     "i18next": "^26.3.1",
