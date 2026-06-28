@@ -13,6 +13,7 @@ import {
   addDoc,
   deleteDoc,
   serverTimestamp,
+  arrayUnion,
 } from "firebase/firestore";
 import apiClient from "../api/client";
 import { COLLECTIONS } from "../constants/collections";
@@ -451,9 +452,18 @@ export const blockUser = async (uid: string, targetId: string) => {
     await apiClient.post(`/users/block`, { targetId });
     return { success: true, error: null };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to block user";
-    console.error("BlockUser error:", message);
-    return { success: false, error: message };
+    console.warn("Backend blockUser failed, attempting client-side fallback:", error);
+    try {
+      await updateDoc(doc(db, COLLECTIONS.USERS, uid), {
+        blockedUsers: arrayUnion(targetId),
+        updatedAt: serverTimestamp()
+      });
+      return { success: true, error: null };
+    } catch (fallbackError: any) {
+      console.error("BlockUser fallback failed:", fallbackError);
+      const message = error instanceof Error ? error.message : "Failed to block user";
+      return { success: false, error: fallbackError.message || message };
+    }
   }
 };
 

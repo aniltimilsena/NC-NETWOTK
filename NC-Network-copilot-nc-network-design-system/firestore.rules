@@ -63,9 +63,9 @@ service cloud.firestore {
         request.auth.uid in resource.data.participants &&
         request.resource.data.participants == resource.data.participants;
         
-      // Only creator can delete entire conversation
+      // Only creator or participant can delete entire conversation
       allow delete: if isSignedIn() && 
-        resource.data.createdBy == request.auth.uid;
+        (resource.data.createdBy == request.auth.uid || request.auth.uid in resource.data.participants);
 
       match /messages/{messageId} {
         allow read: if isSignedIn() && 
