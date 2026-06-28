@@ -59,8 +59,6 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Cloudinary is not configured on the server.' });
   }
 
-  // Only the public-safe values are returned.
-  // CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET are intentionally omitted.
   return res.status(200).json({ cloudName, uploadPreset });
 };
 

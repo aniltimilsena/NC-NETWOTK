@@ -551,11 +551,11 @@ const uploadToCloudinary = (fileBuffer: Buffer, mimeType: string, folder: string
       }
     } else if (cloudName && uploadPreset) {
       try {
+        const b64 = Buffer.from(fileBuffer).toString('base64');
+        const dataURI = `data:${mimeType};base64,${b64}`;
+
         const formData = new FormData();
-        const blob = new Blob([fileBuffer as any], { type: mimeType });
-        const ext = mimeType.split('/')[1] || 'bin';
-        const fileName = `upload.${ext}`;
-        formData.append('file', blob, fileName);
+        formData.append('file', dataURI);
         formData.append('upload_preset', uploadPreset);
         formData.append('folder', folder);
 

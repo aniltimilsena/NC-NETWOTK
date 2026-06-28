@@ -22,7 +22,11 @@ module.exports = async (req, res) => {
 
     // Forward the request body stream for non-GET/HEAD methods
     if (req.method !== 'GET' && req.method !== 'HEAD') {
-      options.body = req;
+      const chunks = [];
+      for await (const chunk of req) {
+        chunks.push(chunk);
+      }
+      options.body = Buffer.concat(chunks);
     }
 
     const response = await fetch(destUrl, options);
