@@ -20,11 +20,12 @@ service cloud.firestore {
     // 2FA secrets are now stored in users/{uid}/private/settings (server-only)
     match /profiles/{userId} {
       allow read: if true;
-      allow write: if isOwner(userId) &&
+      allow create, update: if (isOwner(userId) || isAdmin()) &&
         !('password' in request.resource.data) &&
         !('passwordHash' in request.resource.data) &&
         !('twoFactorBackupCodes' in request.resource.data) &&
         !('twoFactorSecret' in request.resource.data);
+      allow delete: if isOwner(userId) || isAdmin();
 
       match /sessions/{sessionId} {
         allow read, write: if isOwner(userId);
@@ -37,11 +38,12 @@ service cloud.firestore {
     // Users — SECURITY FIX: Restrict reads to owner/admin, block isAdmin writes
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId) &&
+      allow create, update: if (isOwner(userId) || isAdmin()) &&
         !('password' in request.resource.data) &&
         !('passwordHash' in request.resource.data) &&
         !('passwordReset' in request.resource.data) &&
-        !('isAdmin' in request.resource.data);
+        (isAdmin() || !('isAdmin' in request.resource.data));
+      allow delete: if isOwner(userId) || isAdmin();
       
       // Sensitive private data in subcollection
       match /private/{document} {
@@ -89,12 +91,12 @@ service cloud.firestore {
          resource.data.receiverId == request.auth.uid);
          
       allow create: if isSignedIn() && 
-        request.resource.data.senderId == request.auth.uid &&
+        (request.resource.data.senderId == request.auth.uid || isAdmin()) &&
         request.resource.data.recipientId is string &&
-        request.resource.data.type in [
+        (isAdmin() || request.resource.data.type in [
           'message', 'messages', 'follow', 'casting', 'casting_match',
           'review', 'call_missed', 'call_ended'
-        ];
+        ]);
         
       allow update, delete: if isSignedIn() && 
         (resource.data.userId == request.auth.uid || 
@@ -108,21 +110,21 @@ service cloud.firestore {
       allow create: if isSignedIn() && 
         request.resource.data.createdBy == request.auth.uid;
       allow update, delete: if isSignedIn() && 
-        resource.data.createdBy == request.auth.uid;
+        (resource.data.createdBy == request.auth.uid || isAdmin());
     }
 
     // Applications
     match /applications/{appId} {
       allow read: if isSignedIn() && 
         (resource.data.userId == request.auth.uid || 
-         resource.data.creatorId == request.auth.uid);
+         resource.data.creatorId == request.auth.uid || isAdmin());
       allow create: if isSignedIn() && 
         request.resource.data.userId == request.auth.uid;
       allow update: if isSignedIn() && 
         (resource.data.userId == request.auth.uid || 
-         resource.data.creatorId == request.auth.uid);
+         resource.data.creatorId == request.auth.uid || isAdmin());
       allow delete: if isSignedIn() && 
-        resource.data.userId == request.auth.uid;
+        (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     // Saved Calls
@@ -170,7 +172,7 @@ service cloud.firestore {
           'spam', 'harassment', 'inappropriate',
           'fake_profile', 'scam', 'other'
         ];
-      allow update, delete: if false;
+      allow update, delete: if isAdmin();
     }
 
     // Global Settings
@@ -200,7 +202,7 @@ service cloud.firestore {
       allow create: if isSignedIn() && 
         request.resource.data.reviewerId == request.auth.uid;
       allow update, delete: if isSignedIn() &&
-        resource.data.reviewerId == request.auth.uid;
+        (resource.data.reviewerId == request.auth.uid || isAdmin());
     }
 
     // Data Export Requests

@@ -1,10 +1,50 @@
 import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Routes, Route, useParams, useSearchParams, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import OneSignal from 'react-onesignal';
 import { AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import ErrorBoundary from './components/ErrorBoundary';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 import { logger } from './utils/logger';
+
+let oneSignalInitialized = false;
+
+export const initOneSignal = async () => {
+  if (oneSignalInitialized) return;
+  if (typeof window === 'undefined') return;
+
+  const ONESIGNAL_APP_ID = (import.meta.env?.VITE_ONESIGNAL_APP_ID as string) || 
+    (typeof process !== 'undefined' && process.env ? (process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || process.env.VITE_ONESIGNAL_APP_ID) : '') ||
+    "a9962176-972c-4874-8161-ec84428e9036";
+
+  try {
+    await OneSignal.init({
+      appId: ONESIGNAL_APP_ID,
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true,
+      serviceWorkerParam: {
+        scope: '/',
+      },
+    });
+
+    oneSignalInitialized = true;
+
+    if (OneSignal.Notifications) {
+      OneSignal.Notifications.addEventListener(
+        'permissionChange',
+        (permission) => {
+          if (import.meta.env.DEV) {
+            console.log('OneSignal permission:', permission);
+          }
+        }
+      );
+    }
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error('OneSignal init error:', error);
+    }
+  }
+};
 
 
 // Providers and Overlays
@@ -552,16 +592,28 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      initOneSignal();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         
         // Log in to OneSignal
         try {
-          const OneSignalDeferred = (window as any).OneSignalDeferred || [];
-          OneSignalDeferred.push(async function(OneSignal: any) {
+          if (oneSignalInitialized) {
             await OneSignal.login(firebaseUser.uid);
-          });
+          } else {
+            const OneSignalDeferred = (window as any).OneSignalDeferred || [];
+            OneSignalDeferred.push(async function(os: any) {
+              await os.login(firebaseUser.uid);
+            });
+          }
         } catch (e) {
           console.warn("OneSignal login failed:", e);
         }
@@ -597,10 +649,14 @@ export default function App() {
 
         // Log out from OneSignal
         try {
-          const OneSignalDeferred = (window as any).OneSignalDeferred || [];
-          OneSignalDeferred.push(async function(OneSignal: any) {
+          if (oneSignalInitialized) {
             await OneSignal.logout();
-          });
+          } else {
+            const OneSignalDeferred = (window as any).OneSignalDeferred || [];
+            OneSignalDeferred.push(async function(os: any) {
+              await os.logout();
+            });
+          }
         } catch (e) {
           console.warn("OneSignal logout failed:", e);
         }

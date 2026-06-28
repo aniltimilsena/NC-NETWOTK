@@ -669,10 +669,6 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           continue;
         }
       } else if (isVideo) {
-        if (file.type !== 'video/mp4') {
-          showAlert('Invalid File Type', 'error', `"${file.name}" is not a supported MP4 video format.`);
-          continue;
-        }
         if (file.size > 50 * 1024 * 1024) {
           showAlert('File Too Large', 'error', `"${file.name}" exceeds the 50MB video size limit.`);
           continue;

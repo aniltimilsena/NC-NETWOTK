@@ -210,14 +210,14 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
 
   const runBackgroundUpload = async (tempId, file, fileType, localPreviewUrl) => {
     try {
-      const targetPath = `conversations/${activeChatId}/attachments/${Date.now()}_${file.name}`;
-      
-      const url = await uploadProfileMedia(user.uid, file, (progress) => {
+      const uploadResult = await uploadChatMedia(file, activeChatId, (progress) => {
         // Update ONLY the uploadProgress of this specific message
         setOptimisticMessages(prev => prev.map(msg => 
           msg.id === tempId ? { ...msg, uploadProgress: Math.round(progress) } : msg
         ));
-      }, targetPath);
+      });
+
+      const url = uploadResult.url;
 
       if (!url) {
         throw new Error("Upload failed: No URL returned");

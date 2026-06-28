@@ -1,6 +1,6 @@
-import { auth, storage } from "../lib/firebase";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { auth } from "../lib/firebase";
 import imageCompression from "browser-image-compression";
+import { uploadMedia } from "../utils/uploadMedia";
 
 export const uploadFile = async (
   file: File,
@@ -43,9 +43,6 @@ export const uploadFile = async (
     }
   } else if (isMediaPath) {
     if (isVideo) {
-      if (file.type !== "video/mp4") {
-        throw new Error("Invalid video type. Only MP4 videos are allowed");
-      }
       if (file.size > 50 * 1024 * 1024) {
         throw new Error("File too large. Maximum video size is 50MB");
       }
@@ -91,30 +88,27 @@ export const uploadFile = async (
     }
   }
 
-  // Direct upload to Firebase Storage
-  const storageRef = ref(storage, path);
-  const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
+  // Direct upload to Cloudinary (replacing Firebase Storage)
+  let folder = "general";
+  if (isProfilePath) {
+    folder = `avatars/${uid}`;
+  } else if (isMediaPath) {
+    folder = `gallery/${uid}`;
+  } else if (isCastingPath) {
+    const parts = path.split('/');
+    const castingId = parts[1] || 'general';
+    folder = `castings/${castingId}`;
+  } else if (isConversationPath) {
+    const parts = path.split('/');
+    const convoId = parts[1] || 'general';
+    folder = `chat/${convoId}`;
+  }
 
-  return new Promise<string>((resolve, reject) => {
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress = Math.round((snapshot.bytesTransferred * 100) / snapshot.totalBytes);
-        onProgress?.(progress);
-      },
-      (error) => {
-        console.error("Firebase Storage upload failed:", error);
-        reject(new Error(error.message || "Firebase Storage upload failed"));
-      },
-      async () => {
-        try {
-          const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve(downloadUrl);
-        } catch (urlError: any) {
-          console.error("Failed to retrieve download URL:", urlError);
-          reject(new Error(urlError.message || "Failed to retrieve download URL"));
-        }
-      }
-    );
-  });
+  try {
+    const result = await uploadMedia(fileToUpload, folder, onProgress);
+    return result.url;
+  } catch (err: any) {
+    console.error("Cloudinary upload failed:", err);
+    throw new Error(err.message || "Cloudinary upload failed");
+  }
 };

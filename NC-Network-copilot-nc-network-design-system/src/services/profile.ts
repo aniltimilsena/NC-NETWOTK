@@ -1,4 +1,4 @@
-import { auth, db, storage } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import {
   doc,
   getDoc,
@@ -6,7 +6,6 @@ import {
   setDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL, getStorage } from "firebase/storage";
 import axios from "axios";
 import apiClient from "../api/client";
 import { callSecureFunction } from "../api/functionsClient";
