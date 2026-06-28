@@ -51,11 +51,11 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized: Invalid token' });
   }
 
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'du7zu8mca';
+  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || 'stored_media';
 
   if (!cloudName || !uploadPreset) {
-    console.error('[cloudinary-config] CLOUDINARY_CLOUD_NAME or CLOUDINARY_UPLOAD_PRESET not set in Vercel environment variables.');
+    console.error('[cloudinary-config] CLOUDINARY_CLOUD_NAME or CLOUDINARY_UPLOAD_PRESET not set.');
     return res.status(500).json({ error: 'Cloudinary is not configured on the server.' });
   }
 
