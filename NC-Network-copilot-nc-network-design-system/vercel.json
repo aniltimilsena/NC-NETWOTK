@@ -13,6 +13,10 @@
       "destination": "/api/cloudinary-config"
     },
     {
+      "source": "/api/upload",
+      "destination": "/api/upload"
+    },
+    {
       "source": "/api/:match*",
       "destination": "/api/proxy"
     },
