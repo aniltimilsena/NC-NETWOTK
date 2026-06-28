@@ -127,14 +127,32 @@ export const uploadFile = async (
     }
 
     // 2. Direct upload to Cloudinary (either because it is required or as a fallback).
-    // Config is always fetched from the authenticated server endpoint so that
-    // CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET are never bundled
-    // into the client-side JavaScript.
-    const configResponse = await apiClient.get<{ cloudName: string; uploadPreset: string }>("/config/cloudinary");
-    const { cloudName, uploadPreset } = configResponse.data;
+    // Config is fetched via the self-contained Vercel serverless function
+    // /api/cloudinary-config, which works without SERVER_URL being configured.
+    // Only the public-safe values (cloudName + uploadPreset) are returned —
+    // never the API key or secret.
+    let cloudName: string | undefined;
+    let uploadPreset: string | undefined;
+
+    try {
+      // Primary: self-contained Vercel function (always available in production)
+      const configResponse = await apiClient.get<{ cloudName: string; uploadPreset: string }>("/cloudinary-config");
+      cloudName = configResponse.data.cloudName;
+      uploadPreset = configResponse.data.uploadPreset;
+    } catch (vercelConfigError) {
+      console.warn("Vercel cloudinary-config endpoint failed, trying Express proxy:", vercelConfigError);
+      try {
+        // Fallback: Express server endpoint (only works when SERVER_URL is configured)
+        const configResponse = await apiClient.get<{ cloudName: string; uploadPreset: string }>("/config/cloudinary");
+        cloudName = configResponse.data.cloudName;
+        uploadPreset = configResponse.data.uploadPreset;
+      } catch (expressConfigError) {
+        console.error("Both Cloudinary config endpoints failed:", expressConfigError);
+      }
+    }
 
     if (!cloudName || !uploadPreset) {
-      throw new Error("Cloudinary configuration missing from server");
+      throw new Error("Cloudinary configuration unavailable. Please check server environment variables.");
     }
 
     const formData = new FormData();
