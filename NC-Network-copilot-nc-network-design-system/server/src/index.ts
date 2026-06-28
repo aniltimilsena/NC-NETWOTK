@@ -592,9 +592,10 @@ app.get('/api/config/cloudinary', verifyToken, (req: AuthedRequest, res: Respons
     res.status(500).json({ error: 'Cloudinary is not configured on the server.' });
     return;
   }
+  // NOTE: Only expose the public cloud name and the unsigned upload preset.
+  // Never include CLOUDINARY_API_KEY or CLOUDINARY_API_SECRET here.
   res.json({
     cloudName,
-    apiKey: process.env.CLOUDINARY_API_KEY,
     uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET,
   });
 });

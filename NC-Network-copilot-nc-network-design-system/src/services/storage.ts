@@ -126,21 +126,15 @@ export const uploadFile = async (
       }
     }
 
-    // 2. Direct upload to Cloudinary (either because it is required or as a fallback)
-    // Try to get config from environment variables first, then fallback to API
-    let cloudName = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 
-                     import.meta.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) as string;
-    let uploadPreset = (import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 
-                       import.meta.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) as string;
+    // 2. Direct upload to Cloudinary (either because it is required or as a fallback).
+    // Config is always fetched from the authenticated server endpoint so that
+    // CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET are never bundled
+    // into the client-side JavaScript.
+    const configResponse = await apiClient.get<{ cloudName: string; uploadPreset: string }>("/config/cloudinary");
+    const { cloudName, uploadPreset } = configResponse.data;
 
     if (!cloudName || !uploadPreset) {
-      const configResponse = await apiClient.get<{ cloudName: string; uploadPreset: string }>("/config/cloudinary");
-      cloudName = cloudName || configResponse.data.cloudName;
-      uploadPreset = uploadPreset || configResponse.data.uploadPreset;
-    }
-
-    if (!cloudName || !uploadPreset) {
-      throw new Error("Cloudinary configuration missing");
+      throw new Error("Cloudinary configuration missing from server");
     }
 
     const formData = new FormData();
