@@ -1,18 +1,8 @@
-
-
-const path = require('path');
-try {
-  require('dotenv').config({ path: path.resolve(__dirname, '../.env.server') });
-  require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
-} catch (e) { }
-
-const admin = require('firebase-admin');
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'nc-network-10d0b',
-  });
-}
+// api/cloudinary-config.js
+// Returns the public Cloudinary cloud name and unsigned upload preset.
+// These values are safe to expose publicly — they're unsigned preset credentials
+// designed to be used from client-side code.
+// No Firebase auth required here since the values carry no secret.
 
 const ALLOWED_ORIGINS = [
   'https://nc-netwotk.vercel.app',
@@ -30,40 +20,11 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  // Require a valid Firebase ID token
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized: No token provided' });
-  }
-
-  try {
-    await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
-  } catch (err) {
-    console.error('[cloudinary-config] Token verification failed:', err.message);
-    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'du7zu8mca';
   const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || 'stored_media';
 
-  if (!cloudName || !uploadPreset) {
-    console.error('[cloudinary-config] CLOUDINARY_CLOUD_NAME or CLOUDINARY_UPLOAD_PRESET not set.');
-    return res.status(500).json({ error: 'Cloudinary is not configured on the server.' });
-  }
-
   return res.status(200).json({ cloudName, uploadPreset });
-};
-
-module.exports.config = {
-  api: {
-    bodyParser: false,
-  },
 };

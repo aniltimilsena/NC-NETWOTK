@@ -100,21 +100,29 @@ export const uploadFile = async (
 
     if (!shouldUploadDirect) {
       try {
-        // 1. For small files and images, route through our own trusted server (/api/upload) to bypass Safari/Edge tracking prevention (ITP)
-        const formData = new FormData();
-        formData.append("file", fileToUpload);
+        // 1. For small files and images, route through our own trusted server (/api/upload).
+        // Send as base64 JSON to avoid multipart parsing issues on Vercel serverless functions.
+        const fileBuffer = await fileToUpload.arrayBuffer();
+        const bytes = new Uint8Array(fileBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = btoa(binary);
+        const dataURI = `data:${fileToUpload.type};base64,${base64}`;
 
-        const response = await apiClient.post<{ url: string }>("/upload", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              onProgress?.(percent);
-            }
-          },
-        });
+        const response = await apiClient.post<{ url: string }>("/upload",
+          { file: dataURI },
+          {
+            headers: { "Content-Type": "application/json" },
+            onUploadProgress: (progressEvent) => {
+              if (progressEvent.total) {
+                const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                onProgress?.(percent);
+              }
+            },
+          }
+        );
 
         if (response.data && response.data.url) {
           return response.data.url;
