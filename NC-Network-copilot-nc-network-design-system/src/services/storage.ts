@@ -93,65 +93,82 @@ export const uploadFile = async (
   }
 
   try {
-    const isLargeVideo = isVideo && fileToUpload.size > 4 * 1024 * 1024;
+    // Determine if we should upload directly to Cloudinary:
+    // 1. All videos (to avoid proxying heavy media)
+    // 2. Any file larger than 4MB (to bypass Vercel's 4.5MB body size limit)
+    const shouldUploadDirect = isVideo || fileToUpload.size > 4 * 1024 * 1024;
 
-    if (!isLargeVideo) {
-      // 1. For small files and images, route through our own trusted server (/api/upload) to bypass Safari/Edge tracking prevention (ITP)
-      const formData = new FormData();
-      formData.append("file", fileToUpload);
+    if (!shouldUploadDirect) {
+      try {
+        // 1. For small files and images, route through our own trusted server (/api/upload) to bypass Safari/Edge tracking prevention (ITP)
+        const formData = new FormData();
+        formData.append("file", fileToUpload);
 
-      const response = await apiClient.post<{ url: string }>("/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            onProgress?.(percent);
-          }
-        },
-      });
+        const response = await apiClient.post<{ url: string }>("/upload", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              onProgress?.(percent);
+            }
+          },
+        });
 
-      if (response.data && response.data.url) {
-        return response.data.url;
+        if (response.data && response.data.url) {
+          return response.data.url;
+        }
+        throw new Error("Invalid response from upload server");
+      } catch (serverError) {
+        console.warn("Server upload failed, falling back to direct Cloudinary upload:", serverError);
+        // Fall through to direct-to-Cloudinary upload
       }
-      throw new Error("Invalid response from upload server");
-    } else {
-      // 2. For large videos (>4MB), upload directly to Cloudinary to bypass Vercel 4.5MB request body size limits
-      const configResponse = await apiClient.get<{ cloudName: string; uploadPreset: string }>("/config/cloudinary");
-      const { cloudName, uploadPreset } = configResponse.data;
-
-      if (!cloudName || !uploadPreset) {
-        throw new Error("Cloudinary configuration missing from server");
-      }
-
-      const formData = new FormData();
-      formData.append("file", fileToUpload);
-      formData.append("upload_preset", uploadPreset);
-
-      const folder = `nc_network/users/${uid}`;
-      formData.append("folder", folder);
-
-      const resourceType = "video";
-      const url = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
-
-      const response = await axios.post(url, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            onProgress?.(percent);
-          }
-        },
-      });
-
-      if (response.data && response.data.secure_url) {
-        return response.data.secure_url;
-      }
-      throw new Error("Invalid response from Cloudinary API");
     }
+
+    // 2. Direct upload to Cloudinary (either because it is required or as a fallback)
+    // Try to get config from environment variables first, then fallback to API
+    let cloudName = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 
+                     import.meta.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) as string;
+    let uploadPreset = (import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 
+                       import.meta.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) as string;
+
+    if (!cloudName || !uploadPreset) {
+      const configResponse = await apiClient.get<{ cloudName: string; uploadPreset: string }>("/config/cloudinary");
+      cloudName = cloudName || configResponse.data.cloudName;
+      uploadPreset = uploadPreset || configResponse.data.uploadPreset;
+    }
+
+    if (!cloudName || !uploadPreset) {
+      throw new Error("Cloudinary configuration missing");
+    }
+
+    const formData = new FormData();
+    formData.append("file", fileToUpload);
+    formData.append("upload_preset", uploadPreset);
+
+    const folder = `nc_network/users/${uid}`;
+    formData.append("folder", folder);
+
+    const resourceType = isVideo ? "video" : "image";
+    const url = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
+
+    const response = await axios.post(url, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress?.(percent);
+        }
+      },
+    });
+
+    if (response.data && response.data.secure_url) {
+      return response.data.secure_url;
+    }
+    throw new Error("Invalid response from Cloudinary API");
   } catch (error: any) {
     console.error("Hybrid Cloudinary upload failed:", error);
     throw new Error(error.response?.data?.error?.message || error.response?.data?.error || error.message || "Upload failed");
