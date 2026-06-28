@@ -83,7 +83,7 @@ export const uploadFile = async (
       const options = {
         maxSizeMB: 1,
         maxWidthOrHeight: 1200,
-        useWebWorker: true,
+        useWebWorker: false,
       };
       fileToUpload = await imageCompression(file, options);
     } catch (compressionError) {
