@@ -105,7 +105,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
         outcome = `Cancelled by ${callerId}`;
       }
 
-      await sendMessage(convoId, "system", `${callLabel} call • ${outcome}`);
+      await sendMessage(convoId, "system", `${callLabel} call • ${outcome}`, true);
     } catch (e) {
       console.error("Error logging call outcome:", e);
     }

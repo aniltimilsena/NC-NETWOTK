@@ -57,7 +57,7 @@ export default function UserLayout({
         />
       )}
       <main className={`flex-1 ${showNavbar ? 'pt-16 sm:pt-20' : 'pt-0'}`}>
-        <Breadcrumbs />
+        {showNavbar && <Breadcrumbs />}
         <Outlet context={{ user, isAdmin, showAlert, showToast }} />
       </main>
     </div>

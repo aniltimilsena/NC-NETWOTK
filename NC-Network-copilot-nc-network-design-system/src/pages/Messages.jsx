@@ -51,15 +51,32 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     if (text.includes("Cancelled by ")) {
       const parts = text.split("Cancelled by ");
       const prefix = parts[0]; // e.g., "Video call • " or "Audio call • "
-      const identifier = parts[1]; // UserID or "Caller"
+      const identifier = parts[1]?.trim(); // UserID or "Caller"
+      
+      if (!identifier) return text;
       
       if (identifier === user?.uid) {
         return `${prefix}Cancelled by you`;
-      } else if (identifier !== "Caller") {
-        const otherName = chatItem?.name || "them";
-        const firstName = otherName.split(" ")[0];
-        return `${prefix}Cancelled by ${firstName}`;
       }
+      
+      // If the identifier is the other participant's UID or looks like a UID, resolve it to their name
+      if (chatItem) {
+        const otherParticipantId = chatItem.participants?.find(p => p !== user?.uid);
+        if (identifier === otherParticipantId || identifier.length > 15) {
+          const otherName = chatItem.name || "them";
+          const firstName = otherName.split(" ")[0];
+          return `${prefix}Cancelled by ${firstName}`;
+        }
+      }
+      
+      if (identifier === "Caller") {
+        return `${prefix}Cancelled by caller`;
+      }
+      
+      // Fallback
+      const otherName = chatItem?.name || "them";
+      const firstName = otherName.split(" ")[0];
+      return `${prefix}Cancelled by ${firstName}`;
     }
     return text;
   };
@@ -893,7 +910,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       ? msg.createdAt.seconds * 1000 
       : (msg.createdAt instanceof Date ? msg.createdAt.getTime() : Number(msg.createdAt) || Date.now());
     
-    if (msg.isSystem) {
+    if (msg.isSystem || msg.senderId === 'system') {
       const textLower = msg.text.toLowerCase();
       const isCall = textLower.includes('call') || textLower.includes('missed') || textLower.includes('declined') || textLower.includes('busy');
       
