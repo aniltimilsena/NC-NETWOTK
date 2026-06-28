@@ -9,14 +9,6 @@
       "destination": "/api/send-notification"
     },
     {
-      "source": "/api/cloudinary-config",
-      "destination": "/api/cloudinary-config"
-    },
-    {
-      "source": "/api/upload",
-      "destination": "/api/upload"
-    },
-    {
       "source": "/api/:match*",
       "destination": "/api/proxy"
     },
