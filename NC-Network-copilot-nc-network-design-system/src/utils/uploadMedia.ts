@@ -49,9 +49,21 @@ export const uploadMedia = async (
 
     // Success
     xhr.addEventListener('load', () => {
+      if (xhr.status !== 200) {
+        let errMsg = `Upload failed (Status ${xhr.status})`;
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (res.message || res.error) {
+            errMsg = res.message || res.error;
+          }
+        } catch (e) {}
+        reject(new Error(errMsg));
+        return;
+      }
+
       try {
         const res = JSON.parse(xhr.responseText);
-        if (xhr.status === 200 && res.success) {
+        if (res.success) {
           resolve({
             url: res.url,
             publicId: res.publicId,
@@ -63,7 +75,7 @@ export const uploadMedia = async (
             bytes: res.bytes || 0,
           });
         } else {
-          reject(new Error(res.error || 'Upload failed'));
+          reject(new Error(res.message || res.error || 'Upload failed'));
         }
       } catch {
         reject(new Error('Failed to parse upload response'));
