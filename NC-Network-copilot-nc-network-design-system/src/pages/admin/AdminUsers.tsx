@@ -8,14 +8,11 @@ import {
   ExternalLink, 
   Activity, 
   X, 
-  UserX, 
   UserCheck, 
   ShieldAlert, 
   ShieldX, 
-  Award, 
-  CheckCircle2,
-  Mail,
-  User
+  Award,
+  Mail
 } from 'lucide-react';
 import { db, auth } from "../../lib/firebase";
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, addDoc, serverTimestamp } from "firebase/firestore";

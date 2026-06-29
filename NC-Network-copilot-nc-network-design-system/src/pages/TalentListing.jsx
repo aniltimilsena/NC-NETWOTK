@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Filter, SortDesc, ChevronDown, Search, X, Check, Shield, Award, Sparkles, AlertCircle, RefreshCw,
+import { motion } from 'framer-motion';
+import { Search, X,
   ArrowLeft, MapPin, MoreVertical, Share2
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';

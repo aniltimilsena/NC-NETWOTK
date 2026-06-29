@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/shadcn-card";
 import { Separator } from "@/components/ui/shadcn-separator";
-import { Switch } from "@/components/ui/shadcn-switch";
 
 interface PricingFeature {
   text: string;

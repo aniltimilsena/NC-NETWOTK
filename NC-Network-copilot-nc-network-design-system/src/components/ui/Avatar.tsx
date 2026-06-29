@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useUserContext } from '../../context/UserContext';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { UserContext } from '../../context/UserContext';
 import { uploadProfileMedia } from '../../services/profile';
 import ConfirmDialog from './ConfirmDialog';
 import CropModal from './CropModal';
@@ -26,12 +26,7 @@ export default function Avatar(props: AvatarProps) {
   } = props;
 
   // Try to read user and functions from context if available
-  let context: any = null;
-  try {
-    context = useUserContext();
-  } catch (e) {
-    // Context might not be available in all locations (like splash screen)
-  }
+  const context = useContext(UserContext);
 
   // If user, src, or name is explicitly passed (even if undefined), do not automatically fall back to the logged-in user context
   const isExplicit = 'user' in props || 'src' in props || 'name' in props;

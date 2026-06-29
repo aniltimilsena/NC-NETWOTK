@@ -2,7 +2,6 @@ import { auth, db } from "../lib/firebase";
 import {
   collection,
   doc,
-  getDoc,
   getDocs,
   query,
   orderBy,
@@ -11,6 +10,7 @@ import {
   setDoc,
   serverTimestamp,
 } from "firebase/firestore";
+import { rateLimitedGet } from "../utils/rateLimitedFirestore";
 import apiClient from "../api/client";
 import { COLLECTIONS } from "../constants/collections";
 
@@ -64,7 +64,7 @@ export const subscribeToCastingCalls = (
 
 export const getCastingCallById = async (id: string) => {
   try {
-    const snap = await getDoc(doc(db, COLLECTIONS.CASTING_CALLS, id));
+    const snap = await rateLimitedGet(doc(db, COLLECTIONS.CASTING_CALLS, id));
     if (snap.exists()) {
       return { id: snap.id, ...snap.data() };
     }

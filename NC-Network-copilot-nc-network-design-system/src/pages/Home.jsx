@@ -1,22 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 
-import {
-  Plus,
-  Check,
-  Play,
-  ArrowRight
-} from 'lucide-react';
+
+
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import GlassCard from '../components/ui/GlassCard';
 import CategorySkeleton from '../components/ui/CategorySkeleton';
 import Button from '../components/ui/Button';
-import Tag from '../components/ui/Tag';
 import Avatar from '../components/ui/Avatar';
 import { subscribeToTalents } from '../services/users';
 import { subscribeToCastingCalls } from '../services/casting';
 
-import { getAvatar } from '../utils/avatars';
 import { db } from '../lib/firebase';
 import { 
   doc, 
@@ -252,11 +246,19 @@ export default function Home({ onNavigate, user }) {
         try {
           await addDoc(collection(db, "notifications"), {
             userId: targetId,
+            recipientId: targetId,
+            receiverId: targetId,
+            senderId: user.uid,
+            senderName: user.displayName || user.email || "Someone",
+            senderAvatar: user.photoURL || "",
             title: "New Follower",
             body: `${user.displayName || user.email || 'Someone'} started following you.`,
-            type: "system",
+            type: "follow",
+            notificationType: "follow",
+            isRead: false,
             read: false,
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp(),
+            targetUrl: `/profile/${user.uid}`
           });
         } catch (nErr) {
           console.warn("Could not send follow notification in Home:", nErr);

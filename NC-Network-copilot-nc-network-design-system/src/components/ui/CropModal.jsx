@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 export default function CropModal({ imageSrc, isCircular, onConfirm, onClose }) {

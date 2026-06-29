@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { Routes, Route, useParams, useSearchParams, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import OneSignal from 'react-onesignal';
 import { AnimatePresence } from 'framer-motion';
@@ -8,43 +8,55 @@ import { lazyWithRetry } from './utils/lazyWithRetry';
 import { logger } from './utils/logger';
 
 let oneSignalInitialized = false;
+let oneSignalInitPromise: Promise<void> | null = null;
 
 export const initOneSignal = async () => {
-  if (oneSignalInitialized) return;
   if (typeof window === 'undefined') return;
+  if (oneSignalInitialized) return;
+  if (oneSignalInitPromise) return oneSignalInitPromise;
 
-  const ONESIGNAL_APP_ID = (import.meta.env?.VITE_ONESIGNAL_APP_ID as string) || 
-    (typeof process !== 'undefined' && process.env ? (process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || process.env.VITE_ONESIGNAL_APP_ID) : '') ||
-    "a9962176-972c-4874-8161-ec84428e9036";
+  oneSignalInitPromise = (async () => {
+    // SECURITY: Never hardcode the App ID. Must be set in VITE_ONESIGNAL_APP_ID.
+    const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID as string | undefined;
+    if (!ONESIGNAL_APP_ID) {
+      if (import.meta.env.DEV) {
+        console.error('[OneSignal] VITE_ONESIGNAL_APP_ID is not set. Push notifications disabled.');
+      }
+      return;
+    }
 
-  try {
-    await OneSignal.init({
-      appId: ONESIGNAL_APP_ID,
-      notifyButton: { enable: false },
-      allowLocalhostAsSecureOrigin: true,
-      serviceWorkerParam: {
-        scope: '/',
-      },
-    });
+    try {
+      await OneSignal.init({
+        appId: ONESIGNAL_APP_ID,
+        notifyButton: { enable: false },
+        allowLocalhostAsSecureOrigin: true,
+        serviceWorkerParam: {
+          scope: '/',
+        },
+      });
 
-    oneSignalInitialized = true;
+      oneSignalInitialized = true;
 
-    if (OneSignal.Notifications) {
-      OneSignal.Notifications.addEventListener(
-        'permissionChange',
-        (permission) => {
-          if (import.meta.env.DEV) {
-            console.log('OneSignal permission:', permission);
+      if (OneSignal.Notifications) {
+        OneSignal.Notifications.addEventListener(
+          'permissionChange',
+          (permission) => {
+            if (import.meta.env.DEV) {
+              console.log('OneSignal permission:', permission);
+            }
           }
-        }
-      );
+        );
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('OneSignal init error:', error);
+      }
     }
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error('OneSignal init error:', error);
-    }
-  }
+  })();
+
+  return oneSignalInitPromise;
 };
+
 
 
 // Providers and Overlays
@@ -53,7 +65,7 @@ import { PermissionProvider } from './context/PermissionContext';
 import CallingOverlay from './components/calling/CallingOverlay';
 import IncomingCallPopup from './components/calling/IncomingCallPopup';
 import { AlertBanner, type AlertPayload, type AlertType } from './components/ui/AlertBanner';
-import PullToRefresh from './components/ui/PullToRefresh';
+
 import RouteLoader from './components/RouteLoader';
 import PageTransition from './components/PageTransition';
 import SplashScreen from './components/SplashScreen';
@@ -202,7 +214,9 @@ const ProfileRoute = () => {
       <Helmet>
         <title>Talent Profile | NC Network</title>
       </Helmet>
-      <Profile onNavigate={handleLegacyNavigate} user={user} profileId={id || null} isAdmin={isAdmin} />
+      <ErrorBoundary fallback={<div className="p-12 text-center text-red-500 font-bold border border-red-500/20 bg-red-500/5 rounded-3xl max-w-md mx-auto mt-12">Profile failed to load</div>}>
+        <Profile onNavigate={handleLegacyNavigate} user={user} profileId={id || null} isAdmin={isAdmin} />
+      </ErrorBoundary>
     </PageTransition>
   );
 };
@@ -332,7 +346,9 @@ const MessagesRoute = () => {
       <Helmet>
         <title>Inbox & Messages | NC Network</title>
       </Helmet>
-      <Messages onNavigate={handleLegacyNavigate} user={user} initialUserId={activeUserId} showAlert={showAlert} />
+      <ErrorBoundary fallback={<div className="p-12 text-center text-red-500 font-bold border border-red-500/20 bg-red-500/5 rounded-3xl max-w-md mx-auto mt-12">Messages failed to load</div>}>
+        <Messages onNavigate={handleLegacyNavigate} user={user} initialUserId={activeUserId} showAlert={showAlert} />
+      </ErrorBoundary>
     </PageTransition>
   );
 };
@@ -548,7 +564,9 @@ export default function App() {
     let localVersion = 'dev';
     try {
       localVersion = __BUILD_VERSION__;
-    } catch (e) {}
+    } catch {
+      // Fallback if __BUILD_VERSION__ is not defined
+    }
 
     const checkVersionOnNav = async () => {
       try {
@@ -569,7 +587,9 @@ export default function App() {
             );
           }
         }
-      } catch (err) {}
+      } catch {
+        // Fallback for network error during check
+      }
     };
 
     checkVersionOnNav();
@@ -621,26 +641,16 @@ export default function App() {
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           
-          if (firebaseUser.email === 'aniltimilsena53@gmail.com') {
-            if (!userDoc.exists() || userDoc.data()?.isAdmin !== true) {
-              await setDoc(doc(db, 'users', firebaseUser.uid), {
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                name: firebaseUser.displayName || 'Admin',
-                role: userDoc.data()?.role || 'Director',
-                isAdmin: true,
-                updatedAt: serverTimestamp()
-              }, { merge: true });
-            }
-            setIsAdmin(true);
-          } else if (userDoc.exists()) {
+          if (userDoc.exists()) {
+            // SECURITY: Admin status is determined solely by Firestore isAdmin flag.
+            // Never check email against a hardcoded string in source code.
             setIsAdmin(userDoc.data().isAdmin === true);
           } else {
             setIsAdmin(false);
           }
         } catch (err) {
           console.error("Failed to check admin status:", err);
-          setIsAdmin(firebaseUser.email === 'aniltimilsena53@gmail.com');
+          setIsAdmin(false);
         }
       } else {
         setUser(null);
@@ -815,7 +825,7 @@ export default function App() {
     photoURL: userProfile?.photoURL || userProfile?.image || user.photoURL || '',
     gender: userProfile?.gender || '',
     profileImage: userProfile?.image || user.photoURL || '',
-    premium: userProfile?.premium || (user.email === 'aniltimilsena53@gmail.com') || false,
+    premium: userProfile?.premium || isAdmin || false,
     role: userProfile?.category || userProfile?.role || '',
   } : null;
 

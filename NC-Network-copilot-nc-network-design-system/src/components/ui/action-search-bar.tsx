@@ -6,7 +6,7 @@ import { Search, MapPin } from "lucide-react";
 import { db } from "@/lib/firebase";
 import Avatar from "./Avatar";
 
-import { collection, getDocs, limit, query as firestoreQuery, orderBy, where } from "firebase/firestore";
+import { collection, getDocs, query as firestoreQuery } from "firebase/firestore";
 
 function useDebounce<T>(value: T, delay: number = 300): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);

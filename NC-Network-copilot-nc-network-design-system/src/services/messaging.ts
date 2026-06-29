@@ -163,7 +163,7 @@ export const sendMessage = async (
               previewText = "🎥 Sent a video";
             }
 
-            fetch("/api/send-notification", {
+            fetch("/api/notifications/send", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -556,7 +556,7 @@ export const createConversation = async (
         try {
           const idToken = await auth.currentUser?.getIdToken();
           if (idToken) {
-            fetch("/api/send-notification", {
+            fetch("/api/notifications/send", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",

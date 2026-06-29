@@ -1,5 +1,5 @@
 import * as React from "react";
-import { UploadCloud, X, File as FileIcon, CheckCircle2, Trash2 } from "lucide-react";
+import { UploadCloud, X, CheckCircle2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";

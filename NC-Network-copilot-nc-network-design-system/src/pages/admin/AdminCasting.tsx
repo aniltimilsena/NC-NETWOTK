@@ -5,18 +5,16 @@ import {
   Users, 
   Plus, 
   Search, 
-  Filter, 
   Trash2, 
   Activity, 
   X,
   CheckCircle,
   XCircle,
   Calendar,
-  AlertTriangle,
   FolderOpen
 } from 'lucide-react';
 import { db, auth } from '../../lib/firebase';
-import { collection, onSnapshot, doc, updateDoc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, query, where, getDocs } from 'firebase/firestore';
 import { deleteCastingCallAdmin, setCastingPriorityAdmin } from '../../services/casting';
 import { logAdminAction } from '../../services/admin';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';

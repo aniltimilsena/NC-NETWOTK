@@ -2,20 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, 
   User, 
-  MessageCircle, 
   AlertTriangle, 
   CheckCircle, 
-  Ban, 
   Trash2, 
   ShieldX, 
   X, 
   Eye,
-  AlertCircle,
-  Clock,
-  UserCheck
+  AlertCircle
 } from 'lucide-react';
 import { db, auth } from '../../lib/firebase';
-import { collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { logAdminAction } from '../../services/admin';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import apiClient from '../../api/client';

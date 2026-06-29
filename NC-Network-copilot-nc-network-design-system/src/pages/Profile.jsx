@@ -22,9 +22,7 @@ import {
   where, 
   getDocs, 
   getDoc,
-  onSnapshot,
-  orderBy,
-  addDoc
+  onSnapshot
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -815,7 +813,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     setShowIntroSuccess(false);
 
     const isOwnProfile = isLoggedIn && (!profileId || profileId === user?.uid);
-    const isPremium = profile?.premium || (profile?.email === 'aniltimilsena53@gmail.com') || (isOwnProfile && isAdmin) || false;
+    const isPremium = profile?.premium || (isOwnProfile && isAdmin) || false;
     const sizeLimit = isPremium ? 250 * 1024 * 1024 : 50 * 1024 * 1024;
     if (file.size > sizeLimit) {
       showAlert('File Too Large', 'error', `Intro video exceeds the limit of ${isPremium ? '250MB' : '50MB'} for your current tier.`);
@@ -931,7 +929,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     media: Array.isArray(profile?.media) ? profile.media : [],
     languages: Array.isArray(profile?.languages) ? profile.languages : [],
     verified: profile?.verified || false,
-    premium: profile?.premium || (profile?.email === 'aniltimilsena53@gmail.com') || (isOwnProfile && isAdmin) || false,
+    premium: profile?.premium || (isOwnProfile && isAdmin) || false,
     introVideo: profile?.introVideo || null,
     gender: profile?.gender || 'Not Specified',
     email: profile?.email || (isOwnProfile ? user?.email : null) || 'Not Specified',

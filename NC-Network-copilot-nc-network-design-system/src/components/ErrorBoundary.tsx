@@ -22,7 +22,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error, showDetails: false };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     const errorMsg = error?.message || "";
     const isChunkLoadFailed =
       errorMsg.includes("Failed to fetch dynamically imported module") ||
@@ -39,7 +39,9 @@ export default class ErrorBoundary extends Component<Props, State> {
     let localVersion = 'dev';
     try {
       localVersion = __BUILD_VERSION__;
-    } catch (e) {}
+    } catch {
+      // Fallback if __BUILD_VERSION__ is not defined
+    }
 
     // Detailed diagnostics logging in development only
     if (import.meta.env.DEV) {
@@ -54,6 +56,9 @@ export default class ErrorBoundary extends Component<Props, State> {
       });
     }
 
+    // Log error to server
+    this.logError(error, errorInfo);
+
     if (isChunkLoadFailed) {
       const lastReloaded = sessionStorage.getItem("chunk_fail_reload_time");
       const now = Date.now();
@@ -67,6 +72,32 @@ export default class ErrorBoundary extends Component<Props, State> {
         url.searchParams.set('reload', Date.now().toString());
         window.location.href = url.toString();
       }
+    }
+  }
+
+  private async logError(error: Error, errorInfo: ErrorInfo): Promise<void> {
+    try {
+      const { auth } = await import("../lib/firebase");
+      const token = await auth.currentUser?.getIdToken().catch(() => null);
+      await fetch('/api/errors/log', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token || ''}`,
+        },
+        body: JSON.stringify({
+          type: 'react_crash',
+          message: error.message,
+          stack: error.stack,
+          componentStack: errorInfo.componentStack,
+          url: window.location.href,
+          userAgent: navigator.userAgent,
+          timestamp: new Date().toISOString(),
+          userId: auth.currentUser?.uid || 'anonymous',
+        }),
+      });
+    } catch {
+      // Silent fail — don't crash while reporting crash
     }
   }
 
@@ -105,7 +136,9 @@ export default class ErrorBoundary extends Component<Props, State> {
       let localVersion = 'dev';
       try {
         localVersion = __BUILD_VERSION__;
-      } catch (e) {}
+      } catch {
+        // Fallback if __BUILD_VERSION__ is not defined
+      }
 
       return (
         <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-6 text-center relative overflow-hidden">

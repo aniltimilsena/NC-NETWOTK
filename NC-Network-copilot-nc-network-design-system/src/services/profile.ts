@@ -1,14 +1,11 @@
 import { auth, db } from "../lib/firebase";
 import {
   doc,
-  getDoc,
   onSnapshot,
   setDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import axios from "axios";
-import apiClient from "../api/client";
-import { callSecureFunction } from "../api/functionsClient";
+import { rateLimitedGet } from "../utils/rateLimitedFirestore";
 import { uploadFile } from "./storage";
 import { COLLECTIONS } from "../constants/collections";
 
@@ -26,7 +23,7 @@ type ProfileResponse = {
  */
 export const getProfile = async (uid: string): Promise<ProfileResponse> => {
   try {
-    const snap = await getDoc(doc(db, COLLECTIONS.PROFILES, uid));
+    const snap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, uid));
     if (snap.exists()) {
       return { data: snap.data() as ProfileData, error: null };
     }

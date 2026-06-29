@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, AlertCircle, Eye, ShieldAlert, TrendingUp, Search } from 'lucide-react';
+import { AlertCircle, Eye, ShieldAlert, TrendingUp } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, onSnapshot, Timestamp } from 'firebase/firestore';
 

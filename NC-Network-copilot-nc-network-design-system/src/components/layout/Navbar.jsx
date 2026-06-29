@@ -6,15 +6,13 @@ import Logo from '../ui/Logo';
 import { 
   NotificationIcon, 
   MenuCloseIcon, 
-  SendIcon, 
-  SuccessIcon 
+  SendIcon 
 } from "@/components/ui/animated-state-icons";
 import Avatar from '../ui/Avatar';
 import { db } from '../../lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, Timestamp, limit, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, Timestamp, limit } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 
-import { formatMessagePreview } from '../../utils/format';
 
 export default function Navbar({ onNavigate, currentPage, onBack = () => {}, showBack = false, isAdmin = false, user = null, onLogout = () => {} }) {
   const isLoggedIn = !!user;

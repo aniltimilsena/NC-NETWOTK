@@ -43,6 +43,7 @@ export default function CuratorSidebar({ onNavigate, currentPage }: { onNavigate
           <img 
             alt="Admin Avatar" 
             className="w-8 h-8 rounded-full border border-oc-primary/30" 
+            /* eslint-disable-next-line no-secrets/no-secrets */
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGIHfMTy8iEWFbQDstBg7XNvpU9K2NcNY0rTpWTuGo8AVVz6jqR_XCYlWOm7ziPS1ucnu1uXmtIVdFfJmrAIjenr8G3kORgzAAGcrv-uDVB89fg3IxCj-H3WXjt0JwnFbFuQPGT2g1HCerHgTqRZMxIryVrkaQ3hgF-xlStnNUj-VSRCR7KIIRMEh84-Pb8Hp1bdvWPDJgqIxK3mReyG9Ib1zmWq4gyW2Al4L-I5Bm9QzwPAYbH3tOzDpgBVo-joNFiGwojdpEIcM"
           />
           <div className="overflow-hidden">

@@ -1,10 +1,4 @@
-// src/utils/uploadMedia.ts
-
-const CLOUD_NAME = (import.meta.env?.VITE_CLOUDINARY_CLOUD_NAME as string) || 
-  (typeof process !== 'undefined' && process.env ? (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.VITE_CLOUDINARY_CLOUD_NAME) : '');
-
-const UPLOAD_PRESET = (import.meta.env?.VITE_CLOUDINARY_UPLOAD_PRESET as string) || 
-  (typeof process !== 'undefined' && process.env ? (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || process.env.VITE_CLOUDINARY_UPLOAD_PRESET) : '');
+import { auth } from '../lib/firebase';
 
 export interface CloudinaryUploadResult {
   url: string;
@@ -13,57 +7,35 @@ export interface CloudinaryUploadResult {
   width: number | null;
   height: number | null;
   duration: number | null;
-  format: string;
-  bytes: number;
+  format?: string;
+  bytes?: number;
 }
 
-export const uploadMedia = (
+export const uploadMedia = async (
   file: File,
   folder: string,
   onProgress?: (progress: number) => void
 ): Promise<CloudinaryUploadResult> => {
+  // Validate file
+  if (!file) {
+    throw new Error('No file selected');
+  }
+
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) {
+    throw new Error('Authentication required for upload');
+  }
+
   return new Promise((resolve, reject) => {
-    // Validate env vars
-    if (!CLOUD_NAME || !UPLOAD_PRESET) {
-      reject(new Error(
-        'Cloudinary not configured. ' +
-        'Add VITE_CLOUDINARY_CLOUD_NAME and ' +
-        'VITE_CLOUDINARY_UPLOAD_PRESET to your configuration.'
-      ));
-      return;
-    }
-
-    // Validate file
-    if (!file) {
-      reject(new Error('No file selected'));
-      return;
-    }
-
-    // Validate size
-    const isVideo = file.type.startsWith('video/');
-    const maxSize = isVideo ? 100 : 10; // MB
-    if (file.size > maxSize * 1024 * 1024) {
-      reject(new Error(
-        `File too large. Max ${maxSize}MB. ` +
-        `Your file: ${(file.size / 1024 / 1024).toFixed(1)}MB`
-      ));
-      return;
-    }
-
     // Build form data
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', UPLOAD_PRESET);
-    formData.append('folder', `nc-network/${folder}`);
+    formData.append('folder', folder);
 
     // Upload via XHR (supports progress tracking)
     const xhr = new XMLHttpRequest();
-    const resourceType = isVideo ? 'video' : 'image';
-
-    xhr.open(
-      'POST',
-      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`
-    );
+    xhr.open('POST', '/api/upload');
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
 
     // Progress tracking
     if (xhr.upload) {
@@ -77,37 +49,24 @@ export const uploadMedia = (
 
     // Success
     xhr.addEventListener('load', () => {
-      if (xhr.status === 200) {
-        try {
-          const data = JSON.parse(xhr.responseText);
+      try {
+        const res = JSON.parse(xhr.responseText);
+        if (xhr.status === 200 && res.success) {
           resolve({
-            url: data.secure_url,
-            publicId: data.public_id,
-            type: resourceType,
-            width: data.width || null,
-            height: data.height || null,
-            duration: data.duration || null,
-            format: data.format,
-            bytes: data.bytes,
+            url: res.url,
+            publicId: res.publicId,
+            type: res.type,
+            width: res.width,
+            height: res.height,
+            duration: res.duration || null,
+            format: res.format || '',
+            bytes: res.bytes || 0,
           });
-        } catch (parseError) {
-          reject(new Error('Failed to parse Cloudinary response'));
+        } else {
+          reject(new Error(res.error || 'Upload failed'));
         }
-      } else {
-        try {
-          const err = JSON.parse(xhr.responseText);
-          if (err.error?.message?.includes('preset')) {
-            reject(new Error(
-              'Upload preset not found. ' +
-              'Go to Cloudinary → Settings → Upload Presets ' +
-              '→ make sure preset is set to UNSIGNED'
-            ));
-          } else {
-            reject(new Error(err.error?.message || 'Upload failed'));
-          }
-        } catch {
-          reject(new Error(`Upload failed: HTTP ${xhr.status}`));
-        }
+      } catch {
+        reject(new Error('Failed to parse upload response'));
       }
     });
 

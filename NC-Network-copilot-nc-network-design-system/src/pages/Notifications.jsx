@@ -14,7 +14,6 @@ import {
   increment, 
   serverTimestamp 
 } from 'firebase/firestore';
-import { formatMessagePreview } from '../utils/format';
 import Avatar from '../components/ui/Avatar';
 import { 
   ChevronLeft, 

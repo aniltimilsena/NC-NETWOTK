@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, Mail, Lock, Eye, EyeOff, Check, AlertCircle, ArrowLeft, Loader2, Sparkles, UserCheck, ShieldAlert, Heart
 } from 'lucide-react';
-import Logo from '../components/ui/Logo';
 import { auth, googleProvider } from '../lib/firebase';
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import SEO from '../components/SEO';

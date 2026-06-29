@@ -7,14 +7,12 @@ import {
   Video, 
   MessageSquare, 
   Check, 
-  User as UserIcon, 
   Film, 
   Heart, 
   Camera, 
   Loader2,
   ChevronRight,
-  ArrowRight,
-  UserCircle
+  ArrowRight
 } from 'lucide-react';
 import { uploadProfileMedia } from '../services/profile';
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
@@ -269,7 +267,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
                   Welcome to NC Network,<br className="hidden sm:inline" /> {profile?.name || user?.displayName || 'Creative'}!
                 </h1>
                 <p className="text-nc-muted text-sm sm:text-base max-w-md mx-auto">
-                  Let's set up your profile to connect with leading production teams and discover cast opportunities.
+                  Let&apos;s set up your profile to connect with leading production teams and discover cast opportunities.
                 </p>
               </div>
 
@@ -492,7 +490,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Your Profile is Ready!</h2>
                 <p className="text-nc-muted text-xs sm:text-sm max-w-sm mx-auto">
-                  Congratulations! Your details have been saved. You're ready to explore castings and build your network.
+                  Congratulations! Your details have been saved. You&apos;re ready to explore castings and build your network.
                 </p>
               </div>
             </div>

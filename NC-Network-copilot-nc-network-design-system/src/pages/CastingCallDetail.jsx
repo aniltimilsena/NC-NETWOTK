@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react';
 import { 
-  ChevronLeft, Clock, MapPin, User, Calendar, 
-  AlertCircle, CheckCircle, MessageSquare, Award, Info, Trash2, X, Bookmark, Share2 
+  ChevronLeft, Clock, MapPin 
 } from 'lucide-react';
 import Button from '../components/ui/Button';
-import Tag from '../components/ui/Tag';
 import SEO from '../components/SEO';
 import { InlineAlert } from '../components/ui/AlertBanner';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot, collection, addDoc, serverTimestamp, deleteDoc, updateDoc, query, where } from 'firebase/firestore';
-import { getAvatar } from '../utils/avatars';
 import Avatar from '../components/ui/Avatar';
 
 export default function CastingCallDetail({ onNavigate, castingId, user, showAlert }) {

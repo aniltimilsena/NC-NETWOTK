@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCall } from '../context/CallContext';
-import GlassCard from '../components/ui/GlassCard';
 import Avatar from '../components/ui/Avatar';
-import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { db } from '../lib/firebase';
 import { collection, getDocs, doc, updateDoc, onSnapshot, writeBatch, query, where } from 'firebase/firestore';
@@ -20,7 +18,6 @@ import {
   pinMessage,
   markConversationAsRead
 } from '../services/messaging';
-import { uploadProfileMedia } from '../services/profile';
 import { formatMessagePreview } from '../utils/format';
 import { 
   ChevronLeft, 
@@ -31,8 +28,7 @@ import {
   PhoneIncoming,
   PhoneOutgoing,
   PhoneMissed,
-  PhoneOff,
-  Settings, 
+  PhoneOff, 
   Trash2, 
   Check, 
   MoreVertical,
@@ -506,7 +502,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       const now = new Date();
       const diffSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
       
-      let timeLabel = '';
+      let timeLabel;
       if (diffSeconds < 60) {
         timeLabel = 'just now';
       } else if (diffSeconds < 3600) {
@@ -877,7 +873,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
         const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
         const msgTimeStartOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 
-        let label = '';
+        let label;
         if (msgTimeStartOfDay === startOfToday) {
           label = 'Today';
         } else if (msgTimeStartOfDay === startOfYesterday) {
@@ -1440,7 +1436,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
               const isMissed = call.status === 'no-answer' || call.status === 'rejected';
               const wasAnswered = call.status === 'ended' || call.status === 'accepted';
 
-              let statusLabel = '';
+              let statusLabel;
               let statusColor = 'text-gray-500';
               let StatusIcon = isCaller ? PhoneOutgoing : PhoneIncoming;
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Award, Crown, MapPin, Sparkles, Search, Check, ArrowLeft, TrendingUp, HelpCircle
+import { motion } from 'framer-motion';
+import { Crown, MapPin, Search, TrendingUp
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { 

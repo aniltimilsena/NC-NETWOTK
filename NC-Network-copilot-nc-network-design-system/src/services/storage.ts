@@ -109,6 +109,6 @@ export const uploadFile = async (
     return result.url;
   } catch (err: any) {
     console.error("Cloudinary upload failed:", err);
-    throw new Error(err.message || "Cloudinary upload failed");
+    throw new Error(err.message || "Cloudinary upload failed", { cause: err });
   }
 };

@@ -3,8 +3,13 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import App from './App'
+import ErrorBoundary from './components/ErrorBoundary'
+import { initErrorTracking } from './utils/errorTracking'
 import './index.css'
 import './config/i18n'
+
+// Initialize global unhandled error and promise rejection tracking
+initErrorTracking();
 
 // Handle Vite dynamic import chunk failures gracefully by auto-reloading to fetch the latest bundle version
 window.addEventListener('vite:preloadError', () => {
@@ -18,10 +23,12 @@ window.addEventListener('vite:preloadError', () => {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <HelmetProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </HelmetProvider>
+    <ErrorBoundary>
+      <HelmetProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </HelmetProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 )

@@ -12,11 +12,24 @@ import * as admin from 'firebase-admin';
 import { v2 as cloudinary } from 'cloudinary';
 import axios from 'axios';
 import { Readable } from 'stream';
+import streamifier from 'streamifier';
 
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import * as nodemailer from 'nodemailer';
 import twilio from 'twilio';
+import { 
+  rateLimitMiddleware,
+  bloomFilterMiddleware,
+  cacheMiddleware,
+} from './middleware/cacheProtection';
+import { 
+  initBloomFilters,
+  addToBloomFilter,
+  deleteFromCacheByPattern,
+} from './services/cacheService';
+import { validateUpload } from './middleware/uploadSecurity';
+import { errorLogger } from './middleware/errorLogger';
 
 // Load env from current directory first, then fallback to server and parent directories
 dotenv.config();
@@ -87,6 +100,7 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
+initBloomFilters(db);
 const bucket = admin.storage().bucket();
 
 const configureCloudinary = () => {
@@ -107,7 +121,7 @@ const configureCloudinary = () => {
 };
 configureCloudinary();
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 5000;
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
   .split(',')
@@ -323,20 +337,46 @@ app.use(cors({
   maxAge: 86400,
 }));
 app.use(limiter);
+app.use(rateLimitMiddleware);
 app.use(express.json());
 app.use(morgan('dev'));
 
+const multerFileFilter = (
+  _req: any,
+  file: Express.Multer.File,
+  callback: multer.FileFilterCallback
+) => {
+  const dangerousExtensions = [
+    '.php', '.php3', '.php4', '.php5', '.phtml',
+    '.asp', '.aspx', '.jsp', '.jspx',
+    '.sh', '.bash', '.py', '.rb', '.pl',
+    '.cgi', '.exe', '.bat', '.cmd',
+    '.js', '.html', '.htm', '.xml', '.svg',
+    '.htaccess', '.htpasswd',
+  ];
+
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (dangerousExtensions.includes(ext)) {
+    callback(new Error('File type not allowed'));
+    return;
+  }
+
+  const isImage = allowedImageMimeTypes.has(file.mimetype);
+  const isVideo = allowedVideoMimeTypes.has(file.mimetype);
+  if (!isImage && !isVideo) {
+    callback(new Error('Only image and video uploads are allowed'));
+    return;
+  }
+
+  callback(null, true);
+};
+
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit to support video uploads
-  fileFilter: (_req, file, callback) => {
-    const isImage = allowedImageMimeTypes.has(file.mimetype);
-    const isVideo = allowedVideoMimeTypes.has(file.mimetype);
-    if (!isImage && !isVideo) {
-      callback(new Error('Only image and video uploads are allowed'));
-      return;
-    }
-    callback(null, true);
+  fileFilter: multerFileFilter,
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB max limit to support video uploads
+    files: 10,
   },
 });
 
@@ -501,19 +541,19 @@ const assertMessageOwner = async (
 };
 
 
-const uploadToCloudinary = (fileBuffer: Buffer, mimeType: string, folder: string): Promise<string> => {
-  return new Promise(async (resolve, reject) => {
-    const isVideo = mimeType.startsWith('video/');
-    const resourceType = isVideo ? 'video' : 'image';
+const uploadToCloudinary = async (fileBuffer: Buffer, mimeType: string, folder: string): Promise<string> => {
+  const isVideo = mimeType.startsWith('video/');
+  const resourceType = isVideo ? 'video' : 'image';
 
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
-    const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
 
-    console.log(`[Cloudinary] Starting upload. Mime: ${mimeType}, Folder: ${folder}, CloudName: ${cloudName}, HasKey: ${!!apiKey}, HasSecret: ${!!apiSecret}, Preset: ${uploadPreset}`);
+  console.log(`[Cloudinary] Starting upload. Mime: ${mimeType}, Folder: ${folder}, CloudName: ${cloudName}, HasKey: ${!!apiKey}, HasSecret: ${!!apiSecret}, Preset: ${uploadPreset}`);
 
-    if (cloudName && apiKey && apiSecret && apiKey !== 'dummy' && apiSecret !== 'dummy') {
+  if (cloudName && apiKey && apiSecret && apiKey !== 'dummy' && apiSecret !== 'dummy') {
+    return new Promise<string>((resolve, reject) => {
       try {
         // Global config update for this call
         cloudinary.config({
@@ -549,41 +589,41 @@ const uploadToCloudinary = (fileBuffer: Buffer, mimeType: string, folder: string
         console.error('[Cloudinary SDK Catch Error]:', err);
         reject(err);
       }
-    } else if (cloudName && uploadPreset) {
-      try {
-        const b64 = Buffer.from(fileBuffer).toString('base64');
-        const dataURI = `data:${mimeType};base64,${b64}`;
+    });
+  } else if (cloudName && uploadPreset) {
+    try {
+      const b64 = Buffer.from(fileBuffer).toString('base64');
+      const dataURI = `data:${mimeType};base64,${b64}`;
 
-        const formData = new FormData();
-        formData.append('file', dataURI);
-        formData.append('upload_preset', uploadPreset);
-        formData.append('folder', folder);
+      const formData = new FormData();
+      formData.append('file', dataURI);
+      formData.append('upload_preset', uploadPreset);
+      formData.append('folder', folder);
 
-        const response = await axios.post(
-          `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          }
-        );
-
-        if (response.data && response.data.secure_url) {
-          console.log('[Cloudinary Unsigned Success]:', response.data.secure_url);
-          resolve(response.data.secure_url);
-        } else {
-          reject(new Error('Cloudinary unsigned upload failed: secure_url not found in response'));
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         }
-      } catch (err: any) {
-        const errMsg = err.response?.data?.error?.message || err.message;
-        console.error('[Cloudinary Unsigned Error]:', errMsg);
-        reject(new Error(`Cloudinary unsigned upload failed: ${errMsg}`));
+      );
+
+      if (response.data && response.data.secure_url) {
+        console.log('[Cloudinary Unsigned Success]:', response.data.secure_url);
+        return response.data.secure_url;
+      } else {
+        throw new Error('Cloudinary unsigned upload failed: secure_url not found in response');
       }
-    } else {
-      reject(new Error('Cloudinary is not configured on the server. Please define CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET or CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.'));
+    } catch (err: any) {
+      const errMsg = err.response?.data?.error?.message || err.message;
+      console.error('[Cloudinary Unsigned Error]:', errMsg);
+      throw new Error(`Cloudinary unsigned upload failed: ${errMsg}`, { cause: err });
     }
-  });
+  } else {
+    throw new Error('Cloudinary is not configured on the server. Please define CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET or CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.');
+  }
 };
 
 app.get('/api/config/cloudinary', verifyToken, (req: AuthedRequest, res: Response) => {
@@ -600,53 +640,274 @@ app.get('/api/config/cloudinary', verifyToken, (req: AuthedRequest, res: Respons
   });
 });
 
-app.post('/api/upload', verifyToken, uploadLimiter, upload.single('file'), async (req: AuthedRequest, res: Response) => {
-  if (!req.file || !req.user) {
-    res.status(400).send('No file uploaded');
-    return;
-  }
-
-  try {
-    const { mimetype, buffer, size } = req.file;
-    const isVideo = allowedVideoMimeTypes.has(mimetype);
-    const isImage = allowedImageMimeTypes.has(mimetype);
-
-    if (!isImage && !isVideo) {
-      res.status(400).send('Invalid file type. Only images and videos are allowed.');
-      return;
-    }
-
-    // Validate size limit based on category
-    const maxAllowedSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
-    if (size > maxAllowedSize) {
-      res.status(400).send(`File size exceeds limit (${isVideo ? '50MB for videos' : '10MB for images'})`);
-      return;
-    }
-
-    let finalBuffer = buffer;
-    let finalMimeType = mimetype;
-
-    if (isImage) {
-      try {
-        finalBuffer = await sharp(buffer)
-          .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-          .webp({ quality: 80 })
-          .toBuffer();
-        finalMimeType = 'image/webp';
-      } catch (sharpError) {
-        console.warn('Sharp optimization failed, uploading original image:', sharpError);
+app.post(
+  '/api/upload',
+  verifyToken,
+  uploadLimiter,
+  upload.single('file'),
+  validateUpload,
+  async (req: any, res: Response): Promise<any> => {
+    try {
+      if (!req.validatedFile) {
+        return res.status(400).json({ error: 'No file provided' });
       }
+
+      const { buffer, safeName, mimeType, isVideo } = req.validatedFile;
+      const resourceType = isVideo ? 'video' : 'image';
+      const { folder } = req.body;
+
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+      const apiKey = process.env.CLOUDINARY_API_KEY;
+      const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+      if (!cloudName || !apiKey || !apiSecret || apiKey === 'dummy') {
+        console.error('[Cloudinary] Missing configurations on the server.');
+        return res.status(500).json({ error: 'Upload failed: Cloudinary server configuration error.' });
+      }
+
+      cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+        secure: true,
+      });
+
+      // Upload via stream using API secret
+      const result: any = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            public_id: safeName.replace(/\.[^.]+$/, ''),
+            folder: `nc-network/${folder || 'general'}`,
+            resource_type: resourceType,
+            transformation: resourceType === 'image' ? [
+              { quality: 'auto', fetch_format: 'auto' },
+              { width: 1200, crop: 'limit' },
+            ] : [],
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        streamifier
+          .createReadStream(buffer)
+          .pipe(stream);
+      });
+
+      return res.json({
+        success: true,
+        url: result.secure_url,
+        publicId: result.public_id,
+        type: mimeType,
+        width: result.width,
+        height: result.height,
+        duration: result.duration || null,
+      });
+
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      return res.status(500).json({
+        error: 'Upload failed. Please try again.'
+      });
+    }
+  }
+);
+
+// ─── CLOUDINARY DELETE PROXY ──────────
+app.delete(
+  '/api/upload/:publicId',
+  verifyToken,
+  async (req: AuthedRequest<{ publicId: string }, any>, res: Response): Promise<any> => {
+    try {
+      const publicId = decodeURIComponent(req.params.publicId);
+      const resourceType = req.body.resourceType || 'image';
+
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+      const apiKey = process.env.CLOUDINARY_API_KEY;
+      const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+      if (!cloudName || !apiKey || !apiSecret) {
+        return res.status(500).json({ error: 'Cloudinary server configuration error.' });
+      }
+
+      cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+        secure: true,
+      });
+
+      await cloudinary.uploader.destroy(publicId, {
+        resource_type: resourceType,
+      });
+
+      return res.json({ success: true });
+    } catch (error) {
+      console.error('Delete error:', error);
+      return res.status(500).json({ error: 'Delete failed' });
+    }
+  }
+);
+
+// ─── ONESIGNAL NOTIFICATION PROXY ─────
+const handleSendNotification = async (req: AuthedRequest<any, any>, res: Response): Promise<any> => {
+  try {
+    const { userId, title, body, data, url, convoId, senderName, previewText, otherParticipants } = req.body;
+
+    const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
+    const appId = process.env.ONESIGNAL_APP_ID || 'a9962176-972c-4874-8161-ec84428e9036';
+
+    if (!restApiKey) {
+      console.error('OneSignal REST API Key is not configured on the server.');
+      return res.status(500).json({ error: 'Server configuration error' });
     }
 
-    const folder = `nc_network/users/${req.user.uid}`;
-    const secureUrl = await uploadToCloudinary(finalBuffer, finalMimeType, folder);
+    let recipients: string[] = [];
+    let headingsText = title || 'New Notification';
+    let contentsText = body || '';
+    let targetUrl = url || 'https://nc-netwotk.vercel.app';
 
-    res.json({ url: secureUrl });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Upload failed';
-    res.status(500).json({ error: message });
+    if (userId) {
+      recipients = [userId];
+    } else if (otherParticipants && Array.isArray(otherParticipants)) {
+      const senderId = req.user?.uid;
+      recipients = otherParticipants.filter(uid => uid !== senderId);
+    }
+
+    if (convoId && senderName && previewText) {
+      headingsText = `New Message from ${senderName}`;
+      contentsText = previewText;
+      targetUrl = `https://nc-netwotk.vercel.app/messages/${convoId}`;
+    }
+
+    if (recipients.length === 0) {
+      return res.json({ success: true, message: 'No recipients to notify' });
+    }
+
+    const payload = {
+      app_id: appId,
+      contents: { en: contentsText },
+      headings: { en: headingsText },
+      url: targetUrl,
+      include_aliases: {
+        external_id: recipients,
+      },
+      target_channel: 'push',
+      data: data || {},
+    };
+
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': `Basic ${restApiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      console.error('OneSignal notification failed:', errData);
+      return res.status(502).json({ error: 'OneSignal API failed', details: errData });
+    }
+
+    return res.json({ success: true });
+  } catch (error: any) {
+    console.error('Notification proxy error:', error);
+    return res.status(500).json({ error: 'Notification failed', message: error.message });
   }
-});
+};
+
+app.post('/api/notifications/send', verifyToken, handleSendNotification);
+app.post('/api/send-notification', verifyToken, handleSendNotification);
+
+// ─── SEARCH PROXY ─────────────────────
+app.get(
+  '/api/search',
+  verifyToken,
+  async (req: AuthedRequest<any, any, any>, res: Response): Promise<any> => {
+    try {
+      const { q, category } = req.query;
+
+      let queryRef: admin.firestore.Query = db.collection('profiles');
+
+      if (category) {
+        queryRef = queryRef.where('category', '==', category);
+      }
+
+      const results = await queryRef.limit(100).get();
+
+      let talents: any[] = results.docs.map(doc => {
+        const data = doc.data() || {};
+        const { 
+          fcmToken, 
+          fcmTokens,
+          twoFactorSecret, 
+          twoFactorBackupCodes,
+          loginAttempts 
+        } = data;
+        return { 
+          id: doc.id, 
+          ...data,
+          fcmToken: undefined,
+          fcmTokens: undefined,
+          twoFactorSecret: undefined,
+          twoFactorBackupCodes: undefined,
+          loginAttempts: undefined
+        };
+      });
+
+      if (q) {
+        const queryStr = (q as string).toLowerCase();
+        talents = talents.filter(talent => 
+          talent.name?.toLowerCase().includes(queryStr) ||
+          talent.displayName?.toLowerCase().includes(queryStr) ||
+          talent.bio?.toLowerCase().includes(queryStr)
+        );
+      }
+
+      return res.json({ success: true, talents });
+    } catch (error: any) {
+      console.error('Search proxy error:', error);
+      return res.status(500).json({ error: 'Search failed' });
+    }
+  }
+);
+
+// ─── PROFILE PROXY ────────────────────
+app.get(
+  '/api/profiles/:userId',
+  verifyToken,
+  async (req: AuthedRequest<{ userId: string }, any>, res: Response): Promise<any> => {
+    try {
+      const profileDoc = await db
+        .collection('profiles')
+        .doc(req.params.userId)
+        .get();
+
+      if (!profileDoc.exists) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+
+      const data = profileDoc.data() || {};
+      const { 
+        fcmToken, 
+        fcmTokens,
+        twoFactorSecret,
+        twoFactorBackupCodes,
+        loginAttempts,
+        ...safeProfile 
+      } = data;
+
+      return res.json({ 
+        success: true, 
+        profile: safeProfile 
+      });
+    } catch (error) {
+      return res.status(500).json({ error: 'Failed to load profile' });
+    }
+  }
+);
 
 // Upload avatar
 app.post('/api/upload/avatar', verifyToken, uploadLimiter, upload.single('avatar'), async (req: AuthedRequest, res: Response) => {
@@ -902,9 +1163,17 @@ app.post('/api/admin/settings', verifyToken, isAdmin, async (req: AuthedRequest,
   }
 });
 
-app.get('/api/profile/:uid', verifyToken, async (req: AuthedRequest<{ uid: string }>, res: Response) => {
-  try {
-    const docRef = await db.collection('profiles').doc(req.params.uid).get();
+app.get(
+  '/api/profile/:uid',
+  verifyToken,
+  bloomFilterMiddleware('profile'),
+  cacheMiddleware(
+    (req) => `profile:${req.params.uid}`,
+    300
+  ),
+  async (req: AuthedRequest<{ uid: string }>, res: Response) => {
+    try {
+      const docRef = await db.collection('profiles').doc(req.params.uid).get();
     if (!docRef.exists) {
       res.status(404).send('Profile not found');
       return;
@@ -945,6 +1214,11 @@ app.post('/api/profile', verifyToken, async (req: AuthedRequest, res: Response) 
     if (Object.keys(userUpdate).length > 0) {
       await db.collection('users').doc(uid).set(userUpdate, { merge: true });
     }
+
+    addToBloomFilter('profile', uid);
+    addToBloomFilter('user', uid);
+    deleteFromCacheByPattern(`profile:${uid}`);
+    deleteFromCacheByPattern(`user:${uid}`);
 
     res.json({ success: true });
   } catch (error: unknown) {
@@ -988,6 +1262,81 @@ app.get('/api/casting', async (req: Request, res: Response) => {
   }
 });
 
+// ─── USER PROFILE ROUTES ──────────────
+app.get(
+  '/api/users/:id',
+  bloomFilterMiddleware('user'),
+  cacheMiddleware(
+    (req) => `user:${req.params.id}`,
+    300
+  ),
+  async (req: Request<{ id: string }>, res: Response) => {
+    try {
+      const userDoc = await db
+        .collection('users')
+        .doc(req.params.id)
+        .get();
+
+      if (!userDoc.exists) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const { passwordHash, fcmTokens, ...safeData } = userDoc.data() || {};
+      return res.json({ user: safeData });
+    } catch (error) {
+      return res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
+
+// ─── CASTING CALL ROUTES ──────────────
+app.get(
+  '/api/castings/:id',
+  bloomFilterMiddleware('casting'),
+  cacheMiddleware(
+    (req) => `casting:${req.params.id}`,
+    600
+  ),
+  async (req: Request<{ id: string }>, res: Response) => {
+    try {
+      const castingDoc = await db
+        .collection('casting_calls')
+        .doc(req.params.id)
+        .get();
+
+      if (!castingDoc.exists) {
+        return res.status(404).json({ error: 'Casting call not found' });
+      }
+
+      return res.json({ casting: castingDoc.data() });
+    } catch (error) {
+      return res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
+
+// ─── DISCOVERY/SEARCH ROUTES ──────────
+app.get(
+  '/api/discovery',
+  cacheMiddleware(
+    (req) => `discovery:${req.query.category || 'all'}:${req.query.page || '1'}`,
+    120
+  ),
+  async (req, res) => {
+    try {
+      const limitVal = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10), 100) : 20;
+      const snapshot = await db.collection('casting_calls')
+        .orderBy('createdAt', 'desc')
+        .limit(limitVal)
+        .get();
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return res.json({ items });
+    } catch (error) {
+      return res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
+
 app.post('/api/casting', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
     const validatedData = CastingCallSchema.parse(req.body);
@@ -1012,6 +1361,8 @@ app.post('/api/casting', verifyToken, async (req: AuthedRequest, res: Response) 
         createdBy: uid,
         status: 'Open',
       });
+      addToBloomFilter('casting', id);
+      deleteFromCacheByPattern(`casting:${id}`);
       res.json({ id });
     } else {
       const docRef = await db.collection('casting_calls').add({
@@ -1020,6 +1371,7 @@ app.post('/api/casting', verifyToken, async (req: AuthedRequest, res: Response) 
         createdBy: uid,
         status: 'Open',
       });
+      addToBloomFilter('casting', docRef.id);
       res.json({ id: docRef.id });
     }
   } catch (error: unknown) {
@@ -1035,6 +1387,7 @@ app.post('/api/casting', verifyToken, async (req: AuthedRequest, res: Response) 
 app.delete('/api/casting/:id', verifyToken, isAdmin, async (req: AuthedRequest<{ id: string }>, res: Response) => {
   try {
     await db.collection('casting_calls').doc(req.params.id).delete();
+    deleteFromCacheByPattern(`casting:${req.params.id}`);
     res.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to delete casting call';
@@ -1049,6 +1402,7 @@ app.put('/api/casting/:id/priority', verifyToken, isAdmin, async (req: AuthedReq
       highPriority: !!highPriority,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+    deleteFromCacheByPattern(`casting:${req.params.id}`);
     res.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to set casting priority';
@@ -1074,6 +1428,28 @@ app.post('/api/messaging/conversations', verifyToken, async (req: AuthedRequest,
     if (!uniqueParticipants.includes(uid)) {
       res.status(400).json({ error: "Conversation must include the authenticated user" });
       return;
+    }
+
+    // FIX #5: Check if any other participant has blocked the requesting user
+    const otherParticipants = uniqueParticipants.filter(p => p !== uid);
+    for (const participantId of otherParticipants) {
+      const participantDoc = await db.collection('users').doc(participantId).get();
+      if (participantDoc.exists) {
+        const blockedUsers: string[] = participantDoc.data()?.blockedUsers || [];
+        if (blockedUsers.includes(uid)) {
+          res.status(403).json({ error: 'You cannot message this user' });
+          return;
+        }
+      }
+      // Also check if the requesting user has blocked the participant
+      const requesterDoc = await db.collection('users').doc(uid).get();
+      if (requesterDoc.exists) {
+        const requesterBlocked: string[] = requesterDoc.data()?.blockedUsers || [];
+        if (requesterBlocked.includes(participantId)) {
+          res.status(403).json({ error: 'You have blocked this user' });
+          return;
+        }
+      }
     }
 
     const sorted = uniqueParticipants.slice().sort();
@@ -2693,6 +3069,25 @@ app.get('/api/data-export/download', async (req: Request, res: Response) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+// Client error logging endpoint:
+app.post('/api/errors/log', async (req, res) => {
+  try {
+    const firestoreDb = admin.firestore();
+    await firestoreDb.collection('client_errors').add({
+      ...req.body,
+      serverTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+      ip: req.ip || null,
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[ErrorLogger] Failed to write client error to Firestore:', error);
+    res.json({ success: false });
+  }
+});
+
+// Register global error logger middleware (must be registered last)
+app.use(errorLogger);
 
 app.listen(PORT, () => {
   console.log(`NC Network Secure API running on http://localhost:${PORT}`);

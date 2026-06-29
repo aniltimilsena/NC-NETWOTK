@@ -27,7 +27,7 @@ const menuItems = [
   { to: '/admin/settings', label: 'Platform Settings', icon: Settings },
 ];
 
-export default function AdminSidebar({ activeTab, onNavigate }: { activeTab: any; onNavigate: any }) {
+export default function AdminSidebar({ activeTab: _activeTab, onNavigate: _onNavigate }: { activeTab?: any; onNavigate?: any }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (

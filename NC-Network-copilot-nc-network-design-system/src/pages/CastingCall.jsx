@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Bookmark, ClipboardList, SortDesc, ChevronDown, Check, Zap, 
-  MapPin, Calendar, Plus, Search, Eye, AlertCircle, Clock 
+  Bookmark, SortDesc, ChevronDown, Check, 
+  MapPin, Plus, Search, AlertCircle, Clock 
 } from 'lucide-react';
-import { db, auth } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { subscribeToCastingCalls } from '../services/casting';
 import SEO from '../components/SEO';

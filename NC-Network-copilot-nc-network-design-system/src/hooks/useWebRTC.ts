@@ -10,7 +10,6 @@ import {
   subscribeToIceCandidates,
   cleanupCall,
   type CallDoc,
-  type CallStatus,
 } from "../services/call";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────

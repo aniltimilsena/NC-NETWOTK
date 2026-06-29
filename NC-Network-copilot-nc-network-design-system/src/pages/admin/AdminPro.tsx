@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
   CreditCard, 
-  TrendingUp, 
   ArrowUpRight, 
   Zap, 
   Search, 
-  Filter, 
   Award, 
-  Trash2, 
   CheckCircle,
   XCircle,
   X,
   ExternalLink,
-  Mail,
-  User
+  Mail
 } from 'lucide-react';
 import { db, auth } from '../../lib/firebase';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';

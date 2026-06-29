@@ -2,8 +2,6 @@
 // No external audio file required — generates a premium-sounding ring
 
 let audioContext: AudioContext | null = null;
-let oscillatorNode: OscillatorNode | null = null;
-let gainNode: GainNode | null = null;
 let ringInterval: ReturnType<typeof setInterval> | null = null;
 
 /**
@@ -66,8 +64,6 @@ export const stopRingtone = () => {
     audioContext.close().catch(() => {});
     audioContext = null;
   }
-  oscillatorNode = null;
-  gainNode = null;
 };
 
 /**

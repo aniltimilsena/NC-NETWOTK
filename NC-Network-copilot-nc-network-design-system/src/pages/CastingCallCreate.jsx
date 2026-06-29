@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { 
-  MapPin, Clock, Info, Plus, X, Upload, Check, ChevronLeft 
+  MapPin, Clock, Info, Plus, X, Upload, ChevronLeft 
 } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
-import Tag from '../components/ui/Tag';
 import { createCastingCall } from '../services/casting';
 import { uploadProfileMedia } from '../services/profile';
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';

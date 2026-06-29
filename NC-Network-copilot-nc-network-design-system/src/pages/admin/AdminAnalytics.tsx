@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { MousePointer2, Users, CheckCircle, Rocket, TrendingDown, Info, Zap } from 'lucide-react';
+import { TrendingDown, Info, Zap } from 'lucide-react';
 import { db } from '../../lib/firebase';
-import { collection, onSnapshot, query, limit, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import Avatar from '../../components/ui/Avatar';
 
 export default function AdminAnalytics() {

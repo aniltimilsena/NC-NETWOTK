@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  User, 
   CheckCircle, 
   Trash2, 
   Star, 
@@ -9,11 +8,8 @@ import {
   Image as ImageIcon, 
   Video, 
   MapPin, 
-  Sparkles, 
-  AlertTriangle, 
   X,
-  XCircle,
-  Award
+  XCircle
 } from 'lucide-react';
 import { db, auth } from '../../lib/firebase';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';

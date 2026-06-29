@@ -1,21 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
-import { getProfile, updateProfileData, subscribeToProfile, uploadProfileMedia } from '../services/profile';
+import { getProfile, updateProfileData, uploadProfileMedia } from '../services/profile';
 import { verifyUserPassword } from '../services/auth';
 import { COLLECTIONS } from '../constants/collections';
 import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword, GoogleAuthProvider, FacebookAuthProvider, linkWithPopup, unlink } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { collection, query, orderBy, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp, getDocs, where, updateDoc, limit } from 'firebase/firestore';
-import { FileUploadCard } from "@/components/ui/file-upload-card"
-import { InlineAlert } from '../components/ui/AlertBanner';
 import { 
-  ToggleIcon, 
-  LockUnlockIcon, 
-  NotificationIcon, 
-  EyeToggleIcon,
-  DownloadDoneIcon,
-  SuccessIcon
+  LockUnlockIcon
 } from "@/components/ui/animated-state-icons"
 import { Plus, Check, ChevronLeft, User, Briefcase, Lock, Bell, Shield, Database, Trash2, HelpCircle, X, Mail, Loader2, Monitor, Smartphone, Tablet, Eye, EyeOff, AlertTriangle } from "lucide-react"
 import { evaluatePasswordStrength } from '../utils/security';
@@ -330,8 +322,7 @@ const NotificationRow = ({ row, markDirty }) => {
 };
 
 export default function Settings({ onNavigate, user, initialTab, showToast, isAdmin }) {
-  const { t, i18n } = useTranslation();
-  const isUserAdmin = isAdmin || user?.email === 'aniltimilsena53@gmail.com';
+  const isUserAdmin = isAdmin;
 
   const createSystemNotification = async (title, body) => {
     if (!user?.uid) return;
@@ -897,8 +888,6 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
   // OneSignal Push Subscription state listener
   useEffect(() => {
-    let checkInterval;
-
     const checkSubscription = () => {
       const OneSignal = window.OneSignal;
       if (OneSignal && OneSignal.User && OneSignal.User.PushSubscription) {
@@ -907,7 +896,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     };
 
     // Poll every 2 seconds to keep React state perfectly synced with OneSignal
-    checkInterval = setInterval(checkSubscription, 2000);
+    const checkInterval = setInterval(checkSubscription, 2000);
     checkSubscription();
 
     return () => {

@@ -28,6 +28,7 @@ export default function CuratorTopbar() {
         <div className="h-8 w-8 rounded-full bg-oc-surface-highest overflow-hidden border border-oc-border/30">
           <img 
             alt="Admin Profile" 
+            /* eslint-disable-next-line no-secrets/no-secrets */
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhUXdVxppvXN-qUGt__9MmSHQj7f3yaeowhd-D6ufrbJXurkjFuNpn3y7kx4mJ_7pHPH_2P9FaOxkzD36OaJ_6mCkYzjXAQSdtHweYmwvK-1vTPrfVqActUYWPFk4O3UPaNpGzmwQZ7QdM73W0964w5EsgKed3pu-uf6PZBRAIJA2zNJQw-ML1dK1UHFHZ6-hlRkbceck4Fjct7SwuYjkeegifld6DVX8INd-EVKL6RQMhoO127niqsQn1_d7H8e-x0UZRRIUhe-I"
           />
         </div>

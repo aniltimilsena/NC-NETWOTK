@@ -6,13 +6,9 @@ import {
   Lock, 
   Trash2, 
   Plus, 
-  Activity, 
   ShieldCheck, 
   Clock, 
-  ShieldAlert,
-  Save,
-  Check,
-  AlertCircle
+  ShieldAlert
 } from 'lucide-react';
 import { Switch } from "../../components/ui/shadcn-switch";
 import { 

@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { CheckCircle, LogOut, Info, AlertCircle } from 'lucide-react';
 import { useEffect } from 'react';
 
