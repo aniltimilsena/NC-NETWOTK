@@ -1090,7 +1090,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [otpSent, setOtpSent] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(120);
   const [resendActive, setResendActive] = useState(false);
   const [backupCodes, setBackupCodes] = useState([]);
   const [passwordToDisable, setPasswordToDisable] = useState("");
@@ -1116,7 +1116,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       });
       if (res.data.success) {
         setOtpSent(true);
-        setCountdown(60);
+        setCountdown(120);
         setResendActive(false);
         setOtpValue('');
         if (res.data.code && Notification.permission === 'granted') {
@@ -1196,7 +1196,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       
       if (res.data.success) {
         setOtpSent(true);
-        setCountdown(60);
+        setCountdown(120);
         setResendActive(false);
         setOtpValue('');
         setTwoFactorStep('disable_verify');

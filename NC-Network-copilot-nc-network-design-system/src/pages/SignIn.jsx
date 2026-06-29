@@ -134,7 +134,7 @@ export default function SignIn({ onNavigate, showAlert }) {
   const [twoFactorError, setTwoFactorError] = useState('');
   const [twoFactorMethod, setTwoFactorMethod] = useState('sms');
   const [twoFactorDestination, setTwoFactorDestination] = useState('');
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(120);
   const [resendActive, setResendActive] = useState(false);
   const [useBackupCode, setUseBackupCode] = useState(false);
   const [isShake, setIsShake] = useState(false);
@@ -196,7 +196,7 @@ export default function SignIn({ onNavigate, showAlert }) {
         method: twoFactorMethod
       });
       if (res.data.success) {
-        setCountdown(60);
+        setCountdown(120);
         setResendActive(false);
         setVerificationCode('');
         showAlert('Verification code resent!', 'success');
@@ -280,7 +280,7 @@ export default function SignIn({ onNavigate, showAlert }) {
           if (res.data.success) {
             setTwoFactorMethod(res.data.method || 'sms');
             setTwoFactorDestination(res.data.destination);
-            setCountdown(60);
+            setCountdown(120);
             setResendActive(false);
             setVerificationCode('');
             setTwoFactorError('');

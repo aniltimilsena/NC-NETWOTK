@@ -209,7 +209,7 @@ const sendOTPEmail = async (email: string, code: string) => {
         <h1 style="letter-spacing: 8px; color: #00BFFF; font-size: 36px;">
           ${code}
         </h1>
-        <p>This code expires in <strong>10 minutes</strong>.</p>
+        <p>This code expires in <strong>2 minutes</strong>.</p>
         <p style="color: #999; font-size: 12px;">
           If you didn't request this, please ignore this email.
         </p>
@@ -226,7 +226,7 @@ const sendOTPSMS = async (phone: string, code: string) => {
   );
 
   await client.messages.create({
-    body: `Your NC Network verification code: ${code}. Expires in 10 minutes.`,
+    body: `Your NC Network verification code: ${code}. Expires in 2 minutes.`,
     from: process.env.TWILIO_PHONE_NUMBER,
     to: phone,
   });
@@ -2256,7 +2256,7 @@ app.post('/api/2fa/send-setup-otp', verifyToken, async (req: AuthedRequest, res:
       method,
       phone: phone || null,
       email: email || null,
-      expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+      expiresAt: Date.now() + 2 * 60 * 1000, // 2 minutes
       attempts: 0,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
@@ -2282,7 +2282,7 @@ app.post('/api/2fa/send-setup-otp', verifyToken, async (req: AuthedRequest, res:
       success: true,
       method,
       destination: maskDestination(method, targetPhone, targetEmail),
-      expiresIn: 600, // seconds
+      expiresIn: 120, // seconds
     });
   } catch (error: unknown) {
     console.error('Send setup OTP error:', error);
@@ -2351,7 +2351,7 @@ app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
       method: twoFactorMethod,
       phone: targetPhone || null,
       email: targetEmail || null,
-      expiresAt: Date.now() + 10 * 60 * 1000,
+      expiresAt: Date.now() + 2 * 60 * 1000,
       attempts: 0,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
