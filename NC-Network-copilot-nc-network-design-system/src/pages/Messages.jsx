@@ -397,7 +397,15 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       type: 'danger',
       confirmText: 'Delete',
       onConfirm: async () => {
-        await deleteMessage(activeChatId, messageId);
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          await deleteMessage(activeChatId, messageId);
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          showAlert('Failed to delete message: ' + (err instanceof Error ? err.message : String(err)), 'error');
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
       }
     });
   };
@@ -417,12 +425,20 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       type: 'danger',
       confirmText: 'Delete Everything',
       onConfirm: async () => {
-        const { success, error } = await deleteConversation(activeChatId);
-        if (success) {
-          setActiveChatId(null);
-          showAlert('Conversation deleted', 'info');
-        } else {
-          showAlert('Failed to delete: ' + error, 'error');
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          const { success, error } = await deleteConversation(activeChatId);
+          if (success) {
+            setActiveChatId(null);
+            showAlert('Conversation deleted', 'info');
+            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+          } else {
+            showAlert('Failed to delete: ' + error, 'error');
+          }
+        } catch (err) {
+          showAlert('Failed to delete: ' + (err instanceof Error ? err.message : String(err)), 'error');
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
       }
     });
@@ -438,12 +454,20 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       type: 'danger',
       confirmText: 'Block User',
       onConfirm: async () => {
-        const { success, error } = await blockUser(user.uid, otherId);
-        if (success) {
-          setActiveChatId(null);
-          showAlert('User blocked', 'success');
-        } else {
-          showAlert('Failed to block: ' + error, 'error');
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          const { success, error } = await blockUser(user.uid, otherId);
+          if (success) {
+            setActiveChatId(null);
+            showAlert('User blocked', 'success');
+            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+          } else {
+            showAlert('Failed to block: ' + error, 'error');
+          }
+        } catch (err) {
+          showAlert('Failed to block: ' + (err instanceof Error ? err.message : String(err)), 'error');
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
       }
     });

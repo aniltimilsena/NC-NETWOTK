@@ -14,7 +14,8 @@ service cloud.firestore {
     // The write: false rule below is intentional — no client writes permitted.
     function isAdmin() {
       return isSignedIn() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
     }
 
     // FIX #7: profiles read is still public (required for discovery/search).
@@ -33,10 +34,10 @@ service cloud.firestore {
         !('fcmToken' in request.resource.data) &&
         !('fcmTokens' in request.resource.data) &&
         // FIX #2: Ensure media URL fields are strings (not objects/arrays) if present
-        (!('image' in request.resource.data) || request.resource.data.image is string) &&
-        (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string) &&
-        (!('coverUrl' in request.resource.data) || request.resource.data.coverUrl is string) &&
-        (!('coverPhoto' in request.resource.data) || request.resource.data.coverPhoto is string);
+        (!('image' in request.resource.data) || request.resource.data.image is string || request.resource.data.image == null) &&
+        (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string || request.resource.data.photoURL == null) &&
+        (!('coverUrl' in request.resource.data) || request.resource.data.coverUrl is string || request.resource.data.coverUrl == null) &&
+        (!('coverPhoto' in request.resource.data) || request.resource.data.coverPhoto is string || request.resource.data.coverPhoto == null);
       allow delete: if isOwner(userId) || isAdmin();
 
       match /sessions/{sessionId} {
@@ -55,11 +56,11 @@ service cloud.firestore {
         !('password' in request.resource.data) &&
         !('passwordHash' in request.resource.data) &&
         !('passwordReset' in request.resource.data) &&
-        (isAdmin() || !('isAdmin' in request.resource.data)) &&
+        (!('isAdmin' in request.resource.data) || isAdmin() || (resource != null && 'isAdmin' in resource.data && request.resource.data.isAdmin == resource.data.isAdmin)) &&
         // FIX #1: blockedUsers can only be written by the owner (not by admins or other users)
-        (!('blockedUsers' in request.resource.data) || isOwner(userId)) &&
+        (isOwner(userId) || !('blockedUsers' in request.resource.data) || (resource != null && 'blockedUsers' in resource.data && request.resource.data.blockedUsers == resource.data.blockedUsers)) &&
         // FIX #2: photoURL must be a string if present
-        (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string);
+        (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string || request.resource.data.photoURL == null);
       allow delete: if isOwner(userId) || isAdmin();
       
       // Sensitive private data in subcollection

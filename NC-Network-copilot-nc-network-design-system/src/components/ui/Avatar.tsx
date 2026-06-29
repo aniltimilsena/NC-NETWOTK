@@ -233,18 +233,18 @@ export default function Avatar(props: AvatarProps) {
             ✓
           </div>
         )}
-
-        {/* Hidden File Input */}
-        {editable && (
-          <input 
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-          />
-        )}
       </div>
+
+      {/* Hidden File Input */}
+      {editable && (
+        <input 
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+        />
+      )}
 
       {/* Options Dropdown Modal overlay */}
       {showOptionsModal && (

@@ -13,7 +13,6 @@ if (fs.existsSync(envPath)) {
       if (index > 0) {
         const key = trimmed.substring(0, index).trim();
         let value = trimmed.substring(index + 1).trim();
-        // Remove enclosing quotes if present
         if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
           value = value.substring(1, value.length - 1);
         }
@@ -23,6 +22,29 @@ if (fs.existsSync(envPath)) {
     console.log('Manually loaded environment variables from .env');
   } catch (err) {
     console.warn('Failed to parse .env file:', err.message);
+  }
+}
+
+const envServerPath = path.resolve(__dirname, '../.env.server');
+if (fs.existsSync(envServerPath)) {
+  try {
+    const envContent = fs.readFileSync(envServerPath, 'utf8');
+    envContent.split(/\r?\n/).forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) return;
+      const index = trimmed.indexOf('=');
+      if (index > 0) {
+        const key = trimmed.substring(0, index).trim();
+        let value = trimmed.substring(index + 1).trim();
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.substring(1, value.length - 1);
+        }
+        process.env[key] = value;
+      }
+    });
+    console.log('Manually loaded environment variables from .env.server');
+  } catch (err) {
+    console.warn('Failed to parse .env.server file:', err.message);
   }
 }
 
