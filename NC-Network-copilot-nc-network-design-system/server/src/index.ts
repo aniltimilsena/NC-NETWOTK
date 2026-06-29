@@ -615,18 +615,26 @@ const assertMessageOwner = async (
 };
 
 
+const isPlaceholder = (val: string | undefined): boolean => {
+  if (!val) return true;
+  const lower = val.toLowerCase().trim();
+  return lower === 'undefined' || lower === 'null' || lower === '' || lower.includes('your_') || lower.includes('dummy') || lower.includes('placeholder');
+};
+
 const uploadToCloudinary = async (fileBuffer: Buffer, mimeType: string, folder: string): Promise<string> => {
   const isVideo = mimeType.startsWith('video/');
   const resourceType = isVideo ? 'video' : 'image';
 
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'du7zu8mca';
+  const cloudNameEnv = process.env.CLOUDINARY_CLOUD_NAME;
+  const cloudName = isPlaceholder(cloudNameEnv) ? 'du7zu8mca' : cloudNameEnv!;
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
-  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || 'stored_media';
+  const uploadPresetEnv = process.env.CLOUDINARY_UPLOAD_PRESET;
+  const uploadPreset = isPlaceholder(uploadPresetEnv) ? 'stored_media' : uploadPresetEnv!;
 
   console.log(`[Cloudinary] Starting upload. Mime: ${mimeType}, Folder: ${folder}, CloudName: ${cloudName}, HasKey: ${!!apiKey}, HasSecret: ${!!apiSecret}, Preset: ${uploadPreset}`);
 
-  if (cloudName && apiKey && apiSecret && apiKey !== 'dummy' && apiSecret !== 'dummy') {
+  if (cloudName && apiKey && apiSecret && !isPlaceholder(apiKey) && !isPlaceholder(apiSecret)) {
     return new Promise<string>((resolve, reject) => {
       try {
         // Global config update for this call
@@ -701,10 +709,13 @@ const uploadToCloudinary = async (fileBuffer: Buffer, mimeType: string, folder: 
 };
 
 app.get('/api/config/cloudinary', verifyToken, (req: AuthedRequest, res: Response) => {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'du7zu8mca';
+  const cloudNameEnv = process.env.CLOUDINARY_CLOUD_NAME;
+  const cloudName = isPlaceholder(cloudNameEnv) ? 'du7zu8mca' : cloudNameEnv!;
+  const uploadPresetEnv = process.env.CLOUDINARY_UPLOAD_PRESET;
+  const uploadPreset = isPlaceholder(uploadPresetEnv) ? 'stored_media' : uploadPresetEnv!;
   res.json({
     cloudName,
-    uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET || 'stored_media',
+    uploadPreset,
   });
 });
 
@@ -728,17 +739,19 @@ app.post(
       const resourceType = isVideo ? 'video' : 'image';
       const { folder } = req.body;
 
-      const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'du7zu8mca';
+      const cloudNameEnv = process.env.CLOUDINARY_CLOUD_NAME;
+      const cloudName = isPlaceholder(cloudNameEnv) ? 'du7zu8mca' : cloudNameEnv!;
       const apiKey = process.env.CLOUDINARY_API_KEY;
       const apiSecret = process.env.CLOUDINARY_API_SECRET;
-      const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || 'stored_media';
+      const uploadPresetEnv = process.env.CLOUDINARY_UPLOAD_PRESET;
+      const uploadPreset = isPlaceholder(uploadPresetEnv) ? 'stored_media' : uploadPresetEnv!;
 
       console.log(`[Upload API] Starting upload. Resource: ${resourceType}, Size: ${buffer.length} bytes, Target Folder: ${folder || 'general'}`);
 
       // Check if signed credentials exist and are not dummy/placeholders
       const isSignedConfigured = cloudName && apiKey && apiSecret && 
-        apiKey !== 'dummy' && apiKey !== 'your_key' && 
-        apiSecret !== 'dummy' && apiSecret !== 'your_secret';
+        !isPlaceholder(apiKey) && 
+        !isPlaceholder(apiSecret);
 
       if (isSignedConfigured) {
         console.log('[Upload API] Using Cloudinary signed upload strategy.');
