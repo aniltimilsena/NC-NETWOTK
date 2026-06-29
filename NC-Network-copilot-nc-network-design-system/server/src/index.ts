@@ -29,7 +29,6 @@ import {
   deleteFromCacheByPattern,
 } from './services/cacheService';
 import { validateUpload } from './middleware/uploadSecurity';
-import { errorLogger } from './middleware/errorLogger';
 
 // Load env from current directory first, then fallback to server and parent directories
 dotenv.config();
@@ -293,7 +292,6 @@ app.use(helmet({
   },
 }));
 
-// Custom middleware to set proper cache-control and clear deprecated headers for all API responses
 app.use((req, res, next) => {
   const path = req.path;
   
@@ -310,12 +308,72 @@ app.use((req, res, next) => {
   
   res.removeHeader('X-XSS-Protection');
 
+  // Override res.send to format string/HTML errors as standardized JSON
+  const originalSend = res.send;
+  res.send = function (body: any) {
+    const contentType = res.getHeader('Content-Type');
+    const isJsonAlready = contentType && typeof contentType === 'string' && contentType.includes('application/json');
+
+    if (res.statusCode >= 400 && typeof body === 'string' && !isJsonAlready) {
+      let isJsonString = false;
+      try {
+        const trimmed = body.trim();
+        if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+          JSON.parse(trimmed);
+          isJsonString = true;
+        }
+      } catch (e) {}
+
+      if (!isJsonString) {
+        res.setHeader('Content-Type', 'application/json');
+        let message = body;
+        if (body.trim().startsWith('<')) {
+          message = 'An unexpected error occurred on the server.';
+        }
+
+        let errorCode = 'BAD_REQUEST';
+        if (res.statusCode === 401) errorCode = 'UNAUTHORIZED';
+        else if (res.statusCode === 403) errorCode = 'FORBIDDEN';
+        else if (res.statusCode === 404) errorCode = 'NOT_FOUND';
+        else if (res.statusCode === 500) errorCode = 'INTERNAL_SERVER_ERROR';
+
+        return originalSend.call(this, JSON.stringify({
+          success: false,
+          message,
+          error: message,
+          errorCode
+        }));
+      }
+    }
+    return originalSend.call(this, body);
+  };
+
   // STEP 4: Global production error sanitization for 500 Internal Server Errors
   const originalJson = res.json;
   res.json = function (body: any) {
     if (res.statusCode === 500 && body && body.error) {
       if (process.env.NODE_ENV === 'production') {
         body.error = 'Something went wrong. Please try again.';
+      }
+    }
+    
+    // Standardize error formats to match target schema
+    if (res.statusCode >= 400 && body && typeof body === 'object') {
+      if (!('success' in body)) {
+        body.success = false;
+      }
+      if ('error' in body && !('message' in body)) {
+        body.message = typeof body.error === 'string' ? body.error : JSON.stringify(body.error);
+      } else if ('message' in body && !('error' in body)) {
+        body.error = typeof body.message === 'string' ? body.message : JSON.stringify(body.message);
+      }
+      if (!('errorCode' in body)) {
+        let code = 'BAD_REQUEST';
+        if (res.statusCode === 401) code = 'UNAUTHORIZED';
+        else if (res.statusCode === 403) code = 'FORBIDDEN';
+        else if (res.statusCode === 404) code = 'NOT_FOUND';
+        else if (res.statusCode === 500) code = 'INTERNAL_SERVER_ERROR';
+        body.errorCode = code;
       }
     }
     return originalJson.call(this, body);
@@ -444,7 +502,11 @@ const verifyToken = async (req: AuthedRequest, res: Response, next: NextFunction
   const match = bearerHeader?.match(/^Bearer\s+(.+)$/i);
   const token = match?.[1];
   if (!token) {
-    res.status(401).send('Unauthorized');
+    res.status(401).json({
+      success: false,
+      message: 'Unauthorized: Missing token',
+      errorCode: 'UNAUTHORIZED'
+    });
     return;
   }
 
@@ -454,14 +516,22 @@ const verifyToken = async (req: AuthedRequest, res: Response, next: NextFunction
     next();
   } catch (error) {
     console.error('Token verification failed:', error);
-    res.status(401).send('Invalid token');
+    res.status(401).json({
+      success: false,
+      message: 'Unauthorized: Invalid token',
+      errorCode: 'UNAUTHORIZED'
+    });
   }
 };
 
 const isAdmin = async (req: AuthedRequest, res: Response, next: NextFunction) => {
   const uid = req.user?.uid;
   if (!uid) {
-    res.status(401).send('Unauthorized');
+    res.status(401).json({
+      success: false,
+      message: 'Unauthorized: Missing user credentials',
+      errorCode: 'UNAUTHORIZED'
+    });
     return;
   }
 
@@ -475,7 +545,11 @@ const isAdmin = async (req: AuthedRequest, res: Response, next: NextFunction) =>
     next();
     return;
   }
-  res.status(403).send('Forbidden: Admin access required');
+  res.status(403).json({
+    success: false,
+    message: 'Forbidden: Admin access required',
+    errorCode: 'FORBIDDEN'
+  });
 };
 
 const assertParticipant = async (
@@ -649,7 +723,11 @@ app.post(
   async (req: any, res: Response): Promise<any> => {
     try {
       if (!req.validatedFile) {
-        return res.status(400).json({ error: 'No file provided' });
+        return res.status(400).json({
+          success: false,
+          message: 'No file provided',
+          errorCode: 'NO_FILE_PROVIDED'
+        });
       }
 
       const { buffer, safeName, mimeType, isVideo } = req.validatedFile;
@@ -659,55 +737,99 @@ app.post(
       const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
       const apiKey = process.env.CLOUDINARY_API_KEY;
       const apiSecret = process.env.CLOUDINARY_API_SECRET;
+      const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || 'stored_media';
 
-      if (!cloudName || !apiKey || !apiSecret || apiKey === 'dummy') {
-        console.error('[Cloudinary] Missing configurations on the server.');
-        return res.status(500).json({ error: 'Upload failed: Cloudinary server configuration error.' });
-      }
+      console.log(`[Upload API] Starting upload. Resource: ${resourceType}, Size: ${buffer.length} bytes, Target Folder: ${folder || 'general'}`);
 
-      cloudinary.config({
-        cloud_name: cloudName,
-        api_key: apiKey,
-        api_secret: apiSecret,
-        secure: true,
-      });
+      // Check if signed credentials exist and are not dummy/placeholders
+      const isSignedConfigured = cloudName && apiKey && apiSecret && 
+        apiKey !== 'dummy' && apiKey !== 'your_key' && 
+        apiSecret !== 'dummy' && apiSecret !== 'your_secret';
 
-      // Upload via stream using API secret
-      const result: any = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
+      if (isSignedConfigured) {
+        console.log('[Upload API] Using Cloudinary signed upload strategy.');
+        cloudinary.config({
+          cloud_name: cloudName,
+          api_key: apiKey,
+          api_secret: apiSecret,
+          secure: true,
+        });
+
+        const result: any = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              public_id: safeName.replace(/\.[^.]+$/, ''),
+              folder: `nc-network/${folder || 'general'}`,
+              resource_type: resourceType,
+              transformation: resourceType === 'image' ? [
+                { quality: 'auto', fetch_format: 'auto' },
+                { width: 1200, crop: 'limit' },
+              ] : [],
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          streamifier.createReadStream(buffer).pipe(stream);
+        });
+
+        console.log('[Upload API] Signed upload success:', result.secure_url);
+        return res.json({
+          success: true,
+          url: result.secure_url,
+          publicId: result.public_id,
+          type: mimeType,
+          width: result.width,
+          height: result.height,
+          duration: result.duration || null,
+        });
+      } else if (cloudName && uploadPreset) {
+        console.log('[Upload API] Signed config missing or dummy. Falling back to unsigned upload strategy.');
+        
+        const b64 = Buffer.from(buffer).toString('base64');
+        const dataURI = `data:${mimeType};base64,${b64}`;
+
+        const formData = new FormData();
+        formData.append('file', dataURI);
+        formData.append('upload_preset', uploadPreset);
+        formData.append('folder', `nc-network/${folder || 'general'}`);
+
+        const response = await axios.post(
+          `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+          formData,
           {
-            public_id: safeName.replace(/\.[^.]+$/, ''),
-            folder: `nc-network/${folder || 'general'}`,
-            resource_type: resourceType,
-            transformation: resourceType === 'image' ? [
-              { quality: 'auto', fetch_format: 'auto' },
-              { width: 1200, crop: 'limit' },
-            ] : [],
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
           }
         );
-        streamifier
-          .createReadStream(buffer)
-          .pipe(stream);
-      });
 
-      return res.json({
-        success: true,
-        url: result.secure_url,
-        publicId: result.public_id,
-        type: mimeType,
-        width: result.width,
-        height: result.height,
-        duration: result.duration || null,
-      });
+        if (response.data && response.data.secure_url) {
+          console.log('[Upload API] Unsigned upload success:', response.data.secure_url);
+          return res.json({
+            success: true,
+            url: response.data.secure_url,
+            publicId: response.data.public_id,
+            type: mimeType,
+            width: response.data.width,
+            height: response.data.height,
+            duration: response.data.duration || null,
+          });
+        } else {
+          throw new Error('Cloudinary unsigned upload failed: secure_url not found in response');
+        }
+      } else {
+        throw new Error('Cloudinary configuration is missing. Define CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET.');
+      }
 
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('[Upload API Error]:', error);
+      const errMsg = error.response?.data?.error?.message || error.message || 'Upload failed';
       return res.status(500).json({
-        error: 'Upload failed. Please try again.'
+        success: false,
+        message: errMsg,
+        errorCode: 'UPLOAD_FAILED'
       });
     }
   }
@@ -2714,23 +2836,78 @@ app.post('/api/2fa/disable', verifyToken, async (req: AuthedRequest, res: Respon
   }
 });
 
-app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+app.use(async (error: any, req: Request, res: Response, _next: NextFunction) => {
   console.error('[Unhandled Server Error]:', error);
+
+  // Determine status code and message
+  let statusCode = 500;
+  let message = 'An unexpected error occurred. Please try again later.';
+  let errorCode = 'INTERNAL_SERVER_ERROR';
+
   if (error instanceof multer.MulterError) {
-    res.status(400).json({ error: error.message });
-    return;
+    statusCode = 400;
+    message = error.message;
+    errorCode = 'MULTER_ERROR';
+  } else if (error instanceof Error && (error.message === 'Only image uploads are allowed' || error.message === 'Only image and video uploads are allowed')) {
+    statusCode = 400;
+    message = error.message;
+    errorCode = 'INVALID_FILE_TYPE';
+  } else if (error instanceof z.ZodError) {
+    statusCode = 400;
+    message = 'Validation failed';
+    errorCode = 'VALIDATION_ERROR';
+    
+    // Log to Firestore for audit before returning
+    try {
+      const firestoreDb = admin.firestore();
+      await firestoreDb.collection('error_logs').add({
+        message: 'Validation failed',
+        stack: error.stack || null,
+        method: req.method,
+        url: req.url,
+        userId: (req as any).user?.uid || null,
+        ip: req.ip || null,
+        statusCode,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (logError) {
+      console.error('[ErrorLogger] Failed to write validation error to Firestore:', logError);
+    }
+
+    return res.status(statusCode).json({
+      success: false,
+      message,
+      errorCode,
+      details: error.issues
+    });
+  } else if (error.status || error.statusCode) {
+    statusCode = error.status || error.statusCode;
+    message = error.message || message;
   }
-  if (error instanceof Error && (error.message === 'Only image uploads are allowed' || error.message === 'Only image and video uploads are allowed')) {
-    res.status(400).json({ error: error.message });
-    return;
+
+  // Log to Firestore for audit
+  try {
+    const firestoreDb = admin.firestore();
+    await firestoreDb.collection('error_logs').add({
+      message: error.message || 'Unknown error',
+      stack: error.stack || null,
+      method: req.method,
+      url: req.url,
+      userId: (req as any).user?.uid || null,
+      ip: req.ip || null,
+      statusCode,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (logError) {
+    console.error('[ErrorLogger] Failed to write error to Firestore:', logError);
   }
-  if (error instanceof z.ZodError) {
-    res.status(400).json({ error: error.issues });
-    return;
-  }
-  // SECURITY FIX: Never expose internal error details to the client
-  console.error('[Unhandled Error Detail]:', error instanceof Error ? error.message : error);
-  res.status(500).json({ error: 'An unexpected error occurred. Please try again later.' });
+
+  // Respond with standardized JSON
+  return res.status(statusCode).json({
+    success: false,
+    message: statusCode === 500 && process.env.NODE_ENV === 'production' ? 'An unexpected error occurred. Please try again later.' : message,
+    errorCode
+  });
 });
 
 const startupTime = admin.firestore.Timestamp.now();
@@ -3087,7 +3264,6 @@ app.post('/api/errors/log', async (req, res) => {
 });
 
 // Register global error logger middleware (must be registered last)
-app.use(errorLogger);
 
 app.listen(PORT, () => {
   console.log(`NC Network Secure API running on http://localhost:${PORT}`);

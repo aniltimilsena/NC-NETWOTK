@@ -114,7 +114,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
   const [newChatSearch, setNewChatSearch] = useState('');
   const [loadingProfiles, setLoadingProfiles] = useState(false);
   const fileInputRef = useRef(null);
-  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const isUploading = optimisticMessages.some(msg => msg.uploading);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const [typingTimeoutRef, setTypingTimeoutRef] = useState(null);
@@ -239,6 +239,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
 
     } catch (err) {
       console.error(`Media upload/send failed for temp message ${tempId}:`, err);
+      const errMsg = err instanceof Error ? err.message : 'Network error or file size limit exceeded';
+      showAlert(`Upload failed: ${errMsg}`, 'error');
       // Mark as failed in optimistic messages state
       setOptimisticMessages(prev => prev.map(msg => 
         msg.id === tempId ? { ...msg, uploading: false, failed: true } : msg
@@ -1772,8 +1774,9 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                 
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="text-nc-muted hover:text-[#00BFFF] p-1 transition-colors"
-                  title="Attach Media"
+                  disabled={isUploading}
+                  className={`text-nc-muted hover:text-[#00BFFF] p-1 transition-all ${isUploading ? 'opacity-30 cursor-not-allowed' : ''}`}
+                  title={isUploading ? "Upload in progress..." : "Attach Media"}
                   aria-label="Attach Media"
                 >
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1786,20 +1789,21 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
                     type="text"
                     id="messages-new-message"
                     name="messages-new-message"
-                    placeholder="Type a message..."
-                    className="w-full bg-nc-surface border border-nc-border rounded-[2rem] px-5 py-3.5 text-sm text-white placeholder-nc-muted outline-none focus:border-[#00BFFF] transition-all"
+                    placeholder={isUploading ? "Uploading media..." : "Type a message..."}
+                    className="w-full bg-nc-surface border border-nc-border rounded-[2rem] px-5 py-3.5 text-sm text-white placeholder-nc-muted outline-none focus:border-[#00BFFF] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                     value={newMessage}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
+                    disabled={isUploading}
                   />
                 </div>
 
                 {/* Cyan Send button */}
                 <button
                   onClick={handleSendMessage}
-                  disabled={!newMessage.trim()}
+                  disabled={!newMessage.trim() || isUploading}
                   className="w-12 h-12 rounded-full bg-[#00BFFF] text-nc-darker flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale shadow-lg shadow-[#00BFFF]/20 shrink-0"
-                  title="Send Message"
+                  title={isUploading ? "Upload in progress..." : "Send Message"}
                   aria-label="Send Message"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
