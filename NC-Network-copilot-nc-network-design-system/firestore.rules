@@ -99,11 +99,13 @@ service cloud.firestore {
           request.resource.data.keys().hasOnly([
             'senderId', 'text', 'mediaUrl', 'mediaType', 'mediaWidth', 'mediaHeight',
             'mediaDuration', 'createdAt', 'type', 'isSystem', 'status',
-            'replyTo', 'replyToText', 'replyToSender'
+            'replyTo', 'replyToText', 'replyToSender', 'clientMsgId', 'reactions',
+            'read', 'delivered'
           ]);
         allow update: if isSignedIn() && 
           request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
-          resource.data.senderId == request.auth.uid;
+          (resource.data.senderId == request.auth.uid || 
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions', 'read', 'delivered', 'status']));
         allow delete: if isSignedIn() && 
           request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
           resource.data.senderId == request.auth.uid;
