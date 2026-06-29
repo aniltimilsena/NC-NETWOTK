@@ -10,7 +10,6 @@ import multer from 'multer';
 import sharp from 'sharp';
 import * as admin from 'firebase-admin';
 import { v2 as cloudinary } from 'cloudinary';
-import axios from 'axios';
 import { Readable } from 'stream';
 import streamifier from 'streamifier';
 
@@ -677,29 +676,28 @@ const uploadToCloudinary = async (fileBuffer: Buffer, mimeType: string, folder: 
       const b64 = Buffer.from(fileBuffer).toString('base64');
       const dataURI = `data:${mimeType};base64,${b64}`;
 
-      const formData = new FormData();
-      formData.append('file', dataURI);
-      formData.append('upload_preset', uploadPreset);
-      formData.append('folder', folder);
+      cloudinary.config({
+        cloud_name: cloudName,
+        secure: true,
+      });
 
-      const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-        formData,
+      const result = await cloudinary.uploader.unsigned_upload(
+        dataURI,
+        uploadPreset,
         {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+          folder: folder,
+          resource_type: resourceType,
         }
       );
 
-      if (response.data && response.data.secure_url) {
-        console.log('[Cloudinary Unsigned Success]:', response.data.secure_url);
-        return response.data.secure_url;
+      if (result && result.secure_url) {
+        console.log('[Cloudinary Unsigned Success]:', result.secure_url);
+        return result.secure_url;
       } else {
         throw new Error('Cloudinary unsigned upload failed: secure_url not found in response');
       }
     } catch (err: any) {
-      const errMsg = err.response?.data?.error?.message || err.message;
+      const errMsg = err.message || err;
       console.error('[Cloudinary Unsigned Error]:', errMsg);
       throw new Error(`Cloudinary unsigned upload failed: ${errMsg}`, { cause: err });
     }
@@ -797,31 +795,30 @@ app.post(
         const b64 = Buffer.from(buffer).toString('base64');
         const dataURI = `data:${mimeType};base64,${b64}`;
 
-        const formData = new FormData();
-        formData.append('file', dataURI);
-        formData.append('upload_preset', uploadPreset);
-        formData.append('folder', `nc-network/${folder || 'general'}`);
+        cloudinary.config({
+          cloud_name: cloudName,
+          secure: true,
+        });
 
-        const response = await axios.post(
-          `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-          formData,
+        const result = await cloudinary.uploader.unsigned_upload(
+          dataURI,
+          uploadPreset,
           {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
+            folder: `nc-network/${folder || 'general'}`,
+            resource_type: resourceType,
           }
         );
 
-        if (response.data && response.data.secure_url) {
-          console.log('[Upload API] Unsigned upload success:', response.data.secure_url);
+        if (result && result.secure_url) {
+          console.log('[Upload API] Unsigned upload success:', result.secure_url);
           return res.json({
             success: true,
-            url: response.data.secure_url,
-            publicId: response.data.public_id,
+            url: result.secure_url,
+            publicId: result.public_id,
             type: mimeType,
-            width: response.data.width,
-            height: response.data.height,
-            duration: response.data.duration || null,
+            width: result.width,
+            height: result.height,
+            duration: result.duration || null,
           });
         } else {
           throw new Error('Cloudinary unsigned upload failed: secure_url not found in response');
