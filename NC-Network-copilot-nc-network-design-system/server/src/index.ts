@@ -619,10 +619,10 @@ const uploadToCloudinary = async (fileBuffer: Buffer, mimeType: string, folder: 
   const isVideo = mimeType.startsWith('video/');
   const resourceType = isVideo ? 'video' : 'image';
 
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'du7zu8mca';
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
-  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
+  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || 'stored_media';
 
   console.log(`[Cloudinary] Starting upload. Mime: ${mimeType}, Folder: ${folder}, CloudName: ${cloudName}, HasKey: ${!!apiKey}, HasSecret: ${!!apiSecret}, Preset: ${uploadPreset}`);
 
@@ -701,16 +701,10 @@ const uploadToCloudinary = async (fileBuffer: Buffer, mimeType: string, folder: 
 };
 
 app.get('/api/config/cloudinary', verifyToken, (req: AuthedRequest, res: Response) => {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  if (!cloudName) {
-    res.status(500).json({ error: 'Cloudinary is not configured on the server.' });
-    return;
-  }
-  // NOTE: Only expose the public cloud name and the unsigned upload preset.
-  // Never include CLOUDINARY_API_KEY or CLOUDINARY_API_SECRET here.
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'du7zu8mca';
   res.json({
     cloudName,
-    uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET,
+    uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET || 'stored_media',
   });
 });
 
@@ -734,7 +728,7 @@ app.post(
       const resourceType = isVideo ? 'video' : 'image';
       const { folder } = req.body;
 
-      const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'du7zu8mca';
       const apiKey = process.env.CLOUDINARY_API_KEY;
       const apiSecret = process.env.CLOUDINARY_API_SECRET;
       const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || 'stored_media';
