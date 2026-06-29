@@ -19,6 +19,7 @@ import {
   markConversationAsRead
 } from '../services/messaging';
 import { formatMessagePreview } from '../utils/format';
+import { uploadChatMedia } from '../utils/uploadMedia';
 import { 
   ChevronLeft, 
   Search, 
