@@ -30,7 +30,7 @@ export default function Avatar(props: AvatarProps) {
 
   // If user, src, or name is explicitly passed (even if undefined), do not automatically fall back to the logged-in user context
   const isExplicit = 'user' in props || 'src' in props || 'name' in props;
-  const user = propUser || (isExplicit ? null : context?.user);
+  const user = propUser || ((isExplicit && !editable) ? null : context?.user);
   const updateAvatar = context?.updateAvatar;
   const deleteAvatar = context?.deleteAvatar;
 

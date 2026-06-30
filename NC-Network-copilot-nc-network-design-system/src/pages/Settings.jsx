@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getProfile, updateProfileData, uploadProfileMedia } from '../services/profile';
 import { verifyUserPassword } from '../services/auth';
@@ -322,6 +323,7 @@ const NotificationRow = ({ row, markDirty }) => {
 };
 
 export default function Settings({ onNavigate, user, initialTab, showToast, isAdmin }) {
+  const { t, i18n } = useTranslation();
   const isUserAdmin = isAdmin;
 
   const createSystemNotification = async (title, body) => {
