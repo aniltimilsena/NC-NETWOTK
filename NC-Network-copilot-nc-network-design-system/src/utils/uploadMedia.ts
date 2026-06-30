@@ -26,16 +26,38 @@ export const uploadMedia = async (
     throw new Error('Authentication required for upload');
   }
 
+  // 1. Fetch Cloudinary config from the server
+  let config: { cloudName: string; uploadPreset: string };
+  try {
+    const configRes = await fetch('/api/config/cloudinary', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!configRes.ok) {
+      throw new Error(`Failed to fetch upload config (Status ${configRes.status})`);
+    }
+    config = await configRes.json();
+  } catch (err: any) {
+    console.error('Failed to fetch Cloudinary config from server:', err);
+    throw new Error(`Upload initialization failed: ${err.message || err}`);
+  }
+
+  const { cloudName, uploadPreset } = config;
+  const isVideo = file.type.startsWith('video/');
+  const resourceType = isVideo ? 'video' : 'image';
+  const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
+
   return new Promise((resolve, reject) => {
-    // Build form data
+    // Build form data for Cloudinary direct upload
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('folder', folder);
+    formData.append('upload_preset', uploadPreset);
+    formData.append('folder', `nc-network/${folder}`);
 
     // Upload via XHR (supports progress tracking)
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/upload');
-    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.open('POST', uploadUrl);
 
     // Progress tracking
     if (xhr.upload) {
@@ -53,8 +75,8 @@ export const uploadMedia = async (
         let errMsg = `Upload failed (Status ${xhr.status})`;
         try {
           const res = JSON.parse(xhr.responseText);
-          if (res.message || res.error) {
-            errMsg = res.message || res.error;
+          if (res.error && res.error.message) {
+            errMsg = res.error.message;
           }
         } catch (e) {}
         reject(new Error(errMsg));
@@ -63,19 +85,19 @@ export const uploadMedia = async (
 
       try {
         const res = JSON.parse(xhr.responseText);
-        if (res.success) {
+        if (res.secure_url) {
           resolve({
-            url: res.url,
-            publicId: res.publicId,
-            type: res.type,
-            width: res.width,
-            height: res.height,
+            url: res.secure_url,
+            publicId: res.public_id,
+            type: res.resource_type === 'video' ? 'video' : 'image',
+            width: res.width || null,
+            height: res.height || null,
             duration: res.duration || null,
             format: res.format || '',
             bytes: res.bytes || 0,
           });
         } else {
-          reject(new Error(res.message || res.error || 'Upload failed'));
+          reject(new Error(res.error?.message || 'Upload failed'));
         }
       } catch {
         reject(new Error('Failed to parse upload response'));
