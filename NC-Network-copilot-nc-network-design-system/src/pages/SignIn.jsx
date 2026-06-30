@@ -266,7 +266,8 @@ export default function SignIn({ onNavigate, showAlert }) {
 
       try {
         const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
-        if (profileSnap.exists() && profileSnap.data().twoFactorEnabled === true) {
+        // 2FA has been temporarily disabled/bypassed
+        if (false && profileSnap.exists() && profileSnap.data().twoFactorEnabled === true) {
           setTempCredentials({ email: form.email, password: form.password });
           setPendingUserId(user.uid);
           
