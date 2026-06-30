@@ -26,24 +26,26 @@ export const uploadMedia = async (
     throw new Error('Authentication required for upload');
   }
 
-  // 1. Fetch Cloudinary config from the server
-  let config: { cloudName: string; uploadPreset: string };
+  // 1. Fetch Cloudinary config from the server with a robust fallback
+  let cloudName = 'du7zu8mca';
+  let uploadPreset = 'stored_media';
+  
   try {
     const configRes = await fetch('/api/config/cloudinary', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
-    if (!configRes.ok) {
-      throw new Error(`Failed to fetch upload config (Status ${configRes.status})`);
+    if (configRes.ok) {
+      const config = await configRes.json();
+      if (config.cloudName) cloudName = config.cloudName;
+      if (config.uploadPreset) uploadPreset = config.uploadPreset;
+    } else {
+      console.warn(`Failed to fetch Cloudinary config from server (Status ${configRes.status}). Using defaults.`);
     }
-    config = await configRes.json();
   } catch (err: any) {
-    console.error('Failed to fetch Cloudinary config from server:', err);
-    throw new Error(`Upload initialization failed: ${err.message || err}`);
+    console.warn('Failed to fetch Cloudinary config from server. Using defaults:', err);
   }
-
-  const { cloudName, uploadPreset } = config;
   const isVideo = file.type.startsWith('video/');
   const resourceType = isVideo ? 'video' : 'image';
   const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
