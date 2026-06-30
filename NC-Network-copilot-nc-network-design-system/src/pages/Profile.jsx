@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Sparkles, Briefcase, Image, Star, Video, ChevronLeft, Camera } from 'lucide-react';
+import { Sparkles, Briefcase, Image, Star, Video, ChevronLeft, Camera, Trash2 } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
@@ -643,6 +643,34 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     }
   };
 
+  const handleDeleteCover = async () => {
+    if (!user) return;
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Delete Cover Banner',
+      description: 'Are you sure you want to remove your cover banner and revert to the default?',
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          const updateRes = await updateProfileData(user.uid, { coverImage: null });
+          if (updateRes.success) {
+            showAlert("Success", "success", "Cover photo removed successfully!");
+          } else {
+            throw new Error(updateRes.error || "Failed to delete cover image in profile");
+          }
+        } catch (err) {
+          console.error(err);
+          showAlert("Delete Failed", "error", err.message || "Failed to delete cover photo. Please try again.");
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isOpen: false, isLoading: false }));
+        }
+      }
+    });
+  };
+
   const handleMediaSelect = (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -999,10 +1027,10 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     return (
       <div className="min-h-screen bg-nc-dark pb-24">
         {/* Cover Skeleton */}
-        <div className="h-[160px] skeleton rounded-none relative" />
+        <div className="hidden sm:block h-[160px] skeleton rounded-none relative" />
         
         {/* Profile Hero Glass Card Skeleton */}
-        <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 relative -mt-20 sm:-mt-24 z-10">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 relative mt-6 sm:-mt-24 z-10">
           <div className="bg-[#0E0E0E] border border-white/5 rounded-[2.5rem] p-5 sm:p-7 shadow-2xl">
             <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
               {/* Avatar Shimmer */}
@@ -1066,8 +1094,19 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       <div className="min-h-screen bg-nc-dark pb-24">
       {/* Cover + Hero */}
       <div className="relative">
+        {/* Back arrow for mobile since cover is hidden */}
+        <div className="block sm:hidden px-6 pt-4">
+          <button
+            onClick={() => onNavigate('home')}
+            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white transition-colors border border-white/10"
+            aria-label="Back"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        </div>
+
         {/* Cover Image */}
-        <div className="h-[160px] relative w-full overflow-hidden">
+        <div className="hidden sm:block h-[160px] relative w-full overflow-hidden">
           <img 
             src={p.coverImage} 
             alt="Cover" 
@@ -1086,16 +1125,28 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
             <ChevronLeft className="w-5 h-5" />
           </button>
 
-          {/* Cover Photo camera edit button overlay */}
+          {/* Cover Photo edit/delete buttons overlay */}
           {isOwnProfile && (
-            <button
-              onClick={() => coverFileInputRef.current?.click()}
-              className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/85 text-white p-2.5 rounded-full border border-white/10 transition-colors shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 group/cover"
-              title="Change Cover Banner"
-            >
-              <Camera className="w-4 h-4 text-[#00BFFF] group-hover/cover:scale-110 transition-transform" />
-              <span className="text-[10px] uppercase tracking-wider font-black pr-1 hidden sm:inline">Edit Cover</span>
-            </button>
+            <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
+              <button
+                onClick={() => coverFileInputRef.current?.click()}
+                className="bg-black/60 hover:bg-black/85 text-white p-2.5 rounded-full border border-white/10 transition-colors shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 group/cover"
+                title="Change Cover Banner"
+              >
+                <Camera className="w-4 h-4 text-[#00BFFF] group-hover/cover:scale-110 transition-transform" />
+                <span className="text-[10px] uppercase tracking-wider font-black pr-1 hidden sm:inline">Edit Cover</span>
+              </button>
+              {profile?.coverImage && profile.coverImage !== '/hero-bg.png' && (
+                <button
+                  onClick={handleDeleteCover}
+                  className="bg-black/60 hover:bg-red-950/80 hover:border-red-500/30 text-white p-2.5 rounded-full border border-white/10 transition-colors shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 group/delete-cover"
+                  title="Delete Cover Banner"
+                >
+                  <Trash2 className="w-4 h-4 text-red-500 group-hover/delete-cover:scale-110 transition-transform" />
+                  <span className="text-[10px] uppercase tracking-wider font-black pr-1 hidden sm:inline">Delete</span>
+                </button>
+              )}
+            </div>
           )}
 
           {/* Cover Upload Progress Overlay */}
@@ -1129,7 +1180,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
         </div>
         
         {/* Profile Hero Glass Card — Redesigned */}
-        <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 relative -mt-20 sm:-mt-24 z-10">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 relative mt-6 sm:-mt-24 z-10">
           <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.5rem] p-5 sm:p-7 shadow-2xl">
             <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
               {/* Avatar with edit shortcut */}
