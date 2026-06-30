@@ -449,6 +449,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
   // Data Control States/Functions
   const [latestDataRequest, setLatestDataRequest] = useState(null);
+  const isExporting = latestDataRequest?.status === 'pending' || latestDataRequest?.status === 'processing';
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [verificationPassword, setVerificationPassword] = useState('');
   const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
