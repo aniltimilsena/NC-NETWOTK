@@ -867,10 +867,9 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
           await updateProfileData(user.uid, { media: updatedMedia });
           setFullscreenImage(null);
           showAlert('Deleted', 'info', isVideo ? 'Showreel video removed.' : 'Gallery photo removed.');
-          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+          setConfirmConfig(prev => ({ ...prev, isOpen: false, isLoading: false }));
         } catch (err) {
           console.error("Error deleting media:", err);
-        } finally {
           setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
       }
@@ -893,10 +892,9 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
         try {
           await updateProfileData(user.uid, { introVideo: null });
           showAlert('Removed', 'info', 'Intro video removed.');
-          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+          setConfirmConfig(prev => ({ ...prev, isOpen: false, isLoading: false }));
         } catch (err) {
           console.error("Error removing intro video:", err);
-        } finally {
           setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
       }
