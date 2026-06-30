@@ -235,15 +235,37 @@ export default function SignIn({ onNavigate, showAlert }) {
 
     setIsLoading(true);
     setError('');
+
+    let emailToAuthWith = form.email;
+    const isPhone = !form.email.includes('@') && /^[+\d\s-()]+$/.test(form.email);
+
+    if (isPhone) {
+      try {
+        const res = await apiClient.post('/auth/resolve-phone', { phone: form.email });
+        if (res.data && res.data.success && res.data.email) {
+          emailToAuthWith = res.data.email;
+        } else {
+          setIsLoading(false);
+          setError('Could not resolve phone number.');
+          return;
+        }
+      } catch (err) {
+        console.error('Resolve phone error:', err);
+        setIsLoading(false);
+        const errMsg = err.response?.data?.error || 'No user account found with this phone number.';
+        setError(errMsg);
+        return;
+      }
+    }
     
-    const { user, error: authError } = await signInUser(form.email, form.password);
+    const { user, error: authError } = await signInUser(emailToAuthWith, form.password);
     
     if (authError) {
       setIsLoading(false);
-      logLoginAttempt(form.email, 'failed').catch(() => {});
+      logLoginAttempt(emailToAuthWith, 'failed').catch(() => {});
       const currentAttempts = parseInt(localStorage.getItem('login_attempts') || '0', 10) + 1;
       localStorage.setItem('login_attempts', currentAttempts.toString());
-
+ 
       if (currentAttempts >= 5) {
         let duration = 60;
         if (currentAttempts === 6) duration = 180;
@@ -259,16 +281,16 @@ export default function SignIn({ onNavigate, showAlert }) {
       }
       return;
     }
-
+ 
     if (user) {
       localStorage.removeItem('login_attempts');
       localStorage.removeItem('login_lockout_until');
-
+ 
       try {
         const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
         // 2FA has been temporarily disabled/bypassed
         if (false && profileSnap.exists() && profileSnap.data().twoFactorEnabled === true) {
-          setTempCredentials({ email: form.email, password: form.password });
+          setTempCredentials({ email: emailToAuthWith, password: form.password });
           setPendingUserId(user.uid);
           
           await logoutUser();
@@ -300,7 +322,7 @@ export default function SignIn({ onNavigate, showAlert }) {
         console.error("Error checking 2FA profile:", err);
       }
       
-      const logRes = await logLoginAttempt(form.email, 'success');
+      const logRes = await logLoginAttempt(emailToAuthWith, 'success');
       if (logRes?.suspicious) {
         localStorage.setItem('nc_suspicious_login', 'true');
       }
@@ -309,9 +331,17 @@ export default function SignIn({ onNavigate, showAlert }) {
   };
 
   const validateEmailLocally = (val) => {
-    if (!val) return { valid: false, msg: 'Email is required.' };
+    if (!val) return { valid: false, msg: 'Email or phone number is required.' };
+    const isMaybePhone = !val.includes('@') && /^[+\d\s-()]+$/.test(val);
+    if (isMaybePhone) {
+      const digitsOnly = val.replace(/\D/g, '');
+      if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+        return { valid: false, msg: 'Please enter a valid phone number.' };
+      }
+      return { valid: true, msg: '' };
+    }
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regex.test(val)) return { valid: false, msg: 'Please enter a valid email address.' };
+    if (!regex.test(val)) return { valid: false, msg: 'Please enter a valid email address or phone number.' };
     return { valid: true, msg: '' };
   };
 
@@ -680,18 +710,18 @@ export default function SignIn({ onNavigate, showAlert }) {
                 )}
 
                 <form onSubmit={handleSignIn} className="space-y-4">
-                  {/* Email Input */}
+                  {/* Email or Phone Input */}
                   <div>
-                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Email Address</label>
+                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Email or Phone Number</label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
                         <Mail className="w-4 h-4" />
                       </span>
                       <input
-                        type="email"
+                        type="text"
                         value={form.email}
                         onChange={e => handleEmailChange(e.target.value)}
-                        placeholder="you@example.com"
+                        placeholder="you@example.com or +977..."
                         disabled={lockoutTimeLeft > 0}
                         className={getInputStyles('email')}
                       />

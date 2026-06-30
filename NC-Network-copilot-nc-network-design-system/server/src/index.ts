@@ -1876,7 +1876,6 @@ app.post(
         .update(convoUpdate);
 
       // Trigger FCM to participants (except sender)
-      const otherParticipants = participants.filter((p: string) => p !== uid);
       if (otherParticipants.length > 0) {
         // Send notifications document in firestore for each recipient
         for (const otherParticipantId of otherParticipants) {
@@ -3269,6 +3268,57 @@ app.get('/api/data-export/download', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Data export download error:', error);
     res.status(500).send('Internal Server Error');
+  }
+});
+
+app.post('/api/auth/resolve-phone', async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { phone } = req.body;
+    if (!phone || typeof phone !== 'string') {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    const normalizedPhone = phone.replace(/\s+/g, ''); // remove spaces
+    const digitsOnly = phone.replace(/\D/g, ''); // digits only
+
+    const firestoreDb = admin.firestore();
+    
+    // Search for profile matching the phone number
+    let querySnapshot = await firestoreDb.collection('profiles')
+      .where('phone', '==', normalizedPhone)
+      .limit(1)
+      .get();
+
+    // Suffix match fallback (e.g., prefixing +977 if input is 10 digits starting with 9)
+    if (querySnapshot.empty && digitsOnly.length >= 7) {
+      if (digitsOnly.length === 10 && (digitsOnly.startsWith('98') || digitsOnly.startsWith('97'))) {
+        const withPrefix = `+977${digitsOnly}`;
+        querySnapshot = await firestoreDb.collection('profiles')
+          .where('phone', '==', withPrefix)
+          .limit(1)
+          .get();
+      }
+    }
+
+    if (querySnapshot.empty) {
+      return res.status(444).json({ error: 'No user account found with this phone number.' });
+    }
+
+    const uid = querySnapshot.docs[0].id;
+    const userDoc = await firestoreDb.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'User account not found.' });
+    }
+    
+    const email = userDoc.data()?.email;
+    if (!email) {
+      return res.status(404).json({ error: 'No email associated with this account.' });
+    }
+
+    res.json({ success: true, email });
+  } catch (error: any) {
+    console.error('Resolve phone number error:', error);
+    res.status(500).json({ error: 'Internal server error resolving phone number.' });
   }
 });
 

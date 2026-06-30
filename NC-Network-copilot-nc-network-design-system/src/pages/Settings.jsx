@@ -2226,21 +2226,6 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
               <p className="text-[#888] text-sm">Protect your identity, monitor session activity, and control connected services.</p>
             </div>
 
-            {/* 1. Two-Factor Authentication (2FA) */}
-            <section className="bg-[#111] border border-white/5 shadow-[0_0_15px_rgba(0,191,255,0.05)] rounded-2xl p-6 mb-5 opacity-60">
-              <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                <div>
-                  <h4 className="text-white font-bold text-sm">Two-Factor Authentication (2FA)</h4>
-                  <p className="text-[#888] text-xs mt-1 leading-relaxed">Two-Factor Authentication (2FA) has been temporarily disabled for the system.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
-                    DISABLED
-                  </span>
-                </div>
-              </div>
-            </section>
-
             {/* 2. Change Password */}
             <section className="bg-[#111] border border-white/5 rounded-2xl p-6 mb-5">
               <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
