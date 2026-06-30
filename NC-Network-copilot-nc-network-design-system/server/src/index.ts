@@ -1809,6 +1809,27 @@ app.post(
         return;
       }
 
+      // Check if any other participant has blocked the sender, or if the sender has blocked them
+      const otherParticipants = participants.filter((p: string) => p !== uid);
+      for (const participantId of otherParticipants) {
+        const participantDoc = await db.collection('users').doc(participantId).get();
+        if (participantDoc.exists) {
+          const blockedUsers: string[] = participantDoc.data()?.blockedUsers || [];
+          if (blockedUsers.includes(uid)) {
+            res.status(403).json({ error: 'You cannot message this user' });
+            return;
+          }
+        }
+        const requesterDoc = await db.collection('users').doc(uid).get();
+        if (requesterDoc.exists) {
+          const requesterBlocked: string[] = requesterDoc.data()?.blockedUsers || [];
+          if (requesterBlocked.includes(participantId)) {
+            res.status(403).json({ error: 'You have blocked this user' });
+            return;
+          }
+        }
+      }
+
       const isSystem = validatedData.isSystem || uid === 'system';
       const newMessage = {
         senderId: isSystem ? 'system' : uid,

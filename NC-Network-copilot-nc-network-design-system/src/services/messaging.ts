@@ -44,6 +44,9 @@ export const sendMessage = async (
     return { success: true, error: null };
   } catch (apiError: any) {
     console.warn("Backend sendMessage failed, attempting client-side fallback write:", apiError);
+    if (apiError.response?.status === 403 || apiError.response?.status === 401) {
+      return { success: false, error: apiError.response.data?.error || "Action forbidden" };
+    }
     const currentUserUid = auth.currentUser?.uid;
     if (!currentUserUid) {
       return { success: false, error: "Authentication required" };
@@ -54,6 +57,26 @@ export const sendMessage = async (
       let participants: string[] = [];
       if (convoSnap.exists()) {
         participants = convoSnap.data().participants || [];
+      }
+
+      // Client-side block list verification
+      for (const participantId of participants) {
+        if (participantId !== currentUserUid) {
+          const participantSnap = await getDoc(doc(db, COLLECTIONS.USERS, participantId));
+          if (participantSnap.exists()) {
+            const blockedUsers: string[] = participantSnap.data().blockedUsers || [];
+            if (blockedUsers.includes(currentUserUid)) {
+              return { success: false, error: "You cannot message this user" };
+            }
+          }
+          const currentUserSnap = await getDoc(doc(db, COLLECTIONS.USERS, currentUserUid));
+          if (currentUserSnap.exists()) {
+            const userBlocked: string[] = currentUserSnap.data().blockedUsers || [];
+            if (userBlocked.includes(participantId)) {
+              return { success: false, error: "You have blocked this user" };
+            }
+          }
+        }
       }
 
       await addDoc(collection(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES), {
@@ -479,6 +502,9 @@ export const createConversation = async (
     return { id: response.data?.id || null, error: null };
   } catch (apiError: any) {
     console.warn("Backend createConversation failed, attempting client-side fallback:", apiError);
+    if (apiError.response?.status === 403 || apiError.response?.status === 401) {
+      return { id: null, error: apiError.response.data?.error || "Action forbidden" };
+    }
     const currentUserUid = auth.currentUser?.uid;
     if (!currentUserUid) {
       return { id: null, error: "Authentication required" };
@@ -490,6 +516,26 @@ export const createConversation = async (
     if (uniqueParticipants.length < 2) {
       return { id: null, error: "Conversation requires at least two participants" };
     }
+
+    // Client-side block verification
+    const otherParticipants = uniqueParticipants.filter(p => p !== currentUserUid);
+    for (const participantId of otherParticipants) {
+      const participantSnap = await getDoc(doc(db, COLLECTIONS.USERS, participantId));
+      if (participantSnap.exists()) {
+        const blockedUsers: string[] = participantSnap.data().blockedUsers || [];
+        if (blockedUsers.includes(currentUserUid)) {
+          return { id: null, error: "You cannot message this user" };
+        }
+      }
+      const currentUserSnap = await getDoc(doc(db, COLLECTIONS.USERS, currentUserUid));
+      if (currentUserSnap.exists()) {
+        const userBlocked: string[] = currentUserSnap.data().blockedUsers || [];
+        if (userBlocked.includes(participantId)) {
+          return { id: null, error: "You have blocked this user" };
+        }
+      }
+    }
+
     const sorted = uniqueParticipants.slice().sort();
 
     try {
