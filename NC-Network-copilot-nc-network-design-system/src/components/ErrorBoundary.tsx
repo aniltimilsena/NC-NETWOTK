@@ -189,8 +189,8 @@ export default class ErrorBoundary extends Component<Props, State> {
               </Button>
             </div>
 
-            {/* Diagnostics Section - DEV ONLY */}
-            {import.meta.env.DEV && (
+            {/* Diagnostics Section */}
+            {true && (
               <div className="pt-4 border-t border-white/5">
                 <button
                   type="button"
