@@ -563,6 +563,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [role, setRole] = useState("");
   const [showContactInfo, setShowContactInfo] = useState(false);
   
+  const [isLoading, setIsLoading] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
