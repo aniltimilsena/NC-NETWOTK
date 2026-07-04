@@ -169,6 +169,11 @@ export default function CallingOverlay() {
       remoteStream.getAudioTracks().forEach(track => {
         track.enabled = !isSpeakerMuted;
       });
+
+      // Ensure all remote video tracks are explicitly enabled
+      remoteStream.getVideoTracks().forEach(track => {
+        track.enabled = true;
+      });
       
       // Explicitly trigger play to bypass browser autoplay restrictions
       remoteVideoRef.current.play().catch(err => {
@@ -298,6 +303,7 @@ export default function CallingOverlay() {
           ref={remoteVideoRef}
           autoPlay
           playsInline
+          muted={isSpeakerMuted}
           className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 ${
             isVideoCall && isConnected && remoteStream
               ? 'opacity-100'

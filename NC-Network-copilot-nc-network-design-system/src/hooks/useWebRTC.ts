@@ -217,10 +217,29 @@ export function useWebRTC(): UseWebRTCReturn {
         if (event.track) {
           event.track.enabled = true;
         }
-        if (event.streams && event.streams[0]) {
-          // Re-create the MediaStream instance from all tracks of the remote stream to ensure React registers a change
-          setRemoteStream(new MediaStream(event.streams[0].getTracks()));
-        }
+
+        // Use a state accumulator to merge all incoming remote tracks into a single stream.
+        // This resolves issues where tracks are sent separately or stream arrays are empty.
+        setRemoteStream((prevStream) => {
+          const stream = prevStream || new MediaStream();
+          
+          if (!stream.getTracks().some(t => t.id === event.track.id)) {
+            stream.addTrack(event.track);
+            logger.log("[WebRTC] Added remote track to stream:", event.track.kind, "id:", event.track.id);
+          }
+          
+          if (event.streams && event.streams[0]) {
+            event.streams[0].getTracks().forEach((track) => {
+              if (!stream.getTracks().some(t => t.id === track.id)) {
+                track.enabled = true;
+                stream.addTrack(track);
+                logger.log("[WebRTC] Added additional track from event stream:", track.kind, "id:", track.id);
+              }
+            });
+          }
+          
+          return new MediaStream(stream.getTracks());
+        });
       };
 
       // Connection state monitoring
