@@ -31,6 +31,7 @@ interface CallContextValue {
   remoteStream: MediaStream | null;
   isMuted: boolean;
   isVideoOff: boolean;
+  isRemoteVideoOff: boolean;
   callDuration: number;
   errorMessage: string;
   currentUser: any;
@@ -431,6 +432,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     remoteStream: webrtc.remoteStream,
     isMuted: webrtc.isMuted,
     isVideoOff: webrtc.isVideoOff,
+    isRemoteVideoOff: webrtc.isRemoteVideoOff,
     callDuration: webrtc.callDuration,
     errorMessage: webrtc.errorMessage,
     currentUser: user,

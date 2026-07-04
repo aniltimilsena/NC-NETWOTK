@@ -122,6 +122,7 @@ export default function CallingOverlay() {
     remoteStream,
     isMuted,
     isVideoOff,
+    isRemoteVideoOff,
     callDuration,
     errorMessage,
     hangUp,
@@ -311,6 +312,32 @@ export default function CallingOverlay() {
           }`}
         />
 
+        {/* Remote Video Off Avatar Overlay */}
+        {isVideoCall && isConnected && isRemoteVideoOff && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#0A0A0A] animate-fade-in">
+            {/* Background blur of remote avatar */}
+            {remotePhoto && (
+              <div 
+                className="absolute inset-0 bg-cover bg-center blur-[80px] opacity-25 scale-110 pointer-events-none select-none"
+                style={{ backgroundImage: `url(${remotePhoto})` }}
+              />
+            )}
+            <div className="relative z-20 flex flex-col items-center">
+              <div className="relative mb-4">
+                <div className="absolute -inset-2 rounded-full border-2 border-white/5 animate-pulse" style={{ animationDuration: '3s' }} />
+                <Avatar 
+                  src={remotePhoto}
+                  name={remoteName}
+                  gender={remoteProfile?.gender}
+                  size="none"
+                  className="w-24 h-24 sm:w-28 sm:h-28 text-3xl border-4 border-white/10 shadow-2xl"
+                />
+              </div>
+              <p className="text-white/60 text-xs font-bold uppercase tracking-wider">Camera Off</p>
+            </div>
+          </div>
+        )}
+
         {/* ── Video Layer ── */}
         {isVideoCall && (
           <>
@@ -333,10 +360,13 @@ export default function CallingOverlay() {
                 className={`w-full h-full object-cover -scale-x-100 ${isVideoOff ? 'hidden' : ''}`}
               />
               {isVideoOff && (
-                <div className="w-full h-full flex items-center justify-center bg-[#1A1A1A]">
-                  <svg className="w-8 h-8 text-[#444]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                  </svg>
+                <div className="w-full h-full flex items-center justify-center bg-[#111] p-4">
+                  <Avatar 
+                    src={currentUser?.photoURL || currentUser?.profileImage || currentUser?.image}
+                    name={currentUser?.displayName || "Me"}
+                    size="none"
+                    className="w-16 h-16 sm:w-20 sm:h-20 text-xl border border-white/10 shadow-lg"
+                  />
                 </div>
               )}
             </motion.div>

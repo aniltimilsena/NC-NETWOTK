@@ -32,6 +32,7 @@ interface UseWebRTCReturn {
   remoteStream: MediaStream | null;
   isMuted: boolean;
   isVideoOff: boolean;
+  isRemoteVideoOff: boolean;
   callDuration: number;
   errorMessage: string;
   startCall: (params: StartCallParams, preAcquiredStream?: MediaStream) => Promise<void>;
@@ -67,6 +68,7 @@ export function useWebRTC(): UseWebRTCReturn {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isRemoteVideoOff, setIsRemoteVideoOff] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -116,6 +118,7 @@ export function useWebRTC(): UseWebRTCReturn {
     setCallDuration(0);
     setIsMuted(false);
     setIsVideoOff(false);
+    setIsRemoteVideoOff(false);
     setErrorMessage("");
     remoteCandidatesQueueRef.current = [];
   }, [localStream]);
@@ -216,6 +219,21 @@ export function useWebRTC(): UseWebRTCReturn {
         logger.log("[WebRTC] Received remote track:", event.track.kind);
         if (event.track) {
           event.track.enabled = true;
+        }
+
+        if (event.track.kind === "video") {
+          setIsRemoteVideoOff(!event.track.enabled || event.track.muted);
+          event.track.onmute = () => {
+            setIsRemoteVideoOff(true);
+            logger.log("[WebRTC] Remote video track muted (camera turned off)");
+          };
+          event.track.onunmute = () => {
+            setIsRemoteVideoOff(false);
+            logger.log("[WebRTC] Remote video track onunmuted (camera turned on)");
+          };
+          event.track.onended = () => {
+            setIsRemoteVideoOff(true);
+          };
         }
 
         // Use a state accumulator to merge all incoming remote tracks into a single stream.
@@ -583,6 +601,7 @@ export function useWebRTC(): UseWebRTCReturn {
     remoteStream,
     isMuted,
     isVideoOff,
+    isRemoteVideoOff,
     callDuration,
     errorMessage,
     startCall,
