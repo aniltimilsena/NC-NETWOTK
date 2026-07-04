@@ -211,7 +211,7 @@ const TrendingRoute = () => {
 
 const ProfileRoute = () => {
   const { id } = useParams();
-  const { user, isAdmin } = useOutletContext<any>();
+  const { user, isAdmin, showAlert } = useOutletContext<any>();
   const { handleLegacyNavigate } = useLegacyNavigate();
   return (
     <PageTransition>
@@ -219,7 +219,7 @@ const ProfileRoute = () => {
         <title>Talent Profile | NC Network</title>
       </Helmet>
       <ErrorBoundary fallback={<div className="p-12 text-center text-red-500 font-bold border border-red-500/20 bg-red-500/5 rounded-3xl max-w-md mx-auto mt-12">Profile failed to load</div>}>
-        <Profile onNavigate={handleLegacyNavigate} user={user} profileId={id || null} isAdmin={isAdmin} />
+        <Profile onNavigate={handleLegacyNavigate} user={user} profileId={id || null} isAdmin={isAdmin} showAlert={showAlert} />
       </ErrorBoundary>
     </PageTransition>
   );

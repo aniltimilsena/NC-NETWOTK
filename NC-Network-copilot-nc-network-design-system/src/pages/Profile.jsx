@@ -32,7 +32,7 @@ const isVideoUrl = (url) => {
   return ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext) || url.includes('/video/upload/');
 };
 
-export default function Profile({ onNavigate, user, profileId, isAdmin }) {
+export default function Profile({ onNavigate, user, profileId, isAdmin, showAlert }) {
   const isLoggedIn = !!user;
   const [profile, setProfile] = useState(null);
   const [activeTab, setActiveTab] = useState('about');
