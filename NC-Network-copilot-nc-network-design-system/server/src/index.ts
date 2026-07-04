@@ -3596,41 +3596,47 @@ app.post('/api/data-requests/:requestId/approve', verifyToken, isAdmin, async (r
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const downloadLink = `${frontendUrl}/api/data-export/download?token=${token}`;
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    try {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
 
-    await transporter.sendMail({
-      from: `"NC Network Security" <${process.env.EMAIL_USER}>`,
-      to: userEmail,
-      subject: 'Your Data Archive is Ready for Download',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px; background-color: #0b0b0c; color: #fff;">
-          <h2 style="color: #FFD700;">NC Network</h2>
-          <p style="color: #ccc;">Your request to download your account data has been approved.</p>
-          <p style="color: #ccc;">You can download your archive by clicking the button below. This link is valid for <strong>24 hours</strong> and can only be used <strong>once</strong>.</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${downloadLink}" style="background-color: #00BFFF; color: #000; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 6px; display: inline-block;">
-              Download Data Archive
-            </a>
+      await transporter.sendMail({
+        from: `"NC Network Security" <${process.env.EMAIL_USER}>`,
+        to: userEmail,
+        subject: 'Your Data Archive is Ready for Download',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px; background-color: #0b0b0c; color: #fff;">
+            <h2 style="color: #FFD700;">NC Network</h2>
+            <p style="color: #ccc;">Your request to download your account data has been approved.</p>
+            <p style="color: #ccc;">You can download your archive by clicking the button below. This link is valid for <strong>24 hours</strong> and can only be used <strong>once</strong>.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${downloadLink}" style="background-color: #00BFFF; color: #000; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 6px; display: inline-block;">
+                Download Data Archive
+              </a>
+            </div>
+            <p style="color: #999; font-size: 11px;">
+              If the button doesn't work, copy and paste this link into your browser:<br/>
+              <a href="${downloadLink}" style="color: #00BFFF;">${downloadLink}</a>
+            </p>
+            <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;"/>
+            <p style="color: #666; font-size: 11px;">
+              If you did not request this data export, please contact support and update your security settings immediately.
+            </p>
           </div>
-          <p style="color: #999; font-size: 11px;">
-            If the button doesn't work, copy and paste this link into your browser:<br/>
-            <a href="${downloadLink}" style="color: #00BFFF;">${downloadLink}</a>
-          </p>
-          <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;"/>
-          <p style="color: #666; font-size: 11px;">
-            If you did not request this data export, please contact support and update your security settings immediately.
-          </p>
-        </div>
-      `,
-    });
-
-    res.send({ success: true });
+        `,
+      });
+      console.log(`[Data Export] Email successfully sent to ${userEmail}`);
+      res.send({ success: true, emailSent: true });
+    } catch (emailError: any) {
+      console.warn('[Data Export] Failed to send email to user but request approved:', emailError.message);
+      console.log(`[Data Export] Manual download URL for user ${userEmail}: ${downloadLink}`);
+      res.send({ success: true, emailSent: false, downloadLink });
+    }
   } catch (error: any) {
     console.error('Data export approval error:', error);
     res.status(500).send('Internal Server Error');
