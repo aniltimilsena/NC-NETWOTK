@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { motion, useAnimation } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
 interface PullToRefreshProps {
@@ -11,7 +11,6 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startY, setStartY] = useState(0);
-  const controls = useAnimation();
 
   const PULL_THRESHOLD = 80;
 

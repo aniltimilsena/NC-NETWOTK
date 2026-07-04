@@ -6,11 +6,11 @@ import {
 } from 'lucide-react';
 import Logo from '../components/ui/Logo';
 import { auth, googleProvider, db } from '../lib/firebase';
-import { signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCustomToken } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCustomToken } from 'firebase/auth';
 import SEO from '../components/SEO';
 
-import { signInUser, ensureUserProfile, logoutUser, sendPasswordReset } from '../services/auth';
+import { signInUser, ensureUserProfile, sendPasswordReset } from '../services/auth';
 import OtpInput from '../components/ui/OtpInput';
 import apiClient from '../api/client';
 import { logLoginAttempt } from '../utils/security';
@@ -211,6 +211,27 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   };
 
+  const checkUserBanStatus = async (uid) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData?.status === 'banned') {
+          await auth.signOut();
+          const reason = userData.banReason || 'No reason provided';
+          const expiresAt = userData.banExpiresAt;
+          const message = expiresAt
+            ? `Your account is suspended until ${expiresAt.toDate ? expiresAt.toDate().toLocaleDateString() : new Date(expiresAt).toLocaleDateString()}. Reason: ${reason}`
+            : `Your account has been permanently suspended. Reason: ${reason}`;
+          return { banned: true, message };
+        }
+      }
+    } catch (err) {
+      console.error("Error checking ban status:", err);
+    }
+    return { banned: false };
+  };
+
   const handleSignIn = async (e) => {
     e?.preventDefault();
 
@@ -283,44 +304,17 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
  
     if (user) {
+      const banCheck = await checkUserBanStatus(user.uid);
+      if (banCheck.banned) {
+        setIsLoading(false);
+        setError(banCheck.message);
+        return;
+      }
+
       localStorage.removeItem('login_attempts');
       localStorage.removeItem('login_lockout_until');
  
-      try {
-        const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
-        // 2FA has been temporarily disabled/bypassed
-        if (false && profileSnap.exists() && profileSnap.data().twoFactorEnabled === true) {
-          setTempCredentials({ email: emailToAuthWith, password: form.password });
-          setPendingUserId(user.uid);
-          
-          await logoutUser();
-          
-          const res = await apiClient.post('/2fa/send-login-otp', {
-            userId: user.uid,
-            method: profileSnap.data().twoFactorMethod || 'sms'
-          });
-          
-          if (res.data.success) {
-            setTwoFactorMethod(res.data.method || 'sms');
-            setTwoFactorDestination(res.data.destination);
-            setCountdown(120);
-            setResendActive(false);
-            setVerificationCode('');
-            setTwoFactorError('');
-            setUseBackupCode(false);
-            
-            setShow2fa(true);
-            setIsLoading(false);
-            return;
-          } else {
-            setError(res.data.error || 'Failed to send verification code.');
-            setIsLoading(false);
-            return;
-          }
-        }
-      } catch (err) {
-        console.error("Error checking 2FA profile:", err);
-      }
+ 
       
       const logRes = await logLoginAttempt(emailToAuthWith, 'success');
       if (logRes?.suspicious) {
@@ -406,6 +400,13 @@ export default function SignIn({ onNavigate, showAlert }) {
       }
 
       if (result && result.user) {
+        const banCheck = await checkUserBanStatus(result.user.uid);
+        if (banCheck.banned) {
+          setIsLoading(false);
+          setError(banCheck.message);
+          return;
+        }
+
         const profileRes = await ensureUserProfile(result.user);
         if (!profileRes.success) {
           throw new Error(profileRes.error || "Failed to initialize user profile");

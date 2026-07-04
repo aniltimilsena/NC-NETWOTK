@@ -1,7 +1,9 @@
 import { initializeApp, getApps } from "firebase-admin/app";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as logger from "firebase-functions/logger";
 import { z } from "zod";
 
@@ -789,5 +791,60 @@ export const onMessageCreated = onDocumentCreated(
     } catch (err) {
       logger.error("Error processing onMessageCreated trigger:", err);
     }
+  }
+);
+
+export const checkExpiredBans = onSchedule(
+  {
+    schedule: "every 24 hours",
+    region: DEFAULT_REGION,
+    maxInstances: 5,
+  },
+  async (event) => {
+    const now = Timestamp.now();
+    const expiredBans = await db
+      .collection("users")
+      .where("status", "==", "banned")
+      .where("banExpiresAt", "<=", now)
+      .get();
+
+    if (expiredBans.empty) {
+      logger.info("No expired bans found.");
+      return;
+    }
+
+    const batch = db.batch();
+    const auth = getAuth();
+
+    for (const doc of expiredBans.docs) {
+      try {
+        // Re-enable Firebase Auth account
+        await auth.updateUser(doc.id, { disabled: false });
+
+        // Update Firestore status in users collection
+        batch.update(doc.ref, {
+          status: 'Active',
+          bannedAt: FieldValue.delete(),
+          bannedBy: FieldValue.delete(),
+          banReason: FieldValue.delete(),
+          banExpiresAt: FieldValue.delete(),
+        });
+
+        // Update Firestore status in profiles collection
+        const profileRef = db.collection("profiles").doc(doc.id);
+        batch.update(profileRef, {
+          status: 'Active',
+          bannedAt: FieldValue.delete(),
+          bannedBy: FieldValue.delete(),
+          banReason: FieldValue.delete(),
+          banExpiresAt: FieldValue.delete(),
+        });
+      } catch (err) {
+        logger.error(`Failed to unban user ${doc.id}:`, err);
+      }
+    }
+
+    await batch.commit();
+    logger.info(`Auto-unbanned ${expiredBans.size} users`);
   }
 );

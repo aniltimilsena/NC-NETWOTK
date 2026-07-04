@@ -1,6 +1,6 @@
 import { Pricing2 } from '../components/ui/pricing-cards';
 
-export default function Premium({ onNavigate }: { onNavigate: any }) {
+export default function Premium() {
   const ncPlans = [
     {
       id: "starter",

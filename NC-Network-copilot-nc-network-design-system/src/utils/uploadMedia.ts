@@ -80,7 +80,9 @@ export const uploadMedia = async (
           if (res.error && res.error.message) {
             errMsg = res.error.message;
           }
-        } catch (e) {}
+        } catch {
+          // ignore parsing error, fallback to status code error message
+        }
         reject(new Error(errMsg));
         return;
       }

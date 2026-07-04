@@ -74,7 +74,7 @@ const Pricing2 = ({
     },
   ],
 }: Pricing2Props) => {
-  const [isYearly, setIsYearly] = useState(false);
+  const [isYearly] = useState(false);
 
   // --- minimal hero particles ---
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

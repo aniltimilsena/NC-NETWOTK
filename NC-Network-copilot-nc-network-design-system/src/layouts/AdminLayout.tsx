@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import AdminSidebar from '../components/admin/AdminSidebar';
 
-export default function AdminLayout() {
+export default function AdminLayout({ showToast }: { showToast?: any }) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -27,6 +27,7 @@ export default function AdminLayout() {
       case 'admin-pro': navigate('/admin/pro'); break;
       case 'admin-moderation': navigate('/admin/moderation'); break;
       case 'admin-settings': navigate('/admin/settings'); break;
+      case 'admin-data-requests': navigate('/admin/data-requests'); break;
       default: navigate('/');
     }
   };
@@ -77,7 +78,7 @@ export default function AdminLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto bg-admin-bg/50 custom-scrollbar">
-          <Outlet />
+          <Outlet context={{ showToast }} />
         </main>
       </div>
     </div>

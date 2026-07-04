@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Sparkles, Briefcase, Image, Star, Video, ChevronLeft, Camera, Trash2 } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
+import SavedCastingCalls from './SavedCastingCalls';
 import Button from '../components/ui/Button';
 import Tag from '../components/ui/Tag';
 import SkillBar from '../components/ui/SkillBar';
@@ -9,7 +10,6 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import ShareSheet from '../components/ui/ShareSheet';
 import CropModal from '../components/ui/CropModal';
 import { subscribeToProfile, uploadProfileMedia, updateProfileData } from '../services/profile';
-import { usePermissionContext } from '../context/PermissionContext';
 import { 
   doc, 
   setDoc, 
@@ -58,8 +58,6 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   const [loading, setLoading] = useState(true);
-  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
-  const [mediaUploadProgress, setMediaUploadProgress] = useState(0);
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,
     title: '',
@@ -70,18 +68,13 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
     isLoading: false,
     onConfirm: () => {},
   });
-  const [shareCopied, setShareCopied] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [isUploadingIntro, setIsUploadingIntro] = useState(false);
   const [introProgress, setIntroProgress] = useState(0);
-  const { requestPermission } = usePermissionContext();
 
   // Upload feedback & retry states
-  const [mediaUploadError, setMediaUploadError] = useState(null);
-  const [mediaLastFiles, setMediaLastFiles] = useState([]);
   const [introUploadError, setIntroUploadError] = useState(null);
   const [introLastFile, setIntroLastFile] = useState(null);
-  const [showMediaSuccess, setShowMediaSuccess] = useState(false);
   const [showIntroSuccess, setShowIntroSuccess] = useState(false);
 
   const [resolvedUid, setResolvedUid] = useState(null);
@@ -131,6 +124,19 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
 
   const targetUid = resolvedUid || profileId || user?.uid;
   const isOwnProfile = isLoggedIn && (targetUid === user?.uid);
+
+  const [savedCount, setSavedCount] = useState(0);
+
+  useEffect(() => {
+    if (!isOwnProfile || !user?.uid) return;
+    const q = query(collection(db, 'saved_calls'), where('userId', '==', user.uid));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      setSavedCount(snap.size);
+    }, (err) => {
+      console.warn("Failed to subscribe to saved calls count:", err);
+    });
+    return () => unsubscribe();
+  }, [isOwnProfile, user?.uid]);
 
   // Subscribe to profile
   useEffect(() => {
@@ -216,17 +222,14 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
 
   // Check if current user has worked with the talent
   const [hasWorkedTogether, setHasWorkedTogether] = useState(false);
-  const [checkingWorked, setCheckingWorked] = useState(true);
 
   useEffect(() => {
     if (!user || isOwnProfile || !targetUid) {
       setHasWorkedTogether(false);
-      setCheckingWorked(false);
       return;
     }
 
     const checkWorked = async () => {
-      setCheckingWorked(true);
       try {
         // Query direction 1: current user applied, profile owner created
         const q1 = query(
@@ -238,7 +241,6 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
         const snap1 = await getDocs(q1);
         if (!snap1.empty) {
           setHasWorkedTogether(true);
-          setCheckingWorked(false);
           return;
         }
 
@@ -252,14 +254,12 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
         const snap2 = await getDocs(q2);
         if (!snap2.empty) {
           setHasWorkedTogether(true);
-          setCheckingWorked(false);
           return;
         }
       } catch (err) {
         console.error("Error checking worked together status:", err);
       }
       setHasWorkedTogether(false);
-      setCheckingWorked(false);
     };
 
     checkWorked();
@@ -497,6 +497,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
         reviewerName,
         reviewerPhoto,
         targetUid,
+        targetUserId: targetUid,
         rating: ratingInput,
         text: reviewText.trim(),
         workedAs: workedAsInput.trim(),
@@ -891,14 +892,19 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
         try {
-          const updatedMedia = p.media.filter(url => url !== src);
+          const currentMedia = Array.isArray(profile?.media) ? profile.media : [];
+          const updatedMedia = currentMedia.filter(item => {
+            const itemUrl = typeof item === 'string' ? item : item.url;
+            return itemUrl !== src;
+          });
           await updateProfileData(user.uid, { media: updatedMedia });
           setFullscreenImage(null);
           showAlert('Deleted', 'info', isVideo ? 'Showreel video removed.' : 'Gallery photo removed.');
           setConfirmConfig(prev => ({ ...prev, isOpen: false, isLoading: false }));
         } catch (err) {
           console.error("Error deleting media:", err);
-          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+          showAlert('Error', 'error', 'Failed to delete media.');
+          setConfirmConfig(prev => ({ ...prev, isOpen: false, isLoading: false }));
         }
       }
     });
@@ -971,6 +977,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
 
   const tabs = ['about', 'media', 'skills', 'experience', 'reviews'];
   if (isOwnProfile) {
+    tabs.push('saved');
     tabs.push('analytics');
   }
 
@@ -1547,6 +1554,21 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                   </div>
                 </div>
               </div>
+
+              {isOwnProfile && (
+                <div className="bg-nc-card border border-nc-border rounded-2xl p-5">
+                  <h3 className="font-bold text-white mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
+                    <span>⭐</span> Saved Castings
+                  </h3>
+                  <button 
+                    onClick={() => onNavigate('saved-castings')}
+                    className="w-full flex items-center justify-between py-3 px-4 bg-[#141415] border border-white/5 rounded-xl text-xs font-bold text-white hover:bg-white/5 hover:border-nc-accent transition-all active:scale-[0.98]"
+                  >
+                    <span>View Saved Casting Calls</span>
+                    <span className="bg-nc-accent/15 text-nc-accent px-2 py-0.5 rounded-full font-black">{savedCount}</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -2193,6 +2215,13 @@ export default function Profile({ onNavigate, user, profileId, isAdmin }) {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Saved Castings Tab */}
+        {activeTab === 'saved' && isOwnProfile && (
+          <div className="animate-fade-in">
+            <SavedCastingCalls user={user} onNavigate={onNavigate} />
           </div>
         )}
 

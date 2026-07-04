@@ -52,47 +52,7 @@ const SkeletonCard = memo(function SkeletonCard({ index }) {
   );
 });
 
-/* ── Sync status header ───────────────────────────────────────── */
-const SyncHeader = memo(function SyncHeader() {
-  return (
-    <div className="flex items-center justify-center gap-3 py-6 mb-4 talent-sync-header">
-      {/* Glowing sync icon */}
-      <div className="relative flex items-center justify-center">
-        <div className="absolute inset-0 w-8 h-8 rounded-full bg-sky-400/10 animate-ping" style={{ animationDuration: '2s' }} />
-        <div className="relative w-8 h-8 rounded-full bg-nc-card border border-sky-400/20 flex items-center justify-center shadow-[0_0_12px_rgba(56,189,248,0.15)]">
-          <svg
-            className="w-4 h-4 text-sky-400 talent-sync-spin"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.66 0 3-4.03 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4.03-3-9s1.34-9 3-9m-9 9a9 9 0 0 1 9-9" />
-          </svg>
-        </div>
-      </div>
 
-      {/* Status text */}
-      <div className="flex flex-col">
-        <span className="text-sm font-bold text-white/80 tracking-tight talent-sync-text">
-          Syncing network profiles
-        </span>
-        <span className="text-[10px] text-sky-400/60 font-medium tracking-wide uppercase">
-          Establishing connection…
-        </span>
-      </div>
-
-      {/* Animated dots */}
-      <div className="flex gap-0.5 items-center ml-1">
-        <span className="w-1 h-1 rounded-full bg-sky-400/50 talent-sync-dot" style={{ animationDelay: '0s' }} />
-        <span className="w-1 h-1 rounded-full bg-sky-400/50 talent-sync-dot" style={{ animationDelay: '0.2s' }} />
-        <span className="w-1 h-1 rounded-full bg-sky-400/50 talent-sync-dot" style={{ animationDelay: '0.4s' }} />
-      </div>
-    </div>
-  );
-});
 
 /* ── Full skeleton grid ───────────────────────────────────────── */
 const TalentCardSkeleton = memo(function TalentCardSkeleton({ count = DEFAULT_COUNT }) {

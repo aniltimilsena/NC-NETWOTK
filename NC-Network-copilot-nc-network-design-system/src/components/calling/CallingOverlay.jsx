@@ -202,6 +202,49 @@ export default function CallingOverlay() {
     };
   }, [activeCall, currentUser?.uid]);
 
+  // Debug helper — check if video is actually flowing in the console
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.debugVideo = () => {
+        const local = localVideoRef.current;
+        const remote = remoteVideoRef.current;
+        
+        console.log('Local video element details:', {
+          hasStream: !!local?.srcObject,
+          readyState: local?.readyState,
+          paused: local?.paused,
+          tracks: local?.srcObject
+            ? local.srcObject.getTracks().map(t => ({
+                kind: t.kind,
+                enabled: t.enabled,
+                readyState: t.readyState,
+              }))
+            : [],
+        });
+        
+        console.log('Remote video element details:', {
+          hasStream: !!remote?.srcObject,
+          readyState: remote?.readyState,
+          paused: remote?.paused,
+          tracks: remote?.srcObject
+            ? remote.srcObject.getTracks().map(t => ({
+                kind: t.kind,
+                enabled: t.enabled,
+                readyState: t.readyState,
+              }))
+            : [],
+        });
+        
+        console.log('WebRTC Call State:', callState);
+      };
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete window.debugVideo;
+      }
+    };
+  }, [callState, localStream, remoteStream]);
+
   const isActive = callState !== 'idle' && callState !== 'ended' && activeCall;
   const isVideoCall = activeCall?.callType === 'video';
   const isConnected = callState === 'connected';
@@ -281,7 +324,7 @@ export default function CallingOverlay() {
                 autoPlay
                 playsInline
                 muted
-                className={`w-full h-full object-cover ${isVideoOff ? 'hidden' : ''}`}
+                className={`w-full h-full object-cover -scale-x-100 ${isVideoOff ? 'hidden' : ''}`}
               />
               {isVideoOff && (
                 <div className="w-full h-full flex items-center justify-center bg-[#1A1A1A]">

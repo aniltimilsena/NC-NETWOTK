@@ -33,11 +33,13 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onMessageCreated = exports.adminSetCastingPriority = exports.adminDeleteCastingCall = exports.adminUpdateCastingCall = exports.adminCreateCastingCall = exports.registerNotificationToken = exports.blockUser = exports.pinMessage = exports.reactToMessage = exports.deleteMessage = exports.updateMessage = exports.sendMessage = exports.deleteConversation = exports.createOrGetConversation = exports.upsertProfile = exports.bootstrapUserProfile = void 0;
+exports.checkExpiredBans = exports.onMessageCreated = exports.adminSetCastingPriority = exports.adminDeleteCastingCall = exports.adminUpdateCastingCall = exports.adminCreateCastingCall = exports.registerNotificationToken = exports.blockUser = exports.pinMessage = exports.reactToMessage = exports.deleteMessage = exports.updateMessage = exports.sendMessage = exports.deleteConversation = exports.createOrGetConversation = exports.upsertProfile = exports.bootstrapUserProfile = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
+const auth_1 = require("firebase-admin/auth");
 const https_1 = require("firebase-functions/v2/https");
 const firestore_2 = require("firebase-functions/v2/firestore");
+const scheduler_1 = require("firebase-functions/v2/scheduler");
 const logger = __importStar(require("firebase-functions/logger"));
 const zod_1 = require("zod");
 if (!(0, app_1.getApps)().length) {
@@ -358,8 +360,7 @@ exports.sendMessage = (0, https_1.onCall)(callableOptions, async (request) => {
         logger.error("SendMessage: Internal Error", {
             message: error.message,
             code: error.code,
-            stack: error.stack,
-            data: request.data
+            // SECURITY FIX: Do not log user input (request.data) in production
         });
         if (error instanceof https_1.HttpsError)
             throw error;
@@ -678,5 +679,51 @@ exports.onMessageCreated = (0, firestore_2.onDocumentCreated)({
     catch (err) {
         logger.error("Error processing onMessageCreated trigger:", err);
     }
+});
+exports.checkExpiredBans = (0, scheduler_1.onSchedule)({
+    schedule: "every 24 hours",
+    region: DEFAULT_REGION,
+    maxInstances: 5,
+}, async (event) => {
+    const now = firestore_1.Timestamp.now();
+    const expiredBans = await db
+        .collection("users")
+        .where("status", "==", "banned")
+        .where("banExpiresAt", "<=", now)
+        .get();
+    if (expiredBans.empty) {
+        logger.info("No expired bans found.");
+        return;
+    }
+    const batch = db.batch();
+    const auth = (0, auth_1.getAuth)();
+    for (const doc of expiredBans.docs) {
+        try {
+            // Re-enable Firebase Auth account
+            await auth.updateUser(doc.id, { disabled: false });
+            // Update Firestore status in users collection
+            batch.update(doc.ref, {
+                status: 'Active',
+                bannedAt: firestore_1.FieldValue.delete(),
+                bannedBy: firestore_1.FieldValue.delete(),
+                banReason: firestore_1.FieldValue.delete(),
+                banExpiresAt: firestore_1.FieldValue.delete(),
+            });
+            // Update Firestore status in profiles collection
+            const profileRef = db.collection("profiles").doc(doc.id);
+            batch.update(profileRef, {
+                status: 'Active',
+                bannedAt: firestore_1.FieldValue.delete(),
+                bannedBy: firestore_1.FieldValue.delete(),
+                banReason: firestore_1.FieldValue.delete(),
+                banExpiresAt: firestore_1.FieldValue.delete(),
+            });
+        }
+        catch (err) {
+            logger.error(`Failed to unban user ${doc.id}:`, err);
+        }
+    }
+    await batch.commit();
+    logger.info(`Auto-unbanned ${expiredBans.size} users`);
 });
 //# sourceMappingURL=index.js.map

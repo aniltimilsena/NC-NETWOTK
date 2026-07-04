@@ -18,6 +18,12 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
     }
 
+    function isBanned() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', 'active') == 'banned';
+    }
+
     // FIX #7: profiles read is still public (required for discovery/search).
     // NOTE: Sensitive fields (fcmToken, fcmTokens, twoFactorBackupCodes, twoFactorSecret)
     // must NOT be stored on the profiles document. They belong in users/{uid}/private.
@@ -76,23 +82,23 @@ service cloud.firestore {
     match /conversations/{convoId} {
       allow read: if isSignedIn() && 
         request.auth.uid in resource.data.participants;
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() && !isBanned() && 
         request.auth.uid in request.resource.data.participants;
         
       // Prevent participants array manipulation
-      allow update: if isSignedIn() && 
+      allow update: if isSignedIn() && !isBanned() && 
         request.auth.uid in resource.data.participants &&
         request.resource.data.participants == resource.data.participants;
         
       // Only creator or participant can delete entire conversation
-      allow delete: if isSignedIn() && 
+      allow delete: if isSignedIn() && !isBanned() && 
         (resource.data.createdBy == request.auth.uid || request.auth.uid in resource.data.participants);
 
       // FIX #6: Messages field shape validation — prevent arbitrary field injection
       match /messages/{messageId} {
         allow read: if isSignedIn() && 
           request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants;
-        allow create: if isSignedIn() && 
+        allow create: if isSignedIn() && !isBanned() && 
           request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
           request.resource.data.senderId == request.auth.uid &&
           // FIX #6: Restrict message fields to known-safe keys only
@@ -102,11 +108,11 @@ service cloud.firestore {
             'replyTo', 'replyToText', 'replyToSender', 'clientMsgId', 'reactions',
             'read', 'delivered'
           ]);
-        allow update: if isSignedIn() && 
+        allow update: if isSignedIn() && !isBanned() && 
           request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
           (resource.data.senderId == request.auth.uid || 
            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions', 'read', 'delivered', 'status']));
-        allow delete: if isSignedIn() && 
+        allow delete: if isSignedIn() && !isBanned() && 
           request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
           resource.data.senderId == request.auth.uid;
       }
@@ -123,7 +129,7 @@ service cloud.firestore {
          resource.data.recipientId == request.auth.uid || 
          resource.data.receiverId == request.auth.uid);
          
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() && !isBanned() && 
         // Either the sender is the current user, OR it's a system notification marked by admin,
         // OR senderId is 'system' (used by Settings.jsx system notifications)
         (request.resource.data.senderId == request.auth.uid || 
@@ -135,18 +141,18 @@ service cloud.firestore {
           'review', 'call_missed', 'call_ended', 'system'
         ]);
         
-      allow update, delete: if isSignedIn() && 
+      allow update, delete: if isSignedIn() && !isBanned() && 
         (resource.data.userId == request.auth.uid || 
          resource.data.recipientId == request.auth.uid || 
          resource.data.receiverId == request.auth.uid);
     }
-
+ 
     // Casting Calls
     match /casting_calls/{callId} {
       allow read: if true;
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() && !isBanned() && 
         request.resource.data.createdBy == request.auth.uid;
-      allow update, delete: if isSignedIn() && 
+      allow update, delete: if isSignedIn() && !isBanned() && 
         (resource.data.createdBy == request.auth.uid || isAdmin());
     }
 
@@ -155,12 +161,12 @@ service cloud.firestore {
       allow read: if isSignedIn() && 
         (resource.data.userId == request.auth.uid || 
          resource.data.creatorId == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() && !isBanned() && 
         request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && 
+      allow update: if isSignedIn() && !isBanned() && 
         (resource.data.userId == request.auth.uid || 
          resource.data.creatorId == request.auth.uid || isAdmin());
-      allow delete: if isSignedIn() && 
+      allow delete: if isSignedIn() && !isBanned() && 
         (resource.data.userId == request.auth.uid || isAdmin());
     }
 
@@ -168,10 +174,10 @@ service cloud.firestore {
     match /saved_calls/{saveId} {
       allow read, delete: if isSignedIn() && 
         resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() && !isBanned() && 
         request.resource.data.userId == request.auth.uid;
       // FIX #3: Allow owner to update their own saved calls
-      allow update: if isSignedIn() && 
+      allow update: if isSignedIn() && !isBanned() && 
         resource.data.userId == request.auth.uid;
     }
 
@@ -232,27 +238,58 @@ service cloud.firestore {
     // FIX #8: Follows — explicit update: false to clarify intent
     match /follows/{followId} {
       allow read: if true;
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() && !isBanned() && 
         request.resource.data.followerId == request.auth.uid;
       allow update: if false; // Follow docs are immutable — delete and recreate if needed
-      allow delete: if isSignedIn() && 
+      allow delete: if isSignedIn() && !isBanned() && 
         resource.data.followerId == request.auth.uid;
     }
 
     // Reviews
     match /reviews/{reviewId} {
+      // Anyone can read reviews
       allow read: if true;
-      allow create: if isSignedIn() && 
-        request.resource.data.reviewerId == request.auth.uid;
-      allow update, delete: if isSignedIn() &&
-        (resource.data.reviewerId == request.auth.uid || isAdmin());
+
+      // ✅ Signed-in user can create review
+      // reviewerId must match logged-in user
+      allow create: if isSignedIn() && !isBanned() && 
+        request.resource.data.reviewerId == request.auth.uid &&
+        // Cannot review yourself
+        request.resource.data.targetUserId != request.auth.uid &&
+        // Must have rating between 1-5
+        request.resource.data.rating >= 1 &&
+        request.resource.data.rating <= 5 &&
+        // Must have review text
+        request.resource.data.text is string &&
+        request.resource.data.text.size() > 0;
+
+      // Only reviewer can update/delete their own review
+      allow update, delete: if isSignedIn() && !isBanned() && 
+        resource.data.reviewerId == request.auth.uid;
     }
 
     // Data Export Requests
     match /data_export_requests/{reqId} {
       allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'pending';
+      allow create: if isSignedIn() && !isBanned() && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'pending';
       allow update, delete: if isAdmin();
+    }
+
+    match /data_requests/{requestId} {
+      // User can read their own requests
+      allow read: if isSignedIn() && 
+        resource.data.userId == request.auth.uid;
+      
+      // User can create their own request
+      allow create: if isSignedIn() && !isBanned() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      
+      // Admin can read AND update ALL requests
+      allow read, update: if isAdmin();
+      
+      // Nobody can delete requests
+      allow delete: if false;
     }
 
     // One-time tokens (server-use only — Admin SDK)

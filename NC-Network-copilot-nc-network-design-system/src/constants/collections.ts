@@ -17,5 +17,5 @@ export const COLLECTIONS = {
   ADMIN_LOGS: "admin_logs",
   FOLLOWS: "follows",
   REVIEWS: "reviews",
-  DATA_EXPORT_REQUESTS: "data_export_requests",
+  DATA_EXPORT_REQUESTS: "data_requests",
 } as const;

@@ -184,7 +184,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
         where("userId", "==", user.uid),
         where("castingId", "==", callId)
       );
-      const { doc, setDoc, deleteDoc, addDoc } = await import('firebase/firestore');
+      const { deleteDoc, addDoc } = await import('firebase/firestore');
       if (isSaved) {
         onSnapshot(q, (snap) => {
           snap.docs.forEach(async (d) => {

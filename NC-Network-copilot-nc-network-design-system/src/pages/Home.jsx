@@ -11,53 +11,19 @@ import Avatar from '../components/ui/Avatar';
 import { subscribeToTalents } from '../services/users';
 import { subscribeToCastingCalls } from '../services/casting';
 
-import { db } from '../lib/firebase';
-import { 
-  doc, 
-  setDoc, 
-  deleteDoc, 
-  updateDoc, 
-  increment, 
-  serverTimestamp, 
-  collection, 
-  query, 
-  where, 
-  onSnapshot,
-  addDoc 
-} from 'firebase/firestore';
+
+
 
 // Category colors and icons are now sourced from src/config/categories.tsx
 
 export default function Home({ onNavigate, user }) {
   const isLoggedIn = !!user;
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [followedTalents, setFollowedTalents] = useState([]);
-  
-  // Real follows subscription
-  useEffect(() => {
-    if (!user) {
-      setFollowedTalents([]);
-      return;
-    }
-    
-    const q = query(
-      collection(db, "follows"),
-      where("followerId", "==", user.uid)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const ids = snap.docs.map(doc => doc.data().followingId);
-      setFollowedTalents(ids);
-    }, (err) => {
-      console.warn("Follows subscription in Home failed:", err);
-    });
-    
-    return () => unsub();
-  }, [user?.uid]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [currentPremiumIdx, setCurrentPremiumIdx] = useState(0);
   const [talents, setTalents] = useState([]);
   const [castingCalls, setCastingCalls] = useState([]);
-  const [queryError, setQueryError] = useState(null);
   const scrollRef = useRef(null);
   const [categoriesReady, setCategoriesReady] = useState(false);
   const [heroImageError, setHeroImageError] = useState(false);
@@ -111,7 +77,7 @@ export default function Home({ onNavigate, user }) {
 
 
 
-  const categories = CATEGORIES.map((catId, idx) => {
+  const categories = CATEGORIES.map((catId) => {
     const cfg = getCategoryConfig(catId);
     return {
       id: catId,
@@ -122,8 +88,6 @@ export default function Home({ onNavigate, user }) {
       count: talents.filter(t => t.role?.toLowerCase() === catId.toLowerCase() && !t.deactivated).length
     };
   });
-
-  const premiumTalents = talents.filter(t => (t.premium || t.verified) && !t.deactivated);
 
   useEffect(() => {
     let unsubUsers = () => {};
@@ -211,71 +175,7 @@ export default function Home({ onNavigate, user }) {
     return () => cancelAnimationFrame(animationId);
   }, [shouldScroll, castingCalls.length]);
 
-  const toggleFollow = async (e, targetId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user) {
-      onNavigate('signin');
-      return;
-    }
-    const followId = `${user.uid}_${targetId}`;
-    const followDocRef = doc(db, "follows", followId);
-    const isCurrentlyFollowing = followedTalents.includes(targetId);
-    
-    try {
-      if (isCurrentlyFollowing) {
-        // Unfollow
-        await deleteDoc(followDocRef);
-        await updateDoc(doc(db, "profiles", targetId), { followers: increment(-1) });
-        await updateDoc(doc(db, "profiles", user.uid), { following: increment(-1) });
-        try {
-          await updateDoc(doc(db, "users", targetId), { followers: increment(-1) });
-          await updateDoc(doc(db, "users", user.uid), { following: increment(-1) });
-        } catch (err) {
-          console.warn("Could not sync user follow stats:", err);
-        }
-      } else {
-        // Follow
-        await setDoc(followDocRef, {
-          followerId: user.uid,
-          followingId: targetId,
-          createdAt: serverTimestamp()
-        });
 
-        // Send notification
-        try {
-          await addDoc(collection(db, "notifications"), {
-            userId: targetId,
-            recipientId: targetId,
-            receiverId: targetId,
-            senderId: user.uid,
-            senderName: user.displayName || user.email || "Someone",
-            senderAvatar: user.photoURL || "",
-            title: "New Follower",
-            body: `${user.displayName || user.email || 'Someone'} started following you.`,
-            type: "follow",
-            notificationType: "follow",
-            isRead: false,
-            read: false,
-            createdAt: serverTimestamp(),
-            targetUrl: `/profile/${user.uid}`
-          });
-        } catch (nErr) {
-          console.warn("Could not send follow notification in Home:", nErr);
-        }
-        await updateDoc(doc(db, "profiles", targetId), { followers: increment(1) });
-        await updateDoc(doc(db, "profiles", user.uid), { following: increment(1) });
-        try {
-          await updateDoc(doc(db, "users", targetId), { followers: increment(1) });
-          await updateDoc(doc(db, "users", user.uid), { following: increment(1) });
-        } catch (err) {
-          console.warn("Could not sync user follow stats:", err);
-        }
-      }
-    } catch (err) {
-      console.error("Error toggling follow in Home:", err);
-    }
-  };
 
   // Get top 10 trending talents for hero rotation
   const trendingList = talents

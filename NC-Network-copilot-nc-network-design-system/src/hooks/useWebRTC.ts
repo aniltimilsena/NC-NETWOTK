@@ -148,6 +148,11 @@ export function useWebRTC(): UseWebRTCReturn {
       try {
         logger.log("[WebRTC] Requesting media stream with constraints:", constraints);
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        // Explicitly verify and enable all acquired local tracks
+        stream.getTracks().forEach((track) => {
+          track.enabled = true;
+          logger.log("[WebRTC] Local track enabled:", track.kind, "id:", track.id);
+        });
         setLocalStream(stream);
         localStorage.setItem("nc_perm_media", "granted");
         return stream;
@@ -161,6 +166,11 @@ export function useWebRTC(): UseWebRTCReturn {
           };
           logger.log("[WebRTC] Requesting fallback media stream with constraints:", fallbackConstraints);
           const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+          // Explicitly verify and enable all acquired local tracks
+          stream.getTracks().forEach((track) => {
+            track.enabled = true;
+            logger.log("[WebRTC] Local fallback track enabled:", track.kind, "id:", track.id);
+          });
           setLocalStream(stream);
           localStorage.setItem("nc_perm_media", "granted");
           return stream;
@@ -204,8 +214,12 @@ export function useWebRTC(): UseWebRTCReturn {
       // Listen for remote tracks and bind directly to the remote stream
       pc.ontrack = (event) => {
         logger.log("[WebRTC] Received remote track:", event.track.kind);
+        if (event.track) {
+          event.track.enabled = true;
+        }
         if (event.streams && event.streams[0]) {
-          setRemoteStream(event.streams[0]);
+          // Re-create the MediaStream instance from all tracks of the remote stream to ensure React registers a change
+          setRemoteStream(new MediaStream(event.streams[0].getTracks()));
         }
       };
 

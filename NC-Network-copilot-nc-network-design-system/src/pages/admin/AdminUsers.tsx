@@ -15,7 +15,7 @@ import {
   Mail
 } from 'lucide-react';
 import { db, auth } from "../../lib/firebase";
-import { collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 import { logAdminAction } from '../../services/admin';
 import { CATEGORIES, getCategoryConfig } from '../../constants/categories';
@@ -225,19 +225,135 @@ export default function AdminUsers() {
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
         try {
-          await deleteDoc(doc(db, "users", userId));
-          await deleteDoc(doc(db, "profiles", userId));
-          
-          await logAdminAction(adminEmail, `Delete User`, userId, `Permanently deleted user and profile documents`);
+          const firebaseUser = auth.currentUser;
+          if (!firebaseUser) {
+            throw new Error("Admin not authenticated");
+          }
+          const token = await firebaseUser.getIdToken();
+
+          const response = await fetch(`/api/admin/users/${userId}/delete`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || 'Server deletion failed');
+          }
           
           if (selectedUser?.id === userId) {
             setSelectedUser(null);
           }
-          alert("User record deleted successfully!");
+          alert("User record deleted successfully! They have been logged out and all their data removed.");
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         } catch (err) {
           console.error("Failed to delete user:", err);
-          alert("Error deleting user.");
+          alert(err instanceof Error ? err.message : "Error deleting user.");
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
+  };
+
+  const handleBanUser = (userId: string, userName: string) => {
+    const reason = window.prompt(`Reason for banning ${userName}:`);
+    if (reason === null) return; // user cancelled
+
+    const duration = window.prompt(
+      'Ban duration? (1d / 7d / 30d / permanent)', 
+      'permanent'
+    );
+    if (duration === null) return; // user cancelled
+
+    setConfirmConfig({
+      isOpen: true,
+      title: "Ban User Account?",
+      description: `Are you sure you want to ban ${userName}? Reason: "${reason || 'No reason provided'}". Duration: ${duration}. This will revoke their session and block access.`,
+      confirmText: "Ban",
+      cancelText: "Cancel",
+      type: "danger",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          const firebaseUser = auth.currentUser;
+          if (!firebaseUser) {
+            throw new Error("Admin not authenticated");
+          }
+          const token = await firebaseUser.getIdToken();
+
+          const response = await fetch(`/api/admin/users/${userId}/ban`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ reason, duration })
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || 'Server ban request failed');
+          }
+
+          if (selectedUser?.id === userId) {
+            setSelectedUser(prev => prev ? { ...prev, status: 'banned', banReason: reason, banExpiresAt: duration } : null);
+          }
+          alert(`User ${userName} has been successfully banned.`);
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          console.error("Failed to ban user:", err);
+          alert(err instanceof Error ? err.message : "Error banning user.");
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
+  };
+
+  const handleUnbanUser = (userId: string, userName: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Unban User Account?",
+      description: `Are you sure you want to unban ${userName}? This will restore their access.`,
+      confirmText: "Unban",
+      cancelText: "Cancel",
+      type: "success",
+      isLoading: false,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          const firebaseUser = auth.currentUser;
+          if (!firebaseUser) {
+            throw new Error("Admin not authenticated");
+          }
+          const token = await firebaseUser.getIdToken();
+
+          const response = await fetch(`/api/admin/users/${userId}/unban`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            }
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || 'Server unban request failed');
+          }
+
+          if (selectedUser?.id === userId) {
+            setSelectedUser(prev => prev ? { ...prev, status: 'Active' } : null);
+          }
+          alert(`User ${userName} has been successfully unbanned.`);
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          console.error("Failed to unban user:", err);
+          alert(err instanceof Error ? err.message : "Error unbanning user.");
         } finally {
           setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
@@ -525,13 +641,32 @@ export default function AdminUsers() {
                       >
                         <ShieldCheck className="w-4 h-4" />
                       </button>
-                      <button 
-                        onClick={() => handleDeleteUser(user.id)}
-                        title="Delete Record" 
-                        className="p-2 text-nc-muted hover:text-admin-error rounded-lg hover:bg-admin-error/10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {user.status?.toLowerCase() === 'banned' ? (
+                        <button 
+                          onClick={() => handleUnbanUser(user.id, user.name || 'User')}
+                          title="Unban User" 
+                          className="p-2 text-admin-success hover:text-white rounded-lg hover:bg-admin-success/10 animate-pulse"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => handleBanUser(user.id, user.name || 'User')}
+                            title="Ban User" 
+                            className="p-2 text-nc-muted hover:text-admin-error rounded-lg hover:bg-admin-error/10"
+                          >
+                            <ShieldX className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteUser(user.id)}
+                            title="Delete Record" 
+                            className="p-2 text-nc-muted hover:text-admin-error rounded-lg hover:bg-admin-error/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -695,29 +830,38 @@ export default function AdminUsers() {
                 </h4>
                 
                 <div className="flex flex-wrap gap-2">
-                  {selectedUser.status !== 'Active' && (
+                  {selectedUser.status?.toLowerCase() === 'banned' ? (
                     <button 
-                      onClick={() => handleUpdateStatus(selectedUser.id, 'Active')}
+                      onClick={() => handleUnbanUser(selectedUser.id, selectedUser.name || 'User')}
                       className="px-4 py-2 bg-admin-success/20 hover:bg-admin-success text-admin-success hover:text-white text-[10px] font-black uppercase rounded-lg border border-admin-success/30 transition-all flex items-center gap-1.5"
                     >
-                      <UserCheck className="w-3.5 h-3.5" /> Activate User
+                      <UserCheck className="w-3.5 h-3.5" /> Unban User
                     </button>
-                  )}
-                  {selectedUser.status !== 'Suspended' && (
-                    <button 
-                      onClick={() => handleUpdateStatus(selectedUser.id, 'Suspended')}
-                      className="px-4 py-2 bg-admin-warning/20 hover:bg-admin-warning text-admin-warning hover:text-black text-[10px] font-black uppercase rounded-lg border border-admin-warning/30 transition-all flex items-center gap-1.5"
-                    >
-                      <UserMinus className="w-3.5 h-3.5" /> Suspend User
-                    </button>
-                  )}
-                  {selectedUser.status !== 'Banned' && (
-                    <button 
-                      onClick={() => handleUpdateStatus(selectedUser.id, 'Banned')}
-                      className="px-4 py-2 bg-admin-error/20 hover:bg-admin-error text-admin-error hover:text-white text-[10px] font-black uppercase rounded-lg border border-admin-error/30 transition-all flex items-center gap-1.5"
-                    >
-                      <ShieldX className="w-3.5 h-3.5" /> Ban User
-                    </button>
+                  ) : (
+                    <>
+                      {selectedUser.status !== 'Active' && (
+                        <button 
+                          onClick={() => handleUpdateStatus(selectedUser.id, 'Active')}
+                          className="px-4 py-2 bg-admin-success/20 hover:bg-admin-success text-admin-success hover:text-white text-[10px] font-black uppercase rounded-lg border border-admin-success/30 transition-all flex items-center gap-1.5"
+                        >
+                          <UserCheck className="w-3.5 h-3.5" /> Activate User
+                        </button>
+                      )}
+                      {selectedUser.status !== 'Suspended' && (
+                        <button 
+                          onClick={() => handleUpdateStatus(selectedUser.id, 'Suspended')}
+                          className="px-4 py-2 bg-admin-warning/20 hover:bg-admin-warning text-admin-warning hover:text-black text-[10px] font-black uppercase rounded-lg border border-admin-warning/30 transition-all flex items-center gap-1.5"
+                        >
+                          <UserMinus className="w-3.5 h-3.5" /> Suspend User
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => handleBanUser(selectedUser.id, selectedUser.name || 'User')}
+                        className="px-4 py-2 bg-admin-error/20 hover:bg-admin-error text-admin-error hover:text-white text-[10px] font-black uppercase rounded-lg border border-admin-error/30 transition-all flex items-center gap-1.5"
+                      >
+                        <ShieldX className="w-3.5 h-3.5" /> Ban User
+                      </button>
+                    </>
                   )}
                   
                   <button 

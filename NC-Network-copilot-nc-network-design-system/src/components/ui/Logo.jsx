@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-const Logo = ({ size = 'md', className = '', onNavigate }) => {
+const Logo = ({ size = 'md', className = '' }) => {
   const BRAND_YELLOW = '#FACC15';
   const sizes = {
     sm: { box: 'w-7 h-7', text: 'text-[12px]', font: 'text-sm' },

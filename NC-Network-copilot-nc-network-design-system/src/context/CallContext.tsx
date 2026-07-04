@@ -17,7 +17,6 @@ import {
 import { getProfile } from "../services/profile";
 import { playRingtone, stopRingtone, playEndCallSound } from "../utils/ringtone";
 import { findOrCreateConversation, sendMessage } from "../services/messaging";
-import { usePermissionContext } from "./PermissionContext";
 import { db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
@@ -66,7 +65,6 @@ export function CallProvider({ children, user }: CallProviderProps) {
   const [incomingCall, setIncomingCall] = useState<CallDoc | null>(null);
 
   const webrtc = useWebRTC();
-  const { requestPermission } = usePermissionContext() as any;
 
   const loggedCallsRef = useRef<Record<string, boolean>>({});
 

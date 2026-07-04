@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getProfile, updateProfileData, uploadProfileMedia } from '../services/profile';
+import { getProfile, updateProfileData } from '../services/profile';
 import { verifyUserPassword } from '../services/auth';
 import { COLLECTIONS } from '../constants/collections';
 import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword, GoogleAuthProvider, FacebookAuthProvider, linkWithPopup, unlink } from 'firebase/auth';
@@ -10,13 +10,11 @@ import { collection, query, orderBy, onSnapshot, doc, deleteDoc, addDoc, serverT
 import { 
   LockUnlockIcon
 } from "@/components/ui/animated-state-icons"
-import { Plus, Check, ChevronLeft, User, Briefcase, Lock, Bell, Shield, Database, Trash2, HelpCircle, X, Mail, Loader2, Monitor, Smartphone, Tablet, Eye, EyeOff, AlertTriangle } from "lucide-react"
+import { Plus, Check, ChevronLeft, User, Briefcase, Lock, Bell, Shield, Database, Trash2, HelpCircle, X, Mail, Loader2, Monitor, Smartphone, Tablet, Eye, EyeOff, AlertTriangle, Star } from "lucide-react"
 import { evaluatePasswordStrength } from '../utils/security';
 import Avatar from '../components/ui/Avatar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { CATEGORIES } from '../constants/categories';
-import OtpInput from '../components/ui/OtpInput';
-import apiClient from '../api/client';
 
 // Unified premium toggle style
 const GoldenToggle = ({ enabled, onChange }) => (
@@ -189,10 +187,6 @@ const SaveButton = ({ hasChanges, isSaving, onSave, saveSuccess }) => (
 );
 
 // Legacy compat wrappers
-const SettingInput = ({ label, type = 'text', placeholder, value, onChange }) => (
-  <EditInput label={label} type={type} placeholder={placeholder} value={value} onChange={onChange} />
-);
-
 // Chip Tag for skills/expertise
 const ChipTag = ({ label, onRemove }) => (
   <motion.div
@@ -295,36 +289,19 @@ const NeonToggle = ({ enabled, onChange }) => (
   </button>
 );
 
-// Notification Row with independent push/email toggle state
-const NotificationRow = ({ row, markDirty }) => {
-  const [push, setPush] = useState(row.pushDefault ?? false);
-  const [email, setEmail] = useState(row.emailDefault ?? false);
 
-  return (
-    <div className="grid grid-cols-12 p-4 border-b border-[#222] hover:bg-[#151515] transition-colors items-center">
-      <div className="col-span-8 pr-4 text-left">
-        <div className="text-sm font-bold text-white mb-1">{row.title}</div>
-        <div className="text-xs text-[#777] leading-snug">{row.desc}</div>
-      </div>
-      <div className="col-span-2 flex justify-center">
-        <NeonToggle
-          enabled={push}
-          onChange={(v) => { setPush(v); markDirty(); }}
-        />
-      </div>
-      <div className="col-span-2 flex justify-center">
-        <NeonToggle
-          enabled={email}
-          onChange={(v) => { setEmail(v); markDirty(); }}
-        />
-      </div>
-    </div>
-  );
-};
 
 export default function Settings({ onNavigate, user, initialTab, showToast, isAdmin }) {
   const { t, i18n } = useTranslation();
   const isUserAdmin = isAdmin;
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const createSystemNotification = async (title, body) => {
     if (!user?.uid) return;
@@ -418,7 +395,6 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
   const [isMobileDetail, setIsMobileDetail] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const isSavingRef = useRef(false);
 
@@ -500,11 +476,16 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       // Password validated successfully, create pending request in Firestore
       await addDoc(collection(db, COLLECTIONS.DATA_EXPORT_REQUESTS), {
         uid: user.uid,
+        userId: user.uid,
         email: user.email || '',
+        userEmail: user.email || '',
         displayName: user.displayName || '',
+        userName: user.displayName || '',
         status: 'pending',
         createdAt: serverTimestamp(),
+        requestedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+        dataTypes: ['profile', 'casting', 'messages', 'reviews'],
       });
 
       showToast("Data export request submitted successfully!", "success");
@@ -552,50 +533,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     });
   };
 
-  const handleDeleteAccount = () => {
-    setConfirmConfig({
-      isOpen: true,
-      title: "Delete Account Permanently?",
-      description: "WARNING: This will permanently erase your profile details, casting history, and media attachments. This action is irreversible and cannot be undone.",
-      confirmText: "Delete Permanently",
-      cancelText: "Cancel",
-      type: "danger",
-      isLoading: false,
-      onConfirm: async () => {
-        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
-        try {
-          const uid = user.uid;
 
-          // 1. Delete Firestore user and profile documents
-          await deleteDoc(doc(db, "profiles", uid));
-          await deleteDoc(doc(db, "users", uid));
-
-          // 2. Clear confirm state
-          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
-          showToast("Account deleted. Signing out...", "success");
-
-          // 3. Attempt to delete auth user, otherwise sign out
-          try {
-            if (auth.currentUser) {
-              await auth.currentUser.delete();
-            }
-          } catch (authErr) {
-            console.warn("Could not delete auth user immediately (requires recent login):", authErr);
-          }
-
-          // 4. Final sign out and redirect
-          setTimeout(async () => {
-            await auth.signOut();
-            onNavigate('home');
-          }, 1500);
-        } catch (err) {
-          console.error("Deletion failed:", err);
-          showToast("Failed to delete account completely.", "error");
-          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
-        }
-      }
-    });
-  };
 
 
   // Identity States
@@ -607,11 +545,8 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [gender, setGender] = useState("");
   
   // Avatar Upload State
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [avatarProgress, setAvatarProgress] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarLastFile, setAvatarLastFile] = useState(null);
-  const [avatarUploadStatus, setAvatarUploadStatus] = useState("idle"); // 'idle' | 'uploading' | 'success' | 'error'
   const [isPremium, setIsPremium] = useState(false);
 
   // Profile States
@@ -627,7 +562,6 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [hairColor, setHairColor] = useState("");
   const [role, setRole] = useState("");
   const [showContactInfo, setShowContactInfo] = useState(false);
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -665,168 +599,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [notifPromo, setNotifPromo] = useState(false);
   const [notifOneSignalSubscribed, setNotifOneSignalSubscribed] = useState(false);
 
-  const calculateProfileCompletion = () => {
-    let score = 0;
-    if (avatarUrl || user?.photoURL || user?.image) score += 15;
-    if (bio && bio.trim().length > 0) score += 15;
-    if (role) score += 10;
-    if (location) score += 10;
-    if (phone) score += 10;
-    if (gender) score += 10;
-    if (selectedLanguages && selectedLanguages.length > 0) score += 15;
-    if (selectedSkills && selectedSkills.length > 0) score += 15;
-    return score;
-  };
-
-  const getMissingProfileFields = () => {
-    const missing = [];
-    if (!avatarUrl && !user?.photoURL && !user?.image) missing.push("Avatar");
-    if (!bio) missing.push("Bio Description");
-    if (!role) missing.push("Category");
-    if (!location) missing.push("Location");
-    if (!phone) missing.push("Phone");
-    if (!gender) missing.push("Gender");
-    if (!selectedLanguages || selectedLanguages.length === 0) missing.push("Languages");
-    if (!selectedSkills || selectedSkills.length === 0) missing.push("Skills");
-    return missing;
-  };
-
   const markDirty = () => setHasChanges(true);
-
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !user?.uid) return;
-    
-    // Enforce limits: 5MB for Free, 10MB for Pro
-    const sizeLimit = (isPremium || isUserAdmin) ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
-    if (file.size > sizeLimit) {
-      showToast(`Profile picture exceeds the limit of ${(isPremium || isUserAdmin) ? '10MB' : '5MB'} for your current tier.`, 'error');
-      return;
-    }
-    
-    setIsUploadingAvatar(true);
-    setAvatarProgress(0);
-    setAvatarUploadStatus("uploading");
-    setAvatarLastFile(file);
-    
-    try {
-      const url = await uploadProfileMedia(user.uid, file, (progress) => {
-        setAvatarProgress(Math.round(progress));
-      });
-      
-      if (url) {
-        setAvatarUrl(url); // Update local state immediately
-        // Update Firestore doc with both image (standard for this app) and photoURL (Firebase standard)
-        const { success, error } = await updateProfileData(user.uid, { 
-          image: url,
-          photoURL: url 
-        });
-
-        if (success) {
-          if (auth.currentUser) {
-            await updateProfile(auth.currentUser, { photoURL: url });
-          }
-          setAvatarUploadStatus("success");
-          showToast("Profile picture updated successfully!", "success");
-          createSystemNotification("Profile Picture Updated", "Your profile picture has been updated.");
-          setTimeout(() => {
-            setAvatarUploadStatus("idle");
-            setIsUploadingAvatar(false);
-          }, 1500);
-        } else {
-          console.error("Firestore update failed:", error);
-          setAvatarUploadStatus("error");
-          showToast("Photo uploaded but failed to update profile record.", "error");
-        }
-      } else {
-        setAvatarUploadStatus("error");
-        showToast("Failed to upload image to Cloudinary.", "error");
-      }
-    } catch (err) {
-      console.error("Avatar upload error:", err);
-      setAvatarUploadStatus("error");
-      showToast("Error updating profile picture.", "error");
-    } finally {
-      if (e.target) e.target.value = ''; // Reset input
-    }
-  };
-
-  const handleRetryAvatarUpload = async () => {
-    if (!avatarLastFile || !user?.uid) return;
-    
-    setIsUploadingAvatar(true);
-    setAvatarProgress(0);
-    setAvatarUploadStatus("uploading");
-    
-    try {
-      const url = await uploadProfileMedia(user.uid, avatarLastFile, (progress) => {
-        setAvatarProgress(Math.round(progress));
-      });
-      
-      if (url) {
-        setAvatarUrl(url);
-        const { success, error } = await updateProfileData(user.uid, { 
-          image: url,
-          photoURL: url 
-        });
-
-        if (success) {
-          if (auth.currentUser) {
-            await updateProfile(auth.currentUser, { photoURL: url });
-          }
-          setAvatarUploadStatus("success");
-          showToast("Profile picture updated successfully!", "success");
-          createSystemNotification("Profile Picture Updated", "Your profile picture has been updated.");
-          setTimeout(() => {
-            setAvatarUploadStatus("idle");
-            setIsUploadingAvatar(false);
-          }, 1500);
-        } else {
-          setAvatarUploadStatus("error");
-          showToast("Photo uploaded but failed to update profile record.", "error");
-        }
-      } else {
-        setAvatarUploadStatus("error");
-        showToast("Failed to upload image to Cloudinary.", "error");
-      }
-    } catch (err) {
-      console.error("Avatar upload retry error:", err);
-      setAvatarUploadStatus("error");
-      showToast("Error updating profile picture.", "error");
-    }
-  };
-
-  const handleDeleteAvatar = () => {
-    if (!user?.uid) return;
-    
-    setConfirmConfig({
-      isOpen: true,
-      title: "Remove Profile Picture?",
-      description: "Are you sure you want to remove your profile picture? This action cannot be undone.",
-      confirmText: "Remove",
-      cancelText: "Cancel",
-      type: "danger",
-      isLoading: false,
-      onConfirm: async () => {
-        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
-        try {
-          await updateProfileData(user.uid, { image: null, photoURL: null });
-          setAvatarUrl("");
-          if (auth.currentUser) {
-            await updateProfile(auth.currentUser, { photoURL: "" });
-          }
-          showToast("Profile picture removed.", "success");
-          createSystemNotification("Profile Picture Removed", "Your profile picture has been removed.");
-          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
-        } catch (err) {
-          console.error("Avatar delete error:", err);
-          showToast("Error removing profile picture.", "error");
-        } finally {
-          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
-        }
-      }
-    });
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -1033,19 +806,36 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   };
 
   const handleChangePassword = async () => {
+    const u = auth.currentUser;
+    if (!u) {
+      showToast("You must be logged in to change password", "error");
+      return;
+    }
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showToast("Please fill in all fields", "error");
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       showToast("New passwords do not match.", "error");
       return;
     }
+
     const { strength } = evaluatePasswordStrength(newPassword);
     if (strength === 'Weak') {
       showToast("Please choose a stronger password meeting the security criteria.", "error");
       return;
     }
+
+    if (currentPassword === newPassword) {
+      showToast("New password must be different from current password.", "error");
+      return;
+    }
+
     setIsChangingPassword(true);
     try {
-      const u = auth.currentUser;
-      if (u && u.email) {
+      if (u.email) {
         const credential = EmailAuthProvider.credential(u.email, currentPassword);
         await reauthenticateWithCredential(u, credential);
         
@@ -1057,22 +847,43 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
           await handleSignOutAllOthers();
         }
         
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setSignOutOthersAfterPasswordChange(false);
+        if (isMountedRef.current) {
+          setCurrentPassword("");
+          setNewPassword("");
+          setConfirmPassword("");
+          setSignOutOthersAfterPasswordChange(false);
+        }
       } else {
-        showToast("User session not found.", "error");
+        showToast("Email address not found in your profile.", "error");
       }
     } catch (err) {
       console.error("Password update error:", err);
-      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        showToast("Current password incorrect", "error");
-      } else {
-        showToast(err.message || "Failed to update password. Please check your credentials.", "error");
+      if (isMountedRef.current) {
+        switch (err.code) {
+          case 'auth/wrong-password':
+          case 'auth/invalid-credential':
+            showToast("Current password is incorrect.", "error");
+            break;
+          case 'auth/weak-password':
+            showToast("New password is too weak.", "error");
+            break;
+          case 'auth/requires-recent-login':
+            showToast("Session expired. Please log out and log in again.", "error");
+            break;
+          case 'auth/too-many-requests':
+            showToast("Too many attempts. Please try again later.", "error");
+            break;
+          case 'auth/network-request-failed':
+            showToast("Network error. Check your connection.", "error");
+            break;
+          default:
+            showToast(err.message || "Failed to update password. Please check your credentials.", "error");
+        }
       }
     } finally {
-      setIsChangingPassword(false);
+      if (isMountedRef.current) {
+        setIsChangingPassword(false);
+      }
     }
   };
 
@@ -1085,168 +896,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [twoFactorMethod, setTwoFactorMethod] = useState("");
   const [twoFactorPhone, setTwoFactorPhone] = useState("");
   const [twoFactorEmail, setTwoFactorEmail] = useState("");
-  const [twoFactorStep, setTwoFactorStep] = useState("status"); // 'status' | 'method' | 'setup_sms' | 'setup_email' | 'backup_codes' | 'disable_confirm' | 'disable_verify'
-  const [selected2faMethod, setSelected2faMethod] = useState("sms");
-  const [setupPhone, setSetupPhone] = useState("+977");
-  const [setupEmail, setSetupEmail] = useState("");
-  const [otpValue, setOtpValue] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [isSendingCode, setIsSendingCode] = useState(false);
-  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
-  const [countdown, setCountdown] = useState(120);
-  const [resendActive, setResendActive] = useState(false);
-  const [backupCodes, setBackupCodes] = useState([]);
-  const [passwordToDisable, setPasswordToDisable] = useState("");
-  const [otpError, setOtpError] = useState("");
 
-  useEffect(() => {
-    if (otpSent && countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (otpSent && countdown === 0) {
-      setResendActive(true);
-    }
-  }, [countdown, otpSent]);
-
-  const handleSendSetupOtp = async () => {
-    setIsSendingCode(true);
-    setOtpError('');
-    try {
-      const res = await apiClient.post('/2fa/send-setup-otp', {
-        method: selected2faMethod,
-        phone: selected2faMethod === 'sms' ? setupPhone : null,
-        email: selected2faMethod === 'email' ? setupEmail : null,
-      });
-      if (res.data.success) {
-        setOtpSent(true);
-        setCountdown(120);
-        setResendActive(false);
-        setOtpValue('');
-        if (res.data.code && Notification.permission === 'granted') {
-          new Notification("NC-Network Verification", {
-            body: `Your setup verification code is: ${res.data.code}`,
-            icon: '/logo.png',
-            requireInteraction: true
-          });
-        }
-        showToast('Verification code sent!', 'success');
-      } else {
-        setOtpError(res.data.error || 'Failed to send verification code.');
-      }
-    } catch (err) {
-      console.error("2FA send setup error:", err);
-      setOtpError(err.response?.data?.error || 'Error sending verification code.');
-    } finally {
-      setIsSendingCode(false);
-    }
-  };
-
-  const handleVerifySetupOtp = async () => {
-    setIsVerifyingCode(true);
-    setOtpError('');
-    try {
-      const res = await apiClient.post('/2fa/verify-setup-otp', {
-        code: otpValue,
-        method: selected2faMethod,
-        phone: selected2faMethod === 'sms' ? setupPhone : null,
-        email: selected2faMethod === 'email' ? setupEmail : null,
-      });
-      if (res.data.success) {
-        setBackupCodes(res.data.backupCodes);
-        setTwoFactorStep('backup_codes');
-        showToast('Verification successful!', 'success');
-      } else {
-        setOtpError(res.data.error || 'Invalid code.');
-      }
-    } catch (err) {
-      console.error("2FA verify setup error:", err);
-      setOtpError(err.response?.data?.error || 'Verification failed.');
-    } finally {
-      setIsVerifyingCode(false);
-    }
-  };
-
-  const handleDownloadBackupCodes = () => {
-    const element = document.createElement("a");
-    const file = new Blob([
-      `NC NETWORK TWO-FACTOR AUTHENTICATION BACKUP CODES\n`,
-      `Keep these codes in a safe place. Each code can be used once.\n\n`,
-      backupCodes.map((code, idx) => `Code ${idx + 1}: ${code}`).join('\n')
-    ], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = "nc_backup_codes.txt";
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
-
-  const handleSendDisableOtp = async () => {
-    setIsSendingCode(true);
-    setOtpError('');
-    try {
-      if (!auth.currentUser || !auth.currentUser.email) {
-        showToast('Auth error. Log in again.', 'error');
-        return;
-      }
-      const credential = EmailAuthProvider.credential(auth.currentUser.email, passwordToDisable);
-      await reauthenticateWithCredential(auth.currentUser, credential);
-      
-      const res = await apiClient.post('/2fa/send-setup-otp', {
-        method: twoFactorMethod,
-        phone: twoFactorMethod === 'sms' ? twoFactorPhone : null,
-        email: twoFactorMethod === 'email' ? twoFactorEmail : null,
-      });
-      
-      if (res.data.success) {
-        setOtpSent(true);
-        setCountdown(120);
-        setResendActive(false);
-        setOtpValue('');
-        setTwoFactorStep('disable_verify');
-        
-        if (res.data.code && Notification.permission === 'granted') {
-          new Notification("NC-Network Verification", {
-            body: `Your disable confirmation code is: ${res.data.code}`,
-            icon: '/logo.png',
-            requireInteraction: true
-          });
-        }
-        showToast('Verification code sent!', 'success');
-      } else {
-        setOtpError(res.data.error || 'Failed to send verification code.');
-      }
-    } catch (err) {
-      console.error("2FA send disable error:", err);
-      showToast('Invalid password. Please try again.', 'error');
-    } finally {
-      setIsSendingCode(false);
-    }
-  };
-
-  const handleVerifyDisableOtp = async () => {
-    setIsVerifyingCode(true);
-    setOtpError('');
-    try {
-      const res = await apiClient.post('/2fa/disable', {
-        code: otpValue,
-      });
-      if (res.data.success) {
-        setTwoFactor(false);
-        setTwoFactorMethod('');
-        setTwoFactorPhone('');
-        setTwoFactorEmail('');
-        setTwoFactorStep('status');
-        showToast('2FA disabled', 'warning');
-      } else {
-        setOtpError(res.data.error || 'Invalid code.');
-      }
-    } catch (err) {
-      console.error("2FA disable verification error:", err);
-      setOtpError(err.response?.data?.error || 'Verification failed.');
-    } finally {
-      setIsVerifyingCode(false);
-    }
-  };
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -1444,6 +1094,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const tabs = [
     { id: 'account', icon: <User size={18} />, label: 'Account' },
     { id: 'profile', icon: <Briefcase size={18} />, label: 'Profile Details' },
+    { id: 'saved-castings', icon: <Star size={18} />, label: 'Saved Castings' },
     { id: 'privacy', icon: <Shield size={18} />, label: 'Privacy & Visibility' },
     { id: 'notifications', icon: <Bell size={18} />, label: 'Notifications' },
     ...(!isUserAdmin ? [{ id: 'premium', icon: <Plus size={18} />, label: 'Subscription (PRO)' }] : []),
@@ -1452,33 +1103,17 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   ];
 
   const handleTabClick = (id) => {
+    if (id === 'saved-castings') {
+      onNavigate('saved-castings');
+      return;
+    }
     setActiveTab(id);
     setIsMobileDetail(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const [isTypingLanguage, setIsTypingLanguage] = useState(false);
-  const [isTypingSkill, setIsTypingSkill] = useState(false);
   const [tempLanguage, setTempLanguage] = useState("");
   const [tempSkill, setTempSkill] = useState("");
-
-  const handleAddLanguage = (val) => {
-    if (val && !selectedLanguages.includes(val)) {
-      setSelectedLanguages([...selectedLanguages, val]);
-      markDirty();
-    }
-    setIsTypingLanguage(false);
-    setTempLanguage("");
-  };
-
-  const handleAddSkill = (val) => {
-    if (val && !selectedSkills.includes(val)) {
-      setSelectedSkills([...selectedSkills, val]);
-      markDirty();
-    }
-    setIsTypingSkill(false);
-    setTempSkill("");
-  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -2218,7 +1853,14 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
           </div>
         );
 
-      case 'security':
+      case 'security': {
+        const { strength: pwdStrength, rules: pwRules } = evaluatePasswordStrength(newPassword);
+        const strengthInfo = pwdStrength === 'Strong'
+          ? { label: 'Strong', color: 'bg-green-400', percent: 100 }
+          : pwdStrength === 'Medium'
+            ? { label: 'Medium', color: 'bg-yellow-400', percent: 66 }
+            : { label: 'Weak', color: 'bg-red-400', percent: 33 };
+
         return (
           <div className="space-y-8 animate-fade-in text-left pb-10">
             <div className="border-b border-white/5 pb-6 hidden md:block">
@@ -2464,7 +2106,6 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                 {sessions.map((sess) => {
                   const currentSessionId = localStorage.getItem('nc_session_id');
                   const isCurrent = sess.id === currentSessionId;
-                  const isMobile = isMobileDevice(sess.os);
                   
                   return (
                     <div 
@@ -2621,6 +2262,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
             </section>
           </div>
         );
+      }
 
       case 'data':
         return (
@@ -2644,6 +2286,23 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
                   className="text-white bg-[#151515] border border-[#333] px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-[#222] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isExporting ? "Exporting..." : "Request Data Archive"}
+                </button>
+              </div>
+            </div>
+
+            <div className="border border-white/5 bg-[#111] rounded-2xl p-6 space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-white font-bold text-sm mb-1">Saved Casting Calls</h4>
+                  <p className="text-[#888] text-xs max-w-[280px] leading-relaxed">
+                    View and manage all casting calls you have saved.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => onNavigate('saved-castings')}
+                  className="text-white bg-[#151515] border border-[#333] px-5 py-2.5 rounded-lg text-xs font-bold hover:bg-[#222] transition-colors whitespace-nowrap"
+                >
+                  View Saved Casting Calls
                 </button>
               </div>
             </div>

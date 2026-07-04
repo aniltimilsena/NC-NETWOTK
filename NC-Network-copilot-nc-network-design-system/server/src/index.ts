@@ -512,6 +512,18 @@ const verifyToken = async (req: AuthedRequest, res: Response, next: NextFunction
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
     req.user = decodedToken;
+
+    // Check if user is banned
+    const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+    if (userDoc.exists && userDoc.data()?.status === 'banned') {
+      res.status(403).json({
+        success: false,
+        message: 'Forbidden: Your account has been suspended',
+        errorCode: 'SUSPENDED'
+      });
+      return;
+    }
+
     next();
   } catch (error) {
     console.error('Token verification failed:', error);
@@ -1230,6 +1242,270 @@ app.get('/api/admin/users', verifyToken, isAdmin, async (req: AuthedRequest, res
     res.json(users);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch users';
+    res.status(500).json({ error: message });
+  }
+});
+
+app.post('/api/admin/users/:userId/delete', verifyToken, isAdmin, async (req: AuthedRequest, res: Response) => {
+  const { userId } = req.params;
+  const adminUid = req.user?.uid || 'unknown_admin';
+
+  if (!userId) {
+    res.status(400).json({ error: 'User ID is required' });
+    return;
+  }
+
+  try {
+    // 1. Revoke refresh tokens immediately
+    try {
+      await admin.auth().revokeRefreshTokens(userId);
+    } catch (revokeErr) {
+      console.warn(`Could not revoke refresh tokens for user ${userId}:`, revokeErr);
+    }
+
+    // 2. Delete from Firebase Auth
+    try {
+      await admin.auth().deleteUser(userId);
+    } catch (authErr) {
+      // If user does not exist in Auth, log a warning and continue
+      console.warn(`Could not delete Auth user ${userId}:`, authErr);
+    }
+
+    // 3. Delete profiles/{userId}/sessions subcollection documents
+    try {
+      const sessionsSnap = await db.collection('profiles').doc(userId).collection('sessions').get();
+      if (!sessionsSnap.empty) {
+        let batch = db.batch();
+        let count = 0;
+        for (const doc of sessionsSnap.docs) {
+          batch.delete(doc.ref);
+          count++;
+          if (count === 400) {
+            await batch.commit();
+            batch = db.batch();
+            count = 0;
+          }
+        }
+        if (count > 0) {
+          await batch.commit();
+        }
+      }
+    } catch (sessionsErr) {
+      console.warn(`Error deleting sessions for user ${userId}:`, sessionsErr);
+    }
+
+    // 4. Delete Firestore documents in users and profiles collections
+    await db.collection('users').doc(userId).delete();
+    await db.collection('profiles').doc(userId).delete();
+
+    // 5. Clean up associated collections (batched)
+    const collectionsToClean = [
+      { name: 'casting_calls', field: 'createdBy' },
+      { name: 'saved_calls', field: 'userId' },
+      { name: 'data_requests', field: 'userId' },
+      { name: 'follows', field: 'followerId' },
+      { name: 'follows', field: 'followingId' },
+      { name: 'applications', field: 'userId' },
+      { name: 'applications', field: 'creatorId' },
+      { name: 'notifications', field: 'userId' },
+      { name: 'notifications', field: 'recipientId' },
+      { name: 'notifications', field: 'receiverId' },
+      { name: 'notifications', field: 'senderId' },
+      { name: 'reviews', field: 'reviewerId' },
+      { name: 'reviews', field: 'targetUserId' },
+      { name: 'reviews', field: 'targetUid' }
+    ];
+
+    for (const col of collectionsToClean) {
+      try {
+        const snap = await db.collection(col.name).where(col.field, '==', userId).get();
+        if (!snap.empty) {
+          let batch = db.batch();
+          let count = 0;
+          for (const doc of snap.docs) {
+            batch.delete(doc.ref);
+            count++;
+            if (count === 400) {
+              await batch.commit();
+              batch = db.batch();
+              count = 0;
+            }
+          }
+          if (count > 0) {
+            await batch.commit();
+          }
+        }
+      } catch (colErr) {
+        console.warn(`Error cleaning up collection ${col.name} (field ${col.field}) for user ${userId}:`, colErr);
+      }
+    }
+
+    // 6. Add to deleted_users log
+    await db.collection('deleted_users').add({
+      userId,
+      deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+      deletedBy: adminUid,
+    });
+
+    // 7. Write an admin log
+    const adminEmail = req.user?.email || "Unknown Admin";
+    await db.collection('admin_logs').add({
+      adminEmail,
+      action: 'Delete User Account',
+      targetId: userId,
+      details: { deletedByAdminUid: adminUid },
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // 8. Invalidate server cache
+    deleteFromCacheByPattern(`profile:${userId}`);
+    deleteFromCacheByPattern(`user:${userId}`);
+
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to delete user';
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: message });
+  }
+});
+
+function calculateExpiryDate(duration: string) {
+  const now = new Date();
+  const map: Record<string, number> = { '1d': 1, '7d': 7, '30d': 30 };
+  const days = map[duration];
+  if (!days) return null; // permanent
+  now.setDate(now.getDate() + days);
+  return admin.firestore.Timestamp.fromDate(now);
+}
+
+app.post('/api/admin/users/:userId/ban', verifyToken, isAdmin, async (req: AuthedRequest, res: Response) => {
+  const { userId } = req.params;
+  const { reason, duration } = req.body as any;
+  const adminUid = req.user?.uid || 'unknown_admin';
+
+  if (!userId) {
+    res.status(400).json({ error: 'User ID is required' });
+    return;
+  }
+
+  try {
+    // 1. Revoke refresh tokens immediately
+    try {
+      await admin.auth().revokeRefreshTokens(userId);
+    } catch (revokeErr) {
+      console.warn(`Could not revoke refresh tokens for user ${userId}:`, revokeErr);
+    }
+
+    // 2. Disable Firebase Auth account
+    try {
+      await admin.auth().updateUser(userId, { disabled: true });
+    } catch (authErr) {
+      console.warn(`Could not disable Auth user ${userId}:`, authErr);
+    }
+
+    // 3. Mark as banned in Firestore (users & profiles collections)
+    const banExpiresAt = duration === 'permanent'
+      ? null
+      : calculateExpiryDate(duration);
+
+    const updateFields = {
+      status: 'banned',
+      bannedAt: admin.firestore.FieldValue.serverTimestamp(),
+      bannedBy: adminUid,
+      banReason: reason || 'No reason provided',
+      banExpiresAt: banExpiresAt,
+    };
+
+    await db.collection('users').doc(userId).update(updateFields);
+    await db.collection('profiles').doc(userId).update(updateFields);
+
+    // 4. Log in moderation_log
+    await db.collection('moderation_log').add({
+      action: 'ban',
+      userId,
+      reason: reason || 'No reason provided',
+      duration: duration || 'permanent',
+      moderatorId: adminUid,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // 5. Write admin log
+    const adminEmail = req.user?.email || "Unknown Admin";
+    await db.collection('admin_logs').add({
+      adminEmail,
+      action: 'Ban User Account',
+      targetId: userId,
+      details: { reason, duration, bannedByAdminUid: adminUid },
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // 6. Invalidate server cache
+    deleteFromCacheByPattern(`profile:${userId}`);
+    deleteFromCacheByPattern(`user:${userId}`);
+
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to ban user';
+    console.error('Ban user error:', error);
+    res.status(500).json({ error: message });
+  }
+});
+
+app.post('/api/admin/users/:userId/unban', verifyToken, isAdmin, async (req: AuthedRequest, res: Response) => {
+  const { userId } = req.params;
+  const adminUid = req.user?.uid || 'unknown_admin';
+
+  if (!userId) {
+    res.status(400).json({ error: 'User ID is required' });
+    return;
+  }
+
+  try {
+    // 1. Re-enable in Firebase Auth
+    try {
+      await admin.auth().updateUser(userId, { disabled: false });
+    } catch (authErr) {
+      console.warn(`Could not re-enable Auth user ${userId}:`, authErr);
+    }
+
+    // 2. Mark as active in Firestore (users & profiles collections)
+    const removeFields = {
+      status: 'Active',
+      bannedAt: admin.firestore.FieldValue.delete(),
+      bannedBy: admin.firestore.FieldValue.delete(),
+      banReason: admin.firestore.FieldValue.delete(),
+      banExpiresAt: admin.firestore.FieldValue.delete(),
+    };
+
+    await db.collection('users').doc(userId).update(removeFields);
+    await db.collection('profiles').doc(userId).update(removeFields);
+
+    // 3. Log in moderation_log
+    await db.collection('moderation_log').add({
+      action: 'unban',
+      userId,
+      moderatorId: adminUid,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // 4. Write admin log
+    const adminEmail = req.user?.email || "Unknown Admin";
+    await db.collection('admin_logs').add({
+      adminEmail,
+      action: 'Unban User Account',
+      targetId: userId,
+      details: { unbannedByAdminUid: adminUid },
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // 5. Invalidate server cache
+    deleteFromCacheByPattern(`profile:${userId}`);
+    deleteFromCacheByPattern(`user:${userId}`);
+
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to unban user';
+    console.error('Unban user error:', error);
     res.status(500).json({ error: message });
   }
 });
@@ -3267,6 +3543,132 @@ app.get('/api/data-export/download', async (req: Request, res: Response) => {
     res.send(JSON.stringify(archive, null, 2));
   } catch (error: any) {
     console.error('Data export download error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// 3. Admin Approve data-requests REST endpoint
+app.post('/api/data-requests/:requestId/approve', verifyToken, isAdmin, async (req: AuthedRequest<any, any>, res: Response) => {
+  try {
+    const { requestId } = req.params;
+    if (!requestId || typeof requestId !== 'string') {
+      res.status(400).send('Bad Request: Missing requestId');
+      return;
+    }
+
+    const requestRef = db.collection('data_requests').doc(requestId);
+    const requestDoc = await requestRef.get();
+
+    if (!requestDoc.exists) {
+      res.status(404).send('Not Found: Request not found');
+      return;
+    }
+
+    const requestData = requestDoc.data();
+    if (requestData?.status !== 'pending') {
+      res.status(400).send('Bad Request: Request is not in pending status');
+      return;
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours from now
+
+    // Store secure one-time token
+    const userId = requestData.userId || requestData.uid;
+    const userEmail = requestData.userEmail || requestData.email;
+
+    await db.collection('one_time_tokens').doc(token).set({
+      uid: userId,
+      email: userEmail,
+      requestId: requestId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      expiresAt: expiresAt,
+      used: false,
+    });
+
+    // Update data request status
+    await requestRef.update({
+      status: 'approved',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Send email with secure tokenized link
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const downloadLink = `${frontendUrl}/api/data-export/download?token=${token}`;
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"NC Network Security" <${process.env.EMAIL_USER}>`,
+      to: userEmail,
+      subject: 'Your Data Archive is Ready for Download',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px; background-color: #0b0b0c; color: #fff;">
+          <h2 style="color: #FFD700;">NC Network</h2>
+          <p style="color: #ccc;">Your request to download your account data has been approved.</p>
+          <p style="color: #ccc;">You can download your archive by clicking the button below. This link is valid for <strong>24 hours</strong> and can only be used <strong>once</strong>.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${downloadLink}" style="background-color: #00BFFF; color: #000; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 6px; display: inline-block;">
+              Download Data Archive
+            </a>
+          </div>
+          <p style="color: #999; font-size: 11px;">
+            If the button doesn't work, copy and paste this link into your browser:<br/>
+            <a href="${downloadLink}" style="color: #00BFFF;">${downloadLink}</a>
+          </p>
+          <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;"/>
+          <p style="color: #666; font-size: 11px;">
+            If you did not request this data export, please contact support and update your security settings immediately.
+          </p>
+        </div>
+      `,
+    });
+
+    res.send({ success: true });
+  } catch (error: any) {
+    console.error('Data export approval error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// 4. Admin Reject data-requests REST endpoint
+app.post('/api/data-requests/:requestId/reject', verifyToken, isAdmin, async (req: AuthedRequest<any, any>, res: Response) => {
+  try {
+    const { requestId } = req.params;
+    const { reason } = req.body;
+    if (!requestId || typeof requestId !== 'string') {
+      res.status(400).send('Bad Request: Missing requestId');
+      return;
+    }
+    if (!reason || typeof reason !== 'string') {
+      res.status(400).send('Bad Request: Missing rejection reason');
+      return;
+    }
+
+    const requestRef = db.collection('data_requests').doc(requestId);
+    const requestDoc = await requestRef.get();
+
+    if (!requestDoc.exists) {
+      res.status(404).send('Not Found: Request not found');
+      return;
+    }
+
+    // Update data request status
+    await requestRef.update({
+      status: 'rejected',
+      rejectionReason: reason,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.send({ success: true });
+  } catch (error: any) {
+    console.error('Data export rejection error:', error);
     res.status(500).send('Internal Server Error');
   }
 });

@@ -25,7 +25,7 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
   try {
     const callCtx = useCall();
     activeCall = callCtx?.activeCall;
-  } catch (e) {
+  } catch {
     // Graceful fallback if context is not available
   }
   const isCallActive = !!activeCall;

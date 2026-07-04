@@ -42,13 +42,6 @@ const resolveLinkToPath = (link?: string): string => {
   }
 };
 
-interface NotificationPayload {
-  message: string;
-  type?: 'success' | 'error' | 'info' | 'logout';
-  detail?: string;
-  link?: string;
-}
-
 export const useNotifications = (
   user: any, 
   showAlert: (msg: string, type?: any, detail?: string, onAction?: () => void) => void,

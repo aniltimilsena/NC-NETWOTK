@@ -80,7 +80,7 @@ import AdminRoute from './routes/AdminRoute';
 
 // Firebase
 import { auth, db } from './lib/firebase';
-import { onAuthStateChanged, type User, updateProfile } from 'firebase/auth';
+import { onAuthStateChanged, onIdTokenChanged, getIdTokenResult, type User, updateProfile } from 'firebase/auth';
 import { doc, getDoc, onSnapshot, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useNotifications } from './hooks/useNotifications';
 import { UserContext } from './context/UserContext';
@@ -104,6 +104,7 @@ const Notifications = lazyWithRetry(() => import('./pages/Notifications'));
 const Settings = lazyWithRetry(() => import('./pages/Settings'));
 const Trending = lazyWithRetry(() => import('./pages/Trending'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
+const SavedCastingCalls = lazyWithRetry(() => import('./pages/SavedCastingCalls'));
 
 // Admin pages
 const AdminOverview = lazyWithRetry(() => import('./pages/admin/AdminOverview'));
@@ -115,6 +116,7 @@ const AdminMessages = lazyWithRetry(() => import('./pages/admin/AdminMessages'))
 const AdminPro = lazyWithRetry(() => import('./pages/admin/AdminPro'));
 const AdminModeration = lazyWithRetry(() => import('./pages/admin/AdminModeration'));
 const AdminSettings = lazyWithRetry(() => import('./pages/admin/AdminSettings'));
+const AdminDataRequests = lazyWithRetry(() => import('./pages/admin/DataRequests'));
 
 
 // Navigation translate helper
@@ -148,6 +150,8 @@ export function getRoutePath(page: string, param: any = null): string {
     case 'admin-pro': return '/admin/pro';
     case 'admin-moderation': return '/admin/moderation';
     case 'admin-settings': return '/admin/settings';
+    case 'admin-data-requests': return '/admin/data-requests';
+    case 'saved-castings': return '/saved-castings';
     
     default: return '/';
   }
@@ -232,6 +236,19 @@ const SettingsRoute = () => {
         <title>Settings | NC Network</title>
       </Helmet>
       <Settings onNavigate={handleLegacyNavigate} user={user} initialTab={tab} showToast={showToast} isAdmin={isAdmin} />
+    </PageTransition>
+  );
+};
+
+const SavedCastingCallsRoute = () => {
+  const { user, showToast } = useOutletContext<any>();
+  const { handleLegacyNavigate } = useLegacyNavigate();
+  return (
+    <PageTransition>
+      <Helmet>
+        <title>Saved Casting Calls | NC Network</title>
+      </Helmet>
+      <SavedCastingCalls onNavigate={handleLegacyNavigate} user={user} showToast={showToast} />
     </PageTransition>
   );
 };
@@ -514,7 +531,7 @@ export default function App() {
     let localVersion = 'dev';
     try {
       localVersion = __BUILD_VERSION__;
-    } catch (e) {
+    } catch {
       logger.warn("Build version not defined in environment");
     }
 
@@ -727,6 +744,57 @@ export default function App() {
     
     return () => unsub();
   }, [user?.uid, navigate, showAlert]);
+
+  // Listen for ID token changes (e.g. revocation, user deletion) to force logout
+  useEffect(() => {
+    const unsubscribe = onIdTokenChanged(auth, async (currentUser) => {
+      if (!currentUser) return;
+      try {
+        // Force token refresh. Fails if user was deleted or token was revoked.
+        await getIdTokenResult(currentUser, true);
+      } catch (error: any) {
+        if (
+          error.code === 'auth/user-token-expired' ||
+          error.code === 'auth/user-not-found' ||
+          error.code === 'auth/user-disabled'
+        ) {
+          showAlert(
+            "Account Revoked",
+            "logout",
+            "Your account has been deleted or disabled by an administrator."
+          );
+          localStorage.clear();
+          await auth.signOut();
+          navigate('/signin');
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate, showAlert]);
+
+  // Periodic token validity check (runs every 60 seconds)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        try {
+          await getIdTokenResult(currentUser, true);
+        } catch {
+          showAlert(
+            "Session Expired",
+            "logout",
+            "Your session is no longer valid."
+          );
+          localStorage.clear();
+          await auth.signOut();
+          navigate('/signin');
+        }
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [navigate, showAlert]);
 
   // User presence system
   useEffect(() => {
@@ -1017,6 +1085,7 @@ export default function App() {
                       <Route path="/messages/:id" element={<MessagesRoute />} />
                       <Route path="/notifications" element={<NotificationsRoute />} />
                       <Route path="/settings" element={<SettingsRoute />} />
+                      <Route path="/saved-castings" element={<SavedCastingCallsRoute />} />
                     </Route>
                   </Route>
 
@@ -1024,7 +1093,7 @@ export default function App() {
                   <Route element={
                     <AdminRoute user={user} isAdmin={isAdmin} authReady={authReady} />
                   }>
-                    <Route element={<AdminLayout />}>
+                    <Route element={<AdminLayout showToast={showToast} />}>
                       <Route path="/admin" element={<AdminOverview />} />
                       <Route path="/admin/users" element={<AdminUsers />} />
                       <Route path="/admin/analytics" element={<AdminAnalytics />} />
@@ -1034,6 +1103,7 @@ export default function App() {
                       <Route path="/admin/pro" element={<AdminPro />} />
                       <Route path="/admin/moderation" element={<AdminModeration />} />
                       <Route path="/admin/settings" element={<AdminSettings />} />
+                      <Route path="/admin/data-requests" element={<AdminDataRequests />} />
                     </Route>
                   </Route>
 
