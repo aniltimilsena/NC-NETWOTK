@@ -57,10 +57,15 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Security Headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+
   try {
     initFirebaseAdmin();
   } catch (e) {
-    return res.status(500).json({ error: 'Firebase init failed: ' + e.message });
+    return res.status(500).json({ error: 'Initialization error' });
   }
 
   try {
@@ -69,12 +74,13 @@ export default async function handler(req, res) {
     return res.status(authErr.status || 401).json({ error: authErr.message });
   }
 
+  // Validate and sanitize requestId query parameter
   const requestId = req.query?.requestId;
-  if (!requestId) {
-    return res.status(400).json({ error: 'Missing requestId' });
+  if (!requestId || typeof requestId !== 'string' || requestId.trim().length === 0 || requestId.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(requestId)) {
+    return res.status(400).json({ error: 'Invalid requestId parameter' });
   }
 
-  // Read body
+  // Read body securely
   const body = await new Promise((resolve) => {
     let data = '';
     req.on('data', (chunk) => { data += chunk; });
@@ -82,9 +88,10 @@ export default async function handler(req, res) {
     req.on('error', () => resolve({}));
   });
 
+  // Strict validation on rejection reason
   const reason = body?.reason;
-  if (!reason || typeof reason !== 'string' || reason.trim().length < 5) {
-    return res.status(400).json({ error: 'Rejection reason is required (min 5 chars)' });
+  if (!reason || typeof reason !== 'string' || reason.trim().length < 5 || reason.length > 500) {
+    return res.status(400).json({ error: 'Rejection reason is required (min 5, max 500 chars)' });
   }
 
   try {
@@ -105,8 +112,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true });
 
   } catch (error) {
-    console.error('[data-requests-reject] Error:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: 'Failed to reject data request' });
   }
 }
 

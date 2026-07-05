@@ -80,10 +80,15 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Security Headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+
   try {
     initFirebaseAdmin();
   } catch (e) {
-    return res.status(500).json({ error: 'Firebase init failed: ' + e.message });
+    return res.status(500).json({ error: 'Initialization error' });
   }
 
   let adminUser;
@@ -100,11 +105,27 @@ export default async function handler(req, res) {
 
   const { userId, action } = req.query;
 
+  // Validate action query parameter
+  if (!action || typeof action !== 'string' || !['delete', 'ban', 'unban', 'log'].includes(action)) {
+    return res.status(400).json({ error: 'Invalid action parameter' });
+  }
+
   // ── POST /api/admin/log ──────────────────────────────────────────────────
   if (action === 'log') {
     const body = await readBody(req);
     const { action: logAction, targetId, details } = body;
-    if (!logAction) return res.status(400).json({ error: 'action body field is required' });
+    
+    // Strict input validation
+    if (!logAction || typeof logAction !== 'string' || logAction.trim().length === 0 || logAction.length > 200) {
+      return res.status(400).json({ error: 'Invalid logAction' });
+    }
+    if (targetId && (typeof targetId !== 'string' || targetId.length > 200)) {
+      return res.status(400).json({ error: 'Invalid targetId' });
+    }
+    if (details && (typeof details !== 'object' || Array.isArray(details))) {
+      return res.status(400).json({ error: 'Invalid details' });
+    }
+
     try {
       await db.collection('admin_logs').add({
         adminEmail,
@@ -115,13 +136,13 @@ export default async function handler(req, res) {
       });
       return res.status(200).json({ success: true });
     } catch (e) {
-      return res.status(500).json({ error: e.message });
+      return res.status(500).json({ error: 'Failed to record log' });
     }
   }
 
-  if (!userId) return res.status(400).json({ error: 'userId is required' });
-  if (!['delete', 'ban', 'unban'].includes(action)) {
-    return res.status(400).json({ error: `Unknown action: ${action}` });
+  // Validate userId query parameter (prevent NoSQL injection/malformed queries)
+  if (!userId || typeof userId !== 'string' || userId.trim().length === 0 || userId.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(userId)) {
+    return res.status(400).json({ error: 'Invalid userId parameter' });
   }
 
   // ── DELETE ───────────────────────────────────────────────────────────────
@@ -178,8 +199,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ success: true });
     } catch (err) {
-      console.error('[admin-users] delete error:', err);
-      return res.status(500).json({ error: err.message || 'Failed to delete user' });
+      return res.status(500).json({ error: 'Failed to delete user account' });
     }
   }
 
@@ -187,6 +207,15 @@ export default async function handler(req, res) {
   if (action === 'ban') {
     const body = await readBody(req);
     const { reason, duration } = body;
+
+    // Strict input validation
+    if (reason && (typeof reason !== 'string' || reason.length > 500)) {
+      return res.status(400).json({ error: 'Reason must be a string up to 500 characters' });
+    }
+    if (duration && (typeof duration !== 'string' || !['1d', '7d', '30d', 'permanent'].includes(duration))) {
+      return res.status(400).json({ error: 'Invalid ban duration' });
+    }
+
     try {
       try { await auth.revokeRefreshTokens(userId); } catch {}
       try { await auth.updateUser(userId, { disabled: true }); } catch {}
@@ -227,8 +256,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ success: true });
     } catch (err) {
-      console.error('[admin-users] ban error:', err);
-      return res.status(500).json({ error: err.message || 'Failed to ban user' });
+      return res.status(500).json({ error: 'Failed to ban user account' });
     }
   }
 
@@ -260,8 +288,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ success: true });
     } catch (err) {
-      console.error('[admin-users] unban error:', err);
-      return res.status(500).json({ error: err.message || 'Failed to unban user' });
+      return res.status(500).json({ error: 'Failed to unban user account' });
     }
   }
 }

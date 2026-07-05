@@ -58,10 +58,15 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Security Headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+
   try {
     initFirebaseAdmin();
   } catch (e) {
-    return res.status(500).json({ error: 'Firebase init failed: ' + e.message });
+    return res.status(500).json({ error: 'Initialization error' });
   }
 
   try {
@@ -70,9 +75,10 @@ export default async function handler(req, res) {
     return res.status(authErr.status || 401).json({ error: authErr.message });
   }
 
+  // Validate and sanitize requestId query parameter
   const requestId = req.query?.requestId;
-  if (!requestId) {
-    return res.status(400).json({ error: 'Missing requestId' });
+  if (!requestId || typeof requestId !== 'string' || requestId.trim().length === 0 || requestId.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(requestId)) {
+    return res.status(400).json({ error: 'Invalid requestId parameter' });
   }
 
   try {
@@ -95,9 +101,14 @@ export default async function handler(req, res) {
     const userId = requestData.userId || requestData.uid;
     const userEmail = requestData.userEmail || requestData.email;
 
+    // Sanitize values to prevent issues in document creation
+    if (!userId || typeof userId !== 'string' || userId.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(userId)) {
+      return res.status(400).json({ error: 'Invalid target user ID in request' });
+    }
+
     await db.collection('one_time_tokens').doc(token).set({
       uid: userId,
-      email: userEmail,
+      email: userEmail || '',
       requestId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       expiresAt,
@@ -117,8 +128,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, downloadLink, expiresAt });
 
   } catch (error) {
-    console.error('[data-requests-approve] Error:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: 'Failed to approve data request' });
   }
 }
 
