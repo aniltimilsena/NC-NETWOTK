@@ -1,21 +1,22 @@
 // api/debug.js
-// Safe diagnostic endpoint to check firebase-admin structure using createRequire.
-
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+// Diagnostic endpoint to check ES module subpath imports.
 
 export default async function handler(req, res) {
   const diagnostics = {
     status: 'ok',
-    adminKeys: [],
-    appsLength: null,
+    importsSucceeded: false,
     error: null,
   };
 
   try {
-    const admin = require('firebase-admin');
-    diagnostics.adminKeys = Object.keys(admin);
-    diagnostics.appsLength = admin.apps ? admin.apps.length : 'no-apps-field';
+    const { initializeApp, getApps } = await import('firebase-admin/app');
+    const { getAuth } = await import('firebase-admin/auth');
+    const { getFirestore } = await import('firebase-admin/firestore');
+    
+    diagnostics.importsSucceeded = true;
+    diagnostics.getAppsType = typeof getApps;
+    diagnostics.getAuthType = typeof getAuth;
+    diagnostics.getFirestoreType = typeof getFirestore;
   } catch (err) {
     diagnostics.error = {
       message: err.message,
