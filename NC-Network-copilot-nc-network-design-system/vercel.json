@@ -17,6 +17,22 @@
       "destination": "/api/data-requests-reject"
     },
     {
+      "source": "/api/admin/users/:userId/delete",
+      "destination": "/api/admin-users"
+    },
+    {
+      "source": "/api/admin/users/:userId/ban",
+      "destination": "/api/admin-users"
+    },
+    {
+      "source": "/api/admin/users/:userId/unban",
+      "destination": "/api/admin-users"
+    },
+    {
+      "source": "/api/admin/log",
+      "destination": "/api/admin-users"
+    },
+    {
       "source": "/api/:match*",
       "destination": "/api/proxy"
     },
