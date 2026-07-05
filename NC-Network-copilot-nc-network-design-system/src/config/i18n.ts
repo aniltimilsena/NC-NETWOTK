@@ -24,7 +24,7 @@ const applyFontClass = (lng: string) => {
   }
 };
 
-// Apply font on startup
+
 applyFontClass(savedLang);
 
 i18n
@@ -38,7 +38,7 @@ i18n
     lng: savedLang,
     fallbackLng: 'en',
     interpolation: {
-      escapeValue: false // React already escapes values
+      escapeValue: false 
     }
   });
 

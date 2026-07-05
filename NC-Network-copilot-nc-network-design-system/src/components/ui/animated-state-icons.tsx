@@ -5,14 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
 interface StateIconProps {
-  active?: boolean; // Controlled state
+  active?: boolean; 
   size?: number;
   color?: string;
   className?: string;
   duration?: number;
 }
 
-// Internal helper for loop if 'active' is undefined
+
 function useAutoToggle(interval: number, controlledValue?: boolean) {
   const [internalOn, setInternalOn] = useState(false);
   useEffect(() => {

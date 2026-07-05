@@ -48,7 +48,7 @@ export default function AdminCasting() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Open' | 'Closed' | 'Approved' | 'Rejected'>('All');
   
-  // Modal State
+  
   const [selectedCall, setSelectedCall] = useState<CastingCall | null>(null);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [loadingApplicants, setLoadingApplicants] = useState(false);
@@ -79,7 +79,7 @@ export default function AdminCasting() {
     return () => unsub();
   }, []);
 
-  // Fetch applicants when a casting call is inspected
+  
   useEffect(() => {
     if (!selectedCall) {
       setApplicants([]);

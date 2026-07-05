@@ -85,7 +85,7 @@ export async function logLoginAttempt(email: string, status: 'success' | 'failed
     const { os, browser } = getSessionInfo();
     const location = await fetchLocation();
     
-    // Check if this is a suspicious location
+    
     let suspicious = false;
     if (status === 'success' && location !== 'Unknown Location') {
       const historyRef = collection(db, COLLECTIONS.PROFILES, uid, 'login_history');

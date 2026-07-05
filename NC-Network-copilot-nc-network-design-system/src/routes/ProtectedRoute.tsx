@@ -11,11 +11,11 @@ export default function ProtectedRoute({ user, authReady, children }: ProtectedR
   const location = useLocation();
 
   if (!authReady) {
-    return null; // Wait until Firebase Auth initializes
+    return null; 
   }
 
   if (!user) {
-    // Redirect to sign in, saving the current location in router state
+    
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 

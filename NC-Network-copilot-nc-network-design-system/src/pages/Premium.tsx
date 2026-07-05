@@ -20,7 +20,7 @@ export default function Premium() {
       },
     },
     {
-      id: "growth", // Use 'growth' to trigger the "Everything in Starter" logic in the component
+      id: "growth", 
       name: "PRO Member",
       description: "For serious professionals",
       monthlyPrice: "Rs 499",

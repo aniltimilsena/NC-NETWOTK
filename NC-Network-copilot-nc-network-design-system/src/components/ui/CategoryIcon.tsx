@@ -1,8 +1,4 @@
-/**
- * NC Network — Reusable CategoryIcon component
- * Always renders the correct icon + color for any category.
- * Usage: <CategoryIcon categoryId="Actors" size={32} />
- */
+
 
 import React from 'react';
 import { getCategoryConfig } from '../../constants/categories';

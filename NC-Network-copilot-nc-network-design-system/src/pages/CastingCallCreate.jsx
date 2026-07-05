@@ -78,7 +78,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
         }
       }
 
-      // Convert requirements object to readable array
+      
       const requirementList = [];
       if (form.requirements.headshot) requirementList.push('Professional Headshots Required');
       if (form.requirements.wardrobe) requirementList.push('Own Wardrobe Required');

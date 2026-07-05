@@ -47,7 +47,7 @@ export default function CropModal({ imageSrc, isCircular, onConfirm, onClose }) 
     const container = containerRef.current;
     if (!img || !container) return;
 
-    // Output target dimensions
+    
     const outputSize = isCircular ? 400 : 1200;
     const aspect = isCircular ? 1 : 16 / 9; // Cover aspect ratio
     const viewWidth = outputSize;
@@ -59,20 +59,20 @@ export default function CropModal({ imageSrc, isCircular, onConfirm, onClose }) 
 
     if (!ctx) return;
 
-    // Fill with black fallback background
+    
     ctx.fillStyle = '#0a0a0a';
     ctx.fillRect(0, 0, viewWidth, viewHeight);
 
-    // Natural Dimensions of image
+    
     const imgWidth = img.naturalWidth;
     const imgHeight = img.naturalHeight;
 
-    // Viewport dimensions in crop container
+    
     const containerRect = container.getBoundingClientRect();
     const cropWidth = isCircular ? 200 : containerRect.width * 0.9;
     const cropHeight = isCircular ? 200 : cropWidth / aspect;
 
-    // Aspect calculations
+    
     const containerAspect = cropWidth / cropHeight;
     const imgAspect = imgWidth / imgHeight;
     let renderWidth, renderHeight;
@@ -88,10 +88,10 @@ export default function CropModal({ imageSrc, isCircular, onConfirm, onClose }) 
     const zoomWidth = renderWidth * scale;
     const zoomHeight = renderHeight * scale;
 
-    // Normalized coordinates mapped to output canvas space
+    
     const scaleFactor = viewWidth / cropWidth;
 
-    // Calculate rendering offsets relative to center
+    
     const xOffset = ((cropWidth - zoomWidth) / 2 + position.x) * scaleFactor;
     const yOffset = ((cropHeight - zoomHeight) / 2 + position.y) * scaleFactor;
 

@@ -88,7 +88,7 @@ export const createCastingCall = async (callData: any) => {
     const message = error instanceof Error ? error.message : "Failed to create casting call";
     console.warn("Backend createCastingCall failed, attempting client-side fallback write:", message);
     
-    // Client-side fallback direct write to Firestore
+    
     try {
       const currentUserUid = auth.currentUser?.uid;
       if (!currentUserUid) {

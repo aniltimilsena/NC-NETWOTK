@@ -18,9 +18,7 @@ type ProfileResponse = {
   error: string | null;
 };
 
-/**
- * Fetch a profile once from Firestore (direct read, no backend needed).
- */
+
 export const getProfile = async (uid: string): Promise<ProfileResponse> => {
   try {
     const snap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, uid));
@@ -46,20 +44,20 @@ export const updateProfileData = async (
       return { success: false, error: "Unauthorized profile update" };
     }
 
-    // Remove undefined values to prevent Firebase synchronous throw errors
+    
     const cleanData = Object.entries(data).reduce((acc, [k, v]) => {
       if (v !== undefined) acc[k] = v;
       return acc;
     }, {} as ProfileData);
 
-    // 1. Write directly to profiles/{uid} document
+    
     const profileRef = doc(db, COLLECTIONS.PROFILES, uid);
     await setDoc(profileRef, {
       ...cleanData,
       updatedAt: serverTimestamp()
     }, { merge: true });
 
-    // 2. Sync shared fields to users/{uid} document
+    
     const userUpdate: Record<string, any> = {};
     if (cleanData.name !== undefined) userUpdate.name = cleanData.name;
     if (cleanData.role !== undefined) userUpdate.role = cleanData.role;
@@ -90,10 +88,7 @@ export const updateProfileData = async (
   }
 };
 
-/**
- * Real-time listener — calls `callback` whenever the profile document changes.
- * Returns an unsubscribe function.
- */
+
 export const subscribeToProfile = (
   uid: string,
   callback: (data: ProfileData | null) => void,

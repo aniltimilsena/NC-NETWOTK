@@ -33,7 +33,7 @@ export default function AdminPro() {
   const [searchTerm, setSearchTerm] = useState('');
   const [tierFilter, setTierFilter] = useState<'All' | 'PRO' | 'Free'>('All');
   
-  // Modal State
+  
   const [selectedSub, setSelectedSub] = useState<AdminSubscriber | null>(null);
 
   const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
@@ -73,7 +73,7 @@ export default function AdminPro() {
     free: users.filter(u => !u.premium).length
   };
 
-  const mrr = counts.pro * 9; // $9 MRR per PRO user
+  const mrr = counts.pro * 9; 
   const conversionRate = counts.total > 0 ? ((counts.pro / counts.total) * 100).toFixed(1) : '0.0';
 
   const revenueStats = [
@@ -107,7 +107,7 @@ export default function AdminPro() {
     }
   };
 
-  // Filter Subscribers
+  
   const filteredUsers = users.filter(u => {
     const matchesSearch = 
       (u.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) || 

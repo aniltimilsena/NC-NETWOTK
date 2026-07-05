@@ -13,24 +13,24 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Scroll visibility states
+  
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Lightbox overlay detection
+  
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
-  // Active call check
+  
   let activeCall = null;
   try {
     const callCtx = useCall();
     activeCall = callCtx?.activeCall;
   } catch {
-    // Graceful fallback if context is not available
+    
   }
   const isCallActive = !!activeCall;
 
-  // Unread messages subscription
+  
   useEffect(() => {
     if (!user?.uid) {
       setUnreadCount(0);
@@ -43,14 +43,14 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
     return () => unsub();
   }, [user?.uid]);
 
-  // Scroll detection to auto-hide bottom bar
+  
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       if (currentScrollY > lastScrollY && currentScrollY > 60) {
-        setIsVisible(false); // scrolling down
+        setIsVisible(false); 
       } else {
-        setIsVisible(true); // scrolling up
+        setIsVisible(true); 
       }
       setLastScrollY(currentScrollY);
     };
@@ -59,7 +59,7 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // MutationObserver to watch if fullscreen lightbox or overlay with bg-black/95 is rendered
+  
   useEffect(() => {
     const checkLightbox = () => {
       const hasLightbox = 
@@ -78,7 +78,7 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
     return () => observer.disconnect();
   }, []);
 
-  // Haptic feedback function
+  
   const haptic = () => {
     if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(10);
@@ -97,15 +97,15 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
 
   const activeTab = getActiveTab();
 
-  // Hide constraints
+  
   const isChatConversation = location.pathname.startsWith('/messages/') && location.pathname.split('/').filter(Boolean).length > 1;
   const shouldHideNav = isCallActive || isChatConversation || isLightboxOpen || !isVisible;
 
-  // Nav tabs layout mapping to website paths
+  
   const tabs = [
     { id: 'home', label: 'HOME', path: '/', isHome: true },
     { id: 'discover', label: 'DISCOVER', path: '/talents', icon: Camera },
-    { id: 'casting', label: 'CASTING', path: '/casting', icon: Camera }, // Will use Camera icon or custom SVG later
+    { id: 'casting', label: 'CASTING', path: '/casting', icon: Camera }, 
     { id: 'profile', label: 'ABOUT', path: user?.uid ? `/profile/${user.uid}` : '/signin', icon: User },
     { id: 'messages', label: 'MESSAGES', path: '/messages', icon: Mail, hasBadge: true },
   ];

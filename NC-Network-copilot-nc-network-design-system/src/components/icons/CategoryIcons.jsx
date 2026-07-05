@@ -1,11 +1,4 @@
-/**
- * NC Network — Custom Category Icons
- * Premium monochrome SVG icons for the talent marketplace.
- * Designed with consistent thin-to-medium line weight, neon blue accent, 
- * and modern entertainment-industry aesthetics.
- *
- * Each icon accepts standard SVG props (size, className, strokeWidth, etc.)
- */
+
 
 const defaultProps = {
   xmlns: 'http://www.w3.org/2000/svg',
@@ -14,7 +7,7 @@ const defaultProps = {
   strokeLinejoin: 'round',
 };
 
-// ─── 1. Actors → Spotlight ──────────────────────────────────────────────────
+
 export const SpotlightIcon = ({ size = 24, className, ...rest }) => (
   <svg {...defaultProps} viewBox="0 0 24 24" width={size} height={size} className={className} {...rest}>
     <line x1="12" y1="1.5" x2="12" y2="3.8" stroke="currentColor" strokeWidth="1.6" />
@@ -25,7 +18,7 @@ export const SpotlightIcon = ({ size = 24, className, ...rest }) => (
   </svg>
 );
 
-// ─── 2. Directors → Film Reel ───────────────────────────────────────────────
+
 export const FilmReelIcon = ({ size = 24, className, ...rest }) => (
   <svg {...defaultProps} viewBox="0 0 24 24" width={size} height={size} className={className} {...rest}>
     <circle cx="12" cy="12" r="9.2" stroke="currentColor" strokeWidth="1.5" />
@@ -41,7 +34,7 @@ export const FilmReelIcon = ({ size = 24, className, ...rest }) => (
   </svg>
 );
 
-// ─── 3. Models → Aperture ───────────────────────────────────────────────────
+
 export const ApertureIcon = ({ size = 24, className, ...rest }) => (
   <svg {...defaultProps} viewBox="0 0 24 24" width={size} height={size} className={className} {...rest}>
     <circle cx="12" cy="12" r="9.2" stroke="currentColor" strokeWidth="1.5" />
@@ -55,7 +48,7 @@ export const ApertureIcon = ({ size = 24, className, ...rest }) => (
   </svg>
 );
 
-// ─── 4. Dancers → Dynamic Motion ────────────────────────────────────────────
+
 export const DynamicMotionIcon = ({ size = 24, className, ...rest }) => (
   <svg {...defaultProps} viewBox="0 0 24 24" width={size} height={size} className={className} {...rest}>
     <circle cx="12" cy="4" r="2" stroke="currentColor" strokeWidth="1.5" />
@@ -70,7 +63,7 @@ export const DynamicMotionIcon = ({ size = 24, className, ...rest }) => (
   </svg>
 );
 
-// ─── 5. Musicians → Audio Equalizer ─────────────────────────────────────────
+
 export const EqualizerIcon = ({ size = 24, className, ...rest }) => (
   <svg {...defaultProps} viewBox="0 0 24 24" width={size} height={size} className={className} {...rest}>
     <rect x="2.5" y="11" width="2.4" height="7.5" rx="1.2" stroke="currentColor" strokeWidth="1.25" />
@@ -82,7 +75,7 @@ export const EqualizerIcon = ({ size = 24, className, ...rest }) => (
   </svg>
 );
 
-// ─── 6. Voice Over → Headphones ─────────────────────────────────────────────
+
 export const HeadphonesIcon = ({ size = 24, className, ...rest }) => (
   <svg {...defaultProps} viewBox="0 0 24 24" width={size} height={size} className={className} {...rest}>
     <path d="M4.5 13.5C4.5 8.8 7.86 5 12 5s7.5 3.8 7.5 8.5" stroke="currentColor" strokeWidth="1.5" />
@@ -93,7 +86,7 @@ export const HeadphonesIcon = ({ size = 24, className, ...rest }) => (
   </svg>
 );
 
-// ─── 7. VFX → Stacked Layers ────────────────────────────────────────────────
+
 export const StackedLayersIcon = ({ size = 24, className, ...rest }) => (
   <svg {...defaultProps} viewBox="0 0 24 24" width={size} height={size} className={className} {...rest}>
     <path d="M2 16.5l10 4.5 10-4.5" stroke="currentColor" strokeWidth="1.5" opacity="0.35" />
@@ -103,7 +96,7 @@ export const StackedLayersIcon = ({ size = 24, className, ...rest }) => (
   </svg>
 );
 
-// ─── 8. Writers → Open Book ─────────────────────────────────────────────────
+
 export const OpenBookIcon = ({ size = 24, className, ...rest }) => (
   <svg {...defaultProps} viewBox="0 0 24 24" width={size} height={size} className={className} {...rest}>
     <path d="M12 6v15" stroke="currentColor" strokeWidth="1.5" />

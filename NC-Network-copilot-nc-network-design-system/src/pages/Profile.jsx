@@ -42,18 +42,18 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   
-  // Follow list & reviews state
+  
   const [followList, setFollowList] = useState([]);
   const [loadingFollowList, setLoadingFollowList] = useState(false);
   const [reviewsList, setReviewsList] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
   
-  // Review inputs
+  
   const [ratingInput, setRatingInput] = useState(5);
   const [reviewText, setReviewText] = useState('');
   const [workedAsInput, setWorkedAsInput] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-  const [sortBy, setSortBy] = useState('recent'); // 'recent', 'highest', 'helpful'
+  const [sortBy, setSortBy] = useState('recent'); 
   const [analytics, setAnalytics] = useState(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
@@ -72,7 +72,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
   const [isUploadingIntro, setIsUploadingIntro] = useState(false);
   const [introProgress, setIntroProgress] = useState(0);
 
-  // Upload feedback & retry states
+  
   const [introUploadError, setIntroUploadError] = useState(null);
   const [introLastFile, setIntroLastFile] = useState(null);
   const [showIntroSuccess, setShowIntroSuccess] = useState(false);
@@ -81,7 +81,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
   const [resolvingUid, setResolvingUid] = useState(true);
   const [showShareSheet, setShowShareSheet] = useState(false);
 
-  // Cover and Media Upload Queue States/Refs
+  
   const coverFileInputRef = useRef(null);
   const activeUploadsRef = useRef({});
   const [cropCoverSrc, setCropCoverSrc] = useState(null);
@@ -138,7 +138,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
     return () => unsubscribe();
   }, [isOwnProfile, user?.uid]);
 
-  // Subscribe to profile
+  
   useEffect(() => {
     if (!targetUid) {
       setLoading(false);
@@ -153,7 +153,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
     return () => unsubscribe();
   }, [targetUid]);
 
-  // Subscribe to real follows status
+  
   useEffect(() => {
     if (!user || !targetUid || targetUid === user.uid) {
       setIsFollowing(false);
@@ -166,7 +166,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
     return () => unsub();
   }, [user?.uid, targetUid]);
 
-  // Subscribe to real-time follower count
+  
   useEffect(() => {
     if (!targetUid) return;
     const q = query(collection(db, "follows"), where("followingId", "==", targetUid));
@@ -178,7 +178,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
     return () => unsub();
   }, [targetUid]);
 
-  // Subscribe to real-time following count
+  
   useEffect(() => {
     if (!targetUid) return;
     const q = query(collection(db, "follows"), where("followerId", "==", targetUid));
@@ -190,7 +190,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
     return () => unsub();
   }, [targetUid]);
 
-  // Subscribe to real reviews feed
+  
   useEffect(() => {
     if (!targetUid) {
       setLoadingReviews(false);
@@ -220,7 +220,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
     return () => unsub();
   }, [targetUid]);
 
-  // Check if current user has worked with the talent
+  
   const [hasWorkedTogether, setHasWorkedTogether] = useState(false);
 
   useEffect(() => {
@@ -231,7 +231,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
 
     const checkWorked = async () => {
       try {
-        // Query direction 1: current user applied, profile owner created
+        
         const q1 = query(
           collection(db, "applications"),
           where("userId", "==", user.uid),
@@ -244,7 +244,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
           return;
         }
 
-        // Query direction 2: profile owner applied, current user created
+        
         const q2 = query(
           collection(db, "applications"),
           where("userId", "==", targetUid),
@@ -276,7 +276,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
         if (snap.exists()) {
           setAnalytics(snap.data());
         } else {
-          // Initialize with default high-fidelity data
+          
           const defaultAnalytics = {
             profileViewsThisWeek: 124,
             profileViewsLastWeek: 101,
@@ -311,7 +311,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
     }
   }, [activeTab, targetUid, isOwnProfile]);
 
-  // Load followers/following/projects list
+  
   useEffect(() => {
     if (!showFollowModal || !targetUid) {
       setFollowList([]);
@@ -385,9 +385,9 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
     const followDocRef = doc(db, "follows", followId);
     try {
       if (isFollowing) {
-        // Unfollow
+        
         await deleteDoc(followDocRef);
-        // Decrement counters
+        
         await updateDoc(doc(db, "profiles", profileId), { followers: increment(-1) });
         await updateDoc(doc(db, "profiles", user.uid), { following: increment(-1) });
         try {
@@ -397,14 +397,14 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
           console.warn("Could not sync follows stats to user doc:", e);
         }
       } else {
-        // Follow
+        
         await setDoc(followDocRef, {
           followerId: user.uid,
           followingId: profileId,
           createdAt: serverTimestamp()
         });
 
-        // Send notification (deterministic ID to prevent duplicates)
+        
         try {
           let senderName = user.displayName || 'Someone';
           let senderAvatar = user.photoURL || '';
@@ -440,7 +440,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
           console.warn("Could not send follow notification:", nErr);
         }
 
-        // Increment counters
+        
         await updateDoc(doc(db, "profiles", profileId), { followers: increment(1) });
         await updateDoc(doc(db, "profiles", user.uid), { following: increment(1) });
         try {
@@ -506,7 +506,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
         createdAt: serverTimestamp()
       });
       
-      // Recalculate average rating & reviews count
+      
       const q = query(collection(db, "reviews"), where("targetUid", "==", targetUid));
       const snap = await getDocs(q);
       const totalReviews = snap.size;
@@ -557,13 +557,13 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
 
     try {
       if (hasLiked) {
-        // Unlike
+        
         await updateDoc(reviewRef, {
           helpfulCount: increment(-1),
           helpfulUsers: helpfulUsers.filter(uid => uid !== user.uid)
         });
       } else {
-        // Like
+        
         await updateDoc(reviewRef, {
           helpfulCount: increment(1),
           helpfulUsers: [...helpfulUsers, user.uid]
@@ -574,7 +574,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
     }
   };
   
-  // Facebook-style Empty Placeholder Component
+  
   const EmptyState = ({ title, description, icon: Icon, actionLabel, onAction }) => (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-nc-card/30 border border-dashed border-white/10 rounded-[2rem] backdrop-blur-sm animate-fade-in group hover:border-nc-accent/30 transition-all duration-500">
       <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-nc-accent/10 transition-all duration-500">
@@ -935,10 +935,10 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
     });
   };
 
-  // isOwnProfile defined at top of component
+  
 
   const p = {
-    // Prioritize saved Firestore profile data over Firebase Auth data
+    
     name: profile?.name 
       || [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') 
       || profile?.username 
@@ -981,7 +981,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
     tabs.push('analytics');
   }
 
-  // Progressive profile completion calculation
+  
   const completionItems = [
     {
       id: 'photo',
@@ -2041,7 +2041,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
                   const totalRating = reviewsList.reduce((acc, r) => acc + (r.rating || 0), 0);
                   const avgRating = (totalRating / reviewsList.length).toFixed(1);
                   
-                  // Calculate breakdown counts
+                  
                   const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
                   reviewsList.forEach(r => {
                     const rounded = Math.round(r.rating || 5);
@@ -2050,7 +2050,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
                     }
                   });
 
-                  // Helper to render gold filled / empty stars
+                  
                   const renderOverviewStars = (val) => {
                     const stars = [];
                     const roundedRating = Math.round(val);
@@ -2081,7 +2081,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
                           const count = counts[stars];
                           const percentage = reviewsList.length > 0 ? (count / reviewsList.length) * 100 : 0;
                           
-                          // Character representation matching: 5★ ████████░░ 8
+                          
                           const blockCount = Math.round(percentage / 10);
                           const blocks = "█".repeat(blockCount) + "░".repeat(10 - blockCount);
 
@@ -2137,7 +2137,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
                     if (sortBy === 'helpful') {
                       return (b.helpfulCount || 0) - (a.helpfulCount || 0);
                     }
-                    // 'recent'
+                    
                     const dateA = a.createdAt?.seconds ? a.createdAt.seconds : 0;
                     const dateB = b.createdAt?.seconds ? b.createdAt.seconds : 0;
                     return dateB - dateA;
@@ -2305,14 +2305,14 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
                       const chartHeight = 160;
                       const padding = { top: 20, bottom: 20, left: 30, right: 15 };
                       
-                      // Map values to coordinates
+                      
                       const points = data.map((val, idx) => {
                         const x = padding.left + (idx * (chartWidth - padding.left - padding.right) / 6);
                         const y = chartHeight - padding.bottom - (val * (chartHeight - padding.top - padding.bottom) / maxVal);
                         return { x, y, val };
                       });
 
-                      // Construct svg line path
+                      
                       let pathD = "";
                       points.forEach((pt, idx) => {
                         if (idx === 0) {
@@ -2322,7 +2322,7 @@ export default function Profile({ onNavigate, user, profileId, isAdmin, showAler
                         }
                       });
 
-                      // Construct area path for gradient
+                      
                       const firstPt = points[0];
                       const lastPt = points[points.length - 1];
                       const areaD = `${pathD} L ${lastPt.x} ${chartHeight - padding.bottom} L ${firstPt.x} ${chartHeight - padding.bottom} Z`;

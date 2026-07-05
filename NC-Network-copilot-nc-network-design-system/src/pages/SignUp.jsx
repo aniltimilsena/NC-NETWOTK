@@ -21,8 +21,8 @@ export default function SignUp({ onNavigate, showAlert }) {
     gender: 'Male' 
   });
   
-  // Outer role selection: 'talent' | 'casting' | 'fan'
-  const [roleGroup, setRoleGroup] = useState('talent'); // default to talent
+  
+  const [roleGroup, setRoleGroup] = useState('talent'); 
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -30,7 +30,7 @@ export default function SignUp({ onNavigate, showAlert }) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Field validation states
+  
   const [validation, setValidation] = useState({
     name: { valid: null, msg: '' },
     email: { valid: null, msg: '' },
@@ -38,7 +38,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     confirmPassword: { valid: null, msg: '' }
   });
 
-  // Real-time validations
+  
   const handleNameChange = (val) => {
     setForm(prev => ({ ...prev, name: val }));
     if (!val) {
@@ -78,7 +78,7 @@ export default function SignUp({ onNavigate, showAlert }) {
       setValidation(prev => ({ ...prev, password: { valid: true, msg: '' } }));
     }
 
-    // Trigger confirmation validation if confirmPassword has values
+    
     if (form.confirmPassword) {
       if (val !== form.confirmPassword) {
         setValidation(prev => ({ ...prev, confirmPassword: { valid: false, msg: 'Passwords do not match.' } }));
@@ -101,7 +101,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     }
   };
 
-  // Google redirect handler
+  
   useEffect(() => {
     if (!sessionStorage.getItem('nc_google_redirect')) return;
     let isMounted = true;
@@ -163,7 +163,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     setIsLoading(true);
     setError('');
 
-    // Determine target role string based on selected group
+    
     let finalRole = form.role;
     if (roleGroup === 'casting') finalRole = 'Casting Director';
     else if (roleGroup === 'fan') finalRole = 'Fan';
@@ -232,7 +232,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     }
   };
 
-  // Helper validation class resolver
+  
   const getInputStyles = (field) => {
     const status = validation[field]?.valid;
     const common = "w-full bg-[#1a1a1a] text-white placeholder-gray-500 rounded-xl pl-10 pr-10 py-3 text-xs outline-none border transition-all duration-300 ";
@@ -488,7 +488,7 @@ export default function SignUp({ onNavigate, showAlert }) {
                   type="button"
                   onClick={() => {
                     setRoleGroup('talent');
-                    setForm(prev => ({ ...prev, role: 'Actor' })); // Reset to default sub-category
+                    setForm(prev => ({ ...prev, role: 'Actor' })); 
                   }}
                   className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
                     roleGroup === 'talent'

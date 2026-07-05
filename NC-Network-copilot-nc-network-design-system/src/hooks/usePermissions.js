@@ -52,7 +52,7 @@ export const usePermissions = () => {
     if (isMedia) {
       const hasHandled = localStorage.getItem('nc_perm_media');
       
-      // If blocked in localStorage, show blocked modal directly
+      
       if (hasHandled === 'denied') {
         setPermissionType('media-blocked');
         setPendingAction(() => action);
@@ -60,13 +60,13 @@ export const usePermissions = () => {
         return;
       }
       
-      // If granted or skipped, run synchronously to preserve user gesture context
+      
       if (hasHandled === 'granted' || hasHandled === 'skipped') {
         action();
         return;
       }
       
-      // Otherwise query state asynchronously
+      
       getBrowserPermissionState(type).then((browserState) => {
         if (browserState === 'granted') {
           localStorage.setItem('nc_perm_media', 'granted');
@@ -82,7 +82,7 @@ export const usePermissions = () => {
           return;
         }
 
-        // Show our premium modal first
+        
         setPermissionType('media');
         setPendingAction(() => action);
         setShowModal(true);

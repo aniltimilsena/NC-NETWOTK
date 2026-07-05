@@ -48,7 +48,7 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
   };
 
   const handleInstagramShare = () => {
-    // Copy link first since Instagram does not support sharing URLs directly via web
+    
     navigator.clipboard.writeText(shareUrl).then(() => {
       triggerToast('Link copied! Open Instagram to share.', 'success');
       setTimeout(() => {
@@ -102,13 +102,13 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
     cellSize: number
   ) => {
     ctx.fillStyle = '#000000';
-    // Outer 7x7
+    
     ctx.fillRect(x + rx * cellSize, y + ry * cellSize, 7 * cellSize, 7 * cellSize);
     ctx.fillStyle = '#FFFFFF';
-    // Inner 5x5
+    
     ctx.fillRect(x + (rx + 1) * cellSize, y + (ry + 1) * cellSize, 5 * cellSize, 5 * cellSize);
     ctx.fillStyle = '#000000';
-    // Center 3x3
+    
     ctx.fillRect(x + (rx + 2) * cellSize, y + (ry + 2) * cellSize, 3 * cellSize, 3 * cellSize);
   };
 
@@ -119,18 +119,18 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
     size: number,
     seed: string
   ) => {
-    // White card background for QR
+    
     drawRoundedRect(ctx, x - 12, y - 12, size + 24, size + 24, 16, '#FFFFFF', null);
     
     const gridCount = 21;
     const cellSize = size / gridCount;
     
-    // Draw finder patterns
+    
     drawFinderPattern(ctx, x, y, 0, 0, cellSize);
     drawFinderPattern(ctx, x, y, gridCount - 7, 0, cellSize);
     drawFinderPattern(ctx, x, y, 0, gridCount - 7, cellSize);
     
-    // Draw timing patterns
+    
     ctx.fillStyle = '#000000';
     for (let i = 8; i < gridCount - 8; i++) {
       if (i % 2 === 0) {
@@ -139,25 +139,25 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
       }
     }
     
-    // Deterministic hashing from seed string
+    
     let hash = 5381;
     for (let i = 0; i < seed.length; i++) {
       hash = ((hash << 5) + hash) + seed.charCodeAt(i);
     }
     
-    // Draw data cells
+    
     for (let r = 0; r < gridCount; r++) {
       for (let c = 0; c < gridCount; c++) {
-        // Skip finder areas
+        
         const isTopLeft = r < 8 && c < 8;
         const isTopRight = r < 8 && c >= gridCount - 8;
         const isBottomLeft = r >= gridCount - 8 && c < 8;
         if (isTopLeft || isTopRight || isBottomLeft) continue;
         
-        // Skip timing lines
+        
         if (r === 6 || c === 6) continue;
         
-        // Seeded pixel generator
+        
         const val = Math.abs(Math.sin(hash + r * 17 + c * 31));
         if (val > 0.48) {
           ctx.fillStyle = '#000000';
@@ -181,7 +181,7 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
       return;
     }
 
-    // 1. Draw Background (radial dark blue-grey gradient)
+    
     const bgGrad = ctx.createRadialGradient(400, 600, 50, 400, 600, 750);
     bgGrad.addColorStop(0, '#151b26');
     bgGrad.addColorStop(0.5, '#0a0d14');
@@ -189,13 +189,13 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, 800, 1200);
 
-    // Glowing cyan/blue highlight in center background
+    
     ctx.fillStyle = 'rgba(0, 153, 255, 0.04)';
     ctx.beginPath();
     ctx.arc(400, 600, 320, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. Inner Rounded Card (Glass Effect)
+    
     const innerCardGrad = ctx.createLinearGradient(60, 60, 740, 1140);
     innerCardGrad.addColorStop(0, 'rgba(255, 255, 255, 0.03)');
     innerCardGrad.addColorStop(1, 'rgba(255, 255, 255, 0.01)');
@@ -206,30 +206,30 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
     
     drawRoundedRect(ctx, 60, 60, 680, 1080, 48, innerCardGrad, borderGrad, 1.5);
 
-    // 3. Logo Rendering
-    // Yellow rounded square box
+    
+    
     drawRoundedRect(ctx, 290, 115, 50, 50, 14, '#FACC15', null);
     
-    // "NC" Text
+    
     ctx.font = '900 26px Arial, sans-serif';
     ctx.fillStyle = '#000000';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('NC', 315, 140);
 
-    // "Network" Text
+    
     ctx.font = 'bold 30px Arial, sans-serif';
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'left';
     ctx.fillText('Network', 352, 140);
 
     const renderTalentDetails = (imageLoaded: boolean, imgObj?: HTMLImageElement) => {
-      // 4. Circular Avatar (Y: 340, Radius: 105)
+      
       const avatarX = 400;
       const avatarY = 340;
       const avatarRadius = 105;
 
-      // Outer glow circle
+      
       const avatarGlow = ctx.createRadialGradient(avatarX, avatarY, avatarRadius - 5, avatarX, avatarY, avatarRadius + 10);
       avatarGlow.addColorStop(0, 'rgba(0, 153, 255, 0.2)');
       avatarGlow.addColorStop(1, 'rgba(0, 153, 255, 0)');
@@ -238,7 +238,7 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
       ctx.arc(avatarX, avatarY, avatarRadius + 10, 0, Math.PI * 2);
       ctx.fill();
 
-      // Avatar Border
+      
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -251,7 +251,7 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
       ctx.clip();
 
       if (imageLoaded && imgObj) {
-        // Draw image keeping ratio
+        
         const imgWidth = imgObj.width;
         const imgHeight = imgObj.height;
         const size = Math.min(imgWidth, imgHeight);
@@ -259,7 +259,7 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
         const sy = (imgHeight - size) / 2;
         ctx.drawImage(imgObj, sx, sy, size, size, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
       } else {
-        // Initials fallback gradient
+        
         const avatarBg = ctx.createLinearGradient(avatarX - avatarRadius, avatarY - avatarRadius, avatarX + avatarRadius, avatarY + avatarRadius);
         avatarBg.addColorStop(0, '#0099FF');
         avatarBg.addColorStop(1, '#00F0FF');
@@ -275,7 +275,7 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
       }
       ctx.restore();
 
-      // 5. Name & Badge (Y: 530)
+      
       ctx.font = 'bold 42px Arial, sans-serif';
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
@@ -286,10 +286,10 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
       
       ctx.fillText(nameText, avatarX, 530);
 
-      // Verification Badge (drawn inline)
+      
       if (profile.verified) {
         const badgeX = avatarX + (nameWidth / 2) + 20;
-        const badgeY = 530 - 15; // center inline vertically
+        const badgeY = 530 - 15; 
         
         ctx.fillStyle = '#00E5FF';
         ctx.beginPath();
@@ -305,23 +305,23 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
         ctx.stroke();
       }
 
-      // 6. Category / Role (Y: 585)
+      
       ctx.font = 'bold 26px Arial, sans-serif';
       ctx.fillStyle = '#00E5FF';
       ctx.textAlign = 'center';
       ctx.fillText(profile.role || 'New User', avatarX, 585);
 
-      // 7. Location (Y: 630)
+      
       ctx.font = '22px Arial, sans-serif';
       ctx.fillStyle = '#99a2b3';
       ctx.textAlign = 'center';
       ctx.fillText(profile.location || 'Nepal', avatarX, 630);
 
-      // 8. Stats Row (Followers & Rating) (Y: 710)
+      
       const dividerX = 400;
       const statsY = 710;
 
-      // Divider Line
+      
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -329,7 +329,7 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
       ctx.lineTo(dividerX, statsY + 30);
       ctx.stroke();
 
-      // Left Column (Followers)
+      
       ctx.textAlign = 'center';
       ctx.font = 'bold 36px Arial, sans-serif';
       ctx.fillStyle = '#FFFFFF';
@@ -338,35 +338,35 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
       ctx.fillStyle = '#667085';
       ctx.fillText('FOLLOWERS', 280, statsY + 28);
 
-      // Right Column (Rating)
+      
       ctx.textAlign = 'center';
       ctx.font = 'bold 36px Arial, sans-serif';
-      ctx.fillStyle = '#FACC15'; // yellow stars gold
+      ctx.fillStyle = '#FACC15'; 
       const ratingText = profile.rating > 0 ? `${profile.rating.toFixed(1)} ★` : '0.0 ★';
       ctx.fillText(ratingText, 520, statsY);
       ctx.font = 'bold 15px Arial, sans-serif';
       ctx.fillStyle = '#667085';
       ctx.fillText('RATING', 520, statsY + 28);
 
-      // 9. QR Code
+      
       const qrSize = 150;
       const qrX = 400 - (qrSize / 2);
       const qrY = 820;
       drawQRCode(ctx, qrX, qrY, qrSize, profile.id || 'seed');
 
-      // SCAN label below QR
+      
       ctx.font = 'bold 14px Arial, sans-serif';
       ctx.fillStyle = '#667085';
       ctx.textAlign = 'center';
       ctx.fillText('SCAN TO VIEW PROFILE', avatarX, qrY + qrSize + 30);
 
-      // 10. Branding Footer
+      
       ctx.font = 'bold 18px Arial, sans-serif';
       ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
       ctx.textAlign = 'center';
       ctx.fillText('NC NETWORK • TALENT DECK', avatarX, 1115);
 
-      // 11. Trigger Download
+      
       try {
         const url = canvas.toDataURL('image/png');
         const a = document.createElement('a');
@@ -384,12 +384,12 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
       }
     };
 
-    // Attempt to load profile image with CORS config
+    
     if (profile.image) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       
-      // Safety timeout: fallback to initials if image loading takes too long
+      
       const timeout = setTimeout(() => {
         img.onload = null;
         img.onerror = null;

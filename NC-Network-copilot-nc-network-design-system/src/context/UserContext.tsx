@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 
 export interface UserContextType {
-  user: any; // Enriched user object
+  user: any; 
   updateAvatar: (newUrl: string | null) => Promise<void>;
   deleteAvatar: () => Promise<void>;
 }

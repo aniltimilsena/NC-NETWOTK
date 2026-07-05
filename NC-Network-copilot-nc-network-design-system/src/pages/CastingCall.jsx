@@ -13,7 +13,7 @@ const getDeadlineStatus = (deadlineStr) => {
   if (!deadlineStr) return { color: 'text-gray-400 border-white/5 bg-white/5', label: 'No deadline' };
   const dDate = new Date(deadlineStr);
   if (isNaN(dDate.getTime())) {
-    // Non-date string fallback
+    
     return { color: 'text-gray-400 border-white/5 bg-white/5', label: deadlineStr };
   }
   const now = new Date();
@@ -46,13 +46,13 @@ const getRolesSummary = (call) => {
 };
 
 export default function CastingCall({ onNavigate, user, isAdmin }) {
-  const [activeFilter, setActiveFilter] = useState('All'); // 'All', 'Open', 'Closing Soon', 'My Applications'
+  const [activeFilter, setActiveFilter] = useState('All'); 
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [calls, setCalls] = useState([]);
   const [savedIds, setSavedIds] = useState([]); 
   const [appliedCastingIds, setAppliedCastingIds] = useState([]);
-  const [activeSort, setActiveSort] = useState('Latest'); // 'Latest', 'Deadline', 'Category'
+  const [activeSort, setActiveSort] = useState('Latest'); 
   const [isSortOpen, setIsSortOpen] = useState(false);
 
   const filterPills = [
@@ -68,7 +68,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
     { id: 'Category', label: 'Category' }
   ];
 
-  // Subscribe to all casting calls
+  
   useEffect(() => {
     setIsLoading(true);
     const unsubscribe = subscribeToCastingCalls('All', (data) => {
@@ -78,7 +78,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
     return () => unsubscribe();
   }, []);
 
-  // Fetch saved casting call bookmarks
+  
   useEffect(() => {
     if (!user) {
       setSavedIds([]);
@@ -97,7 +97,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
     return () => unsub();
   }, [user?.uid]);
 
-  // Subscribe to user applications
+  
   useEffect(() => {
     if (!user) {
       setAppliedCastingIds([]);
@@ -116,13 +116,13 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
     return () => unsub();
   }, [user?.uid]);
 
-  // Check if current user can publish calls (Directors/Director or Admin)
+  
   const canPostCall = user && (user.role === 'Director' || user.role === 'Directors' || isAdmin);
 
-  // Filter casting calls
+  
   const filteredCalls = calls
     .filter(call => {
-      // Search filter
+      
       const matchesSearch = !searchQuery || 
         call.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         call.production?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -132,11 +132,11 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
 
       if (!matchesSearch) return false;
 
-      // Filter pills logic
+      
       if (activeFilter === 'Open') {
         if (!call.deadline) return true;
         const dDate = new Date(call.deadline);
-        if (isNaN(dDate.getTime())) return true; // Keep custom text open
+        if (isNaN(dDate.getTime())) return true; 
         return dDate.getTime() >= new Date().getTime();
       }
       
@@ -152,7 +152,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
         return appliedCastingIds.includes(call.id);
       }
 
-      return true; // 'All'
+      return true; 
     })
     .sort((a, b) => {
       if (activeSort === 'Deadline') {
@@ -165,7 +165,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
         const catB = b.category || b.type || '';
         return catA.localeCompare(catB);
       }
-      // 'Latest'
+      
       const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return timeB - timeA;

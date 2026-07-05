@@ -14,12 +14,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   const [call, setCall] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Application states
+  
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
   const [applyAlert, setApplyAlert] = useState({ type: null, message: null, detail: null });
 
-  // Save states
+  
   const [saved, setSaved] = useState(false);
   const [saveAlert, setSaveAlert] = useState({ type: null, message: null });
 
@@ -45,7 +45,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   const isCreator = user && call && (call.creatorId === user.uid || call.createdBy === user.uid);
 
-  // Countdown timer calculation
+  
   const [timeLeft, setTimeLeft] = useState('');
   const [isExpired, setIsExpired] = useState(false);
 
@@ -53,7 +53,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     if (!call?.deadline) return;
     const deadlineDate = new Date(call.deadline);
     if (isNaN(deadlineDate.getTime())) {
-      setTimeLeft(call.deadline); // Non-date fallback
+      setTimeLeft(call.deadline); 
       return;
     }
 
@@ -78,7 +78,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     return () => clearInterval(interval);
   }, [call?.deadline]);
 
-  // Fetch casting call details
+  
   useEffect(() => {
     if (!castingId) return;
     const unsub = onSnapshot(doc(db, 'casting_calls', castingId), (snap) => {
@@ -93,7 +93,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     return () => unsub();
   }, [castingId]);
 
-  // Fetch director profile
+  
   useEffect(() => {
     if (!call?.creatorId) return;
     const unsub = onSnapshot(doc(db, 'profiles', call.creatorId), (snap) => {
@@ -106,7 +106,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     return () => unsub();
   }, [call?.creatorId]);
 
-  // Fetch related casting calls
+  
   useEffect(() => {
     if (!call?.type) return;
     const q = query(
@@ -125,7 +125,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     return () => unsub();
   }, [call?.id, call?.type]);
 
-  // Check if current user has already applied
+  
   useEffect(() => {
     if (!castingId || !user) return;
     const q = query(
@@ -147,7 +147,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     return () => unsub();
   }, [castingId, user]);
 
-  // Subscribe to received applications (for creators)
+  
   useEffect(() => {
     if (!castingId || !isCreator) {
       setApps([]);
@@ -192,7 +192,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     return () => unsub();
   }, [castingId, isCreator, user?.uid]);
 
-  // Apply Now
+  
   const handleApply = async () => {
     if (!user) {
       onNavigate('signin');
@@ -217,7 +217,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         creatorId: creatorId,
       });
 
-      // Send casting notification
+      
       try {
         if (creatorId) {
           await addDoc(collection(db, 'notifications'), {

@@ -20,10 +20,10 @@ import { findOrCreateConversation, sendMessage } from "../services/messaging";
 import { db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-// ─── Context Types ──────────────────────────────────────────────────────────
+
 
 interface CallContextValue {
-  // State
+  
   callState: CallState;
   activeCall: CallDoc | null;
   incomingCall: CallDoc | null;
@@ -36,7 +36,7 @@ interface CallContextValue {
   errorMessage: string;
   currentUser: any;
 
-  // Actions
+  
   initiateCall: (params: {
     calleeId: string;
     calleeName: string;
@@ -54,11 +54,11 @@ interface CallContextValue {
 
 const CallContext = createContext<CallContextValue | null>(null);
 
-// ─── Provider ───────────────────────────────────────────────────────────────
+
 
 interface CallProviderProps {
   children: ReactNode;
-  user: any; // Firebase user
+  user: any; 
 }
 
 export function CallProvider({ children, user }: CallProviderProps) {
@@ -110,7 +110,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     }
   }, []);
 
-  // ─── Listen to the active call document changes in Firestore ───────────
+  
   useEffect(() => {
     const callId = webrtc.callId;
     if (!callId || !user?.uid) return;
@@ -119,7 +119,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
       if (callDoc) {
         setActiveCall(callDoc);
 
-        // If this user is the caller, they are responsible for logging the outcome
+        
         const isCaller = callDoc.callerId === user.uid;
         if (isCaller) {
           if (callDoc.status === "rejected") {
@@ -140,7 +140,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     return () => unsub();
   }, [webrtc.callId, user?.uid, webrtc.callDuration, logCallOutcome]);
 
-  // ─── Listen to WebRTC call state changes to detect errors ───────────────
+  
   useEffect(() => {
     if (webrtc.callState === "error" && activeCall && activeCall.callerId === user?.uid) {
       const isNetworkError = webrtc.errorMessage?.toLowerCase().includes("network") || 
@@ -149,14 +149,14 @@ export function CallProvider({ children, user }: CallProviderProps) {
       const statusType = isNetworkError ? "network-error" : "offline";
       logCallOutcome(activeCall, 0, statusType);
       
-      // Update the call document in Firestore so the other side knows
+      
       if (activeCall.id) {
         updateCallStatus(activeCall.id, "ended");
       }
     }
   }, [webrtc.callState, webrtc.errorMessage, activeCall, user?.uid, logCallOutcome]);
 
-  // ─── Listen for incoming calls ─────────────────────────────────────────
+  
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -177,7 +177,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     };
   }, [user?.uid, webrtc.callState]);
 
-  // ─── Stop ringtone when call state changes from idle ───────────────────
+  
 
   useEffect(() => {
     if (webrtc.callState !== "idle") {
@@ -185,7 +185,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     }
   }, [webrtc.callState]);
 
-  // ─── Reset active/incoming call states when call ends ──────────────────
+  
 
   useEffect(() => {
     if (webrtc.callState === "ended") {
@@ -200,7 +200,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     }
   }, [webrtc.callState, webrtc.resetToIdle]);
 
-  // ─── Listen for custom 'nc-call' events from non-context components ────
+  
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -213,7 +213,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     return () => window.removeEventListener("nc-call", handler);
   }, [user?.uid]);
 
-  // ─── Initiate an outgoing call ─────────────────────────────────────────
+  
 
   const initiateCall = useCallback(
     async (params: {
@@ -224,7 +224,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     }) => {
       if (!user?.uid) return;
 
-      // 1. Immediately show Calling overlay using cached and passed profile data (0ms delay)
+      
       const initialActiveCall = {
         id: "",
         callerId: user.uid,
@@ -244,10 +244,10 @@ export function CallProvider({ children, user }: CallProviderProps) {
       };
       setActiveCall(initialActiveCall as any);
 
-      // 2. Synchronously invoke getUserMedia to keep the call inside the original user gesture event stack (preventing NotAllowedError)
+      
       const streamPromise = webrtc.getUserMedia(params.callType);
 
-      // 3. Perform profile fetching, peer connection, and signaling asynchronously in the background
+      
       (async () => {
         try {
           const stream = await streamPromise;
@@ -257,7 +257,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
           let calleeName = params.calleeName;
           let calleePhoto = params.calleePhoto;
 
-          // Fetch full profile info concurrently
+          
           const [callerRes, calleeRes] = await Promise.allSettled([
             getProfile(user.uid),
             getProfile(params.calleeId)
@@ -289,7 +289,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
             callType: params.callType,
           };
 
-          // Update activeCall details once profile lookup is done
+          
           setActiveCall((prev) => prev ? {
             ...prev,
             ...callParams,
@@ -298,7 +298,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
           await webrtc.startCall(callParams, stream);
         } catch (err: any) {
           console.error("Failed to start call:", err);
-          // If webrtc error state was not set, clean up here
+          
           setActiveCall(null);
         }
       })();
@@ -306,7 +306,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     [user, webrtc.getUserMedia, webrtc.startCall]
   );
 
-  // ─── Accept incoming call ──────────────────────────────────────────────
+  
 
   const acceptCall = useCallback(async () => {
     if (!incomingCall) return;
@@ -316,16 +316,16 @@ export function CallProvider({ children, user }: CallProviderProps) {
     setIncomingCall(null);
 
     try {
-      // Immediately pre-acquire media stream inside user gesture event loop
+      
       const stream = await webrtc.getUserMedia(incomingCall.callType);
-      // Answer call with the pre-acquired stream
+      
       await webrtc.answerCall(incomingCall, stream);
     } catch (err: any) {
       console.error("Failed to answer call:", err);
     }
   }, [incomingCall, webrtc.getUserMedia, webrtc.answerCall]);
 
-  // ─── Reject incoming call ─────────────────────────────────────────────
+  
 
   const rejectCall = useCallback(async () => {
     if (!incomingCall) return;
@@ -333,7 +333,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     stopRingtone();
     await updateCallStatus(incomingCall.id, "rejected");
 
-    // Send missed call notification
+    
     try {
       let senderName = incomingCall.callerName;
       let senderAvatar = incomingCall.callerPhoto || "";
@@ -370,12 +370,12 @@ export function CallProvider({ children, user }: CallProviderProps) {
     setIncomingCall(null);
   }, [incomingCall]);
 
-  // ─── Hang up active call ──────────────────────────────────────────────
+  
 
   const hangUp = useCallback(async () => {
     if (activeCall) {
       const targetReceiverId = activeCall.calleeId || activeCall.receiverId;
-      // If duration was 0 and current user is caller, send a missed call notification to callee
+      
       if (webrtc.callDuration === 0 && activeCall.callerId === user?.uid) {
         try {
           let senderName = activeCall.callerName;
@@ -415,14 +415,14 @@ export function CallProvider({ children, user }: CallProviderProps) {
     setActiveCall(null);
   }, [activeCall, webrtc.endCall, webrtc.callDuration, user?.uid]);
 
-  // ─── Dismiss error ────────────────────────────────────────────────────
+  
 
   const dismissError = useCallback(() => {
     webrtc.endCall();
     setActiveCall(null);
   }, [webrtc.endCall]);
 
-  // ─── Context value ────────────────────────────────────────────────────
+  
 
   const value: CallContextValue = {
     callState: webrtc.callState,
@@ -453,7 +453,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
   );
 }
 
-// ─── Hook ───────────────────────────────────────────────────────────────────
+
 
 export function useCall(): CallContextValue {
   const ctx = useContext(CallContext);

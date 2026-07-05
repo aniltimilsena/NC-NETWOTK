@@ -73,7 +73,7 @@ export default function AdminContent() {
   const handleApproveProfile = async (profileId: string) => {
     try {
       await updateDoc(doc(db, "profiles", profileId), { verified: true, status: 'Active' });
-      // Update user doc as well if it exists
+      
       try {
         await updateDoc(doc(db, "users", profileId), { verified: true, status: 'Active' });
       } catch (e) {
@@ -165,7 +165,7 @@ export default function AdminContent() {
     });
   };
 
-  // Filter profiles based on search and filters
+  
   const filteredProfiles = profiles.filter(p => {
     const matchesSearch = 
       (p.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) || 

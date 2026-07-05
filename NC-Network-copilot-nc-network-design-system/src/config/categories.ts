@@ -1,11 +1,4 @@
-/**
- * NC Network — Single source of truth for all category definitions.
- * Import from here in EVERY component. Never define category icons/colors inline.
- * To change an icon or color → change it ONCE here, updates everywhere.
- *
- * NOTE: icons are resolved at runtime via CATEGORY_ICON_MAP (CategoryIcons.jsx)
- * so this file stays as plain .ts with no JSX/React import needed.
- */
+
 
 export interface CategoryConfig {
   id: string;
@@ -47,11 +40,7 @@ export const getCategoryBgColor = (nameOrId: string): string => {
   return found?.bgColor ?? 'rgba(0,191,255,0.10)';
 };
 
-/**
- * getCategoryConfig — returns color + bgColor.
- * The `icon` field is injected by callers via CATEGORY_ICON_MAP from CategoryIcons.jsx.
- * This avoids importing JSX into a .ts file.
- */
+
 export const getCategoryMeta = (nameOrId: string) => {
   const found = CATEGORY_META.find(
     (c) => c.id.toLowerCase() === (nameOrId ?? '').toLowerCase()

@@ -10,9 +10,9 @@ const formatDuration = (seconds) => {
   return `${m}:${s}`;
 };
 
-// ─── Voice Waveform Component ─────────────────────────────────────────────
-// Analyzes the remote audio stream and renders animated bars that react
-// to the remote peer's voice level during audio-only calls.
+
+
+
 
 function VoiceWaveform({ stream }) {
   const [levels, setLevels] = useState(() => new Array(7).fill(0.15));
@@ -41,12 +41,12 @@ function VoiceWaveform({ stream }) {
 
       const tick = () => {
         analyser.getByteFrequencyData(data);
-        // Sample BAR_COUNT frequency bins spread across the spectrum
+        
         const newLevels = [];
         const step = Math.floor(data.length / BAR_COUNT);
         for (let i = 0; i < BAR_COUNT; i++) {
           const idx = Math.min(i * step + Math.floor(step / 2), data.length - 1);
-          // Normalize 0-255 to 0.15-1.0 range, minimum bar height is 15%
+          
           newLevels.push(Math.max(0.15, data[idx] / 255));
         }
         setLevels(newLevels);
@@ -89,8 +89,8 @@ function VoiceWaveform({ stream }) {
   );
 }
 
-// ─── Calling Dots Animation ───────────────────────────────────────────────
-// Shows animated bouncing dots during the "Calling..." state
+
+
 
 function CallingDots() {
   return (
@@ -112,7 +112,7 @@ function CallingDots() {
   );
 }
 
-// ─── Main Overlay ─────────────────────────────────────────────────────────
+
 
 export default function CallingOverlay() {
   const {
@@ -154,7 +154,7 @@ export default function CallingOverlay() {
     });
   };
 
-  // Attach streams to video elements
+  
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
@@ -166,24 +166,24 @@ export default function CallingOverlay() {
       remoteVideoRef.current.srcObject = remoteStream;
       remoteVideoRef.current.muted = isSpeakerMuted;
       
-      // Ensure all remote audio tracks are in sync with the speaker muted state
+      
       remoteStream.getAudioTracks().forEach(track => {
         track.enabled = !isSpeakerMuted;
       });
 
-      // Ensure all remote video tracks are explicitly enabled
+      
       remoteStream.getVideoTracks().forEach(track => {
         track.enabled = true;
       });
       
-      // Explicitly trigger play to bypass browser autoplay restrictions
+      
       remoteVideoRef.current.play().catch(err => {
         console.warn("[CallingOverlay] Remote stream play failed or interrupted:", err);
       });
     }
   }, [remoteStream, isSpeakerMuted]);
 
-  // Dynamic remote profile loading using getProfile
+  
   useEffect(() => {
     if (!activeCall || !currentUser?.uid) {
       setRemoteProfile(null);
@@ -208,7 +208,7 @@ export default function CallingOverlay() {
     };
   }, [activeCall, currentUser?.uid]);
 
-  // Debug helper — check if video is actually flowing in the console
+  
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.debugVideo = () => {
@@ -257,7 +257,7 @@ export default function CallingOverlay() {
   const isError = callState === 'error';
   const isCalling = callState === 'calling' || callState === 'ringing';
 
-  // Determine the remote party's info correctly
+  
   const isCaller = currentUser?.uid === activeCall?.callerId;
   const docRemoteName = isCaller 
     ? (activeCall?.calleeName || activeCall?.receiverName || 'Unknown') 
@@ -273,8 +273,8 @@ export default function CallingOverlay() {
   const statusText = useMemo(() => {
     if (callState === 'requesting-media') return isCaller ? 'Requesting access...' : 'Connecting...';
     if (callState === 'creating-offer') return isCaller ? 'Preparing...' : 'Connecting...';
-    if (callState === 'calling') return null; // We'll render CallingDots instead
-    if (callState === 'ringing') return isCaller ? null : 'Incoming Call'; // Dots for caller
+    if (callState === 'calling') return null; 
+    if (callState === 'ringing') return isCaller ? null : 'Incoming Call'; 
     if (callState === 'connecting') return 'Connecting...';
     if (callState === 'connected') return formatDuration(callDuration);
     if (callState === 'error') return 'Call Failed';

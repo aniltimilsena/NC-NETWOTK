@@ -6,8 +6,8 @@ export default function AdminLayout({ showToast }: { showToast?: any }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Convert the pathname back to the old string identifier (e.g. "/admin/users" -> "admin-users")
-  // so the AdminSidebar can highlight the activeTab correctly.
+  
+  
   const getLegacyActiveTab = (pathname: string) => {
     if (pathname === '/admin' || pathname === '/admin/') return 'admin-overview';
     return 'admin-' + pathname.split('/admin/')[1];

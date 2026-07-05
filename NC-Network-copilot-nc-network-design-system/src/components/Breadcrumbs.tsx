@@ -28,7 +28,7 @@ export default function Breadcrumbs() {
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter((x) => x);
 
-  // Don't render breadcrumbs on home, profile, messages, notifications, settings, signin, signup, or premium pages
+  
   const excludedPaths = ['profile', 'signin', 'signup', 'premium', 'messages', 'notifications', 'settings'];
   if (
     pathnames.length === 0 || 
@@ -47,10 +47,10 @@ export default function Breadcrumbs() {
         const last = index === pathnames.length - 1;
         const to = `/${pathnames.slice(0, index + 1).join('/')}`;
 
-        // Determine the label
+        
         let label = pathLabels[value];
         if (!label) {
-          // Fallback for dynamic IDs:
+          
           const parent = pathnames[index - 1];
           if (parent === 'casting') {
             label = 'Audition Detail';

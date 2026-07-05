@@ -25,7 +25,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
       const currentY = e.touches[0].pageY;
       const distance = Math.max(0, currentY - startY);
       
-      // Add resistance to the pull
+      
       const resistanceDistance = Math.pow(distance, 0.85);
       setPullDistance(resistanceDistance);
     }

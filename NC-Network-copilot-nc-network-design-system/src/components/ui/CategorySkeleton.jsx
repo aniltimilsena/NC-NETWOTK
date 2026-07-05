@@ -1,15 +1,6 @@
 import { memo } from 'react';
 
-/**
- * CategorySkeleton — Premium shimmer skeleton for category cards.
- *
- * Renders exactly 8 ghost cards that match the final category‑card
- * dimensions, spacing, border‑radius, and responsive behaviour so
- * there is zero Cumulative Layout Shift (CLS) when real data loads.
- *
- * Animations use only `transform` + `opacity` (GPU‑composited) and
- * honour `prefers‑reduced‑motion`.
- */
+
 
 const CARD_COUNT = 8;
 

@@ -4,20 +4,20 @@ export default function OtpInput({ value, onChange, error }) {
   const inputsRef = useRef([]);
 
   useEffect(() => {
-    // Focus first input on mount
+    
     inputsRef.current[0]?.focus();
   }, []);
 
   const handleChange = (e, index) => {
     const val = e.target.value;
-    if (val && isNaN(Number(val))) return; // only allow numbers
+    if (val && isNaN(Number(val))) return; 
 
     const codeArray = value.split('');
-    codeArray[index] = val.slice(-1); // only take last char
+    codeArray[index] = val.slice(-1); 
     const newCode = codeArray.join('');
     onChange(newCode);
 
-    // Auto-advance
+    
     if (val && index < 5) {
       inputsRef.current[index + 1]?.focus();
     }
@@ -44,7 +44,7 @@ export default function OtpInput({ value, onChange, error }) {
 
     onChange(pastedData);
     
-    // Focus appropriate box
+    
     const focusIndex = Math.min(pastedData.length, 5);
     inputsRef.current[focusIndex]?.focus();
   };

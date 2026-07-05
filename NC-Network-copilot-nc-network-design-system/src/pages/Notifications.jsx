@@ -27,14 +27,14 @@ import {
   Check
 } from 'lucide-react';
 
-// Helpers for notification rendering logic
+
 const getNotificationDetails = (notif) => {
   const type = (notif.type || notif.notificationType || '').toLowerCase();
   const body = (notif.body || notif.message || '').toLowerCase();
   const title = (notif.title || '').toLowerCase();
   const senderName = notif.senderName || 'Someone';
 
-  // 1. Follow / New Follower
+  
   if (type === 'follow' || title.includes('follow') || body.includes('following you') || body.includes('started following')) {
     return {
       type: 'follow',
@@ -49,7 +49,7 @@ const getNotificationDetails = (notif) => {
     };
   }
 
-  // 2. Casting alert
+  
   if (type === 'casting' || title.includes('casting') || title.includes('application') || body.includes('casting') || body.includes('applied')) {
     let displayElement = (
       <span>
@@ -77,7 +77,7 @@ const getNotificationDetails = (notif) => {
     };
   }
 
-  // 3. Messages & Calls
+  
   if (type === 'messages' || type === 'message') {
     if (body.includes('missed') || title.includes('missed')) {
       return {
@@ -104,7 +104,7 @@ const getNotificationDetails = (notif) => {
         ),
       };
     }
-    // Message received
+    
     return {
       type: 'message_received',
       themeColor: 'blue',
@@ -118,7 +118,7 @@ const getNotificationDetails = (notif) => {
     };
   }
 
-  // 4. System / Default
+  
   return {
     type: 'system',
     themeColor: 'gray',
@@ -162,7 +162,7 @@ const renderIconCircle = (iconName) => {
   );
 };
 
-// Swipable individual notification card component
+
 function NotificationCard({ 
   notif, 
   followingIds, 
@@ -178,7 +178,7 @@ function NotificationCard({
   const details = getNotificationDetails(notif);
   const showAvatar = details.iconName === 'message_received' || details.iconName === 'missed_call' || details.iconName === 'call_cancelled';
 
-  // Handle snapping of the swipe card
+  
   const handleDragEnd = (event, info) => {
     if (info.offset.x < -30) {
       controls.start({ x: -80 });
@@ -198,9 +198,9 @@ function NotificationCard({
     }
   };
 
-  // Styling properties
-  // Unread: slightly brighter bg (#1a2744), bold name text, blue left border (3px)
-  // Read: dark bg #111, normal text
+  
+  
+  
   const cardBgClass = notif.read 
     ? 'bg-[#111111] border-l-[3px] border-l-transparent hover:bg-white/[0.02]' 
     : 'bg-[#1a2744] border-l-[3px] border-l-[#00BFFF] hover:bg-[#203154]';
@@ -310,7 +310,7 @@ export default function Notifications({ onNavigate, user }) {
     { id: 'system', label: 'System' },
   ];
 
-  // Subscribe to follows to track who the user is currently following back in real-time
+  
   useEffect(() => {
     if (!user?.uid) {
       setFollowingIds(new Set());
@@ -328,7 +328,7 @@ export default function Notifications({ onNavigate, user }) {
     return () => unsub();
   }, [user?.uid]);
 
-  // Subscribe to notifications collection
+  
   useEffect(() => {
     if (!user?.uid) {
       setNotifications([]);
@@ -336,7 +336,7 @@ export default function Notifications({ onNavigate, user }) {
       return;
     }
     setLoading(true);
-    // Fetch visibleLimit + 1 to check if there are more items for pagination
+    
     const q = query(
       collection(db, 'notifications'),
       where('userId', '==', user.uid),
@@ -344,7 +344,7 @@ export default function Notifications({ onNavigate, user }) {
     );
     const unsub = onSnapshot(q, (snapshot) => {
       const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      // Sort by createdAt desc
+      
       items.sort((a, b) => {
         const timeA = a.createdAt?.seconds || 0;
         const timeB = b.createdAt?.seconds || 0;
@@ -369,7 +369,7 @@ export default function Notifications({ onNavigate, user }) {
   }, [user?.uid, visibleLimit]);
 
   const markAsRead = async (notifId) => {
-    // Optimistic UI update
+    
     setNotifications(prev =>
       prev.map(n => n.id === notifId ? { ...n, read: true, isRead: true } : n)
     );
@@ -384,7 +384,7 @@ export default function Notifications({ onNavigate, user }) {
 
   const deleteNotification = async (e, notifId) => {
     e.stopPropagation();
-    // Optimistic UI update
+    
     setNotifications(prev => prev.filter(n => n.id !== notifId));
     if (user?.uid) {
       try {
@@ -398,7 +398,7 @@ export default function Notifications({ onNavigate, user }) {
   const handleNotificationClick = async (notif) => {
     await markAsRead(notif.id);
     
-    // Resolve navigation target
+    
     const target = notif.targetUrl || notif.profileUrl;
     if (target) {
       if (target.startsWith('/profile/')) {
@@ -428,14 +428,14 @@ export default function Notifications({ onNavigate, user }) {
     const followDocRef = doc(db, "follows", followId);
 
     try {
-      // Create follow document
+      
       await setDoc(followDocRef, {
         followerId: user.uid,
         followingId: senderId,
         createdAt: serverTimestamp()
       });
 
-      // Send follow notification back (deterministic ID)
+      
       const notifId = `${user.uid}_${senderId}_follow`;
       await setDoc(doc(db, "notifications", notifId), {
         userId: senderId,
@@ -455,7 +455,7 @@ export default function Notifications({ onNavigate, user }) {
         senderAvatar: user.photoURL || ''
       }, { merge: true });
 
-      // Increment counters
+      
       await updateDoc(doc(db, "profiles", senderId), { followers: increment(1) });
       await updateDoc(doc(db, "profiles", user.uid), { following: increment(1) });
       try {
@@ -471,7 +471,7 @@ export default function Notifications({ onNavigate, user }) {
 
   const handleMarkAllRead = async () => {
     const unreadNotifs = notifications.filter(n => !n.read);
-    // Optimistic UI update
+    
     setNotifications(prev => prev.map(n => ({ ...n, read: true, isRead: true })));
     try {
       const promises = unreadNotifs.map(n => 
@@ -487,7 +487,7 @@ export default function Notifications({ onNavigate, user }) {
     setVisibleLimit(prev => prev + 15);
   };
 
-  // Grouping logic for dates
+  
   const groupNotifications = (list) => {
     const today = [];
     const yesterday = [];
@@ -511,7 +511,7 @@ export default function Notifications({ onNavigate, user }) {
     return { today, yesterday, earlier };
   };
 
-  // Filter logic based on active tab
+  
   const filtered = notifications.filter(n => {
     if (filter === 'all') return true;
     if (filter === 'unread') return !n.read;

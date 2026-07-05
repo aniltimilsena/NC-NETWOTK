@@ -47,8 +47,8 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     if (!text || typeof text !== 'string') return text;
     if (text.includes("Cancelled by ")) {
       const parts = text.split("Cancelled by ");
-      const prefix = parts[0]; // e.g., "Video call • " or "Audio call • "
-      const identifier = parts[1]?.trim(); // UserID or "Caller"
+      const prefix = parts[0]; 
+      const identifier = parts[1]?.trim(); 
       
       if (!identifier) return text;
       
@@ -56,7 +56,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
         return `${prefix}Cancelled by you`;
       }
       
-      // If the identifier is the other participant's UID or looks like a UID, resolve it to their name
+      
       if (chatItem) {
         const otherParticipantId = chatItem.participants?.find(p => p !== user?.uid);
         if (identifier === otherParticipantId || identifier.length > 15) {
@@ -70,7 +70,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
         return `${prefix}Cancelled by caller`;
       }
       
-      // Fallback
+      
       const otherName = chatItem?.name || "them";
       const firstName = otherName.split(" ")[0];
       return `${prefix}Cancelled by ${firstName}`;
@@ -88,9 +88,9 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
   const [editingMessage, setEditingMessage] = useState(null);
   const [showOptionsId, setShowOptionsId] = useState(null);
   const [activeMenu, setActiveMenu] = useState('main');
-  const [activeTab, setActiveTab] = useState('chats'); // 'chats' | 'calls'
+  const [activeTab, setActiveTab] = useState('chats'); 
   const [callHistory, setCallHistory] = useState([]);
-  const [callHistoryLoading, setCallHistoryLoading] = useState(true); // 'main', 'emojis', 'more'
+  const [callHistoryLoading, setCallHistoryLoading] = useState(true); 
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,
     title: '',
@@ -119,7 +119,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
 
   const [typingTimeoutRef, setTypingTimeoutRef] = useState(null);
 
-  // Sync typing status helper to Firestore
+  
   const updateTypingStatus = async (isTyping) => {
     if (!activeChatId || !user?.uid) return;
     try {
@@ -132,7 +132,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     }
   };
 
-  // Handle typing input changes with debounce
+  
   const handleInputChange = (e) => {
     const val = e.target.value;
     setNewMessage(val);
@@ -157,7 +157,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     setTypingTimeoutRef(timeout);
   };
 
-  // Reset typing status on unmount or chat switch
+  
   useEffect(() => {
     return () => {
       if (typingTimeoutRef) {
@@ -174,21 +174,21 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
   const sendImageMessage = async (file) => {
     if (!activeChatId || !user?.uid) return;
 
-    // Generate optimistic temp id
+    
     const tempId = `opt-media-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Generate local preview URL
+    
     const localPreviewUrl = URL.createObjectURL(file);
 
-    // Save file in pending files ref for retry logic
+    
     const fileType = file.type.startsWith('video/') ? 'video' : 'image';
     pendingFilesRef.current.set(tempId, { file, fileType, localPreviewUrl });
 
-    // Create optimistic message object
+    
     const optimisticMessage = {
       id: tempId,
       senderId: user.uid,
-      text: localPreviewUrl, // local blob URL
+      text: localPreviewUrl, 
       type: fileType,
       createdAt: Date.now(),
       isOptimistic: true,
@@ -197,18 +197,18 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       failed: false,
     };
 
-    // Add to optimisticMessages state
+    
     setOptimisticMessages(prev => [...prev, optimisticMessage]);
     setTimeout(scrollToBottom, 50);
 
-    // Trigger upload in background
+    
     runBackgroundUpload(tempId, file, fileType, localPreviewUrl);
   };
 
   const runBackgroundUpload = async (tempId, file, fileType, localPreviewUrl) => {
     try {
       const uploadResult = await uploadChatMedia(file, activeChatId, (progress) => {
-        // Update ONLY the uploadProgress of this specific message
+        
         setOptimisticMessages(prev => prev.map(msg => 
           msg.id === tempId ? { ...msg, uploadProgress: Math.round(progress) } : msg
         ));
@@ -220,17 +220,17 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
         throw new Error("Upload failed: No URL returned");
       }
 
-      // Send the real message via database
+      
       const result = await sendMessage(activeChatId, user.uid, url, false, null, fileType, tempId);
       if (!result.success) {
         throw new Error(result.error || "Failed to send message after upload");
       }
 
-      // Success: clean up from pending files and optimistic state
+      
       pendingFilesRef.current.delete(tempId);
       setOptimisticMessages(prev => prev.filter(msg => msg.id !== tempId));
       
-      // Clean up object URL to prevent memory leaks
+      
       try {
         URL.revokeObjectURL(localPreviewUrl);
       } catch (e) {
@@ -241,7 +241,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       console.error(`Media upload/send failed for temp message ${tempId}:`, err);
       const errMsg = err instanceof Error ? err.message : 'Network error or file size limit exceeded';
       showAlert(`Upload failed: ${errMsg}`, 'error');
-      // Mark as failed in optimistic messages state
+      
       setOptimisticMessages(prev => prev.map(msg => 
         msg.id === tempId ? { ...msg, uploading: false, failed: true } : msg
       ));
@@ -256,12 +256,12 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
       return;
     }
 
-    // Set status back to uploading
+    
     setOptimisticMessages(prev => prev.map(msg => 
       msg.id === tempMsg.id ? { ...msg, uploading: true, uploadProgress: 0, failed: false } : msg
     ));
 
-    // Restart upload
+    
     runBackgroundUpload(tempMsg.id, pending.file, pending.fileType, pending.localPreviewUrl);
   };
 
@@ -283,7 +283,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     p.role?.toLowerCase().includes(newChatSearch.toLowerCase())
   );
 
-  // Fetch profiles when New Chat modal is opened
+  
   useEffect(() => {
     if (showNewChatModal) {
       const fetchProfiles = async () => {
@@ -292,7 +292,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
           const snapshot = await getDocs(collection(db, 'profiles'));
           const list = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(p => p.id !== user?.uid); // exclude current user
+            .filter(p => p.id !== user?.uid); 
           setAllProfiles(list);
         } catch (err) {
           console.error("Error fetching profiles for new chat:", err);
@@ -325,7 +325,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     const textToSend = newMessage.trim();
     if (!textToSend || !activeChatId) return;
     
-    // Stop typing status instantly
+    
     updateTypingStatus(false);
     if (typingTimeoutRef) {
       clearTimeout(typingTimeoutRef);
@@ -566,20 +566,20 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     }
   }, [user?.uid]);
 
-  // Subscribe to call history
+  
   useEffect(() => {
     if (!user?.uid) return;
     let cancelled = false;
     setCallHistoryLoading(true);
     
-    // Lazy-import to avoid circular deps
+    
     import('../services/call').then(({ subscribeToCallHistory }) => {
       if (cancelled) return;
       const unsub = subscribeToCallHistory(user.uid, (calls) => {
         setCallHistory(calls);
         setCallHistoryLoading(false);
       });
-      // Store unsub for cleanup
+      
       cleanupCallHistoryRef.current = unsub;
     });
 
@@ -589,7 +589,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     };
   }, [user?.uid]);
 
-  // Handle direct messaging from profile
+  
   useEffect(() => {
     if (user?.uid && initialUserId && initialUserId !== user.uid) {
       const initChat = async () => {
@@ -604,7 +604,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     }
   }, [user?.uid, initialUserId]);
 
-  // Clear unread count when a conversation is opened
+  
   useEffect(() => {
     if (activeChatId && user?.uid) {
       const active = conversations.find(c => c.id === activeChatId);
@@ -625,7 +625,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     }
   }, [activeChatId]);
 
-  // Listen to remote participant profile in real-time for presence status
+  
   useEffect(() => {
     if (!activeChatId || !user?.uid) {
       setRemoteProfile(null);
@@ -651,7 +651,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     return () => unsubscribe();
   }, [activeChatId]);
 
-  // Update read receipts for incoming messages when chat changes or new messages arrive
+  
   useEffect(() => {
     if (!activeChatId || !user?.uid || !messages.length) return;
 
@@ -669,7 +669,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
           batch.update(msgRef, { read: true, delivered: true });
         });
         
-        // Update conversation metadata if the last message is read
+        
         const lastMsg = messages[messages.length - 1];
         if (unreadMessages.some(m => m.id === lastMsg.id)) {
           const convoRef = doc(db, 'conversations', activeChatId);
@@ -688,7 +688,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     updateIncomingMessagesRead();
   }, [activeChatId, messages, user?.uid]);
 
-  // Update delivery receipts for conversations where last message is undelivered
+  
   useEffect(() => {
     if (!user?.uid || !conversations.length) return;
 
@@ -701,7 +701,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     const markUndeliveredAsDelivered = async () => {
       try {
         for (const convo of undeliveredConvos) {
-          // Fetch messages that are undelivered
+          
           const msgsQuery = query(
             collection(db, 'conversations', convo.id, 'messages'),
             where('senderId', '!=', user.uid)
@@ -743,7 +743,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     setShowScrollBottom(isScrolledUp);
   };
 
-  // Format date/times for conversation cards
+  
   const formatConvoTime = (timestamp) => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -766,7 +766,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
   };
 
-  // Format date separators inside conversation window
+  
   const formatSeparatorTime = (timeMs) => {
     const date = new Date(timeMs);
     const now = new Date();
@@ -786,7 +786,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     return `${dateString} • ${timeString}`;
   };
 
-  // Render typing bouncy dots indicator
+  
   const otherParticipantId = activeChat?.participants?.find(p => p !== user?.uid);
   const isOtherTyping = activeChat?.typing?.[otherParticipantId] === true;
 
@@ -868,7 +868,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
         </div>
       );
     }
-    // Sent, but not delivered or read
+    
     return (
       <svg className={`w-3.5 h-3.5 ${tickColor} shrink-0`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -876,7 +876,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     );
   };
 
-  // Render messages separating them by calendar date groups (Today, Yesterday, Date)
+  
   const renderMessagesWithSeparators = () => {
     const elements = [];
     let lastDateStr = null;
@@ -925,7 +925,7 @@ export default function Messages({ onNavigate, user, initialUserId, showAlert })
     return elements;
   };
 
-  // Render individual message bubble
+  
   const renderMessageBubble = (msg) => {
     const isMine = msg.senderId === user.uid;
     const hasReactions = msg.reactions && Object.keys(msg.reactions).length > 0;

@@ -17,7 +17,7 @@ import { logLoginAttempt } from '../utils/security';
 
 export default function SignIn({ onNavigate, showAlert }) {
   const navigate = useNavigate();
-  // view states: 'signin' | 'forgot' | 'forgot_success'
+  
   const [view, setView] = useState('signin');
   
   const [form, setForm] = useState({ email: '', password: '' });
@@ -26,13 +26,13 @@ export default function SignIn({ onNavigate, showAlert }) {
   const [isLoading, setIsLoading] = useState(false);
   const [lockoutTimeLeft, setLockoutTimeLeft] = useState(0);
 
-  // Field validation states
+  
   const [validation, setValidation] = useState({
     email: { valid: null, msg: '' },
     password: { valid: null, msg: '' }
   });
 
-  // Real-time validation handlers
+  
   const handleEmailChange = (val) => {
     setForm(prev => ({ ...prev, email: val }));
     setError('');
@@ -62,7 +62,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   };
 
-  // Google redirect handler
+  
   useEffect(() => {
     if (!sessionStorage.getItem('nc_google_redirect')) return;
     let isMounted = true;
@@ -94,7 +94,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     return () => { isMounted = false; };
   }, [onNavigate]);
 
-  // Lockout countdown timer
+  
   useEffect(() => {
     const lockoutUntil = localStorage.getItem('login_lockout_until');
     if (lockoutUntil) {
@@ -126,7 +126,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     return () => clearInterval(interval);
   }, [lockoutTimeLeft]);
 
-  // 2FA states & verification
+  
   const [show2fa, setShow2fa] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [tempCredentials, setTempCredentials] = useState(null);
@@ -148,7 +148,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   }, [countdown, show2fa]);
 
-  // Auto-submit when 6 digits are filled
+  
   useEffect(() => {
     if (show2fa && !useBackupCode && verificationCode.length === 6 && !isLoading) {
       const triggerVerify = async () => {
@@ -235,7 +235,7 @@ export default function SignIn({ onNavigate, showAlert }) {
   const handleSignIn = async (e) => {
     e?.preventDefault();
 
-    // Check lockout first
+    
     const lockoutUntil = localStorage.getItem('login_lockout_until');
     if (lockoutUntil && Date.now() < parseInt(lockoutUntil, 10)) {
       const remainingSecs = Math.ceil((parseInt(lockoutUntil, 10) - Date.now()) / 1000);
@@ -244,7 +244,7 @@ export default function SignIn({ onNavigate, showAlert }) {
       return;
     }
 
-    // Run validation on all fields
+    
     const emailVal = validateEmailLocally(form.email);
     const passVal = validatePasswordLocally(form.password);
     setValidation({ email: emailVal, password: passVal });
@@ -474,7 +474,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   };
 
-  // Helper validation class resolver
+  
   const getInputStyles = (field) => {
     const status = validation[field]?.valid;
     const common = "w-full bg-[#1a1a1a] text-white placeholder-gray-500 rounded-xl pl-10 pr-10 py-3 text-sm outline-none border transition-all duration-300 ";

@@ -32,7 +32,7 @@ export type GlobalSettings = {
   categories: string[];
 };
 
-// Log admin action to firestore
+
 export const logAdminAction = async (adminEmail: string, action: string, targetId: string, details: string) => {
   try {
     await apiClient.post("/admin/log", { action, targetId, details });
@@ -41,7 +41,7 @@ export const logAdminAction = async (adminEmail: string, action: string, targetI
   }
 };
 
-// Subscribe to admin logs (limit to 50 for display)
+
 export const subscribeToAdminLogs = (callback: (logs: AdminLog[]) => void) => {
   const q = query(collection(db, COLLECTIONS.ADMIN_LOGS), orderBy("timestamp", "desc"), limit(50));
   return onSnapshot(q, (snap) => {
@@ -55,7 +55,7 @@ export const subscribeToAdminLogs = (callback: (logs: AdminLog[]) => void) => {
   });
 };
 
-// Default settings object
+
 const defaultSettings: GlobalSettings = {
   maintenanceMode: false,
   features: {
@@ -67,14 +67,14 @@ const defaultSettings: GlobalSettings = {
   categories: [...CATEGORIES]
 };
 
-// Subscribe to global platform settings
+
 export const subscribeToGlobalSettings = (callback: (settings: GlobalSettings) => void) => {
   const settingsDocRef = doc(db, COLLECTIONS.SETTINGS, "global");
   return onSnapshot(settingsDocRef, (snap) => {
     if (snap.exists()) {
       callback(snap.data() as GlobalSettings);
     } else {
-      // Initialize with defaults - just callback defaultSettings since client-side setDoc is blocked under 3-tier
+      
       callback(defaultSettings);
     }
   }, (err) => {
@@ -82,7 +82,7 @@ export const subscribeToGlobalSettings = (callback: (settings: GlobalSettings) =
   });
 };
 
-// Update global settings
+
 export const updateGlobalSettings = async (settings: Partial<GlobalSettings>) => {
   try {
     await apiClient.post("/admin/settings", settings);

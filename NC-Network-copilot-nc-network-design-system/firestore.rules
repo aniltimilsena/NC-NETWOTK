@@ -10,8 +10,8 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // FIX #9: Admin SDK (used for admin_logs writes) bypasses these rules entirely.
-    // The write: false rule below is intentional — no client writes permitted.
+    
+    
     function isAdmin() {
       return isSignedIn() && 
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
@@ -29,12 +29,12 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(userId)).data.get('premium', false) == true;
     }
 
-    // FIX #7: profiles read is restricted to authenticated users to protect contact/privacy data.
-    // NOTE: Sensitive fields (fcmToken, fcmTokens, twoFactorBackupCodes, twoFactorSecret)
-    // must NOT be stored on the profiles document. They belong in users/{uid}/private.
-    // The Express server proxy (/api/profiles/:userId) already strips these before returning.
-    // FIX #2: profiles update blocks writing of arbitrary URLs — image/photoURL must be strings.
-    // FIX #1 (partial): profiles does not contain blockedUsers, so no guard needed here.
+    
+    
+    
+    
+    
+    
     match /profiles/{userId} {
       allow read: if isSignedIn();
       allow create, update: if (isOwner(userId) || isAdmin()) &&
@@ -44,12 +44,12 @@ service cloud.firestore {
         !('twoFactorSecret' in request.resource.data) &&
         !('fcmToken' in request.resource.data) &&
         !('fcmTokens' in request.resource.data) &&
-        // FIX #2: Ensure media URL fields are strings (not objects/arrays) if present
+        
         (!('image' in request.resource.data) || request.resource.data.image is string || request.resource.data.image == null) &&
         (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string || request.resource.data.photoURL == null) &&
         (!('coverUrl' in request.resource.data) || request.resource.data.coverUrl is string || request.resource.data.coverUrl == null) &&
         (!('coverPhoto' in request.resource.data) || request.resource.data.coverPhoto is string || request.resource.data.coverPhoto == null) &&
-        // Enforce premium and free upload limits on media array size
+        
         (!('media' in request.resource.data) || (request.resource.data.media is list && request.resource.data.media.size() <= (isPremiumUser(userId) ? 55 : 11)));
       allow delete: if isOwner(userId) || isAdmin();
 
@@ -61,8 +61,8 @@ service cloud.firestore {
       }
     }
 
-    // FIX #1: Users — blockedUsers field can only be written by the owner.
-    // FIX #2: Media URL fields (photoURL) must be strings if present.
+    
+    
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create, update: if (isOwner(userId) || isAdmin()) &&
@@ -70,45 +70,45 @@ service cloud.firestore {
         !('passwordHash' in request.resource.data) &&
         !('passwordReset' in request.resource.data) &&
         (!('isAdmin' in request.resource.data) || isAdmin() || (resource != null && 'isAdmin' in resource.data && request.resource.data.isAdmin == resource.data.isAdmin)) &&
-        // FIX #1: blockedUsers can only be written by the owner (not by admins or other users)
+        
         (isOwner(userId) || !('blockedUsers' in request.resource.data) || (resource != null && 'blockedUsers' in resource.data && request.resource.data.blockedUsers == resource.data.blockedUsers)) &&
-        // FIX #2: photoURL must be a string if present
+        
         (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string || request.resource.data.photoURL == null);
       allow delete: if isOwner(userId) || isAdmin();
       
-      // Sensitive private data in subcollection
+      
       match /private/{document} {
         allow read, write: if isOwner(userId);
       }
     }
 
-    // Conversations
-    // FIX #5: Block enforcement (whether the target has blocked the requester) is enforced
-    // server-side in the Express /api/messaging/conversations route, which checks
-    // blockedUsers before creating. Firestore rules enforce participant membership integrity.
+    
+    
+    
+    
     match /conversations/{convoId} {
       allow read: if isSignedIn() && 
         request.auth.uid in resource.data.participants;
       allow create: if isSignedIn() && !isBanned() && 
         request.auth.uid in request.resource.data.participants;
         
-      // Prevent participants array manipulation
+      
       allow update: if isSignedIn() && !isBanned() && 
         request.auth.uid in resource.data.participants &&
         request.resource.data.participants == resource.data.participants;
         
-      // Only creator or participant can delete entire conversation
+      
       allow delete: if isSignedIn() && !isBanned() && 
         (resource.data.createdBy == request.auth.uid || request.auth.uid in resource.data.participants);
 
-      // FIX #6: Messages field shape validation — prevent arbitrary field injection
+      
       match /messages/{messageId} {
         allow read: if isSignedIn() && 
           request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants;
         allow create: if isSignedIn() && !isBanned() && 
           request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
           request.resource.data.senderId == request.auth.uid &&
-          // FIX #6: Restrict message fields to known-safe keys only
+          
           request.resource.data.keys().hasOnly([
             'senderId', 'text', 'mediaUrl', 'mediaType', 'mediaWidth', 'mediaHeight',
             'mediaDuration', 'createdAt', 'type', 'isSystem', 'status',
@@ -126,10 +126,10 @@ service cloud.firestore {
     }
 
 
-    // Notifications
-    // FIX #4: Added 'system' and 'call_missed' / 'call_ended' to type allowlist.
-    // All client-side notification creates must include senderId == request.auth.uid
-    // OR senderId == 'system' (for system notifications — permitted by the isAdmin OR senderId check).
+    
+    
+    
+    
     match /notifications/{notifId} {
       allow read: if isSignedIn() && 
         (resource.data.userId == request.auth.uid || 
@@ -137,8 +137,8 @@ service cloud.firestore {
          resource.data.receiverId == request.auth.uid);
          
       allow create: if isSignedIn() && !isBanned() && 
-        // Either the sender is the current user, OR it's a system notification marked by admin,
-        // OR senderId is 'system' (used by Settings.jsx system notifications)
+        
+        
         (request.resource.data.senderId == request.auth.uid || 
          request.resource.data.senderId == 'system' ||
          isAdmin()) &&
@@ -154,7 +154,7 @@ service cloud.firestore {
          resource.data.receiverId == request.auth.uid);
     }
  
-    // Casting Calls
+    
     match /casting_calls/{callId} {
       allow read: if true;
       allow create: if isSignedIn() && !isBanned() && 
@@ -163,7 +163,7 @@ service cloud.firestore {
         (resource.data.createdBy == request.auth.uid || isAdmin());
     }
 
-    // Applications
+    
     match /applications/{appId} {
       allow read: if isSignedIn() && 
         (resource.data.userId == request.auth.uid || 
@@ -177,18 +177,18 @@ service cloud.firestore {
         (resource.data.userId == request.auth.uid || isAdmin());
     }
 
-    // FIX #3: Saved Calls — added missing update rule
+    
     match /saved_calls/{saveId} {
       allow read, delete: if isSignedIn() && 
         resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && !isBanned() && 
         request.resource.data.userId == request.auth.uid;
-      // FIX #3: Allow owner to update their own saved calls
+      
       allow update: if isSignedIn() && !isBanned() && 
         resource.data.userId == request.auth.uid;
     }
 
-    // WebRTC Calls
+    
     match /calls/{callId} {
       allow read, update, delete: if isSignedIn() && 
         (resource.data.callerId == request.auth.uid || 
@@ -208,12 +208,12 @@ service cloud.firestore {
       }
     }
 
-    // OTP Codes (2FA) — server Admin SDK only
+    
     match /otpCodes/{userId} {
       allow read, write: if false;
     }
 
-    // Reports
+    
     match /reports/{reportId} {
       allow read: if isAdmin();
       allow create: if isSignedIn() && 
@@ -228,54 +228,54 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // Global Settings
+    
     match /settings/{settingsId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // FIX #9: Admin Logs — write: false is intentional.
-    // All writes go through the Express server using the Firebase Admin SDK,
-    // which bypasses these rules. No client writes are permitted.
+    
+    
+    
     match /admin_logs/{logId} {
       allow read: if isAdmin();
-      allow write: if false; // Admin SDK bypasses this — client writes are blocked intentionally
+      allow write: if false; 
     }
 
-    // FIX #8: Follows — explicit update: false to clarify intent
+    
     match /follows/{followId} {
       allow read: if true;
       allow create: if isSignedIn() && !isBanned() && 
         request.resource.data.followerId == request.auth.uid;
-      allow update: if false; // Follow docs are immutable — delete and recreate if needed
+      allow update: if false; 
       allow delete: if isSignedIn() && !isBanned() && 
         resource.data.followerId == request.auth.uid;
     }
 
-    // Reviews
+    
     match /reviews/{reviewId} {
-      // Anyone can read reviews
+      
       allow read: if true;
 
-      // ✅ Signed-in user can create review
-      // reviewerId must match logged-in user
+      
+      
       allow create: if isSignedIn() && !isBanned() && 
         request.resource.data.reviewerId == request.auth.uid &&
-        // Cannot review yourself
+        
         request.resource.data.targetUserId != request.auth.uid &&
-        // Must have rating between 1-5
+        
         request.resource.data.rating >= 1 &&
         request.resource.data.rating <= 5 &&
-        // Must have review text
+        
         request.resource.data.text is string &&
         request.resource.data.text.size() > 0;
 
-      // Only reviewer can update/delete their own review
+      
       allow update, delete: if isSignedIn() && !isBanned() && 
         resource.data.reviewerId == request.auth.uid;
     }
 
-    // Data Export Requests
+    
     match /data_export_requests/{reqId} {
       allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
       allow create: if isSignedIn() && !isBanned() && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'pending';
@@ -283,28 +283,28 @@ service cloud.firestore {
     }
 
     match /data_requests/{requestId} {
-      // User can read their own requests
+      
       allow read: if isSignedIn() && 
         resource.data.userId == request.auth.uid;
       
-      // User can create their own request
+      
       allow create: if isSignedIn() && !isBanned() && 
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.status == 'pending';
       
-      // Admin can read AND update ALL requests
+      
       allow read, update: if isAdmin();
       
-      // Nobody can delete requests
+      
       allow delete: if false;
     }
 
-    // One-time tokens (server-use only — Admin SDK)
+    
     match /one_time_tokens/{tokenId} {
       allow read, write: if false;
     }
 
-    // Default Deny
+    
     match /{document=**} {
       allow read, write: if false;
     }

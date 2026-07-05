@@ -1,13 +1,6 @@
 import { memo } from 'react';
 
-/**
- * TalentCardSkeleton — Premium shimmer skeleton for the talent listing page.
- *
- * Renders ghost cards that exactly match the final talent card dimensions,
- * spacing, border‑radius, and responsive behaviour — zero CLS when real
- * data arrives. Animations use only transform + opacity (GPU‑composited)
- * and honour prefers‑reduced‑motion.
- */
+
 
 const DEFAULT_COUNT = 10;
 

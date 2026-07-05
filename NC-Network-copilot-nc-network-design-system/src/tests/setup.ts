@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 
-// Polyfill localStorage for jsdom testing
+
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {

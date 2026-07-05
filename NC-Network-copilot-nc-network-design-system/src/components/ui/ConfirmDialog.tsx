@@ -27,19 +27,19 @@ export default function ConfirmDialog({
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  // Focus Trap and Escape key handlers for Accessibility (A11y)
+  
   useEffect(() => {
     if (isOpen) {
       previousFocusRef.current = document.activeElement as HTMLElement;
 
-      // Small timeout to allow element rendering and then set focus
+      
       const timer = setTimeout(() => {
         if (modalRef.current) {
           const focusableElements = modalRef.current.querySelectorAll(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
           );
           if (focusableElements.length > 0) {
-            // Focus cancel (first element) as the safe default focus
+            
             (focusableElements[0] as HTMLElement).focus();
           }
         }
@@ -63,13 +63,13 @@ export default function ConfirmDialog({
           const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
 
           if (e.shiftKey) {
-            // Shift + Tab
+            
             if (document.activeElement === firstElement) {
               lastElement.focus();
               e.preventDefault();
             }
           } else {
-            // Tab
+            
             if (document.activeElement === lastElement) {
               firstElement.focus();
               e.preventDefault();
@@ -89,7 +89,7 @@ export default function ConfirmDialog({
     }
   }, [isOpen, isLoading, onClose]);
 
-  // Determine icon to render
+  
   const getIcon = () => {
     switch (type) {
       case 'danger':

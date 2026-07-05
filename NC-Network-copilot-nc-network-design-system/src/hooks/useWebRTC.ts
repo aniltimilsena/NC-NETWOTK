@@ -12,7 +12,7 @@ import {
   type CallDoc,
 } from "../services/call";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+
 
 export type CallState =
   | "idle"
@@ -59,7 +59,7 @@ interface StartCallParams {
   callType: "audio" | "video";
 }
 
-// ─── Hook ───────────────────────────────────────────────────────────────────
+
 
 export function useWebRTC(): UseWebRTCReturn {
   const [callState, setCallState] = useState<CallState>("idle");
@@ -81,10 +81,10 @@ export function useWebRTC(): UseWebRTCReturn {
   const noAnswerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const remoteCandidatesQueueRef = useRef<RTCIceCandidateInit[]>([]);
 
-  // ─── Cleanup everything ──────────────────────────────────────────────────
+  
 
   const cleanup = useCallback(async () => {
-    // Stop timer
+    
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -94,11 +94,11 @@ export function useWebRTC(): UseWebRTCReturn {
       noAnswerTimerRef.current = null;
     }
 
-    // Unsubscribe all Firestore listeners
+    
     unsubsRef.current.forEach((unsub) => unsub());
     unsubsRef.current = [];
 
-    // Close peer connection
+    
     if (pcRef.current) {
       pcRef.current.ontrack = null;
       pcRef.current.onicecandidate = null;
@@ -108,7 +108,7 @@ export function useWebRTC(): UseWebRTCReturn {
       pcRef.current = null;
     }
 
-    // Stop local media tracks
+    
     if (localStream) {
       localStream.getTracks().forEach((t) => t.stop());
     }
@@ -123,7 +123,7 @@ export function useWebRTC(): UseWebRTCReturn {
     remoteCandidatesQueueRef.current = [];
   }, [localStream]);
 
-  // ─── Get user media ──────────────────────────────────────────────────────
+  
 
   const getUserMedia = useCallback(
     async (callType: "audio" | "video"): Promise<MediaStream> => {
@@ -151,7 +151,7 @@ export function useWebRTC(): UseWebRTCReturn {
       try {
         logger.log("[WebRTC] Requesting media stream with constraints:", constraints);
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        // Explicitly verify and enable all acquired local tracks
+        
         stream.getTracks().forEach((track) => {
           track.enabled = true;
           logger.log("[WebRTC] Local track enabled:", track.kind, "id:", track.id);
@@ -169,7 +169,7 @@ export function useWebRTC(): UseWebRTCReturn {
           };
           logger.log("[WebRTC] Requesting fallback media stream with constraints:", fallbackConstraints);
           const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
-          // Explicitly verify and enable all acquired local tracks
+          
           stream.getTracks().forEach((track) => {
             track.enabled = true;
             logger.log("[WebRTC] Local fallback track enabled:", track.kind, "id:", track.id);
@@ -199,13 +199,13 @@ export function useWebRTC(): UseWebRTCReturn {
     []
   );
 
-  // ─── Create peer connection ──────────────────────────────────────────────
+  
 
   const createPeerConnection = useCallback(
     (stream: MediaStream): RTCPeerConnection => {
       const pc = new RTCPeerConnection(ICE_SERVERS);
 
-      // Ensure all local tracks are enabled and add them to connection
+      
       stream.getTracks().forEach((track) => {
         if (!track.enabled) {
           track.enabled = true;
@@ -214,7 +214,7 @@ export function useWebRTC(): UseWebRTCReturn {
         logger.log("[WebRTC] Added local track to peer connection:", track.kind, "enabled:", track.enabled);
       });
 
-      // Listen for remote tracks and bind directly to the remote stream
+      
       pc.ontrack = (event) => {
         logger.log("[WebRTC] Received remote track:", event.track.kind);
         if (event.track) {
@@ -236,8 +236,8 @@ export function useWebRTC(): UseWebRTCReturn {
           };
         }
 
-        // Use a state accumulator to merge all incoming remote tracks into a single stream.
-        // This resolves issues where tracks are sent separately or stream arrays are empty.
+        
+        
         setRemoteStream((prevStream) => {
           const stream = prevStream || new MediaStream();
           
@@ -260,7 +260,7 @@ export function useWebRTC(): UseWebRTCReturn {
         });
       };
 
-      // Connection state monitoring
+      
       pc.oniceconnectionstatechange = () => {
         const state = pc.iceConnectionState;
         logger.log("[WebRTC] ICE state:", state);
@@ -268,7 +268,7 @@ export function useWebRTC(): UseWebRTCReturn {
         if (state === "connected" || state === "completed") {
           setCallState("connected");
           callStateRef.current = "connected";
-          // Start duration timer
+          
           if (!timerRef.current) {
             const start = Date.now();
             timerRef.current = setInterval(() => {
@@ -279,7 +279,7 @@ export function useWebRTC(): UseWebRTCReturn {
           setErrorMessage("Connection failed. Please try again.");
           setCallState("error");
         } else if (state === "disconnected") {
-          // Give it a moment to reconnect before erroring
+          
           setTimeout(() => {
             if (pc.iceConnectionState === "disconnected" && pcRef.current === pc) {
               setErrorMessage("Call disconnected due to network issues.");
@@ -295,7 +295,7 @@ export function useWebRTC(): UseWebRTCReturn {
     []
   );
 
-  // ─── Start call (caller) ─────────────────────────────────────────────────
+  
 
   const startCall = useCallback(
     async (params: StartCallParams, preAcquiredStream?: MediaStream) => {
@@ -306,7 +306,7 @@ export function useWebRTC(): UseWebRTCReturn {
         setCallState("creating-offer");
 
         const candidateQueue: RTCIceCandidateInit[] = [];
-        // ICE candidate handler — set BEFORE setLocalDescription to catch early candidates
+        
         pc.onicecandidate = (event) => {
           if (event.candidate) {
             const cand = event.candidate.toJSON();
@@ -318,11 +318,11 @@ export function useWebRTC(): UseWebRTCReturn {
           }
         };
 
-        // Create offer
+        
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
 
-        // Store call in Firestore
+        
         const { callId, error } = await createCall({
           ...params,
           offer: { type: offer.type!, sdp: offer.sdp! },
@@ -345,12 +345,12 @@ export function useWebRTC(): UseWebRTCReturn {
         setCallState("calling");
         callStateRef.current = "calling";
 
-        // Flush queued local candidates
+        
         for (const cand of candidateQueue) {
           addIceCandidate(callId, "caller", cand);
         }
 
-        // Listen for answer from callee
+        
         const unsubCall = subscribeToCall(callId, async (callDoc) => {
           if (!callDoc || callDoc.status === "rejected" || callDoc.status === "no-answer" || callDoc.status === "ended") {
             setCallState("ended");
@@ -366,7 +366,7 @@ export function useWebRTC(): UseWebRTCReturn {
               setCallState("connecting");
               callStateRef.current = "connecting";
 
-              // Process queued remote candidates
+              
               while (remoteCandidatesQueueRef.current.length > 0) {
                 const cand = remoteCandidatesQueueRef.current.shift();
                 if (cand) {
@@ -382,7 +382,7 @@ export function useWebRTC(): UseWebRTCReturn {
         });
         unsubsRef.current.push(unsubCall);
 
-        // Listen for callee ICE candidates
+        
         const unsubICE = subscribeToIceCandidates(
           callId,
           "caller",
@@ -400,9 +400,9 @@ export function useWebRTC(): UseWebRTCReturn {
         );
         unsubsRef.current.push(unsubICE);
 
-        // No-answer timeout (30 seconds)
+        
         noAnswerTimerRef.current = setTimeout(async () => {
-          // Use ref instead of stale closure to get current call state
+          
           if (callStateRef.current === "calling") {
             await updateCallStatus(callId, "no-answer");
             setCallState("ended");
@@ -421,7 +421,7 @@ export function useWebRTC(): UseWebRTCReturn {
     [getUserMedia, createPeerConnection, cleanup]
   );
 
-  // ─── Answer call (callee) ────────────────────────────────────────────────
+  
 
   const answerCall = useCallback(
     async (callDoc: CallDoc, preAcquiredStream?: MediaStream) => {
@@ -435,13 +435,13 @@ export function useWebRTC(): UseWebRTCReturn {
         setCallState("connecting");
         callStateRef.current = "connecting";
 
-        // Set the remote description (offer)
+        
         if (callDoc.offer) {
           await pc.setRemoteDescription(
             new RTCSessionDescription(callDoc.offer)
           );
 
-          // Process queued remote candidates
+          
           while (remoteCandidatesQueueRef.current.length > 0) {
             const cand = remoteCandidatesQueueRef.current.shift();
             if (cand) {
@@ -452,24 +452,24 @@ export function useWebRTC(): UseWebRTCReturn {
           }
         }
 
-        // ICE candidate handler — set BEFORE setLocalDescription to catch early candidates
+        
         pc.onicecandidate = (event) => {
           if (event.candidate) {
             addIceCandidate(callDoc.id, "callee", event.candidate.toJSON());
           }
         };
 
-        // Create answer
+        
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
-        // Store answer in Firestore
+        
         await setCallAnswer(callDoc.id, {
           type: answer.type!,
           sdp: answer.sdp!,
         });
 
-        // Listen for caller ICE candidates
+        
         const unsubICE = subscribeToIceCandidates(
           callDoc.id,
           "callee",
@@ -487,7 +487,7 @@ export function useWebRTC(): UseWebRTCReturn {
         );
         unsubsRef.current.push(unsubICE);
 
-        // Monitor call status for remote hangup
+        
         const unsubCall = subscribeToCall(callDoc.id, async (doc) => {
           if (!doc || doc.status === "ended") {
             setCallState("ended");
@@ -506,13 +506,13 @@ export function useWebRTC(): UseWebRTCReturn {
     [getUserMedia, createPeerConnection, cleanup, callState]
   );
 
-  // ─── End call ────────────────────────────────────────────────────────────
+  
 
   const endCall = useCallback(async () => {
     const callId = callIdRef.current;
     if (callId) {
       await updateCallStatus(callId, "ended");
-      // Clean up Firestore after a delay to allow the other peer to see the status
+      
       setTimeout(() => cleanupCall(callId), 5000);
     }
     setCallState("ended");
@@ -520,7 +520,7 @@ export function useWebRTC(): UseWebRTCReturn {
     callIdRef.current = null;
   }, [cleanup]);
 
-  // ─── Toggle mute ─────────────────────────────────────────────────────────
+  
 
   const toggleMute = useCallback(() => {
     if (localStream) {
@@ -531,7 +531,7 @@ export function useWebRTC(): UseWebRTCReturn {
     }
   }, [localStream]);
 
-  // ─── Toggle video ────────────────────────────────────────────────────────
+  
 
   const toggleVideo = useCallback(() => {
     if (localStream) {
@@ -542,7 +542,7 @@ export function useWebRTC(): UseWebRTCReturn {
     }
   }, [localStream]);
 
-  // ─── Switch camera (mobile) ──────────────────────────────────────────────
+  
 
   const switchCamera = useCallback(async () => {
     if (!localStream || !pcRef.current) return;
@@ -559,7 +559,7 @@ export function useWebRTC(): UseWebRTCReturn {
       });
       const newTrack = newStream.getVideoTracks()[0];
 
-      // Replace track in peer connection
+      
       const sender = pcRef.current
         .getSenders()
         .find((s) => s.track?.kind === "video");
@@ -567,7 +567,7 @@ export function useWebRTC(): UseWebRTCReturn {
         await sender.replaceTrack(newTrack);
       }
 
-      // Replace track in local stream
+      
       videoTrack.stop();
       localStream.removeTrack(videoTrack);
       localStream.addTrack(newTrack);
@@ -582,12 +582,12 @@ export function useWebRTC(): UseWebRTCReturn {
     callStateRef.current = "idle";
   }, []);
 
-  // Keep callStateRef updated to avoid stale closure issues
+  
   useEffect(() => {
     callStateRef.current = callState;
   }, [callState]);
 
-  // Cleanup on unmount
+  
   useEffect(() => {
     return () => {
       cleanup();

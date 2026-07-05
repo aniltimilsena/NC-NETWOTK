@@ -14,7 +14,7 @@ import { subscribeToCastingCalls } from '../services/casting';
 
 
 
-// Category colors and icons are now sourced from src/config/categories.tsx
+
 
 export default function Home({ onNavigate, user }) {
   const isLoggedIn = !!user;
@@ -106,13 +106,13 @@ export default function Home({ onNavigate, user }) {
     let unsubUsers = () => {};
     let unsubCalls = () => {};
 
-    // Initial loading timeout as fallback
+    
     const loaderTimeout = setTimeout(() => setIsLoading(false), 3000);
 
     try {
       unsubUsers = subscribeToTalents((data) => {
         setTalents(data);
-        setIsLoading(false); // Clear as soon as we have any data
+        setIsLoading(false); 
       });
       
       unsubCalls = subscribeToCastingCalls('All', (data, error) => {
@@ -137,7 +137,7 @@ export default function Home({ onNavigate, user }) {
     };
   }, []);
 
-  // ── Delayed category reveal for skeleton → real transition ──────────────
+  
   useEffect(() => {
     if (!isLoading) {
       const t = setTimeout(() => setCategoriesReady(true), 80);
@@ -147,7 +147,7 @@ export default function Home({ onNavigate, user }) {
   }, [isLoading]);
 
 
-  // ── Auto-scroll for Casting Strip ────────────────────────────────────────
+  
   const [shouldScroll, setShouldScroll] = useState(false);
 
   useEffect(() => {
@@ -155,7 +155,7 @@ export default function Home({ onNavigate, user }) {
     if (!container || castingCalls.length === 0) return;
 
     const checkScroll = () => {
-      // We only want to scroll if the content is wider than the container
+      
       setShouldScroll(container.scrollWidth > container.offsetWidth);
     };
 
@@ -174,7 +174,7 @@ export default function Home({ onNavigate, user }) {
 
     const animate = () => {
       scrollPos += speed;
-      // Loop point is halfway if duplicated, otherwise at the end
+      
       const loopPoint = castingCalls.length > 3 ? container.scrollWidth / 2 : container.scrollWidth - container.offsetWidth;
       
       if (scrollPos >= loopPoint) {
@@ -190,7 +190,7 @@ export default function Home({ onNavigate, user }) {
 
 
 
-  // Get top 10 trending talents for hero rotation
+  
   const trendingList = talents
     .filter(t => !t.deactivated)
     .sort((a, b) => {
@@ -209,7 +209,7 @@ export default function Home({ onNavigate, user }) {
     const interval = setInterval(() => {
       setCurrentPremiumIdx(prev => {
         let next = Math.floor(Math.random() * trendingList.length);
-        // Avoid repeating the same index if possible
+        
         if (trendingList.length > 1) {
           while (next === prev) {
             next = Math.floor(Math.random() * trendingList.length);
@@ -528,7 +528,7 @@ export default function Home({ onNavigate, user }) {
             <div className="flex flex-wrap gap-3 sm:gap-4">
               {categories?.map((cat, idx) => {
                 const categoryColor = cat.color;
-                const CatIcon = cat.icon; // must be capitalized for JSX
+                const CatIcon = cat.icon; 
                 return (
                   <button
                     key={cat.id}

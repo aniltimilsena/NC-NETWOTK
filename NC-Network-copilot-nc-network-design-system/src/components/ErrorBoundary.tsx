@@ -29,7 +29,7 @@ export default class ErrorBoundary extends Component<Props, State> {
       errorMsg.includes("Importing a module script failed") ||
       errorMsg.includes("error loading dynamically imported module");
 
-    // Extract chunk URL if possible
+    
     let chunkUrl = "Unknown URL";
     const match = errorMsg.match(/https?:\/\/[^\s"']+/);
     if (match) {
@@ -40,10 +40,10 @@ export default class ErrorBoundary extends Component<Props, State> {
     try {
       localVersion = __BUILD_VERSION__;
     } catch {
-      // Fallback if __BUILD_VERSION__ is not defined
+      
     }
 
-    // Detailed diagnostics logging in development only
+    
     if (import.meta.env.DEV) {
       console.error("NC Network ErrorBoundary caught an uncaught error:", {
         message: errorMsg,
@@ -56,14 +56,14 @@ export default class ErrorBoundary extends Component<Props, State> {
       });
     }
 
-    // Log error to server
+    
     this.logError(error, errorInfo);
 
     if (isChunkLoadFailed) {
       const lastReloaded = sessionStorage.getItem("chunk_fail_reload_time");
       const now = Date.now();
       
-      // If we haven't reloaded in the last 15 seconds, perform a hard cache-busting reload
+      
       if (!lastReloaded || now - parseInt(lastReloaded, 10) > 15000) {
         sessionStorage.setItem("chunk_fail_reload_time", now.toString());
         console.warn("Dynamic import failure detected in ErrorBoundary. Auto-reloading page with cache-busting...");
@@ -97,7 +97,7 @@ export default class ErrorBoundary extends Component<Props, State> {
         }),
       });
     } catch {
-      // Silent fail — don't crash while reporting crash
+      
     }
   }
 
@@ -108,7 +108,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   private handleReload = () => {
-    // Clear retry flags to allow a fresh retry
+    
     sessionStorage.clear();
     const url = new URL(window.location.href);
     url.searchParams.set('reload', Date.now().toString());
@@ -137,7 +137,7 @@ export default class ErrorBoundary extends Component<Props, State> {
       try {
         localVersion = __BUILD_VERSION__;
       } catch {
-        // Fallback if __BUILD_VERSION__ is not defined
+        
       }
 
       return (
@@ -148,7 +148,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           
           <div className="max-w-md w-full bg-[#111118]/80 backdrop-blur-xl border border-white/5 rounded-3xl p-8 shadow-2xl space-y-6 relative z-10">
             {isChunkLoadFailed ? (
-              // Case 1: Chunk Loading Failure (System Update required)
+              
               <>
                 <div className="w-16 h-16 rounded-2xl bg-sky-500/10 text-sky-400 flex items-center justify-center mx-auto mb-4 border border-sky-500/20 animate-pulse">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -163,7 +163,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 </div>
               </>
             ) : (
-              // Case 2: Runtime Crash
+              
               <>
                 <div className="w-16 h-16 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center mx-auto mb-4 border border-red-500/20">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">

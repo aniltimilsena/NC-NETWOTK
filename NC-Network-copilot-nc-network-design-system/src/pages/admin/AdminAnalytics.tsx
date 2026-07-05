@@ -15,7 +15,7 @@ export default function AdminAnalytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Funnel Aggregation (Simplified for demo, usually done on backend)
+    
     const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
       const docs = snap.docs.map(d => d.data());
       setFunnelData({

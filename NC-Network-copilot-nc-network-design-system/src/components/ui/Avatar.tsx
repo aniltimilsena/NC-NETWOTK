@@ -25,10 +25,10 @@ export default function Avatar(props: AvatarProps) {
     user: propUser
   } = props;
 
-  // Try to read user and functions from context if available
+  
   const context = useContext(UserContext);
 
-  // If user, src, or name is explicitly passed (even if undefined), do not automatically fall back to the logged-in user context
+  
   const isExplicit = 'user' in props || 'src' in props || 'name' in props;
   const user = propUser || ((isExplicit && !editable) ? null : context?.user);
   const updateAvatar = context?.updateAvatar;
@@ -44,7 +44,7 @@ export default function Avatar(props: AvatarProps) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Resolve active source URL
+  
   const resolvedSrc = propSrc !== undefined ? propSrc : (user?.photoURL || user?.profileImage || user?.image || null);
 
   const isDefaultImage = (url?: string | null) => {
@@ -59,13 +59,13 @@ export default function Avatar(props: AvatarProps) {
   const hasPhoto = resolvedSrc && !isDefaultImage(resolvedSrc) && !imageError;
   const currentSrc = previewSrc || (hasPhoto ? resolvedSrc : null);
 
-  // Reset states on src change
+  
   useEffect(() => {
     setImageError(false);
     setPreviewSrc(null);
   }, [resolvedSrc]);
 
-  // Standard sizes mapping
+  
   const sizes: Record<string, string> = {
     xs: 'w-6 h-6 text-[8px]',
     sm: 'w-8 h-8 text-[10px]',
@@ -80,30 +80,30 @@ export default function Avatar(props: AvatarProps) {
   const sizeClass = isNumberSize ? '' : (sizes[size] || sizes.md);
   const sizeStyle = isNumberSize ? { width: `${size}px`, height: `${size}px` } : {};
 
-  // Custom alert dispatcher
+  
   const triggerToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     window.dispatchEvent(new CustomEvent('nc-alert', { detail: { message, type } }));
   };
 
-  // Upload handler
+  
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate size (max 5MB)
+    
     if (file.size > 5 * 1024 * 1024) {
       triggerToast("Photo exceeds the 5MB size limit.", "error");
       return;
     }
 
-    // Validate format
+    
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       triggerToast("Only JPG, PNG, and WEBP formats are allowed.", "error");
       return;
     }
 
-    // Open crop tool
+    
     const reader = new FileReader();
     reader.onload = () => {
       setCropSrc(reader.result as string);
@@ -116,7 +116,7 @@ export default function Avatar(props: AvatarProps) {
     setCropSrc(null);
     if (!user?.uid || !updateAvatar) return;
 
-    // Generate local preview immediately
+    
     const reader = new FileReader();
     reader.onload = () => {
       setPreviewSrc(reader.result as string);
@@ -147,7 +147,7 @@ export default function Avatar(props: AvatarProps) {
     }
   };
 
-  // Delete handler
+  
   const handleConfirmDelete = async () => {
     setConfirmDeleteOpen(false);
     setUploading(true);
@@ -165,7 +165,7 @@ export default function Avatar(props: AvatarProps) {
     }
   };
 
-  // Avatar wrapper click
+  
   const handleAvatarClick = () => {
     if (!editable || uploading) return;
     if (hasPhoto) {

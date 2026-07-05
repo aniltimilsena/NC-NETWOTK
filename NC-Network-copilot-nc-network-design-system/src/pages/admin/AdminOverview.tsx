@@ -15,7 +15,7 @@ export default function AdminOverview() {
   const [registrationDates, setRegistrationDates] = useState<Date[]>([]);
 
   useEffect(() => {
-    // Real-time counts
+    
     const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
       const all = snap.size;
       const pro = snap.docs.filter(d => d.data().premium).length;
@@ -54,10 +54,10 @@ export default function AdminOverview() {
 
     const startDate = new Date(now.getTime() - daysLimit * 24 * 60 * 60 * 1000);
 
-    // Filter dates within the period
+    
     const filteredDates = registrationDates.filter(d => d >= startDate);
 
-    // Group by day
+    
     const dayBuckets: Record<string, number> = {};
     for (let i = 0; i <= daysLimit; i++) {
       const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
@@ -72,7 +72,7 @@ export default function AdminOverview() {
       }
     });
 
-    // Generate cumulative count over the period
+    
     let cumulative = registrationDates.filter(d => d < startDate).length;
     const dataPoints: { x: number; y: number; label: string; count: number }[] = [];
 
@@ -83,25 +83,25 @@ export default function AdminOverview() {
       cumulative += dayBuckets[key];
       dataPoints.push({
         x: idx * stepX,
-        y: cumulative, // raw count, will scale later
+        y: cumulative, 
         label: key,
         count: cumulative
       });
     });
 
-    // Scale Y coordinates (between 180 for min, 40 for max)
+    
     const countsList = dataPoints.map(p => p.count);
     const maxVal = Math.max(...countsList, 0); 
     const minVal = Math.min(...countsList, 0);
     const range = maxVal - minVal || 1;
 
     const scaledPoints = dataPoints.map(p => {
-      // 180 is bottom, 40 is top
+      
       const y = 180 - ((p.count - minVal) / range) * 140;
       return { ...p, y };
     });
 
-    // Build SVG Path
+    
     let pathD = '';
     let areaD = '';
 
@@ -110,7 +110,7 @@ export default function AdminOverview() {
       for (let i = 1; i < scaledPoints.length; i++) {
         const prev = scaledPoints[i - 1];
         const curr = scaledPoints[i];
-        // Curved path using cubic bezier controls
+        
         const cpX1 = prev.x + (curr.x - prev.x) / 3;
         const cpY1 = prev.y;
         const cpX2 = prev.x + 2 * (curr.x - prev.x) / 3;

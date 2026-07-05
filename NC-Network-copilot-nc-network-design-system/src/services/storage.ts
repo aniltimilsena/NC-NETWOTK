@@ -12,7 +12,7 @@ export const uploadFile = async (
     throw new Error("Authentication is required for uploads");
   }
 
-  // Validate path authorizations
+  
   const isProfilePath = path.startsWith(`profiles/${uid}/`);
   const isMediaPath = path.startsWith(`media/${uid}/`);
   const isCastingPath = path.startsWith(`castings/`);
@@ -27,7 +27,7 @@ export const uploadFile = async (
 
   let fileToUpload = file;
 
-  // Type & size validations based on target folder
+  
   if (isProfilePath) {
     if (!isImage) {
       throw new Error("Invalid file type. Please use JPG, PNG or WEBP");
@@ -74,7 +74,7 @@ export const uploadFile = async (
     }
   }
 
-  // Compress images before upload (max size 1MB, max width 1200px, quality 80%)
+  
   if (isImage && file.type !== "image/gif") {
     try {
       const options = {
@@ -88,7 +88,7 @@ export const uploadFile = async (
     }
   }
 
-  // Direct upload to Cloudinary (replacing Firebase Storage)
+  
   let folder = "general";
   if (isProfilePath) {
     folder = `avatars/${uid}`;

@@ -16,12 +16,12 @@ import Avatar from '../components/ui/Avatar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { CATEGORIES } from '../constants/categories';
 
-// Unified premium toggle style
+
 const GoldenToggle = ({ enabled, onChange }) => (
   <NeonToggle enabled={enabled} onChange={onChange} />
 );
 
-// Consistent styled input field
+
 const EditInput = ({ label, type = 'text', placeholder, value, onChange, icon, readOnly = false }) => (
   <div className="mb-4 text-left">
     {label && <label className="block text-[#888] text-[10px] font-bold uppercase tracking-[1px] mb-2">{label}</label>}
@@ -39,7 +39,7 @@ const EditInput = ({ label, type = 'text', placeholder, value, onChange, icon, r
   </div>
 );
 
-// Consistent styled textarea with character counter
+
 const EditTextarea = ({ label, placeholder, value, onChange, rows = 4, charCount = null }) => (
   <div className="mb-4 text-left">
     <div className="flex justify-between items-center mb-2">
@@ -56,7 +56,7 @@ const EditTextarea = ({ label, placeholder, value, onChange, rows = 4, charCount
   </div>
 );
 
-// Consistent styled select dropdown
+
 const EditSelect = ({ label, options, value, onChange, placeholder }) => (
   <div className="mb-4 text-left">
     {label && <label className="block text-[#888] text-[10px] font-bold uppercase tracking-[1px] mb-2">{label}</label>}
@@ -78,7 +78,7 @@ const EditSelect = ({ label, options, value, onChange, placeholder }) => (
   </div>
 );
 
-// Autocomplete Location Input Component
+
 const AutocompleteLocationInput = ({ label, value, onChange, icon }) => {
   const [queryVal, setQueryVal] = useState(value || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -156,7 +156,7 @@ const AutocompleteLocationInput = ({ label, value, onChange, icon }) => {
   );
 };
 
-// Premium Save Button Component
+
 const SaveButton = ({ hasChanges, isSaving, onSave, saveSuccess }) => (
   <button
     type="button"
@@ -186,8 +186,8 @@ const SaveButton = ({ hasChanges, isSaving, onSave, saveSuccess }) => (
   </button>
 );
 
-// Legacy compat wrappers
-// Chip Tag for skills/expertise
+
+
 const ChipTag = ({ label, onRemove }) => (
   <motion.div
     initial={{ scale: 0.85, opacity: 0 }}
@@ -206,7 +206,7 @@ const ChipTag = ({ label, onRemove }) => (
   </motion.div>
 );
 
-// Experience Card for Edit mode
+
 const ExperienceEditCard = ({ exp, idx, onChange, onRemove }) => (
   <motion.div
     initial={{ y: 12, opacity: 0 }}
@@ -258,7 +258,7 @@ const ExperienceEditCard = ({ exp, idx, onChange, onRemove }) => (
   </motion.div>
 );
 
-// Premium Neon Toggle Switch (sky-blue accent)
+
 const NeonToggle = ({ enabled, onChange }) => (
   <button
     type="button"
@@ -358,7 +358,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     return 'about';
   });
 
-  // Sync state if initialTab prop changes (e.g. via navigation)
+  
   useEffect(() => {
     if (initialTab) {
       if (initialTab === 'premium' && isUserAdmin) {
@@ -383,7 +383,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     }
   }, [initialTab, isUserAdmin]);
   
-  // Parse name into first and last if possible
+  
   const displayName = user?.displayName || "";
   const nameParts = displayName ? displayName.split(" ") : [];
   const defaultFirstName = nameParts[0] || "";
@@ -398,7 +398,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [isSaving, setIsSaving] = useState(false);
   const isSavingRef = useRef(false);
 
-  // Appearance Settings
+  
   const [fontSize, setFontSize] = useState(() => localStorage.getItem('nc_font_size') || 'small');
   const handleFontSizeChange = (size) => {
     setFontSize(size);
@@ -423,14 +423,14 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     }
   };
 
-  // Data Control States/Functions
+  
   const [latestDataRequest, setLatestDataRequest] = useState(null);
   const isExporting = latestDataRequest?.status === 'pending' || latestDataRequest?.status === 'processing';
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [verificationPassword, setVerificationPassword] = useState('');
   const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
 
-  // Subscribe to latest data export request
+  
   useEffect(() => {
     if (!user?.uid) return;
     const q = query(
@@ -473,7 +473,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
         return;
       }
 
-      // Password validated successfully, create pending request in Firestore
+      
       await addDoc(collection(db, COLLECTIONS.DATA_EXPORT_REQUESTS), {
         uid: user.uid,
         userId: user.uid,
@@ -510,7 +510,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
         try {
-          // Update profile deactivated flag
+          
           await updateDoc(doc(db, "profiles", user.uid), {
             deactivated: true,
             updatedAt: serverTimestamp()
@@ -519,7 +519,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
           showToast("Profile deactivated. Signing out...", "success");
 
-          // Sign out
+          
           setTimeout(async () => {
             await auth.signOut();
             onNavigate('home');
@@ -536,7 +536,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
 
 
-  // Identity States
+  
   const [fName, setFName] = useState("");
   const [lName, setLName] = useState("");
   const [displayNameState, setDisplayNameState] = useState("");
@@ -544,12 +544,12 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [phone, setPhone] = useState("");
   const [gender, setGender] = useState("");
   
-  // Avatar Upload State
+  
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarLastFile, setAvatarLastFile] = useState(null);
   const [isPremium, setIsPremium] = useState(false);
 
-  // Profile States
+  
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [selectedLanguages, setSelectedLanguages] = useState([]);
@@ -570,17 +570,17 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   
-  // Show/hide password toggles
+  
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [signOutOthersAfterPasswordChange, setSignOutOthersAfterPasswordChange] = useState(false);
 
-  // Connected accounts and login history
+  
   const [providers, setProviders] = useState([]);
   const [loginHistory, setLoginHistory] = useState([]);
 
-  // Account deletion states
+  
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleteConfirmPassword, setDeleteConfirmPassword] = useState("");
@@ -589,7 +589,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [whoCanMessage, setWhoCanMessage] = useState("connections");
   const [profileVisibility, setProfileVisibility] = useState("public");
 
-  // Notifications states
+  
   const [notifMessages, setNotifMessages] = useState(true);
   const [notifTyping, setNotifTyping] = useState(false);
   const [notifCasting, setNotifCasting] = useState(true);
@@ -663,7 +663,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     };
   }, [user?.uid]);
 
-  // OneSignal Push Subscription state listener
+  
   useEffect(() => {
     const checkSubscription = () => {
       const OneSignal = window.OneSignal;
@@ -672,7 +672,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       }
     };
 
-    // Poll every 2 seconds to keep React state perfectly synced with OneSignal
+    
     const checkInterval = setInterval(checkSubscription, 2000);
     checkSubscription();
 
@@ -691,15 +691,15 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     try {
       if (notifOneSignalSubscribed) {
         await OneSignal.User.PushSubscription.optOut();
-        setNotifOneSignalSubscribed(false); // Update React UI immediately
+        setNotifOneSignalSubscribed(false); 
         showToast("Successfully unsubscribed from push notifications.", "success");
       } else {
-        // Request native notification permission first
+        
         if (OneSignal.Notifications) {
           await OneSignal.Notifications.requestPermission();
         }
         await OneSignal.User.PushSubscription.optIn();
-        // Check state after a brief delay
+        
         setTimeout(() => {
           if (OneSignal && OneSignal.User && OneSignal.User.PushSubscription) {
             const isSubbed = OneSignal.User.PushSubscription.optedIn;
@@ -798,7 +798,7 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       console.error('[Settings] unexpected error during save:', err);
       showToast('Failed to save. Try again', 'error');
     } finally {
-      // Small delay before allowing snapshot updates to avoid overwriting with stale data
+      
       setTimeout(() => {
         isSavingRef.current = false;
         setIsSaving(false);
@@ -888,12 +888,12 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
     }
   };
 
-  // Example Settings State
+  
   const [searchVisibility, setSearchVisibility] = useState(true);
   const [twoFactor, setTwoFactor] = useState(false);
   const [sessions, setSessions] = useState([]);
 
-  // 2FA states
+  
   const [twoFactorMethod, setTwoFactorMethod] = useState("");
   const [twoFactorPhone, setTwoFactorPhone] = useState("");
   const [twoFactorEmail, setTwoFactorEmail] = useState("");

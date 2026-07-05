@@ -1,5 +1,5 @@
-// api/proxy.js
-// Uses ES module syntax to prevent ES module scope crashes on Vercel.
+
+
 
 const targetUrl = process.env.SERVER_URL || 'http://localhost:5000/api';
 
@@ -8,13 +8,13 @@ export default async function handler(req, res) {
     console.warn('SERVER_URL environment variable is not configured. Falling back to localhost.');
   }
 
-  // Remove the '/api' prefix and forward to the server URL
+  
   const path = req.url.replace(/^\/api/, '');
   const destUrl = `${targetUrl.replace(/\/$/, '')}${path}`;
 
   try {
     const headers = { ...req.headers };
-    // Remove host header to avoid SSL certificate issues
+    
     delete headers.host;
 
     const options = {
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       headers,
     };
 
-    // Forward the request body stream for non-GET/HEAD methods
+    
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       const chunks = [];
       for await (const chunk of req) {
@@ -33,14 +33,14 @@ export default async function handler(req, res) {
 
     const response = await fetch(destUrl, options);
     
-    // Copy response headers to Vercel's response
+    
     response.headers.forEach((value, name) => {
       res.setHeader(name, value);
     });
 
     res.status(response.status);
 
-    // Read the response buffer and send it
+    
     const buffer = await response.arrayBuffer();
     res.send(Buffer.from(buffer));
   } catch (error) {
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
   }
 }
 
-// Disable body parsing so that req can be streamed directly to the backend
+
 export const config = {
   api: {
     bodyParser: false,

@@ -1,6 +1,6 @@
-// api/data-requests-reject.js
-// Reads requestId from req.query.requestId (set by vercel.json rewrite)
-// Uses ES module syntax to prevent ES module scope crashes on Vercel.
+
+
+
 
 import admin from 'firebase-admin';
 import * as jose from 'jose';
@@ -57,7 +57,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Security Headers
+  
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -74,13 +74,13 @@ export default async function handler(req, res) {
     return res.status(authErr.status || 401).json({ error: authErr.message });
   }
 
-  // Validate and sanitize requestId query parameter
+  
   const requestId = req.query?.requestId;
   if (!requestId || typeof requestId !== 'string' || requestId.trim().length === 0 || requestId.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(requestId)) {
     return res.status(400).json({ error: 'Invalid requestId parameter' });
   }
 
-  // Read body securely
+  
   const body = await new Promise((resolve) => {
     let data = '';
     req.on('data', (chunk) => { data += chunk; });
@@ -88,7 +88,7 @@ export default async function handler(req, res) {
     req.on('error', () => resolve({}));
   });
 
-  // Strict validation on rejection reason
+  
   const reason = body?.reason;
   if (!reason || typeof reason !== 'string' || reason.trim().length < 5 || reason.length > 500) {
     return res.status(400).json({ error: 'Rejection reason is required (min 5, max 500 chars)' });

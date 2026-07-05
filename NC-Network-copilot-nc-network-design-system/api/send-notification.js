@@ -1,9 +1,9 @@
-// api/send-notification.js
-// Uses ES module syntax to prevent ES module scope crashes on Vercel.
+
+
 
 import admin from 'firebase-admin';
 
-// Initialize admin SDK using the project ID
+
 if (!admin.apps.length) {
   admin.initializeApp({
     projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'nc-network-10d0b'
@@ -11,7 +11,7 @@ if (!admin.apps.length) {
 }
 
 export default async function handler(req, res) {
-  // SECURITY FIX: Restrict CORS to known origins instead of wildcard
+  
   const allowedOrigins = [
     'https://nc-netwotk.vercel.app',
     'http://localhost:5173',
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Security Headers
+  
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 
     const idToken = authHeader.split('Bearer ')[1];
     
-    // Verify Firebase ID Token securely
+    
     let decodedToken;
     try {
       decodedToken = await admin.auth().verifyIdToken(idToken);
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
     const senderId = decodedToken.uid;
     const { convoId, senderName, previewText, otherParticipants } = req.body;
 
-    // Strict input validation and sanitization
+    
     if (
       !convoId || typeof convoId !== 'string' || convoId.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(convoId) ||
       !senderName || typeof senderName !== 'string' || senderName.length > 100 ||
@@ -68,20 +68,20 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Bad Request: Invalid or missing parameters' });
     }
 
-    // Verify otherParticipants are valid user IDs
+    
     for (const uid of otherParticipants) {
       if (typeof uid !== 'string' || uid.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(uid)) {
         return res.status(400).json({ error: 'Bad Request: Invalid recipient format' });
       }
     }
 
-    // Double check that sender is not notifying themselves
+    
     const recipients = otherParticipants.filter(uid => uid !== senderId);
     if (recipients.length === 0) {
       return res.status(200).json({ success: true, message: 'No recipients to notify' });
     }
 
-    // Send OneSignal push notification
+    
     const appId = process.env.ONESIGNAL_APP_ID || 'a9962176-972c-4874-8161-ec84428e9036';
     const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
 

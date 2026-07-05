@@ -1,15 +1,12 @@
-// Ringtone synthesizer using Web Audio API
-// No external audio file required — generates a premium-sounding ring
+
+
 
 let audioContext: AudioContext | null = null;
 let ringInterval: ReturnType<typeof setInterval> | null = null;
 
-/**
- * Play a looping ringtone for incoming calls.
- * Uses a dual-tone pattern similar to modern phone ringtones.
- */
+
 export const playRingtone = () => {
-  stopRingtone(); // Prevent overlapping
+  stopRingtone(); 
 
   try {
     audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -17,11 +14,11 @@ export const playRingtone = () => {
     const playRingBurst = () => {
       if (!audioContext) return;
 
-      // First tone
+      
       const osc1 = audioContext.createOscillator();
       const gain1 = audioContext.createGain();
       osc1.type = "sine";
-      osc1.frequency.setValueAtTime(440, audioContext.currentTime); // A4
+      osc1.frequency.setValueAtTime(440, audioContext.currentTime); 
       gain1.gain.setValueAtTime(0, audioContext.currentTime);
       gain1.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
       gain1.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.4);
@@ -30,11 +27,11 @@ export const playRingtone = () => {
       osc1.start(audioContext.currentTime);
       osc1.stop(audioContext.currentTime + 0.4);
 
-      // Second tone (slightly higher, 50ms offset)
+      
       const osc2 = audioContext.createOscillator();
       const gain2 = audioContext.createGain();
       osc2.type = "sine";
-      osc2.frequency.setValueAtTime(554.37, audioContext.currentTime + 0.5); // C#5
+      osc2.frequency.setValueAtTime(554.37, audioContext.currentTime + 0.5); 
       gain2.gain.setValueAtTime(0, audioContext.currentTime + 0.5);
       gain2.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.55);
       gain2.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.9);
@@ -44,7 +41,7 @@ export const playRingtone = () => {
       osc2.stop(audioContext.currentTime + 0.9);
     };
 
-    // Play immediately, then repeat every 2 seconds
+    
     playRingBurst();
     ringInterval = setInterval(playRingBurst, 2000);
   } catch (err) {
@@ -52,9 +49,7 @@ export const playRingtone = () => {
   }
 };
 
-/**
- * Stop the ringtone completely.
- */
+
 export const stopRingtone = () => {
   if (ringInterval) {
     clearInterval(ringInterval);
@@ -66,9 +61,7 @@ export const stopRingtone = () => {
   }
 };
 
-/**
- * Play a short "call ended" beep.
- */
+
 export const playEndCallSound = () => {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();

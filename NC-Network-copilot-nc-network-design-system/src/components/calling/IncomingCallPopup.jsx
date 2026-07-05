@@ -28,7 +28,7 @@ export default function IncomingCallPopup() {
 
   const isVideo = incomingCall.callType === 'video';
 
-  // Resolve caller details dynamically
+  
   const callerName = callerProfile?.name || incomingCall?.callerName || 'Unknown Caller';
   const callerPhoto = callerProfile?.image || callerProfile?.avatar || callerProfile?.photoURL || incomingCall?.callerPhoto || incomingCall?.callerAvatar || '';
   const callerProfession = callerProfile?.role || 'Talent';

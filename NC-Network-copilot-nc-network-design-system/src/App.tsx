@@ -16,7 +16,7 @@ export const initOneSignal = async () => {
   if (oneSignalInitPromise) return oneSignalInitPromise;
 
   oneSignalInitPromise = (async () => {
-    // SECURITY: Never hardcode the App ID. Must be set in VITE_ONESIGNAL_APP_ID.
+    
     const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID as string | undefined;
     if (!ONESIGNAL_APP_ID) {
       if (import.meta.env.DEV) {
@@ -59,7 +59,7 @@ export const initOneSignal = async () => {
 
 
 
-// Providers and Overlays
+
 import { CallProvider } from './context/CallContext';
 import { PermissionProvider } from './context/PermissionContext';
 import CallingOverlay from './components/calling/CallingOverlay';
@@ -71,21 +71,21 @@ import PageTransition from './components/PageTransition';
 import SplashScreen from './components/SplashScreen';
 import Onboarding from './components/Onboarding';
 
-// Layouts and Protection
+
 import PublicLayout from './layouts/PublicLayout';
 import UserLayout from './layouts/UserLayout';
 import AdminLayout from './layouts/AdminLayout';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AdminRoute from './routes/AdminRoute';
 
-// Firebase
+
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, onIdTokenChanged, getIdTokenResult, type User, updateProfile } from 'firebase/auth';
 import { doc, getDoc, onSnapshot, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useNotifications } from './hooks/useNotifications';
 import { UserContext } from './context/UserContext';
 
-// Lazy Loaded Pages
+
 const Home = lazyWithRetry(() => import('./pages/Home'));
 const TalentListing = lazyWithRetry(() => import('./pages/TalentListing'));
 const Profile = lazyWithRetry(() => import('./pages/Profile'));
@@ -106,7 +106,7 @@ const Trending = lazyWithRetry(() => import('./pages/Trending'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 const SavedCastingCalls = lazyWithRetry(() => import('./pages/SavedCastingCalls'));
 
-// Admin pages
+
 const AdminOverview = lazyWithRetry(() => import('./pages/admin/AdminOverview'));
 const AdminUsers = lazyWithRetry(() => import('./pages/admin/AdminUsers'));
 const AdminAnalytics = lazyWithRetry(() => import('./pages/admin/AdminAnalytics'));
@@ -119,7 +119,7 @@ const AdminSettings = lazyWithRetry(() => import('./pages/admin/AdminSettings'))
 const AdminDataRequests = lazyWithRetry(() => import('./pages/admin/DataRequests'));
 
 
-// Navigation translate helper
+
 export function getRoutePath(page: string, param: any = null): string {
   switch (page) {
     case 'home': return '/';
@@ -140,7 +140,7 @@ export function getRoutePath(page: string, param: any = null): string {
     case 'trust': return '/trust-safety';
     case 'trending': return '/trending';
     
-    // Admin routes
+    
     case 'admin-overview': return '/admin';
     case 'admin-users': return '/admin/users';
     case 'admin-analytics': return '/admin/analytics';
@@ -165,7 +165,7 @@ function useLegacyNavigate() {
   return { handleLegacyNavigate };
 }
 
-// ─── ROUTE WRAPPER ADAPTERS ──────────────────────────────────────────────────
+
 
 const HomeRoute = () => {
   const { user } = useOutletContext<any>();
@@ -229,7 +229,7 @@ const SettingsRoute = () => {
   const { user, showToast, isAdmin } = useOutletContext<any>();
   const { handleLegacyNavigate } = useLegacyNavigate();
   const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab'); // null when no ?tab= in URL
+  const tab = searchParams.get('tab'); 
   return (
     <PageTransition>
       <Helmet>
@@ -470,7 +470,7 @@ async function registerSession(uid: string) {
   }, { merge: true });
 }
 
-// ─── MAIN APP COMPONENT ──────────────────────────────────────────────────────
+
 
 export default function App() {
   const navigate = useNavigate();
@@ -482,7 +482,7 @@ export default function App() {
   const [authReady, setAuthReady] = useState(false);
 
 
-  // Alert queue
+  
   const [alerts, setAlerts] = useState<AlertPayload[]>([]);
 
 
@@ -520,12 +520,12 @@ export default function App() {
     return () => window.removeEventListener('nc-alert', handleCustomAlert);
   }, [showAlert]);
 
-  // Handle direct navigation conversions from hooks
+  
   const handleLegacyNavigate = useCallback((page: string, param: any = null) => {
     navigate(getRoutePath(page, param));
   }, [navigate]);
 
-  // Version check logic
+  
   const lastVersionCheckRef = useRef<number>(0);
   useEffect(() => {
     let localVersion = 'dev';
@@ -543,7 +543,7 @@ export default function App() {
           if (data && data.version && data.version !== localVersion) {
             logger.log(`[Version Check] New build version detected: ${data.version} (Local: ${localVersion})`);
             
-            // Clear any retry flags so next load is fresh
+            
             sessionStorage.clear();
             
             showAlert(
@@ -563,16 +563,16 @@ export default function App() {
       }
     };
 
-    // 1. Check on mount
+    
     checkVersion();
 
-    // 2. Check periodically (every 5 minutes)
+    
     const interval = setInterval(checkVersion, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, [showAlert]);
 
-  // 3. Check on navigation (throttled to at most once a minute)
+  
   useEffect(() => {
     const now = Date.now();
     if (now - lastVersionCheckRef.current < 60000) return;
@@ -582,7 +582,7 @@ export default function App() {
     try {
       localVersion = __BUILD_VERSION__;
     } catch {
-      // Fallback if __BUILD_VERSION__ is not defined
+      
     }
 
     const checkVersionOnNav = async () => {
@@ -605,17 +605,17 @@ export default function App() {
           }
         }
       } catch {
-        // Fallback for network error during check
+        
       }
     };
 
     checkVersionOnNav();
   }, [location.pathname, showAlert]);
 
-  // Initialize Notifications
+  
   useNotifications(user, showAlert, handleLegacyNavigate);
 
-  // Request notification permission immediately when site opens
+  
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission()
@@ -629,7 +629,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Small delay to ensure DOM is ready
+    
     const timer = setTimeout(() => {
       initOneSignal();
     }, 1000);
@@ -641,7 +641,7 @@ export default function App() {
       if (firebaseUser) {
         setUser(firebaseUser);
         
-        // Log in to OneSignal
+        
         try {
           if (oneSignalInitialized) {
             await OneSignal.login(firebaseUser.uid);
@@ -659,8 +659,8 @@ export default function App() {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           
           if (userDoc.exists()) {
-            // SECURITY: Admin status is determined solely by Firestore isAdmin flag.
-            // Never check email against a hardcoded string in source code.
+            
+            
             setIsAdmin(userDoc.data().isAdmin === true);
           } else {
             setIsAdmin(false);
@@ -674,7 +674,7 @@ export default function App() {
         setUserProfile(null);
         setIsAdmin(false);
 
-        // Log out from OneSignal
+        
         try {
           if (oneSignalInitialized) {
             await OneSignal.logout();
@@ -693,7 +693,7 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Active session revocation listener
+  
   useEffect(() => {
     if (!user?.uid) return;
     
@@ -745,12 +745,12 @@ export default function App() {
     return () => unsub();
   }, [user?.uid, navigate, showAlert]);
 
-  // Listen for ID token changes (e.g. revocation, user deletion) to force logout
+  
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (currentUser) => {
       if (!currentUser) return;
       try {
-        // Force token refresh. Fails if user was deleted or token was revoked.
+        
         await getIdTokenResult(currentUser, true);
       } catch (error: any) {
         if (
@@ -773,7 +773,7 @@ export default function App() {
     return () => unsubscribe();
   }, [navigate, showAlert]);
 
-  // Periodic token validity check (runs every 60 seconds)
+  
   useEffect(() => {
     const interval = setInterval(async () => {
       const currentUser = auth.currentUser;
@@ -796,7 +796,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [navigate, showAlert]);
 
-  // User presence system
+  
   useEffect(() => {
     if (!user?.uid) return;
 
@@ -814,22 +814,22 @@ export default function App() {
       }
     };
 
-    // Mark online instantly on login/mount
+    
     setOnlineStatus(true);
 
-    // Heartbeat every 60 seconds
+    
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         setOnlineStatus(true);
       }
     }, 60000);
 
-    // Tab visibility changes
+    
     const handleVisibilityChange = () => {
       setOnlineStatus(document.visibilityState === 'visible');
     };
 
-    // Beforeunload tab close
+    
     const handleBeforeUnload = () => {
       updateDoc(profileRef, {
         online: false,
@@ -845,7 +845,7 @@ export default function App() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       
-      // Mark offline on unmount/logout
+      
       updateDoc(profileRef, {
         online: false,
         lastSeen: serverTimestamp()
@@ -853,7 +853,7 @@ export default function App() {
     };
   }, [user?.uid]);
 
-  // Subscribe to profile data
+  
   useEffect(() => {
     if (!user?.uid) {
       setUserProfile(null);
@@ -864,7 +864,7 @@ export default function App() {
         const data = snap.data();
         setUserProfile(data);
 
-        // Auto-reactivate if deactivated
+        
         if (data.deactivated === true) {
           try {
             await setDoc(doc(db, 'profiles', user.uid), {
@@ -885,7 +885,7 @@ export default function App() {
     return () => unsub();
   }, [user?.uid, showAlert]);
 
-  // Enriched user object for layouts/screens
+  
   const enrichedUser = user ? {
     uid: user.uid,
     email: user.email,
@@ -921,7 +921,7 @@ export default function App() {
     setUser({ ...auth.currentUser } as any);
   };
 
-  // Auth-driven status notifications
+  
   const [lastUser, setLastUser] = useState<User | null>(null);
   const isInitialAuth = useRef(true);
 
@@ -979,7 +979,7 @@ export default function App() {
     navigate('/');
   };
 
-  // Apply font size preference
+  
   useEffect(() => {
     const savedFontSize = localStorage.getItem('nc_font_size') || 'small';
     document.documentElement.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');

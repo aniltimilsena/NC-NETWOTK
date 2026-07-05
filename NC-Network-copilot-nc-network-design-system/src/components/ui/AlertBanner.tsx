@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, AlertCircle, Info, LogOut, X } from 'lucide-react';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+
 
 export type AlertType = 'success' | 'error' | 'info' | 'logout';
 
@@ -14,7 +14,7 @@ export interface AlertPayload {
   onAction?: () => void;
 }
 
-// ─── Inline Alert — contextual feedback inside a form/page ────────────────────
+
 
 interface InlineAlertProps {
   type: AlertType | null;
@@ -93,7 +93,7 @@ export function InlineAlert({ type, message, detail, onDismiss, className = '' }
   );
 }
 
-// ─── AlertBanner — slide-in, non-blocking, bottom-right corner ────────────────
+
 
 const BANNER_CONFIG = {
   success: {
@@ -126,7 +126,7 @@ const BANNER_CONFIG = {
   },
 };
 
-const DURATION = 3500; // ms before auto-dismiss
+const DURATION = 3500; 
 
 interface AlertBannerProps {
   alerts: AlertPayload[];

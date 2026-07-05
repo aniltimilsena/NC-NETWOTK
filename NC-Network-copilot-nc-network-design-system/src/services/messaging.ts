@@ -59,7 +59,7 @@ export const sendMessage = async (
         participants = convoSnap.data().participants || [];
       }
 
-      // Client-side block list verification
+      
       for (const participantId of participants) {
         if (participantId !== currentUserUid) {
           const participantSnap = await getDoc(doc(db, COLLECTIONS.USERS, participantId));
@@ -175,7 +175,7 @@ export const sendMessage = async (
           });
         }
 
-        // Call our Vercel Serverless Function to securely trigger OneSignal notification
+        
         try {
           const idToken = await auth.currentUser?.getIdToken();
           if (idToken) {
@@ -380,8 +380,8 @@ export const subscribeToConversations = (
             }
           }
 
-          // ── Determine unread status for THIS user ─────────────────────────
-          // Log raw data in dev so we can see the exact field names
+          
+          
           if (import.meta.env.DEV) {
             console.debug('[messaging] convo', d.id, '| raw fields:', {
               unread: data.unread,
@@ -396,33 +396,33 @@ export const subscribeToConversations = (
 
           if (lastSender && lastSender !== uid) {
             if (data.readBy && typeof data.readBy === 'object' && !Array.isArray(data.readBy)) {
-              // readBy[uid] === false  →  this user hasn't read yet
+              
               isUnreadForMe = data.readBy[uid] === false;
             } else if (data.unreadCounts && typeof data.unreadCounts === 'object') {
-              // unreadCounts[uid] > 0  →  unread for this user
+              
               isUnreadForMe = (data.unreadCounts[uid] || 0) > 0;
             } else if (typeof data.unread === 'boolean') {
-              // legacy single boolean
+              
               isUnreadForMe = data.unread === true;
             } else if (typeof data.unread === 'number') {
               isUnreadForMe = data.unread > 0;
             }
           }
-          // Never show unread for the sender of the last message
+          
           if (lastSender === uid) isUnreadForMe = false;
 
           return {
             id: d.id,
             ...data,
             ...participantInfo,
-            // Expose a normalised isUnread flag for the UI
+            
             isUnreadForMe,
           };
 
         })
       );
 
-      // Sort locally by lastMessageAt desc
+      
       convos.sort((a: any, b: any) => {
         const timeA = a.lastMessageAt?.toMillis?.() || a.lastMessageAt?.seconds * 1000 || 0;
         const timeB = b.lastMessageAt?.toMillis?.() || b.lastMessageAt?.seconds * 1000 || 0;
@@ -439,7 +439,7 @@ export const subscribeToConversations = (
 };
 
 export const getConversations = async (uid: string) => {
-  // Keep as a one-time fetch if needed elsewhere
+  
   try {
     const q = query(
       collection(db, COLLECTIONS.CONVERSATIONS),
@@ -447,7 +447,7 @@ export const getConversations = async (uid: string) => {
       orderBy("lastMessageAt", "desc")
     );
     const snapshot = await getDocs(q);
-    // ... logic omitted for brevity as we'll use subscription mostly
+    
     return []; 
   } catch (error) {
     return [];
@@ -517,7 +517,7 @@ export const createConversation = async (
       return { id: null, error: "Conversation requires at least two participants" };
     }
 
-    // Client-side block verification
+    
     const otherParticipants = uniqueParticipants.filter(p => p !== currentUserUid);
     for (const participantId of otherParticipants) {
       const participantSnap = await getDoc(doc(db, COLLECTIONS.USERS, participantId));
@@ -598,7 +598,7 @@ export const createConversation = async (
           profileUrl: `/messages/${currentUserUid}`
         });
 
-        // Call our Vercel Serverless Function to securely trigger OneSignal notification
+        
         try {
           const idToken = await auth.currentUser?.getIdToken();
           if (idToken) {
@@ -650,7 +650,7 @@ export const markConversationAsRead = async (convoId: string) => {
   try {
     const uid = auth.currentUser?.uid;
 
-    // 1. Write directly to Firestore so the UI updates immediately
+    
     if (uid && convoId) {
       const convoRef = doc(db, COLLECTIONS.CONVERSATIONS, convoId);
       const snap = await getDoc(convoRef);
@@ -659,13 +659,13 @@ export const markConversationAsRead = async (convoId: string) => {
         const updatePayload: Record<string, any> = {};
 
         if (data.readBy && typeof data.readBy === 'object') {
-          // Per-user readBy map: mark this user as read
+          
           updatePayload[`readBy.${uid}`] = true;
         } else if (data.unreadCounts && typeof data.unreadCounts === 'object') {
-          // Per-user unreadCounts map: zero out this user's count
+          
           updatePayload[`unreadCounts.${uid}`] = 0;
         } else {
-          // Legacy boolean — only clear if we were the recipient
+          
           if (data.lastSenderId !== uid) {
             updatePayload['unread'] = false;
           }
@@ -677,7 +677,7 @@ export const markConversationAsRead = async (convoId: string) => {
       }
     }
 
-    // 2. Also call backend for server-side sync (best-effort)
+    
     await apiClient.put(`/messaging/${convoId}/read`, {}, { timeout: 1500 });
     return { success: true, error: null };
   } catch (error: unknown) {

@@ -103,7 +103,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync initial state from current profile if exists
+  
   useEffect(() => {
     if (profile) {
       if (profile.role) {
@@ -126,7 +126,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
 
   const handleNext = () => {
     if (step === 2 && selectedRole !== 'Talent') {
-      // Skip category picking if not a Talent
+      
       setStep(4);
     } else {
       setStep((prev) => Math.min(prev + 1, 6));
@@ -135,7 +135,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
 
   const handleBack = () => {
     if (step === 4 && selectedRole !== 'Talent') {
-      // Go back to Role Selection if not Talent
+      
       setStep(2);
     } else {
       setStep((prev) => Math.max(prev - 1, 1));

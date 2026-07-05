@@ -10,21 +10,21 @@ import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import { CATEGORIES, getCategoryColor, getCategoryConfig } from '../constants/categories';
 
-// Category colors are now sourced from src/config/categories.tsx
+
 
 export default function Trending({ onNavigate }) {
   const [profiles, setProfiles] = useState([]);
   const [followingIds, setFollowingIds] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Filters State
-  const [selectedPeriod, setSelectedPeriod] = useState('This Week'); // 'Today' | 'This Week' | 'This Month'
-  const [selectedCategory, setSelectedCategory] = useState('All'); // 'All' | CATEGORIES
   
-  // Pagination
+  const [selectedPeriod, setSelectedPeriod] = useState('This Week'); 
+  const [selectedCategory, setSelectedCategory] = useState('All'); 
+  
+  
   const [visibleCount, setVisibleCount] = useState(10);
 
-  // Subscribe to profiles data
+  
   useEffect(() => {
     setLoading(true);
     const q = query(collection(db, "profiles"));
@@ -39,7 +39,7 @@ export default function Trending({ onNavigate }) {
     return () => unsub();
   }, []);
 
-  // Subscribe to current user's follows
+  
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       if (currentUser) {
@@ -58,7 +58,7 @@ export default function Trending({ onNavigate }) {
     return () => unsubscribe();
   }, []);
 
-  // Check if profile is created within last 7 days
+  
   const isProfileNew = (profile) => {
     const createdDate = profile.createdAt?.toDate?.() || (profile.createdAt ? new Date(profile.createdAt) : null);
     if (!createdDate) return false;
@@ -66,7 +66,7 @@ export default function Trending({ onNavigate }) {
     return diff < 7 * 24 * 60 * 60 * 1000;
   };
 
-  // Trending scoring algorithm based on period, rating, and followers
+  
   const calculateTrendingScore = (profile, period) => {
     const followers = profile.followers || 0;
     const rating = parseFloat(profile.rating) || 0;
@@ -94,7 +94,7 @@ export default function Trending({ onNavigate }) {
       else if (now - createdTime < 30 * oneDay) recencyBonus = 30;
       
       if (now - lastActiveTime < 7 * oneDay) activityBonus = 45;
-    } else { // This Month
+    } else { 
       if (now - createdTime < 30 * oneDay) recencyBonus = 70;
       if (now - lastActiveTime < 30 * oneDay) activityBonus = 35;
     }
@@ -102,7 +102,7 @@ export default function Trending({ onNavigate }) {
     return (rating * 25) + (followers * 1.8) + recencyBonus + activityBonus;
   };
 
-  // Handle follow toggle with optimistic UI update
+  
   const handleToggleFollow = async (e, talentId) => {
     e.stopPropagation();
     const currentUser = auth.currentUser;
@@ -115,11 +115,11 @@ export default function Trending({ onNavigate }) {
     const followId = `${currentUser.uid}_${talentId}`;
     const followDocRef = doc(db, "follows", followId);
     
-    // Save previous state for rollback
+    
     const prevFollowingIds = [...followingIds];
     const prevProfiles = [...profiles];
 
-    // Optimistic UI updates
+    
     setFollowingIds(prev => 
       isFollowing 
         ? prev.filter(id => id !== talentId) 
@@ -135,12 +135,12 @@ export default function Trending({ onNavigate }) {
     
     try {
       if (isFollowing) {
-        // Unfollow
+        
         await deleteDoc(followDocRef);
         await updateDoc(doc(db, "profiles", talentId), { followers: increment(-1) });
         await updateDoc(doc(db, "profiles", currentUser.uid), { following: increment(-1) });
       } else {
-        // Follow
+        
         await setDoc(followDocRef, {
           followerId: currentUser.uid,
           followingId: talentId,
@@ -149,7 +149,7 @@ export default function Trending({ onNavigate }) {
         await updateDoc(doc(db, "profiles", talentId), { followers: increment(1) });
         await updateDoc(doc(db, "profiles", currentUser.uid), { following: increment(1) });
         
-        // Send real-time notification
+        
         await addDoc(collection(db, "notifications"), {
           userId: talentId,
           recipientId: talentId,
@@ -169,13 +169,13 @@ export default function Trending({ onNavigate }) {
       }
     } catch (err) {
       console.error("Error toggling follow:", err);
-      // Rollback on failure
+      
       setFollowingIds(prevFollowingIds);
       setProfiles(prevProfiles);
     }
   };
 
-  // Filter and rank profiles based on state
+  
   const rankedProfiles = profiles
     .filter(p => {
       if (p.deactivated === true) return false;
@@ -189,20 +189,20 @@ export default function Trending({ onNavigate }) {
     .sort((a, b) => b.trendingScore - a.trendingScore);
 
   const topThree = rankedProfiles.slice(0, 3);
-  const remainingList = rankedProfiles; // Show all profiles in the list so users can view everything sequentially
+  const remainingList = rankedProfiles; 
 
-  // Podium Positions helpers
+  
   const podiumOrder = [
-    { pos: 1, profile: topThree[1], height: 'h-44 sm:h-52', borderGlow: 'border-slate-400/20 shadow-[0_0_25px_rgba(200,200,200,0.05)]' }, // #2 left
-    { pos: 0, profile: topThree[0], height: 'h-52 sm:h-64', borderGlow: 'border-yellow-400/30 shadow-[0_0_35px_rgba(250,204,21,0.08)]' },  // #1 center
-    { pos: 2, profile: topThree[2], height: 'h-36 sm:h-44', borderGlow: 'border-amber-700/20 shadow-[0_0_20px_rgba(205,127,50,0.05)]' }   // #3 right
+    { pos: 1, profile: topThree[1], height: 'h-44 sm:h-52', borderGlow: 'border-slate-400/20 shadow-[0_0_25px_rgba(200,200,200,0.05)]' }, 
+    { pos: 0, profile: topThree[0], height: 'h-52 sm:h-64', borderGlow: 'border-yellow-400/30 shadow-[0_0_35px_rgba(250,204,21,0.08)]' },  
+    { pos: 2, profile: topThree[2], height: 'h-36 sm:h-44', borderGlow: 'border-amber-700/20 shadow-[0_0_20px_rgba(205,127,50,0.05)]' }   
   ];
 
   const getRankColor = (rank) => {
-    if (rank === 1) return '#FFD700'; // Gold
-    if (rank === 2) return '#C0C0C0'; // Silver
-    if (rank === 3) return '#CD7F32'; // Bronze
-    return '#4B5563'; // Dark Grey
+    if (rank === 1) return '#FFD700'; 
+    if (rank === 2) return '#C0C0C0'; 
+    if (rank === 3) return '#CD7F32'; 
+    return '#4B5563'; 
   };
 
   return (

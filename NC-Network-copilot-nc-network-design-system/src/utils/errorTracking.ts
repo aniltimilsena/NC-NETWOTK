@@ -1,7 +1,7 @@
 export const initErrorTracking = () => {
   if (typeof window === 'undefined') return;
 
-  // Catch unhandled JS errors
+  
   window.onerror = (message, source, line, col, error) => {
     logError({
       type: 'uncaught',
@@ -11,10 +11,10 @@ export const initErrorTracking = () => {
       col: col || 0,
       stack: error?.stack || null,
     });
-    return false; // don't suppress error
+    return false; 
   };
 
-  // Catch unhandled Promise rejections
+  
   window.addEventListener('unhandledrejection', (event) => {
     logError({
       type: 'unhandled_promise',
@@ -23,12 +23,12 @@ export const initErrorTracking = () => {
     });
   });
 
-  // Catch network errors
+  
   const originalFetch = window.fetch;
   window.fetch = async (...args) => {
     try {
       const response = await originalFetch(...args);
-      // Log server errors (status 500+) except logging requests themselves to prevent infinite loops
+      
       const url = String(args[0]);
       if (!response.ok && response.status >= 500 && !url.includes('/api/errors/log')) {
         logError({
@@ -53,7 +53,7 @@ export const initErrorTracking = () => {
 };
 
 const logError = async (errorData: any) => {
-  // Only log in production
+  
   if (!import.meta.env.PROD) {
     console.error('Error tracked (dev):', errorData);
     return;
@@ -78,6 +78,6 @@ const logError = async (errorData: any) => {
       }),
     });
   } catch {
-    // Silent fail
+    
   }
 };

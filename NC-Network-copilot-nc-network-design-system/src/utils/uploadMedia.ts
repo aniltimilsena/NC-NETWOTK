@@ -16,7 +16,7 @@ export const uploadMedia = async (
   folder: string,
   onProgress?: (progress: number) => void
 ): Promise<CloudinaryUploadResult> => {
-  // Validate file
+  
   if (!file) {
     throw new Error('No file selected');
   }
@@ -26,7 +26,7 @@ export const uploadMedia = async (
     throw new Error('Authentication required for upload');
   }
 
-  // 1. Fetch Cloudinary config from the server with a robust fallback
+  
   let cloudName = 'du7zu8mca';
   let uploadPreset = 'stored_media';
   
@@ -51,17 +51,17 @@ export const uploadMedia = async (
   const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
 
   return new Promise((resolve, reject) => {
-    // Build form data for Cloudinary direct upload
+    
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', uploadPreset);
     formData.append('folder', `nc-network/${folder}`);
 
-    // Upload via XHR (supports progress tracking)
+    
     const xhr = new XMLHttpRequest();
     xhr.open('POST', uploadUrl);
 
-    // Progress tracking
+    
     if (xhr.upload) {
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
@@ -71,7 +71,7 @@ export const uploadMedia = async (
       });
     }
 
-    // Success
+    
     xhr.addEventListener('load', () => {
       if (xhr.status !== 200) {
         let errMsg = `Upload failed (Status ${xhr.status})`;
@@ -81,7 +81,7 @@ export const uploadMedia = async (
             errMsg = res.error.message;
           }
         } catch {
-          // ignore parsing error, fallback to status code error message
+          
         }
         reject(new Error(errMsg));
         return;
@@ -112,7 +112,7 @@ export const uploadMedia = async (
       reject(new Error('Network error during upload'))
     );
 
-    xhr.timeout = 300000; // 5 min for large videos
+    xhr.timeout = 300000; 
     xhr.addEventListener('timeout', () =>
       reject(new Error('Upload timed out. Try a smaller file.'))
     );
@@ -121,7 +121,7 @@ export const uploadMedia = async (
   });
 };
 
-// Specific helpers:
+
 export const uploadChatMedia = (file: File, conversationId: string, onProgress?: (progress: number) => void) =>
   uploadMedia(file, `chat/${conversationId}`, onProgress);
 

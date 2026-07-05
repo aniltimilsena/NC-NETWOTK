@@ -65,7 +65,7 @@ export default function AdminModeration() {
         const r = docSnap.data();
         return {
           id: docSnap.id,
-          status: 'Pending', // default if not set
+          status: 'Pending', 
           ...r
         } as SafetyReport;
       });
@@ -78,7 +78,7 @@ export default function AdminModeration() {
     return () => unsub();
   }, []);
 
-  // Sync data export requests when tab is selected
+  
   useEffect(() => {
     if (adminTab !== 'data-exports') return;
     const unsub = onSnapshot(collection(db, COLLECTIONS.DATA_EXPORT_REQUESTS), (snap) => {
@@ -86,7 +86,7 @@ export default function AdminModeration() {
         id: docSnap.id,
         ...docSnap.data()
       }));
-      // Sort by createdAt desc
+      
       data.sort((a: any, b: any) => {
         const timeA = a.createdAt?.toDate?.()?.getTime() || 0;
         const timeB = b.createdAt?.toDate?.()?.getTime() || 0;
@@ -189,7 +189,7 @@ export default function AdminModeration() {
       return;
     }
     try {
-      // Set warning state in user profile/account
+      
       await updateDoc(doc(db, "users", userId), { status: 'Warned', warned: true });
       await updateDoc(doc(db, "profiles", userId), { status: 'Warned', warned: true });
       
@@ -242,10 +242,10 @@ export default function AdminModeration() {
           if (contentType.toLowerCase() === 'casting_call' || contentType.toLowerCase() === 'casting call') {
             await deleteDoc(doc(db, "casting_calls", contentId));
           } else if (contentType.toLowerCase() === 'profile' || contentType.toLowerCase() === 'talent content') {
-            // Deleting portfolio media/details
+            
             await updateDoc(doc(db, "profiles", contentId), { bio: '[Bio deleted by admin moderation]', media: [] });
           } else {
-            // generic document deletion if path format is supplied
+            
             await deleteDoc(doc(db, contentType, contentId));
           }
 

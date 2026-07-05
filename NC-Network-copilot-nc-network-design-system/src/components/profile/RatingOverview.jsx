@@ -26,7 +26,7 @@ const RatingOverview = ({ targetUserId }) => {
       const total = ratings.length;
       const average = ratings.reduce((a, b) => a + b, 0) / total;
       
-      // Count per star
+      
       const breakdown = {1:0, 2:0, 3:0, 4:0, 5:0};
       ratings.forEach(r => {
         const val = Math.round(r);

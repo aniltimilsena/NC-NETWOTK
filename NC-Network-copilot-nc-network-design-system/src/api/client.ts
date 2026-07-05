@@ -10,7 +10,7 @@ const apiClient = axios.create({
   timeout: 10000,
 });
 
-// Interceptor to attach Firebase Token
+
 apiClient.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
   if (user) {

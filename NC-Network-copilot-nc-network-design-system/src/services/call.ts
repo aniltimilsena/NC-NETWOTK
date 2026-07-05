@@ -15,7 +15,7 @@ import {
 } from "firebase/firestore";
 import { COLLECTIONS } from "../constants/collections";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+
 
 export type CallStatus =
   | "pending"
@@ -46,18 +46,18 @@ export interface CallDoc {
   endedAt?: any;
 }
 
-// ─── STUN/TURN Configuration ────────────────────────────────────────────────
-// TURN servers ensure calls work behind strict NATs, corporate firewalls,
-// and symmetric NATs where STUN alone fails (~15-20% of connections).
+
+
+
 
 export const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
-    // Google STUN servers (fast, reliable, free)
+    
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun2.l.google.com:19302" },
-    // TURN relay servers for restrictive networks
-    // Using OpenRelay (free, open-source TURN service)
+    
+    
     {
       urls: "turn:openrelay.metered.ca:80",
       username: "openrelayproject",
@@ -77,12 +77,9 @@ export const ICE_SERVERS: RTCConfiguration = {
   iceCandidatePoolSize: 10,
 };
 
-// ─── Service Functions ──────────────────────────────────────────────────────
 
-/**
- * Create a new call document in Firestore.
- * Returns the call ID.
- */
+
+
 export const createCall = async (params: {
   callerId: string;
   callerName: string;
@@ -123,9 +120,7 @@ export const createCall = async (params: {
   }
 };
 
-/**
- * Update call status (accept, reject, end).
- */
+
 export const updateCallStatus = async (
   callId: string,
   status: CallStatus
@@ -141,9 +136,7 @@ export const updateCallStatus = async (
   }
 };
 
-/**
- * Set the answer SDP on the call document.
- */
+
 export const setCallAnswer = async (
   callId: string,
   answer: RTCSessionDescriptionInit
@@ -159,9 +152,7 @@ export const setCallAnswer = async (
   }
 };
 
-/**
- * Add an ICE candidate to the caller or callee sub-collection.
- */
+
 export const addIceCandidate = async (
   callId: string,
   role: "caller" | "callee",
@@ -176,10 +167,7 @@ export const addIceCandidate = async (
   }
 };
 
-/**
- * Subscribe to incoming calls for a user (callee).
- * Fires callback when a call with status 'pending' is found for this user.
- */
+
 export const subscribeToIncomingCalls = (
   userId: string,
   callback: (call: CallDoc | null) => void
@@ -197,7 +185,7 @@ export const subscribeToIncomingCalls = (
         callback(null);
         return;
       }
-      // Take the most recent pending call
+      
       const callDoc = snapshot.docs[0];
       callback({ id: callDoc.id, ...callDoc.data() } as CallDoc);
     },
@@ -208,9 +196,7 @@ export const subscribeToIncomingCalls = (
   );
 };
 
-/**
- * Subscribe to changes on a specific call document.
- */
+
 export const subscribeToCall = (
   callId: string,
   callback: (call: CallDoc | null) => void
@@ -231,15 +217,13 @@ export const subscribeToCall = (
   );
 };
 
-/**
- * Subscribe to ICE candidates from the remote peer.
- */
+
 export const subscribeToIceCandidates = (
   callId: string,
   role: "caller" | "callee",
   callback: (candidate: RTCIceCandidateInit) => void
 ): Unsubscribe => {
-  // Listen to the OPPOSITE role's candidates
+  
   const subCol =
     role === "caller" ? "calleeCandidates" : "callerCandidates";
 
@@ -258,51 +242,46 @@ export const subscribeToIceCandidates = (
   );
 };
 
-/**
- * Clean up a call: delete all sub-collection documents, then the call doc.
- */
+
 export const cleanupCall = async (callId: string): Promise<void> => {
   try {
-    // Delete caller candidates
+    
     const callerCands = await getDocs(
       collection(db, COLLECTIONS.CALLS, callId, "callerCandidates")
     );
     for (const d of callerCands.docs) {
       await deleteDoc(d.ref);
     }
-    // Delete callee candidates
+    
     const calleeCands = await getDocs(
       collection(db, COLLECTIONS.CALLS, callId, "calleeCandidates")
     );
     for (const d of calleeCands.docs) {
       await deleteDoc(d.ref);
     }
-    // Finally delete the call document
+    
     await deleteDoc(doc(db, COLLECTIONS.CALLS, callId));
   } catch (err) {
     console.error("[CallService] cleanupCall error:", err);
   }
 };
 
-// ─── Call History ───────────────────────────────────────────────────────────
 
-/**
- * Fetch call history for a user (both as caller and callee).
- * Runs two queries and merges + sorts by createdAt descending.
- */
+
+
 export const getCallHistory = async (
   userId: string,
   maxResults: number = 50
 ): Promise<CallDoc[]> => {
   try {
-    // Query 1: Calls where user is the caller
+    
     const callerQuery = query(
       collection(db, COLLECTIONS.CALLS),
       where("callerId", "==", userId),
       limit(maxResults)
     );
 
-    // Query 2: Calls where user is the callee
+    
     const calleeQuery = query(
       collection(db, COLLECTIONS.CALLS),
       where("calleeId", "==", userId),
@@ -325,7 +304,7 @@ export const getCallHistory = async (
       }
     });
 
-    // Sort by createdAt descending
+    
     const allCalls = Array.from(callMap.values());
     allCalls.sort((a, b) => {
       const aTime = a.createdAt?.toMillis?.() || a.createdAt?.seconds * 1000 || 0;
@@ -340,15 +319,13 @@ export const getCallHistory = async (
   }
 };
 
-/**
- * Subscribe to call history changes in real-time.
- */
+
 export const subscribeToCallHistory = (
   userId: string,
   callback: (calls: CallDoc[]) => void,
   maxResults: number = 50
 ): Unsubscribe => {
-  // We listen to calls where user is caller
+  
   const callerQ = query(
     collection(db, COLLECTIONS.CALLS),
     where("callerId", "==", userId),

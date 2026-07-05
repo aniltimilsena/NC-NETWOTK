@@ -1,6 +1,6 @@
-// api/data-requests-approve.js
-// Reads requestId from req.query.requestId (set by vercel.json rewrite)
-// Uses ES module syntax to prevent ES module scope crashes on Vercel.
+
+
+
 
 import admin from 'firebase-admin';
 import crypto from 'crypto';
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Security Headers
+  
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -75,7 +75,7 @@ export default async function handler(req, res) {
     return res.status(authErr.status || 401).json({ error: authErr.message });
   }
 
-  // Validate and sanitize requestId query parameter
+  
   const requestId = req.query?.requestId;
   if (!requestId || typeof requestId !== 'string' || requestId.trim().length === 0 || requestId.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(requestId)) {
     return res.status(400).json({ error: 'Invalid requestId parameter' });
@@ -101,7 +101,7 @@ export default async function handler(req, res) {
     const userId = requestData.userId || requestData.uid;
     const userEmail = requestData.userEmail || requestData.email;
 
-    // Sanitize values to prevent issues in document creation
+    
     if (!userId || typeof userId !== 'string' || userId.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(userId)) {
       return res.status(400).json({ error: 'Invalid target user ID in request' });
     }

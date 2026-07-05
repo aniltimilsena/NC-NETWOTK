@@ -44,7 +44,7 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
     const file = e.target.files?.[0];
     if (!file || !user?.uid) return;
 
-    // Enforce 5MB limit for Basic Profile photo upload
+    
     const sizeLimit = 5 * 1024 * 1024;
     if (file.size > sizeLimit) {
       showAlert('File Too Large', 'error', 'Profile photo exceeds the limit of 5MB.');

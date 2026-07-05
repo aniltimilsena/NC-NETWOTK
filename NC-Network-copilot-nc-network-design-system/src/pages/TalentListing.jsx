@@ -26,7 +26,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     return 'categories';
   });
 
-  // Filters State
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilters, setSelectedFilters] = useState({
     category: initialCategory || 'All',
@@ -34,7 +34,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     experienceLevel: 'All',
   });
   
-  const [activeSort, setActiveSort] = useState('trending'); // 'trending', 'newest', 'followers'
+  const [activeSort, setActiveSort] = useState('trending'); 
   const [notifySaved, setNotifySaved] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [activeShareTalent, setActiveShareTalent] = useState(null);
@@ -71,7 +71,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
   }, [initialCategory]);
 
   useEffect(() => {
-    // We fetch all profiles for responsive client-side filtering/sorting
+    
     const q = query(collection(db, "profiles"), orderBy("updatedAt", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -84,7 +84,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     return () => unsub();
   }, []);
 
-  // Subscribe to real follows status
+  
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       if (currentUser) {
@@ -103,7 +103,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     return () => unsubscribe();
   }, []);
 
-  // Delayed reveal for skeleton
+  
   useEffect(() => {
     if (!loading) {
       const t = setTimeout(() => setProfilesReady(true), 80);
@@ -124,14 +124,14 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     return talents.filter(t => {
       if (t.deactivated === true) return false;
 
-      // Search Query
+      
       const matchesSearch = !searchQuery || 
         t.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
         t.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.location?.toLowerCase().includes(searchQuery.toLowerCase());
       if (!matchesSearch) return false;
 
-      // Selected Category (If not currently the one being counted)
+      
       if (filterKey !== 'category' && selectedFilters.category !== 'All') {
         if (t.role?.toLowerCase() !== selectedFilters.category.toLowerCase()) return false;
       }
@@ -142,7 +142,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         if (getExperienceLevel(t) !== selectedFilters.experienceLevel) return false;
       }
 
-      // Check count option
+      
       if (filterKey === 'category') {
         if (optionValue === 'All') return true;
         return t.role?.toLowerCase() === optionValue.toLowerCase();
@@ -173,12 +173,12 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     
     try {
       if (isFollowing) {
-        // Unfollow
+        
         await deleteDoc(followDocRef);
         await updateDoc(doc(db, "profiles", talentId), { followers: increment(-1) });
         await updateDoc(doc(db, "profiles", currentUser.uid), { following: increment(-1) });
       } else {
-        // Follow
+        
         await setDoc(followDocRef, {
           followerId: currentUser.uid,
           followingId: talentId,
@@ -187,7 +187,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         await updateDoc(doc(db, "profiles", talentId), { followers: increment(1) });
         await updateDoc(doc(db, "profiles", currentUser.uid), { following: increment(1) });
         
-        // Create notification
+        
         await addDoc(collection(db, "notifications"), {
           userId: talentId,
           recipientId: talentId,
@@ -214,20 +214,20 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     .filter(t => {
       if (t.deactivated === true) return false;
 
-      // Search Query
+      
       const matchesSearch = !searchQuery || 
         t.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
         t.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.location?.toLowerCase().includes(searchQuery.toLowerCase());
       if (!matchesSearch) return false;
 
-      // Category
+      
       if (selectedFilters.category !== 'All' && t.role?.toLowerCase() !== selectedFilters.category.toLowerCase()) return false;
 
-      // Location
+      
       if (selectedFilters.location !== 'All' && t.location !== selectedFilters.location) return false;
 
-      // Experience Level
+      
       if (selectedFilters.experienceLevel !== 'All' && getExperienceLevel(t) !== selectedFilters.experienceLevel) return false;
 
       return true;
@@ -236,7 +236,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
       if (activeSort === 'followers') return (b.followers || 0) - (a.followers || 0);
       if (activeSort === 'trending') return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0) || (b.followers || 0) - (a.followers || 0);
       
-      // Newest
+      
       const timeA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
       const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
       return timeB - timeA;
@@ -244,7 +244,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
 
   const handleClearFilters = () => {
     setSelectedFilters({
-      category: selectedFilters.category, // Keep the category context
+      category: selectedFilters.category, 
       location: 'All',
       experienceLevel: 'All',
     });
@@ -274,7 +274,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                 {CATEGORIES.map((cat, idx) => {
                   const count = getFacetedCount('category', cat);
                   const detail = getCategoryConfig(cat);
-                  const Icon = detail.icon; // must be capitalized for JSX
+                  const Icon = detail.icon; 
 
                   return (
                     <motion.button

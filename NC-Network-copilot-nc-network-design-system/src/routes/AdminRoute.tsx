@@ -10,11 +10,11 @@ interface AdminRouteProps {
 
 export default function AdminRoute({ user, isAdmin, authReady, children }: AdminRouteProps) {
   if (!authReady) {
-    return null; // Wait until Firebase Auth initializes
+    return null; 
   }
 
   if (!user || !isAdmin) {
-    // Redirect unauthorized users to the main landing page
+    
     return <Navigate to="/" replace />;
   }
 

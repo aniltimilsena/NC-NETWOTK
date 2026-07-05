@@ -51,7 +51,7 @@ export function ActionSearchBar({
     const [allProfiles, setAllProfiles] = useState<ProfileSuggestion[]>([]);
     const [hasLoaded, setHasLoaded] = useState(false);
 
-    // Fetch all profiles once when search bar is focused
+    
     useEffect(() => {
         if (!isFocused || hasLoaded) return;
 
@@ -81,11 +81,11 @@ export function ActionSearchBar({
         loadAllProfiles();
     }, [isFocused, hasLoaded]);
 
-    // Filter profiles locally when query or allProfiles changes
+    
     useEffect(() => {
         const normalized = query.trim().toLowerCase();
         if (!normalized) {
-            // Suggest first 6 profiles when query is empty
+            
             setProfiles(allProfiles.slice(0, 6));
             return;
         }

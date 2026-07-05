@@ -1,15 +1,12 @@
 import React from 'react';
 
-/**
- * Cinematic Infinite Ticker Component
- * Features: Seamless loop, GPU acceleration, hover-to-pause, and gradient edge masking.
- */
+
 export default function Ticker({ 
   items = [], 
   speed = '30s', 
   direction = 'normal' 
 }) {
-  // If no items are provided, use defaults suited for NC Network
+  
   const defaultItems = [
     "🔥 Casting Call: Cyberpunk 2077 Fan Film",
     "⭐ Just Signed: Zendaya joins Matrix 5",
@@ -21,11 +18,7 @@ export default function Ticker({
 
   return (
     <div className="w-full relative overflow-hidden bg-[#0A0A0A] border-y border-white/5 py-4 mask-edge-fade">
-      {/* 
-        The scrolling container. 
-        We use w-max to allow it to grow beyond the screen, 
-        and double the content dynamically in the layout to ensure a seamless -50% translation loop.
-      */}
+      {}
       <div 
         className="flex items-center w-[max-content] animate-ticker will-change-transform"
         style={{ '--duration': speed, animationDuration: speed, animationDirection: direction }}

@@ -17,7 +17,7 @@ export const ensureUserProfile = async (user: User) => {
     const userRef = doc(db, COLLECTIONS.USERS, user.uid);
     const profileRef = doc(db, COLLECTIONS.PROFILES, user.uid);
 
-    // Bootstrap user document — SECURITY: isAdmin is server-only (Cloud Functions)
+    
     await setDoc(userRef, {
       uid: user.uid,
       name: user.displayName || "NC User",
@@ -27,7 +27,7 @@ export const ensureUserProfile = async (user: User) => {
       updatedAt: serverTimestamp(),
     }, { merge: true });
 
-    // Bootstrap profile document
+    
     await setDoc(profileRef, {
       uid: user.uid,
       name: user.displayName || "NC User",
@@ -75,7 +75,7 @@ export const signUpUser = async (
     const userRef = doc(db, COLLECTIONS.USERS, user.uid);
     const profileRef = doc(db, COLLECTIONS.PROFILES, user.uid);
 
-    // SECURITY: isAdmin is server-only (Cloud Functions / Admin SDK)
+    
     await setDoc(userRef, {
       uid: user.uid,
       name,
@@ -113,22 +113,22 @@ export const signInUser = async (email: string, password: string): Promise<AuthR
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { user: userCredential.user, error: null };
   } catch (error: any) {
-    console.error('Login error code:', error?.code); // log for debugging
+    console.error('Login error code:', error?.code); 
 
-    // These all show the SAME generic message to the user:
+    
     const invalidCredentialCodes = [
-      'auth/user-not-found',      // email doesn't exist
-      'auth/wrong-password',      // password wrong
-      'auth/invalid-credential',  // Firebase v9+ combined error
-      'auth/invalid-email',       // malformed email
-      'auth/user-mismatch',       // credential mismatch
+      'auth/user-not-found',      
+      'auth/wrong-password',      
+      'auth/invalid-credential',  
+      'auth/invalid-email',       
+      'auth/user-mismatch',       
     ];
 
     if (error?.code && invalidCredentialCodes.includes(error.code)) {
       return { user: null, error: 'Invalid credentials. Please check your email and password.' };
     }
 
-    // Specific messages for other error cases:
+    
     let message = 'Something went wrong. Please try again.';
     switch (error?.code) {
       case 'auth/too-many-requests':

@@ -29,7 +29,7 @@ import {
 } from './services/cacheService';
 import { validateUpload } from './middleware/uploadSecurity';
 
-// Load env from current directory first, then fallback to server and parent directories
+
 dotenv.config();
 dotenv.config({ path: path.resolve(__dirname, '../../.env.server') });
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -60,7 +60,7 @@ if (!admin.apps.length) {
       storageBucket: `${projectId}.appspot.com`,
     });
   } else {
-    // Try to load credentials from Application Default Credentials (ADC)
+    
     let initialized = false;
     try {
       admin.initializeApp({
@@ -71,14 +71,14 @@ if (!admin.apps.length) {
       console.log("🚀 Firebase Admin initialized successfully using Application Default Credentials (ADC).");
       initialized = true;
     } catch (adcError) {
-      // Proceed to dummy cert initialization
+      
     }
 
     if (!initialized) {
       console.warn("⚠️ Firebase Admin credentials are not fully configured in environment variables.");
       console.warn("Initializing Firebase Admin with dynamically generated dummy credentials for local startup.");
       
-      // Generate a structurally valid RSA private key PEM dynamically
+      
       const { privateKey: dummyPrivateKey } = crypto.generateKeyPairSync('rsa', {
         modulusLength: 2048,
         publicKeyEncoding: { type: 'spki', format: 'pem' },
@@ -126,7 +126,7 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-// Always allow standard local development origins
+
 if (!allowedOrigins.includes('http://localhost:5173')) {
   allowedOrigins.push('http://localhost:5173');
 }
@@ -186,7 +186,7 @@ const maskDestination = (method: string, phone: string, email: string) => {
   return 'your device';
 };
 
-// Send OTP via Email
+
 const sendOTPEmail = async (email: string, code: string) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -216,7 +216,7 @@ const sendOTPEmail = async (email: string, code: string) => {
   });
 };
 
-// Send OTP via SMS (using Twilio)
+
 const sendOTPSMS = async (phone: string, code: string) => {
   const client = twilio(
     process.env.TWILIO_ACCOUNT_SID,
@@ -281,8 +281,8 @@ async function sendOneSignalNotification({ userIds, title, body, url }: OneSigna
 
 
 app.use(helmet({
-  frameguard: false, // Disable legacy X-Frame-Options in favor of Content-Security-Policy frame-ancestors
-  xssFilter: false,  // Disable deprecated X-XSS-Protection header
+  frameguard: false, 
+  xssFilter: false,  
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -294,7 +294,7 @@ app.use(helmet({
 app.use((req, res, next) => {
   const path = req.path;
   
-  // STEP 3: Strict no-store caching headers for sensitive API endpoints (2FA and admin actions)
+  
   if (path.startsWith('/api/2fa') || path.startsWith('/api/admin')) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.setHeader('Pragma', 'no-cache');
@@ -307,7 +307,7 @@ app.use((req, res, next) => {
   
   res.removeHeader('X-XSS-Protection');
 
-  // Override res.send to format string/HTML errors as standardized JSON
+  
   const originalSend = res.send;
   res.send = function (body: any) {
     const contentType = res.getHeader('Content-Type');
@@ -347,7 +347,7 @@ app.use((req, res, next) => {
     return originalSend.call(this, body);
   };
 
-  // STEP 4: Global production error sanitization for 500 Internal Server Errors
+  
   const originalJson = res.json;
   res.json = function (body: any) {
     if (res.statusCode === 500 && body && body.error) {
@@ -356,7 +356,7 @@ app.use((req, res, next) => {
       }
     }
     
-    // Standardize error formats to match target schema
+    
     if (res.statusCode >= 400 && body && typeof body === 'object') {
       if (!('success' in body)) {
         body.success = false;
@@ -432,7 +432,7 @@ const upload = multer({
   storage: multer.memoryStorage(),
   fileFilter: multerFileFilter,
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB max limit to support video uploads
+    fileSize: 100 * 1024 * 1024, 
     files: 10,
   },
 });
@@ -513,7 +513,7 @@ const verifyToken = async (req: AuthedRequest, res: Response, next: NextFunction
     const decodedToken = await admin.auth().verifyIdToken(token);
     req.user = decodedToken;
 
-    // Check if user is banned
+    
     const userDoc = await db.collection('users').doc(decodedToken.uid).get();
     if (userDoc.exists && userDoc.data()?.status === 'banned') {
       res.status(403).json({
@@ -599,7 +599,7 @@ const assertMessageOwner = async (
   res: Response
 ): Promise<admin.firestore.DocumentSnapshot | null> => {
   try {
-    // First verify participant
+    
     const convo = await assertParticipant(conversationId, userId, res);
     if (!convo) return null;
 
@@ -648,7 +648,7 @@ const uploadToCloudinary = async (fileBuffer: Buffer, mimeType: string, folder: 
   if (cloudName && apiKey && apiSecret && !isPlaceholder(apiKey) && !isPlaceholder(apiSecret)) {
     return new Promise<string>((resolve, reject) => {
       try {
-        // Global config update for this call
+        
         cloudinary.config({
           cloud_name: cloudName,
           api_key: apiKey,
@@ -758,7 +758,7 @@ app.post(
 
       console.log(`[Upload API] Starting upload. Resource: ${resourceType}, Size: ${buffer.length} bytes, Target Folder: ${folder || 'general'}`);
 
-      // Check if signed credentials exist and are not dummy/placeholders
+      
       const isSignedConfigured = cloudName && apiKey && apiSecret && 
         !isPlaceholder(apiKey) && 
         !isPlaceholder(apiSecret);
@@ -851,7 +851,7 @@ app.post(
   }
 );
 
-// ─── CLOUDINARY DELETE PROXY ──────────
+
 app.delete(
   '/api/upload/:publicId',
   verifyToken,
@@ -887,7 +887,7 @@ app.delete(
   }
 );
 
-// ─── ONESIGNAL NOTIFICATION PROXY ─────
+
 const handleSendNotification = async (req: AuthedRequest<any, any>, res: Response): Promise<any> => {
   try {
     const { userId, title, body, data, url, convoId, senderName, previewText, otherParticipants } = req.body;
@@ -959,7 +959,7 @@ const handleSendNotification = async (req: AuthedRequest<any, any>, res: Respons
 app.post('/api/notifications/send', verifyToken, handleSendNotification);
 app.post('/api/send-notification', verifyToken, handleSendNotification);
 
-// ─── SEARCH PROXY ─────────────────────
+
 app.get(
   '/api/search',
   verifyToken,
@@ -1012,7 +1012,7 @@ app.get(
   }
 );
 
-// ─── PROFILE PROXY ────────────────────
+
 app.get(
   '/api/profiles/:userId',
   verifyToken,
@@ -1047,7 +1047,7 @@ app.get(
   }
 );
 
-// Upload avatar
+
 app.post('/api/upload/avatar', verifyToken, uploadLimiter, upload.single('avatar'), async (req: AuthedRequest, res: Response) => {
   try {
     if (!req.file || !req.user) {
@@ -1057,11 +1057,11 @@ app.post('/api/upload/avatar', verifyToken, uploadLimiter, upload.single('avatar
 
     const userId = req.user.uid;
 
-    // Convert buffer to base64
+    
     const b64 = Buffer.from(req.file.buffer).toString('base64');
     const dataURI = `data:${req.file.mimetype};base64,${b64}`;
 
-    // Upload to Cloudinary with auto-optimization
+    
     const result = await cloudinary.uploader.upload(dataURI, {
       folder: `nc-network/avatars/${userId}`,
       public_id: 'profile',
@@ -1072,7 +1072,7 @@ app.post('/api/upload/avatar', verifyToken, uploadLimiter, upload.single('avatar
       ],
     });
 
-    // Save URL to Firestore in both users and profiles collections
+    
     const userRef = db.collection('users').doc(userId);
     const profileRef = db.collection('profiles').doc(userId);
 
@@ -1091,7 +1091,7 @@ app.post('/api/upload/avatar', verifyToken, uploadLimiter, upload.single('avatar
   }
 });
 
-// Upload casting banner
+
 app.post('/api/upload/casting/:castingId', verifyToken, upload.single('banner'), async (req: AuthedRequest, res: Response) => {
   try {
     if (!req.file || !req.user) {
@@ -1102,7 +1102,7 @@ app.post('/api/upload/casting/:castingId', verifyToken, upload.single('banner'),
     const { castingId } = req.params;
     const userId = req.user.uid;
 
-    // Verify ownership
+    
     if (castingId !== 'new') {
       const castingDoc = await db.collection('casting_calls').doc(castingId).get();
       if (!castingDoc.exists) {
@@ -1138,7 +1138,7 @@ app.post('/api/upload/casting/:castingId', verifyToken, upload.single('banner'),
   }
 });
 
-// Upload media (photos + videos)
+
 app.post('/api/upload/media', verifyToken, uploadLimiter, upload.array('media', 10), async (req: AuthedRequest, res: Response) => {
   try {
     if (!req.files || !req.user) {
@@ -1164,7 +1164,7 @@ app.post('/api/upload/media', verifyToken, uploadLimiter, upload.array('media', 
         ],
       });
 
-      // Save to Firestore users -> media subcollection
+      
       const mediaRef = await db
         .collection('users').doc(userId)
         .collection('media').add({
@@ -1189,7 +1189,7 @@ app.post('/api/upload/media', verifyToken, uploadLimiter, upload.array('media', 
   }
 });
 
-// Delete media
+
 app.delete('/api/upload/media/:mediaId', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
     if (!req.user) {
@@ -1212,14 +1212,14 @@ app.delete('/api/upload/media/:mediaId', verifyToken, async (req: AuthedRequest,
     const publicId = mediaDoc.data()?.publicId;
     const mediaType = mediaDoc.data()?.type || 'image';
 
-    // Delete from Cloudinary
+    
     if (publicId) {
       await cloudinary.uploader.destroy(publicId, {
         resource_type: mediaType === 'video' ? 'video' : 'image'
       });
     }
 
-    // Delete from Firestore
+    
     await mediaDoc.ref.delete();
 
     res.json({ success: true });
@@ -1234,7 +1234,7 @@ app.get('/api/admin/users', verifyToken, isAdmin, async (req: AuthedRequest, res
     const snapshot = await db.collection('profiles').get();
     const users = snapshot.docs.map((doc) => {
       const data = doc.data();
-      // Remove sensitive properties
+      
       delete data.twoFactorBackupCodes;
       delete data.twoFactorSecret;
       return { id: doc.id, ...data };
@@ -1256,22 +1256,22 @@ app.post('/api/admin/users/:userId/delete', verifyToken, isAdmin, async (req: Au
   }
 
   try {
-    // 1. Revoke refresh tokens immediately
+    
     try {
       await admin.auth().revokeRefreshTokens(userId);
     } catch (revokeErr) {
       console.warn(`Could not revoke refresh tokens for user ${userId}:`, revokeErr);
     }
 
-    // 2. Delete from Firebase Auth
+    
     try {
       await admin.auth().deleteUser(userId);
     } catch (authErr) {
-      // If user does not exist in Auth, log a warning and continue
+      
       console.warn(`Could not delete Auth user ${userId}:`, authErr);
     }
 
-    // 3. Delete profiles/{userId}/sessions subcollection documents
+    
     try {
       const sessionsSnap = await db.collection('profiles').doc(userId).collection('sessions').get();
       if (!sessionsSnap.empty) {
@@ -1294,11 +1294,11 @@ app.post('/api/admin/users/:userId/delete', verifyToken, isAdmin, async (req: Au
       console.warn(`Error deleting sessions for user ${userId}:`, sessionsErr);
     }
 
-    // 4. Delete Firestore documents in users and profiles collections
+    
     await db.collection('users').doc(userId).delete();
     await db.collection('profiles').doc(userId).delete();
 
-    // 5. Clean up associated collections (batched)
+    
     const collectionsToClean = [
       { name: 'casting_calls', field: 'createdBy' },
       { name: 'saved_calls', field: 'userId' },
@@ -1340,14 +1340,14 @@ app.post('/api/admin/users/:userId/delete', verifyToken, isAdmin, async (req: Au
       }
     }
 
-    // 6. Add to deleted_users log
+    
     await db.collection('deleted_users').add({
       userId,
       deletedAt: admin.firestore.FieldValue.serverTimestamp(),
       deletedBy: adminUid,
     });
 
-    // 7. Write an admin log
+    
     const adminEmail = req.user?.email || "Unknown Admin";
     await db.collection('admin_logs').add({
       adminEmail,
@@ -1357,7 +1357,7 @@ app.post('/api/admin/users/:userId/delete', verifyToken, isAdmin, async (req: Au
       timestamp: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    // 8. Invalidate server cache
+    
     deleteFromCacheByPattern(`profile:${userId}`);
     deleteFromCacheByPattern(`user:${userId}`);
 
@@ -1373,7 +1373,7 @@ function calculateExpiryDate(duration: string) {
   const now = new Date();
   const map: Record<string, number> = { '1d': 1, '7d': 7, '30d': 30 };
   const days = map[duration];
-  if (!days) return null; // permanent
+  if (!days) return null; 
   now.setDate(now.getDate() + days);
   return admin.firestore.Timestamp.fromDate(now);
 }
@@ -1389,21 +1389,21 @@ app.post('/api/admin/users/:userId/ban', verifyToken, isAdmin, async (req: Authe
   }
 
   try {
-    // 1. Revoke refresh tokens immediately
+    
     try {
       await admin.auth().revokeRefreshTokens(userId);
     } catch (revokeErr) {
       console.warn(`Could not revoke refresh tokens for user ${userId}:`, revokeErr);
     }
 
-    // 2. Disable Firebase Auth account
+    
     try {
       await admin.auth().updateUser(userId, { disabled: true });
     } catch (authErr) {
       console.warn(`Could not disable Auth user ${userId}:`, authErr);
     }
 
-    // 3. Mark as banned in Firestore (users & profiles collections)
+    
     const banExpiresAt = duration === 'permanent'
       ? null
       : calculateExpiryDate(duration);
@@ -1419,7 +1419,7 @@ app.post('/api/admin/users/:userId/ban', verifyToken, isAdmin, async (req: Authe
     await db.collection('users').doc(userId).update(updateFields);
     await db.collection('profiles').doc(userId).update(updateFields);
 
-    // 4. Log in moderation_log
+    
     await db.collection('moderation_log').add({
       action: 'ban',
       userId,
@@ -1429,7 +1429,7 @@ app.post('/api/admin/users/:userId/ban', verifyToken, isAdmin, async (req: Authe
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // 5. Write admin log
+    
     const adminEmail = req.user?.email || "Unknown Admin";
     await db.collection('admin_logs').add({
       adminEmail,
@@ -1439,7 +1439,7 @@ app.post('/api/admin/users/:userId/ban', verifyToken, isAdmin, async (req: Authe
       timestamp: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    // 6. Invalidate server cache
+    
     deleteFromCacheByPattern(`profile:${userId}`);
     deleteFromCacheByPattern(`user:${userId}`);
 
@@ -1461,14 +1461,14 @@ app.post('/api/admin/users/:userId/unban', verifyToken, isAdmin, async (req: Aut
   }
 
   try {
-    // 1. Re-enable in Firebase Auth
+    
     try {
       await admin.auth().updateUser(userId, { disabled: false });
     } catch (authErr) {
       console.warn(`Could not re-enable Auth user ${userId}:`, authErr);
     }
 
-    // 2. Mark as active in Firestore (users & profiles collections)
+    
     const removeFields = {
       status: 'Active',
       bannedAt: admin.firestore.FieldValue.delete(),
@@ -1480,7 +1480,7 @@ app.post('/api/admin/users/:userId/unban', verifyToken, isAdmin, async (req: Aut
     await db.collection('users').doc(userId).update(removeFields);
     await db.collection('profiles').doc(userId).update(removeFields);
 
-    // 3. Log in moderation_log
+    
     await db.collection('moderation_log').add({
       action: 'unban',
       userId,
@@ -1488,7 +1488,7 @@ app.post('/api/admin/users/:userId/unban', verifyToken, isAdmin, async (req: Aut
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // 4. Write admin log
+    
     const adminEmail = req.user?.email || "Unknown Admin";
     await db.collection('admin_logs').add({
       adminEmail,
@@ -1498,7 +1498,7 @@ app.post('/api/admin/users/:userId/unban', verifyToken, isAdmin, async (req: Aut
       timestamp: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    // 5. Invalidate server cache
+    
     deleteFromCacheByPattern(`profile:${userId}`);
     deleteFromCacheByPattern(`user:${userId}`);
 
@@ -1582,7 +1582,7 @@ app.get(
     }
     const data = docRef.data();
     if (data) {
-      // Remove sensitive properties
+      
       delete data.twoFactorBackupCodes;
       delete data.twoFactorSecret;
     }
@@ -1607,7 +1607,7 @@ app.post('/api/profile', verifyToken, async (req: AuthedRequest, res: Response) 
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
-    // Also update users/{uid} for shared fields to keep them in sync
+    
     const userUpdate: Record<string, any> = {};
     if (validatedData.name !== undefined) userUpdate.name = validatedData.name;
     if (validatedData.role !== undefined) userUpdate.role = validatedData.role;
@@ -1664,7 +1664,7 @@ app.get('/api/casting', async (req: Request, res: Response) => {
   }
 });
 
-// ─── USER PROFILE ROUTES ──────────────
+
 app.get(
   '/api/users/:id',
   bloomFilterMiddleware('user'),
@@ -1691,7 +1691,7 @@ app.get(
   }
 );
 
-// ─── CASTING CALL ROUTES ──────────────
+
 app.get(
   '/api/castings/:id',
   bloomFilterMiddleware('casting'),
@@ -1717,7 +1717,7 @@ app.get(
   }
 );
 
-// ─── DISCOVERY/SEARCH ROUTES ──────────
+
 app.get(
   '/api/discovery',
   cacheMiddleware(
@@ -1751,7 +1751,7 @@ app.post('/api/casting', verifyToken, async (req: AuthedRequest, res: Response) 
     const { id, ...dataToSave } = validatedData;
 
     if (id) {
-      // SECURITY FIX: Verify ownership before overwriting existing casting call
+      
       const existingDoc = await db.collection('casting_calls').doc(id).get();
       if (existingDoc.exists && existingDoc.data()?.createdBy !== uid) {
         res.status(403).json({ error: 'Forbidden: You do not own this casting call' });
@@ -1832,7 +1832,7 @@ app.post('/api/messaging/conversations', verifyToken, async (req: AuthedRequest,
       return;
     }
 
-    // FIX #5: Check if any other participant has blocked the requesting user
+    
     const otherParticipants = uniqueParticipants.filter(p => p !== uid);
     for (const participantId of otherParticipants) {
       const participantDoc = await db.collection('users').doc(participantId).get();
@@ -1843,7 +1843,7 @@ app.post('/api/messaging/conversations', verifyToken, async (req: AuthedRequest,
           return;
         }
       }
-      // Also check if the requesting user has blocked the participant
+      
       const requesterDoc = await db.collection('users').doc(uid).get();
       if (requesterDoc.exists) {
         const requesterBlocked: string[] = requesterDoc.data()?.blockedUsers || [];
@@ -1856,7 +1856,7 @@ app.post('/api/messaging/conversations', verifyToken, async (req: AuthedRequest,
 
     const sorted = uniqueParticipants.slice().sort();
 
-    // Check if conversation already exists
+    
     const snapshot = await db.collection('conversations')
       .where('participants', 'array-contains', uid)
       .get();
@@ -1883,7 +1883,7 @@ app.post('/api/messaging/conversations', verifyToken, async (req: AuthedRequest,
       lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Send a new conversation notification to the other participant
+    
     const otherParticipantId = sorted.find((p) => p !== uid);
     if (otherParticipantId) {
       const user = req.user!;
@@ -1951,7 +1951,7 @@ app.post('/api/messaging/conversations', verifyToken, async (req: AuthedRequest,
           });
       }
 
-      // Also send via OneSignal push notification
+      
       sendOneSignalNotification({
         userIds: [otherParticipantId],
         title: 'New Conversation',
@@ -2085,7 +2085,7 @@ app.post(
         return;
       }
 
-      // Check if any other participant has blocked the sender, or if the sender has blocked them
+      
       const otherParticipants = participants.filter((p: string) => p !== uid);
       for (const participantId of otherParticipants) {
         const participantDoc = await db.collection('users').doc(participantId).get();
@@ -2125,7 +2125,7 @@ app.post(
         .collection('messages')
         .add(newMessage);
 
-      // Update conversation metadata
+      
       const convoUpdate: any = {
         lastMessage: validatedData.text,
         lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -2136,7 +2136,7 @@ app.post(
         lastMessageRead: false,
       };
 
-      // SECURITY & PERFORMANCE FIX: Use atomic FieldValue.increment and dot notation to prevent race conditions
+      
       convoUpdate[`readBy.${uid}`] = true;
       convoUpdate[`unreadCounts.${uid}`] = 0;
 
@@ -2151,9 +2151,9 @@ app.post(
         .doc(req.params.conversationId)
         .update(convoUpdate);
 
-      // Trigger FCM to participants (except sender)
+      
       if (otherParticipants.length > 0) {
-        // Send notifications document in firestore for each recipient
+        
         for (const otherParticipantId of otherParticipants) {
           const user = req.user!;
           let senderName = (user as any).name || "Someone";
@@ -2234,7 +2234,7 @@ app.post(
             });
         }
 
-        // Also send via OneSignal push notification
+        
         const preview = formatMessagePreview(validatedData.text);
         sendOneSignalNotification({
           userIds: otherParticipants,
@@ -2448,7 +2448,7 @@ app.put('/api/messaging/:conversationId/read', verifyToken, async (req: AuthedRe
     const convo = await assertParticipant(req.params.conversationId, uid, res);
     if (!convo) return;
 
-    // SECURITY FIX: Use correct field name 'unreadCounts' (with 's') to match message send code
+    
     await db.collection('conversations')
       .doc(req.params.conversationId)
       .update({
@@ -2540,20 +2540,20 @@ app.get('/api/notifications/unread-count', verifyToken, async (req: AuthedReques
       return;
     }
 
-    // 1. Get user profile and last check timestamp
+    
     const profileDoc = await db.collection('profiles').doc(uid).get();
     const profileData = profileDoc.data();
     const lastCheckedAt = profileData?.lastCheckedAt || new admin.firestore.Timestamp(0, 0);
     const userSkills = profileData?.skills || [];
 
-    // 2. Count new messages in conversations
+    
     const conversationsSnapshot = await db.collection('conversations')
       .where('participants', 'array-contains', uid)
       .get();
 
     let unreadMessages = 0;
     
-    // We check each conversation for messages since lastCheckedAt
+    
     const messagePromises = conversationsSnapshot.docs.map(convo => 
       db.collection('conversations')
         .doc(convo.id)
@@ -2568,7 +2568,7 @@ app.get('/api/notifications/unread-count', verifyToken, async (req: AuthedReques
       unreadMessages += snap.size;
     });
 
-    // 3. Count new matching casting calls
+    
     let castingSnapshot = await db.collection('casting_calls')
       .where('createdAt', '>', lastCheckedAt)
       .get();
@@ -2578,7 +2578,7 @@ app.get('/api/notifications/unread-count', verifyToken, async (req: AuthedReques
     if (userSkills.length > 0) {
       newCastingCalls = castingSnapshot.docs.filter(doc => {
         const data = doc.data();
-        // Match based on category/type
+        
         return userSkills.some((skill: any) => 
           (typeof skill === 'string' && skill.toLowerCase() === data.type?.toLowerCase()) ||
           (data.skills && Array.isArray(data.skills) && data.skills.includes(skill))
@@ -2619,7 +2619,7 @@ app.post('/api/notifications/mark-as-read', verifyToken, async (req: AuthedReque
   }
 });
 
-// Helper function to verify credentials via Firebase REST API
+
 const verifyCredentials = async (email: string, password: string): Promise<boolean> => {
   const apiKey = process.env.VITE_FIREBASE_API_KEY;
   if (!apiKey) {
@@ -2640,7 +2640,7 @@ const verifyCredentials = async (email: string, password: string): Promise<boole
   }
 };
 
-// ─── SEND SETUP OTP ───────────────────
+
 app.post('/api/2fa/send-setup-otp', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
     const userId = req.user?.uid;
@@ -2648,15 +2648,15 @@ app.post('/api/2fa/send-setup-otp', verifyToken, async (req: AuthedRequest, res:
       res.status(401).send('Unauthorized');
       return;
     }
-    const { method, phone, email } = req.body as any; // 'email' or 'sms'
+    const { method, phone, email } = req.body as any; 
 
-    // Rate limiting — prevent OTP spam
+    
     const existingOTP = await db.collection('otpCodes').doc(userId).get();
     if (existingOTP.exists) {
       const existingData = existingOTP.data();
       if (existingData?.createdAt) {
         const timeSinceLastOTP = Date.now() - existingData.createdAt.toMillis();
-        if (timeSinceLastOTP < 60 * 1000) { // 60 second cooldown
+        if (timeSinceLastOTP < 60 * 1000) { 
           res.status(429).json({
             error: 'Please wait before requesting another code',
             waitSeconds: Math.ceil((60000 - timeSinceLastOTP) / 1000),
@@ -2666,45 +2666,45 @@ app.post('/api/2fa/send-setup-otp', verifyToken, async (req: AuthedRequest, res:
       }
     }
 
-    // Generate 6-digit OTP
+    
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Hash it before storing — never store plain OTP
+    
     const hashedCode = await bcrypt.hash(code, 10);
 
-    // Store hashed OTP in Firestore with expiry
+    
     await db.collection('otpCodes').doc(userId).set({
       hashedCode,
       method,
       phone: phone || null,
       email: email || null,
-      expiresAt: Date.now() + 2 * 60 * 1000, // 2 minutes
+      expiresAt: Date.now() + 2 * 60 * 1000, 
       attempts: 0,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Get user data to find email/phone
+    
     const userDoc = await db.collection('users').doc(userId).get();
     const userData = userDoc.data() || {};
     const targetEmail = email || userData.email || '';
     const targetPhone = phone || userData.phone || '';
 
-    // Send code via email or SMS — NEVER in response
+    
     if (method === 'email') {
       await sendOTPEmail(targetEmail, code);
     } else if (method === 'sms') {
       await sendOTPSMS(targetPhone, code);
     }
 
-    // Local debug print (safe console-only, never sent to client)
-    // SECURITY FIX: Never log OTP codes — log only that an OTP was sent
+    
+    
     console.log(`[2FA OTP Setup] Method: ${method}, Destination: ${method === 'email' ? targetEmail : targetPhone}, OTP sent successfully`);
 
     res.json({
       success: true,
       method,
       destination: maskDestination(method, targetPhone, targetEmail),
-      expiresIn: 120, // seconds
+      expiresIn: 120, 
     });
   } catch (error: unknown) {
     console.error('Send setup OTP error:', error);
@@ -2713,27 +2713,27 @@ app.post('/api/2fa/send-setup-otp', verifyToken, async (req: AuthedRequest, res:
   }
 });
 
-// ─── SEND LOGIN OTP ───────────────────
+
 app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
   try {
     const { email, password, method } = req.body;
 
-    // Verify credentials first (password auth)
+    
     const valid = await verifyCredentials(email, password);
     if (!valid) {
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
 
-    // Fetch user
+    
     const userRecord = await admin.auth().getUserByEmail(email);
     const userId = userRecord.uid;
 
-    // Verify 2FA is actually enabled for this user
+    
     const userDoc = await db.collection('users').doc(userId).get();
     const userData = userDoc.data() || {};
     
-    // SECURITY FIX: Read 2FA settings from private settings document
+    
     const privateSettingsDoc = await db.collection('users').doc(userId).collection('private').doc('settings').get();
     const privateSettingsData = privateSettingsDoc.data() || {};
 
@@ -2747,13 +2747,13 @@ app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
     const targetEmail = privateSettingsData.twoFactorEmail || userData.email || email;
     const targetPhone = privateSettingsData.twoFactorPhone || userData.phone || '';
 
-    // Rate limiting — prevent OTP spam
+    
     const existingOTP = await db.collection('otpCodes').doc(userId).get();
     if (existingOTP.exists) {
       const existingData = existingOTP.data();
       if (existingData?.createdAt) {
         const timeSinceLastOTP = Date.now() - existingData.createdAt.toMillis();
-        if (timeSinceLastOTP < 60 * 1000) { // 60 second cooldown
+        if (timeSinceLastOTP < 60 * 1000) { 
           res.status(429).json({
             error: 'Please wait before requesting another code',
             waitSeconds: Math.ceil((60000 - timeSinceLastOTP) / 1000),
@@ -2763,11 +2763,11 @@ app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
       }
     }
 
-    // Generate and hash OTP
+    
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedCode = await bcrypt.hash(code, 10);
 
-    // Store hashed OTP
+    
     await db.collection('otpCodes').doc(userId).set({
       hashedCode,
       method: twoFactorMethod,
@@ -2778,15 +2778,15 @@ app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Send via email or SMS only
+    
     if (twoFactorMethod === 'email') {
       await sendOTPEmail(targetEmail, code);
     } else {
       await sendOTPSMS(targetPhone, code);
     }
 
-    // Local debug print (safe console-only, never sent to client)
-    // SECURITY FIX: Never log OTP codes — log only that an OTP was sent
+    
+    
     console.log(`[2FA OTP Login] Method: ${twoFactorMethod}, Destination: ${twoFactorMethod === 'email' ? targetEmail : targetPhone}, OTP sent successfully`);
 
     res.json({
@@ -2801,11 +2801,11 @@ app.post('/api/2fa/send-login-otp', async (req: Request, res: Response) => {
   }
 });
 
-// ─── VERIFY OTP (NEW MERGED ENDPOINT) ───
-// SECURITY FIX: Require authentication to prevent arbitrary userId submission
+
+
 app.post('/api/2fa/verify-otp', verifyToken, async (req: AuthedRequest<any, any>, res: Response) => {
   try {
-    // SECURITY FIX: Use authenticated user's UID instead of client-supplied userId
+    
     const userId = req.user?.uid;
     const { code } = req.body;
 
@@ -2814,20 +2814,20 @@ app.post('/api/2fa/verify-otp', verifyToken, async (req: AuthedRequest<any, any>
       return;
     }
 
-    // Backup code check (8 digits)
+    
     if (code.toString().length === 8) {
       const privateSettingsRef = db.collection('users').doc(userId).collection('private').doc('settings');
       const privateSettingsDoc = await privateSettingsRef.get();
       if (privateSettingsDoc.exists) {
         const backupCodes = privateSettingsDoc.data()?.twoFactorBackupCodes || [];
         if (backupCodes.includes(code.toString())) {
-          // Remove used code
+          
           const updatedBackupCodes = backupCodes.filter((c: string) => c !== code.toString());
           await privateSettingsRef.set({
             twoFactorBackupCodes: updatedBackupCodes
           }, { merge: true });
 
-          // Reset attempts
+          
           await db.collection('two_factor_attempts').doc(userId).delete();
 
           const customToken = await admin.auth().createCustomToken(userId, {
@@ -2854,14 +2854,14 @@ app.post('/api/2fa/verify-otp', verifyToken, async (req: AuthedRequest<any, any>
 
     const otpData = otpDoc.data() || {};
 
-    // Check expiry
+    
     if (Date.now() > otpData.expiresAt) {
       await db.collection('otpCodes').doc(userId).delete();
       res.status(400).json({ error: 'Code expired. Please request a new one.' });
       return;
     }
 
-    // Check max attempts — brute force protection
+    
     if (otpData.attempts >= 3) {
       await db.collection('otpCodes').doc(userId).delete();
       res.status(429).json({
@@ -2870,10 +2870,10 @@ app.post('/api/2fa/verify-otp', verifyToken, async (req: AuthedRequest<any, any>
       return;
     }
 
-    // Verify code against hash
+    
     const isValid = await bcrypt.compare(code.toString(), otpData.hashedCode);
     if (!isValid) {
-      // Increment failed attempt counter
+      
       await db.collection('otpCodes').doc(userId).update({
         attempts: otpData.attempts + 1,
       });
@@ -2884,10 +2884,10 @@ app.post('/api/2fa/verify-otp', verifyToken, async (req: AuthedRequest<any, any>
       return;
     }
 
-    // Code is valid — delete it immediately (one-time use)
+    
     await db.collection('otpCodes').doc(userId).delete();
 
-    // If this is login 2FA, generate a custom token for the client
+    
     const customToken = await admin.auth().createCustomToken(userId, {
       twoFactorVerified: true,
     });
@@ -2895,7 +2895,7 @@ app.post('/api/2fa/verify-otp', verifyToken, async (req: AuthedRequest<any, any>
     res.json({
       success: true,
       verified: true,
-      customToken, // client uses this to complete sign-in
+      customToken, 
     });
   } catch (error: unknown) {
     console.error('Verify OTP error:', error);
@@ -2904,7 +2904,7 @@ app.post('/api/2fa/verify-otp', verifyToken, async (req: AuthedRequest<any, any>
   }
 });
 
-// ─── VERIFY SETUP OTP (BACKWARDS COMPATIBILITY) ───
+
 app.post('/api/2fa/verify-setup-otp', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
     const { code, method, phone, email } = req.body as any;
@@ -2929,12 +2929,12 @@ app.post('/api/2fa/verify-setup-otp', verifyToken, async (req: AuthedRequest, re
       return;
     }
 
-    // Generate 8 backup codes (8 digits each)
+    
     const backupCodes = Array.from({ length: 8 }, () => 
       Math.floor(10000000 + Math.random() * 90000000).toString()
     );
 
-    // SECURITY FIX: Save configuration to private settings
+    
     await db.collection('users').doc(uid).collection('private').doc('settings').set({
       twoFactorEnabled: true,
       twoFactorMethod: method,
@@ -2944,13 +2944,13 @@ app.post('/api/2fa/verify-setup-otp', verifyToken, async (req: AuthedRequest, re
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
-    // Sync to users
+    
     await db.collection('users').doc(uid).set({
       twoFactorEnabled: true,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
-    // Clean up OTP
+    
     await db.collection('otpCodes').doc(uid).delete();
 
     res.json({ success: true, backupCodes });
@@ -2961,12 +2961,12 @@ app.post('/api/2fa/verify-setup-otp', verifyToken, async (req: AuthedRequest, re
   }
 });
 
-// ─── VERIFY LOGIN OTP (BACKWARDS COMPATIBILITY) ───
+
 app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
   try {
     const { email, password, code, useBackupCode } = req.body;
 
-    // SECURITY FIX: Re-verify password alongside OTP to prevent blind brute-force
+    
     if (!email || !password) {
       res.status(400).json({ error: 'Email and password are required' });
       return;
@@ -2980,7 +2980,7 @@ app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
     const userRecord = await admin.auth().getUserByEmail(email);
     const uid = userRecord.uid;
 
-    // Check Lockout
+    
     const attemptsDoc = await db.collection('two_factor_attempts').doc(uid).get();
     let currentAttempts = 0;
     if (attemptsDoc.exists) {
@@ -2998,13 +2998,13 @@ app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
       const backupCodes = privateSettingsDoc.data()?.twoFactorBackupCodes || [];
       
       if (backupCodes.includes(code)) {
-        // Remove code from array
+        
         const updatedBackupCodes = backupCodes.filter((c: string) => c !== code);
         await privateSettingsRef.set({
           twoFactorBackupCodes: updatedBackupCodes
         }, { merge: true });
 
-        // Reset attempts
+        
         await db.collection('two_factor_attempts').doc(uid).delete();
         res.json({ success: true });
         return;
@@ -3016,7 +3016,7 @@ app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
         const isExpired = Date.now() > otpData.expiresAt;
         const isValid = await bcrypt.compare(code.toString(), otpData.hashedCode);
         if (isValid && !isExpired) {
-          // Success
+          
           await db.collection('otpCodes').doc(uid).delete();
           await db.collection('two_factor_attempts').doc(uid).delete();
           res.json({ success: true });
@@ -3025,10 +3025,10 @@ app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
       }
     }
 
-    // Invalid code -> track attempts
+    
     currentAttempts += 1;
     if (currentAttempts >= 3) {
-      const lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 min lockout
+      const lockedUntil = new Date(Date.now() + 15 * 60 * 1000); 
       await db.collection('two_factor_attempts').doc(uid).set({
         attempts: currentAttempts,
         lockedUntil,
@@ -3048,7 +3048,7 @@ app.post('/api/2fa/verify-login-otp', async (req: Request, res: Response) => {
   }
 });
 
-// ─── ENABLE 2FA AFTER SETUP ───────────
+
 app.post('/api/2fa/enable', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
     const userId = req.user?.uid;
@@ -3058,7 +3058,7 @@ app.post('/api/2fa/enable', verifyToken, async (req: AuthedRequest, res: Respons
     }
     const { method, verificationCode } = req.body as any;
 
-    // Verify the setup code first
+    
     const otpDoc = await db.collection('otpCodes').doc(userId).get();
     if (!otpDoc.exists) {
       res.status(400).json({ error: 'No pending verification found' });
@@ -3081,10 +3081,10 @@ app.post('/api/2fa/enable', verifyToken, async (req: AuthedRequest, res: Respons
       return;
     }
 
-    // Clean up OTP
+    
     await db.collection('otpCodes').doc(userId).delete();
 
-    // Enable 2FA on user's private settings
+    
     await db.collection('users').doc(userId).collection('private').doc('settings').set({
       twoFactorEnabled: true,
       twoFactorMethod: method,
@@ -3104,7 +3104,7 @@ app.post('/api/2fa/enable', verifyToken, async (req: AuthedRequest, res: Respons
   }
 });
 
-// ─── DISABLE 2FA ──────────────────────
+
 app.post('/api/2fa/disable', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
     const userId = req.user?.uid;
@@ -3113,7 +3113,7 @@ app.post('/api/2fa/disable', verifyToken, async (req: AuthedRequest, res: Respon
       return;
     }
 
-    // SECURITY FIX: Disable 2FA in private settings
+    
     await db.collection('users').doc(userId).collection('private').doc('settings').set({
       twoFactorEnabled: false,
       twoFactorMethod: null,
@@ -3139,7 +3139,7 @@ app.post('/api/2fa/disable', verifyToken, async (req: AuthedRequest, res: Respon
 app.use(async (error: any, req: Request, res: Response, _next: NextFunction) => {
   console.error('[Unhandled Server Error]:', error);
 
-  // Determine status code and message
+  
   let statusCode = 500;
   let message = 'An unexpected error occurred. Please try again later.';
   let errorCode = 'INTERNAL_SERVER_ERROR';
@@ -3157,7 +3157,7 @@ app.use(async (error: any, req: Request, res: Response, _next: NextFunction) => 
     message = 'Validation failed';
     errorCode = 'VALIDATION_ERROR';
     
-    // Log to Firestore for audit before returning
+    
     try {
       const firestoreDb = admin.firestore();
       await firestoreDb.collection('error_logs').add({
@@ -3185,7 +3185,7 @@ app.use(async (error: any, req: Request, res: Response, _next: NextFunction) => 
     message = error.message || message;
   }
 
-  // Log to Firestore for audit
+  
   try {
     const firestoreDb = admin.firestore();
     await firestoreDb.collection('error_logs').add({
@@ -3202,7 +3202,7 @@ app.use(async (error: any, req: Request, res: Response, _next: NextFunction) => 
     console.error('[ErrorLogger] Failed to write error to Firestore:', logError);
   }
 
-  // Respond with standardized JSON
+  
   return res.status(statusCode).json({
     success: false,
     message: statusCode === 500 && process.env.NODE_ENV === 'production' ? 'An unexpected error occurred. Please try again later.' : message,
@@ -3215,7 +3215,7 @@ const startupTime = admin.firestore.Timestamp.now();
 function startFirestoreListeners() {
   console.log("🔥 Starting background Firestore listeners for Push Notifications...");
 
-  // 1. Listen to new notifications in Firestore
+  
   db.collection('notifications')
     .where('createdAt', '>', startupTime)
     .onSnapshot((snapshot) => {
@@ -3250,7 +3250,7 @@ function startFirestoreListeners() {
               console.log(`[Push Notification] Sent ${response.successCount} pushes for notification ${docId}`);
             }
 
-            // Mark as pushSent: true in the database
+            
             await db.collection('notifications').doc(docId).update({ pushSent: true });
           } catch (err) {
             console.error(`[Push Notification] Error sending for notification ${docId}:`, err);
@@ -3261,7 +3261,7 @@ function startFirestoreListeners() {
       console.error("[Push Notification] Notifications listener error:", error);
     });
 
-  // 2. Listen to new calls in Firestore
+  
   db.collection('calls')
     .where('createdAt', '>', startupTime)
     .onSnapshot((snapshot) => {
@@ -3304,7 +3304,7 @@ function startFirestoreListeners() {
       console.error("[Call Push] Calls listener error:", error);
     });
 
-  // 3. Listen to new casting calls in Firestore
+  
   db.collection('casting_calls')
     .where('createdAt', '>', startupTime)
     .onSnapshot((snapshot) => {
@@ -3317,7 +3317,7 @@ function startFirestoreListeners() {
             const castingType = casting.type;
             if (!castingType) return;
 
-            // Query profiles to find matching role category or skills
+            
             const profilesSnap = await db.collection('profiles').get();
             const matchingProfiles = profilesSnap.docs.filter(doc => {
               const data = doc.data();
@@ -3336,9 +3336,9 @@ function startFirestoreListeners() {
 
             for (const profileDoc of matchingProfiles) {
               const recipientId = profileDoc.id;
-              if (recipientId === casting.createdBy) continue; // Don't notify the creator
+              if (recipientId === casting.createdBy) continue; 
 
-              // Write a notification document to Firestore
+              
               await db.collection('notifications').add({
                 userId: recipientId,
                 recipientId: recipientId,
@@ -3367,9 +3367,9 @@ function startFirestoreListeners() {
     });
 }
 
-// ─── Data Export Endpoints ───────────────────────────────────────────────────────
 
-// 1. Admin Approve request: generate secure random token, store in one_time_tokens, send email with link
+
+
 app.post('/api/admin/data-export/approve', verifyToken, isAdmin, async (req: AuthedRequest<any, any>, res: Response) => {
   try {
     const { requestId } = req.body;
@@ -3393,9 +3393,9 @@ app.post('/api/admin/data-export/approve', verifyToken, isAdmin, async (req: Aut
     }
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours from now
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; 
 
-    // Store secure one-time token
+    
     await db.collection('one_time_tokens').doc(token).set({
       uid: requestData.uid,
       email: requestData.email,
@@ -3405,13 +3405,13 @@ app.post('/api/admin/data-export/approve', verifyToken, isAdmin, async (req: Aut
       used: false,
     });
 
-    // Update data request status
+    
     await requestRef.update({
       status: 'approved',
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Send email with secure tokenized link
+    
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const downloadLink = `${frontendUrl}/api/data-export/download?token=${token}`;
 
@@ -3456,7 +3456,7 @@ app.post('/api/admin/data-export/approve', verifyToken, isAdmin, async (req: Aut
   }
 });
 
-// 2. Download endpoint (Public link, authenticated via token query parameter)
+
 app.get('/api/data-export/download', async (req: Request, res: Response) => {
   try {
     const token = req.query.token;
@@ -3489,16 +3489,16 @@ app.get('/api/data-export/download', async (req: Request, res: Response) => {
       return;
     }
 
-    // Invalidate token immediately to guarantee single use
+    
     await tokenRef.update({ used: true });
 
     const uid = tokenData.uid;
 
-    // Fetch Profile
+    
     const profileDoc = await db.collection('profiles').doc(uid).get();
     const profileData = profileDoc.exists ? { id: uid, ...profileDoc.data() } : null;
 
-    // Fetch Conversations & Messages
+    
     const convoSnap = await db.collection('conversations')
       .where('participants', 'array-contains', uid)
       .get();
@@ -3547,7 +3547,7 @@ app.get('/api/data-export/download', async (req: Request, res: Response) => {
   }
 });
 
-// 3. Admin Approve data-requests REST endpoint
+
 app.post('/api/data-requests/:requestId/approve', verifyToken, isAdmin, async (req: AuthedRequest<any, any>, res: Response) => {
   try {
     const { requestId } = req.params;
@@ -3571,9 +3571,9 @@ app.post('/api/data-requests/:requestId/approve', verifyToken, isAdmin, async (r
     }
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours from now
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; 
 
-    // Store secure one-time token
+    
     const userId = requestData.userId || requestData.uid;
     const userEmail = requestData.userEmail || requestData.email;
 
@@ -3586,13 +3586,13 @@ app.post('/api/data-requests/:requestId/approve', verifyToken, isAdmin, async (r
       used: false,
     });
 
-    // Update data request status
+    
     await requestRef.update({
       status: 'approved',
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Send email with secure tokenized link
+    
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const downloadLink = `${frontendUrl}/api/data-export/download?token=${token}`;
 
@@ -3643,7 +3643,7 @@ app.post('/api/data-requests/:requestId/approve', verifyToken, isAdmin, async (r
   }
 });
 
-// 4. Admin Reject data-requests REST endpoint
+
 app.post('/api/data-requests/:requestId/reject', verifyToken, isAdmin, async (req: AuthedRequest<any, any>, res: Response) => {
   try {
     const { requestId } = req.params;
@@ -3665,7 +3665,7 @@ app.post('/api/data-requests/:requestId/reject', verifyToken, isAdmin, async (re
       return;
     }
 
-    // Update data request status
+    
     await requestRef.update({
       status: 'rejected',
       rejectionReason: reason,
@@ -3686,18 +3686,18 @@ app.post('/api/auth/resolve-phone', async (req: Request, res: Response): Promise
       return res.status(400).json({ error: 'Phone number is required' });
     }
 
-    const normalizedPhone = phone.replace(/\s+/g, ''); // remove spaces
-    const digitsOnly = phone.replace(/\D/g, ''); // digits only
+    const normalizedPhone = phone.replace(/\s+/g, ''); 
+    const digitsOnly = phone.replace(/\D/g, ''); 
 
     const firestoreDb = admin.firestore();
     
-    // Search for profile matching the phone number
+    
     let querySnapshot = await firestoreDb.collection('profiles')
       .where('phone', '==', normalizedPhone)
       .limit(1)
       .get();
 
-    // Suffix match fallback (e.g., prefixing +977 if input is 10 digits starting with 9)
+    
     if (querySnapshot.empty && digitsOnly.length >= 7) {
       if (digitsOnly.length === 10 && (digitsOnly.startsWith('98') || digitsOnly.startsWith('97'))) {
         const withPrefix = `+977${digitsOnly}`;
@@ -3730,7 +3730,7 @@ app.post('/api/auth/resolve-phone', async (req: Request, res: Response): Promise
   }
 });
 
-// Client error logging endpoint:
+
 app.post('/api/errors/log', async (req, res) => {
   try {
     const firestoreDb = admin.firestore();
@@ -3746,7 +3746,7 @@ app.post('/api/errors/log', async (req, res) => {
   }
 });
 
-// Register global error logger middleware (must be registered last)
+
 
 app.listen(PORT, () => {
   console.log(`NC Network Secure API running on http://localhost:${PORT}`);

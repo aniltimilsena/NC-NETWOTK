@@ -7,14 +7,14 @@ import { formatMessagePreview } from '../utils/format';
 import apiClient from '../api/client';
 import { logger } from '../utils/logger';
 
-// VAPID key is required for FCM Web
+
 const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY;
 
 const resolveLinkToPath = (link?: string): string => {
   if (!link) return '/';
   if (link.startsWith('/') || link.startsWith('http')) return link;
   
-  // Parse format "pageName" or "pageName:paramValue"
+  
   let page = link;
   let param: any = null;
   if (link.includes(':')) {
@@ -51,7 +51,7 @@ export const useNotifications = (
   const parseLink = (link?: string): { page: string, param?: any } | null => {
     if (!link) return null;
     
-    // Support formats: "pageName" or "pageName:paramValue"
+    
     if (link.includes(':')) {
       const [page, param] = link.split(':');
       return { page, param };
@@ -73,7 +73,7 @@ export const useNotifications = (
       return;
     }
 
-    // Skip on localhost in local development ONLY if explicitly disabled
+    
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const disableFCMOnLocalhost = import.meta.env.VITE_DISABLE_FCM_LOCALHOST === 'true';
     
@@ -106,7 +106,7 @@ export const useNotifications = (
         });
 
         if (token) {
-          // Try registering with the local Express backend first
+          
           let registeredLocally = false;
           try {
             const response = await apiClient.post('/notifications/register-token', { token }, { timeout: 2000 });
@@ -119,7 +119,7 @@ export const useNotifications = (
           }
 
           if (!registeredLocally) {
-            // Fallback to Firebase Cloud Function
+            
             const { data, error: registerError } = await callSecureFunction<{ token: string }, { success: boolean }>(
               'registerNotificationToken', 
               { token }
@@ -171,8 +171,8 @@ export const useNotifications = (
           navigation ? () => onNavigate(navigation.page, navigation.param) : undefined
         );
       } else {
-        // Tab is open but hidden (backgrounded). Because FCM onMessage intercepted it, 
-        // the service worker's background handler won't run. We must trigger a native system notification.
+        
+        
         if (Notification.permission === 'granted') {
           const notificationTitle = title || 'New Notification';
           const resolvedLink = resolveLinkToPath(link);

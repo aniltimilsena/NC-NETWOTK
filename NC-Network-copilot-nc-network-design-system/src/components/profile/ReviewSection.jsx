@@ -20,7 +20,7 @@ const ReviewSection = ({ targetUserId, targetUserName, user: propUser, showToast
   const [userReview, setUserReview] = useState(null);
   const [reviews, setReviews] = useState([]);
 
-  // Load existing reviews
+  
   useEffect(() => {
     if (!targetUserId) return;
     loadReviews();
@@ -43,7 +43,7 @@ const ReviewSection = ({ targetUserId, targetUserName, user: propUser, showToast
     }
   };
 
-  // Check if current user already reviewed
+  
   const checkExistingReview = async () => {
     if (!currentUser?.uid || !targetUserId) return;
     
@@ -59,7 +59,7 @@ const ReviewSection = ({ targetUserId, targetUserName, user: propUser, showToast
           id: snapshot.docs[0].id, 
           ...snapshot.docs[0].data() 
         });
-        // Pre-fill with existing review
+        
         setRating(snapshot.docs[0].data().rating);
         setReviewText(snapshot.docs[0].data().text);
       }
@@ -69,28 +69,28 @@ const ReviewSection = ({ targetUserId, targetUserName, user: propUser, showToast
   };
 
   const handleSubmitReview = async () => {
-    // ─── VALIDATION ───────────────────
+    
     setError('');
 
-    // Must be logged in
+    
     if (!currentUser?.uid) {
       setError('Please log in to leave a review');
       return;
     }
 
-    // Cannot review yourself
+    
     if (currentUser.uid === targetUserId) {
       setError('You cannot review your own profile');
       return;
     }
 
-    // Must select rating
+    
     if (rating === 0) {
       setError('Please select a star rating');
       return;
     }
 
-    // Must write review text
+    
     if (!reviewText.trim()) {
       setError('Please write a review');
       return;
@@ -111,19 +111,19 @@ const ReviewSection = ({ targetUserId, targetUserName, user: propUser, showToast
 
       const reviewData = {
         targetUserId,
-        targetUid: targetUserId,          // keep targetUid for compatibility
+        targetUid: targetUserId,          
         targetUserName,
-        reviewerId: currentUser.uid,      // ✅ MUST match auth user
+        reviewerId: currentUser.uid,      
         reviewerName: currentUser.displayName || 'Anonymous',
         reviewerPhoto: currentUser.photoURL || null,
-        rating: Number(rating),            // ensure it's a number
+        rating: Number(rating),            
         text: reviewText.trim(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
 
       if (userReview) {
-        // Update existing review
+        
         await updateDoc(
           doc(db, 'reviews', userReview.id),
           {
@@ -133,10 +133,10 @@ const ReviewSection = ({ targetUserId, targetUserName, user: propUser, showToast
           }
         );
       } else {
-        // Create new review
+        
         await addDoc(collection(db, 'reviews'), reviewData);
 
-        // Update target user's review count
+        
         await updateDoc(
           doc(db, 'users', targetUserId),
           {
@@ -148,9 +148,9 @@ const ReviewSection = ({ targetUserId, targetUserName, user: propUser, showToast
 
       setSuccess(true);
       setReviewText('');
-      loadReviews(); // refresh list
+      loadReviews(); 
 
-      // Hide success message after 3s
+      
       setTimeout(() => setSuccess(false), 3000);
 
     } catch (error) {
@@ -168,9 +168,9 @@ const ReviewSection = ({ targetUserId, targetUserName, user: propUser, showToast
     }
   };
 
-  // Cannot review own profile
+  
   if (currentUser?.uid === targetUserId) {
-    return null; // Don't show review section on own profile
+    return null; 
   }
 
   return (
@@ -201,8 +201,8 @@ const ReviewSection = ({ targetUserId, targetUserName, user: propUser, showToast
               fontSize: 32,
               padding: 4,
               color: star <= (hoveredRating || rating)
-                ? '#FFD700'   // filled gold
-                : '#333',     // empty grey
+                ? '#FFD700'   
+                : '#333',     
               transition: 'color 0.15s ease',
             }}
           >
@@ -337,7 +337,7 @@ const ReviewSection = ({ targetUserId, targetUserName, user: propUser, showToast
   );
 };
 
-// Review card component
+
 const ReviewCard = ({ review, isOwn }) => (
   <div style={{
     background: '#111',

@@ -1,6 +1,6 @@
-// api/admin-users.js
-// Handles: DELETE /ban /unban /log — reads params from req.query (set by vercel.json rewrite)
-// Uses ES module syntax to prevent ES module scope crashes on Vercel.
+
+
+
 
 import admin from 'firebase-admin';
 import * as jose from 'jose';
@@ -80,7 +80,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Security Headers
+  
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -105,17 +105,17 @@ export default async function handler(req, res) {
 
   const { userId, action } = req.query;
 
-  // Validate action query parameter
+  
   if (!action || typeof action !== 'string' || !['delete', 'ban', 'unban', 'log'].includes(action)) {
     return res.status(400).json({ error: 'Invalid action parameter' });
   }
 
-  // ── POST /api/admin/log ──────────────────────────────────────────────────
+  
   if (action === 'log') {
     const body = await readBody(req);
     const { action: logAction, targetId, details } = body;
     
-    // Strict input validation
+    
     if (!logAction || typeof logAction !== 'string' || logAction.trim().length === 0 || logAction.length > 200) {
       return res.status(400).json({ error: 'Invalid logAction' });
     }
@@ -140,12 +140,12 @@ export default async function handler(req, res) {
     }
   }
 
-  // Validate userId query parameter (prevent NoSQL injection/malformed queries)
+  
   if (!userId || typeof userId !== 'string' || userId.trim().length === 0 || userId.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(userId)) {
     return res.status(400).json({ error: 'Invalid userId parameter' });
   }
 
-  // ── DELETE ───────────────────────────────────────────────────────────────
+  
   if (action === 'delete') {
     try {
       try { await auth.revokeRefreshTokens(userId); } catch {}
@@ -203,12 +203,12 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── BAN ──────────────────────────────────────────────────────────────────
+  
   if (action === 'ban') {
     const body = await readBody(req);
     const { reason, duration } = body;
 
-    // Strict input validation
+    
     if (reason && (typeof reason !== 'string' || reason.length > 500)) {
       return res.status(400).json({ error: 'Reason must be a string up to 500 characters' });
     }
@@ -260,7 +260,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── UNBAN ────────────────────────────────────────────────────────────────
+  
   if (action === 'unban') {
     try {
       try { await auth.updateUser(userId, { disabled: false }); } catch {}

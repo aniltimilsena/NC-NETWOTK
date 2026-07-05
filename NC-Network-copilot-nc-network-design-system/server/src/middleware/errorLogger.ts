@@ -7,7 +7,7 @@ export const errorLogger = async (
   res: Response,
   _next: NextFunction
 ): Promise<void> => {
-  // Log to Firestore for review
+  
   try {
     const db = admin.firestore();
     await db.collection('error_logs').add({
@@ -21,11 +21,11 @@ export const errorLogger = async (
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
   } catch (logError) {
-    // Silent fail
+    
     console.error('[ErrorLogger] Failed to write error to Firestore:', logError);
   }
 
-  // Send generic error response
+  
   const statusCode = err.status || err.statusCode || 500;
   res.status(statusCode).json({
     error: process.env.NODE_ENV === 'production'

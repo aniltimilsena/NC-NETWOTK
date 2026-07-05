@@ -1,5 +1,5 @@
-// api/debug.js
-// Diagnostic endpoint to check jose JWT verification.
+
+
 
 import * as jose from 'jose';
 

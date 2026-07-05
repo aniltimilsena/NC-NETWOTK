@@ -13,7 +13,7 @@ const AdminDataRequests = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [selectedId, setSelectedId] = useState(null);
   const [processing, setProcessing] = useState(false);
-  // Map of requestId -> download link (populated after approval)
+  
   const [downloadLinks, setDownloadLinks] = useState({});
 
   const { showToast: ctxShowToast } = useOutletContext() || {};
@@ -49,7 +49,7 @@ const AdminDataRequests = () => {
     return () => unsubscribe();
   }, []);
 
-  // Filter requests
+  
   const filtered = requests.filter(r => 
     filter === 'all' ? true : r.status === filter
   );
@@ -58,7 +58,7 @@ const AdminDataRequests = () => {
     r => r.status === 'pending'
   ).length;
 
-  // Approve request — returns download link directly, no email
+  
   const handleApprove = async (requestId, userEmail, userName) => {
     try {
       setProcessing(true);
@@ -90,7 +90,7 @@ const AdminDataRequests = () => {
       const result = await response.json();
       const link = result.downloadLink;
 
-      // Store the download link so the button appears on the card
+      
       if (link) {
         setDownloadLinks(prev => ({ ...prev, [requestId]: link }));
       }
@@ -104,7 +104,7 @@ const AdminDataRequests = () => {
     }
   };
 
-  // Reject request
+  
   const handleReject = async (requestId, userEmail) => {
     if (!rejectReason || rejectReason.trim().length < 5) {
       showToast('Please enter a rejection reason', 'error');

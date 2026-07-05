@@ -1,7 +1,7 @@
 import { vi, describe, it, expect } from 'vitest';
 import { Writable } from 'stream';
 
-// 1. Mock firebase-admin first to avoid real connection attempts
+
 vi.mock('firebase-admin', () => {
   const mockCollection = {
     doc: vi.fn().mockReturnThis(),
@@ -60,7 +60,7 @@ vi.mock('firebase-admin', () => {
   };
 });
 
-// Mock cloudinary uploader stream using standard node Writable stream
+
 vi.mock('cloudinary', () => ({
   v2: {
     config: vi.fn(),
@@ -83,7 +83,7 @@ vi.mock('cloudinary', () => ({
   },
 }));
 
-// Set required environment variables before loading the app
+
 process.env.CLOUDINARY_CLOUD_NAME = 'test_cloud';
 process.env.CLOUDINARY_API_KEY = 'test_key';
 process.env.CLOUDINARY_API_SECRET = 'test_secret';
@@ -105,7 +105,7 @@ describe('File Upload Security', () => {
   });
 
   it('accepts valid JPEG image', async () => {
-    // JPEG magic bytes: FF D8 FF E0
+    
     const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46]);
     
     const response = await request(app)
@@ -118,7 +118,7 @@ describe('File Upload Security', () => {
   });
 
   it('rejects files over size limit', async () => {
-    // The server limit is 100MB. Allocate 101MB.
+    
     const largeBuffer = Buffer.alloc(101 * 1024 * 1024);
     
     const response = await request(app)

@@ -22,7 +22,7 @@ export default function PublicLayout({
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Adapter for old onNavigate calls inside components
+  
   const handleLegacyNavigate = (page: string, param: any = null) => {
     switch (page) {
       case 'home': navigate('/'); break;

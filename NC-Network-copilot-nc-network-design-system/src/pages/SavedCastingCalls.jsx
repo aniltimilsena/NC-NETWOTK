@@ -20,7 +20,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
   useEffect(() => {
     if (!currentUser?.uid) return;
 
-    // Query saved_calls collection
+    
     const q = query(
       collection(db, 'saved_calls'),
       where('userId', '==', currentUser.uid),
@@ -28,12 +28,12 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      // Get casting call details for each saved item
+      
       const savedData = await Promise.all(
         snapshot.docs.map(async (savedDoc) => {
           const saveData = savedDoc.data();
           
-          // Fetch the actual casting call data
+          
           try {
             const castingDoc = await getDoc(
               doc(db, 'casting_calls', saveData.castingId)
@@ -47,14 +47,14 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                 ...castingDoc.data(),
               };
             }
-            return null; // casting deleted
+            return null; 
           } catch {
             return null;
           }
         })
       );
 
-      // Filter out nulls (deleted castings)
+      
       setSavedCalls(savedData.filter(Boolean));
       setLoading(false);
     });
@@ -62,7 +62,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
     return () => unsubscribe();
   }, [currentUser?.uid]);
 
-  // Remove from saved
+  
   const handleUnsave = async (saveId, castingTitle) => {
     try {
       setRemoving(saveId);
@@ -279,7 +279,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
   );
 };
 
-// Deadline badge component
+
 const DeadlineBadge = ({ deadline }) => {
   const deadlineDate = deadline?.toDate 
     ? deadline.toDate() 
@@ -289,10 +289,10 @@ const DeadlineBadge = ({ deadline }) => {
   );
 
   const color = daysLeft < 3 
-    ? '#EF4444'   // red — urgent
+    ? '#EF4444'   
     : daysLeft < 7 
-    ? '#F59E0B'   // yellow — soon
-    : '#888';     // grey — plenty of time
+    ? '#F59E0B'   
+    : '#888';     
 
   return (
     <span style={{

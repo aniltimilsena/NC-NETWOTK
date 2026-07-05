@@ -1,8 +1,8 @@
 import { getDoc, DocumentReference, DocumentSnapshot } from 'firebase/firestore';
 
 const requestCounts = new Map<string, number[]>();
-const LIMIT = 50; // max 50 reads per minute
-const WINDOW = 60000; // 1 minute
+const LIMIT = 50; 
+const WINDOW = 60000; 
 
 export const rateLimitedGet = async (
   docRef: DocumentReference

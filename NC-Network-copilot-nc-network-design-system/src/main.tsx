@@ -8,10 +8,10 @@ import { initErrorTracking } from './utils/errorTracking'
 import './index.css'
 import './config/i18n'
 
-// Initialize global unhandled error and promise rejection tracking
+
 initErrorTracking();
 
-// Handle Vite dynamic import chunk failures gracefully by auto-reloading to fetch the latest bundle version
+
 window.addEventListener('vite:preloadError', () => {
   const lastReloaded = sessionStorage.getItem("vite_reload_time");
   const now = Date.now();

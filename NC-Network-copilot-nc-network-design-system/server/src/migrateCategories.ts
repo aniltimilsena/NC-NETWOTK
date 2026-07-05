@@ -3,7 +3,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import crypto from 'crypto';
 
-// Load environment variables
+
 dotenv.config();
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
@@ -23,7 +23,7 @@ function mapRoleToApprovedCategory(role: string | undefined | null): string {
   
   const clean = role.trim().toLowerCase();
   
-  // Direct matches
+  
   if (clean === "actor" || clean === "actors") return "Actor";
   if (clean === "director" || clean === "directors") return "Director";
   if (clean === "model" || clean === "models") return "Model";
@@ -33,12 +33,12 @@ function mapRoleToApprovedCategory(role: string | undefined | null): string {
   if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
   if (clean === "writer" || clean === "writers") return "Writer";
   
-  // Legacy mappings
+  
   if (clean === "photographer" || clean === "photographers") return "Model";
   if (clean === "agent" || clean === "agents" || clean === "producer" || clean === "producers") return "Director";
   if (clean === "talent" || clean === "extras" || clean === "crew" || clean === "crew members") return "Actor";
   
-  // Fuzzy match
+  
   for (const cat of APPROVED_CATEGORIES) {
     if (cat.toLowerCase().startsWith(clean) || clean.startsWith(cat.toLowerCase().slice(0, -1))) {
       return cat;
@@ -53,7 +53,7 @@ function mapCastingCallType(type: string | undefined | null): string {
   
   const clean = type.trim().toLowerCase();
   
-  // Direct matches
+  
   if (clean === "actor" || clean === "actors") return "Actor";
   if (clean === "director" || clean === "directors") return "Director";
   if (clean === "model" || clean === "models") return "Model";
@@ -63,7 +63,7 @@ function mapCastingCallType(type: string | undefined | null): string {
   if (clean === "vfx" || clean === "editor" || clean === "editors" || clean === "editor/vfx") return "VFX";
   if (clean === "writer" || clean === "writers") return "Writer";
   
-  // Genre mappings (legacy)
+  
   if (clean === "film" || clean === "theatre" || clean === "commercial" || clean === "series" || clean === "short film") {
     return "Actor";
   }
@@ -71,7 +71,7 @@ function mapCastingCallType(type: string | undefined | null): string {
   return "Actor";
 }
 
-// Initialize Firebase Admin
+
 const projectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID;
 const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 const privateKey = process.env.FIREBASE_PRIVATE_KEY;
@@ -88,7 +88,7 @@ if (projectId && clientEmail && privateKey) {
 } else {
   console.log("No explicit service account credentials found. Trying default credential initialization...");
   try {
-    // Generates a dummy cert if it doesn't find credentials (matches index.ts fallback)
+    
     const { privateKey: dummyPrivateKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength: 2048,
       publicKeyEncoding: { type: 'spki', format: 'pem' },
@@ -114,7 +114,7 @@ async function runMigration() {
   console.log("Starting Firestore category standardization migration...");
   
   try {
-    // 1. Migrate Global Settings Document
+    
     console.log("Updating settings/global categories...");
     const settingsRef = db.collection('settings').doc('global');
     await settingsRef.set({
@@ -122,7 +122,7 @@ async function runMigration() {
     }, { merge: true });
     console.log("✅ settings/global categories updated to: ", APPROVED_CATEGORIES);
 
-    // 2. Migrate Users
+    
     console.log("Scanning users collection...");
     const usersSnapshot = await db.collection('users').get();
     let usersUpdated = 0;
@@ -145,7 +145,7 @@ async function runMigration() {
     }
     console.log(`✅ Users complete: Checked ${usersChecked}, Updated ${usersUpdated}`);
 
-    // 3. Migrate Profiles
+    
     console.log("Scanning profiles collection...");
     const profilesSnapshot = await db.collection('profiles').get();
     let profilesUpdated = 0;
@@ -168,7 +168,7 @@ async function runMigration() {
     }
     console.log(`✅ Profiles complete: Checked ${profilesChecked}, Updated ${profilesUpdated}`);
 
-    // 4. Migrate Casting Calls
+    
     console.log("Scanning casting_calls collection...");
     const castingCallsSnapshot = await db.collection('casting_calls').get();
     let castingUpdated = 0;

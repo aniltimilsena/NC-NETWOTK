@@ -31,7 +31,7 @@ const MIME_TO_EXT: Record<string, string> = {
   'video/3gpp': 'mp4',
 };
 
-// Extend Express Request type with validatedFile property
+
 export interface ValidatedRequest extends Request {
   validatedFile?: {
     buffer: Buffer;
@@ -51,7 +51,7 @@ export const validateUpload = async (
   if (!file) return next();
 
   try {
-    // ─── FIX 4: Block dangerous extensions first ───
+    
     const originalExt = path.extname(file.originalname).toLowerCase();
     if (DANGEROUS_EXTENSIONS.has(originalExt)) {
       return res.status(400).json({ 
@@ -59,7 +59,7 @@ export const validateUpload = async (
       });
     }
 
-    // ─── FIX 1 + 2: Validate magic bytes + MIME ───
+    
     const detected = await fromBuffer(file.buffer);
     
     if (!detected) {
@@ -74,28 +74,28 @@ export const validateUpload = async (
       });
     }
 
-    // Mismatch between claimed and real type
+    
     if (file.mimetype !== detected.mime) {
       console.warn(`Upload MIME mismatch: 
         claimed=${file.mimetype} 
         real=${detected.mime}
         ip=${req.ip}
       `);
-      // Use real detected type — not client's claim
+      
     }
 
-    // ─── FIX 3: Generate random safe filename ─────
+    
     const safeExt = MIME_TO_EXT[detected.mime] || 'bin';
     const safeName = `${randomUUID().replace(/-/g, '')}.${safeExt}`;
 
-    // ─── FIX 5: Keep in memory — no disk storage ──
-    // multer memoryStorage is already handling this
+    
+    
 
-    // Attach validated/safe info to request
+    
     req.validatedFile = {
       buffer: file.buffer,
-      safeName,            // random name
-      mimeType: detected.mime,  // real type
+      safeName,            
+      mimeType: detected.mime,  
       size: file.size,
       isVideo: detected.mime.startsWith('video/'),
     };

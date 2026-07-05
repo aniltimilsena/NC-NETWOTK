@@ -83,7 +83,7 @@ export default function AdminSettings() {
         return;
       }
 
-      // Write notification for each recipient
+      
       const batchPromises = recipients.map(uid => {
         return addDoc(collection(db, "notifications"), {
           userId: uid,
@@ -137,7 +137,7 @@ export default function AdminSettings() {
         setIsMigrating(true);
         setMigrationStatus("Initializing migration...");
         try {
-          // 1. Update settings/global
+          
           setMigrationStatus("Updating global settings categories...");
           await updateGlobalSettings({ categories: [...CATEGORIES] });
 
@@ -181,7 +181,7 @@ export default function AdminSettings() {
 
           const approvedLabels = CATEGORIES.map(cat => getCategoryConfig(cat).label);
 
-          // 2. Migrate Users
+          
           setMigrationStatus("Scanning users...");
           const usersSnap = await getDocs(collection(db, "users"));
           let usersUpdated = 0;
@@ -194,7 +194,7 @@ export default function AdminSettings() {
             }
           }
 
-          // 3. Migrate Profiles
+          
           setMigrationStatus("Scanning profiles...");
           const profilesSnap = await getDocs(collection(db, "profiles"));
           let profilesUpdated = 0;
@@ -207,7 +207,7 @@ export default function AdminSettings() {
             }
           }
 
-          // 4. Migrate Casting Calls
+          
           setMigrationStatus("Scanning casting calls...");
           const castingSnap = await getDocs(collection(db, "casting_calls"));
           let castingUpdated = 0;
@@ -240,13 +240,13 @@ export default function AdminSettings() {
 
 
   useEffect(() => {
-    // 1. Subscribe to Global Settings
+    
     const unsubSettings = subscribeToGlobalSettings((data) => {
       setSettings(data);
       setLoading(false);
     });
 
-    // 2. Subscribe to Admin Audit Logs
+    
     const unsubLogs = subscribeToAdminLogs((data) => {
       setLogs(data);
     });

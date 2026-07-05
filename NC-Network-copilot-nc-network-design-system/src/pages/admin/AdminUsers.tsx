@@ -42,7 +42,7 @@ export default function AdminUsers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   
-  // Filtering states
+  
   const [roleFilter, setRoleFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showFiltersDropdown, setShowFiltersDropdown] = useState(false);
@@ -71,7 +71,7 @@ export default function AdminUsers() {
       const actionLabel = targetVerified ? "Verify User" : "Unverify User";
       await logAdminAction(adminEmail, actionLabel, userId, `Set verified to ${targetVerified}`);
 
-      // Send verification notification
+      
       try {
         await addDoc(collection(db, "notifications"), {
           userId: userId,
@@ -113,7 +113,7 @@ export default function AdminUsers() {
       
       await logAdminAction(adminEmail, `Update User Status`, userId, `Set status to ${nextStatus}`);
 
-      // Send account status update notification
+      
       try {
         await addDoc(collection(db, "notifications"), {
           userId: userId,
@@ -178,7 +178,7 @@ export default function AdminUsers() {
       
       await logAdminAction(adminEmail, `Update Subscription`, userId, targetPremium ? `Granted PRO Membership` : `Revoked PRO Membership`);
 
-      // Send premium update notification
+      
       try {
         await addDoc(collection(db, "notifications"), {
           userId: userId,
@@ -261,13 +261,13 @@ export default function AdminUsers() {
 
   const handleBanUser = (userId: string, userName: string) => {
     const reason = window.prompt(`Reason for banning ${userName}:`);
-    if (reason === null) return; // user cancelled
+    if (reason === null) return; 
 
     const duration = window.prompt(
       'Ban duration? (1d / 7d / 30d / permanent)', 
       'permanent'
     );
-    if (duration === null) return; // user cancelled
+    if (duration === null) return; 
 
     setConfirmConfig({
       isOpen: true,
@@ -444,21 +444,21 @@ export default function AdminUsers() {
     setCurrentPage(1);
   }, [search, roleFilter, statusFilter]);
   
-  // Filtering logic
+  
   const filteredUsers = users.filter((u) => {
-    // 1. Search filter
+    
     const matchesSearch = 
       (u.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
       (u.email ?? '').toLowerCase().includes(search.toLowerCase()) ||
       u.id.toLowerCase().includes(search.toLowerCase());
     
-    // 2. Role filter
+    
     const matchesRole = 
       roleFilter === 'All' || 
       (roleFilter === 'Admin' && u.isAdmin) ||
       (roleFilter !== 'Admin' && !u.isAdmin && u.role?.toLowerCase() === roleFilter.toLowerCase());
     
-    // 3. Status filter
+    
     const matchesStatus = 
       statusFilter === 'All' || 
       u.status?.toLowerCase() === statusFilter.toLowerCase();
