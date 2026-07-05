@@ -1,20 +1,22 @@
 // api/data-requests-reject.js
 // Reads requestId from req.query.requestId (set by vercel.json rewrite)
+// Uses robust CommonJS imports to prevent module resolution crashes on Vercel.
 
-const { initializeApp, cert, getApps } = require('firebase-admin/app');
-const { getFirestore, FieldValue } = require('firebase-admin/firestore');
-const { getAuth } = require('firebase-admin/auth');
+const admin = require('firebase-admin');
 
 function initFirebaseAdmin() {
-  if (getApps().length > 0) return;
+  if (admin.apps.length > 0) return;
   const projectId = process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || 'nc-network-10d0b';
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const rawKey = process.env.FIREBASE_PRIVATE_KEY || '';
   const privateKey = rawKey.replace(/\\n/g, '\n');
+
   if (projectId && clientEmail && privateKey) {
-    initializeApp({ credential: cert({ projectId, clientEmail, privateKey }) });
+    admin.initializeApp({
+      credential: admin.credential.cert({ projectId, clientEmail, privateKey })
+    });
   } else {
-    initializeApp({ projectId });
+    admin.initializeApp({ projectId });
   }
 }
 
@@ -22,10 +24,11 @@ async function verifyAdmin(req) {
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.replace('Bearer ', '').trim();
   if (!token) throw Object.assign(new Error('Unauthorized: No token'), { status: 401 });
-  const auth = getAuth();
-  const decoded = await auth.verifyIdToken(token);
-  const db = getFirestore();
+  
+  const decoded = await admin.auth().verifyIdToken(token);
+  const db = admin.firestore();
   const userDoc = await db.collection('users').doc(decoded.uid).get();
+  
   if (!userDoc.exists || userDoc.data()?.isAdmin !== true) {
     throw Object.assign(new Error('Forbidden: Not an admin'), { status: 403 });
   }
@@ -51,7 +54,6 @@ module.exports = async (req, res) => {
     return res.status(authErr.status || 401).json({ error: authErr.message });
   }
 
-  // Read requestId from query param (injected by vercel.json rewrite)
   const requestId = req.query?.requestId;
   if (!requestId) {
     return res.status(400).json({ error: 'Missing requestId' });
@@ -71,7 +73,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const db = getFirestore();
+    const db = admin.firestore();
     const requestRef = db.collection('data_requests').doc(requestId);
     const requestDoc = await requestRef.get();
 
@@ -82,7 +84,7 @@ module.exports = async (req, res) => {
     await requestRef.update({
       status: 'rejected',
       rejectionReason: reason.trim(),
-      updatedAt: FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     return res.status(200).json({ success: true });

@@ -1,20 +1,22 @@
 // api/admin-users.js
-// Handles: DELETE /ban /unban /log — reads params from req.query (set by vercel.json rewrites)
+// Handles: DELETE /ban /unban /log — reads params from req.query (set by vercel.json rewrite)
+// Uses robust CommonJS imports to prevent module resolution crashes on Vercel.
 
-const { initializeApp, cert, getApps } = require('firebase-admin/app');
-const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
-const { getAuth } = require('firebase-admin/auth');
+const admin = require('firebase-admin');
 
 function initFirebaseAdmin() {
-  if (getApps().length > 0) return;
+  if (admin.apps.length > 0) return;
   const projectId = process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || 'nc-network-10d0b';
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const rawKey = process.env.FIREBASE_PRIVATE_KEY || '';
   const privateKey = rawKey.replace(/\\n/g, '\n');
+
   if (projectId && clientEmail && privateKey) {
-    initializeApp({ credential: cert({ projectId, clientEmail, privateKey }) });
+    admin.initializeApp({
+      credential: admin.credential.cert({ projectId, clientEmail, privateKey })
+    });
   } else {
-    initializeApp({ projectId });
+    admin.initializeApp({ projectId });
   }
 }
 
@@ -22,10 +24,11 @@ async function verifyAdmin(req) {
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.replace('Bearer ', '').trim();
   if (!token) throw Object.assign(new Error('Unauthorized: No token'), { status: 401 });
-  const auth = getAuth();
-  const decoded = await auth.verifyIdToken(token);
-  const db = getFirestore();
+  
+  const decoded = await admin.auth().verifyIdToken(token);
+  const db = admin.firestore();
   const userDoc = await db.collection('users').doc(decoded.uid).get();
+  
   if (!userDoc.exists || userDoc.data()?.isAdmin !== true) {
     throw Object.assign(new Error('Forbidden: Not an admin'), { status: 403 });
   }
@@ -75,12 +78,11 @@ module.exports = async (req, res) => {
     return res.status(authErr.status || 401).json({ error: authErr.message });
   }
 
-  const db = getFirestore();
-  const auth = getAuth();
+  const db = admin.firestore();
+  const auth = admin.auth();
   const adminUid = adminUser.uid;
   const adminEmail = adminUser.email || 'Unknown Admin';
 
-  // Read params from query string (set by vercel.json rewrites)
   const { userId, action } = req.query;
 
   // ── POST /api/admin/log ──────────────────────────────────────────────────
@@ -94,7 +96,7 @@ module.exports = async (req, res) => {
         action: String(logAction).slice(0, 200),
         targetId: targetId || null,
         details: details || {},
-        timestamp: FieldValue.serverTimestamp(),
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
       return res.status(200).json({ success: true });
     } catch (e) {
@@ -147,7 +149,7 @@ module.exports = async (req, res) => {
       try {
         await db.collection('deleted_users').add({
           userId,
-          deletedAt: FieldValue.serverTimestamp(),
+          deletedAt: admin.firestore.FieldValue.serverTimestamp(),
           deletedBy: adminUid,
         });
         await db.collection('admin_logs').add({
@@ -155,7 +157,7 @@ module.exports = async (req, res) => {
           action: 'Delete User Account',
           targetId: userId,
           details: { deletedByAdminUid: adminUid },
-          timestamp: FieldValue.serverTimestamp(),
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
       } catch {}
 
@@ -180,13 +182,13 @@ module.exports = async (req, res) => {
         if (days) {
           const expiry = new Date();
           expiry.setDate(expiry.getDate() + days);
-          banExpiresAt = Timestamp.fromDate(expiry);
+          banExpiresAt = admin.firestore.Timestamp.fromDate(expiry);
         }
       }
 
       const updateFields = {
         status: 'banned',
-        bannedAt: FieldValue.serverTimestamp(),
+        bannedAt: admin.firestore.FieldValue.serverTimestamp(),
         bannedBy: adminUid,
         banReason: reason || 'No reason provided',
         banExpiresAt,
@@ -200,12 +202,12 @@ module.exports = async (req, res) => {
         reason: reason || 'No reason provided',
         duration: duration || 'permanent',
         moderatorId: adminUid,
-        timestamp: FieldValue.serverTimestamp(),
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
       await db.collection('admin_logs').add({
         adminEmail, action: 'Ban User Account', targetId: userId,
         details: { reason, duration, bannedByAdminUid: adminUid },
-        timestamp: FieldValue.serverTimestamp(),
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       return res.status(200).json({ success: true });
@@ -222,10 +224,10 @@ module.exports = async (req, res) => {
 
       const removeFields = {
         status: 'Active',
-        bannedAt: FieldValue.delete(),
-        bannedBy: FieldValue.delete(),
-        banReason: FieldValue.delete(),
-        banExpiresAt: FieldValue.delete(),
+        bannedAt: admin.firestore.FieldValue.delete(),
+        bannedBy: admin.firestore.FieldValue.delete(),
+        banReason: admin.firestore.FieldValue.delete(),
+        banExpiresAt: admin.firestore.FieldValue.delete(),
       };
 
       await db.collection('users').doc(userId).update(removeFields);
@@ -233,12 +235,12 @@ module.exports = async (req, res) => {
 
       await db.collection('moderation_log').add({
         action: 'unban', userId, moderatorId: adminUid,
-        timestamp: FieldValue.serverTimestamp(),
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
       await db.collection('admin_logs').add({
         adminEmail, action: 'Unban User Account', targetId: userId,
         details: { unbannedByAdminUid: adminUid },
-        timestamp: FieldValue.serverTimestamp(),
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       return res.status(200).json({ success: true });
