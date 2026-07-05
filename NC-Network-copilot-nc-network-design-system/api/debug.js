@@ -1,22 +1,20 @@
 // api/debug.js
-// Diagnostic endpoint to check ES module subpath imports.
+// Diagnostic endpoint to check jose JWT verification.
+
+import * as jose from 'jose';
 
 export default async function handler(req, res) {
   const diagnostics = {
     status: 'ok',
-    importsSucceeded: false,
+    joseSupported: false,
     error: null,
   };
 
   try {
-    const { initializeApp, getApps } = await import('firebase-admin/app');
-    const { getAuth } = await import('firebase-admin/auth');
-    const { getFirestore } = await import('firebase-admin/firestore');
-    
-    diagnostics.importsSucceeded = true;
-    diagnostics.getAppsType = typeof getApps;
-    diagnostics.getAuthType = typeof getAuth;
-    diagnostics.getFirestoreType = typeof getFirestore;
+    const JWKS = jose.createRemoteJWKSet(
+      new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
+    );
+    diagnostics.joseSupported = typeof JWKS === 'function';
   } catch (err) {
     diagnostics.error = {
       message: err.message,
