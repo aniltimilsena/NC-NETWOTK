@@ -180,7 +180,7 @@ export default function Avatar(props: AvatarProps) {
       <div 
         onClick={handleAvatarClick}
         style={sizeStyle}
-        className={`relative flex-shrink-0 rounded-full border-2 border-nc-accent/20 transition-all duration-300 select-none bg-[#3a3a3a] ${sizeClass} ${className} ${editable ? 'cursor-pointer hover:border-nc-accent group/avatar' : ''}`}
+        className={`relative flex-shrink-0 rounded-full border-2 border-nc-accent/20 transition-all duration-300 select-none bg-gradient-to-b from-[#1E1E26] to-[#111116] ${sizeClass} ${className} ${editable ? 'cursor-pointer hover:border-nc-accent group/avatar' : ''}`}
       >
         <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
           {currentSrc ? (
@@ -191,7 +191,7 @@ export default function Avatar(props: AvatarProps) {
               className="w-full h-full object-cover transition-opacity duration-300 ease-in-out opacity-100" 
             />
           ) : (
-            <svg viewBox="0 0 100 100" fill="#888888" className="w-2/3 h-2/3">
+            <svg viewBox="0 0 100 100" fill="#5A5A75" className="w-2/3 h-2/3">
               <circle cx="50" cy="35" r="20"/>
               <ellipse cx="50" cy="85" rx="35" ry="25"/>
             </svg>
