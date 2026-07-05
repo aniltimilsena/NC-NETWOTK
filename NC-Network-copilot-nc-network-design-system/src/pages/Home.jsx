@@ -572,7 +572,7 @@ export default function Home({ onNavigate, user }) {
 
           {/* CastingCall & Audition Update Strip */}
           {castingCalls.length > 0 && (
-            <div className="mt-14 lg:mt-16">
+            <div className="mt-6 lg:mt-8">
                 {/* Editorial Header */}
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center">
@@ -619,7 +619,7 @@ export default function Home({ onNavigate, user }) {
 
       {/* Trending Talents */}
       {talents.length > 0 && (
-        <section className="py-12 lg:py-16">
+        <section className="pt-2 pb-8 lg:pt-2 lg:pb-10">
           <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
             {/* Editorial Header */}
             <div className="flex items-center justify-between mb-10">
@@ -714,7 +714,7 @@ export default function Home({ onNavigate, user }) {
 
       {/* CTA Section - Only show if not logged in */}
       {!isLoggedIn && (
-        <section className="py-12 sm:py-16 lg:py-20">
+        <section className="pt-2 pb-12 sm:pt-2 sm:pb-16 lg:pt-2 lg:pb-20">
           <div className="max-w-4xl mx-auto px-6">
             <GlassCard strong className="p-8 sm:p-14 relative overflow-hidden">
               <div className="absolute top-0 left-1/3 w-72 h-72 bg-nc-accent/10 rounded-full blur-3xl" />
