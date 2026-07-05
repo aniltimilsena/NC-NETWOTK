@@ -9,6 +9,14 @@
       "destination": "/api/send-notification"
     },
     {
+      "source": "/api/data-requests/:requestId/approve",
+      "destination": "/api/data-requests-approve"
+    },
+    {
+      "source": "/api/data-requests/:requestId/reject",
+      "destination": "/api/data-requests-reject"
+    },
+    {
       "source": "/api/:match*",
       "destination": "/api/proxy"
     },
