@@ -71,7 +71,6 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
 
   useEffect(() => {
     if (!user) {
-      setNotifications([]);
       setUnreadCount(0);
       return;
     }
@@ -88,7 +87,6 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
         id: doc.id,
         ...doc.data()
       }));
-      setNotifications(notifs);
       setUnreadCount(notifs.filter(n => !n.read).length);
     }, (err) => {
       if (err.code !== 'permission-denied') {
