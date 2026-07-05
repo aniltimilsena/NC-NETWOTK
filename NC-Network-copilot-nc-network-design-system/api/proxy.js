@@ -1,7 +1,9 @@
 // api/proxy.js
+// Uses ES module syntax to prevent ES module scope crashes on Vercel.
+
 const targetUrl = process.env.SERVER_URL || 'http://localhost:5000/api';
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (!process.env.SERVER_URL) {
     console.warn('SERVER_URL environment variable is not configured. Falling back to localhost.');
   }
@@ -45,10 +47,10 @@ module.exports = async (req, res) => {
     console.error('[Proxy Error]:', error);
     res.status(500).json({ error: 'Proxy failed', message: error.message });
   }
-};
+}
 
 // Disable body parsing so that req can be streamed directly to the backend
-module.exports.config = {
+export const config = {
   api: {
     bodyParser: false,
     sizeLimit: '50mb',

@@ -1,11 +1,7 @@
-const path = require('path');
-try {
-  require('dotenv').config({ path: path.resolve(__dirname, '../.env.server') });
-  require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
-} catch (e) {
-  console.warn('dotenv not loaded:', e);
-}
-const admin = require('firebase-admin');
+// api/send-notification.js
+// Uses ES module syntax to prevent ES module scope crashes on Vercel.
+
+import admin from 'firebase-admin';
 
 // Initialize admin SDK using the project ID
 if (!admin.apps.length) {
@@ -14,7 +10,7 @@ if (!admin.apps.length) {
   });
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // SECURITY FIX: Restrict CORS to known origins instead of wildcard
   const allowedOrigins = [
     'https://nc-netwotk.vercel.app',
@@ -111,4 +107,4 @@ module.exports = async (req, res) => {
     console.error('Internal serverless function error:', error);
     return res.status(500).json({ error: 'Internal Server Error', message: error.message });
   }
-};
+}
