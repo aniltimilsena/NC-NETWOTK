@@ -13,6 +13,8 @@ const AdminDataRequests = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [selectedId, setSelectedId] = useState(null);
   const [processing, setProcessing] = useState(false);
+  // Map of requestId -> download link (populated after approval)
+  const [downloadLinks, setDownloadLinks] = useState({});
 
   const { showToast: ctxShowToast } = useOutletContext() || {};
   const showToast = (msg, type = 'success') => {
@@ -24,7 +26,6 @@ const AdminDataRequests = () => {
   };
 
   useEffect(() => {
-    // ✅ Real-time listener — see requests as they come in
     const q = query(
       collection(db, 'data_requests'),
       orderBy('requestedAt', 'desc')
@@ -41,7 +42,6 @@ const AdminDataRequests = () => {
       },
       (error) => {
         console.error('Error fetching requests:', error);
-        // If permission error → check admin role in Firestore
         setLoading(false);
       }
     );
@@ -58,7 +58,7 @@ const AdminDataRequests = () => {
     r => r.status === 'pending'
   ).length;
 
-  // Approve request
+  // Approve request — returns download link directly, no email
   const handleApprove = async (requestId, userEmail, userName) => {
     try {
       setProcessing(true);
@@ -76,10 +76,19 @@ const AdminDataRequests = () => {
       );
 
       if (!response.ok) {
-        throw new Error('Approval failed');
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'Approval failed');
       }
 
-      showToast(`✅ Approved — email sent to ${userEmail}`);
+      const result = await response.json();
+      const link = result.downloadLink;
+
+      // Store the download link so the button appears on the card
+      if (link) {
+        setDownloadLinks(prev => ({ ...prev, [requestId]: link }));
+      }
+
+      showToast(`✅ Approved — download link is ready below`);
 
     } catch (error) {
       showToast('Failed to approve: ' + error.message, 'error');
@@ -265,7 +274,7 @@ const AdminDataRequests = () => {
             ))}
           </div>
 
-          {/* Action buttons (pending only) */}
+          {/* ── Action buttons (pending only) ── */}
           {request.status === 'pending' && (
             <div>
               {selectedId === request.id ? (
@@ -370,7 +379,49 @@ const AdminDataRequests = () => {
             </div>
           )}
 
-          {/* Rejection reason */}
+          {/* ── Download button (approved) ── */}
+          {request.status === 'approved' && downloadLinks[request.id] && (
+            <div style={{
+              marginTop: 12,
+              padding: '12px 16px',
+              background: 'rgba(16,185,129,0.08)',
+              border: '1px solid rgba(16,185,129,0.2)',
+              borderRadius: 8,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}>
+              <div>
+                <p style={{ color: '#10B981', fontWeight: 600, margin: 0, fontSize: 13 }}>
+                  📦 Data archive ready
+                </p>
+                <p style={{ color: '#666', fontSize: 11, margin: '2px 0 0' }}>
+                  Link expires in 24 hours · single use
+                </p>
+              </div>
+              <a
+                href={downloadLinks[request.id]}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-block',
+                  background: '#10B981',
+                  color: '#000',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  padding: '8px 20px',
+                  borderRadius: 8,
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                📥 Download Data
+              </a>
+            </div>
+          )}
+
+          {/* ── Rejection reason ── */}
           {request.status === 'rejected' && 
            request.rejectionReason && (
             <div style={{
