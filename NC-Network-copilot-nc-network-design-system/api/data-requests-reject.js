@@ -1,8 +1,13 @@
 // api/data-requests-reject.js
 // Reads requestId from req.query.requestId (set by vercel.json rewrite)
-// Uses robust CommonJS imports to prevent module resolution crashes on Vercel.
+// Uses ES module syntax to prevent ES module scope crashes on Vercel.
 
-const admin = require('firebase-admin');
+import admin from 'firebase-admin';
+import * as jose from 'jose';
+
+const JWKS = jose.createRemoteJWKSet(
+  new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
+);
 
 function initFirebaseAdmin() {
   if (admin.apps.length > 0) return;
@@ -25,17 +30,27 @@ async function verifyAdmin(req) {
   const token = authHeader.replace('Bearer ', '').trim();
   if (!token) throw Object.assign(new Error('Unauthorized: No token'), { status: 401 });
   
-  const decoded = await admin.auth().verifyIdToken(token);
+  const projectId = process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || 'nc-network-10d0b';
+  const { payload } = await jose.jwtVerify(token, JWKS, {
+    issuer: `https://securetoken.google.com/${projectId}`,
+    audience: projectId,
+  });
+
+  const uid = payload.sub;
   const db = admin.firestore();
-  const userDoc = await db.collection('users').doc(decoded.uid).get();
+  const userDoc = await db.collection('users').doc(uid).get();
   
   if (!userDoc.exists || userDoc.data()?.isAdmin !== true) {
     throw Object.assign(new Error('Forbidden: Not an admin'), { status: 403 });
   }
-  return decoded;
+  return {
+    uid,
+    email: payload.email || '',
+    ...payload,
+  };
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -93,6 +108,6 @@ module.exports = async (req, res) => {
     console.error('[data-requests-reject] Error:', error);
     return res.status(500).json({ error: error.message });
   }
-};
+}
 
-module.exports.config = { api: { bodyParser: false } };
+export const config = { api: { bodyParser: false } };

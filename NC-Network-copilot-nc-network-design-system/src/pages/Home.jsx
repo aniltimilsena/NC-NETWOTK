@@ -45,17 +45,30 @@ export default function Home({ onNavigate, user }) {
     container.scrollBy({ left: 300, behavior: 'smooth' });
   };
 
-  const getActorYear = (actor) => {
-    if (actor.memberSince) return actor.memberSince;
-    if (actor.joined) return actor.joined;
+  const getActorJoinStatus = (actor) => {
+    let createdDate = null;
     if (actor.createdAt) {
-      const date = actor.createdAt.toDate ? actor.createdAt.toDate() : new Date(actor.createdAt);
-      if (date && !isNaN(date.getFullYear())) {
-        return date.getFullYear();
-      }
+      createdDate = actor.createdAt.toDate ? actor.createdAt.toDate() : new Date(actor.createdAt);
+    } else if (actor.memberSince) {
+      const year = parseInt(actor.memberSince);
+      if (!isNaN(year)) createdDate = new Date(`${year}-01-01`);
+    } else if (actor.joined) {
+      const year = parseInt(actor.joined);
+      if (!isNaN(year)) createdDate = new Date(`${year}-01-01`);
     }
-    const hash = actor.id ? actor.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
-    return 2018 + (hash % 7);
+
+    if (!createdDate) {
+      createdDate = new Date('2026-07-01');
+    }
+
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - createdDate.getTime());
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+    if (diffDays <= 2) {
+      return "New";
+    }
+    return `Since ${createdDate.getFullYear()}`;
   };
 
   useEffect(() => {
@@ -468,9 +481,15 @@ export default function Home({ onNavigate, user }) {
                             className="shadow-md"
                           />
                           <p className="text-white font-bold text-[13px] text-center mt-2 truncate w-full">{actor.name}</p>
-                          <p className="text-nc-muted text-xs text-center mt-0.5 font-medium truncate w-full">
-                            {actor.location || 'Nepal'} - Since {getActorYear(actor)}
-                          </p>
+                          <p className="text-nc-muted text-xs text-center mt-0.5 font-medium truncate w-full flex items-center justify-center gap-1">
+                             <span>{actor.location || 'Nepal'}</span>
+                             <span>•</span>
+                             {getActorJoinStatus(actor) === 'New' ? (
+                               <span className="text-[#00BFFF] font-bold">New</span>
+                             ) : (
+                               <span>{getActorJoinStatus(actor)}</span>
+                             )}
+                           </p>
                         </div>
                       ))}
                   </div>

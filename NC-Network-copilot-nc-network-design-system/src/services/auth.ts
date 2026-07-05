@@ -39,6 +39,7 @@ export const ensureUserProfile = async (user: User) => {
       languages: [],
       media: [],
       verified: false,
+      createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }, { merge: true });
 
@@ -97,6 +98,7 @@ export const signUpUser = async (
       languages: [],
       media: [],
       verified: false,
+      createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }, { merge: true });
 

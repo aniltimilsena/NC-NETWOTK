@@ -463,7 +463,24 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filteredTalents.map((talent) => {
                   const isFollowing = followingIds.includes(talent.id);
-                  const joinYear = talent.joinedYear || (talent.createdAt?.toDate ? talent.createdAt.toDate().getFullYear() : 2025);
+                  
+                  let createdDate = null;
+                  if (talent.createdAt) {
+                    createdDate = talent.createdAt.toDate ? talent.createdAt.toDate() : new Date(talent.createdAt);
+                  } else if (talent.joinedYear) {
+                    createdDate = new Date(`${talent.joinedYear}-01-01`);
+                  }
+                  
+                  if (!createdDate) {
+                    createdDate = new Date('2026-07-01');
+                  }
+
+                  const now = new Date();
+                  const diffTime = Math.abs(now.getTime() - createdDate.getTime());
+                  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+                  const isNew = diffDays <= 2;
+                  const joinYear = createdDate.getFullYear();
                   
                   return (
                     <div
@@ -523,7 +540,11 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                             <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
                           )}
                         </h3>
-                        <p className="text-[10px] text-gray-500 font-medium mt-0.5">Since {joinYear}</p>
+                        {isNew ? (
+                          <p className="text-[10px] text-[#00BFFF] font-bold mt-0.5">New</p>
+                        ) : (
+                          <p className="text-[10px] text-gray-500 font-medium mt-0.5">Since {joinYear}</p>
+                        )}
                       </div>
 
                       {/* Location with pin icon */}
