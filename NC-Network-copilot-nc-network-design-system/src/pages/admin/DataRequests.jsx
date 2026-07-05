@@ -76,8 +76,15 @@ const AdminDataRequests = () => {
       );
 
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || 'Approval failed');
+        const text = await response.text().catch(() => '');
+        let errMsg = 'Approval failed';
+        try {
+          const parsed = JSON.parse(text);
+          errMsg = parsed.error || parsed.message || errMsg;
+        } catch {
+          if (text) errMsg = text.slice(0, 150);
+        }
+        throw new Error(errMsg);
       }
 
       const result = await response.json();
@@ -121,7 +128,15 @@ const AdminDataRequests = () => {
       );
 
       if (!response.ok) {
-        throw new Error('Rejection failed');
+        const text = await response.text().catch(() => '');
+        let errMsg = 'Rejection failed';
+        try {
+          const parsed = JSON.parse(text);
+          errMsg = parsed.error || parsed.message || errMsg;
+        } catch {
+          if (text) errMsg = text.slice(0, 150);
+        }
+        throw new Error(errMsg);
       }
 
       setRejectReason('');
