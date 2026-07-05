@@ -10,27 +10,27 @@
     },
     {
       "source": "/api/data-requests/:requestId/approve",
-      "destination": "/api/data-requests-approve"
+      "destination": "/api/data-requests-approve?requestId=:requestId"
     },
     {
       "source": "/api/data-requests/:requestId/reject",
-      "destination": "/api/data-requests-reject"
+      "destination": "/api/data-requests-reject?requestId=:requestId"
     },
     {
       "source": "/api/admin/users/:userId/delete",
-      "destination": "/api/admin-users"
+      "destination": "/api/admin-users?userId=:userId&action=delete"
     },
     {
       "source": "/api/admin/users/:userId/ban",
-      "destination": "/api/admin-users"
+      "destination": "/api/admin-users?userId=:userId&action=ban"
     },
     {
       "source": "/api/admin/users/:userId/unban",
-      "destination": "/api/admin-users"
+      "destination": "/api/admin-users?userId=:userId&action=unban"
     },
     {
       "source": "/api/admin/log",
-      "destination": "/api/admin-users"
+      "destination": "/api/admin-users?action=log"
     },
     {
       "source": "/api/:match*",
