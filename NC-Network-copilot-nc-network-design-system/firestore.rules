@@ -24,14 +24,19 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', 'active') == 'banned';
     }
 
-    // FIX #7: profiles read is still public (required for discovery/search).
+    function isPremiumUser(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+        get(/databases/$(database)/documents/users/$(userId)).data.get('premium', false) == true;
+    }
+
+    // FIX #7: profiles read is restricted to authenticated users to protect contact/privacy data.
     // NOTE: Sensitive fields (fcmToken, fcmTokens, twoFactorBackupCodes, twoFactorSecret)
     // must NOT be stored on the profiles document. They belong in users/{uid}/private.
     // The Express server proxy (/api/profiles/:userId) already strips these before returning.
     // FIX #2: profiles update blocks writing of arbitrary URLs — image/photoURL must be strings.
     // FIX #1 (partial): profiles does not contain blockedUsers, so no guard needed here.
     match /profiles/{userId} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow create, update: if (isOwner(userId) || isAdmin()) &&
         !('password' in request.resource.data) &&
         !('passwordHash' in request.resource.data) &&
@@ -43,7 +48,9 @@ service cloud.firestore {
         (!('image' in request.resource.data) || request.resource.data.image is string || request.resource.data.image == null) &&
         (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string || request.resource.data.photoURL == null) &&
         (!('coverUrl' in request.resource.data) || request.resource.data.coverUrl is string || request.resource.data.coverUrl == null) &&
-        (!('coverPhoto' in request.resource.data) || request.resource.data.coverPhoto is string || request.resource.data.coverPhoto == null);
+        (!('coverPhoto' in request.resource.data) || request.resource.data.coverPhoto is string || request.resource.data.coverPhoto == null) &&
+        // Enforce premium and free upload limits on media array size
+        (!('media' in request.resource.data) || (request.resource.data.media is list && request.resource.data.media.size() <= (isPremiumUser(userId) ? 55 : 11)));
       allow delete: if isOwner(userId) || isAdmin();
 
       match /sessions/{sessionId} {
