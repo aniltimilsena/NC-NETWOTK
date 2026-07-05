@@ -1,23 +1,23 @@
 // api/debug.js
-// Safe diagnostic endpoint with ZERO compile-time dependencies.
-// Uses dynamic import in try/catch to capture exact runtime errors.
+// Safe diagnostic endpoint to check firebase-admin structure using createRequire.
+
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
 export default async function handler(req, res) {
   const diagnostics = {
     status: 'ok',
-    nodeVersion: process.version,
-    envKeys: Object.keys(process.env).filter(k => !k.includes('KEY') && !k.includes('PASS') && !k.includes('SECRET')),
-    importError: null,
-    firebaseApps: 0,
+    adminKeys: [],
+    appsLength: null,
+    error: null,
   };
 
   try {
-    const admin = await import('firebase-admin');
-    // CommonJS default export wrapper check
-    const firebaseAdmin = admin.default || admin;
-    diagnostics.firebaseApps = firebaseAdmin.apps ? firebaseAdmin.apps.length : 'unknown';
+    const admin = require('firebase-admin');
+    diagnostics.adminKeys = Object.keys(admin);
+    diagnostics.appsLength = admin.apps ? admin.apps.length : 'no-apps-field';
   } catch (err) {
-    diagnostics.importError = {
+    diagnostics.error = {
       message: err.message,
       stack: err.stack,
     };
