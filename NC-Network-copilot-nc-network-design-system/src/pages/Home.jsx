@@ -433,7 +433,7 @@ export default function Home({ onNavigate, user }) {
         <>
           {/* Featured Actors Showcase */}
           {talents.filter(t => t.role?.toLowerCase().includes('actor') && !t.deactivated).length > 0 && (
-            <section className="pt-2 pb-8 bg-nc-dark relative overflow-hidden">
+            <section className="pt-2 pb-0 bg-nc-dark relative overflow-hidden">
               <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
                 {/* Editorial Header */}
                 <div className="flex items-center justify-between mb-10">
@@ -508,7 +508,7 @@ export default function Home({ onNavigate, user }) {
           )}
 
           {/* Categories */}
-          <section className="pt-12 pb-10 lg:pt-16 lg:pb-14 bg-nc-dark">
+          <section className="pt-2 pb-10 lg:pt-2 lg:pb-14 bg-nc-dark">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
             {/* Editorial Header */}
             <div className="flex items-center justify-between mb-10">
