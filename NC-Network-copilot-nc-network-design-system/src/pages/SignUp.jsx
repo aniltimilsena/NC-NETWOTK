@@ -14,6 +14,9 @@ import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { evaluatePasswordStrength } from '../utils/security';
 import { Progress } from '../components/ui/progress';
+import Logo from '../components/ui/Logo';
+import GlassCard from '../components/ui/GlassCard';
+import Button from '../components/ui/Button';
 
 const step1Schema = (t) => z.object({
   name: z.string().min(3, { message: t('err_name_length', 'Name must be at least 3 characters.') }),
@@ -306,7 +309,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     if (status === false) {
       return common + "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]";
     }
-    return common + "border-white/5 focus:border-[#00BFFF]/50 focus:shadow-[0_0_0_3px_rgba(0,191,255,0.15)]";
+    return common + "border-white/5 focus:border-yellow-500/50 focus:shadow-[0_0_0_3px_rgba(250,204,21,0.15)]";
   };
 
   const passwordStrength = evaluatePasswordStrength(form.password);
@@ -319,7 +322,7 @@ export default function SignUp({ onNavigate, showAlert }) {
       />
 
       {/* BACKGROUND DECORATION */}
-      <div className="absolute top-[-100px] left-[-100px] w-96 h-96 bg-[#00BFFF]/5 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute top-[-100px] left-[-100px] w-96 h-96 bg-yellow-500/5 rounded-full blur-[120px] pointer-events-none z-0" />
       <div className="absolute bottom-[-100px] right-[-100px] w-96 h-96 bg-purple-500/5 rounded-full blur-[120px] pointer-events-none z-0" />
 
       {/* LEFT COLUMN: Cinematic Image (Desktop Only) */}
@@ -373,28 +376,12 @@ export default function SignUp({ onNavigate, showAlert }) {
           <span>{t('lbl_back')}</span>
         </button>
 
-        <div className="w-full max-w-[420px] flex flex-col items-center">
+        <GlassCard strong className="p-8 border border-white/5 bg-[#111]/90 w-full max-w-[450px] flex flex-col items-center shadow-2xl relative">
           
-          {/* NC Logo (top center, horizontal) */}
-          <Link 
-            to="/" 
-            className="flex flex-row items-center justify-center gap-2.5 mb-8 mt-[40px] sm:mt-[48px] md:mt-[40px] group cursor-pointer text-center"
-          >
-            {/* Yellow circle with NC */}
-            <div 
-              className="w-14 h-14 rounded-xl flex items-center justify-center font-black text-[20px] text-black shadow-lg shadow-[#FFD700]/10 transition-transform group-hover:scale-105"
-              style={{ backgroundColor: '#FFD700' }}
-            >
-              NC
-            </div>
-            
-            {/* Network text side-by-side */}
-            <span className="text-white font-bold text-[18px] tracking-[0.5px]">
-              Network
-            </span>
-          </Link>
+          {/* Logo component */}
+          <Logo size="lg" className="mb-8 mt-[20px] sm:mt-[30px]" />
 
-          <div className="w-full space-y-6 text-left py-6">
+          <div className="w-full space-y-6 text-left py-2">
             <div className="text-center w-full">
               <h1 className="text-3xl font-black text-white tracking-tight text-center">{t('join_nc_network', 'Join NC Network')}</h1>
               <p className="text-sm text-gray-500 mt-1.5 font-medium text-center">{t('create_profile_desc', 'Create your talent profile today')}</p>
@@ -404,7 +391,7 @@ export default function SignUp({ onNavigate, showAlert }) {
             <div className="space-y-2 mb-4 bg-white/5 p-4 rounded-2xl border border-white/5">
               <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-gray-400">
                 <span>{t('step_indicator', { current: step, total: 3 })}</span>
-                <span className="text-[#00BFFF]">{step === 1 ? 'Account Details' : step === 2 ? 'Security & Credentials' : 'Roles & Agreement'}</span>
+                <span className="text-yellow-400">{step === 1 ? 'Account Details' : step === 2 ? 'Security & Credentials' : 'Roles & Agreement'}</span>
               </div>
               <Progress value={(step / 3) * 100} className="h-1.5 bg-white/5 rounded-full" />
             </div>
@@ -603,7 +590,7 @@ export default function SignUp({ onNavigate, showAlert }) {
                           onClick={() => setForm(prev => ({ ...prev, gender: g }))}
                           className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all ${
                             form.gender === g
-                              ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
+                              ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500'
                               : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
                           }`}
                         >
@@ -628,7 +615,7 @@ export default function SignUp({ onNavigate, showAlert }) {
                         }}
                         className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
                           roleGroup === 'talent'
-                            ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
+                            ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500'
                             : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
                         }`}
                       >
@@ -646,7 +633,7 @@ export default function SignUp({ onNavigate, showAlert }) {
                         }}
                         className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
                           roleGroup === 'casting'
-                            ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
+                            ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500'
                             : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
                         }`}
                       >
@@ -664,7 +651,7 @@ export default function SignUp({ onNavigate, showAlert }) {
                         }}
                         className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
                           roleGroup === 'fan'
-                            ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
+                            ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500'
                             : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
                         }`}
                       >
@@ -713,7 +700,7 @@ export default function SignUp({ onNavigate, showAlert }) {
                       type="checkbox"
                       checked={agreeToTerms}
                       onChange={e => setAgreeToTerms(e.target.checked)}
-                      className="w-4 h-4 rounded border-white/10 bg-[#1a1a1a] text-[#00BFFF] focus:ring-[#00BFFF] mt-0.5 cursor-pointer shrink-0"
+                      className="w-4 h-4 rounded border-white/10 bg-[#1a1a1a] text-yellow-500 focus:ring-yellow-500 mt-0.5 cursor-pointer shrink-0"
                     />
                     <label htmlFor="terms-checkbox" className="text-xs text-gray-500 leading-normal select-none cursor-pointer">
                       {t('lbl_agree_terms')}
@@ -723,37 +710,38 @@ export default function SignUp({ onNavigate, showAlert }) {
               )}
 
               {/* Step Navigation Buttons */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 w-full">
                 {step > 1 && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
                     onClick={() => setStep(step - 1)}
-                    className="flex-1 bg-white/5 border border-white/5 hover:bg-white/10 text-white font-black py-3 rounded-xl text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
+                    className="flex-1 rounded-xl py-3.5 text-xs font-black uppercase tracking-widest"
                   >
                     {t('step_prev')}
-                  </button>
+                  </Button>
                 )}
                 
                 {step < 3 ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="primary"
                     onClick={() => {
                       if (validateStep(step)) {
                         setStep(step + 1);
                       }
                     }}
-                    className="flex-1 bg-gradient-to-r from-[#00bfff] to-[#0080ff] text-black font-black py-3 rounded-xl text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
+                    className="flex-1 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-[0_4px_20px_rgba(250,204,21,0.25)] text-black py-3.5 text-xs font-black uppercase tracking-widest border-none"
                   >
                     {t('step_next')}
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
                     type="submit"
+                    variant="primary"
                     disabled={isLoading || !agreeToTerms}
-                    className="flex-1 bg-gradient-to-r from-[#00bfff] to-[#0080ff] hover:opacity-95 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg shadow-[#00bfff]/10 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex-1 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-[0_4px_20px_rgba(250,204,21,0.25)] text-black py-3.5 text-xs font-black uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed border-none"
                   >
-                    {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin mx-auto" /> : t('lbl_create_account')}
-                  </button>
+                    {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin mx-auto text-black" /> : t('lbl_create_account')}
+                  </Button>
                 )}
               </div>
 
@@ -783,14 +771,14 @@ export default function SignUp({ onNavigate, showAlert }) {
               {t('lbl_already_have_account', 'Already have an account?')}{' '}
               <button 
                 onClick={() => onNavigate('signin')} 
-                className="text-[#00BFFF] hover:underline underline-offset-4 font-bold"
+                className="text-yellow-500 hover:underline underline-offset-4 font-bold"
               >
                 {t('lbl_signin', 'Sign in')}
               </button>
             </p>
 
           </div>
-        </div>
+        </GlassCard>
       </div>
     </div>
   );
