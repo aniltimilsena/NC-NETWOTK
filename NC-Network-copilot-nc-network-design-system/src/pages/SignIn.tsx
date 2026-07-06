@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mail, Lock, Eye, EyeOff, Check, AlertCircle, ArrowLeft, Loader2, Sparkles
 } from 'lucide-react';
 import Logo from '../components/ui/Logo';
+import GlassCard from '../components/ui/GlassCard';
+import Button from '../components/ui/Button';
 import { auth, googleProvider, db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCustomToken } from 'firebase/auth';
@@ -16,25 +18,37 @@ import apiClient from '../api/client';
 import { logLoginAttempt } from '../utils/security';
 import { getUserFriendlyError } from '../utils/errorHandler';
 
-export default function SignIn({ onNavigate, showAlert }) {
+interface SignInProps {
+  onNavigate: (page: string, param?: any) => void;
+  showAlert?: (message: string, type?: 'success' | 'error') => void;
+}
+
+interface ValidationField {
+  valid: boolean | null;
+  msg: string;
+}
+
+interface ValidationState {
+  email: ValidationField;
+  password: ValidationField;
+}
+
+export default function SignIn({ onNavigate, showAlert }: SignInProps) {
   const navigate = useNavigate();
   
-  const [view, setView] = useState('signin');
-  
+  const [view, setView] = useState<'signin' | 'forgot' | 'forgot_success'>('signin');
   const [form, setForm] = useState({ email: '', password: '' });
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [lockoutTimeLeft, setLockoutTimeLeft] = useState(0);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [lockoutTimeLeft, setLockoutTimeLeft] = useState<number>(0);
 
-  
-  const [validation, setValidation] = useState({
+  const [validation, setValidation] = useState<ValidationState>({
     email: { valid: null, msg: '' },
     password: { valid: null, msg: '' }
   });
 
-  
-  const handleEmailChange = (val) => {
+  const handleEmailChange = (val: string) => {
     setForm(prev => ({ ...prev, email: val }));
     setError('');
     if (!val) {
@@ -49,7 +63,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   };
 
-  const handlePasswordChange = (val) => {
+  const handlePasswordChange = (val: string) => {
     setForm(prev => ({ ...prev, password: val }));
     setError('');
     if (!val) {
@@ -63,7 +77,6 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   };
 
-  
   useEffect(() => {
     if (!sessionStorage.getItem('nc_google_redirect')) return;
     let isMounted = true;
@@ -95,7 +108,6 @@ export default function SignIn({ onNavigate, showAlert }) {
     return () => { isMounted = false; };
   }, [onNavigate]);
 
-  
   useEffect(() => {
     const lockoutUntil = localStorage.getItem('login_lockout_until');
     if (lockoutUntil) {
@@ -127,18 +139,17 @@ export default function SignIn({ onNavigate, showAlert }) {
     return () => clearInterval(interval);
   }, [lockoutTimeLeft]);
 
-  
-  const [show2fa, setShow2fa] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
-  const [tempCredentials, setTempCredentials] = useState(null);
-  const [pendingUserId, setPendingUserId] = useState(null);
-  const [twoFactorError, setTwoFactorError] = useState('');
-  const [twoFactorMethod, setTwoFactorMethod] = useState('sms');
-  const [twoFactorDestination, setTwoFactorDestination] = useState('');
-  const [countdown, setCountdown] = useState(120);
-  const [resendActive, setResendActive] = useState(false);
-  const [useBackupCode, setUseBackupCode] = useState(false);
-  const [isShake, setIsShake] = useState(false);
+  const [show2fa, setShow2fa] = useState<boolean>(false);
+  const [verificationCode, setVerificationCode] = useState<string>('');
+  const [tempCredentials, setTempCredentials] = useState<any>(null);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [twoFactorError, setTwoFactorError] = useState<string>('');
+  const [twoFactorMethod, setTwoFactorMethod] = useState<string>('sms');
+  const [twoFactorDestination, setTwoFactorDestination] = useState<string>('');
+  const [countdown, setCountdown] = useState<number>(120);
+  const [resendActive, setResendActive] = useState<boolean>(false);
+  const [useBackupCode, setUseBackupCode] = useState<boolean>(false);
+  const [isShake, setIsShake] = useState<boolean>(false);
 
   useEffect(() => {
     if (show2fa && countdown > 0) {
@@ -149,7 +160,6 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   }, [countdown, show2fa]);
 
-  
   useEffect(() => {
     if (show2fa && !useBackupCode && verificationCode.length === 6 && !isLoading) {
       const triggerVerify = async () => {
@@ -176,7 +186,7 @@ export default function SignIn({ onNavigate, showAlert }) {
             setTimeout(() => setIsShake(false), 500);
             setIsLoading(false);
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error("2FA verify login error:", err);
           setTwoFactorError(err.response?.data?.error || 'Verification failed. Try again.');
           setIsShake(true);
@@ -186,7 +196,7 @@ export default function SignIn({ onNavigate, showAlert }) {
       };
       triggerVerify();
     }
-  }, [verificationCode, useBackupCode, show2fa, pendingUserId]);
+  }, [verificationCode, useBackupCode, show2fa, pendingUserId, isLoading, onNavigate, tempCredentials]);
 
   const handleResend2faCode = async () => {
     setIsLoading(true);
@@ -200,11 +210,11 @@ export default function SignIn({ onNavigate, showAlert }) {
         setCountdown(120);
         setResendActive(false);
         setVerificationCode('');
-        showAlert('Verification code resent!', 'success');
+        if (showAlert) showAlert('Verification code resent!', 'success');
       } else {
         setTwoFactorError(res.data.error || 'Failed to resend code.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("2FA resend error:", err);
       setTwoFactorError(err.response?.data?.error || 'Failed to resend code.');
     } finally {
@@ -212,7 +222,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   };
 
-  const checkUserBanStatus = async (uid) => {
+  const checkUserBanStatus = async (uid: string) => {
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (userDoc.exists()) {
@@ -233,10 +243,9 @@ export default function SignIn({ onNavigate, showAlert }) {
     return { banned: false };
   };
 
-  const handleSignIn = async (e) => {
+  const handleSignIn = async (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    
     const lockoutUntil = localStorage.getItem('login_lockout_until');
     if (lockoutUntil && Date.now() < parseInt(lockoutUntil, 10)) {
       const remainingSecs = Math.ceil((parseInt(lockoutUntil, 10) - Date.now()) / 1000);
@@ -245,7 +254,6 @@ export default function SignIn({ onNavigate, showAlert }) {
       return;
     }
 
-    
     const emailVal = validateEmailLocally(form.email);
     const passVal = validatePasswordLocally(form.password);
     setValidation({ email: emailVal, password: passVal });
@@ -271,7 +279,7 @@ export default function SignIn({ onNavigate, showAlert }) {
           setError('Could not resolve phone number.');
           return;
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Resolve phone error:', err);
         setIsLoading(false);
         const errMsg = err.response?.data?.error || 'No user account found with this phone number.';
@@ -308,15 +316,13 @@ export default function SignIn({ onNavigate, showAlert }) {
       const banCheck = await checkUserBanStatus(user.uid);
       if (banCheck.banned) {
         setIsLoading(false);
-        setError(banCheck.message);
+        setError(banCheck.message || 'Suspended.');
         return;
       }
 
       localStorage.removeItem('login_attempts');
       localStorage.removeItem('login_lockout_until');
  
- 
-      
       const logRes = await logLoginAttempt(emailToAuthWith, 'success');
       if (logRes?.suspicious) {
         localStorage.setItem('nc_suspicious_login', 'true');
@@ -325,7 +331,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   };
 
-  const validateEmailLocally = (val) => {
+  const validateEmailLocally = (val: string) => {
     if (!val) return { valid: false, msg: 'Email or phone number is required.' };
     const isMaybePhone = !val.includes('@') && /^[+\d\s-()]+$/.test(val);
     if (isMaybePhone) {
@@ -340,13 +346,13 @@ export default function SignIn({ onNavigate, showAlert }) {
     return { valid: true, msg: '' };
   };
 
-  const validatePasswordLocally = (val) => {
+  const validatePasswordLocally = (val: string) => {
     if (!val) return { valid: false, msg: 'Password is required.' };
     if (val.length < 8) return { valid: false, msg: 'Password must be at least 8 characters.' };
     return { valid: true, msg: '' };
   };
 
-  const handleVerify2fa = async (e) => {
+  const handleVerify2fa = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!verificationCode || verificationCode.length !== (useBackupCode ? 8 : 6)) {
       setTwoFactorError(useBackupCode ? 'Please enter your 8-digit backup code.' : 'Please enter the 6-digit verification code.');
@@ -376,7 +382,7 @@ export default function SignIn({ onNavigate, showAlert }) {
         setTimeout(() => setIsShake(false), 500);
         setIsLoading(false);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("2FA verify login error:", err);
       setTwoFactorError(err.response?.data?.error || 'Verification failed. Try again.');
       setIsShake(true);
@@ -391,7 +397,7 @@ export default function SignIn({ onNavigate, showAlert }) {
       let result;
       try {
         result = await signInWithPopup(auth, googleProvider);
-      } catch (err) {
+      } catch (err: any) {
         if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request')) {
           sessionStorage.setItem('nc_google_redirect', 'true');
           await signInWithRedirect(auth, googleProvider);
@@ -404,7 +410,7 @@ export default function SignIn({ onNavigate, showAlert }) {
         const banCheck = await checkUserBanStatus(result.user.uid);
         if (banCheck.banned) {
           setIsLoading(false);
-          setError(banCheck.message);
+          setError(banCheck.message || 'Suspended.');
           return;
         }
 
@@ -428,7 +434,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   };
 
-  const handleSendResetLink = async (e) => {
+  const handleSendResetLink = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const emailVal = validateEmailLocally(form.email);
     setValidation(prev => ({ ...prev, email: emailVal }));
@@ -463,8 +469,7 @@ export default function SignIn({ onNavigate, showAlert }) {
     }
   };
 
-  
-  const getInputStyles = (field) => {
+  const getInputStyles = (field: keyof ValidationState) => {
     const status = validation[field]?.valid;
     const common = "w-full bg-[#1a1a1a] text-white placeholder-gray-500 rounded-xl pl-10 pr-10 py-3 text-sm outline-none border transition-all duration-300 ";
     if (status === true) {
@@ -473,103 +478,110 @@ export default function SignIn({ onNavigate, showAlert }) {
     if (status === false) {
       return common + "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]";
     }
-    return common + "border-white/5 focus:border-[#00BFFF]/50 focus:shadow-[0_0_0_3px_rgba(0,191,255,0.15)]";
+    return common + "border-white/5 focus:border-yellow-500/50 focus:shadow-[0_0_0_3px_rgba(250,204,21,0.15)]";
   };
 
   if (show2fa) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 relative overflow-hidden font-sans">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#00BFFF]/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl" />
         <div className="w-full max-w-md z-10">
           <div className="text-center mb-8">
-            <Logo onNavigate={onNavigate} size="lg" className="mx-auto mb-6" />
+            <Logo size="lg" className="mx-auto mb-6" />
             <h1 className="text-2xl font-black text-white">Two-Factor Verification</h1>
             <p className="text-gray-400 mt-1 text-sm">
               {useBackupCode ? 'Enter one of your 8-digit recovery backup codes' : `Enter the 6-digit code sent to ${twoFactorDestination}`}
             </p>
           </div>
           
-          <motion.div 
-            animate={isShake ? { x: [-10, 10, -10, 10, -5, 5, 0], transition: { duration: 0.4 } } : {}}
-            className="bg-[#111] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl"
+          <GlassCard 
+            strong
+            className="p-6 sm:p-8 border border-white/5 bg-[#111]/90 shadow-2xl relative"
+            onClick={undefined}
           >
-            <form onSubmit={handleVerify2fa} className="space-y-6">
-              {twoFactorError && (
-                <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-lg border border-red-500/20">
-                  {twoFactorError}
-                </div>
-              )}
-              
-              {!useBackupCode ? (
-                <div>
-                  <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2 text-center">Verification Code</label>
-                  <OtpInput value={verificationCode} onChange={setVerificationCode} error={!!twoFactorError} />
-                </div>
-              ) : (
-                <div className="text-left">
-                  <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2 text-center">Backup Code</label>
-                  <input
-                    type="text"
-                    maxLength={8}
-                    value={verificationCode}
-                    onChange={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                    placeholder="8-digit code"
-                    className="w-full bg-[#1a1a1a] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 outline-none focus:border-[#00BFFF] transition-colors text-center font-mono text-xl tracking-[0.3em] font-bold"
-                  />
-                </div>
-              )}
-              
-              <div className="space-y-3">
-                <button
-                  type="submit"
-                  disabled={isLoading || (useBackupCode ? verificationCode.length !== 8 : verificationCode.length !== 6)}
-                  className="w-full justify-center flex items-center gap-2 bg-gradient-to-r from-[#00bfff] to-[#0080ff] hover:opacity-95 text-black font-extrabold py-3.5 rounded-xl text-sm transition-all shadow-lg active:scale-[0.98] disabled:opacity-50"
-                >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify & Sign In'}
-                </button>
-
-                {!useBackupCode && (
-                  <div className="text-center">
-                    <button
-                      type="button"
-                      onClick={handleResend2faCode}
-                      disabled={!resendActive || isLoading}
-                      className="text-xs text-[#00BFFF] disabled:text-gray-600 font-bold transition-colors py-1"
-                    >
-                      {resendActive ? 'Resend Code' : `Resend code in ${countdown}s`}
-                    </button>
+            <motion.div 
+              animate={isShake ? { x: [-10, 10, -10, 10, -5, 5, 0], transition: { duration: 0.4 } } : {}}
+            >
+              <form onSubmit={handleVerify2fa} className="space-y-6">
+                {twoFactorError && (
+                  <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-lg border border-red-500/20">
+                    {twoFactorError}
                   </div>
                 )}
                 
-                <div className="flex flex-col gap-2 pt-2 border-t border-white/5 mt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUseBackupCode(!useBackupCode);
-                      setVerificationCode('');
-                      setTwoFactorError('');
-                    }}
-                    className="text-center text-xs text-[#00BFFF] hover:underline transition-colors py-1"
+                {!useBackupCode ? (
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2 text-center">Verification Code</label>
+                    <OtpInput value={verificationCode} onChange={setVerificationCode} error={!!twoFactorError} />
+                  </div>
+                ) : (
+                  <div className="text-left">
+                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2 text-center">Backup Code</label>
+                    <input
+                      type="text"
+                      maxLength={8}
+                      value={verificationCode}
+                      onChange={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="8-digit code"
+                      className="w-full bg-[#1a1a1a] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 outline-none focus:border-yellow-500 transition-colors text-center font-mono text-xl tracking-[0.3em] font-bold"
+                    />
+                  </div>
+                )}
+                
+                <div className="space-y-3">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={isLoading || (useBackupCode ? verificationCode.length !== 8 : verificationCode.length !== 6)}
+                    onClick={undefined}
+                    className="w-full rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 text-black py-3.5 text-sm font-extrabold border-none"
                   >
-                    {useBackupCode ? 'Use verification code instead' : 'Use backup code instead'}
-                  </button>
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-black" /> : 'Verify & Sign In'}
+                  </Button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShow2fa(false);
-                      setVerificationCode('');
-                      setTwoFactorError('');
-                      setTempCredentials(null);
-                    }}
-                    className="w-full text-center text-xs text-gray-500 hover:text-white transition-colors py-1"
-                  >
-                    Back to Sign In
-                  </button>
+                  {!useBackupCode && (
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={handleResend2faCode}
+                        disabled={!resendActive || isLoading}
+                        className="text-xs text-yellow-500 disabled:text-gray-600 font-bold transition-colors py-1"
+                      >
+                        {resendActive ? 'Resend Code' : `Resend code in ${countdown}s`}
+                      </button>
+                    </div>
+                  )}
+                  
+                  <div className="flex flex-col gap-2 pt-2 border-t border-white/5 mt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUseBackupCode(!useBackupCode);
+                        setVerificationCode('');
+                        setTwoFactorError('');
+                      }}
+                      className="text-center text-xs text-yellow-500 hover:underline transition-colors py-1"
+                    >
+                      {useBackupCode ? 'Use verification code instead' : 'Use backup code instead'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShow2fa(false);
+                        setVerificationCode('');
+                        setTwoFactorError('');
+                        setTempCredentials(null);
+                      }}
+                      className="w-full text-center text-xs text-gray-500 hover:text-white transition-colors py-1"
+                    >
+                      Back to Sign In
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </form>
-          </motion.div>
+              </form>
+            </motion.div>
+          </GlassCard>
         </div>
       </div>
     );
@@ -580,15 +592,15 @@ export default function SignIn({ onNavigate, showAlert }) {
       <SEO 
         title="Sign In | NC Network" 
         description="Access your NC Network account to explore Nepali cinema casting opportunities and talent." 
+        schema={undefined}
       />
 
       {/* BACKGROUND DECORATION */}
-      <div className="absolute top-[-100px] right-[-100px] w-96 h-96 bg-[#00BFFF]/5 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute top-[-100px] right-[-100px] w-96 h-96 bg-yellow-500/5 rounded-full blur-[120px] pointer-events-none z-0" />
       <div className="absolute bottom-[-100px] left-[-100px] w-96 h-96 bg-purple-500/5 rounded-full blur-[120px] pointer-events-none z-0" />
 
       {/* LEFT COLUMN: Cinematic Image (Desktop Only) */}
       <div className="hidden md:flex md:w-1/2 relative flex-col justify-between p-16 bg-cover bg-center" style={{ backgroundImage: "url('/cinematic_backstage.png')" }}>
-        {/* Dark Cinematic Vignette overlay */}
         <div className="absolute inset-0 bg-gradient-to-tr from-[#0a0a0af5] via-[#0a0a0ad5] to-[#0a0a0a55] z-0"></div>
         
         <div className="flex-1" />
@@ -638,26 +650,10 @@ export default function SignIn({ onNavigate, showAlert }) {
           <span>Back</span>
         </button>
 
-        <div className="w-full max-w-[400px] flex flex-col items-center">
+        <GlassCard strong className="p-8 border border-white/5 bg-[#111]/90 w-full max-w-[450px] flex flex-col items-center shadow-2xl relative" onClick={undefined}>
           
-          {/* NC Logo (top center, horizontal) */}
-          <Link 
-            to="/" 
-            className="flex flex-row items-center justify-center gap-2.5 mb-8 mt-[40px] sm:mt-[48px] md:mt-[40px] group cursor-pointer text-center"
-          >
-            {/* Yellow circle with NC */}
-            <div 
-              className="w-14 h-14 rounded-xl flex items-center justify-center font-black text-[20px] text-black shadow-lg shadow-[#FFD700]/10 transition-transform group-hover:scale-105"
-              style={{ backgroundColor: '#FFD700' }}
-            >
-              NC
-            </div>
-            
-            {/* Network text side-by-side */}
-            <span className="text-white font-bold text-[18px] tracking-[0.5px]">
-              Network
-            </span>
-          </Link>
+          {/* Logo component */}
+          <Logo size="lg" className="mb-8 mt-[20px] sm:mt-[30px]" />
           
           <div className="w-full">
             <AnimatePresence mode="wait">
@@ -739,7 +735,7 @@ export default function SignIn({ onNavigate, showAlert }) {
                         type="button"
                         onClick={() => setView('forgot')}
                         disabled={isLoading}
-                        className="text-[#00BFFF] text-xs font-bold hover:underline underline-offset-4"
+                        className="text-yellow-500 text-xs font-bold hover:underline underline-offset-4"
                       >
                         Forgot password?
                       </button>
@@ -771,13 +767,15 @@ export default function SignIn({ onNavigate, showAlert }) {
                   </div>
 
                   {/* Sign In Button */}
-                  <button
+                  <Button
                     type="submit"
+                    variant="primary"
                     disabled={isLoading || lockoutTimeLeft > 0}
-                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#00bfff] to-[#0080ff] hover:opacity-95 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg shadow-[#00bfff]/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={undefined}
+                    className="w-full rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-[0_4px_20px_rgba(250,204,21,0.25)] text-black py-3.5 text-xs font-black uppercase tracking-widest border-none"
                   >
-                    {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : 'Sign In'}
-                  </button>
+                    {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin text-black" /> : 'Sign In'}
+                  </Button>
                 </form>
 
                 {/* Divider */}
@@ -804,130 +802,131 @@ export default function SignIn({ onNavigate, showAlert }) {
                   Don't have an account?{' '}
                   <button 
                     onClick={() => onNavigate('signup')} 
-                    className="text-[#00BFFF] hover:underline underline-offset-4 font-bold"
+                    className="text-yellow-500 hover:underline underline-offset-4 font-bold"
                   >
                     Sign up
                   </button>
                 </p>
               </motion.div>
-            )}
+              )}
 
-            {/* VIEW 2: FORGOT PASSWORD */}
-            {view === 'forgot' && (
-              <motion.div
-                key="forgot"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-8 text-left"
-              >
-                <button
-                  onClick={() => {
-                    setView('signin');
-                    setError('');
-                  }}
-                  className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-white transition-colors uppercase tracking-wider"
+              {/* VIEW 2: FORGOT PASSWORD */}
+              {view === 'forgot' && (
+                <motion.div
+                  key="forgot"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-8 text-left"
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to Sign In
-                </button>
+                  <button
+                    onClick={() => {
+                      setView('signin');
+                      setError('');
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-white transition-colors uppercase tracking-wider"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Sign In
+                  </button>
 
-                <div>
-                  <h1 className="text-3xl font-black text-white tracking-tight">Forgot Password</h1>
-                  <p className="text-sm text-gray-500 mt-1.5 font-medium">Enter your email to receive a password reset link</p>
-                </div>
-
-                {error && (
-                  <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-xl border border-red-500/20 font-bold">
-                    {error}
-                  </div>
-                )}
-
-                <form onSubmit={handleSendResetLink} className="space-y-4">
-                  {/* Email Input */}
                   <div>
-                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Email Address</label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
-                        <Mail className="w-4 h-4" />
-                      </span>
-                      <input
-                        type="email"
-                        value={form.email}
-                        onChange={e => handleEmailChange(e.target.value)}
-                        placeholder="you@example.com"
-                        className={getInputStyles('email')}
-                      />
-                      {validation.email.valid === true && (
-                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-green-500">
-                          <Check className="w-4.5 h-4.5" />
+                    <h1 className="text-3xl font-black text-white tracking-tight">Forgot Password</h1>
+                    <p className="text-sm text-gray-500 mt-1.5 font-medium">Enter your email to receive a password reset link</p>
+                  </div>
+
+                  {error && (
+                    <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-xl border border-red-500/20 font-bold">
+                      {error}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSendResetLink} className="space-y-4">
+                    {/* Email Input */}
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Email Address</label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                          <Mail className="w-4 h-4" />
                         </span>
-                      )}
+                        <input
+                          type="email"
+                          value={form.email}
+                          onChange={e => handleEmailChange(e.target.value)}
+                          placeholder="you@example.com"
+                          className={getInputStyles('email')}
+                        />
+                        {validation.email.valid === true && (
+                          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-green-500">
+                            <Check className="w-4.5 h-4.5" />
+                          </span>
+                        )}
+                        {validation.email.valid === false && (
+                          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500">
+                            <AlertCircle className="w-4.5 h-4.5" />
+                          </span>
+                        )}
+                      </div>
                       {validation.email.valid === false && (
-                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500">
-                          <AlertCircle className="w-4.5 h-4.5" />
-                        </span>
+                        <p className="text-[10px] text-red-400 font-bold mt-1.5">{validation.email.msg}</p>
                       )}
                     </div>
-                    {validation.email.valid === false && (
-                      <p className="text-[10px] text-red-400 font-bold mt-1.5">{validation.email.msg}</p>
-                    )}
-                  </div>
 
-                  {/* Send Reset Link Button */}
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#00bfff] to-[#0080ff] hover:opacity-95 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg active:scale-[0.98] disabled:opacity-50"
-                  >
-                    {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : 'Send Reset Link'}
-                  </button>
-                </form>
-              </motion.div>
-            )}
+                    {/* Send Reset Link Button */}
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={isLoading}
+                      onClick={undefined}
+                      className="w-full rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 text-black py-3.5 text-xs font-black uppercase tracking-widest border-none"
+                    >
+                      {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin text-black" /> : 'Send Reset Link'}
+                    </Button>
+                  </form>
+                </motion.div>
+              )}
 
-            {/* VIEW 3: FORGOT SUCCESS */}
-            {view === 'forgot_success' && (
-              <motion.div
-                key="forgot_success"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-8 text-center"
-              >
-                <div className="flex flex-col items-center justify-center space-y-4">
-                  {/* Circular glowing green checkmark */}
-                  <div className="w-20 h-20 bg-green-500/10 border border-green-500/25 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.15)]">
-                    <Check className="w-10 h-10 text-green-400" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h1 className="text-3xl font-black text-white tracking-tight">Check your email</h1>
-                    <p className="text-sm text-gray-500 font-medium max-w-[320px] mx-auto leading-relaxed">
-                      A password reset link has been successfully dispatched to <span className="text-white font-bold">{form.email}</span>. Please verify your inbox and spam folders.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setView('signin');
-                    setError('');
-                    setForm(prev => ({ ...prev, password: '' }));
-                    setValidation({ email: { valid: null, msg: '' }, password: { valid: null, msg: '' } });
-                  }}
-                  className="inline-flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-white/5 hover:border-white/10 text-white font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-2xl transition-all shadow-lg active:scale-[0.98]"
+              {/* VIEW 3: FORGOT SUCCESS */}
+              {view === 'forgot_success' && (
+                <motion.div
+                  key="forgot_success"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-8 text-center"
                 >
-                  Back to Sign In
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="w-20 h-20 bg-green-500/10 border border-green-500/25 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.15)]">
+                      <Check className="w-10 h-10 text-green-400" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h1 className="text-3xl font-black text-white tracking-tight">Check your email</h1>
+                      <p className="text-sm text-gray-500 font-medium max-w-[320px] mx-auto leading-relaxed">
+                        A password reset link has been successfully dispatched to <span className="text-white font-bold">{form.email}</span>. Please verify your inbox and spam folders.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setView('signin');
+                      setError('');
+                      setForm(prev => ({ ...prev, password: '' }));
+                      setValidation({ email: { valid: null, msg: '' }, password: { valid: null, msg: '' } });
+                    }}
+                    className="inline-flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-white/5 hover:border-white/10 text-white font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-2xl transition-all shadow-lg active:scale-[0.98]"
+                  >
+                    Back to Sign In
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </GlassCard>
       </div>
     </div>
-  </div>
   );
 }
