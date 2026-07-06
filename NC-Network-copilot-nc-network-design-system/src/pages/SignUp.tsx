@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -18,12 +18,12 @@ import Logo from '../components/ui/Logo';
 import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 
-const step1Schema = (t) => z.object({
+const step1Schema = (t: any) => z.object({
   name: z.string().min(3, { message: t('err_name_length', 'Name must be at least 3 characters.') }),
   email: z.string().email({ message: t('err_email_invalid', 'Please enter a valid email address.') }),
 });
 
-const step2Schema = (t) => z.object({
+const step2Schema = (t: any) => z.object({
   password: z
     .string()
     .min(8, { message: t('err_password_length', 'Password must be at least 8 characters.') })
@@ -35,10 +35,27 @@ const step2Schema = (t) => z.object({
   path: ['confirmPassword']
 });
 
-export default function SignUp({ onNavigate, showAlert }) {
+interface SignUpProps {
+  onNavigate: (page: string, param?: any) => void;
+  showAlert?: (config: { type: 'success' | 'error'; message: string }) => void;
+}
+
+interface ValidationField {
+  valid: boolean | null;
+  msg: string;
+}
+
+interface ValidationState {
+  name: ValidationField;
+  email: ValidationField;
+  password: ValidationField;
+  confirmPassword: ValidationField;
+}
+
+export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<number>(1);
   const [form, setForm] = useState({ 
     name: '', 
     email: '', 
@@ -48,27 +65,24 @@ export default function SignUp({ onNavigate, showAlert }) {
     gender: 'Male' 
   });
   
-  
-  const [roleGroup, setRoleGroup] = useState('talent'); 
-  
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [agreeToTerms, setAgreeToTerms] = useState(false);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [roleGroup, setRoleGroup] = useState<string>('talent'); 
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [agreeToTerms, setAgreeToTerms] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  
-  const [validation, setValidation] = useState({
+  const [validation, setValidation] = useState<ValidationState>({
     name: { valid: null, msg: '' },
     email: { valid: null, msg: '' },
     password: { valid: null, msg: '' },
     confirmPassword: { valid: null, msg: '' }
   });
 
-  const [turnstileToken, setTurnstileToken] = useState(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   useEffect(() => {
-    window.onTurnstileSuccess = (token) => {
+    (window as any).onTurnstileSuccess = (token: string) => {
       setTurnstileToken(token);
       setError('');
     };
@@ -80,7 +94,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     document.body.appendChild(script);
 
     return () => {
-      delete window.onTurnstileSuccess;
+      delete (window as any).onTurnstileSuccess;
       const existingScript = document.querySelector('script[src*="turnstile/v0/api.js"]');
       if (existingScript) {
         existingScript.remove();
@@ -88,31 +102,31 @@ export default function SignUp({ onNavigate, showAlert }) {
     };
   }, []);
 
-  const handleNameChange = (val) => {
+  const handleNameChange = (val: string) => {
     setForm(prev => ({ ...prev, name: val }));
     const result = step1Schema(t).shape.name.safeParse(val);
     if (!result.success) {
-      setValidation(prev => ({ ...prev, name: { valid: false, msg: result.error.errors[0].message } }));
+      setValidation(prev => ({ ...prev, name: { valid: false, msg: result.error.issues[0].message } }));
     } else {
       setValidation(prev => ({ ...prev, name: { valid: true, msg: '' } }));
     }
   };
 
-  const handleEmailChange = (val) => {
+  const handleEmailChange = (val: string) => {
     setForm(prev => ({ ...prev, email: val }));
     const result = step1Schema(t).shape.email.safeParse(val);
     if (!result.success) {
-      setValidation(prev => ({ ...prev, email: { valid: false, msg: result.error.errors[0].message } }));
+      setValidation(prev => ({ ...prev, email: { valid: false, msg: result.error.issues[0].message } }));
     } else {
       setValidation(prev => ({ ...prev, email: { valid: true, msg: '' } }));
     }
   };
 
-  const handlePasswordChange = (val) => {
+  const handlePasswordChange = (val: string) => {
     setForm(prev => ({ ...prev, password: val }));
     const result = step2Schema(t).shape.password.safeParse(val);
     if (!result.success) {
-      setValidation(prev => ({ ...prev, password: { valid: false, msg: result.error.errors[0].message } }));
+      setValidation(prev => ({ ...prev, password: { valid: false, msg: result.error.issues[0].message } }));
     } else {
       setValidation(prev => ({ ...prev, password: { valid: true, msg: '' } }));
     }
@@ -126,7 +140,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     }
   };
 
-  const handleConfirmPasswordChange = (val) => {
+  const handleConfirmPasswordChange = (val: string) => {
     setForm(prev => ({ ...prev, confirmPassword: val }));
     if (val !== form.password) {
       setValidation(prev => ({ ...prev, confirmPassword: { valid: false, msg: t('err_passwords_mismatch', 'Passwords do not match.') } }));
@@ -135,7 +149,6 @@ export default function SignUp({ onNavigate, showAlert }) {
     }
   };
 
-  
   useEffect(() => {
     if (!sessionStorage.getItem('nc_google_redirect')) return;
     let isMounted = true;
@@ -165,7 +178,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     return () => { isMounted = false; };
   }, [onNavigate, t]);
 
-  const validateStep = (currentStep) => {
+  const validateStep = (currentStep: number) => {
     setError('');
     if (currentStep === 1) {
       const result = step1Schema(t).safeParse({ name: form.name, email: form.email });
@@ -177,9 +190,9 @@ export default function SignUp({ onNavigate, showAlert }) {
         }));
         return true;
       } else {
-        const errors = {};
-        result.error.errors.forEach(issue => {
-          errors[issue.path[0]] = issue.message;
+        const errors: Record<string, string> = {};
+        result.error.issues.forEach(issue => {
+          errors[issue.path[0] as string] = issue.message;
         });
         setValidation(prev => ({
           ...prev,
@@ -202,9 +215,9 @@ export default function SignUp({ onNavigate, showAlert }) {
         }
         return true;
       } else {
-        const errors = {};
-        result.error.errors.forEach(issue => {
-          errors[issue.path[0]] = issue.message;
+        const errors: Record<string, string> = {};
+        result.error.issues.forEach(issue => {
+          errors[issue.path[0] as string] = issue.message;
         });
         setValidation(prev => ({
           ...prev,
@@ -221,7 +234,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     return validateStep(1) && validateStep(2);
   };
 
-  const handleSignUp = async (e) => {
+  const handleSignUp = async (e?: React.FormEvent) => {
     e?.preventDefault();
     
     if (!validateAllLocally()) {
@@ -242,7 +255,6 @@ export default function SignUp({ onNavigate, showAlert }) {
     setIsLoading(true);
     setError('');
 
-    
     let finalRole = form.role;
     if (roleGroup === 'casting') finalRole = 'Casting Director';
     else if (roleGroup === 'fan') finalRole = 'Fan';
@@ -269,7 +281,7 @@ export default function SignUp({ onNavigate, showAlert }) {
       let result;
       try {
         result = await signInWithPopup(auth, googleProvider);
-      } catch (err) {
+      } catch (err: any) {
         if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request')) {
           sessionStorage.setItem('nc_google_redirect', 'true');
           await signInWithRedirect(auth, googleProvider);
@@ -299,8 +311,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     }
   };
 
-  
-  const getInputStyles = (field) => {
+  const getInputStyles = (field: keyof ValidationState) => {
     const status = validation[field]?.valid;
     const common = "w-full bg-[#1a1a1a] text-white placeholder-gray-500 rounded-xl pl-10 pr-10 py-3 text-xs outline-none border transition-all duration-300 ";
     if (status === true) {
@@ -319,6 +330,7 @@ export default function SignUp({ onNavigate, showAlert }) {
       <SEO 
         title="Sign Up | NC Network" 
         description="Join NC Network to create your portfolio, find cinema calls, or recruit Nepali talent." 
+        schema={undefined}
       />
 
       {/* BACKGROUND DECORATION */}
@@ -376,7 +388,7 @@ export default function SignUp({ onNavigate, showAlert }) {
           <span>{t('lbl_back')}</span>
         </button>
 
-        <GlassCard strong className="p-8 border border-white/5 bg-[#111]/90 w-full max-w-[450px] flex flex-col items-center shadow-2xl relative">
+        <GlassCard strong className="p-8 border border-white/5 bg-[#111]/90 w-full max-w-[450px] flex flex-col items-center shadow-2xl relative" onClick={undefined}>
           
           {/* Logo component */}
           <Logo size="lg" className="mb-8 mt-[20px] sm:mt-[30px]" />
@@ -522,7 +534,7 @@ export default function SignUp({ onNavigate, showAlert }) {
                             { key: 'number', label: 'One number' },
                             { key: 'special', label: 'One special char' }
                           ].map((rule) => {
-                            const met = passwordStrength.rules[rule.key];
+                            const met = passwordStrength.rules[rule.key as keyof typeof passwordStrength.rules];
                             return (
                               <div key={rule.key} className="flex items-center gap-1.5 text-[9px] font-bold text-gray-500">
                                 <Check className={`w-3.5 h-3.5 shrink-0 ${met ? 'text-green-500' : 'opacity-25'}`} />
@@ -738,6 +750,7 @@ export default function SignUp({ onNavigate, showAlert }) {
                     type="submit"
                     variant="primary"
                     disabled={isLoading || !agreeToTerms}
+                    onClick={undefined}
                     className="flex-1 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-[0_4px_20px_rgba(250,204,21,0.25)] text-black py-3.5 text-xs font-black uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed border-none"
                   >
                     {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin mx-auto text-black" /> : t('lbl_create_account')}
