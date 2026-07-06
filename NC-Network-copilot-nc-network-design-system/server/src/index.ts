@@ -21,6 +21,7 @@ import {
   rateLimitMiddleware,
   bloomFilterMiddleware,
   cacheMiddleware,
+  scrapingPreventerMiddleware,
 } from './middleware/cacheProtection';
 import { 
   initBloomFilters,
@@ -381,6 +382,34 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.onesignal.com", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com", "https://www.gstatic.com", "https://*.firebaseapp.com", "https://*.firebase.com", "https://www.google-analytics.com", "https://apis.google.com"],
+      scriptSrcElem: ["'self'", "'unsafe-inline'", "https://cdn.onesignal.com", "https://api.onesignal.com", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com", "https://www.gstatic.com", "https://*.firebaseapp.com", "https://www.google-analytics.com", "https://apis.google.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
+      mediaSrc: ["'self'", "blob:", "https://res.cloudinary.com", "https://*.cloudinary.com"],
+      connectSrc: [
+        "'self'", "https://*.cloudinary.com", "https://api.cloudinary.com", "https://res.cloudinary.com",
+        "https://*.firebase.com", "https://*.firebaseio.com", "https://*.googleapis.com",
+        "https://firebasestorage.googleapis.com", "https://*.firebasestorage.googleapis.com",
+        "https://fcmregistrations.googleapis.com", "https://cdn.onesignal.com", "https://onesignal.com",
+        "https://*.onesignal.com", "https://api.onesignal.com", "https://analytics.google.com",
+        "https://www.google-analytics.com", "https://stats.g.doubleclick.net", "https://www.google.com",
+        "wss://*.firebaseio.com"
+      ],
+      frameSrc: ["'self'", "https://*.firebaseapp.com"],
+      workerSrc: ["'self'", "blob:"],
+      childSrc: ["'self'", "blob:"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"]
+    }
+  }
+}));
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -551,11 +580,21 @@ const isAdmin = async (req: AuthedRequest, res: Response, next: NextFunction) =>
     return;
   }
 
+  // Safe fallback to auto-set claims for legacy users who haven't logged in since custom claims migration
   const userDoc = await db.collection('users').doc(uid).get();
-  if (userDoc.exists && userDoc.data()?.isAdmin) {
+  if (userDoc.exists && userDoc.data()?.isAdmin === true) {
+    try {
+      await admin.auth().setCustomUserClaims(uid, { admin: true });
+      if (req.user) {
+        req.user.admin = true;
+      }
+    } catch (err) {
+      console.error(`Failed to auto-set custom claim for user ${uid}:`, err);
+    }
     next();
     return;
   }
+
   res.status(403).json({
     success: false,
     message: 'Forbidden: Admin access required',
@@ -747,7 +786,12 @@ app.post(
 
       const { buffer, safeName, mimeType, isVideo } = req.validatedFile;
       const resourceType = isVideo ? 'video' : 'image';
-      const { folder } = req.body;
+      
+      // Sanitize folder path to prevent directory traversal or overwriting attacks in Cloudinary
+      const rawFolder = req.body.folder;
+      const sanitizedFolder = (typeof rawFolder === 'string'
+        ? rawFolder.replace(/\.{2,}/g, '').replace(/[/\\]/g, '').replace(/[^a-zA-Z0-9_-]/g, '')
+        : 'general') || 'general';
 
       const cloudNameEnv = process.env.CLOUDINARY_CLOUD_NAME;
       const cloudName = isPlaceholder(cloudNameEnv) ? 'du7zu8mca' : cloudNameEnv!;
@@ -756,7 +800,7 @@ app.post(
       const uploadPresetEnv = process.env.CLOUDINARY_UPLOAD_PRESET;
       const uploadPreset = isPlaceholder(uploadPresetEnv) ? 'stored_media' : uploadPresetEnv!;
 
-      console.log(`[Upload API] Starting upload. Resource: ${resourceType}, Size: ${buffer.length} bytes, Target Folder: ${folder || 'general'}`);
+      console.log(`[Upload API] Starting upload. Resource: ${resourceType}, Size: ${buffer.length} bytes, Target Folder: ${sanitizedFolder}`);
 
       
       const isSignedConfigured = cloudName && apiKey && apiSecret && 
@@ -776,7 +820,7 @@ app.post(
           const stream = cloudinary.uploader.upload_stream(
             {
               public_id: safeName.replace(/\.[^.]+$/, ''),
-              folder: `nc-network/${folder || 'general'}`,
+              folder: `nc-network/${sanitizedFolder}`,
               resource_type: resourceType,
               transformation: resourceType === 'image' ? [
                 { quality: 'auto', fetch_format: 'auto' },
@@ -816,7 +860,7 @@ app.post(
           dataURI,
           uploadPreset,
           {
-            folder: `nc-network/${folder || 'general'}`,
+            folder: `nc-network/${sanitizedFolder}`,
             resource_type: resourceType,
           }
         );
@@ -963,6 +1007,7 @@ app.post('/api/send-notification', verifyToken, handleSendNotification);
 app.get(
   '/api/search',
   verifyToken,
+  scrapingPreventerMiddleware,
   async (req: AuthedRequest<any, any, any>, res: Response): Promise<any> => {
     try {
       const { q, category } = req.query;
@@ -982,17 +1027,28 @@ app.get(
           fcmTokens,
           twoFactorSecret, 
           twoFactorBackupCodes,
-          loginAttempts 
+          loginAttempts,
+          email,
+          phone,
+          showContactInfo,
+          ...rest
         } = data;
-        return { 
-          id: doc.id, 
-          ...data,
-          fcmToken: undefined,
-          fcmTokens: undefined,
-          twoFactorSecret: undefined,
-          twoFactorBackupCodes: undefined,
-          loginAttempts: undefined
+
+        const isOwner = req.user?.uid === doc.id;
+        const isAdminUser = req.user?.admin === true;
+
+        const talent: any = {
+          id: doc.id,
+          ...rest,
+          showContactInfo
         };
+
+        if (isOwner || isAdminUser || showContactInfo === true) {
+          talent.email = email;
+          talent.phone = phone;
+        }
+
+        return talent;
       });
 
       if (q) {
@@ -1016,6 +1072,7 @@ app.get(
 app.get(
   '/api/profiles/:userId',
   verifyToken,
+  scrapingPreventerMiddleware,
   async (req: AuthedRequest<{ userId: string }, any>, res: Response): Promise<any> => {
     try {
       const profileDoc = await db
@@ -1036,6 +1093,15 @@ app.get(
         loginAttempts,
         ...safeProfile 
       } = data;
+
+      // Redact contact PII (email/phone) if the viewer is not the profile owner,
+      // not an admin, and the owner has not opted to show contact info.
+      const isOwner = req.user?.uid === req.params.userId;
+      const isAdminUser = req.user?.admin === true;
+      if (!isOwner && !isAdminUser && !safeProfile.showContactInfo) {
+        delete safeProfile.email;
+        delete safeProfile.phone;
+      }
 
       return res.json({ 
         success: true, 
@@ -1243,6 +1309,52 @@ app.get('/api/admin/users', verifyToken, isAdmin, async (req: AuthedRequest, res
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch users';
     res.status(500).json({ error: message });
+  }
+});
+
+// Admin role promotion/demotion — uses Admin SDK to bypass client-side Firestore rules.
+// This is the ONLY way to change isAdmin; client-side writes are blocked by rules.
+app.post('/api/admin/users/:userId/role', verifyToken, isAdmin, async (req: AuthedRequest<{ userId: string }, { makeAdmin: boolean }>, res: Response): Promise<any> => {
+  const { userId } = req.params;
+  const { makeAdmin } = req.body;
+  const adminUid = req.user?.uid || 'unknown_admin';
+
+  if (!userId) {
+    return res.status(400).json({ success: false, error: 'User ID is required' });
+  }
+
+  if (typeof makeAdmin !== 'boolean') {
+    return res.status(400).json({ success: false, error: 'makeAdmin must be a boolean' });
+  }
+
+  // Prevent admins from modifying their own admin status
+  if (userId === adminUid) {
+    return res.status(400).json({ success: false, error: 'Cannot modify your own admin status' });
+  }
+
+  try {
+    const nextRole = makeAdmin ? 'Admin' : 'Talent';
+
+    // Update both users and profiles collections via Admin SDK
+    const batch = db.batch();
+    batch.update(db.collection('users').doc(userId), { isAdmin: makeAdmin, role: nextRole });
+    batch.update(db.collection('profiles').doc(userId), { isAdmin: makeAdmin, role: nextRole });
+    await batch.commit();
+
+    // Log the action server-side (admin_logs has allow write: if false — only Admin SDK can write)
+    await db.collection('admin_logs').add({
+      action: 'Update User Role',
+      performedBy: adminUid,
+      targetUser: userId,
+      details: makeAdmin ? 'Promoted to Admin' : 'Demoted to Talent',
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.json({ success: true, role: nextRole, isAdmin: makeAdmin });
+  } catch (error: unknown) {
+    console.error('Failed to update user role:', error);
+    const message = error instanceof Error ? error.message : 'Failed to update user role';
+    res.status(500).json({ success: false, error: message });
   }
 });
 
@@ -1566,8 +1678,9 @@ app.post('/api/admin/settings', verifyToken, isAdmin, async (req: AuthedRequest,
 });
 
 app.get(
-  '/api/profile/:uid',
+  '/api/users/:uid/profile',
   verifyToken,
+  scrapingPreventerMiddleware,
   bloomFilterMiddleware('profile'),
   cacheMiddleware(
     (req) => `profile:${req.params.uid}`,
@@ -1582,9 +1695,17 @@ app.get(
     }
     const data = docRef.data();
     if (data) {
-      
       delete data.twoFactorBackupCodes;
       delete data.twoFactorSecret;
+
+      // Redact contact PII (email/phone) if the viewer is not the profile owner,
+      // not an admin, and the owner has not opted to show contact info.
+      const isOwner = req.user?.uid === req.params.uid;
+      const isAdminUser = req.user?.admin === true;
+      if (!isOwner && !isAdminUser && !data.showContactInfo) {
+        delete data.email;
+        delete data.phone;
+      }
     }
     res.json(data);
   } catch (error: unknown) {
@@ -1634,7 +1755,7 @@ app.post('/api/profile', verifyToken, async (req: AuthedRequest, res: Response) 
   }
 });
 
-app.get('/api/casting', async (req: Request, res: Response) => {
+app.get('/api/casting', verifyToken, scrapingPreventerMiddleware, async (req: Request, res: Response) => {
   try {
     const filter = req.query.filter as string | undefined;
     const limitVal = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10), 100) : 50;
@@ -1694,6 +1815,8 @@ app.get(
 
 app.get(
   '/api/castings/:id',
+  verifyToken,
+  scrapingPreventerMiddleware,
   bloomFilterMiddleware('casting'),
   cacheMiddleware(
     (req) => `casting:${req.params.id}`,

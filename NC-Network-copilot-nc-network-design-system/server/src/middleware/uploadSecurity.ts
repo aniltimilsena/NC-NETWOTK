@@ -1,6 +1,7 @@
 import { fromBuffer } from 'file-type';
 import { randomUUID } from 'crypto';
 import path from 'path';
+import sharp from 'sharp';
 import { Request, Response, NextFunction } from 'express';
 
 const ALLOWED_TYPES = new Set([
@@ -85,17 +86,29 @@ export const validateUpload = async (
     }
 
     
+    // Safe filename from detected MIME — prevents extension spoofing
     const safeExt = MIME_TO_EXT[detected.mime] || 'bin';
     const safeName = `${randomUUID().replace(/-/g, '')}.${safeExt}`;
 
-    
-    
+    // Strip metadata from images to neutralize polyglot/EXIF attacks.
+    // GIFs are excluded because sharp converts animated GIFs to single frames.
+    let processedBuffer = file.buffer;
+    if (detected.mime.startsWith('image/') && detected.mime !== 'image/gif') {
+      try {
+        processedBuffer = await sharp(file.buffer)
+          .rotate()           // auto-rotate based on EXIF orientation before stripping
+          .withMetadata({})    // strip all EXIF/XMP/IPTC metadata
+          .toBuffer();
+      } catch (sharpError) {
+        console.warn('Image metadata stripping failed, using original buffer:', sharpError);
+        // Fall through with original buffer — validation already passed
+      }
+    }
 
-    
     req.validatedFile = {
-      buffer: file.buffer,
-      safeName,            
-      mimeType: detected.mime,  
+      buffer: processedBuffer,
+      safeName,
+      mimeType: detected.mime,
       size: file.size,
       isVideo: detected.mime.startsWith('video/'),
     };

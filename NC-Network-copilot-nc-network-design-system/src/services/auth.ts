@@ -11,6 +11,7 @@ import {
 import { auth, db } from "../lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { COLLECTIONS } from "../constants/collections";
+import { getUserFriendlyError } from "../utils/errorHandler";
 
 export const ensureUserProfile = async (user: User) => {
   try {
@@ -56,8 +57,7 @@ type AuthResult = {
   error: string | null;
 };
 
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Authentication request failed";
+const getErrorMessage = (error: unknown) => getUserFriendlyError(error);
 
 export const signUpUser = async (
   email: string,
@@ -113,35 +113,7 @@ export const signInUser = async (email: string, password: string): Promise<AuthR
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { user: userCredential.user, error: null };
   } catch (error: any) {
-    console.error('Login error code:', error?.code); 
-
-    
-    const invalidCredentialCodes = [
-      'auth/user-not-found',      
-      'auth/wrong-password',      
-      'auth/invalid-credential',  
-      'auth/invalid-email',       
-      'auth/user-mismatch',       
-    ];
-
-    if (error?.code && invalidCredentialCodes.includes(error.code)) {
-      return { user: null, error: 'Invalid credentials. Please check your email and password.' };
-    }
-
-    
-    let message = 'Something went wrong. Please try again.';
-    switch (error?.code) {
-      case 'auth/too-many-requests':
-        message = 'Too many failed attempts. Please try again later or reset your password.';
-        break;
-      case 'auth/user-disabled':
-        message = 'This account has been disabled. Please contact support.';
-        break;
-      case 'auth/network-request-failed':
-        message = 'Network error. Please check your internet connection.';
-        break;
-    }
-    return { user: null, error: message };
+    return { user: null, error: getUserFriendlyError(error) };
   }
 };
 

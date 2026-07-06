@@ -100,3 +100,34 @@ export const cacheMiddleware = (
     next();
   };
 };
+
+// Scraping detector: limit authenticated UIDs to 30 profile/casting reads per 60 seconds.
+// If exceeded, block the UID for 5 minutes (300 seconds).
+const scrapingRateLimiter = new RateLimiterMemory({
+  points: 30,
+  duration: 60,
+  blockDuration: 300,
+});
+
+export const scrapingPreventerMiddleware = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  const uid = req.user?.uid;
+  // Non-authenticated visitors are handled by IP rate limits, admins are excluded
+  if (!uid || req.user?.admin === true) {
+    return next();
+  }
+
+  try {
+    await scrapingRateLimiter.consume(uid);
+    next();
+  } catch {
+    console.warn(`[Scraping Attempt Detected] UID: ${uid}, IP: ${req.ip || 'unknown'}`);
+    return res.status(429).json({
+      error: 'Access restricted due to suspicious scraping activity. Please try again later.',
+      retryAfter: 300,
+    });
+  }
+};

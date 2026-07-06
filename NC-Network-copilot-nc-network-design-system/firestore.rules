@@ -14,8 +14,7 @@ service cloud.firestore {
     
     function isAdmin() {
       return isSignedIn() && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
+        request.auth.token.get('admin', false) == true;
     }
 
     function isBanned() {
@@ -69,7 +68,9 @@ service cloud.firestore {
         !('password' in request.resource.data) &&
         !('passwordHash' in request.resource.data) &&
         !('passwordReset' in request.resource.data) &&
-        (!('isAdmin' in request.resource.data) || isAdmin() || (resource != null && 'isAdmin' in resource.data && request.resource.data.isAdmin == resource.data.isAdmin)) &&
+        // isAdmin changes are ONLY allowed via Admin SDK (server-side).
+        // Client writes must preserve the existing value or omit the field.
+        (!('isAdmin' in request.resource.data) || (resource != null && 'isAdmin' in resource.data && request.resource.data.isAdmin == resource.data.isAdmin)) &&
         
         (isOwner(userId) || !('blockedUsers' in request.resource.data) || (resource != null && 'blockedUsers' in resource.data && request.resource.data.blockedUsers == resource.data.blockedUsers)) &&
         
@@ -154,7 +155,8 @@ service cloud.firestore {
          resource.data.receiverId == request.auth.uid);
     }
  
-    
+    // PUBLIC COLLECTION — Casting calls are publicly browsable.
+    // Must NOT contain PII beyond userIds. Ensure createdBy is a userId, not email.
     match /casting_calls/{callId} {
       allow read: if true;
       allow create: if isSignedIn() && !isBanned() && 
@@ -228,7 +230,8 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    
+    // PUBLIC COLLECTION — Contains only public app settings (theme, feature flags).
+    // Must NOT contain API keys, secrets, or internal configuration.
     match /settings/{settingsId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -242,7 +245,8 @@ service cloud.firestore {
       allow write: if false; 
     }
 
-    
+    // PUBLIC COLLECTION — Follow relationships are public (followerId → followingId).
+    // Must NOT contain PII beyond userIds.
     match /follows/{followId} {
       allow read: if true;
       allow create: if isSignedIn() && !isBanned() && 
@@ -252,7 +256,8 @@ service cloud.firestore {
         resource.data.followerId == request.auth.uid;
     }
 
-    
+    // PUBLIC COLLECTION — Reviews are publicly visible.
+    // Contains reviewerId, targetUserId, rating, text. No sensitive PII.
     match /reviews/{reviewId} {
       
       allow read: if true;
@@ -299,7 +304,8 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    
+    // SERVER-ONLY — Managed exclusively via Admin SDK (firebase-admin).
+    // Client access is intentionally blocked. Used for data export download tokens.
     match /one_time_tokens/{tokenId} {
       allow read, write: if false;
     }

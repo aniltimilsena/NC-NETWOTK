@@ -18,8 +18,11 @@ import { db, auth } from "../../lib/firebase";
 import { collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 import { logAdminAction } from '../../services/admin';
+import apiClient from '../../api/client';
+import { callSecureFunction } from '../../api/functionsClient';
 import { CATEGORIES, getCategoryConfig } from '../../constants/categories';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { getUserFriendlyError } from '../../utils/errorHandler';
 
 type AdminUser = {
   id: string;
@@ -148,25 +151,21 @@ export default function AdminUsers() {
 
   const handleUpdateRole = async (userId: string, makeAdmin: boolean) => {
     try {
-      const nextRole = makeAdmin ? 'Admin' : 'Talent';
-      await updateDoc(doc(db, "users", userId), { 
-        isAdmin: makeAdmin,
-        role: nextRole
-      });
-      await updateDoc(doc(db, "profiles", userId), { 
-        isAdmin: makeAdmin,
-        role: nextRole
-      });
-      
-      await logAdminAction(adminEmail, `Update User Role`, userId, makeAdmin ? `Promoted to Admin` : `Demoted to Talent`);
+      const { data, error } = await callSecureFunction<
+        { userId: string; makeAdmin: boolean },
+        { role: string; isAdmin: boolean }
+      >("adminUpdateUserRole", { userId, makeAdmin });
+
+      if (error) throw new Error(error);
+      const nextRole = data?.role || (makeAdmin ? 'Admin' : 'Talent');
       
       if (selectedUser?.id === userId) {
         setSelectedUser(prev => prev ? { ...prev, role: nextRole, isAdmin: makeAdmin } : null);
       }
       alert(makeAdmin ? "Promoted user to Admin successfully!" : "Removed Admin role from user successfully!");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update user role:", err);
-      alert("Error updating user role.");
+      alert(getUserFriendlyError(err));
     }
   };
 
@@ -225,33 +224,20 @@ export default function AdminUsers() {
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
         try {
-          const firebaseUser = auth.currentUser;
-          if (!firebaseUser) {
-            throw new Error("Admin not authenticated");
-          }
-          const token = await firebaseUser.getIdToken();
-
-          const response = await fetch(`/api/admin/users/${userId}/delete`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-
-          if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || 'Server deletion failed');
-          }
+          const { error } = await callSecureFunction<{ userId: string }, { success: boolean }>(
+            "adminDeleteUser",
+            { userId }
+          );
+          if (error) throw new Error(error);
           
           if (selectedUser?.id === userId) {
             setSelectedUser(null);
           }
           alert("User record deleted successfully! They have been logged out and all their data removed.");
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
-        } catch (err) {
+        } catch (err: any) {
           console.error("Failed to delete user:", err);
-          alert(err instanceof Error ? err.message : "Error deleting user.");
+          alert(getUserFriendlyError(err));
         } finally {
           setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
@@ -280,34 +266,21 @@ export default function AdminUsers() {
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
         try {
-          const firebaseUser = auth.currentUser;
-          if (!firebaseUser) {
-            throw new Error("Admin not authenticated");
-          }
-          const token = await firebaseUser.getIdToken();
+          const { error } = await callSecureFunction<
+            { userId: string; reason: string; duration: string },
+            { success: boolean }
+          >("adminBanUser", { userId, reason: reason || "", duration: duration || "" });
 
-          const response = await fetch(`/api/admin/users/${userId}/ban`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ reason, duration })
-          });
-
-          if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || 'Server ban request failed');
-          }
+          if (error) throw new Error(error);
 
           if (selectedUser?.id === userId) {
             setSelectedUser(prev => prev ? { ...prev, status: 'banned', banReason: reason, banExpiresAt: duration } : null);
           }
           alert(`User ${userName} has been successfully banned.`);
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
-        } catch (err) {
+        } catch (err: any) {
           console.error("Failed to ban user:", err);
-          alert(err instanceof Error ? err.message : "Error banning user.");
+          alert(getUserFriendlyError(err));
         } finally {
           setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
@@ -327,33 +300,20 @@ export default function AdminUsers() {
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
         try {
-          const firebaseUser = auth.currentUser;
-          if (!firebaseUser) {
-            throw new Error("Admin not authenticated");
-          }
-          const token = await firebaseUser.getIdToken();
-
-          const response = await fetch(`/api/admin/users/${userId}/unban`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            }
-          });
-
-          if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || 'Server unban request failed');
-          }
+          const { error } = await callSecureFunction<{ userId: string }, { success: boolean }>(
+            "adminUnbanUser",
+            { userId }
+          );
+          if (error) throw new Error(error);
 
           if (selectedUser?.id === userId) {
             setSelectedUser(prev => prev ? { ...prev, status: 'Active' } : null);
           }
           alert(`User ${userName} has been successfully unbanned.`);
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
-        } catch (err) {
+        } catch (err: any) {
           console.error("Failed to unban user:", err);
-          alert(err instanceof Error ? err.message : "Error unbanning user.");
+          alert(getUserFriendlyError(err));
         } finally {
           setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }

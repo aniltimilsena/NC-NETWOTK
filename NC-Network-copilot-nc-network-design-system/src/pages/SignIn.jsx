@@ -14,6 +14,7 @@ import { signInUser, ensureUserProfile, sendPasswordReset } from '../services/au
 import OtpInput from '../components/ui/OtpInput';
 import apiClient from '../api/client';
 import { logLoginAttempt } from '../utils/security';
+import { getUserFriendlyError } from '../utils/errorHandler';
 
 export default function SignIn({ onNavigate, showAlert }) {
   const navigate = useNavigate();
@@ -85,7 +86,7 @@ export default function SignIn({ onNavigate, showAlert }) {
         console.error("Redirect auth error:", err);
         sessionStorage.removeItem('nc_google_redirect');
         if (isMounted) {
-          setError('Google Sign-In failed: ' + (err instanceof Error ? err.message : String(err)));
+          setError('Google Sign-In failed: ' + getUserFriendlyError(err));
           setIsLoading(false);
         }
       }
@@ -422,19 +423,7 @@ export default function SignIn({ onNavigate, showAlert }) {
         onNavigate('home');
       }
     } catch (err) {
-      console.error(err);
-      let friendlyMessage = err instanceof Error ? err.message : String(err);
-      if (err && typeof err === 'object') {
-        const code = err.code;
-        if (code === 'auth/popup-closed-by-user') {
-          friendlyMessage = 'Sign-in cancelled. The Google sign-in window was closed.';
-        } else if (code === 'auth/popup-blocked') {
-          friendlyMessage = 'The Google login popup was blocked by your browser. Please allow popups for this site.';
-        } else if (code === 'auth/cancelled-popup-request') {
-          friendlyMessage = 'The sign-in window was closed because another popup request was opened.';
-        }
-      }
-      setError('Google Sign-In failed: ' + friendlyMessage);
+      setError('Google Sign-In failed: ' + getUserFriendlyError(err));
       setIsLoading(false);
     }
   };

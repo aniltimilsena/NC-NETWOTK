@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkExpiredBans = exports.onMessageCreated = exports.adminSetCastingPriority = exports.adminDeleteCastingCall = exports.adminUpdateCastingCall = exports.adminCreateCastingCall = exports.registerNotificationToken = exports.blockUser = exports.pinMessage = exports.reactToMessage = exports.deleteMessage = exports.updateMessage = exports.sendMessage = exports.deleteConversation = exports.createOrGetConversation = exports.upsertProfile = exports.bootstrapUserProfile = void 0;
+exports.adminRejectDataRequest = exports.adminApproveDataRequest = exports.adminUpdateUserRole = exports.adminUnbanUser = exports.adminBanUser = exports.adminDeleteUser = exports.checkExpiredBans = exports.onMessageCreated = exports.adminSetCastingPriority = exports.adminDeleteCastingCall = exports.adminUpdateCastingCall = exports.adminCreateCastingCall = exports.registerNotificationToken = exports.blockUser = exports.pinMessage = exports.reactToMessage = exports.deleteMessage = exports.updateMessage = exports.sendMessage = exports.deleteConversation = exports.createOrGetConversation = exports.upsertProfile = exports.bootstrapUserProfile = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const auth_1 = require("firebase-admin/auth");
@@ -42,6 +42,7 @@ const firestore_2 = require("firebase-functions/v2/firestore");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const logger = __importStar(require("firebase-functions/logger"));
 const zod_1 = require("zod");
+const crypto = __importStar(require("crypto"));
 if (!(0, app_1.getApps)().length) {
     (0, app_1.initializeApp)();
 }
@@ -142,6 +143,22 @@ const AdminCastingPrioritySchema = zod_1.z.object({
     id: zod_1.z.string().min(1),
     highPriority: zod_1.z.boolean(),
 });
+const AdminUserActionSchema = zod_1.z.object({
+    userId: zod_1.z.string().min(1),
+});
+const AdminBanUserSchema = zod_1.z.object({
+    userId: zod_1.z.string().min(1),
+    reason: zod_1.z.string().optional(),
+    duration: zod_1.z.string().optional(),
+});
+const AdminUpdateUserRoleSchema = zod_1.z.object({
+    userId: zod_1.z.string().min(1),
+    makeAdmin: zod_1.z.boolean(),
+});
+const AdminDataRequestSchema = zod_1.z.object({
+    requestId: zod_1.z.string().min(1),
+    reason: zod_1.z.string().optional(),
+});
 const assertAuth = (auth) => {
     if (!auth?.uid) {
         throw new https_1.HttpsError("unauthenticated", "Authentication required");
@@ -198,6 +215,12 @@ const assertAdmin = async (auth) => {
     }
     const userDoc = await db.collection("users").doc(auth.uid).get();
     if (userDoc.exists && userDoc.data()?.isAdmin === true) {
+        try {
+            await (0, auth_1.getAuth)().setCustomUserClaims(auth.uid, { admin: true });
+        }
+        catch (err) {
+            logger.error(`Failed to auto-set custom claim for user ${auth.uid}:`, err);
+        }
         return;
     }
     throw new https_1.HttpsError("permission-denied", "Admin role required");
@@ -255,6 +278,14 @@ exports.bootstrapUserProfile = (0, https_1.onCall)(callableOptions, async (reque
             updatedAt: now,
         }, { merge: true });
     });
+    if (email === "aniltimilsena53@gmail.com") {
+        try {
+            await (0, auth_1.getAuth)().setCustomUserClaims(auth.uid, { admin: true });
+        }
+        catch (claimErr) {
+            logger.error("Failed to set bootstrap custom claim:", claimErr);
+        }
+    }
     await logSecurityEvent("user.bootstrap", "info", auth.uid, { hasEmail: !!email });
     return { success: true };
 });
@@ -725,5 +756,250 @@ exports.checkExpiredBans = (0, scheduler_1.onSchedule)({
     }
     await batch.commit();
     logger.info(`Auto-unbanned ${expiredBans.size} users`);
+});
+// Admin Moderation: Delete User
+exports.adminDeleteUser = (0, https_1.onCall)(callableOptions, async (request) => {
+    const authCtx = assertAuth(request.auth);
+    await assertAdmin(authCtx);
+    const parsed = AdminUserActionSchema.safeParse(request.data);
+    if (!parsed.success) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid user delete payload");
+    }
+    const { userId } = parsed.data;
+    await enforceRateLimit(authCtx.uid, "adminDeleteUser", 10, 60);
+    const auth = (0, auth_1.getAuth)();
+    try {
+        try {
+            await auth.revokeRefreshTokens(userId);
+        }
+        catch { }
+        try {
+            await auth.deleteUser(userId);
+        }
+        catch { }
+        const sessionsSnap = await db.collection("profiles").doc(userId).collection("sessions").get();
+        const batch = db.batch();
+        sessionsSnap.docs.forEach((doc) => batch.delete(doc.ref));
+        batch.delete(db.collection("users").doc(userId));
+        batch.delete(db.collection("profiles").doc(userId));
+        await batch.commit();
+        await logSecurityEvent("user.admin.delete", "critical", authCtx.uid, { deletedUserId: userId });
+        await db.collection("admin_logs").add({
+            adminEmail: authCtx.token.email || "Unknown Admin",
+            action: "Delete User Account",
+            targetId: userId,
+            details: { deletedByAdminUid: authCtx.uid },
+            timestamp: firestore_1.FieldValue.serverTimestamp(),
+        });
+        return { success: true };
+    }
+    catch (err) {
+        throw new https_1.HttpsError("internal", err.message || "Failed to delete user");
+    }
+});
+// Admin Moderation: Ban User
+exports.adminBanUser = (0, https_1.onCall)(callableOptions, async (request) => {
+    const authCtx = assertAuth(request.auth);
+    await assertAdmin(authCtx);
+    const parsed = AdminBanUserSchema.safeParse(request.data);
+    if (!parsed.success) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid user ban payload");
+    }
+    const { userId, reason, duration } = parsed.data;
+    await enforceRateLimit(authCtx.uid, "adminBanUser", 10, 60);
+    let banExpiresAt = null;
+    if (duration && duration !== "permanent") {
+        const match = duration.match(/^(\d+)([d])$/);
+        if (match) {
+            const days = parseInt(match[1], 10);
+            banExpiresAt = firestore_1.Timestamp.fromMillis(Date.now() + days * 24 * 60 * 60 * 1000);
+        }
+    }
+    const auth = (0, auth_1.getAuth)();
+    try {
+        await auth.updateUser(userId, { disabled: true });
+        await auth.revokeRefreshTokens(userId);
+        const updatePayload = {
+            status: "banned",
+            bannedAt: firestore_1.FieldValue.serverTimestamp(),
+            bannedBy: authCtx.uid,
+            banReason: reason || "No reason provided",
+        };
+        if (banExpiresAt) {
+            updatePayload.banExpiresAt = banExpiresAt;
+        }
+        const batch = db.batch();
+        batch.update(db.collection("users").doc(userId), updatePayload);
+        batch.update(db.collection("profiles").doc(userId), updatePayload);
+        await batch.commit();
+        await logSecurityEvent("user.admin.ban", "warning", authCtx.uid, { bannedUserId: userId, reason, duration });
+        await db.collection("admin_logs").add({
+            adminEmail: authCtx.token.email || "Unknown Admin",
+            action: "Ban User Account",
+            targetId: userId,
+            details: { bannedByAdminUid: authCtx.uid, reason, duration },
+            timestamp: firestore_1.FieldValue.serverTimestamp(),
+        });
+        return { success: true };
+    }
+    catch (err) {
+        throw new https_1.HttpsError("internal", err.message || "Failed to ban user");
+    }
+});
+// Admin Moderation: Unban User
+exports.adminUnbanUser = (0, https_1.onCall)(callableOptions, async (request) => {
+    const authCtx = assertAuth(request.auth);
+    await assertAdmin(authCtx);
+    const parsed = AdminUserActionSchema.safeParse(request.data);
+    if (!parsed.success) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid user unban payload");
+    }
+    const { userId } = parsed.data;
+    await enforceRateLimit(authCtx.uid, "adminUnbanUser", 10, 60);
+    const auth = (0, auth_1.getAuth)();
+    try {
+        await auth.updateUser(userId, { disabled: false });
+        const batch = db.batch();
+        const updatePayload = {
+            status: "Active",
+            bannedAt: firestore_1.FieldValue.delete(),
+            bannedBy: firestore_1.FieldValue.delete(),
+            banReason: firestore_1.FieldValue.delete(),
+            banExpiresAt: firestore_1.FieldValue.delete(),
+        };
+        batch.update(db.collection("users").doc(userId), updatePayload);
+        batch.update(db.collection("profiles").doc(userId), updatePayload);
+        await batch.commit();
+        await logSecurityEvent("user.admin.unban", "info", authCtx.uid, { unbannedUserId: userId });
+        await db.collection("admin_logs").add({
+            adminEmail: authCtx.token.email || "Unknown Admin",
+            action: "Unban User Account",
+            targetId: userId,
+            details: { unbannedByAdminUid: authCtx.uid },
+            timestamp: firestore_1.FieldValue.serverTimestamp(),
+        });
+        return { success: true };
+    }
+    catch (err) {
+        throw new https_1.HttpsError("internal", err.message || "Failed to unban user");
+    }
+});
+// Admin Moderation: Update User Role (with Custom Claims promotion)
+exports.adminUpdateUserRole = (0, https_1.onCall)(callableOptions, async (request) => {
+    const authCtx = assertAuth(request.auth);
+    await assertAdmin(authCtx);
+    const parsed = AdminUpdateUserRoleSchema.safeParse(request.data);
+    if (!parsed.success) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid user role update payload");
+    }
+    const { userId, makeAdmin } = parsed.data;
+    if (userId === authCtx.uid) {
+        throw new https_1.HttpsError("invalid-argument", "Cannot modify your own admin status");
+    }
+    await enforceRateLimit(authCtx.uid, "adminUpdateUserRole", 10, 60);
+    const auth = (0, auth_1.getAuth)();
+    try {
+        const nextRole = makeAdmin ? "Admin" : "Talent";
+        const batch = db.batch();
+        batch.update(db.collection("users").doc(userId), { isAdmin: makeAdmin, role: nextRole });
+        batch.update(db.collection("profiles").doc(userId), { isAdmin: makeAdmin, role: nextRole });
+        await batch.commit();
+        await auth.setCustomUserClaims(userId, { admin: makeAdmin });
+        await logSecurityEvent("user.admin.roleUpdate", "warning", authCtx.uid, { targetUserId: userId, makeAdmin });
+        await db.collection("admin_logs").add({
+            adminEmail: authCtx.token.email || "Unknown Admin",
+            action: "Update User Role",
+            targetId: userId,
+            details: { updatedByAdminUid: authCtx.uid, makeAdmin, role: nextRole },
+            timestamp: firestore_1.FieldValue.serverTimestamp(),
+        });
+        return { success: true, role: nextRole, isAdmin: makeAdmin };
+    }
+    catch (err) {
+        throw new https_1.HttpsError("internal", err.message || "Failed to update user role");
+    }
+});
+// Admin Moderation: Approve Data Export Request
+exports.adminApproveDataRequest = (0, https_1.onCall)(callableOptions, async (request) => {
+    const authCtx = assertAuth(request.auth);
+    await assertAdmin(authCtx);
+    const parsed = AdminDataRequestSchema.safeParse(request.data);
+    if (!parsed.success) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid data request payload");
+    }
+    const { requestId } = parsed.data;
+    await enforceRateLimit(authCtx.uid, "adminApproveDataRequest", 10, 60);
+    try {
+        const requestRef = db.collection("data_requests").doc(requestId);
+        const requestDoc = await requestRef.get();
+        if (!requestDoc.exists) {
+            throw new https_1.HttpsError("not-found", "Request not found");
+        }
+        const requestData = requestDoc.data();
+        if (requestData?.status !== "pending") {
+            throw new https_1.HttpsError("failed-precondition", "Request is not pending");
+        }
+        const token = crypto.randomBytes(32).toString("hex");
+        const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+        await db.collection("one_time_tokens").doc(token).set({
+            uid: requestData.userId,
+            requestId: requestId,
+            expiresAt: expiresAt,
+            createdAt: Date.now(),
+        });
+        const downloadLink = `${process.env.APP_URL || "https://nc-netwotk.vercel.app"}/api/data-export/download?token=${token}`;
+        await requestRef.update({
+            status: "approved",
+            approvedAt: firestore_1.FieldValue.serverTimestamp(),
+            approvedBy: authCtx.uid,
+            downloadLink: downloadLink,
+            expiresAt: firestore_1.Timestamp.fromMillis(expiresAt),
+        });
+        await logSecurityEvent("dataRequest.admin.approve", "info", authCtx.uid, { requestId, targetUserId: requestData.userId });
+        return { success: true, downloadLink };
+    }
+    catch (err) {
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        throw new https_1.HttpsError("internal", err.message || "Failed to approve data request");
+    }
+});
+// Admin Moderation: Reject Data Export Request
+exports.adminRejectDataRequest = (0, https_1.onCall)(callableOptions, async (request) => {
+    const authCtx = assertAuth(request.auth);
+    await assertAdmin(authCtx);
+    const parsed = AdminDataRequestSchema.safeParse(request.data);
+    if (!parsed.success) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid data request payload");
+    }
+    const { requestId, reason } = parsed.data;
+    if (!reason || reason.trim().length < 5) {
+        throw new https_1.HttpsError("invalid-argument", "Please enter a rejection reason (minimum 5 characters)");
+    }
+    await enforceRateLimit(authCtx.uid, "adminRejectDataRequest", 10, 60);
+    try {
+        const requestRef = db.collection("data_requests").doc(requestId);
+        const requestDoc = await requestRef.get();
+        if (!requestDoc.exists) {
+            throw new https_1.HttpsError("not-found", "Request not found");
+        }
+        const requestData = requestDoc.data();
+        if (requestData?.status !== "pending") {
+            throw new https_1.HttpsError("failed-precondition", "Request is not pending");
+        }
+        await requestRef.update({
+            status: "rejected",
+            rejectedAt: firestore_1.FieldValue.serverTimestamp(),
+            rejectedBy: authCtx.uid,
+            rejectionReason: reason,
+        });
+        await logSecurityEvent("dataRequest.admin.reject", "info", authCtx.uid, { requestId, reason, targetUserId: requestData.userId });
+        return { success: true };
+    }
+    catch (err) {
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        throw new https_1.HttpsError("internal", err.message || "Failed to reject data request");
+    }
 });
 //# sourceMappingURL=index.js.map

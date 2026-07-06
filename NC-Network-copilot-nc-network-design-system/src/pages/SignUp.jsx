@@ -9,6 +9,7 @@ import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase
 import SEO from '../components/SEO';
 
 import { signUpUser, ensureUserProfile } from '../services/auth';
+import { getUserFriendlyError } from '../utils/errorHandler';
 
 export default function SignUp({ onNavigate, showAlert }) {
   const navigate = useNavigate();
@@ -122,7 +123,7 @@ export default function SignUp({ onNavigate, showAlert }) {
         console.error("Redirect auth error:", err);
         sessionStorage.removeItem('nc_google_redirect');
         if (isMounted) {
-          setError('Google Registration failed: ' + (err instanceof Error ? err.message : String(err)));
+          setError('Google Registration failed: ' + getUserFriendlyError(err));
           setIsLoading(false);
         }
       }
@@ -207,19 +208,7 @@ export default function SignUp({ onNavigate, showAlert }) {
         onNavigate('home');
       }
     } catch (err) {
-      console.error(err);
-      let friendlyMessage = err instanceof Error ? err.message : String(err);
-      if (err && typeof err === 'object') {
-        const code = err.code;
-        if (code === 'auth/popup-closed-by-user') {
-          friendlyMessage = 'Sign-up cancelled. The Google authentication window was closed.';
-        } else if (code === 'auth/popup-blocked') {
-          friendlyMessage = 'The Google authentication popup was blocked by your browser. Please allow popups for this site.';
-        } else if (code === 'auth/cancelled-popup-request') {
-          friendlyMessage = 'The authentication window was closed because another popup request was opened.';
-        }
-      }
-      setError('Google Registration failed: ' + friendlyMessage);
+      setError('Google Registration failed: ' + getUserFriendlyError(err));
       setIsLoading(false);
     }
   };

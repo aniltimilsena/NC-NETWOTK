@@ -5,6 +5,7 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
+import { callSecureFunction } from '../../api/functionsClient';
 
 const AdminDataRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -62,40 +63,21 @@ const AdminDataRequests = () => {
   const handleApprove = async (requestId, userEmail, userName) => {
     try {
       setProcessing(true);
-      const token = await auth.currentUser.getIdToken();
       
-      const response = await fetch(
-        `/api/data-requests/${requestId}/approve`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
+      const { data, error } = await callSecureFunction(
+        'adminApproveDataRequest',
+        { requestId }
       );
 
-      if (!response.ok) {
-        const text = await response.text().catch(() => '');
-        let errMsg = 'Approval failed';
-        try {
-          const parsed = JSON.parse(text);
-          errMsg = parsed.error || parsed.message || errMsg;
-        } catch {
-          if (text) errMsg = text.slice(0, 150);
-        }
-        throw new Error(errMsg);
-      }
-
-      const result = await response.json();
-      const link = result.downloadLink;
+      if (error) throw new Error(error);
+      const link = data?.downloadLink;
 
       
       if (link) {
         setDownloadLinks(prev => ({ ...prev, [requestId]: link }));
       }
 
-      showToast(`✅ Approved — download link is ready below`);
+      showToast(`Approved — download link is ready below`);
 
     } catch (error) {
       showToast('Failed to approve: ' + error.message, 'error');
@@ -113,38 +95,20 @@ const AdminDataRequests = () => {
 
     try {
       setProcessing(true);
-      const token = await auth.currentUser.getIdToken();
-
-      const response = await fetch(
-        `/api/data-requests/${requestId}/reject`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ reason: rejectReason }),
-        }
+      
+      const { error } = await callSecureFunction(
+        'adminRejectDataRequest',
+        { requestId, reason: rejectReason }
       );
 
-      if (!response.ok) {
-        const text = await response.text().catch(() => '');
-        let errMsg = 'Rejection failed';
-        try {
-          const parsed = JSON.parse(text);
-          errMsg = parsed.error || parsed.message || errMsg;
-        } catch {
-          if (text) errMsg = text.slice(0, 150);
-        }
-        throw new Error(errMsg);
-      }
+      if (error) throw new Error(error);
 
       setRejectReason('');
       setSelectedId(null);
-      showToast('Request rejected');
+      showToast('Request rejected successfully');
 
     } catch (error) {
-      showToast('Failed to reject', 'error');
+      showToast('Failed to reject: ' + error.message, 'error');
     } finally {
       setProcessing(false);
     }

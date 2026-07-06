@@ -37,12 +37,22 @@ async function verifyAdmin(req) {
   });
 
   const uid = payload.sub;
-  const db = admin.firestore();
-  const userDoc = await db.collection('users').doc(uid).get();
   
-  if (!userDoc.exists || userDoc.data()?.isAdmin !== true) {
-    throw Object.assign(new Error('Forbidden: Not an admin'), { status: 403 });
+  if (payload.admin !== true) {
+    const db = admin.firestore();
+    const userDoc = await db.collection('users').doc(uid).get();
+    
+    if (!userDoc.exists || userDoc.data()?.isAdmin !== true) {
+      throw Object.assign(new Error('Forbidden: Not an admin'), { status: 403 });
+    }
+    
+    try {
+      await admin.auth().setCustomUserClaims(uid, { admin: true });
+    } catch (err) {
+      console.error(`Failed to auto-set custom claim for user ${uid}:`, err);
+    }
   }
+
   return {
     uid,
     email: payload.email || '',

@@ -3,12 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { User, Camera, Mail } from 'lucide-react';
 import { subscribeToConversations } from '../../services/messaging';
 import { useCall } from '../../context/CallContext';
+import { useTranslation } from 'react-i18next';
 
 interface MobileBottomNavProps {
   user: any;
 }
 
 export default function MobileBottomNav({ user }: MobileBottomNavProps) {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -63,8 +65,8 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
   useEffect(() => {
     const checkLightbox = () => {
       const hasLightbox = 
-        !!document.querySelector('.fixed.inset-0.z-\\[150\\]') || 
-        !!document.querySelector('.fixed.inset-0.z-\\[200\\]') ||
+         !!document.querySelector('.fixed.inset-0.z-\\[150\\]') || 
+         !!document.querySelector('.fixed.inset-0.z-\\[200\\]') ||
         document.body.classList.contains('overflow-hidden') ||
         document.body.style.overflow === 'hidden';
       setIsLightboxOpen(hasLightbox);
@@ -103,11 +105,11 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
 
   
   const tabs = [
-    { id: 'home', label: 'HOME', path: '/', isHome: true },
-    { id: 'discover', label: 'DISCOVER', path: '/talents', icon: Camera },
-    { id: 'casting', label: 'CASTING', path: '/casting', icon: Camera }, 
-    { id: 'profile', label: 'ABOUT', path: user?.uid ? `/profile/${user.uid}` : '/signin', icon: User },
-    { id: 'messages', label: 'MESSAGES', path: '/messages', icon: Mail, hasBadge: true },
+    { id: 'home', label: t('nav_home').toUpperCase(), path: '/', isHome: true },
+    { id: 'discover', label: t('nav_talents').toUpperCase(), path: '/talents', icon: Camera },
+    { id: 'casting', label: t('nav_casting').toUpperCase(), path: '/casting', icon: Camera }, 
+    { id: 'profile', label: t('nav_profile').toUpperCase(), path: user?.uid ? `/profile/${user.uid}` : '/signin', icon: User },
+    { id: 'messages', label: t('nav_messages').toUpperCase(), path: '/messages', icon: Mail, hasBadge: true },
   ];
 
   return (
