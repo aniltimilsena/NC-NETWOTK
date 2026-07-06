@@ -641,19 +641,20 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
       {/* RIGHT COLUMN: Interactive Form Container */}
       <div className="w-full md:w-1/2 flex flex-col justify-start items-center p-6 sm:p-12 md:p-16 z-10 overflow-y-auto relative pt-4 md:pt-4">
         
-        {/* Back Button */}
-        <button 
-          onClick={handleBack} 
-          className="absolute top-6 left-6 flex items-center gap-1.5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 rounded-full px-3.5 py-1.5 transition-all text-xs font-bold group cursor-pointer z-20"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-          <span>Back</span>
-        </button>
-
         <GlassCard strong className="p-8 border border-white/5 bg-[#111]/90 w-full max-w-[450px] flex flex-col items-center shadow-2xl relative" onClick={undefined}>
           
+          {/* Back Button */}
+          <button 
+            onClick={handleBack} 
+            type="button"
+            className="absolute top-6 left-6 flex items-center gap-1.5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 rounded-full px-3.5 py-1.5 transition-all text-xs font-bold group cursor-pointer z-20"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+            <span>Back</span>
+          </button>
+
           {/* Logo component */}
-          <Logo size="lg" className="mb-8 mt-[20px] sm:mt-[30px]" />
+          <Logo size="lg" className="mb-8 mt-[36px] sm:mt-[44px]" />
           
           <div className="w-full">
             <AnimatePresence mode="wait">
