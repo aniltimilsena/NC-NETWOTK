@@ -204,26 +204,42 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white pt-8 pb-32 md:pb-24 relative font-sans">
+    <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col md:flex-row relative font-sans">
       <SEO 
         title="Casting Calls & Auditions | NC Network" 
         description="Find Nepali movie casting calls, short films, models, and dancers auditions." 
       />
-      <div className="max-w-5xl mx-auto px-6 sm:px-8">
+      
+      {/* Sticky Left Column: 40% width on desktop */}
+      <aside className="w-full md:w-[40%] p-8 sm:p-12 md:p-16 border-b md:border-b-0 md:border-r border-white/5 h-auto md:h-screen md:sticky md:top-0 flex flex-col justify-between shrink-0 bg-[#070707] z-20">
+        <div className="flex flex-col justify-center flex-1 py-12 md:py-0">
+          <span className="text-[10px] uppercase tracking-[0.35em] text-yellow-500 mb-3 font-black block">Featured Showcase</span>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase leading-[1.05] tracking-tighter text-white">
+            Casting the <br/> <span className="text-yellow-500">Future of <br/>Talent</span>
+          </h1>
+          <p className="text-xs text-gray-500 mt-5 leading-relaxed max-w-sm font-medium">
+            Discover premier casting calls and open auditions across verified film, model, and television productions in Nepal.
+          </p>
+        </div>
+        
+        <div className="hidden md:block text-[10px] uppercase tracking-widest text-gray-600 font-bold">
+          © 2026 NC Network. All rights reserved.
+        </div>
+      </aside>
+
+      {/* Main Feed: 60% width on desktop */}
+      <main className="w-full md:w-[60%] px-6 sm:px-12 md:px-16 py-12 md:py-20 overflow-y-auto">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-white/5 pb-10 mb-10">
-          <div className="flex items-center gap-3.5">
-            <div className="w-[4px] h-10 bg-yellow-500 rounded-full" />
-            <div>
-              <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">Casting Calls</h1>
-              <p className="text-sm text-gray-500 mt-2 font-medium">Open opportunities from verified productions</p>
-            </div>
+        <div className="flex items-center justify-between border-b border-white/5 pb-8 mb-8">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">Opportunities</h2>
+            <p className="text-xs text-gray-500 mt-1 font-medium">Open casting calls from verified productions</p>
           </div>
           {canPostCall && (
             <button
               onClick={() => onNavigate('casting-create')}
-              className="bg-yellow-500 hover:bg-yellow-600 text-black px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-yellow-500/10 active:scale-[0.98] flex items-center gap-1.5 shrink-0"
+              className="bg-yellow-500 hover:bg-yellow-600 text-black px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-yellow-500/10 active:scale-[0.98] flex items-center gap-1.5 shrink-0"
             >
               <Plus size={15} strokeWidth={3} />
               Post a Call
@@ -420,8 +436,8 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
                       >
                         <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-yellow-500' : ''} />
                       </button>
-                      <span className="text-xs font-bold text-yellow-500 uppercase tracking-widest group-hover:underline flex items-center gap-0.5">
-                        Details &gt;
+                      <span className="text-xs font-bold text-yellow-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 whitespace-nowrap">
+                        View Role &gt;
                       </span>
                     </div>
                   </div>
@@ -431,7 +447,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
           )}
         </div>
 
-      </div>
+      </main>
     </div>
   );
 }
