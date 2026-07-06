@@ -35,6 +35,12 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #38BDF8;
   }
+
+  /* Hide native browser password reveal eye and clear buttons */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none !important;
+  }
 }
 
 @layer utilities {
