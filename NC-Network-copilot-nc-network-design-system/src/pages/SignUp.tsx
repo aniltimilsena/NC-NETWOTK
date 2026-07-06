@@ -81,26 +81,57 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
 
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
+  const renderExplicitTurnstile = () => {
+    const container = document.querySelector('.cf-turnstile');
+    if (container && (window as any).turnstile) {
+      try {
+        (window as any).turnstile.render(container, {
+          sitekey: '1x00000000000000000000AA',
+          theme: 'dark',
+          callback: (window as any).onTurnstileSuccess,
+        });
+      } catch (e) {
+        console.log("Explicit Turnstile render call:", e);
+      }
+    }
+  };
+
   useEffect(() => {
     (window as any).onTurnstileSuccess = (token: string) => {
       setTurnstileToken(token);
       setError('');
     };
 
+    (window as any).onTurnstileLoad = () => {
+      if (step === 2) {
+        renderExplicitTurnstile();
+      }
+    };
+
     const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad';
     script.async = true;
     script.defer = true;
     document.body.appendChild(script);
 
     return () => {
       delete (window as any).onTurnstileSuccess;
+      delete (window as any).onTurnstileLoad;
       const existingScript = document.querySelector('script[src*="turnstile/v0/api.js"]');
       if (existingScript) {
         existingScript.remove();
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (step === 2) {
+      const timer = setTimeout(() => {
+        renderExplicitTurnstile();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
 
   const handleNameChange = (val: string) => {
     setForm(prev => ({ ...prev, name: val }));
@@ -580,12 +611,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                   </div>
 
                   {/* Cloudflare Turnstile Challenge */}
-                  <div 
-                    className="cf-turnstile my-4 flex justify-center" 
-                    data-sitekey="1x00000000000000000000AA"
-                    data-theme="dark"
-                    data-callback="onTurnstileSuccess"
-                  />
+                  <div className="cf-turnstile my-4 flex justify-center" />
                 </div>
               )}
 
