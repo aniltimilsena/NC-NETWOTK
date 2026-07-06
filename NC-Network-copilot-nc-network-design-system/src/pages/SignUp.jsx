@@ -10,9 +10,32 @@ import SEO from '../components/SEO';
 
 import { signUpUser, ensureUserProfile } from '../services/auth';
 import { getUserFriendlyError } from '../utils/errorHandler';
+import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
+import { evaluatePasswordStrength } from '../utils/security';
+import { Progress } from '../components/ui/progress';
+
+const step1Schema = (t) => z.object({
+  name: z.string().min(3, { message: t('err_name_length', 'Name must be at least 3 characters.') }),
+  email: z.string().email({ message: t('err_email_invalid', 'Please enter a valid email address.') }),
+});
+
+const step2Schema = (t) => z.object({
+  password: z
+    .string()
+    .min(8, { message: t('err_password_length', 'Password must be at least 8 characters.') })
+    .regex(/[A-Z]/, { message: t('err_password_uppercase', 'Password must contain at least one uppercase letter.') })
+    .regex(/[0-9]/, { message: t('err_password_number', 'Password must contain at least one number.') }),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: t('err_passwords_mismatch', 'Passwords do not match.'),
+  path: ['confirmPassword']
+});
 
 export default function SignUp({ onNavigate, showAlert }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState({ 
     name: '', 
     email: '', 
@@ -39,15 +62,34 @@ export default function SignUp({ onNavigate, showAlert }) {
     confirmPassword: { valid: null, msg: '' }
   });
 
-  
+  const [turnstileToken, setTurnstileToken] = useState(null);
+
+  useEffect(() => {
+    window.onTurnstileSuccess = (token) => {
+      setTurnstileToken(token);
+      setError('');
+    };
+
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+
+    return () => {
+      delete window.onTurnstileSuccess;
+      const existingScript = document.querySelector('script[src*="turnstile/v0/api.js"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, []);
+
   const handleNameChange = (val) => {
     setForm(prev => ({ ...prev, name: val }));
-    if (!val) {
-      setValidation(prev => ({ ...prev, name: { valid: false, msg: 'Full Name is required.' } }));
-      return;
-    }
-    if (val.trim().length < 3) {
-      setValidation(prev => ({ ...prev, name: { valid: false, msg: 'Name must be at least 3 characters.' } }));
+    const result = step1Schema(t).shape.name.safeParse(val);
+    if (!result.success) {
+      setValidation(prev => ({ ...prev, name: { valid: false, msg: result.error.errors[0].message } }));
     } else {
       setValidation(prev => ({ ...prev, name: { valid: true, msg: '' } }));
     }
@@ -55,13 +97,9 @@ export default function SignUp({ onNavigate, showAlert }) {
 
   const handleEmailChange = (val) => {
     setForm(prev => ({ ...prev, email: val }));
-    if (!val) {
-      setValidation(prev => ({ ...prev, email: { valid: false, msg: 'Email is required.' } }));
-      return;
-    }
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regex.test(val)) {
-      setValidation(prev => ({ ...prev, email: { valid: false, msg: 'Please enter a valid email address.' } }));
+    const result = step1Schema(t).shape.email.safeParse(val);
+    if (!result.success) {
+      setValidation(prev => ({ ...prev, email: { valid: false, msg: result.error.errors[0].message } }));
     } else {
       setValidation(prev => ({ ...prev, email: { valid: true, msg: '' } }));
     }
@@ -69,20 +107,16 @@ export default function SignUp({ onNavigate, showAlert }) {
 
   const handlePasswordChange = (val) => {
     setForm(prev => ({ ...prev, password: val }));
-    if (!val) {
-      setValidation(prev => ({ ...prev, password: { valid: false, msg: 'Password is required.' } }));
-      return;
-    }
-    if (val.length < 8) {
-      setValidation(prev => ({ ...prev, password: { valid: false, msg: 'Password must be at least 8 characters.' } }));
+    const result = step2Schema(t).shape.password.safeParse(val);
+    if (!result.success) {
+      setValidation(prev => ({ ...prev, password: { valid: false, msg: result.error.errors[0].message } }));
     } else {
       setValidation(prev => ({ ...prev, password: { valid: true, msg: '' } }));
     }
 
-    
     if (form.confirmPassword) {
       if (val !== form.confirmPassword) {
-        setValidation(prev => ({ ...prev, confirmPassword: { valid: false, msg: 'Passwords do not match.' } }));
+        setValidation(prev => ({ ...prev, confirmPassword: { valid: false, msg: t('err_passwords_mismatch', 'Passwords do not match.') } }));
       } else {
         setValidation(prev => ({ ...prev, confirmPassword: { valid: true, msg: '' } }));
       }
@@ -91,12 +125,8 @@ export default function SignUp({ onNavigate, showAlert }) {
 
   const handleConfirmPasswordChange = (val) => {
     setForm(prev => ({ ...prev, confirmPassword: val }));
-    if (!val) {
-      setValidation(prev => ({ ...prev, confirmPassword: { valid: false, msg: 'Please repeat your password.' } }));
-      return;
-    }
     if (val !== form.password) {
-      setValidation(prev => ({ ...prev, confirmPassword: { valid: false, msg: 'Passwords do not match.' } }));
+      setValidation(prev => ({ ...prev, confirmPassword: { valid: false, msg: t('err_passwords_mismatch', 'Passwords do not match.') } }));
     } else {
       setValidation(prev => ({ ...prev, confirmPassword: { valid: true, msg: '' } }));
     }
@@ -123,41 +153,86 @@ export default function SignUp({ onNavigate, showAlert }) {
         console.error("Redirect auth error:", err);
         sessionStorage.removeItem('nc_google_redirect');
         if (isMounted) {
-          setError('Google Registration failed: ' + getUserFriendlyError(err));
+          setError(t('err_google_failed', 'Google Registration failed') + ': ' + getUserFriendlyError(err));
           setIsLoading(false);
         }
       }
     };
     checkRedirect();
     return () => { isMounted = false; };
-  }, [onNavigate]);
+  }, [onNavigate, t]);
+
+  const validateStep = (currentStep) => {
+    setError('');
+    if (currentStep === 1) {
+      const result = step1Schema(t).safeParse({ name: form.name, email: form.email });
+      if (result.success) {
+        setValidation(prev => ({
+          ...prev,
+          name: { valid: true, msg: '' },
+          email: { valid: true, msg: '' }
+        }));
+        return true;
+      } else {
+        const errors = {};
+        result.error.errors.forEach(issue => {
+          errors[issue.path[0]] = issue.message;
+        });
+        setValidation(prev => ({
+          ...prev,
+          name: { valid: !errors.name, msg: errors.name || '' },
+          email: { valid: !errors.email, msg: errors.email || '' }
+        }));
+        return false;
+      }
+    } else if (currentStep === 2) {
+      const result = step2Schema(t).safeParse({ password: form.password, confirmPassword: form.confirmPassword });
+      if (result.success) {
+        setValidation(prev => ({
+          ...prev,
+          password: { valid: true, msg: '' },
+          confirmPassword: { valid: true, msg: '' }
+        }));
+        if (!turnstileToken) {
+          setError(t('err_turnstile_required', 'Please complete the security challenge.'));
+          return false;
+        }
+        return true;
+      } else {
+        const errors = {};
+        result.error.errors.forEach(issue => {
+          errors[issue.path[0]] = issue.message;
+        });
+        setValidation(prev => ({
+          ...prev,
+          password: { valid: !errors.password, msg: errors.password || '' },
+          confirmPassword: { valid: !errors.confirmPassword, msg: errors.confirmPassword || '' }
+        }));
+        return false;
+      }
+    }
+    return true;
+  };
 
   const validateAllLocally = () => {
-    const n = form.name.trim().length >= 3;
-    const e = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
-    const p = form.password.length >= 8;
-    const cp = form.password === form.confirmPassword && form.confirmPassword.length > 0;
-    
-    setValidation({
-      name: { valid: n, msg: n ? '' : 'Name must be at least 3 characters.' },
-      email: { valid: e, msg: e ? '' : 'Please enter a valid email address.' },
-      password: { valid: p, msg: p ? '' : 'Password must be at least 8 characters.' },
-      confirmPassword: { valid: cp, msg: cp ? '' : 'Passwords do not match.' }
-    });
-
-    return n && e && p && cp;
+    return validateStep(1) && validateStep(2);
   };
 
   const handleSignUp = async (e) => {
     e?.preventDefault();
     
     if (!validateAllLocally()) {
-      setError('Please resolve validation errors before creating your account.');
+      setError(t('err_validation_title', 'Please resolve validation errors before creating your account.'));
       return;
     }
 
     if (!agreeToTerms) {
-      setError('You must agree to the Terms of Service and Privacy Policy.');
+      setError(t('err_terms_required', 'You must agree to the Terms of Service and Privacy Policy.'));
+      return;
+    }
+
+    if (!turnstileToken) {
+      setError(t('err_turnstile_required', 'Please complete the security challenge.'));
       return;
     }
 
@@ -178,7 +253,7 @@ export default function SignUp({ onNavigate, showAlert }) {
     );
 
     if (authError) {
-      setError(authError);
+      setError(getUserFriendlyError(authError));
       setIsLoading(false);
     } else {
       onNavigate('home');
@@ -208,7 +283,7 @@ export default function SignUp({ onNavigate, showAlert }) {
         onNavigate('home');
       }
     } catch (err) {
-      setError('Google Registration failed: ' + getUserFriendlyError(err));
+      setError(t('err_google_failed', 'Google Registration failed') + ': ' + getUserFriendlyError(err));
       setIsLoading(false);
     }
   };
@@ -233,6 +308,8 @@ export default function SignUp({ onNavigate, showAlert }) {
     }
     return common + "border-white/5 focus:border-[#00BFFF]/50 focus:shadow-[0_0_0_3px_rgba(0,191,255,0.15)]";
   };
+
+  const passwordStrength = evaluatePasswordStrength(form.password);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col md:flex-row relative overflow-hidden font-sans">
@@ -293,7 +370,7 @@ export default function SignUp({ onNavigate, showAlert }) {
           className="absolute top-6 left-6 flex items-center gap-1.5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 rounded-full px-3.5 py-1.5 transition-all text-xs font-bold group cursor-pointer z-20"
         >
           <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-          <span>Back</span>
+          <span>{t('lbl_back')}</span>
         </button>
 
         <div className="w-full max-w-[420px] flex flex-col items-center">
@@ -319,304 +396,402 @@ export default function SignUp({ onNavigate, showAlert }) {
 
           <div className="w-full space-y-6 text-left py-6">
             <div className="text-center w-full">
-              <h1 className="text-3xl font-black text-white tracking-tight text-center">Join NC Network</h1>
-              <p className="text-sm text-gray-500 mt-1.5 font-medium text-center">Create your talent profile today</p>
+              <h1 className="text-3xl font-black text-white tracking-tight text-center">{t('join_nc_network', 'Join NC Network')}</h1>
+              <p className="text-sm text-gray-500 mt-1.5 font-medium text-center">{t('create_profile_desc', 'Create your talent profile today')}</p>
             </div>
 
-          {error && (
-            <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-xl border border-red-500/20 font-bold">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSignUp} className="space-y-4">
-            
-            {/* Full Name */}
-            <div>
-              <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Full Name</label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
-                  <User className="w-4 h-4" />
-                </span>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={e => handleNameChange(e.target.value)}
-                  placeholder="Your full name"
-                  className={getInputStyles('name')}
-                />
-                {validation.name.valid === true && (
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-green-500">
-                    <Check className="w-4.5 h-4.5" />
-                  </span>
-                )}
-                {validation.name.valid === false && (
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500">
-                    <AlertCircle className="w-4.5 h-4.5" />
-                  </span>
-                )}
+            {/* Step Progress Indicator (Progress component wrapper) */}
+            <div className="space-y-2 mb-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-gray-400">
+                <span>{t('step_indicator', { current: step, total: 3 })}</span>
+                <span className="text-[#00BFFF]">{step === 1 ? 'Account Details' : step === 2 ? 'Security & Credentials' : 'Roles & Agreement'}</span>
               </div>
-              {validation.name.valid === false && (
-                <p className="text-[10px] text-red-400 font-bold mt-1">{validation.name.msg}</p>
-              )}
+              <Progress value={(step / 3) * 100} className="h-1.5 bg-white/5 rounded-full" />
             </div>
 
-            {/* Email Address */}
-            <div>
-              <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Email Address</label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
-                  <Mail className="w-4 h-4" />
-                </span>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={e => handleEmailChange(e.target.value)}
-                  placeholder="you@example.com"
-                  className={getInputStyles('email')}
-                />
-                {validation.email.valid === true && (
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-green-500">
-                    <Check className="w-4.5 h-4.5" />
-                  </span>
-                )}
-                {validation.email.valid === false && (
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500">
-                    <AlertCircle className="w-4.5 h-4.5" />
-                  </span>
-                )}
+            {error && (
+              <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-xl border border-red-500/20 font-bold">
+                {error}
               </div>
-              {validation.email.valid === false && (
-                <p className="text-[10px] text-red-400 font-bold mt-1">{validation.email.msg}</p>
-              )}
-            </div>
+            )}
 
-            {/* Password */}
-            <div>
-              <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Password</label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
-                  <Lock className="w-4 h-4" />
-                </span>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={form.password}
-                  onChange={e => handlePasswordChange(e.target.value)}
-                  placeholder="Min 8 characters"
-                  className={getInputStyles('password')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-white"
-                >
-                  {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-                </button>
-              </div>
-              {validation.password.valid === false && (
-                <p className="text-[10px] text-red-400 font-bold mt-1">{validation.password.msg}</p>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Confirm Password</label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
-                  <Lock className="w-4 h-4" />
-                </span>
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={form.confirmPassword}
-                  onChange={e => handleConfirmPasswordChange(e.target.value)}
-                  placeholder="Repeat your password"
-                  className={getInputStyles('confirmPassword')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-white"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-                </button>
-              </div>
-              {validation.confirmPassword.valid === false && (
-                <p className="text-[10px] text-red-400 font-bold mt-1">{validation.confirmPassword.msg}</p>
-              )}
-            </div>
-
-            {/* Gender Selection */}
-            <div>
-              <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">Gender</label>
-              <div className="flex gap-2">
-                {['Male', 'Female', 'Other'].map(g => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => setForm(prev => ({ ...prev, gender: g }))}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all ${
-                      form.gender === g
-                        ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
-                        : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
-                    }`}
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Outer Role Selector: "I am a..." */}
-            <div>
-              <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-3">I am a...</label>
+            <form onSubmit={handleSignUp} className="space-y-4">
               
-              <div className="grid grid-cols-3 gap-2.5">
-                {/* Talent Card */}
-                <button
-                  key="talent"
-                  type="button"
-                  onClick={() => {
-                    setRoleGroup('talent');
-                    setForm(prev => ({ ...prev, role: 'Actor' })); 
-                  }}
-                  className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
-                    roleGroup === 'talent'
-                      ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
-                      : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
-                  }`}
-                >
-                  <UserCheck className="w-5 h-5 mb-1.5" />
-                  <span className="text-[11px] font-black uppercase tracking-wider">Talent</span>
-                </button>
+              {/* STEP 1: Account details */}
+              {step === 1 && (
+                <div className="space-y-4">
+                  {/* Full Name */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">{t('lbl_name')}</label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                        <User className="w-4 h-4" />
+                      </span>
+                      <input
+                        type="text"
+                        value={form.name}
+                        onChange={e => handleNameChange(e.target.value)}
+                        placeholder={t('placeholder_name')}
+                        className={getInputStyles('name')}
+                      />
+                      {validation.name.valid === true && (
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-green-500">
+                          <Check className="w-4.5 h-4.5" />
+                        </span>
+                      )}
+                      {validation.name.valid === false && (
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500">
+                          <AlertCircle className="w-4.5 h-4.5" />
+                        </span>
+                      )}
+                    </div>
+                    {validation.name.valid === false && (
+                      <p className="text-[10px] text-red-400 font-bold mt-1">{validation.name.msg}</p>
+                    )}
+                  </div>
 
-                {/* Casting Director Card */}
-                <button
-                  key="casting"
-                  type="button"
-                  onClick={() => {
-                    setRoleGroup('casting');
-                    setForm(prev => ({ ...prev, role: 'Casting Director' }));
-                  }}
-                  className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
-                    roleGroup === 'casting'
-                      ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
-                      : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
-                  }`}
-                >
-                  <ShieldAlert className="w-5 h-5 mb-1.5" />
-                  <span className="text-[11px] font-black uppercase tracking-wider">Recruiter</span>
-                </button>
+                  {/* Email Address */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">{t('lbl_email')}</label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                        <Mail className="w-4 h-4" />
+                      </span>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={e => handleEmailChange(e.target.value)}
+                        placeholder={t('placeholder_email')}
+                        className={getInputStyles('email')}
+                      />
+                      {validation.email.valid === true && (
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-green-500">
+                          <Check className="w-4.5 h-4.5" />
+                        </span>
+                      )}
+                      {validation.email.valid === false && (
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500">
+                          <AlertCircle className="w-4.5 h-4.5" />
+                        </span>
+                      )}
+                    </div>
+                    {validation.email.valid === false && (
+                      <p className="text-[10px] text-red-400 font-bold mt-1">{validation.email.msg}</p>
+                    )}
+                  </div>
+                </div>
+              )}
 
-                {/* Fan Card */}
-                <button
-                  key="fan"
-                  type="button"
-                  onClick={() => {
-                    setRoleGroup('fan');
-                    setForm(prev => ({ ...prev, role: 'Fan' }));
-                  }}
-                  className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
-                    roleGroup === 'fan'
-                      ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
-                      : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
-                  }`}
-                >
-                  <Heart className="w-5 h-5 mb-1.5" />
-                  <span className="text-[11px] font-black uppercase tracking-wider">Fan</span>
-                </button>
+              {/* STEP 2: Password and credentials */}
+              {step === 2 && (
+                <div className="space-y-4">
+                  {/* Password */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">{t('lbl_password')}</label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                        <Lock className="w-4 h-4" />
+                      </span>
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={form.password}
+                        onChange={e => handlePasswordChange(e.target.value)}
+                        placeholder={t('placeholder_password')}
+                        className={getInputStyles('password')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-white"
+                      >
+                        {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                      </button>
+                    </div>
+
+                    {/* Password Strength Meter */}
+                    {form.password && (
+                      <div className="mt-2.5 space-y-2 bg-[#111] p-3 rounded-xl border border-white/5">
+                        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                          <span>Password Strength:</span>
+                          <span className={
+                            passwordStrength.strength === 'Strong' ? 'text-green-400' :
+                            passwordStrength.strength === 'Medium' ? 'text-yellow-400' : 'text-red-400'
+                          }>
+                            {passwordStrength.strength}
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div className={`h-full transition-all duration-300 ${
+                            passwordStrength.strength === 'Strong' ? 'w-full bg-green-500' :
+                            passwordStrength.strength === 'Medium' ? 'w-2/3 bg-yellow-500' : 'w-1/3 bg-red-500'
+                          }`} />
+                        </div>
+                        
+                        {/* Dynamic Rule Indicators */}
+                        <div className="grid grid-cols-2 gap-1.5 pt-1">
+                          {[
+                            { key: 'length', label: 'Min 8 characters' },
+                            { key: 'uppercase', label: 'One uppercase letter' },
+                            { key: 'number', label: 'One number' },
+                            { key: 'special', label: 'One special char' }
+                          ].map((rule) => {
+                            const met = passwordStrength.rules[rule.key];
+                            return (
+                              <div key={rule.key} className="flex items-center gap-1.5 text-[9px] font-bold text-gray-500">
+                                <Check className={`w-3.5 h-3.5 shrink-0 ${met ? 'text-green-500' : 'opacity-25'}`} />
+                                <span className={met ? 'text-gray-300' : ''}>{rule.label}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {validation.password.valid === false && (
+                      <p className="text-[10px] text-red-400 font-bold mt-1">{validation.password.msg}</p>
+                    )}
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">{t('lbl_confirm_password')}</label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                        <Lock className="w-4 h-4" />
+                      </span>
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={form.confirmPassword}
+                        onChange={e => handleConfirmPasswordChange(e.target.value)}
+                        placeholder={t('placeholder_confirm_password')}
+                        className={getInputStyles('confirmPassword')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-white"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                      </button>
+                    </div>
+                    {validation.confirmPassword.valid === false && (
+                      <p className="text-[10px] text-red-400 font-bold mt-1">{validation.confirmPassword.msg}</p>
+                    )}
+                  </div>
+
+                  {/* Cloudflare Turnstile Challenge */}
+                  <div 
+                    className="cf-turnstile my-4 flex justify-center" 
+                    data-sitekey="1x00000000000000000000AA"
+                    data-theme="dark"
+                    data-callback="onTurnstileSuccess"
+                  />
+                </div>
+              )}
+
+              {/* STEP 3: Roles and gender selection */}
+              {step === 3 && (
+                <div className="space-y-4">
+                  {/* Gender Selection */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2">{t('lbl_gender')}</label>
+                    <div className="flex gap-2">
+                      {['Male', 'Female', 'Other'].map(g => (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => setForm(prev => ({ ...prev, gender: g }))}
+                          className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                            form.gender === g
+                              ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
+                              : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
+                          }`}
+                        >
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Outer Role Selector: "I am a..." */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-3">{t('lbl_role')}</label>
+                    
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {/* Talent Card */}
+                      <button
+                        key="talent"
+                        type="button"
+                        onClick={() => {
+                          setRoleGroup('talent');
+                          setForm(prev => ({ ...prev, role: 'Actor' })); 
+                        }}
+                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
+                          roleGroup === 'talent'
+                            ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
+                            : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
+                        }`}
+                      >
+                        <UserCheck className="w-5 h-5 mb-1.5" />
+                        <span className="text-[11px] font-black uppercase tracking-wider">{t('lbl_talent')}</span>
+                      </button>
+
+                      {/* Casting Director Card */}
+                      <button
+                        key="casting"
+                        type="button"
+                        onClick={() => {
+                          setRoleGroup('casting');
+                          setForm(prev => ({ ...prev, role: 'Casting Director' }));
+                        }}
+                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
+                          roleGroup === 'casting'
+                            ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
+                            : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
+                        }`}
+                      >
+                        <ShieldAlert className="w-5 h-5 mb-1.5" />
+                        <span className="text-[11px] font-black uppercase tracking-wider">{t('lbl_recruiter')}</span>
+                      </button>
+
+                      {/* Fan Card */}
+                      <button
+                        key="fan"
+                        type="button"
+                        onClick={() => {
+                          setRoleGroup('fan');
+                          setForm(prev => ({ ...prev, role: 'Fan' }));
+                        }}
+                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
+                          roleGroup === 'fan'
+                            ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
+                            : 'bg-[#111] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
+                        }`}
+                      >
+                        <Heart className="w-5 h-5 mb-1.5" />
+                        <span className="text-[11px] font-black uppercase tracking-wider">{t('lbl_fan')}</span>
+                      </button>
+                    </div>
+
+                    {/* Sub-Selection for Talent */}
+                    <AnimatePresence>
+                      {roleGroup === 'talent' && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden mt-3"
+                        >
+                          <div className="bg-[#111] border border-white/5 p-3 rounded-2xl space-y-2">
+                            <p className="text-[9px] uppercase tracking-wider text-gray-500 font-bold">Select professional category:</p>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {['Actor', 'Model', 'Dancer', 'Director'].map(sub => (
+                                <button
+                                  key={sub}
+                                  type="button"
+                                  onClick={() => setForm(prev => ({ ...prev, role: sub }))}
+                                  className={`py-2 px-3 rounded-lg text-xs font-bold text-center border transition-all ${
+                                    form.role === sub
+                                      ? 'bg-white text-black border-white'
+                                      : 'bg-[#1a1a1a] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
+                                  }`}
+                                >
+                                  {sub}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Terms and Conditions Checkbox */}
+                  <div className="flex items-start gap-2.5 py-1.5">
+                    <input
+                      id="terms-checkbox"
+                      type="checkbox"
+                      checked={agreeToTerms}
+                      onChange={e => setAgreeToTerms(e.target.checked)}
+                      className="w-4 h-4 rounded border-white/10 bg-[#1a1a1a] text-[#00BFFF] focus:ring-[#00BFFF] mt-0.5 cursor-pointer shrink-0"
+                    />
+                    <label htmlFor="terms-checkbox" className="text-xs text-gray-500 leading-normal select-none cursor-pointer">
+                      {t('lbl_agree_terms')}
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Step Navigation Buttons */}
+              <div className="flex gap-3 pt-4">
+                {step > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setStep(step - 1)}
+                    className="flex-1 bg-white/5 border border-white/5 hover:bg-white/10 text-white font-black py-3 rounded-xl text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
+                  >
+                    {t('step_prev')}
+                  </button>
+                )}
+                
+                {step < 3 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (validateStep(step)) {
+                        setStep(step + 1);
+                      }
+                    }}
+                    className="flex-1 bg-gradient-to-r from-[#00bfff] to-[#0080ff] text-black font-black py-3 rounded-xl text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
+                  >
+                    {t('step_next')}
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isLoading || !agreeToTerms}
+                    className="flex-1 bg-gradient-to-r from-[#00bfff] to-[#0080ff] hover:opacity-95 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg shadow-[#00bfff]/10 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin mx-auto" /> : t('lbl_create_account')}
+                  </button>
+                )}
               </div>
 
-              {/* Sub-Selection for Talent */}
-              <AnimatePresence>
-                {roleGroup === 'talent' && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden mt-3"
-                  >
-                    <div className="bg-[#111] border border-white/5 p-3 rounded-2xl space-y-2">
-                      <p className="text-[9px] uppercase tracking-wider text-gray-500 font-bold">Select professional category:</p>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {['Actor', 'Model', 'Dancer', 'Director'].map(sub => (
-                          <button
-                            key={sub}
-                            type="button"
-                            onClick={() => setForm(prev => ({ ...prev, role: sub }))}
-                            className={`py-2 px-3 rounded-lg text-xs font-bold text-center border transition-all ${
-                              form.role === sub
-                                ? 'bg-white text-black border-white'
-                                : 'bg-[#1a1a1a] border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
-                            }`}
-                          >
-                            {sub}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            </form>
+
+            {/* Divider */}
+            <div className="relative flex items-center gap-3 py-2">
+              <div className="flex-1 h-px bg-white/5" />
+              <span className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">{t('lbl_or_continue_with', 'or continue with')}</span>
+              <div className="flex-1 h-px bg-white/5" />
             </div>
 
-            {/* Terms and Conditions Checkbox */}
-            <div className="flex items-start gap-2.5 py-1.5">
-              <input
-                id="terms-checkbox"
-                type="checkbox"
-                checked={agreeToTerms}
-                onChange={e => setAgreeToTerms(e.target.checked)}
-                className="w-4 h-4 rounded border-white/10 bg-[#1a1a1a] text-[#00BFFF] focus:ring-[#00BFFF] mt-0.5 cursor-pointer shrink-0"
-              />
-              <label htmlFor="terms-checkbox" className="text-xs text-gray-500 leading-normal select-none cursor-pointer">
-                I agree to the <span className="text-gray-400 hover:text-white cursor-pointer underline underline-offset-2">Terms of Service</span> and <span className="text-gray-400 hover:text-white cursor-pointer underline underline-offset-2">Privacy Policy</span>
-              </label>
-            </div>
-
-            {/* Create Account Button */}
+            {/* Google signup button */}
             <button
-              type="submit"
-              disabled={isLoading || !agreeToTerms}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#00bfff] to-[#0080ff] hover:opacity-95 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg shadow-[#00bfff]/10 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-black font-extrabold py-3 rounded-xl text-sm transition-all disabled:opacity-50"
             >
-              {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : 'Create Account'}
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 488 512" fill="currentColor">
+                <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" />
+              </svg>
+              {t('lbl_signup_google', 'Sign up with Google')}
             </button>
 
-          </form>
+            {/* Bottom redirection */}
+            <p className="text-center text-gray-500 text-sm pt-4">
+              {t('lbl_already_have_account', 'Already have an account?')}{' '}
+              <button 
+                onClick={() => onNavigate('signin')} 
+                className="text-[#00BFFF] hover:underline underline-offset-4 font-bold"
+              >
+                {t('lbl_signin', 'Sign in')}
+              </button>
+            </p>
 
-          {/* Divider */}
-          <div className="relative flex items-center gap-3 py-2">
-            <div className="flex-1 h-px bg-white/5" />
-            <span className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">or continue with</span>
-            <div className="flex-1 h-px bg-white/5" />
           </div>
-
-          {/* Google signup button */}
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-black font-extrabold py-3 rounded-xl text-sm transition-all disabled:opacity-50"
-          >
-            <svg className="w-4 h-4 shrink-0" viewBox="0 0 488 512" fill="currentColor">
-              <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" />
-            </svg>
-            Sign up with Google
-          </button>
-
-          {/* Bottom redirection */}
-          <p className="text-center text-gray-500 text-sm pt-4">
-            Already have an account?{' '}
-            <button 
-              onClick={() => onNavigate('signin')} 
-              className="text-[#00BFFF] hover:underline underline-offset-4 font-bold"
-            >
-              Sign in
-            </button>
-          </p>
-
         </div>
       </div>
     </div>
-  </div>
   );
 }
