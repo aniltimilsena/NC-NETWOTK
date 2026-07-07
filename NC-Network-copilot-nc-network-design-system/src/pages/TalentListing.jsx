@@ -254,7 +254,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-32 md:pb-20 relative font-sans">
       <SEO 
-        title="Browse Professional Talent | NC Network" 
+        title="Browse Professional Talent | NepalCasts" 
         description="Premium directory of cinema professionals in Nepal." 
       />
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
@@ -263,8 +263,8 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         {viewMode === 'categories' && (
           <div className="animate-fade-in space-y-10 text-left">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">Browse by Category</h1>
-              <p className="text-sm text-gray-500 mt-1 font-medium">Find talent by profession</p>
+              <h1 className="text-4xl sm:text-5xl font-serif italic font-medium text-white tracking-tight leading-none mb-1.5">Browse by Category</h1>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[1.5px]">Discover Nepal's finest cinema professionals</p>
             </div>
 
             {loading ? (

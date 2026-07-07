@@ -724,7 +724,7 @@ export default function Home({ onNavigate, user }) {
                   Ready to Get Discovered?
                 </h2>
                 <p className="text-nc-secondary text-sm sm:text-lg max-w-xl mx-auto px-2 leading-relaxed">
-                  Join 25,000+ talents on NC Network. Create your profile and start getting noticed by top productions today.
+                  Join 25,000+ talents on NepalCasts. Create your profile and start getting noticed by top productions today.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-2">
                   <Button size="lg" className="w-full sm:w-auto" onClick={() => onNavigate('profile-create')}>Create Your Profile</Button>

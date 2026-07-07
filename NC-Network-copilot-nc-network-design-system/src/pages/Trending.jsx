@@ -208,7 +208,7 @@ export default function Trending({ onNavigate }) {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-32 md:pb-20 relative font-sans">
       <SEO 
-        title="Trending Cinema Talent | NC Network" 
+        title="Trending Cinema Talent | NepalCasts" 
         description="Check out who's trending now on Nepal's premier casting and cinema professional network." 
       />
 

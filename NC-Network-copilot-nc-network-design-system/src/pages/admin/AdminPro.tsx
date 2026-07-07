@@ -36,7 +36,7 @@ export default function AdminPro() {
   
   const [selectedSub, setSelectedSub] = useState<AdminSubscriber | null>(null);
 
-  const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+  const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "users"), (snap) => {

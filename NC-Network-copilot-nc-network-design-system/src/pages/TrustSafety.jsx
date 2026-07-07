@@ -4,8 +4,8 @@ export default function TrustSafety() {
   return (
     <div className="min-h-screen bg-nc-dark pt-2 pb-24">
       <SEO 
-        title="Trust & Safety | Scam Prevention on NC Network" 
-        description="Learn how NC Network protects actors from scams. Read our E-E-A-T verified trust and safety guidelines, how we verify casting directors, and tips for safe auditions."
+        title="Trust & Safety | Scam Prevention on NepalCasts" 
+        description="Learn how NepalCasts protects actors from scams. Read our E-E-A-T verified trust and safety guidelines, how we verify casting directors, and tips for safe auditions."
       />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 space-y-4">
@@ -27,7 +27,7 @@ export default function TrustSafety() {
               <div>
                 <h2 className="text-2xl font-bold text-white mb-2">Our Casting Director Verification Protocol</h2>
                 <p className="text-nc-muted leading-relaxed">
-                  To establish high Experience, Expertise, Authoritativeness, and Trustworthiness (E-E-A-T), NC Network employs a rigorous manual verification process before any production house is allowed to post a job.
+                  To establish high Experience, Expertise, Authoritativeness, and Trustworthiness (E-E-A-T), NepalCasts employs a rigorous manual verification process before any production house is allowed to post a job.
                 </p>
               </div>
             </div>
@@ -85,7 +85,7 @@ export default function TrustSafety() {
                   </svg>
                 </div>
                 <h3 className="font-bold text-white mb-2">Keep Comms On-Platform</h3>
-                <p className="text-nc-secondary text-sm">Use NC Network Messages. Scammers often try to move the conversation immediately to WhatsApp or Telegram to bypass our security filters.</p>
+                <p className="text-nc-secondary text-sm">Use NepalCasts Messages. Scammers often try to move the conversation immediately to WhatsApp or Telegram to bypass our security filters.</p>
               </div>
             </div>
           </section>

@@ -359,8 +359,8 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col md:flex-row relative overflow-hidden font-sans">
       <SEO 
-        title="Sign Up | NC Network" 
-        description="Join NC Network to create your portfolio, find cinema calls, or recruit Nepali talent." 
+        title="Sign Up | NepalCasts" 
+        description="Join NepalCasts to create your portfolio, find cinema calls, or recruit Nepali talent." 
         schema={undefined}
       />
 
@@ -403,7 +403,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
         </div>
         
         <div className="relative z-10 text-xs text-gray-600 text-left">
-          © 2026 NC Network. All rights reserved.
+          © 2026 NepalCasts. All rights reserved.
         </div>
       </div>
 
@@ -427,7 +427,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
 
           <div className="w-full space-y-6 text-left py-2">
             <div className="text-center w-full">
-              <h1 className="text-3xl font-black text-white tracking-tight text-center">{t('join_nc_network', 'Join NC Network')}</h1>
+              <h1 className="text-3xl font-black text-white tracking-tight text-center">{t('join_nc_network', 'Join NepalCasts')}</h1>
               <p className="text-sm text-gray-500 mt-1.5 font-medium text-center">{t('create_profile_desc', 'Create your talent profile today')}</p>
             </div>
 

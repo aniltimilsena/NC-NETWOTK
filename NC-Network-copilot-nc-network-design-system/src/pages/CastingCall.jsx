@@ -206,7 +206,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col md:flex-row relative font-sans">
       <SEO 
-        title="Casting Calls & Auditions | NC Network" 
+        title="Casting Calls & Auditions | NepalCasts" 
         description="Find Nepali movie casting calls, short films, models, and dancers auditions." 
       />
       
@@ -223,7 +223,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
         </div>
         
         <div className="hidden md:block text-[10px] uppercase tracking-widest text-gray-600 font-bold">
-          © 2026 NC Network. All rights reserved.
+          © 2026 NepalCasts. All rights reserved.
         </div>
       </aside>
 

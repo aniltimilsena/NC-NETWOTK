@@ -38,7 +38,7 @@ export default function AdminContent() {
   const [filterType, setFilterType] = useState<'All' | 'Pending' | 'Verified' | 'Featured'>('All');
   const [selectedProfile, setSelectedProfile] = useState<TalentProfile | null>(null);
 
-  const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+  const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
 
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,

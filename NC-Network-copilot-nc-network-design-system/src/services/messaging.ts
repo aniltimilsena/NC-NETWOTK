@@ -14,6 +14,7 @@ import {
   deleteDoc,
   serverTimestamp,
   arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import apiClient from "../api/client";
 import { COLLECTIONS } from "../constants/collections";
@@ -489,6 +490,27 @@ export const blockUser = async (uid: string, targetId: string) => {
     }
   }
 };
+
+export const unblockUser = async (uid: string, targetId: string) => {
+  try {
+    await apiClient.post(`/users/unblock`, { targetId });
+    return { success: true, error: null };
+  } catch (error: unknown) {
+    console.warn("Backend unblockUser failed, attempting client-side fallback:", error);
+    try {
+      await updateDoc(doc(db, COLLECTIONS.USERS, uid), {
+        blockedUsers: arrayRemove(targetId),
+        updatedAt: serverTimestamp()
+      });
+      return { success: true, error: null };
+    } catch (fallbackError: any) {
+      console.error("UnblockUser fallback failed:", fallbackError);
+      const message = error instanceof Error ? error.message : "Failed to unblock user";
+      return { success: false, error: fallbackError.message || message };
+    }
+  }
+};
+
 
 export const createConversation = async (
   participants: string[],

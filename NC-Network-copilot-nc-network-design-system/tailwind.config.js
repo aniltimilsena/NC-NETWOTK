@@ -29,6 +29,7 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Outfit', 'sans-serif'],
+        serif: ['"Playfair Display"', 'Georgia', 'serif'],
       },
       backdropBlur: {
         xs: '2px',

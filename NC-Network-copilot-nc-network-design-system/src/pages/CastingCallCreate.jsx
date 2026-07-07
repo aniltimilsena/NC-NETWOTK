@@ -584,7 +584,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
               <div className="bg-[#1a1a1a] p-4 rounded-2xl border border-white/5 flex gap-3 items-start">
                 <Info className="w-4 h-4 text-[#00BFFF] shrink-0 mt-0.5" />
                 <p className="text-xs text-gray-500 leading-relaxed font-medium">
-                  Please review the details above. Once published, your casting call will be live on the NC Network casting board.
+                  Please review the details above. Once published, your casting call will be live on the NepalCasts casting board.
                 </p>
               </div>
             </div>

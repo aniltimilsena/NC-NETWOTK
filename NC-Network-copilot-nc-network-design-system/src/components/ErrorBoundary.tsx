@@ -45,7 +45,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
     
     if (import.meta.env.DEV) {
-      console.error("NC Network ErrorBoundary caught an uncaught error:", {
+      console.error("NepalCasts ErrorBoundary caught an uncaught error:", {
         message: errorMsg,
         chunkUrl,
         route: window.location.pathname,
@@ -158,7 +158,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 <div className="space-y-2">
                   <h2 className="text-2xl font-black text-white tracking-tight">Update Required</h2>
                   <p className="text-nc-secondary text-sm leading-relaxed">
-                    A new version of NC Network has been deployed. A reload is required to fetch the latest application components and settings.
+                    A new version of NepalCasts has been deployed. A reload is required to fetch the latest application components and settings.
                   </p>
                 </div>
               </>
@@ -173,7 +173,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 <div className="space-y-2">
                   <h2 className="text-2xl font-black text-white tracking-tight">Application Error</h2>
                   <p className="text-nc-secondary text-sm leading-relaxed">
-                    NC Network experienced an unexpected runtime crash. Try reloading the page or returning to the previous screen.
+                    NepalCasts experienced an unexpected runtime crash. Try reloading the page or returning to the previous screen.
                   </p>
                 </div>
               </>

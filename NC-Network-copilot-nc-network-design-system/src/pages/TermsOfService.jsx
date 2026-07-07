@@ -7,7 +7,7 @@ export default function TermsOfService() {
         <div className="bg-nc-surface border border-nc-border rounded-2xl p-6 sm:p-10 space-y-8 text-nc-secondary leading-relaxed">
           <section>
             <h2 className="text-xl font-bold text-white mb-4">1. Acceptance of Terms</h2>
-            <p>By accessing and using NC Network, you accept and agree to be bound by the terms and provision of this agreement. Any participation in this platform will constitute acceptance of this agreement.</p>
+            <p>By accessing and using NepalCasts, you accept and agree to be bound by the terms and provision of this agreement. Any participation in this platform will constitute acceptance of this agreement.</p>
           </section>
 
           <section>
@@ -17,7 +17,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-bold text-white mb-4">3. User Content</h2>
-            <p>Users are responsible for the content they post (including portfolios, videos, and profile information). You grant NC Network a license to display this content on the platform to fulfill our matching and casting services.</p>
+            <p>Users are responsible for the content they post (including portfolios, videos, and profile information). You grant NepalCasts a license to display this content on the platform to fulfill our matching and casting services.</p>
           </section>
 
           <section>
@@ -27,7 +27,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-bold text-white mb-4">5. Modifications to Service</h2>
-            <p>NC Network reserves the right to modify or discontinue, temporarily or permanently, the service (or any part thereof) with or without notice at any time.</p>
+            <p>NepalCasts reserves the right to modify or discontinue, temporarily or permanently, the service (or any part thereof) with or without notice at any time.</p>
           </section>
         </div>
       </div>

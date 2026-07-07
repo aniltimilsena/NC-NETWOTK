@@ -7,7 +7,7 @@ export default function PrivacyPolicy() {
         <div className="bg-nc-surface border border-nc-border rounded-2xl p-6 sm:p-10 space-y-8 text-nc-secondary leading-relaxed">
           <section>
             <h2 className="text-xl font-bold text-white mb-4">1. Information We Collect</h2>
-            <p>At NC Network, we collect primary data explicitly provided by our talent including email addresses, phone numbers, location data, roles, skills, and portfolio media. We also collect usage data (IP addresses, browser types) automatically to improve the platform experience.</p>
+            <p>At NepalCasts, we collect primary data explicitly provided by our talent including email addresses, phone numbers, location data, roles, skills, and portfolio media. We also collect usage data (IP addresses, browser types) automatically to improve the platform experience.</p>
           </section>
 
           <section>
@@ -27,7 +27,7 @@ export default function PrivacyPolicy() {
 
           <section>
             <h2 className="text-xl font-bold text-white mb-4">5. Contact Us</h2>
-            <p>If you have any questions regarding this privacy policy, you may contact us using the information on our main contact page or email us at privacy@ncnetwork.com.</p>
+            <p>If you have any questions regarding this privacy policy, you may contact us using the information on our main contact page or email us at privacy@nepalcasts.com.</p>
           </section>
         </div>
       </div>

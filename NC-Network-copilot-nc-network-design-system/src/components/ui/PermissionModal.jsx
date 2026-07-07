@@ -5,7 +5,7 @@ export default function PermissionModal({ isOpen, onClose, onGrant, type = 'medi
   const configs = {
     media: {
       title: 'Enable Experience',
-      description: 'NC Network needs access to your camera and microphone for professional video calls and voice messaging.',
+      description: 'NepalCasts needs access to your camera and microphone for professional video calls and voice messaging.',
       icon: (
         <div className="flex gap-2.5">
           <div className="w-10 h-10 rounded-xl bg-nc-accent/10 flex items-center justify-center text-nc-accent">

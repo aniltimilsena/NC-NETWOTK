@@ -12,7 +12,7 @@ export default function CuratorSidebar({ onNavigate, currentPage }: { onNavigate
   return (
     <aside className="h-screen w-64 fixed left-0 top-0 bg-oc-surface-low shadow-[40px_0_60px_-15px_rgba(0,0,0,0.3)] bg-black/60 backdrop-blur-xl flex flex-col py-8 px-4 z-[60]">
       <div className="mb-10 px-2">
-        <h1 className="text-xl font-black tracking-tighter text-oc-primary">NC Network</h1>
+        <h1 className="text-xl font-black tracking-tighter text-oc-primary">NepalCasts</h1>
         <p className="font-headline uppercase tracking-widest text-[0.6875rem] font-bold text-oc-border mt-1">Obsidian Curator</p>
       </div>
       

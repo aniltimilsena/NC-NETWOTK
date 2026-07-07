@@ -173,7 +173,7 @@ const HomeRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Home | NC Network</title>
+        <title>Home | NepalCasts</title>
         <meta name="description" content="Nepal's premier casting and professional talent network." />
       </Helmet>
       <Home onNavigate={handleLegacyNavigate} user={user} />
@@ -188,7 +188,7 @@ const TalentListingRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Browse Talents | NC Network</title>
+        <title>Browse Talents | NepalCasts</title>
         <meta name="description" content="Discover Nepal's top cinema talents, actors, directors, and models." />
       </Helmet>
       <TalentListing onNavigate={handleLegacyNavigate} initialCategory={category} />
@@ -201,7 +201,7 @@ const TrendingRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Trending Now | NC Network</title>
+        <title>Trending Now | NepalCasts</title>
         <meta name="description" content="Check out Nepal's trending professional talent, actors, directors, and models." />
       </Helmet>
       <Trending onNavigate={handleLegacyNavigate} />
@@ -216,7 +216,7 @@ const ProfileRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Talent Profile | NC Network</title>
+        <title>Talent Profile | NepalCasts</title>
       </Helmet>
       <ErrorBoundary fallback={<div className="p-12 text-center text-red-500 font-bold border border-red-500/20 bg-red-500/5 rounded-3xl max-w-md mx-auto mt-12">Profile failed to load</div>}>
         <Profile onNavigate={handleLegacyNavigate} user={user} profileId={id || null} isAdmin={isAdmin} showAlert={showAlert} />
@@ -233,7 +233,7 @@ const SettingsRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Settings | NC Network</title>
+        <title>Settings | NepalCasts</title>
       </Helmet>
       <Settings onNavigate={handleLegacyNavigate} user={user} initialTab={tab} showToast={showToast} isAdmin={isAdmin} />
     </PageTransition>
@@ -246,7 +246,7 @@ const SavedCastingCallsRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Saved Casting Calls | NC Network</title>
+        <title>Saved Casting Calls | NepalCasts</title>
       </Helmet>
       <SavedCastingCalls onNavigate={handleLegacyNavigate} user={user} showToast={showToast} />
     </PageTransition>
@@ -259,7 +259,7 @@ const CastingCallRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Casting Calls & Auditions | NC Network</title>
+        <title>Casting Calls & Auditions | NepalCasts</title>
         <meta name="description" content="Find the latest auditions and casting calls in Nepal." />
       </Helmet>
       <CastingCall onNavigate={handleLegacyNavigate} user={user} isAdmin={isAdmin} />
@@ -274,7 +274,7 @@ const CastingDetailRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Audition Details | NC Network</title>
+        <title>Audition Details | NepalCasts</title>
       </Helmet>
       <CastingCallDetail
         onNavigate={handleLegacyNavigate}
@@ -292,7 +292,7 @@ const SignInRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Sign In | NC Network</title>
+        <title>Sign In | NepalCasts</title>
       </Helmet>
       <SignIn onNavigate={handleLegacyNavigate} showAlert={showAlert} />
     </PageTransition>
@@ -305,7 +305,7 @@ const SignUpRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Sign Up | NC Network</title>
+        <title>Sign Up | NepalCasts</title>
       </Helmet>
       <SignUp onNavigate={handleLegacyNavigate} showAlert={showAlert} />
     </PageTransition>
@@ -318,7 +318,7 @@ const ProfileCreateRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Create Profile | NC Network</title>
+        <title>Create Profile | NepalCasts</title>
       </Helmet>
       <ProfileCreate onNavigate={handleLegacyNavigate} user={user} showAlert={showAlert} />
     </PageTransition>
@@ -331,7 +331,7 @@ const CastingCreateRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Post a Casting Call | NC Network</title>
+        <title>Post a Casting Call | NepalCasts</title>
       </Helmet>
       <CastingCallCreate onNavigate={handleLegacyNavigate} user={user} showAlert={showAlert} />
     </PageTransition>
@@ -343,8 +343,8 @@ const PremiumRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Premium Membership | NC Network</title>
-        <meta name="description" content="Upgrade to NC Network PRO to access exclusive casting calls and talent matching." />
+        <title>Premium Membership | NepalCasts</title>
+        <meta name="description" content="Upgrade to NepalCasts PRO to access exclusive casting calls and talent matching." />
       </Helmet>
       <Premium onNavigate={handleLegacyNavigate} />
     </PageTransition>
@@ -361,7 +361,7 @@ const MessagesRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Inbox & Messages | NC Network</title>
+        <title>Inbox & Messages | NepalCasts</title>
       </Helmet>
       <ErrorBoundary fallback={<div className="p-12 text-center text-red-500 font-bold border border-red-500/20 bg-red-500/5 rounded-3xl max-w-md mx-auto mt-12">Messages failed to load</div>}>
         <Messages onNavigate={handleLegacyNavigate} user={user} initialUserId={activeUserId} showAlert={showAlert} />
@@ -376,7 +376,7 @@ const NotificationsRoute = () => {
   return (
     <PageTransition>
       <Helmet>
-        <title>Notifications | NC Network</title>
+        <title>Notifications | NepalCasts</title>
       </Helmet>
       <Notifications onNavigate={handleLegacyNavigate} user={user} />
     </PageTransition>
@@ -388,7 +388,7 @@ const NotificationsRoute = () => {
 const PrivacyRoute = () => (
   <PageTransition>
     <Helmet>
-      <title>Privacy Policy | NC Network</title>
+      <title>Privacy Policy | NepalCasts</title>
     </Helmet>
     <PrivacyPolicy />
   </PageTransition>
@@ -397,7 +397,7 @@ const PrivacyRoute = () => (
 const TermsRoute = () => (
   <PageTransition>
     <Helmet>
-      <title>Terms of Service | NC Network</title>
+      <title>Terms of Service | NepalCasts</title>
     </Helmet>
     <TermsOfService />
   </PageTransition>
@@ -406,7 +406,7 @@ const TermsRoute = () => (
 const TrustRoute = () => (
   <PageTransition>
     <Helmet>
-      <title>Trust & Safety | NC Network</title>
+      <title>Trust & Safety | NepalCasts</title>
     </Helmet>
     <TrustSafety />
   </PageTransition>
@@ -480,6 +480,14 @@ export default function App() {
   const [userProfile, setUserProfile] = useState<Record<string, any> | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(false);
+  const [minSplashTimeElapsed, setMinSplashTimeElapsed] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinSplashTimeElapsed(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
 
   
@@ -549,7 +557,7 @@ export default function App() {
             showAlert(
               "System Update Available",
               "info",
-              "A new version of NC Network is available. Click here to reload and fetch the latest features.",
+              "A new version of NepalCasts is available. Click here to reload and fetch the latest features.",
               () => {
                 const url = new URL(window.location.href);
                 url.searchParams.set('reload', Date.now().toString());
@@ -595,7 +603,7 @@ export default function App() {
             showAlert(
               "System Update Available",
               "info",
-              "A new version of NC Network is available. Click here to reload and fetch the latest features.",
+              "A new version of NepalCasts is available. Click here to reload and fetch the latest features.",
               () => {
                 const url = new URL(window.location.href);
                 url.searchParams.set('reload', Date.now().toString());
@@ -780,15 +788,25 @@ export default function App() {
       if (currentUser) {
         try {
           await getIdTokenResult(currentUser, true);
-        } catch {
-          showAlert(
-            "Session Expired",
-            "logout",
-            "Your session is no longer valid."
-          );
-          localStorage.clear();
-          await auth.signOut();
-          navigate('/signin');
+        } catch (error: any) {
+          if (
+            error && (
+              error.code === 'auth/user-token-expired' ||
+              error.code === 'auth/user-not-found' ||
+              error.code === 'auth/user-disabled'
+            )
+          ) {
+            showAlert(
+              "Session Expired",
+              "logout",
+              "Your session is no longer valid."
+            );
+            localStorage.clear();
+            await auth.signOut();
+            navigate('/signin');
+          } else {
+            console.debug("Transient error during token check, keeping session active:", error);
+          }
         }
       }
     }, 60000);
@@ -938,7 +956,7 @@ export default function App() {
       showAlert(
         `Welcome back, ${user.displayName || user.email}`,
         'success',
-        'You are signed in to NC Network',
+        'You are signed in to NepalCasts',
       );
       if (localStorage.getItem('nc_suspicious_login') === 'true') {
         showAlert(
@@ -1029,7 +1047,7 @@ export default function App() {
             </div>
           )}
           <AnimatePresence>
-            {!authReady && <SplashScreen />}
+            {!(authReady && minSplashTimeElapsed) && <SplashScreen />}
             {showOnboarding && (
               <Onboarding 
                 user={enrichedUser} 

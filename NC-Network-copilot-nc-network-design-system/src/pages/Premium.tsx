@@ -44,7 +44,7 @@ export default function Premium() {
     <div className="bg-zinc-950 min-h-screen">
       <Pricing2 
         heading="Elevate Your Career"
-        description="Join thousands of professionals on NC Network and unlock exclusive opportunities."
+        description="Join thousands of professionals on NepalCasts and unlock exclusive opportunities."
         plans={ncPlans}
       />
       

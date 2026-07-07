@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.adminRejectDataRequest = exports.adminApproveDataRequest = exports.adminUpdateUserRole = exports.adminUnbanUser = exports.adminBanUser = exports.adminDeleteUser = exports.checkExpiredBans = exports.onMessageCreated = exports.adminSetCastingPriority = exports.adminDeleteCastingCall = exports.adminUpdateCastingCall = exports.adminCreateCastingCall = exports.registerNotificationToken = exports.blockUser = exports.pinMessage = exports.reactToMessage = exports.deleteMessage = exports.updateMessage = exports.sendMessage = exports.deleteConversation = exports.createOrGetConversation = exports.upsertProfile = exports.bootstrapUserProfile = void 0;
+exports.adminRejectDataRequest = exports.adminApproveDataRequest = exports.adminUpdateUserRole = exports.adminUnbanUser = exports.adminBanUser = exports.adminDeleteUser = exports.checkExpiredBans = exports.onMessageCreated = exports.adminSetCastingPriority = exports.adminDeleteCastingCall = exports.adminUpdateCastingCall = exports.adminCreateCastingCall = exports.registerNotificationToken = exports.unblockUser = exports.blockUser = exports.pinMessage = exports.reactToMessage = exports.deleteMessage = exports.updateMessage = exports.sendMessage = exports.deleteConversation = exports.createOrGetConversation = exports.upsertProfile = exports.bootstrapUserProfile = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const auth_1 = require("firebase-admin/auth");
@@ -517,6 +517,20 @@ exports.blockUser = (0, https_1.onCall)(callableOptions, async (request) => {
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     }, { merge: true });
     await logSecurityEvent("user.block", "warning", auth.uid, { targetId: parsed.data.targetId });
+    return { success: true };
+});
+exports.unblockUser = (0, https_1.onCall)(callableOptions, async (request) => {
+    const auth = assertAuth(request.auth);
+    const parsed = BlockUserSchema.safeParse(request.data);
+    if (!parsed.success) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid unblock user payload");
+    }
+    await enforceRateLimit(auth.uid, "unblockUser", 30, 60);
+    await db.collection("users").doc(auth.uid).set({
+        blockedUsers: firestore_1.FieldValue.arrayRemove(parsed.data.targetId),
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    await logSecurityEvent("user.unblock", "info", auth.uid, { targetId: parsed.data.targetId });
     return { success: true };
 });
 exports.registerNotificationToken = (0, https_1.onCall)(callableOptions, async (request) => {

@@ -110,7 +110,7 @@ export default function Footer({ user }) {
         {/* ── Bottom bar (shared) ─────────────────────────────── */}
         <div className="pt-8 border-t border-white/5 flex flex-row justify-between items-center gap-4 flex-wrap text-left">
           <p className="text-xs text-[#444] font-medium">
-            &copy; {new Date().getFullYear()} NC Network Entertainment. All rights reserved.
+            &copy; {new Date().getFullYear()} NepalCasts. All rights reserved.
           </p>
           <div className="flex items-center justify-center gap-6 sm:gap-8">
             <button className="text-[#1877F2] transition-all duration-300 transform hover:scale-110 hover:brightness-110" aria-label="Facebook">

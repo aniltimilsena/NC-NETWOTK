@@ -597,6 +597,25 @@ export const blockUser = onCall(callableOptions, async (request) => {
   return { success: true };
 });
 
+export const unblockUser = onCall(callableOptions, async (request) => {
+  const auth = assertAuth(request.auth);
+  const parsed = BlockUserSchema.safeParse(request.data);
+  if (!parsed.success) {
+    throw new HttpsError("invalid-argument", "Invalid unblock user payload");
+  }
+
+  await enforceRateLimit(auth.uid, "unblockUser", 30, 60);
+  await db.collection("users").doc(auth.uid).set(
+    {
+      blockedUsers: FieldValue.arrayRemove(parsed.data.targetId),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+  await logSecurityEvent("user.unblock", "info", auth.uid, { targetId: parsed.data.targetId });
+  return { success: true };
+});
+
 export const registerNotificationToken = onCall(callableOptions, async (request) => {
   const auth = assertAuth(request.auth);
   const parsed = NotificationTokenSchema.safeParse(request.data);

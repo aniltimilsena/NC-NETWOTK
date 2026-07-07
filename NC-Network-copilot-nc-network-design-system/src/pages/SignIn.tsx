@@ -590,8 +590,8 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col md:flex-row relative overflow-hidden font-sans">
       <SEO 
-        title="Sign In | NC Network" 
-        description="Access your NC Network account to explore Nepali cinema casting opportunities and talent." 
+        title="Sign In | NepalCasts" 
+        description="Access your NepalCasts account to explore Nepali cinema casting opportunities and talent." 
         schema={undefined}
       />
 
@@ -634,7 +634,7 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
         </div>
         
         <div className="relative z-10 text-xs text-gray-600 text-left">
-          © 2026 NC Network. All rights reserved.
+          © 2026 NepalCasts. All rights reserved.
         </div>
       </div>
 
@@ -670,7 +670,7 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
                 >
                   <div className="text-center w-full">
                     <h1 className="text-3xl font-black text-white tracking-tight text-center">Welcome Back</h1>
-                    <p className="text-sm text-gray-500 mt-1.5 font-medium text-center">Sign in to your NC Network account</p>
+                    <p className="text-sm text-gray-500 mt-1.5 font-medium text-center">Sign in to your NepalCasts account</p>
                   </div>
 
                 {/* Error Banner */}

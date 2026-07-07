@@ -54,7 +54,7 @@ export default function AdminSettings() {
     onConfirm: () => {},
   });
 
-  const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+  const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
 
   const handleSendAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +90,7 @@ export default function AdminSettings() {
           recipientId: uid,
           receiverId: uid,
           senderId: "system",
-          senderName: "NC Network Team",
+          senderName: "NepalCasts Team",
           senderAvatar: "",
           title: announcement.title.trim(),
           body: announcement.body.trim(),

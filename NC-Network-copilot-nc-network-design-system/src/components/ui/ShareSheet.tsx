@@ -39,7 +39,7 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
   };
 
   const handleWhatsAppShare = () => {
-    const text = `Check out ${profile.name}'s professional profile on NC Network:`;
+    const text = `Check out ${profile.name}'s professional profile on NepalCasts:`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + shareUrl)}`, '_blank');
   };
 

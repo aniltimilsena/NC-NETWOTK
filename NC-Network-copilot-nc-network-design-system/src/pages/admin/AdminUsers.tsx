@@ -52,7 +52,7 @@ export default function AdminUsers() {
 
   const pageSize = 10;
   const navigate = useNavigate();
-  const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+  const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
 
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,
@@ -81,7 +81,7 @@ export default function AdminUsers() {
           recipientId: userId,
           receiverId: userId,
           senderId: "system",
-          senderName: "NC Network Team",
+          senderName: "NepalCasts Team",
           senderAvatar: "",
           title: targetVerified ? "Profile Verification Approved" : "Profile Verification Revoked",
           body: targetVerified 
@@ -123,7 +123,7 @@ export default function AdminUsers() {
           recipientId: userId,
           receiverId: userId,
           senderId: "system",
-          senderName: "NC Network Team",
+          senderName: "NepalCasts Team",
           senderAvatar: "",
           title: `Account Status: ${nextStatus}`,
           body: `Your account status has been updated to ${nextStatus} by the moderation team.`,
@@ -184,7 +184,7 @@ export default function AdminUsers() {
           recipientId: userId,
           receiverId: userId,
           senderId: "system",
-          senderName: "NC Network Team",
+          senderName: "NepalCasts Team",
           senderAvatar: "",
           title: targetPremium ? "Premium Activated" : "Premium Subscription Ended",
           body: targetPremium 

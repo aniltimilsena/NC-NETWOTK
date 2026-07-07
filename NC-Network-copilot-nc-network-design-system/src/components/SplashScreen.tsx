@@ -6,60 +6,71 @@ export default function SplashScreen() {
     <motion.div
       className="fixed inset-0 bg-black z-[9999] flex flex-col items-center justify-center overflow-hidden"
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.6, ease: "easeInOut" } }}
+      exit={{ 
+        opacity: 0, 
+        transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] } 
+      }}
     >
-      {/* Background Subtle Radial Glow in Gold */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(242,178,42,0.06)_0%,transparent_60%)] pointer-events-none" />
+      {/* Background Subtle Radial Glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.06)_0%,transparent_75%)] pointer-events-none" />
 
       {/* Cinematic Logo Container */}
       <motion.div 
-        className="relative flex flex-col items-center w-full max-w-sm px-4"
-        initial={{ scale: 0.85, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.9, ease: [0.34, 1.56, 0.64, 1] }}
+        className="relative flex flex-col items-center justify-center w-full max-w-sm px-6"
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1.1, opacity: 1 }}
+        exit={{ 
+          scale: 1.0, 
+          opacity: 0, 
+          transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] } 
+        }}
+        transition={{ 
+          duration: 1.8, 
+          ease: [0.4, 0, 0.2, 1] 
+        }}
       >
-        {/* SVG Curved Logo Design */}
-        <svg viewBox="0 0 400 300" className="w-full h-auto drop-shadow-[0_0_35px_rgba(242,178,42,0.25)]">
-          <defs>
-            {/* Cinematic Metallic Gold Gradient */}
-            <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FFEAA5" />
-              <stop offset="35%" stopColor="#F2B22A" />
-              <stop offset="75%" stopColor="#D97706" />
-              <stop offset="100%" stopColor="#6E2C00" />
-            </linearGradient>
-          </defs>
+        {/* Glowing aura behind logo */}
+        <motion.div 
+          className="absolute -inset-6 bg-[#FACC15]/10 rounded-full blur-3xl pointer-events-none" 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: [0, 0.8, 0.4], scale: [0.8, 1.2, 1.0] }}
+          transition={{ duration: 2.2, ease: [0.4, 0, 0.2, 1] }}
+        />
 
-          {/* Giant Bold "NC" Text */}
-          <text 
-            x="200" 
-            y="145" 
-            textAnchor="middle" 
-            fontSize="140" 
-            fontWeight="900" 
-            fontFamily="'Inter', 'Impact', 'Arial Black', sans-serif" 
-            fill="url(#gold-gradient)" 
-            letterSpacing="-0.02em"
-          >
-            NC
-          </text>
+        <motion.img 
+          src="/logo.png" 
+          alt="NepalCasts Logo" 
+          className="relative max-h-56 w-auto object-contain drop-shadow-[0_0_35px_rgba(250,204,21,0.2)]"
+          initial={{ 
+            filter: "brightness(0.8) contrast(1.2) saturate(0.7)",
+          }}
+          animate={{ 
+            filter: [
+              "brightness(0.8) contrast(1.2) saturate(0.7)", 
+              "brightness(1.6) contrast(1.6) saturate(1.2)", 
+              "brightness(1) contrast(1) saturate(1)"
+            ]
+          }}
+          transition={{ 
+            duration: 2.5, 
+            times: [0, 0.6, 1],
+            ease: [0.4, 0, 0.2, 1]
+          }}
+        />
 
-          {/* Path for curved "NETWORK" text - arches upwards in the center */}
-          <path id="curve-path" d="M 60,215 Q 200,190 340,215" fill="transparent" />
-
-          {/* Curved "NETWORK" Text along path */}
-          <text 
-            fontSize="26" 
-            fontWeight="900" 
-            fontFamily="'Inter', 'Arial Black', sans-serif" 
-            letterSpacing="0.25em" 
-            fill="url(#gold-gradient)"
-          >
-            <textPath href="#curve-path" startOffset="50%" textAnchor="middle">
-              NETWORK
-            </textPath>
-          </text>
-        </svg>
+        {/* Golden sweep light sheen overlay */}
+        <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none mix-blend-color-dodge">
+          <motion.div 
+            className="w-[150%] h-[300%] bg-gradient-to-r from-transparent via-[#FACC15]/30 to-transparent -top-full -left-full rotate-[35deg]"
+            initial={{ x: "-100%", y: "-100%" }}
+            animate={{ x: "100%", y: "100%" }}
+            transition={{ 
+              delay: 0.2, 
+              duration: 1.6, 
+              ease: [0.4, 0, 0.2, 1] 
+            }}
+          />
+        </div>
       </motion.div>
     </motion.div>
   );

@@ -6,7 +6,7 @@ export default function NotFound() {
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-white flex flex-col items-center justify-center px-4 relative overflow-hidden select-none">
       <Helmet>
-        <title>404 — Screen Not Found | NC Network</title>
+        <title>404 — Screen Not Found | NepalCasts</title>
       </Helmet>
 
       {/* Decorative neon blur element */}

@@ -2611,6 +2611,28 @@ app.post('/api/users/block', verifyToken, async (req: AuthedRequest, res: Respon
   }
 });
 
+app.post('/api/users/unblock', verifyToken, async (req: AuthedRequest, res: Response) => {
+  try {
+    const { targetId } = req.body as any;
+    const uid = req.user?.uid;
+    if (!uid || !targetId) {
+      res.status(400).send('User ID and target ID are required');
+      return;
+    }
+
+    await db.collection('users').doc(uid).set({
+      blockedUsers: admin.firestore.FieldValue.arrayRemove(targetId),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    res.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to unblock user';
+    res.status(500).json({ error: message });
+  }
+});
+
+
 app.post('/api/notifications/register-token', verifyToken, async (req: AuthedRequest, res: Response) => {
   try {
     const { token } = NotificationTokenSchema.parse(req.body);

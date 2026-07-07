@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 export default function SEO({ title, description, schema }) {
   useEffect(() => {
     
-    document.title = title ? `${title} | NC Network` : ' Network — Talent Discovery & Casting Calls Near Me';
+    document.title = title ? `${title} | NepalCasts` : 'NepalCasts — Talent Discovery & Casting Calls Near Me';
 
     
     let metaDescription = document.querySelector('meta[name="description"]');
@@ -12,7 +12,7 @@ export default function SEO({ title, description, schema }) {
       metaDescription.name = "description";
       document.head.appendChild(metaDescription);
     }
-    metaDescription.content = description || "Find casting calls near me, apply to local auditions across cities, and discover premium verified talent on NC Network.";
+    metaDescription.content = description || "Find casting calls near me, apply to local auditions across cities, and discover premium verified talent on NepalCasts.";
 
     
     let script = document.querySelector('#seo-schema');

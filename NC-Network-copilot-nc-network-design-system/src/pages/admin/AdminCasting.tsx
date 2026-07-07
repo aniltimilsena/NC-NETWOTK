@@ -53,7 +53,7 @@ export default function AdminCasting() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [loadingApplicants, setLoadingApplicants] = useState(false);
 
-  const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+  const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
 
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,

@@ -6,7 +6,7 @@ import { verifyUserPassword } from '../services/auth';
 import { COLLECTIONS } from '../constants/collections';
 import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword, GoogleAuthProvider, FacebookAuthProvider, linkWithPopup, unlink } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp, getDocs, where, updateDoc, limit } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp, getDocs, where, updateDoc, limit, documentId } from 'firebase/firestore';
 import { 
   LockUnlockIcon
 } from "@/components/ui/animated-state-icons"
@@ -15,6 +15,7 @@ import { evaluatePasswordStrength } from '../utils/security';
 import Avatar from '../components/ui/Avatar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { CATEGORIES } from '../constants/categories';
+import { unblockUser } from '../services/messaging';
 
 
 const GoldenToggle = ({ enabled, onChange }) => (
@@ -589,6 +590,9 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
   const [whoCanMessage, setWhoCanMessage] = useState("connections");
   const [profileVisibility, setProfileVisibility] = useState("public");
 
+  const [blockedUsers, setBlockedUsers] = useState([]);
+  const [isLoadingBlocked, setIsLoadingBlocked] = useState(false);
+
   
   const [notifMessages, setNotifMessages] = useState(true);
   const [notifTyping, setNotifTyping] = useState(false);
@@ -662,6 +666,93 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
       isMounted = false;
     };
   }, [user?.uid]);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (activeTab === 'privacy' && user?.uid) {
+      setIsLoadingBlocked(true);
+      const userRef = doc(db, COLLECTIONS.USERS, user.uid);
+      const unsubscribe = onSnapshot(userRef, async (snap) => {
+        if (!isMounted) return;
+        if (snap.exists()) {
+          const blockedIds = snap.data().blockedUsers || [];
+          if (blockedIds.length === 0) {
+            setBlockedUsers([]);
+            setIsLoadingBlocked(false);
+            return;
+          }
+          try {
+            // Fetch profiles of the blocked users (limit 30 due to Firestore 'in' query limit)
+            const chunkedIds = blockedIds.slice(0, 30);
+            const profilesRef = collection(db, COLLECTIONS.PROFILES);
+            const q = query(profilesRef, where(documentId(), 'in', chunkedIds));
+            const querySnap = await getDocs(q);
+            
+            if (!isMounted) return;
+            const fetchedBlocked = querySnap.docs.map(doc => ({
+              uid: doc.id,
+              name: doc.data().name || `${doc.data().firstName || ''} ${doc.data().lastName || ''}`.trim() || 'Unknown User',
+              image: doc.data().image || doc.data().photoURL || ''
+            }));
+            
+            // Map to preserve order and fallback for users without profiles
+            const finalBlocked = chunkedIds.map(id => {
+              const found = fetchedBlocked.find(u => u.uid === id);
+              return found || { uid: id, name: `User (${id.substring(0, 6)}...)`, image: '' };
+            });
+            
+            setBlockedUsers(finalBlocked);
+          } catch (err) {
+            console.error("Error fetching blocked users profiles:", err);
+          } finally {
+            if (isMounted) {
+              setIsLoadingBlocked(false);
+            }
+          }
+        } else {
+          setBlockedUsers([]);
+          setIsLoadingBlocked(false);
+        }
+      }, (err) => {
+        console.error("Error listening to user document for blocked list:", err);
+        if (isMounted) {
+          setIsLoadingBlocked(false);
+        }
+      });
+      return () => {
+        isMounted = false;
+        unsubscribe();
+      };
+    }
+  }, [activeTab, user?.uid]);
+
+  const handleUnblockClick = (blockedUser) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Unblock User',
+      description: `Are you sure you want to unblock ${blockedUser.name}? They will be able to message you and view your profile again.`,
+      type: 'warning',
+      confirmText: 'Unblock',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          const { success, error } = await unblockUser(user.uid, blockedUser.uid);
+          if (success) {
+            showToast(`${blockedUser.name} has been unblocked`, 'success');
+            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+          } else {
+            showToast('Failed to unblock: ' + error, 'error');
+          }
+        } catch (err) {
+          showToast('Failed to unblock: ' + (err instanceof Error ? err.message : String(err)), 'error');
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
+  };
+
 
   
   useEffect(() => {
@@ -1677,6 +1768,51 @@ export default function Settings({ onNavigate, user, initialTab, showToast, isAd
 
             <div className="pt-4">
               <SaveButton hasChanges={hasChanges} isSaving={isSaving} onSave={handleSave} saveSuccess={saveSuccess} />
+            </div>
+
+            {/* Blocked Users Section */}
+            <div className="space-y-4 pt-8 border-t border-white/5">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-[1px] text-[#888] mb-1">Blocked Users</h3>
+                <p className="text-xs text-[#555] leading-relaxed">
+                  People you block will no longer be able to message you, and their comments and casting applications will be filtered out.
+                </p>
+              </div>
+
+              {isLoadingBlocked ? (
+                <div className="flex items-center gap-2 text-xs text-[#888] py-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#00BFFF]" />
+                  <span>Loading blocked list...</span>
+                </div>
+              ) : blockedUsers.length === 0 ? (
+                <div className="bg-[#111] border border-white/5 rounded-xl p-4 text-center">
+                  <p className="text-xs text-[#555]">You haven't blocked any users yet.</p>
+                </div>
+              ) : (
+                <div className="bg-[#111] border border-white/5 rounded-xl divide-y divide-white/5 overflow-hidden">
+                  {blockedUsers.map((blockedUser) => (
+                    <div key={blockedUser.uid} className="flex items-center justify-between p-3.5 hover:bg-white/[0.02] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Avatar
+                          size="sm"
+                          name={blockedUser.name}
+                          src={blockedUser.image}
+                        />
+                        <div>
+                          <span className="text-sm font-medium text-white block">{blockedUser.name}</span>
+                          <span className="text-[10px] text-[#555] font-mono">{blockedUser.uid}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleUnblockClick(blockedUser)}
+                        className="px-3 py-1.5 bg-white/5 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs font-semibold rounded-lg transition-colors border border-white/5"
+                      >
+                        Unblock
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         );

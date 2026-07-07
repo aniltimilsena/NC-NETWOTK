@@ -264,7 +264,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
                   <Sparkles className="w-8 h-8 text-[#00BFFF]" />
                 </div>
                 <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-                  Welcome to NC Network,<br className="hidden sm:inline" /> {profile?.name || user?.displayName || 'Creative'}!
+                  Welcome to NepalCasts,<br className="hidden sm:inline" /> {profile?.name || user?.displayName || 'Creative'}!
                 </h1>
                 <p className="text-nc-muted text-sm sm:text-base max-w-md mx-auto">
                   Let&apos;s set up your profile to connect with leading production teams and discover cast opportunities.
@@ -310,7 +310,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
               <div className="space-y-2">
                 <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Choose Your Role</h2>
                 <p className="text-nc-muted text-xs sm:text-sm max-w-md mx-auto">
-                  Select how you plan to use NC Network. You can change this later in settings.
+                  Select how you plan to use NepalCasts. You can change this later in settings.
                 </p>
               </div>
 

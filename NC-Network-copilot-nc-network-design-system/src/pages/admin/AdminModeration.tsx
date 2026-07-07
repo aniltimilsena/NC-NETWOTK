@@ -46,7 +46,7 @@ export default function AdminModeration() {
   const [filterStatus, setFilterStatus] = useState<'Pending' | 'Resolved' | 'Dismissed' | 'All'>('Pending');
   const [selectedReport, setSelectedReport] = useState<SafetyReport | null>(null);
 
-  const adminEmail = auth.currentUser?.email || 'admin@nc-network.com';
+  const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
 
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,
