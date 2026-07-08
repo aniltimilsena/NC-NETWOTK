@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { 
-  Sparkles, 
+  Star, 
   UserCheck, 
   Video, 
   MessageSquare, 
@@ -261,7 +261,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
             <div className="space-y-8 animate-fade-in">
               <div className="space-y-3">
                 <div className="inline-flex items-center justify-center p-3.5 bg-nc-accent/10 rounded-3xl border border-nc-accent/15 mb-2">
-                  <Sparkles className="w-8 h-8 text-[#00BFFF]" />
+                  <Film className="w-8 h-8 text-[#00BFFF]" />
                 </div>
                 <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
                   Welcome to NepalCasts,<br className="hidden sm:inline" /> {profile?.name || user?.displayName || 'Creative'}!
@@ -318,7 +318,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
                 {[
                   {
                     id: 'Talent',
-                    icon: <Sparkles className="w-6 h-6 text-[#00BFFF]" />,
+                    icon: <Star className="w-6 h-6 text-[#00BFFF]" />,
                     title: "I'm a Talent",
                     desc: "Actor, model, dancer, writer, director, or crew looking for castings."
                   },

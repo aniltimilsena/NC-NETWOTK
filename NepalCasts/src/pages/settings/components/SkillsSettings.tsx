@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Check, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Check, Award } from 'lucide-react';
 import { Button } from '../../../components/ui';
 import type { UserProfile, Skill } from '../../../types';
 
@@ -58,7 +58,7 @@ export default function SkillsSettings({ profile, onUpdate, showAlert }: SkillsS
       {/* Add Skill Panel */}
       <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 space-y-4">
         <h2 className="text-xl font-black text-white flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-[#00BFFF]" />
+          <Award className="w-5 h-5 text-[#00BFFF]" />
           Add Professional Skills
         </h2>
 

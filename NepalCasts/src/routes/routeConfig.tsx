@@ -60,14 +60,22 @@ const CastingDetailWrapper = ({ onNavigate, user, showAlert }: any) => {
   return <CastingDetail onNavigate={onNavigate} castingId={id} user={user} showAlert={showAlert} />;
 };
 
+const TalentListingWrapper = ({ onNavigate }: any) => {
+  const { category } = useParams();
+  return <TalentListing onNavigate={onNavigate} initialCategory={category || 'All'} />;
+};
+
 export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAlert, showToast }: any) {
   const navigate = useNavigate();
 
   const onNavigate = (page: string, param?: any) => {
-    let path = '/' + page;
-    if (page === 'home') path = '/';
-    if (page === 'listing') path = '/talents';
-    if (param) path = `/${page}/${param}`;
+    let targetPage = page;
+    if (page === 'casting-detail') targetPage = 'casting';
+    if (page === 'listing') targetPage = 'talents';
+
+    let path = '/' + targetPage;
+    if (targetPage === 'home') path = '/';
+    if (param) path = `/${targetPage}/${param}`;
     navigate(path);
   };
 
@@ -84,7 +92,8 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
         />
       }>
         <Route path="/" element={<Home onNavigate={onNavigate} user={user} />} />
-        <Route path="/talents" element={<TalentListing onNavigate={onNavigate} />} />
+        <Route path="/talents" element={<TalentListingWrapper onNavigate={onNavigate} />} />
+        <Route path="/talents/:category" element={<TalentListingWrapper onNavigate={onNavigate} />} />
         <Route path="/trending" element={<Trending onNavigate={onNavigate} />} />
         <Route path="/profile/:id" element={<ProfileWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} showAlert={showAlert} />} />
         <Route path="/talent/:id" element={<ProfileWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} showAlert={showAlert} />} />

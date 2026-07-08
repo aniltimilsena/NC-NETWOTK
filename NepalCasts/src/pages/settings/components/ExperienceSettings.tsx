@@ -62,7 +62,7 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
       {/* Add Experience Panel */}
       <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 space-y-4">
         <h2 className="text-xl font-black text-white flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-[#00BFFF]" />
+          <Briefcase className="w-5 h-5 text-[#00BFFF]" />
           Add Professional Experience
         </h2>
 

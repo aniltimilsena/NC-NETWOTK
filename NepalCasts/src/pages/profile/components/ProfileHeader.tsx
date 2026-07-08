@@ -209,7 +209,7 @@ export default function ProfileHeader({
           </div>
 
           {/* Stats Bar */}
-          <div className="grid grid-cols-4 gap-2 mt-6 pt-4 border-t border-white/5 w-full">
+          <div className={`grid gap-2 mt-6 pt-4 border-t border-white/5 w-full ${isOwnProfile ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <div className="flex flex-col items-center justify-center text-center py-1">
               <span className="text-white text-lg font-black">{followerCount}</span>
               <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Followers</span>

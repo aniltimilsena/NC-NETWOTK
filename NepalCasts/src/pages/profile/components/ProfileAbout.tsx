@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, Calendar, User, Eye, Sparkles } from 'lucide-react';
+import { Mail, Phone, Calendar, User, Eye, FileText } from 'lucide-react';
 import type { UserProfile } from '../../../types';
 
 interface ProfileAboutProps {
@@ -27,7 +27,7 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
         {/* Bio Panel */}
         <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2rem] p-6 space-y-4">
           <h2 className="text-xl font-black text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#00BFFF]" />
+            <FileText className="w-5 h-5 text-[#00BFFF]" />
             About Me
           </h2>
           <p className="text-nc-muted text-sm leading-relaxed whitespace-pre-line">{bio}</p>

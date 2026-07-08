@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Mail, Lock, Eye, EyeOff, Check, AlertCircle, ArrowLeft, Loader2, Sparkles
+  Mail, Lock, Eye, EyeOff, Check, AlertCircle, ArrowLeft, Loader2, Film
 } from 'lucide-react';
 import Logo from '../components/ui/Logo';
 import GlassCard from '../components/ui/GlassCard';
@@ -612,7 +612,7 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
             transition={{ duration: 0.6 }}
             className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-yellow-400 font-semibold w-max"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Film className="w-3.5 h-3.5" />
             Nepal's Premier Cinema Platform
           </motion.div>
           <motion.h2 

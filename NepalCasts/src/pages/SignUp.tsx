@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  User, Mail, Lock, Eye, EyeOff, Check, AlertCircle, ArrowLeft, Loader2, Sparkles, UserCheck, ShieldAlert, Heart
+  User, Mail, Lock, Eye, EyeOff, Check, AlertCircle, ArrowLeft, Loader2, Film, UserCheck, ShieldAlert, Heart
 } from 'lucide-react';
 import { auth, googleProvider } from '../lib/firebase';
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
@@ -381,7 +381,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
             transition={{ duration: 0.6 }}
             className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-yellow-400 font-semibold w-max"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Film className="w-3.5 h-3.5" />
             Discover Multiple Talents
           </motion.div>
           <motion.h2 

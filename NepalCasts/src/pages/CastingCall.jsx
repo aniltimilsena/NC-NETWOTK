@@ -204,31 +204,14 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col md:flex-row relative font-sans">
+    <div className="min-h-screen bg-[#0A0A0A] text-white relative font-sans">
       <SEO 
         title="Casting Calls & Auditions | NepalCasts" 
         description="Find Nepali movie casting calls, short films, models, and dancers auditions." 
       />
-      
-      {/* Sticky Left Column: 40% width on desktop */}
-      <aside className="w-full md:w-[40%] p-8 sm:p-12 md:p-16 border-b md:border-b-0 md:border-r border-white/5 h-auto md:h-screen md:sticky md:top-0 flex flex-col justify-between shrink-0 bg-[#070707] z-20">
-        <div className="flex flex-col justify-center flex-1 py-12 md:py-0">
-          <span className="text-[10px] uppercase tracking-[0.35em] text-yellow-500 mb-3 font-black block">Featured Showcase</span>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase leading-[1.05] tracking-tighter text-white">
-            Casting the <br/> <span className="text-yellow-500">Future of <br/>Talent</span>
-          </h1>
-          <p className="text-xs text-gray-500 mt-5 leading-relaxed max-w-sm font-medium">
-            Discover premier casting calls and open auditions across verified film, model, and television productions in Nepal.
-          </p>
-        </div>
-        
-        <div className="hidden md:block text-[10px] uppercase tracking-widest text-gray-600 font-bold">
-          © 2026 NepalCasts. All rights reserved.
-        </div>
-      </aside>
 
-      {/* Main Feed: 60% width on desktop */}
-      <main className="w-full md:w-[60%] px-6 sm:px-12 md:px-16 py-12 md:py-20 overflow-y-auto">
+      {/* Main Feed: Full width centered on desktop */}
+      <main className="max-w-5xl mx-auto px-6 sm:px-12 md:px-16 py-12 md:py-20 w-full">
         
         {/* HEADER */}
         <div className="flex items-center justify-between border-b border-white/5 pb-8 mb-8">
@@ -239,7 +222,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
           {canPostCall && (
             <button
               onClick={() => onNavigate('casting-create')}
-              className="bg-yellow-500 hover:bg-yellow-600 text-black px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-yellow-500/10 active:scale-[0.98] flex items-center gap-1.5 shrink-0"
+              className="bg-gradient-to-br from-sky-400 to-sky-600 text-black px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-sky-500/10 active:scale-[0.98] flex items-center gap-1.5 shrink-0"
             >
               <Plus size={15} strokeWidth={3} />
               Post a Call
@@ -248,20 +231,20 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
         </div>
 
         {/* SEARCH & FILTERS BAR */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-10">
+        <div className="flex flex-col gap-4 md:gap-6 mb-6 md:mb-10">
           
           {/* Filter pills */}
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide flex-1 pr-2">
+          <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide w-full border-b border-white/5">
             {filterPills.map(pill => {
               const isActive = activeFilter === pill.id;
               return (
                 <button
                   key={pill.id}
                   onClick={() => setActiveFilter(pill.id)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all uppercase tracking-wider ${
+                  className={`flex-shrink-0 px-4 md:px-8 py-2 rounded-full text-[10px] md:text-xs font-medium uppercase tracking-wider md:tracking-[0.2em] transition-all duration-300 ${
                     isActive
-                      ? 'bg-white text-black shadow-lg shadow-white/5'
-                      : 'bg-[#111] border border-white/5 text-gray-400 hover:text-white'
+                      ? 'border border-sky-400 bg-gradient-to-b from-sky-400/10 to-transparent text-sky-400 shadow-lg shadow-sky-500/5'
+                      : 'bg-transparent text-gray-500 hover:text-white border border-transparent'
                   }`}
                 >
                   {pill.label}
@@ -271,28 +254,35 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
           </div>
 
           {/* Search Input & Sort dropdown */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center justify-between gap-4 w-full pt-1 md:pt-2">
             {/* Search Box */}
-            <div className="relative w-48 sm:w-64">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <div className="relative flex-1 max-w-[200px] sm:max-w-xs">
+              <Search className="absolute left-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
               <input
                 type="text"
                 placeholder="Search projects..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#111] border border-white/5 focus:border-yellow-500 rounded-full pl-9 pr-4 py-2 text-xs text-white placeholder-gray-500 outline-none transition-all"
+                className="w-full bg-transparent border-b border-white/10 focus:border-sky-400 pl-7 pr-2 py-2 text-xs text-white placeholder-gray-500 outline-none transition-all duration-300 focus:shadow-[0_1px_0_0_#38bdf8]"
               />
             </div>
 
             {/* Sort Toggle */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <button 
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#111] border border-white/5 text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white transition-all ${isSortOpen ? 'border-yellow-500 text-yellow-500' : ''}`}
+                className={`flex items-center gap-1.5 px-1 py-2 bg-transparent border-b border-white/10 text-xs font-medium uppercase tracking-[0.1em] md:tracking-[0.2em] text-gray-400 hover:text-white transition-all duration-300 ${isSortOpen ? 'border-sky-400 text-sky-400 shadow-[0_1px_0_0_#38bdf8]' : ''}`}
               >
-                <SortDesc size={13} />
                 <span>{activeSort}</span>
-                <ChevronDown size={13} className={`transition-transform duration-300 ${isSortOpen ? 'rotate-180' : ''}`} />
+                <svg 
+                  className={`w-3.5 h-3.5 transition-transform duration-300 ${isSortOpen ? 'rotate-180' : ''}`} 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor" 
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
               </button>
 
               <AnimatePresence>
@@ -309,7 +299,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
                         onClick={() => { setActiveSort(opt.id); setIsSortOpen(false); }}
                         className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold transition-all uppercase tracking-wider ${
                           activeSort === opt.id 
-                            ? 'bg-yellow-500/10 text-yellow-500' 
+                            ? 'bg-sky-400/10 text-sky-400' 
                             : 'text-gray-400 hover:bg-white/5 hover:text-white'
                         }`}
                       >
@@ -353,7 +343,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
               {canPostCall && (
                 <button
                   onClick={() => onNavigate('casting-create')}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-black px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-yellow-500/10"
+                  className="bg-gradient-to-br from-sky-400 to-sky-600 text-black px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-sky-500/10 hover:brightness-110 active:scale-[0.98]"
                 >
                   Create Casting Call
                 </button>
@@ -368,79 +358,79 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
               const roleNeeded = getRolesSummary(call);
 
               return (
-                <div
-                  key={call.id}
-                  onClick={() => onNavigate('casting-detail', call.id)}
-                  className="group flex flex-col sm:flex-row items-start sm:items-center justify-between py-8 border-b border-white/10 hover:border-yellow-500 transition-all duration-300 cursor-pointer gap-6"
-                >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-1 w-full min-w-0">
-                    {/* Widescreen image thumbnail */}
-                    <div className="w-full sm:w-48 h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/5">
-                      <img 
-                        src={bannerImage} 
-                        alt={call.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=640&auto=format&fit=crop';
-                        }}
-                      />
-                      {isApplied && (
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-yellow-500 text-black text-[9px] font-black uppercase tracking-wider">
-                          Applied
-                        </div>
-                      )}
-                    </div>
+                 <div
+                   key={call.id}
+                   onClick={() => onNavigate('casting-detail', call.id)}
+                   className="group flex flex-col sm:flex-row items-start sm:items-center justify-between py-8 border-b border-white/10 hover:border-sky-400/50 transition-all duration-300 cursor-pointer gap-6"
+                 >
+                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-1 w-full min-w-0">
+                     {/* Widescreen image thumbnail */}
+                     <div className="w-full sm:w-48 h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/5">
+                       <img 
+                         src={bannerImage} 
+                         alt={call.title} 
+                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                         onError={(e) => {
+                           e.currentTarget.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=640&auto=format&fit=crop';
+                         }}
+                       />
+                       {isApplied && (
+                         <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-sky-400 text-black text-[9px] font-black uppercase tracking-wider">
+                           Applied
+                         </div>
+                       )}
+                     </div>
 
-                    {/* Text content details */}
-                    <div className="space-y-2 flex-1 min-w-0">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-yellow-500">
-                          {call.category || call.type || 'Nepali Project'}
-                        </span>
-                      </div>
-                      
-                      <h2 className="text-2xl sm:text-3xl font-black text-white group-hover:text-yellow-400 transition-colors leading-tight truncate">
-                        {call.title}
-                      </h2>
-                      
-                      <p className="text-sm text-gray-400 font-medium line-clamp-1 leading-relaxed">
-                        {roleNeeded}
-                      </p>
+                     {/* Text content details */}
+                     <div className="space-y-2 flex-1 min-w-0">
+                       <div className="flex items-center gap-3">
+                         <span className="text-[10px] font-black uppercase tracking-wider text-sky-400">
+                           {call.category || call.type || 'Nepali Project'}
+                         </span>
+                       </div>
+                       
+                       <h2 className="text-2xl sm:text-3xl font-black text-white group-hover:text-sky-400 transition-colors leading-tight truncate">
+                         {call.title}
+                       </h2>
+                       
+                       <p className="text-sm text-gray-400 font-medium line-clamp-1 leading-relaxed">
+                         {roleNeeded}
+                       </p>
 
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 pt-1">
-                        <span className="flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-gray-600 shrink-0" />
-                          {call.location || 'Nepal'}
-                        </span>
-                        {call.budget && (
-                          <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                            <span className="text-gray-600 text-[10px] font-black">Rs.</span>
-                            {call.budget}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                       <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 pt-1">
+                         <span className="flex items-center gap-1.5">
+                           <MapPin className="w-3.5 h-3.5 text-gray-600 shrink-0" />
+                           {call.location || 'Nepal'}
+                         </span>
+                         {call.budget && (
+                           <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                             <span className="text-gray-600 text-[10px] font-black">Rs.</span>
+                             {call.budget}
+                           </span>
+                         )}
+                       </div>
+                     </div>
+                   </div>
 
-                  {/* Right: Deadline & Action */}
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
-                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${deadlineInfo.color}`}>
-                      <Clock className="w-3 h-3 shrink-0" />
-                      {deadlineInfo.label}
-                    </span>
-                    
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={(e) => toggleSave(e, call.id)}
-                        className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-gray-400 hover:text-white"
-                      >
-                        <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-yellow-500' : ''} />
-                      </button>
-                      <span className="text-xs font-bold text-yellow-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 whitespace-nowrap">
-                        View Role &gt;
-                      </span>
-                    </div>
-                  </div>
+                   {/* Right: Deadline & Action */}
+                   <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
+                     <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${deadlineInfo.color}`}>
+                       <Clock className="w-3 h-3 shrink-0" />
+                       {deadlineInfo.label}
+                     </span>
+                     
+                     <div className="flex items-center gap-3">
+                       <button
+                         onClick={(e) => toggleSave(e, call.id)}
+                         className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-gray-400 hover:text-white"
+                       >
+                         <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-sky-400' : ''} />
+                       </button>
+                       <span className="text-xs font-bold text-sky-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 whitespace-nowrap">
+                         View Role &gt;
+                       </span>
+                     </div>
+                   </div>
                 </div>
               );
             })

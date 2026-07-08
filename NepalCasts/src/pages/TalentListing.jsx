@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X,
   ArrowLeft, MapPin, MoreVertical, Share2
 } from 'lucide-react';
@@ -19,6 +19,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
   const [loading, setLoading] = useState(true);
   const [profilesReady, setProfilesReady] = useState(false);
   const [followingIds, setFollowingIds] = useState([]);
+  const [hoveredTalent, setHoveredTalent] = useState(null);
   const [viewMode, setViewMode] = useState(() => {
     if (initialCategory && initialCategory !== 'All' && CATEGORIES.includes(initialCategory)) {
       return 'talents';
@@ -257,7 +258,34 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         title="Browse Professional Talent | NepalCasts" 
         description="Premium directory of cinema professionals in Nepal." 
       />
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+
+      {/* Obsidian Gallery Portrait Reveal Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <AnimatePresence>
+          {hoveredTalent && (hoveredTalent.photoURL || hoveredTalent.profileImage || hoveredTalent.image) && (
+            <motion.div
+              key={hoveredTalent.id}
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 0.35, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute right-0 top-0 bottom-0 w-[45vw] h-full hidden md:block"
+            >
+              <img
+                src={hoveredTalent.photoURL || hoveredTalent.profileImage || hoveredTalent.image}
+                alt={hoveredTalent.name}
+                className="w-full h-full object-cover filter grayscale brightness-50 contrast-125 transition-all duration-300"
+              />
+              {/* Subtle overlay gradients to blend portrait into pure black backdrop */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-[#0A0A0A]" />
+              <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A] via-transparent to-[#0A0A0A]" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
 
         {/* VIEW 1: CATEGORIES GRID SELECTION */}
         {viewMode === 'categories' && (
@@ -334,7 +362,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                   setSelectedFilters(prev => ({ ...prev, category: 'All' }));
                   setViewMode('categories');
                 }}
-                className="flex items-center gap-1.5 text-sm font-bold text-[#0099FF] hover:opacity-85 transition-opacity"
+                className="flex items-center gap-1.5 text-sm font-bold text-sky-400 hover:opacity-85 transition-opacity"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back to Categories
@@ -348,70 +376,81 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
             </div>
 
             {/* Search, Sort, and Filters Panel */}
-            <div className="bg-[#111] border border-white/5 rounded-3xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              {/* Left: Search Bar */}
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                <input
-                  type="text"
-                  placeholder={`Search ${selectedFilters.category === 'All' ? 'talents' : getCategoryConfig(selectedFilters.category).pluralLabel.toLowerCase()} by name or location...`}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#0099FF] rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-gray-500 outline-none transition-all focus:shadow-[0_0_0_3px_rgba(0,153,255,0.15)]"
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+            <div className="flex flex-col gap-6 pt-2 pb-6 border-b border-white/5">
+              
+              {/* Row 1: Search & Filter Selects */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+                
+                {/* Search Box */}
+                <div className="relative flex-1 max-w-md w-full">
+                  <Search className="absolute left-1 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="text"
+                    placeholder={`Search ${selectedFilters.category === 'All' ? 'talents' : getCategoryConfig(selectedFilters.category).pluralLabel.toLowerCase()} by name or location...`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-transparent border-b border-white/10 focus:border-sky-400 pl-7 pr-8 py-2 text-xs text-white placeholder-gray-500 outline-none transition-all duration-300 focus:shadow-[0_1px_0_0_#38bdf8]"
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Dropdowns (Location & Experience) */}
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                  {/* Location Filter */}
+                  <select
+                    value={selectedFilters.location}
+                    onChange={e => setSelectedFilters(prev => ({ ...prev, location: e.target.value }))}
+                    className="flex-1 sm:flex-initial bg-transparent border-b border-white/10 text-xs text-gray-400 py-2 px-1 outline-none focus:border-sky-400 cursor-pointer transition-all duration-300"
                   >
-                    <X size={14} />
-                  </button>
-                )}
+                    <option value="All" className="bg-[#111] text-white">All Locations</option>
+                    {locationsList.filter(l => l !== 'All').map(loc => (
+                      <option key={loc} value={loc} className="bg-[#111] text-white">{loc}</option>
+                    ))}
+                  </select>
+
+                  {/* Experience Level Filter */}
+                  <select
+                    value={selectedFilters.experienceLevel}
+                    onChange={e => setSelectedFilters(prev => ({ ...prev, experienceLevel: e.target.value }))}
+                    className="flex-1 sm:flex-initial bg-transparent border-b border-white/10 text-xs text-gray-400 py-2 px-1 outline-none focus:border-sky-400 cursor-pointer transition-all duration-300"
+                  >
+                    <option value="All" className="bg-[#111] text-white">All Experience</option>
+                    {experienceLevels.filter(l => l !== 'All').map(lvl => (
+                      <option key={lvl} value={lvl} className="bg-[#111] text-white">{lvl}</option>
+                    ))}
+                  </select>
+                </div>
+
               </div>
 
-              {/* Right: Filters & Sort */}
-              <div className="flex flex-wrap items-center gap-3">
-                {/* Location Filter */}
-                <select
-                  value={selectedFilters.location}
-                  onChange={e => setSelectedFilters(prev => ({ ...prev, location: e.target.value }))}
-                  className="bg-[#1a1a1a] border border-white/5 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#0099FF] cursor-pointer"
-                >
-                  <option value="All">All Locations</option>
-                  {locationsList.filter(l => l !== 'All').map(loc => (
-                    <option key={loc} value={loc}>{loc}</option>
-                  ))}
-                </select>
-
-                {/* Experience Level Filter */}
-                <select
-                  value={selectedFilters.experienceLevel}
-                  onChange={e => setSelectedFilters(prev => ({ ...prev, experienceLevel: e.target.value }))}
-                  className="bg-[#1a1a1a] border border-white/5 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#0099FF] cursor-pointer"
-                >
-                  <option value="All">All Experience</option>
-                  {experienceLevels.filter(l => l !== 'All').map(lvl => (
-                    <option key={lvl} value={lvl}>{lvl}</option>
-                  ))}
-                </select>
-
-                {/* Sort Option */}
-                <div className="flex bg-[#1a1a1a] border border-white/5 rounded-xl p-1">
-                  {sortOptions.map(opt => (
+              {/* Row 2: Sort Toggle Options */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide w-full">
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mr-2 shrink-0">Sort By:</span>
+                {sortOptions.map(opt => {
+                  const isActive = activeSort === opt.id;
+                  return (
                     <button
                       key={opt.id}
                       onClick={() => setActiveSort(opt.id)}
-                      className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all uppercase tracking-wider ${
-                        activeSort === opt.id
-                          ? 'bg-[#0099FF] text-black shadow-md'
-                          : 'text-gray-400 hover:text-white'
+                      className={`flex-shrink-0 px-5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 ${
+                        isActive
+                          ? 'border border-sky-400 bg-gradient-to-b from-sky-400/10 to-transparent text-sky-400 shadow-md shadow-sky-500/5'
+                          : 'bg-transparent text-gray-500 hover:text-white border border-transparent'
                       }`}
                     >
                       {opt.label}
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
+
             </div>
 
             {/* Clear Filters Indicator */}
@@ -459,116 +498,108 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                 <p className="text-gray-500 text-sm mt-1.5 max-w-xs mx-auto">Try adjusting your filters or search query to find matching talent.</p>
               </div>
             ) : (
-              /* Grid of talent cards (2 col mobile, 3-4 col desktop) */
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {filteredTalents.map((talent) => {
-                  const isFollowing = followingIds.includes(talent.id);
-                  
-                  let createdDate = null;
-                  if (talent.createdAt) {
-                    createdDate = talent.createdAt.toDate ? talent.createdAt.toDate() : new Date(talent.createdAt);
-                  } else if (talent.joinedYear) {
-                    createdDate = new Date(`${talent.joinedYear}-01-01`);
-                  }
-                  
-                  if (!createdDate) {
-                    createdDate = new Date('2026-07-01');
-                  }
+              <>
+                {/* Unified Cardless List View (Desktop & Mobile) */}
+                <div className="space-y-1">
+                  {filteredTalents.map((talent, idx) => {
+                    const isFollowing = followingIds.includes(talent.id);
+                    
+                    let createdDate = null;
+                    if (talent.createdAt) {
+                      createdDate = talent.createdAt.toDate ? talent.createdAt.toDate() : new Date(talent.createdAt);
+                    } else if (talent.joinedYear) {
+                      createdDate = new Date(`${talent.joinedYear}-01-01`);
+                    }
+                    
+                    if (!createdDate) {
+                      createdDate = new Date('2026-07-01');
+                    }
 
-                  const now = new Date();
-                  const diffTime = Math.abs(now.getTime() - createdDate.getTime());
-                  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                    const now = new Date();
+                    const diffTime = Math.abs(now.getTime() - createdDate.getTime());
+                    const diffDays = diffTime / (1000 * 60 * 60 * 24);
 
-                  const isNew = diffDays <= 2;
-                  const joinYear = createdDate.getFullYear();
-                  
-                  return (
-                    <div
-                      key={talent.id}
-                      onClick={() => onNavigate('profile', talent.id)}
-                      className="group relative bg-[#111] border border-white/5 hover:border-[#0099FF]/30 rounded-[2rem] p-5 text-center flex flex-col items-center justify-between cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_15px_30px_rgba(0,153,255,0.06)]"
-                    >
-                      {/* 3-Dot Options/Share Menu */}
-                      <div className="absolute top-4 right-4 z-10" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => setActiveMenuId(activeMenuId === talent.id ? null : talent.id)}
-                          className="w-8 h-8 rounded-full bg-black/40 hover:bg-[#222] border border-white/5 hover:border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95"
-                          aria-label="Options"
-                        >
-                          <MoreVertical size={16} />
-                        </button>
-                        
-                        {activeMenuId === talent.id && (
-                          <>
-                            {/* Invisible click-away backdrop */}
-                            <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)} />
-                            <div className="absolute right-0 mt-2 w-36 bg-[#181818]/95 border border-white/10 rounded-2xl shadow-2xl z-20 py-1.5 backdrop-blur-lg overflow-hidden">
-                              <button
-                                onClick={() => {
-                                  setActiveShareTalent(talent);
-                                  setActiveMenuId(null);
-                                }}
-                                className="w-full px-4 py-2.5 text-left text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-2 transition-colors"
-                              >
-                                <Share2 size={14} className="text-[#0099FF]" />
-                                Share Profile
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      {/* Real circular profile photo */}
-                      <div className="relative mb-4">
-                        <Avatar
-                          user={talent}
-                          size="lg"
-                          name={talent.name}
-                        />
-                        {talent.openToWork && (
-                          <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-green-500 border border-[#111]"></span>
-                          </span>
-                        )}
-                      </div>
+                    const isNew = diffDays <= 2;
+                    const joinYear = createdDate.getFullYear();
+                    const expLevel = getExperienceLevel(talent);
 
-                      {/* Name & Joined subtitle */}
-                      <div className="mb-4 w-full">
-                        <h3 className="font-bold text-white text-sm sm:text-base tracking-tight truncate px-2 flex items-center justify-center gap-1">
-                          <span className="truncate">{talent.name}</span>
-                          {talent.verified && (
-                            <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
-                          )}
-                        </h3>
-                        {isNew ? (
-                          <p className="text-[10px] text-[#00BFFF] font-bold mt-0.5">New</p>
-                        ) : (
-                          <p className="text-[10px] text-gray-500 font-medium mt-0.5">Since {joinYear}</p>
-                        )}
-                      </div>
-
-                      {/* Location with pin icon */}
-                      <div className="flex items-center gap-1 text-xs text-gray-400 mb-5 w-full justify-center px-2">
-                        <MapPin className="w-3.5 h-3.5 text-gray-500 shrink-0" />
-                        <span className="truncate max-w-[120px]">{talent.location || 'Nepal'}</span>
-                      </div>
-
-                      {/* Follow button */}
-                      <button
-                        type="button"
-                        onClick={(e) => handleToggleFollow(e, talent.id)}
-                        className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider ${
-                          isFollowing
-                            ? 'bg-transparent border border-white/10 hover:border-red-500/30 hover:bg-red-500/5 hover:text-red-400 text-gray-300'
-                            : 'bg-[#0099FF] text-black hover:opacity-95 shadow-lg shadow-[#0099FF]/10 active:scale-[0.98]'
-                        }`}
+                    return (
+                      <div
+                        key={talent.id}
+                        onMouseEnter={() => setHoveredTalent(talent)}
+                        onMouseLeave={() => setHoveredTalent(null)}
+                        onClick={() => onNavigate('profile', talent.id)}
+                        className="flex items-center justify-between py-5 border-b border-white/5 hover:border-white/10 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group"
                       >
-                        {isFollowing ? 'Following' : 'Follow'}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+                        <div className="flex items-center gap-4 min-w-0">
+                          <Avatar
+                            user={talent}
+                            size="lg"
+                            name={talent.name}
+                            className="w-12 h-12 md:w-14 md:h-14 transition-transform group-hover:scale-105 duration-300"
+                          />
+                          <div className="min-w-0 text-left">
+                            <h3 className="font-bold text-white text-base md:text-lg tracking-tight truncate flex items-center gap-1.5 group-hover:text-sky-400 transition-colors duration-300">
+                              {talent.name}
+                              {talent.verified && (
+                                <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
+                              )}
+                              {talent.openToWork && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 ring-2 ring-green-500/20" title="Open to Work" />
+                              )}
+                            </h3>
+                            <p className="text-xs text-gray-500 font-medium mt-0.5">
+                              {talent.role || 'Talent'} • {expLevel} Level • {isNew ? 'New' : `Since ${joinYear}`}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1 truncate">
+                              {talent.location || 'Nepal'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleFollow(e, talent.id)}
+                            className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+                              isFollowing
+                                ? 'border border-white/10 text-gray-400 hover:bg-white/5'
+                                : 'bg-gradient-to-br from-sky-400 to-sky-600 text-black hover:brightness-110 shadow-lg shadow-sky-500/10 active:scale-[0.98]'
+                            }`}
+                          >
+                            {isFollowing ? 'Following' : 'Follow'}
+                          </button>
+                          
+                          <button
+                            type="button"
+                            onClick={() => setActiveMenuId(activeMenuId === talent.id ? null : talent.id)}
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-white relative bg-transparent hover:bg-white/5 transition-colors"
+                          >
+                            <MoreVertical size={16} />
+                            {activeMenuId === talent.id && (
+                              <>
+                                <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)} />
+                                <div className="absolute right-0 top-10 mt-1 w-36 bg-[#121212]/95 border border-white/10 rounded-xl shadow-2xl z-20 py-1.5 backdrop-blur-lg overflow-hidden text-left">
+                                  <button
+                                    onClick={() => {
+                                      setActiveShareTalent(talent);
+                                      setActiveMenuId(null);
+                                    }}
+                                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-2 transition-colors"
+                                  >
+                                    <Share2 size={12} className="text-sky-400" />
+                                    Share Profile
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         )}

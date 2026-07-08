@@ -582,10 +582,10 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           </div>
 
           {/* Sidebar (Right Column) */}
-          <div className="flex-1 space-y-6 text-left">
+          <div className="flex-1 space-y-6 text-left lg:sticky lg:top-24 h-fit">
             
             {/* Countdown / Apply Box */}
-            <div className="bg-[#111] border border-white/5 rounded-3xl p-6 space-y-5 sticky top-24">
+            <div className="bg-[#111] border border-white/5 rounded-3xl p-6 space-y-5">
               
               {/* Countdown timer */}
               <div className="text-center bg-[#1a1a1a] rounded-2xl p-4 border border-white/5">
