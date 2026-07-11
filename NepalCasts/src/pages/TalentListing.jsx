@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X,
-  ArrowLeft, MapPin, MoreVertical, Share2
+  ArrowLeft, MapPin, MoreVertical, Share2, ChevronLeft
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, onSnapshot, query, orderBy, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';
@@ -290,9 +290,19 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         {/* VIEW 1: CATEGORIES GRID SELECTION */}
         {viewMode === 'categories' && (
           <div className="animate-fade-in space-y-10 text-left">
-            <div>
-              <h1 className="text-4xl sm:text-5xl font-serif italic font-medium text-white tracking-tight leading-none mb-1.5">Browse by Category</h1>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[1.5px]">Discover Nepal's finest cinema professionals</p>
+            <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+              <button
+                onClick={() => onNavigate('back')}
+                className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors shadow-md shrink-0 cursor-pointer"
+                aria-label="Back"
+                title="Go Back"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-serif italic font-medium text-white tracking-tight leading-none mb-1.5">Browse by Category</h1>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[1.5px]">Discover Nepal's finest cinema professionals</p>
+              </div>
             </div>
 
             {loading ? (
@@ -315,21 +325,21 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.04 }}
-                      className="category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-4 flex flex-col items-center gap-2.5 group cursor-pointer"
+                      className="category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-5 sm:p-6 flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer"
                     >
                       {/* Circular icon — same as Home */}
                       <div
-                        className="relative z-10 w-14 h-14 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
+                        className="relative z-10 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
                         style={{
                           backgroundColor: `${detail.color}26`,
                           color: detail.color,
                           boxShadow: `0 0 15px ${detail.color}15`,
                         }}
                       >
-                        <Icon size={26} strokeWidth={1.5} />
+                        <Icon size={38} className="w-[38px] h-[38px] sm:w-[44px] sm:h-[44px]" strokeWidth={1.5} />
                       </div>
 
-                      <span className="text-sm sm:text-base font-extrabold text-white/90 group-hover:text-white transition-colors relative z-10">
+                      <span className="text-base sm:text-lg font-extrabold text-white/90 group-hover:text-white transition-colors relative z-10">
                         {detail.label}
                       </span>
 
@@ -362,10 +372,11 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                   setSelectedFilters(prev => ({ ...prev, category: 'All' }));
                   setViewMode('categories');
                 }}
-                className="flex items-center gap-1.5 text-sm font-bold text-sky-400 hover:opacity-85 transition-opacity"
+                className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors shadow-md z-20 cursor-pointer"
+                aria-label="Back to Categories"
+                title="Back to Categories"
               >
-                <ArrowLeft className="w-4 h-4" />
-                Back to Categories
+                <ChevronLeft className="w-5 h-5" />
               </button>
               <div className="text-right">
                 <h2 className="text-2xl font-black text-white">

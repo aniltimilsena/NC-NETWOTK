@@ -103,18 +103,18 @@ export default function Home({ onNavigate, user }) {
   });
 
   useEffect(() => {
-    let unsubUsers = () => {};
-    let unsubCalls = () => {};
+    let unsubUsers = () => { };
+    let unsubCalls = () => { };
 
-    
+
     const loaderTimeout = setTimeout(() => setIsLoading(false), 3000);
 
     try {
       unsubUsers = subscribeToTalents((data) => {
         setTalents(data);
-        setIsLoading(false); 
+        setIsLoading(false);
       });
-      
+
       unsubCalls = subscribeToCastingCalls('All', (data, error) => {
         if (error) {
           console.warn("Home query issue (likely index building):", error);
@@ -137,7 +137,7 @@ export default function Home({ onNavigate, user }) {
     };
   }, []);
 
-  
+
   useEffect(() => {
     if (!isLoading) {
       const t = setTimeout(() => setCategoriesReady(true), 80);
@@ -147,7 +147,7 @@ export default function Home({ onNavigate, user }) {
   }, [isLoading]);
 
 
-  
+
   const [shouldScroll, setShouldScroll] = useState(false);
 
   useEffect(() => {
@@ -155,7 +155,7 @@ export default function Home({ onNavigate, user }) {
     if (!container || castingCalls.length === 0) return;
 
     const checkScroll = () => {
-      
+
       setShouldScroll(container.scrollWidth > container.offsetWidth);
     };
 
@@ -174,9 +174,9 @@ export default function Home({ onNavigate, user }) {
 
     const animate = () => {
       scrollPos += speed;
-      
+
       const loopPoint = castingCalls.length > 3 ? container.scrollWidth / 2 : container.scrollWidth - container.offsetWidth;
-      
+
       if (scrollPos >= loopPoint) {
         scrollPos = 0;
       }
@@ -190,7 +190,7 @@ export default function Home({ onNavigate, user }) {
 
 
 
-  
+
   const trendingList = talents
     .filter(t => !t.deactivated)
     .sort((a, b) => {
@@ -205,11 +205,11 @@ export default function Home({ onNavigate, user }) {
 
   useEffect(() => {
     if (trendingList.length <= 1) return;
-    
+
     const interval = setInterval(() => {
       setCurrentPremiumIdx(prev => {
         let next = Math.floor(Math.random() * trendingList.length);
-        
+
         if (trendingList.length > 1) {
           while (next === prev) {
             next = Math.floor(Math.random() * trendingList.length);
@@ -229,11 +229,11 @@ export default function Home({ onNavigate, user }) {
 
   const isDefaultImage = (url) => {
     if (!url) return true;
-    return url.includes('default-avatar.png') || 
-           url.includes('default-male.png') || 
-           url.includes('default-female.png') || 
-           url.includes('achyut.png') ||
-           url.startsWith('data:image/svg+xml');
+    return url.includes('default-avatar.png') ||
+      url.includes('default-male.png') ||
+      url.includes('default-female.png') ||
+      url.includes('achyut.png') ||
+      url.startsWith('data:image/svg+xml');
   };
 
   const heroPhotoURL = currentPremiumUser?.photoURL || currentPremiumUser?.profileImage || currentPremiumUser?.image;
@@ -254,10 +254,10 @@ export default function Home({ onNavigate, user }) {
         </div>
 
         {/* Animated gradient orb for depth */}
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-[#FACC15]/8 via-sky-400/5 to-transparent rounded-full blur-3xl z-[1] animate-pulse" style={{ animationDuration: '6s' }} />
+        <div className="absolute top-1/4 left-1/4 w-[250px] h-[250px] bg-gradient-to-br from-[#FACC15]/8 via-sky-400/5 to-transparent rounded-full blur-3xl z-[1] animate-pulse" style={{ animationDuration: '6s' }} />
 
-        <div className="relative z-10 max-w-4xl space-y-2">
-          <h1 className="font-display italic font-bold text-[36px] text-[#00BFFF] hero-text-shadow leading-tight">
+        <div className="relative z-10 max-w-4xl space-y-2 -ml-6 sm:-ml-8 lg:-ml-20">
+          <h1 className="font-sans font-bold text-[36px] text-[#00BFFF] hero-text-shadow leading-tight">
             Discover
           </h1>
           <h2 className="text-[18px] font-bold text-white hero-text-shadow">
@@ -267,13 +267,13 @@ export default function Home({ onNavigate, user }) {
 
         {/* Profile Card */}
         {currentPremiumUser && (
-          <motion.div 
+          <motion.div
             key={currentPremiumUser.id}
             initial={{ opacity: 0, y: 15, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -15, scale: 0.95 }}
             onClick={() => currentPremiumUser.id && onNavigate('profile', currentPremiumUser.id)}
-            className="relative z-30 cursor-pointer group mt-16 sm:mt-20"
+            className="relative z-30 cursor-pointer group mt-16 sm:mt-20 self-start -ml-6 sm:-ml-8 lg:-ml-20"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -293,21 +293,21 @@ export default function Home({ onNavigate, user }) {
                 src={heroPhotoURL} 
                 alt={currentPremiumUser.name} 
                 onError={() => setHeroImageError(true)}
-                className="w-[70px] h-[110px] object-cover flex-shrink-0"
+                className="w-[80px] h-[120px] object-cover flex-shrink-0"
                 style={{
-                  borderRadius: '12px',
-                  border: '2px solid rgba(255,255,255,0.15)'
+                  borderRadius: '0px',
+                  boxShadow: '0 0 0 2px rgba(255,255,255,0.15)'
                 }}
               />
             ) : (
               <div 
-                className="w-[70px] h-[110px] flex-shrink-0 flex items-center justify-center bg-[#3a3a3a]"
+                className="w-[80px] h-[120px] flex-shrink-0 flex items-center justify-center bg-[#3a3a3a]"
                 style={{
-                  borderRadius: '12px',
-                  border: '2px solid rgba(255,255,255,0.15)'
+                  borderRadius: '0px',
+                  boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.15)'
                 }}
               >
-                <svg viewBox="0 0 100 100" fill="#888888" className="w-8 h-8">
+                <svg viewBox="0 0 100 100" fill="#888888" className="w-10 h-10">
                   <circle cx="50" cy="35" r="20"/>
                   <ellipse cx="50" cy="85" rx="35" ry="25"/>
                 </svg>
@@ -316,9 +316,9 @@ export default function Home({ onNavigate, user }) {
 
             <div className="flex flex-col justify-center min-w-0" style={{ gap: '4px' }}>
               <h3 
-                className="font-bold text-white truncate" 
-                style={{ 
-                  fontSize: '16px', 
+                className="font-bold text-white truncate"
+                style={{
+                  fontSize: '17px',
                   background: 'none',
                   textShadow: '0 1px 4px rgba(0,0,0,0.8)',
                   lineHeight: '1.2'
@@ -327,18 +327,18 @@ export default function Home({ onNavigate, user }) {
                 {currentPremiumUser.name}
               </h3>
               <p 
-                className="capitalize truncate" 
-                style={{ 
-                  color: '#999', 
-                  fontSize: '13px',
+                className="capitalize truncate"
+                style={{
+                  color: '#999',
+                  fontSize: '14px',
                   textShadow: '0 1px 4px rgba(0,0,0,0.8)',
                   lineHeight: '1.2'
                 }}
               >
                 {currentPremiumUser.category || currentPremiumUser.role || 'Actor'}
               </p>
-              
-              <button 
+
+              <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -377,8 +377,8 @@ export default function Home({ onNavigate, user }) {
             </div>
             <div className="flex gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-hide">
               {Array.from({ length: 6 }).map((_, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className="flex flex-col items-center w-[120px] min-w-[120px] flex-shrink-0"
                 >
                   <div className="w-[90px] h-[90px] rounded-full skeleton" />
@@ -404,17 +404,17 @@ export default function Home({ onNavigate, user }) {
               <div className="section-accent-bar"></div>
               <div className="h-7 skeleton w-40" />
             </div>
-            <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="flex flex-col">
               {Array.from({ length: 3 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="bg-[#111] border border-white/5 rounded-3xl p-4 sm:p-5 flex items-center justify-between"
+                  className="flex items-center justify-between py-5 border-b border-white/5 gap-4"
                 >
                   <div className="flex items-center gap-4 min-w-0 flex-1">
                     {/* Rank Number Placeholder */}
                     <div className="w-8 h-8 rounded-lg skeleton shrink-0" />
                     {/* Avatar Placeholder */}
-                    <div className="w-12 h-12 rounded-full skeleton shrink-0" />
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full skeleton shrink-0" />
                     {/* Basic Info Placeholder */}
                     <div className="space-y-2 min-w-0 flex-1">
                       <div className="h-4 skeleton w-1/3" />
@@ -439,10 +439,10 @@ export default function Home({ onNavigate, user }) {
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center">
                     <div className="section-accent-bar"></div>
-                    <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Actor & Actress</h2>
+                    <h2 className="font-sans text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Actor & Actress</h2>
                   </div>
-                  <button 
-                    onClick={() => onNavigate('listing', 'actor')} 
+                  <button
+                    onClick={() => onNavigate('listing', 'actor')}
                     className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
                   >
                     View all
@@ -451,7 +451,7 @@ export default function Home({ onNavigate, user }) {
 
                 {/* Horizontal Scroll Area */}
                 <div className="relative group">
-                  <div 
+                  <div
                     ref={actorsScrollRef}
                     className="flex gap-6 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
                   >
@@ -469,35 +469,35 @@ export default function Home({ onNavigate, user }) {
                       })
                       .slice(0, 10)
                       .map((actor) => (
-                        <div 
-                          key={actor.id} 
+                        <div
+                          key={actor.id}
                           onClick={() => onNavigate('profile', actor.id)}
-                          className="flex flex-col items-center w-[120px] min-w-[120px] flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-1 group/actor"
+                          className="flex flex-col items-center w-[140px] min-w-[140px] flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-1 group/actor"
                         >
-                          <Avatar 
+                          <Avatar
                             user={actor}
-                            size={90}
+                            size="none"
                             name={actor.name}
-                            className="shadow-md"
+                            className="w-[110px] h-[110px] shadow-md border border-white/5"
                           />
                           <p className="text-white font-bold text-[13px] text-center mt-2 truncate w-full">{actor.name}</p>
                           <p className="text-nc-muted text-xs text-center mt-0.5 font-medium truncate w-full flex items-center justify-center gap-1">
-                             <span>{actor.location || 'Nepal'}</span>
-                             <span>•</span>
-                             {getActorJoinStatus(actor) === 'New' ? (
-                               <span className="px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse shrink-0">New</span>
-                             ) : (
-                               <span>{getActorJoinStatus(actor)}</span>
-                             )}
-                           </p>
+                            <span>{actor.location || 'Nepal'}</span>
+                            <span>•</span>
+                            {getActorJoinStatus(actor) === 'New' ? (
+                              <span className="px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse shrink-0">New</span>
+                            ) : (
+                              <span>{getActorJoinStatus(actor)}</span>
+                            )}
+                          </p>
                         </div>
                       ))}
                   </div>
 
                   {showRightArrow && (
-                    <button 
+                    <button
                       onClick={scrollRight}
-                      className="absolute right-0 top-[45px] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#12121A]/90 border border-white/10 flex items-center justify-center text-white font-black text-lg hover:bg-nc-accent hover:border-nc-accent transition-all shadow-xl shadow-black/40"
+                      className="absolute right-0 top-[55px] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#12121A]/90 border border-white/10 flex items-center justify-center text-white font-black text-lg hover:bg-nc-accent hover:border-nc-accent transition-all shadow-xl shadow-black/40"
                     >
                       &gt;
                     </button>
@@ -509,203 +509,203 @@ export default function Home({ onNavigate, user }) {
 
           {/* Categories */}
           <section className="pt-2 pb-10 lg:pt-2 lg:pb-14 bg-nc-dark">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
-            {/* Editorial Header */}
-            <div className="flex items-center justify-between mb-10">
-              <div className="flex items-center">
-                <div className="section-accent-bar"></div>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Browse by Category</h2>
+            <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
+              {/* Editorial Header */}
+              <div className="flex items-center justify-between mb-10">
+                <div className="flex items-center">
+                  <div className="section-accent-bar"></div>
+                  <h2 className="font-sans text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Browse by Category</h2>
+                </div>
+                <button
+                  onClick={() => setShowAllCategories(!showAllCategories)}
+                  className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
+                >
+                  {showAllCategories ? 'Show less' : 'View all'}
+                </button>
               </div>
-              <button 
-                onClick={() => setShowAllCategories(!showAllCategories)} 
-                className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
-              >
-                {showAllCategories ? 'Show less' : 'View all'}
-              </button>
-            </div>
-          {/* ── Category cards with staggered reveal ────────── */}
-          {categoriesReady ? (
-            <div className="flex flex-wrap gap-3 sm:gap-4">
-              {categories?.map((cat, idx) => {
-                const categoryColor = cat.color;
-                const CatIcon = cat.icon; 
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => onNavigate('listing', cat.name)}
-                    style={{ animationDelay: `${idx * 40}ms` }}
-                    className={`cat-card-reveal category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-4 flex-col items-center gap-2.5 group ${
-                      idx >= 4 && !showAllCategories ? 'hidden sm:flex' : 'flex'
-                    }`}
-                  >
-                    {/* Circular glow background container with accent color at 15% opacity */}
-                    <div 
-                      className="relative z-10 w-14 h-14 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
-                      style={{ 
-                        backgroundColor: `${categoryColor}26`, 
-                        color: categoryColor,
-                        boxShadow: `0 0 15px ${categoryColor}15`
-                      }}
-                    >
-                      <CatIcon size={32} strokeWidth={1.5} />
-                    </div>
-                    
-                    <span className="text-sm sm:text-base font-extrabold text-white/90 group-hover:text-white transition-colors relative z-10">{cat.name}</span>
-                    
-                    {/* Talent count or Be the first invite */}
-                    {cat.count === 0 ? (
-                      <span className="text-xs sm:text-sm font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
-                        Be the first →
-                      </span>
-                    ) : (
-                      <span className="text-xs sm:text-sm font-semibold text-nc-muted relative z-10">
-                        {cat.count} {cat.count === 1 ? 'talent' : 'talents'}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <CategorySkeleton />
-          )}
+              {/* ── Category cards with staggered reveal ────────── */}
+              {categoriesReady ? (
+                <div className="flex flex-wrap gap-3 sm:gap-4">
+                  {categories?.map((cat, idx) => {
+                    const categoryColor = cat.color;
+                    const CatIcon = cat.icon;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => onNavigate('listing', cat.name)}
+                        style={{ animationDelay: `${idx * 40}ms` }}
+                        className={`cat-card-reveal category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-5 sm:p-6 flex flex-col items-center gap-3 sm:gap-4 group ${idx >= 4 && !showAllCategories ? 'hidden sm:flex' : 'flex'
+                          }`}
+                      >
+                        {/* Circular glow background container with accent color at 15% opacity */}
+                        <div
+                          className="relative z-10 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
+                          style={{
+                            backgroundColor: `${categoryColor}26`,
+                            color: categoryColor,
+                            boxShadow: `0 0 15px ${categoryColor}15`
+                          }}
+                        >
+                          <CatIcon size={38} className="w-[38px] h-[38px] sm:w-[44px] sm:h-[44px]" strokeWidth={1.5} />
+                        </div>
 
-          {/* CastingCall & Audition Update Strip */}
-          {castingCalls.length > 0 && (
-            <div className="mt-6 lg:mt-8">
+                        <span className="text-base sm:text-lg font-extrabold text-white/90 group-hover:text-white transition-colors relative z-10">{cat.name}</span>
+
+                        {/* Talent count or Be the first invite */}
+                        {cat.count === 0 ? (
+                          <span className="text-xs sm:text-sm font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
+                            Be the first →
+                          </span>
+                        ) : (
+                          <span className="text-xs sm:text-sm font-semibold text-nc-muted relative z-10">
+                            {cat.count} {cat.count === 1 ? 'talent' : 'talents'}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <CategorySkeleton />
+              )}
+
+              {/* CastingCall & Audition Update Strip */}
+              {castingCalls.length > 0 && (
+                <div className="mt-6 lg:mt-8">
+                  {/* Editorial Header */}
+                  <div className="flex items-center justify-between mb-10">
+                    <div className="flex items-center">
+                      <div className="section-accent-bar"></div>
+                      <h2 className="font-sans text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Casting Calls & Auditions</h2>
+                    </div>
+                    <button
+                      onClick={() => onNavigate('casting')}
+                      className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
+                    >
+                      View all
+                    </button>
+                  </div>
+
+                  <div
+                    ref={scrollRef}
+                    className={`flex overflow-x-auto gap-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pr-6 sm:pr-8 mx-[-1.5rem] sm:mx-0 px-6 sm:px-0 ${shouldScroll ? '' : 'justify-start sm:justify-center'}`}
+                  >
+                    {/* Only double the items if we actually need to loop to fill the screen */}
+                    {(castingCalls.length > 3 ? [...castingCalls, ...castingCalls] : castingCalls)
+                      ?.slice(0, 12)
+                      ?.map((item, i) => (
+                        <div
+                          key={i}
+                          onClick={() => onNavigate('casting-detail', item.id)}
+                          className="flex-shrink-0 w-[240px] sm:w-[280px] bg-nc-card rounded-3xl flex items-center p-3 gap-4 border border-transparent snap-start hover:brightness-110 transition-all duration-300 cursor-pointer group"
+                        >
+                          <div className="w-16 h-20 sm:w-16 sm:h-24 bg-nc-surface overflow-hidden rounded-xl shadow-md border border-white/[0.06] group-hover:border-nc-accent/30 transition-colors">
+                            <img src={item.thumbnail || '/movie-banner.png'} alt={item.title} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 min-w-0 pr-2">
+                            <h4 className="text-white font-bold leading-tight truncate text-sm">{item.title}</h4>
+                            <p className="text-nc-muted text-xs mt-1 mb-2.5 line-clamp-2 leading-relaxed">{item.type}</p>
+                            <button className="text-nc-accent text-[11px] font-bold uppercase tracking-wider hover:text-sky-300 self-start transition-colors hidden sm:block">View more</button>
+                            <button className="text-nc-accent text-xs font-bold self-start sm:hidden">View more</button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Trending Talents */}
+          {talents.length > 0 && (
+            <section className="pt-2 pb-8 lg:pt-2 lg:pb-10">
+              <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
                 {/* Editorial Header */}
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center">
                     <div className="section-accent-bar"></div>
-                    <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Casting Calls & Auditions</h2>
+                    <h2 className="font-sans text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Trending Now</h2>
                   </div>
-                  <button 
-                    onClick={() => onNavigate('casting')} 
+                  <button
+                    onClick={() => onNavigate('trending')}
                     className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
                   >
                     View all
                   </button>
                 </div>
-                
-                 <div 
-                  ref={scrollRef}
-                  className={`flex overflow-x-auto gap-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pr-6 sm:pr-8 mx-[-1.5rem] sm:mx-0 px-6 sm:px-0 ${shouldScroll ? '' : 'justify-start sm:justify-center'}`}
-                >
-                  {/* Only double the items if we actually need to loop to fill the screen */}
-                  {(castingCalls.length > 3 ? [...castingCalls, ...castingCalls] : castingCalls)
-                  ?.slice(0, 12)
-                  ?.map((item, i) => (
-                    <div 
-                      key={i} 
-                      onClick={() => onNavigate('casting-detail', item.id)}
-                      className="flex-shrink-0 w-[240px] sm:w-[280px] bg-nc-card rounded-3xl flex items-center p-3 gap-4 border border-transparent snap-start hover:brightness-110 transition-all duration-300 cursor-pointer group"
-                    >
-                    <div className="w-16 h-20 sm:w-16 sm:h-24 bg-nc-surface overflow-hidden rounded-xl shadow-md border border-white/[0.06] group-hover:border-nc-accent/30 transition-colors">
-                      <img src={item.thumbnail || '/movie-banner.png'} alt={item.title} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0 pr-2">
-                      <h4 className="text-white font-bold leading-tight truncate text-sm">{item.title}</h4>
-                      <p className="text-nc-muted text-xs mt-1 mb-2.5 line-clamp-2 leading-relaxed">{item.type}</p>
-                      <button className="text-nc-accent text-[11px] font-bold uppercase tracking-wider hover:text-sky-300 self-start transition-colors hidden sm:block">View more</button>
-                      <button className="text-nc-accent text-xs font-bold self-start sm:hidden">View more</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
+                <div className="flex flex-col">
+                  {talents
+                    .filter(t => !t.deactivated)
+                    .slice()
+                    .sort((a, b) => {
+                      const followersA = a.followers || 0;
+                      const followersB = b.followers || 0;
+                      if (followersB !== followersA) {
+                        return followersB - followersA;
+                      }
+                      const ratingA = parseFloat(a.rating) || 0;
+                      const ratingB = parseFloat(b.rating) || 0;
+                      return ratingB - ratingA;
+                    })
+                    .slice(0, 3)
+                    .map((talent, idx) => (
+                      <div
+                        key={talent.id}
+                        onClick={() => onNavigate('profile', talent.id)}
+                        className="group flex items-center justify-between py-5 border-b border-white/5 hover:border-white/10 active:bg-white/[0.01] transition-all duration-300 cursor-pointer text-left gap-4"
+                      >
+                        <div className="flex items-center gap-4 min-w-0 flex-1">
+                          {/* Rank Number */}
+                          <span className="font-sans text-2xl sm:text-3xl font-black text-white/10 group-hover:text-sky-400/30 transition-colors w-8 text-center shrink-0 select-none">
+                            {idx + 1}
+                          </span>
+                          <Avatar
+                            user={talent}
+                            size="none"
+                            name={talent.name}
+                            className="w-20 h-20 sm:w-24 sm:h-24 border-white/5"
+                          />
 
-      {/* Trending Talents */}
-      {talents.length > 0 && (
-        <section className="pt-2 pb-8 lg:pt-2 lg:pb-10">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
-            {/* Editorial Header */}
-            <div className="flex items-center justify-between mb-10">
-              <div className="flex items-center">
-                <div className="section-accent-bar"></div>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Trending Now</h2>
-              </div>
-              <button 
-                onClick={() => onNavigate('trending')} 
-                className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
-              >
-                View all
-              </button>
-            </div>
-            <div className="flex flex-col gap-3 sm:gap-4">
-              {talents
-                .filter(t => !t.deactivated)
-                .slice()
-                .sort((a, b) => {
-                  const followersA = a.followers || 0;
-                  const followersB = b.followers || 0;
-                  if (followersB !== followersA) {
-                    return followersB - followersA;
-                  }
-                  const ratingA = parseFloat(a.rating) || 0;
-                  const ratingB = parseFloat(b.rating) || 0;
-                  return ratingB - ratingA;
-                })
-                .slice(0, 3)
-                .map((talent, idx) => (
-                <div
-                  key={talent.id}
-                  onClick={() => onNavigate('profile', talent.id)}
-                  className="bg-nc-card hover:brightness-110 border border-transparent rounded-3xl p-4 sm:p-5 transition-all duration-300 cursor-pointer group flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-4 min-w-0 flex-1">
-                    {/* Rank Number */}
-                    <span className="font-display text-2xl sm:text-3xl font-black text-white/10 group-hover:text-sky-400/30 transition-colors w-8 text-center shrink-0 select-none">
-                      {idx + 1}
-                    </span>
-                    <Avatar 
-                      user={talent}
-                      size="md"
-                      name={talent.name}
-                    />
+                          {/* Basic Info */}
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-white text-base sm:text-lg leading-tight truncate">{talent.name}</h3>
+                              {talent.verified && (
+                                <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-nc-muted text-xs sm:text-sm truncate">
+                              <span className="text-sky-400 font-medium truncate shrink-0">@{(talent.username || talent.name.toLowerCase().replace(/\s+/g, '')).replace(/^@/, '')}</span>
+                              <span className="shrink-0">•</span>
+                              <span className="capitalize truncate">{talent.location || 'Nepal'}</span>
+                            </div>
+                            <div className="mt-2 truncate">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/[0.06] text-[10px] font-bold text-nc-muted uppercase tracking-wider group-hover:border-nc-accent/20 truncate max-w-full">
+                                {talent.role?.split(',')[0]}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
 
-                    {/* Basic Info */}
-                    <div className="space-y-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-white text-base sm:text-lg leading-tight truncate">{talent.name}</h3>
-                        {talent.verified && (
-                          <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
-                        )}
+                        {/* Right Status */}
+                        <div className="text-right flex flex-col items-end gap-1 px-2 shrink-0 justify-center">
+                          <span className="px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse shrink-0">New</span>
+                          <div className="mt-auto">
+                            <p className="text-nc-muted text-[10px] sm:text-xs font-medium">
+                              <span className="text-white font-bold">
+                                {(talent.followers || 0) >= 1000
+                                  ? `${((talent.followers || 0) / 1000).toFixed(1).replace(/\.0$/, '')}K`
+                                  : (talent.followers || 0)}
+                              </span> followers
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-nc-muted text-xs sm:text-sm truncate">
-                        <span className="text-sky-400 font-medium truncate shrink-0">@{(talent.username || talent.name.toLowerCase().replace(/\s+/g, '')).replace(/^@/, '')}</span>
-                        <span className="shrink-0">•</span>
-                        <span className="capitalize truncate">{talent.location || 'Nepal'}</span>
-                      </div>
-                      <div className="mt-2 truncate">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/[0.06] text-[10px] font-bold text-nc-muted uppercase tracking-wider group-hover:border-nc-accent/20 truncate max-w-full">
-                          {talent.role?.split(',')[0]}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Status */}
-                  <div className="text-right flex flex-col items-end gap-1 px-2 shrink-0 justify-center">
-                    <span className="px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse shrink-0">New</span>
-                    <div className="mt-auto">
-                      <p className="text-nc-muted text-[10px] sm:text-xs font-medium">
-                        <span className="text-white font-bold">
-                          {(talent.followers || 0) >= 1000 
-                            ? `${((talent.followers || 0)/1000).toFixed(1).replace(/\.0$/, '')}K` 
-                            : (talent.followers || 0)}
-                        </span> followers
-                      </p>
-                    </div>
-                  </div>
+                    ))}
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+              </div>
+            </section>
+          )}
 
 
 
@@ -720,7 +720,7 @@ export default function Home({ onNavigate, user }) {
               <div className="absolute top-0 left-1/3 w-72 h-72 bg-nc-accent/10 rounded-full blur-3xl" />
               <div className="absolute bottom-0 right-1/4 w-56 h-56 bg-[#FACC15]/8 rounded-full blur-3xl" />
               <div className="relative z-10 space-y-5 sm:space-y-7 text-center">
-                <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black text-white px-2 leading-tight">
+                <h2 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-bold text-white px-2 leading-tight">
                   Ready to Get Discovered?
                 </h2>
                 <p className="text-nc-secondary text-sm sm:text-lg max-w-xl mx-auto px-2 leading-relaxed">

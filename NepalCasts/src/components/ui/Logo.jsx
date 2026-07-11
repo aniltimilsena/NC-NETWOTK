@@ -9,7 +9,7 @@ export const LogoIcon = ({ className = 'w-12 h-12' }) => (
   />
 );
 
-const Logo = ({ size = 'md', className = '' }) => {
+const Logo = ({ size = 'md', className = '', showText = true }) => {
   const sizes = {
     sm: { box: 'w-10 h-10', font: 'text-sm' },
     md: { box: 'w-14 h-14', font: 'text-xl' },
@@ -21,12 +21,14 @@ const Logo = ({ size = 'md', className = '' }) => {
   return (
     <Link 
       to="/" 
-      className={`flex items-center gap-2.5 group/logo w-fit mx-auto ${className}`}
+      className={`flex items-center ${showText ? 'gap-2.5' : ''} group/logo w-fit mx-auto ${className}`}
     >
       <LogoIcon className={`${s.box} transition-transform group-hover/logo:scale-110`} />
-      <span className={`${s.font} font-black text-white tracking-wider group-hover/logo:text-[#D4AF37] transition-colors`}>
-        NepalCasts
-      </span>
+      {showText && (
+        <span className={`${s.font} font-black text-white tracking-wider group-hover/logo:text-[#D4AF37] transition-colors`}>
+          NepalCasts
+        </span>
+      )}
     </Link>
   );
 };

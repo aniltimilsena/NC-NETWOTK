@@ -70,7 +70,7 @@ export default function ProfileReviews({
         <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 space-y-6">
           <h2 className="text-xl font-black text-white flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-[#00BFFF]" />
-            Reviews & Testimonials
+            Reviews
           </h2>
 
           {loading ? (

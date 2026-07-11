@@ -290,8 +290,65 @@ export default function ProfilePage({
 
   if (loading || resolvingUid) {
     return (
-      <div className="min-h-screen bg-nc-dark pb-24 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-[#00BFFF] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-nc-dark pb-24 text-left">
+        {/* Cover image skeleton */}
+        <div className="h-[160px] w-full bg-white/[0.02] relative">
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
+        </div>
+
+        {/* Header content skeleton */}
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 relative -mt-16 sm:-mt-24 z-10">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-white/5">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 text-center sm:text-left">
+              {/* Avatar circle */}
+              <div className="w-32 h-32 rounded-full border-4 border-nc-dark skeleton shrink-0" />
+              
+              <div className="space-y-2 pb-2">
+                {/* Name */}
+                <div className="h-6 skeleton w-48 mx-auto sm:mx-0" />
+                {/* Role */}
+                <div className="h-4 skeleton w-24 mx-auto sm:mx-0" />
+                {/* Location */}
+                <div className="h-3.5 skeleton w-32 mx-auto sm:mx-0" />
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="h-10 skeleton w-28 rounded-xl flex-grow sm:flex-initial" />
+              <div className="h-10 skeleton w-28 rounded-xl flex-grow sm:flex-initial" />
+            </div>
+          </div>
+
+          {/* Stats Bar */}
+          <div className="grid grid-cols-3 gap-2 mt-6 pt-4 border-t border-white/5 w-full">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="flex flex-col items-center justify-center py-1 space-y-1.5">
+                <div className="h-5 skeleton w-12" />
+                <div className="h-3 skeleton w-16" />
+              </div>
+            ))}
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border-b border-white/5 gap-6 mt-8 pb-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-5 skeleton w-20" />
+            ))}
+          </div>
+
+          {/* Content Block */}
+          <div className="mt-8 space-y-6">
+            <div className="bg-[#111]/80 border border-white/5 rounded-[2rem] p-6 sm:p-8 space-y-6">
+              <div className="h-5 skeleton w-32" />
+              <div className="space-y-3">
+                <div className="h-3.5 skeleton w-full" />
+                <div className="h-3.5 skeleton w-11/12" />
+                <div className="h-3.5 skeleton w-4/5" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

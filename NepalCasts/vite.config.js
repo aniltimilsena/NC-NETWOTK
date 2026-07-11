@@ -33,6 +33,9 @@ export default defineConfig({
     },
     dedupe: ['react', 'react-dom'],
   },
+  optimizeDeps: {
+    exclude: ['agentation'],
+  },
   define: {
     __BUILD_VERSION__: JSON.stringify(buildVersion),
   },

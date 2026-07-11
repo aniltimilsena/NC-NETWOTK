@@ -299,7 +299,7 @@ export function ActionSearchBar({
                                                 )}
                                             </div>
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-wider text-center py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-400 group-hover:text-white group-hover:border-[#00BFFF] group-hover:bg-[#00BFFF]/10 transition-all duration-300 w-full block">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-center py-2.5 rounded-xl bg-[#0099FF]/5 border border-[#0099FF]/20 text-[#0099FF] group-hover:bg-[#0099FF] group-hover:text-black group-hover:border-transparent group-hover:shadow-md group-hover:shadow-[#0099FF]/20 transition-all duration-300 w-full block">
                                             View Profile
                                         </span>
                                     </li>

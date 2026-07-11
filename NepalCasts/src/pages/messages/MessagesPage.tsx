@@ -85,8 +85,65 @@ export default function MessagesPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-nc-dark pb-24 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-[#00BFFF] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-nc-dark text-white flex">
+        {/* Messages Shell Container */}
+        <div className="max-w-7xl mx-auto w-full px-6 sm:px-8 lg:px-12 py-8 flex gap-6 h-[calc(100vh-80px)]">
+          {/* Left Column: Sidebar Skeleton */}
+          <div className="w-80 border border-white/5 bg-[#111]/80 rounded-[2rem] p-5 hidden md:flex flex-col space-y-6 shrink-0">
+            <div className="flex items-center justify-between pb-2">
+              <div className="h-6 skeleton w-24" />
+              <div className="w-9 h-9 rounded-full skeleton" />
+            </div>
+            <div className="h-10 skeleton rounded-xl w-full" />
+            <div className="flex-1 space-y-4 overflow-hidden pt-2">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="flex items-center gap-3 p-2">
+                  <div className="w-12 h-12 rounded-full skeleton shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-3.5 skeleton w-2/3" />
+                    <div className="h-3 skeleton w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column: Chat Area Skeleton */}
+          <div className="flex-1 border border-white/5 bg-[#111]/80 rounded-[2rem] p-6 flex flex-col justify-between">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full skeleton" />
+                <div className="space-y-1.5">
+                  <div className="h-4 skeleton w-28" />
+                  <div className="h-3 skeleton w-16" />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-8 h-8 rounded-full skeleton" />
+                <div className="w-8 h-8 rounded-full skeleton" />
+              </div>
+            </div>
+
+            {/* Message History */}
+            <div className="flex-1 py-6 space-y-5 overflow-hidden">
+              <div className="flex gap-3 max-w-md">
+                <div className="w-8 h-8 rounded-full skeleton shrink-0" />
+                <div className="h-14 skeleton w-64 rounded-2xl rounded-tl-none" />
+              </div>
+              <div className="flex gap-3 max-w-md ml-auto justify-end">
+                <div className="h-10 skeleton w-48 rounded-2xl rounded-tr-none" />
+              </div>
+              <div className="flex gap-3 max-w-md">
+                <div className="w-8 h-8 rounded-full skeleton shrink-0" />
+                <div className="h-12 skeleton w-56 rounded-2xl rounded-tl-none" />
+              </div>
+            </div>
+
+            {/* Input bar */}
+            <div className="h-12 skeleton rounded-2xl w-full" />
+          </div>
+        </div>
       </div>
     );
   }

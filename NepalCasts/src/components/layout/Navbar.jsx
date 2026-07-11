@@ -174,7 +174,7 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                   </svg>
                 </button>
               )}
-              <Logo onNavigate={onNavigate} size="md" />
+              <Logo onNavigate={onNavigate} size="md" showText={false} />
             </div>
             
             <div className="hidden md:flex items-center justify-center flex-1 mx-8 gap-8">
@@ -479,8 +479,8 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
 
             <div className="w-full max-w-xl md:max-w-4xl lg:max-w-6xl space-y-6 animate-slide-up relative z-10 pb-12">
               <div className="text-center space-y-1.5 mb-6">
-                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Search</h2>
-                <p className="text-nc-muted text-xs font-semibold">Find talent by name, role, or location.</p>
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Search</h2>
+                <p className="text-white/40 text-[11px] sm:text-xs tracking-wider uppercase font-semibold">Find talent by name, role, or location.</p>
               </div>
 
               <div className="relative z-50">

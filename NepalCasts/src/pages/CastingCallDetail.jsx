@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  ChevronLeft, Clock, MapPin 
+  ChevronLeft, Clock, MapPin, Check 
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import SEO from '../components/SEO';
@@ -374,10 +374,91 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-[#0A0A0A] pt-6 flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-[#00BFFF]/30 border-t-[#00BFFF] animate-spin" />
-        <p className="text-gray-500 text-sm font-medium">Loading project details...</p>
+    <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-32 font-sans relative">
+      {/* 1. Banner Skeleton */}
+      <div className="h-64 sm:h-80 w-full relative overflow-hidden bg-white/[0.02]">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
+        <div className="absolute bottom-6 left-6 sm:left-10 right-6 z-20 max-w-4xl space-y-3">
+          <div className="h-5 skeleton w-24 rounded-full" />
+          <div className="h-8 sm:h-10 skeleton w-2/3" />
+        </div>
+      </div>
+
+      {/* 2. Content Skeleton */}
+      <div className="max-w-5xl mx-auto px-6 sm:px-8 mt-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          {/* Main Details (Left Column) */}
+          <div className="flex-[2] space-y-6">
+            <div className="bg-[#111]/80 border border-white/5 rounded-[2rem] p-6 sm:p-8 space-y-8">
+              {/* Description */}
+              <div className="space-y-3">
+                <div className="h-4 skeleton w-36" />
+                <div className="h-px bg-white/5 w-full mt-2" />
+                <div className="space-y-2 pt-2">
+                  <div className="h-3.5 skeleton w-full" />
+                  <div className="h-3.5 skeleton w-11/12" />
+                  <div className="h-3.5 skeleton w-4/5" />
+                </div>
+              </div>
+
+              {/* Requirements */}
+              <div className="space-y-4 pt-2">
+                <div className="h-4 skeleton w-28" />
+                <div className="h-px bg-white/5 w-full mt-2" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                  {[1, 2].map(i => (
+                    <div key={i} className="flex items-center gap-3.5 bg-white/[0.02] p-4 rounded-2xl border border-white/5">
+                      <div className="w-6 h-6 rounded-full skeleton shrink-0" />
+                      <div className="h-3.5 skeleton w-3/4" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Available Roles */}
+              <div className="space-y-4 pt-2">
+                <div className="h-4 skeleton w-32" />
+                <div className="h-px bg-white/5 w-full mt-2" />
+                <div className="space-y-4 pt-2">
+                  {[1].map(i => (
+                    <div key={i} className="bg-white/[0.01] border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-3 flex-1">
+                        <div className="h-5 skeleton w-1/3" />
+                        <div className="h-3.5 skeleton w-24" />
+                        <div className="h-3.5 skeleton w-3/4" />
+                      </div>
+                      <div className="w-16 h-8 skeleton rounded-lg" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar (Right Column) */}
+          <div className="flex-1 space-y-6">
+            <div className="bg-[#111]/80 border border-white/5 rounded-[2rem] p-6 space-y-6">
+              {/* Deadline */}
+              <div className="h-20 skeleton rounded-2xl" />
+              {/* Metadata rows */}
+              <div className="space-y-4 border-t border-b border-white/5 py-5">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="flex justify-between items-center">
+                    <div className="h-3.5 skeleton w-16" />
+                    <div className="h-3.5 skeleton w-20" />
+                  </div>
+                ))}
+              </div>
+              {/* Buttons */}
+              <div className="space-y-3">
+                <div className="h-11 skeleton rounded-xl w-full" />
+                <div className="h-9 skeleton rounded-xl w-full" />
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   );
@@ -417,10 +498,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         <div className="absolute top-6 left-6 sm:left-10 z-20">
           <button
             onClick={() => onNavigate('back')}
-            className="flex items-center gap-1.5 bg-black/60 hover:bg-black/80 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border border-white/10 transition-all shadow-md"
+            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shadow-md"
+            aria-label="Back"
+            title="Go Back"
           >
-            <ChevronLeft size={16} />
-            Back
+            <ChevronLeft className="w-5 h-5" />
           </button>
         </div>
 
@@ -440,64 +522,76 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           {/* Main Details (Left Column) */}
           <div className="flex-[2] space-y-6 text-left">
             
-            {/* Description Section */}
-            <div className="bg-[#111] border border-white/5 rounded-3xl p-6 sm:p-8 space-y-4">
-              <h2 className="text-lg font-black text-white uppercase tracking-wider border-b border-white/5 pb-3">Project Description</h2>
-              <p className="text-sm text-gray-300 leading-relaxed font-medium whitespace-pre-line">
-                {call.description || 'No description provided for this project.'}
-              </p>
-            </div>
-
-            {/* Requirements Details */}
-            <div className="bg-[#111] border border-white/5 rounded-3xl p-6 sm:p-8 space-y-5">
-              <h2 className="text-lg font-black text-white uppercase tracking-wider border-b border-white/5 pb-3">Requirements</h2>
+            {/* Main Project Details Container */}
+            <div className="bg-[#111]/80 backdrop-blur-md border border-white/5 rounded-[2rem] p-6 sm:p-8 space-y-8 shadow-xl">
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {Array.isArray(call.requirements) && call.requirements.length > 0 ? (
-                  call.requirements.map((req, idx) => (
-                    <div key={idx} className="flex items-start gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
-                      <span className="w-5 h-5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] flex items-center justify-center flex-shrink-0 text-xs font-black mt-0.5">✓</span>
-                      <div>
-                        <div className="text-xs font-bold text-white uppercase tracking-wider">Item {idx + 1}</div>
-                        <div className="text-xs text-gray-400 mt-1 font-medium">{req}</div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-xs italic">General auditions open. No specific checklist.</p>
-                )}
+              {/* Description Section */}
+              <div className="space-y-3">
+                <h2 className="text-[11px] font-black text-sky-400 uppercase tracking-[0.2em]">Project Description</h2>
+                <div className="h-px bg-white/5 w-full mt-2" />
+                <p className="text-sm text-gray-300 leading-relaxed font-medium whitespace-pre-line pt-2">
+                  {call.description || 'No description provided for this project.'}
+                </p>
               </div>
-            </div>
 
-            {/* Available Roles */}
-            <div className="bg-[#111] border border-white/5 rounded-3xl p-6 sm:p-8 space-y-4">
-              <h2 className="text-lg font-black text-white uppercase tracking-wider border-b border-white/5 pb-3">Available Roles</h2>
-              <div className="space-y-4">
-                {Array.isArray(call.roles) && call.roles.length > 0 ? (
-                  call.roles.map((role, idx) => (
-                    <div key={idx} className="bg-[#1a1a1a] border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <div className="font-bold text-white text-base">{role.name || 'Untitled Role'}</div>
-                        {role.ageRange && (
-                          <div className="text-xs text-gray-400 font-semibold flex items-center gap-1">
-                            <Clock size={12} className="text-gray-500" />
-                            Age Range: {role.ageRange}
+              {/* Requirements Details */}
+              <div className="space-y-4 pt-2">
+                <h2 className="text-[11px] font-black text-sky-400 uppercase tracking-[0.2em]">Requirements</h2>
+                <div className="h-px bg-white/5 w-full mt-2" />
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                  {Array.isArray(call.requirements) && call.requirements.length > 0 ? (
+                    call.requirements.map((req, idx) => (
+                      <div key={idx} className="flex items-center gap-3.5 bg-white/[0.02] hover:bg-white/[0.04] p-4 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-300">
+                        <div className="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center flex-shrink-0 text-emerald-400">
+                          <Check className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="text-xs text-gray-300 font-bold leading-normal">{req}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-xs italic">General auditions open. No specific checklist.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Available Roles */}
+              <div className="space-y-4 pt-2">
+                <h2 className="text-[11px] font-black text-sky-400 uppercase tracking-[0.2em]">Available Roles</h2>
+                <div className="h-px bg-white/5 w-full mt-2" />
+                
+                <div className="space-y-4 pt-2">
+                  {Array.isArray(call.roles) && call.roles.length > 0 ? (
+                    call.roles.map((role, idx) => (
+                      <div key={idx} className="bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-2.5 min-w-0 flex-1">
+                          <div className="font-extrabold text-white text-base tracking-tight">{role.name || 'Untitled Role'}</div>
+                          
+                          <div className="flex flex-wrap items-center gap-2">
+                            {role.ageRange && (
+                              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/[0.06] text-[10px] font-bold uppercase tracking-wider text-gray-300">
+                                <Clock className="w-3 h-3 text-gray-500" />
+                                Age: {role.ageRange}
+                              </span>
+                            )}
                           </div>
-                        )}
-                        {role.description && (
-                          <p className="text-xs text-gray-400 mt-2 font-medium leading-relaxed max-w-xl">{role.description}</p>
-                        )}
+                          
+                          {role.description && (
+                            <p className="text-xs text-gray-400 mt-2 font-medium leading-relaxed max-w-xl whitespace-pre-line">{role.description}</p>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="px-3 py-1.5 rounded-lg bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] text-xs font-black uppercase tracking-wider">
+                            {role.pay || 'Paid'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="px-3 py-1 rounded bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] text-xs font-bold uppercase tracking-wider">
-                          {role.pay || 'Paid'}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-xs italic">General roles available.</p>
-                )}
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-xs italic">General roles available.</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -584,21 +678,23 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           {/* Sidebar (Right Column) */}
           <div className="flex-1 space-y-6 text-left lg:sticky lg:top-24 h-fit">
             
-            {/* Countdown / Apply Box */}
-            <div className="bg-[#111] border border-white/5 rounded-3xl p-6 space-y-5">
+            {/* Merged professional sidebar card */}
+            <div className="bg-[#111]/80 backdrop-blur-md border border-white/5 rounded-[2rem] p-6 space-y-6 shadow-xl relative overflow-hidden">
+              {/* Subtle accent corner glow */}
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-[#00BFFF]/5 blur-2xl rounded-full pointer-events-none" />
               
-              {/* Countdown timer */}
-              <div className="text-center bg-[#1a1a1a] rounded-2xl p-4 border border-white/5">
-                <div className={`text-xl sm:text-2xl font-black ${isExpired ? 'text-red-500' : 'text-[#FACC15]'} font-mono`}>
+              {/* 1. Countdown timer */}
+              <div className="text-center bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+                <div className={`text-xl sm:text-2xl font-black ${isExpired ? 'text-red-500' : 'text-[#FACC15]'} font-mono tracking-wider`}>
                   {timeLeft || 'Open'}
                 </div>
-                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Application Deadline</div>
+                <div className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1.5">Application Deadline</div>
               </div>
 
-              {/* Metadata rows */}
+              {/* 2. Metadata rows */}
               <div className="space-y-3.5 border-t border-b border-white/5 py-4 text-xs font-semibold">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 uppercase tracking-wider">Pay / Budget</span>
+                  <span className="text-gray-500 uppercase tracking-wider text-[10px]">Pay / Budget</span>
                   <span className="text-white font-bold flex items-center gap-1">
                     {call.budget && !call.budget.toLowerCase().includes('competitive') && !call.budget.toLowerCase().includes('rs') && (
                       <span className="text-gray-500 text-xs font-black">Rs.</span>
@@ -607,135 +703,138 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 uppercase tracking-wider">Location</span>
+                  <span className="text-gray-500 uppercase tracking-wider text-[10px]">Location</span>
                   <span className="text-white flex items-center gap-1 font-bold">
                     <MapPin size={12} className="text-gray-500" />
                     {call.location}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 uppercase tracking-wider">Target Type</span>
+                  <span className="text-gray-500 uppercase tracking-wider text-[10px]">Target Type</span>
                   <span className="text-white font-bold">{call.type}</span>
                 </div>
               </div>
 
-              {applyAlert.type && (
-                <InlineAlert
-                  type={applyAlert.type}
-                  message={applyAlert.message}
-                  detail={applyAlert.detail}
-                  onDismiss={() => setApplyAlert({ type: null, message: null, detail: null })}
-                />
-              )}
-
-              {isCreator ? (
-                <Button
-                  className="w-full bg-red-600 hover:bg-red-700 text-white border-none rounded-xl"
-                  size="lg"
-                  onClick={handleDelete}
-                  loading={deleting}
-                  disabled={deleting}
-                >
-                  Delete Call
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    className={`w-full rounded-xl ${
-                      applicationStatus === 'accepted'
-                        ? 'bg-green-600/20 text-green-400 border border-green-500/30 cursor-default hover:bg-green-600/20'
-                        : applicationStatus === 'rejected'
-                        ? 'bg-red-600/20 text-red-400 border border-red-500/30 cursor-default hover:bg-red-600/20'
-                        : 'bg-[#00BFFF] text-black hover:opacity-90'
-                    }`}
-                    size="lg"
-                    onClick={handleApply}
-                    disabled={applied || applying || isExpired}
-                  >
-                    {applying ? (
-                      'Submitting...'
-                    ) : applicationStatus === 'accepted' ? (
-                      '✓ Application Accepted'
-                    ) : applicationStatus === 'rejected' ? (
-                      '✕ Application Rejected'
-                    ) : applied ? (
-                      '✓ Applied (Pending)'
-                    ) : isExpired ? (
-                      'Audition Closed'
-                    ) : (
-                      'Apply Now'
-                    )}
-                  </Button>
-
-                  {applied && applicationId && applicationStatus === 'pending' && (
-                    <button
-                      onClick={handleCancelApplication}
-                      disabled={cancelling}
-                      className="w-full py-2.5 rounded-xl border border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2"
-                    >
-                      Withdraw Application
-                    </button>
-                  )}
-
-                  {saveAlert.type && (
-                    <InlineAlert
-                      type={saveAlert.type}
-                      message={saveAlert.message}
-                      onDismiss={() => setSaveAlert({ type: null, message: null })}
-                    />
-                  )}
-                  <button
-                    onClick={handleSave}
-                    disabled={saved}
-                    className={`w-full text-xs font-bold uppercase tracking-widest py-2 rounded-xl border border-white/5 bg-white/5 transition-colors ${
-                      saved ? 'text-[#00BFFF] cursor-default' : 'text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    {saved ? '🔖 Saved' : '🔖 Save for Later'}
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Casting Director Card */}
-            {directorProfile && (
-              <div className="bg-[#111] border border-white/5 rounded-3xl p-5 space-y-4">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Posted By</h3>
-                <div className="flex items-center gap-3">
-                  <Avatar 
-                    src={directorProfile.image || directorProfile.photoURL} 
-                    size={48} 
-                    name={directorProfile.name}
-                    className="border-2 border-[#00BFFF]"
+              {/* 3. Apply Actions */}
+              <div className="space-y-3">
+                {applyAlert.type && (
+                  <InlineAlert
+                    type={applyAlert.type}
+                    message={applyAlert.message}
+                    detail={applyAlert.detail}
+                    onDismiss={() => setApplyAlert({ type: null, message: null, detail: null })}
                   />
-                  <div>
-                    <h4 className="font-bold text-white text-sm">{directorProfile.name}</h4>
-                    <p className="text-[11px] text-gray-400 capitalize font-medium">{directorProfile.role || 'Casting Director'}</p>
-                    {directorProfile.openToWork && (
-                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-green-400 bg-green-500/5 px-2 py-0.5 rounded-full border border-green-500/10 mt-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                        Open to cast
-                      </span>
+                )}
+
+                {isCreator ? (
+                  <Button
+                    className="w-full bg-red-600/20 text-red-500 border border-red-500/30 hover:bg-red-600 hover:text-white rounded-xl transition-all font-bold uppercase tracking-wider text-xs"
+                    size="lg"
+                    onClick={handleDelete}
+                    loading={deleting}
+                    disabled={deleting}
+                  >
+                    Delete Call
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      className={`w-full rounded-xl transition-all font-bold uppercase tracking-wider text-xs ${
+                        applicationStatus === 'accepted'
+                          ? 'bg-green-600/20 text-green-400 border border-green-500/30 cursor-default hover:bg-green-600/20'
+                          : applicationStatus === 'rejected'
+                          ? 'bg-red-600/20 text-red-400 border border-red-500/30 cursor-default hover:bg-red-600/20'
+                          : 'bg-[#00BFFF] text-black hover:bg-[#0099e6]'
+                      }`}
+                      size="lg"
+                      onClick={handleApply}
+                      disabled={applied || applying || isExpired}
+                    >
+                      {applying ? (
+                        'Submitting...'
+                      ) : applicationStatus === 'accepted' ? (
+                        '✓ Application Accepted'
+                      ) : applicationStatus === 'rejected' ? (
+                        '✕ Application Rejected'
+                      ) : applied ? (
+                        '✓ Applied (Pending)'
+                      ) : isExpired ? (
+                        'Audition Closed'
+                      ) : (
+                        'Apply Now'
+                      )}
+                    </Button>
+
+                    {applied && applicationId && applicationStatus === 'pending' && (
+                      <button
+                        onClick={handleCancelApplication}
+                        disabled={cancelling}
+                        className="w-full py-2.5 rounded-xl border border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+                      >
+                        Withdraw Application
+                      </button>
                     )}
+
+                    {saveAlert.type && (
+                      <InlineAlert
+                        type={saveAlert.type}
+                        message={saveAlert.message}
+                        onDismiss={() => setSaveAlert({ type: null, message: null })}
+                      />
+                    )}
+                    
+                    <button
+                      onClick={handleSave}
+                      disabled={saved}
+                      className={`w-full text-xs font-bold uppercase tracking-widest py-2.5 rounded-xl border border-white/5 bg-white/5 transition-colors ${
+                        saved ? 'text-[#00BFFF] cursor-default' : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      {saved ? '🔖 Saved' : '🔖 Save for Later'}
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* 4. Casting Director Section (Nested in same card!) */}
+              {directorProfile && (
+                <div className="border-t border-white/5 pt-5 space-y-4">
+                  <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Posted By</h3>
+                  <div className="flex items-center gap-3.5 bg-white/[0.01] border border-white/5 p-3.5 rounded-2xl">
+                    <Avatar 
+                      src={directorProfile.image || directorProfile.photoURL} 
+                      size={44} 
+                      name={directorProfile.name}
+                      className="border border-[#00BFFF]/20"
+                    />
+                    <div className="min-w-0">
+                      <h4 className="font-extrabold text-white text-sm truncate leading-tight">{directorProfile.name}</h4>
+                      <p className="text-[10px] text-gray-400 capitalize font-semibold mt-0.5">{directorProfile.role || 'Casting Director'}</p>
+                      {directorProfile.openToWork && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-green-400 bg-green-500/5 px-2 py-0.5 rounded-full border border-green-500/10 mt-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                          Open to cast
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button 
+                      onClick={() => onNavigate('profile', directorProfile.id)}
+                      className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-xs font-bold uppercase tracking-wider text-gray-300 transition-colors text-center"
+                    >
+                      Profile
+                    </button>
+                    <button 
+                      onClick={() => onNavigate('messages', directorProfile.id)}
+                      className="w-full py-2 bg-[#00BFFF]/10 hover:bg-[#00BFFF]/20 border border-[#00BFFF]/20 rounded-xl text-xs font-bold uppercase tracking-wider text-[#00BFFF] transition-colors text-center"
+                    >
+                      Contact
+                    </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2.5 pt-2">
-                  <button 
-                    onClick={() => onNavigate('profile', directorProfile.id)}
-                    className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-xs font-bold uppercase tracking-wider text-gray-300 transition-colors text-center"
-                  >
-                    Profile
-                  </button>
-                  <button 
-                    onClick={() => onNavigate('messages', directorProfile.id)}
-                    className="w-full py-2 bg-[#00BFFF]/10 hover:bg-[#00BFFF]/20 border border-[#00BFFF]/20 rounded-xl text-xs font-bold uppercase tracking-wider text-[#00BFFF] transition-colors text-center"
-                  >
-                    Contact
-                  </button>
-                </div>
-              </div>
-            )}
-
+              )}
+            </div>
           </div>
 
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Crown, MapPin, Search, TrendingUp
+import { Crown, MapPin, Search, TrendingUp, ChevronLeft
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { 
@@ -213,6 +213,18 @@ export default function Trending({ onNavigate }) {
       />
 
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        {/* Back Button */}
+        <div className="mb-6 flex justify-start">
+          <button
+            onClick={() => onNavigate('back')}
+            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors"
+            aria-label="Back"
+            title="Go Back"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        </div>
+
         {/* Header with yellow left bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5 mb-10 text-left">
           <div className="flex items-start gap-4">
@@ -281,9 +293,73 @@ export default function Trending({ onNavigate }) {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 space-y-4">
-            <div className="w-10 h-10 border-4 border-yellow-400/20 border-t-yellow-400 rounded-full animate-spin"></div>
-            <p className="text-xs text-gray-500 font-medium">Crunching real-time stats...</p>
+          <div className="space-y-12">
+            {/* Podium Skeleton (Desktop View) */}
+            {selectedCategory === 'All' && (
+              <div className="hidden md:flex justify-center items-end gap-6 max-w-4xl mx-auto pt-8 pb-4 relative">
+                {/* Backdrop ambient glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-gradient-to-r from-yellow-500/5 via-blue-500/5 to-purple-500/5 blur-[80px] rounded-full pointer-events-none" />
+                
+                {/* #2 Rank Skeleton */}
+                <div className="flex-1 flex flex-col items-center">
+                  <div className="w-24 h-24 rounded-full skeleton border border-white/5 mb-6" />
+                  <div className="h-4 skeleton w-24 mb-2" />
+                  <div className="h-3 skeleton w-16 mb-4" />
+                  <div className="h-8 skeleton w-20 rounded-full" />
+                </div>
+                
+                {/* #1 Rank Skeleton */}
+                <div className="flex-1 flex flex-col items-center">
+                  <Crown className="w-8 h-8 text-yellow-400/20 mb-2 fill-yellow-400/5 animate-pulse" />
+                  <div className="w-32 h-32 rounded-full skeleton border-2 border-yellow-400/10 mb-6" />
+                  <div className="h-5 skeleton w-28 mb-2" />
+                  <div className="h-3.5 skeleton w-20 mb-4" />
+                  <div className="h-9 skeleton w-24 rounded-full" />
+                </div>
+                
+                {/* #3 Rank Skeleton */}
+                <div className="flex-1 flex flex-col items-center">
+                  <div className="w-20 h-20 rounded-full skeleton border border-white/5 mb-6" />
+                  <div className="h-4 skeleton w-20 mb-2" />
+                  <div className="h-3 skeleton w-16 mb-4" />
+                  <div className="h-8 skeleton w-20 rounded-full" />
+                </div>
+              </div>
+            )}
+
+            {/* List Skeleton */}
+            <div className="flex flex-col">
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between gap-4 py-5 border-b border-white/5"
+                >
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    {/* Rank Placeholder */}
+                    <div className="w-10 sm:w-14 h-8 rounded-lg skeleton shrink-0" />
+                    
+                    {/* Avatar Placeholder */}
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full skeleton shrink-0" />
+                    
+                    {/* Details Placeholder */}
+                    <div className="space-y-2 min-w-0 flex-1">
+                      <div className="h-4 skeleton w-1/3" />
+                      <div className="h-3 skeleton w-1/2" />
+                      <div className="h-3.5 skeleton w-1/4 mt-1" />
+                    </div>
+                  </div>
+                  
+                  {/* Followers & Follow Button Placeholders */}
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="text-right space-y-1.5 hidden sm:block">
+                      <div className="h-3.5 skeleton w-16 ml-auto" />
+                      <div className="h-3 skeleton w-20 ml-auto" />
+                    </div>
+                    <div className="w-20 sm:w-24 h-9 sm:h-10 rounded-xl skeleton" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : rankedProfiles.length === 0 ? (
           <div className="text-center py-24 bg-[#111] border border-dashed border-white/5 rounded-[2.5rem]">
@@ -377,7 +453,7 @@ export default function Trending({ onNavigate }) {
                         </div>
 
                         {isNew && (
-                          <span className="self-center px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse">
+                          <span className="self-center px-2 py-0.5 rounded-md text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 font-extrabold uppercase tracking-wide animate-pulse">
                             New
                           </span>
                         )}
@@ -406,7 +482,7 @@ export default function Trending({ onNavigate }) {
                 {selectedCategory === 'All' ? 'All Ranked Talent' : `${getCategoryConfig(selectedCategory).label} Rankings`}
               </h2>
 
-              <div className="flex flex-col gap-4 text-left">
+              <div className="flex flex-col text-left">
                 {remainingList.slice(0, visibleCount).map((prof, index) => {
                   const rank = index + 1;
                   const isFollowing = followingIds.includes(prof.id);
@@ -420,7 +496,7 @@ export default function Trending({ onNavigate }) {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: (index % 10) * 0.05 }}
                       onClick={() => onNavigate('profile', prof.id)}
-                      className="group relative bg-[#111]/80 border border-white/5 hover:border-white/10 rounded-3xl p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer transition-all duration-300 hover:shadow-[0_12px_24px_rgba(0,0,0,0.4)]"
+                      className="group flex items-center justify-between gap-4 py-5 border-b border-white/5 hover:border-white/10 active:bg-white/[0.01] transition-all duration-300 cursor-pointer text-left"
                     >
                       {/* Left Side: Rank, Avatar and details */}
                       <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
@@ -439,9 +515,9 @@ export default function Trending({ onNavigate }) {
                         <div className="relative shrink-0">
                           <Avatar
                             user={prof}
-                            size="md"
+                            size="none"
                             name={prof.name}
-                            className="w-14 h-14 sm:w-16 sm:h-16 border-white/5 group-hover:border-white/20"
+                            className="w-20 h-20 sm:w-24 sm:h-24 border-white/5 group-hover:border-white/20"
                           />
                           {prof.openToWork && (
                             <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5">
@@ -458,7 +534,7 @@ export default function Trending({ onNavigate }) {
                               {prof.name}
                             </h3>
                             {isNew && (
-                              <span className="shrink-0 px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse">
+                              <span className="shrink-0 px-2 py-0.5 rounded-md text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 font-extrabold uppercase tracking-wide animate-pulse">
                                 New
                               </span>
                             )}

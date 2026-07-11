@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  User, Mail, Lock, Eye, EyeOff, Check, AlertCircle, ArrowLeft, Loader2, Film, UserCheck, ShieldAlert, Heart
+  User, Mail, Lock, Eye, EyeOff, Check, AlertCircle, ArrowLeft, Loader2, Film, UserCheck, ShieldAlert, Heart, ChevronLeft
 } from 'lucide-react';
 import { auth, googleProvider } from '../lib/firebase';
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
@@ -416,10 +416,11 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
           <button 
             onClick={handleBack} 
             type="button"
-            className="absolute top-6 left-6 flex items-center gap-1.5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 rounded-full px-3.5 py-1.5 transition-all text-xs font-bold group cursor-pointer z-20"
+            className="absolute top-6 left-6 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-all shadow-md z-20 cursor-pointer"
+            aria-label="Back"
+            title="Go Back"
           >
-            <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-            <span>{t('lbl_back')}</span>
+            <ChevronLeft className="w-5 h-5" />
           </button>
 
           {/* Logo component */}
