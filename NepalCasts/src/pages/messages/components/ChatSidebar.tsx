@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Search, MessageSquare, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, MessageSquare, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, ArrowLeft } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
 
 interface ChatSidebarProps {
@@ -35,6 +36,7 @@ export default function ChatSidebar({
   currentUser,
   onStartNewChat
 }: ChatSidebarProps) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'chats' | 'calls'>('chats');
   const [query, setQuery] = useState('');
 
@@ -47,7 +49,16 @@ export default function ChatSidebar({
       {/* Sidebar Header */}
       <div className="p-4 pt-6 md:p-4 border-b border-white/5 space-y-3">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-black text-white">Inbox</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/')}
+              className="p-1.5 hover:bg-white/5 rounded-xl text-nc-muted hover:text-white transition-colors"
+              title="Go to Home"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <h2 className="text-lg font-black text-white">Inbox</h2>
+          </div>
           <button
             onClick={onStartNewChat}
             className="w-8 h-8 rounded-xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] hover:bg-[#00BFFF]/20 transition-all flex items-center justify-center"
