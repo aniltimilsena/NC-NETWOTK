@@ -628,7 +628,7 @@ export default function Home({ onNavigate, user }) {
                 <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Trending Now</h2>
               </div>
               <button 
-                onClick={() => onNavigate('listing')} 
+                onClick={() => onNavigate('trending')} 
                 className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
               >
                 View all
