@@ -90,6 +90,7 @@ export default function SecuritySettings({
             <input
               type="password"
               value={currentPassword}
+              placeholder="••••••••"
               onChange={(e) => setCurrentPassword(e.target.value)}
               className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white outline-none"
             />
@@ -101,6 +102,7 @@ export default function SecuritySettings({
               <input
                 type="password"
                 value={newPassword}
+                placeholder="••••••••"
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white outline-none"
               />
@@ -111,6 +113,7 @@ export default function SecuritySettings({
               <input
                 type="password"
                 value={confirmPassword}
+                placeholder="••••••••"
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white outline-none"
               />
