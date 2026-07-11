@@ -449,8 +449,11 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-start pt-12 px-4 shadow-[0_0_50px_rgba(56,189,248,0.1)]"
+            className="fixed inset-0 z-[100] bg-[#121212]/95 backdrop-blur-md flex flex-col items-center justify-start pt-16 px-4 overflow-y-auto"
           >
+            {/* Soft gold glow backdrop */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-gradient-to-r from-[#D4AF37]/10 to-transparent blur-[100px] rounded-full pointer-events-none z-0" />
+
             {/* Close Button */}
             <button 
               onClick={() => setShowSearchOverlay(false)}
@@ -463,10 +466,10 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
               </svg>
             </button>
 
-            <div className="w-full max-w-xl space-y-6 animate-slide-up">
-              <div className="text-center space-y-1 mb-6">
-                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Search</h2>
-                <p className="text-[#888] text-sm font-medium">Find talent by name, role, or location.</p>
+            <div className="w-full max-w-xl space-y-6 animate-slide-up relative z-10 pb-12">
+              <div className="text-center space-y-1.5 mb-6">
+                <h2 className="text-4xl sm:text-5xl font-light tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-[#D4AF37] uppercase">Search</h2>
+                <p className="text-white/40 text-xs italic font-light tracking-wide">Find talent by name, role, or location.</p>
               </div>
 
               <div className="relative z-50">
@@ -482,11 +485,26 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                 />
               </div>
 
-              {/* Quick Filters / Tips */}
-              <div className="flex flex-wrap justify-center gap-2 mt-8 opacity-60">
+              {/* Editorial Style Chips */}
+              <div className="flex flex-wrap justify-center gap-3 mt-8 relative z-10">
                 {['Actors', 'Directors', 'Casting Calls', 'Movies'].map(tag => (
-                  <button key={tag} className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-xs font-bold text-[#888] hover:text-white hover:bg-white/10 transition-all">
-                    Search for {tag}
+                  <button 
+                    key={tag} 
+                    onClick={() => {
+                      if (tag === 'Casting Calls') {
+                        setShowSearchOverlay(false);
+                        navigate('/casting');
+                      } else if (tag === 'Movies') {
+                        setShowSearchOverlay(false);
+                        navigate('/');
+                      } else {
+                        setShowSearchOverlay(false);
+                        navigate(`/listing?role=${tag.toLowerCase()}`);
+                      }
+                    }}
+                    className="px-5 py-2 border border-white/10 hover:border-[#D4AF37] text-white/50 hover:text-[#D4AF37] transition-all duration-300 uppercase tracking-widest text-[10px] font-bold rounded-lg bg-black/20"
+                  >
+                    {tag}
                   </button>
                 ))}
               </div>
