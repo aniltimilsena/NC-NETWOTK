@@ -32,6 +32,7 @@ export default function SettingsPage({
   } = useSettings(user);
 
   const [activeTab, setActiveTab] = useState<'about' | 'skills' | 'experience' | 'password' | 'notifications' | 'data'>('about');
+  const [currentMobileView, setCurrentMobileView] = useState<'menu' | 'content'>('menu');
 
   const tabsConfig = [
     { id: 'about', label: 'Edit Profile', icon: User },
@@ -67,23 +68,36 @@ export default function SettingsPage({
     );
   }
 
+  const activeTabLabel = tabsConfig.find(t => t.id === activeTab)?.label || 'Account Settings';
+
+  const handleBack = () => {
+    if (currentMobileView === 'content') {
+      setCurrentMobileView('menu');
+    } else {
+      onNavigate('profile', profile.uid);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-nc-dark pb-24">
       {/* Header */}
       <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 pt-6 flex items-center gap-4">
         <button
-          onClick={() => onNavigate('profile', profile.uid)}
+          onClick={handleBack}
           className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors"
-          aria-label="Back to Profile"
+          aria-label="Back"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-2xl font-black text-white">Account Settings</h1>
+        <h1 className="text-2xl font-black text-white">
+          <span className="md:inline hidden">Account Settings</span>
+          <span className="md:hidden inline">{currentMobileView === 'content' ? activeTabLabel : 'Account Settings'}</span>
+        </h1>
       </div>
 
       <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 mt-8 grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Left Hand Sidebar Navigation */}
-        <div className="md:col-span-1 space-y-1">
+        <div className={`md:col-span-1 space-y-1 ${currentMobileView === 'menu' ? 'block' : 'hidden md:block'}`}>
           {tabsConfig.map((tab) => {
             const Icon = tab.icon;
             const isSelected = activeTab === tab.id;
@@ -91,7 +105,10 @@ export default function SettingsPage({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setCurrentMobileView('content');
+                }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all text-left ${
                   isSelected 
                     ? 'bg-[#00BFFF]/10 text-[#00BFFF] border border-[#00BFFF]/20' 
@@ -106,7 +123,7 @@ export default function SettingsPage({
         </div>
 
         {/* Right Hand Settings Details Panel */}
-        <div className="md:col-span-3 animate-fade-in">
+        <div className={`md:col-span-3 animate-fade-in ${currentMobileView === 'content' ? 'block' : 'hidden md:block'}`}>
           {activeTab === 'about' && (
             <ProfileSettings 
               profile={profile}
