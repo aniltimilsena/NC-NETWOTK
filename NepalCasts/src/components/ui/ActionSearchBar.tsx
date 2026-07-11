@@ -49,7 +49,7 @@ export function ActionSearchBar({
 
         setHistory((prev) => {
             const filtered = prev.filter((item) => item.toLowerCase() !== cleanTerm.toLowerCase());
-            const updated = [cleanTerm, ...filtered].slice(0, 5); // Keep latest 5 items
+            const updated = [cleanTerm, ...filtered].slice(0, 6); // Keep latest 6 items
             try {
                 localStorage.setItem("nc_search_history", JSON.stringify(updated));
             } catch (err) {
@@ -192,7 +192,7 @@ export function ActionSearchBar({
 
             {/* Results Container - Relative & Transparent */}
             <div className="relative w-full bg-transparent z-50 overflow-hidden text-left pt-2">
-                <div className="max-h-[380px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] space-y-6">
+                <div className="max-h-[380px] md:max-h-[580px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] space-y-6">
                     {/* Recent Searches Section */}
                     {!query && history.length > 0 && (
                         <div>
@@ -207,7 +207,7 @@ export function ActionSearchBar({
                                     Clear All
                                 </button>
                             </div>
-                            <ul className="space-y-1.5">
+                            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                                 {history.map((term, idx) => (
                                     <li 
                                         key={`${term}-${idx}`}
@@ -260,47 +260,46 @@ export function ActionSearchBar({
                                 {query ? `No profiles found for "${query}"` : "No profiles available"}
                             </div>
                         ) : (
-                            <ul className="space-y-2">
+                            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                                 {profiles.map((profile) => (
                                     <li
                                         key={profile.uid}
                                         onClick={() => handleProfileSelect(profile)}
-                                        className="group p-3 flex items-center justify-between bg-white/[0.01] hover:bg-white/[0.04] active:bg-white/[0.02] border border-white/[0.03] hover:border-white/10 rounded-2xl cursor-pointer transition-all duration-300"
+                                        className="group p-4 flex flex-col justify-between bg-white/[0.01] hover:bg-white/[0.04] active:bg-white/[0.02] border border-white/[0.03] hover:border-white/10 rounded-2xl cursor-pointer transition-all duration-300 gap-4"
                                     >
-                                        <div className="flex items-center gap-3.5 min-w-0">
-                                            <div className="w-10 h-10 flex-shrink-0">
+                                        <div className="flex items-start gap-3.5 min-w-0">
+                                            <div className="w-12 h-12 flex-shrink-0">
                                                 <Avatar 
                                                     user={{
                                                         image: profile.image,
                                                         gender: profile.gender,
                                                         displayName: profile.name
                                                     }}
-                                                    size="sm"
+                                                    size="md"
                                                     name={profile.name}
                                                     verified={profile.verified}
                                                 />
                                             </div>
 
-                                            <div className="min-w-0">
-                                                <div className="text-sm font-bold text-white group-hover:text-[#00BFFF] transition-colors flex items-center gap-1.5">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="text-sm font-bold text-white group-hover:text-[#00BFFF] transition-colors flex items-center gap-1.5 truncate">
                                                     {profile.name}
                                                     {profile.verified && (
                                                         <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
                                                     )}
                                                 </div>
-                                                <div className="text-xs text-gray-400 flex items-center gap-1">
-                                                    <span>{profile.role}</span>
-                                                    {profile.location && (
-                                                        <>
-                                                            <span>·</span>
-                                                            <MapPin className="w-3 h-3 text-gray-600 shrink-0" />
-                                                            <span className="truncate">{profile.location}</span>
-                                                        </>
-                                                    )}
+                                                <div className="text-xs text-gray-400 mt-1">
+                                                    {profile.role}
                                                 </div>
+                                                {profile.location && (
+                                                    <div className="text-xs text-gray-500 flex items-center gap-1 mt-1 truncate">
+                                                        <MapPin className="w-3 h-3 text-gray-600 shrink-0" />
+                                                        <span>{profile.location}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-gray-400 group-hover:text-white group-hover:border-[#00BFFF] group-hover:bg-[#00BFFF]/10 transition-all duration-300">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-center py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-400 group-hover:text-white group-hover:border-[#00BFFF] group-hover:bg-[#00BFFF]/10 transition-all duration-300 w-full block">
                                             View Profile
                                         </span>
                                     </li>

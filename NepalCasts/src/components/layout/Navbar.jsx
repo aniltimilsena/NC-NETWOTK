@@ -477,7 +477,7 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
               </svg>
             </button>
 
-            <div className="w-full max-w-xl space-y-6 animate-slide-up relative z-10 pb-12">
+            <div className="w-full max-w-xl md:max-w-4xl lg:max-w-6xl space-y-6 animate-slide-up relative z-10 pb-12">
               <div className="text-center space-y-1.5 mb-6">
                 <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Search</h2>
                 <p className="text-nc-muted text-xs font-semibold">Find talent by name, role, or location.</p>
