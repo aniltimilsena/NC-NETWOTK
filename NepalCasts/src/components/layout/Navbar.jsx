@@ -495,30 +495,6 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                   }}
                 />
               </div>
-
-              {/* Editorial Style Chips */}
-              <div className="flex flex-wrap justify-center gap-3 mt-8 relative z-10">
-                {['Actors', 'Directors', 'Casting Calls', 'Movies'].map(tag => (
-                  <button 
-                    key={tag} 
-                    onClick={() => {
-                      if (tag === 'Casting Calls') {
-                        setShowSearchOverlay(false);
-                        navigate('/casting');
-                      } else if (tag === 'Movies') {
-                        setShowSearchOverlay(false);
-                        navigate('/');
-                      } else {
-                        setShowSearchOverlay(false);
-                        navigate(`/listing?role=${tag.toLowerCase()}`);
-                      }
-                    }}
-                    className="px-5 py-2 border border-white/10 hover:border-[#D4AF37] text-white/50 hover:text-[#D4AF37] transition-all duration-300 uppercase tracking-widest text-[10px] font-bold rounded-lg bg-black/20"
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
             </div>
           </motion.div>
         )}
