@@ -19,18 +19,47 @@ export default function MessageInput({
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const typingTimeoutRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!text.trim()) return;
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
-    onSend(text.trim(), 'text');
-    setText('');
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!text.trim() && !selectedFile) return;
+
     onTyping(false);
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
+    }
+
+    if (selectedFile) {
+      setUploading(true);
+      setUploadProgress(0);
+      try {
+        const result = await uploadMedia(selectedFile, 'chat', (progress) => {
+          setUploadProgress(progress);
+        });
+        onSend(result.url, result.type);
+        handleRemovePreview();
+      } catch (err: any) {
+        console.error('Failed to upload chat media:', err);
+        alert(err.message || 'Failed to upload file.');
+      } finally {
+        setUploading(false);
+        setUploadProgress(0);
+      }
+    } else {
+      onSend(text.trim(), 'text');
+      setText('');
     }
   };
 
@@ -50,7 +79,7 @@ export default function MessageInput({
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -59,24 +88,21 @@ export default function MessageInput({
       return;
     }
 
-    setUploading(true);
-    setUploadProgress(0);
+    setSelectedFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
 
-    try {
-      const result = await uploadMedia(file, 'chat', (progress) => {
-        setUploadProgress(progress);
-      });
-      onSend(result.url, result.type);
-    } catch (err: any) {
-      console.error('Failed to upload chat media:', err);
-      alert(err.message || 'Failed to upload file.');
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
+  };
+
+  const handleRemovePreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(null);
+    setPreviewUrl(null);
   };
 
   return (
@@ -93,6 +119,33 @@ export default function MessageInput({
             className="text-nc-muted hover:text-white transition-colors"
           >
             <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Media Preview Box */}
+      {previewUrl && selectedFile && (
+        <div className="relative inline-block bg-white/5 border border-white/5 p-2 rounded-2xl max-w-[200px] text-left animate-in fade-in zoom-in duration-200">
+          {selectedFile.type.startsWith('image/') ? (
+            <img 
+              src={previewUrl} 
+              alt="Preview" 
+              className="max-w-[180px] max-h-[120px] rounded-xl object-cover border border-white/10" 
+            />
+          ) : (
+            <video 
+              src={previewUrl} 
+              className="max-w-[180px] max-h-[120px] rounded-xl object-cover border border-white/10" 
+            />
+          )}
+          <button
+            type="button"
+            onClick={handleRemovePreview}
+            disabled={uploading}
+            className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all z-10"
+            title="Remove attachment"
+          >
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
@@ -145,7 +198,7 @@ export default function MessageInput({
 
         <button
           type="submit"
-          disabled={!text.trim() || uploading}
+          disabled={(!text.trim() && !selectedFile) || uploading}
           className="w-11 h-11 bg-[#00BFFF] hover:bg-[#00BFFF]/80 disabled:opacity-50 disabled:hover:bg-[#00BFFF] rounded-2xl flex items-center justify-center text-black font-black transition-all shrink-0 active:scale-95"
         >
           <Send className="w-4 h-4" />
