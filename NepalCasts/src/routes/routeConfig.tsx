@@ -1,5 +1,5 @@
 import React, { lazy } from 'react';
-import { Route, Routes, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Route, Routes, Navigate, useNavigate, useParams, Outlet } from 'react-router-dom';
 import PublicLayout from '../layouts/PublicLayout';
 import UserLayout from '../layouts/UserLayout';
 import AdminLayout from '../layouts/AdminLayout';
@@ -41,12 +41,12 @@ const NotFound = lazy(() => import('../pages/NotFound'));
 // Route Guards
 const ProtectedRoute = ({ user, authReady, children }: any) => {
   if (!authReady) return <RouteLoader />;
-  return user ? children : <Navigate to="/signin" replace />;
+  return user ? (children || <Outlet />) : <Navigate to="/signin" replace />;
 };
 
 const AdminRoute = ({ user, isAdmin, authReady, children }: any) => {
   if (!authReady) return <RouteLoader />;
-  return user && isAdmin ? children : <Navigate to="/" replace />;
+  return user && isAdmin ? (children || <Outlet />) : <Navigate to="/" replace />;
 };
 
 // Parameterized wrappers to map router params to legacy component props
