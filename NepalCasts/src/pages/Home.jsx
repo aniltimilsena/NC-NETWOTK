@@ -485,7 +485,7 @@ export default function Home({ onNavigate, user }) {
                              <span>{actor.location || 'Nepal'}</span>
                              <span>•</span>
                              {getActorJoinStatus(actor) === 'New' ? (
-                               <span className="text-[#00BFFF] font-bold">New</span>
+                               <span className="px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse shrink-0">New</span>
                              ) : (
                                <span>{getActorJoinStatus(actor)}</span>
                              )}
@@ -688,8 +688,8 @@ export default function Home({ onNavigate, user }) {
                   </div>
 
                   {/* Right Status */}
-                  <div className="text-right flex flex-col items-end gap-1 px-2 shrink-0">
-                    <span className="text-[10px] sm:text-xs font-black text-sky-400 tracking-widest uppercase animate-pulse">New</span>
+                  <div className="text-right flex flex-col items-end gap-1 px-2 shrink-0 justify-center">
+                    <span className="px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse shrink-0">New</span>
                     <div className="mt-auto">
                       <p className="text-nc-muted text-[10px] sm:text-xs font-medium">
                         <span className="text-white font-bold">
