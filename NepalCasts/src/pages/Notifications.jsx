@@ -581,7 +581,7 @@ export default function Notifications({ onNavigate, user }) {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       {/* Header Container */}
-      <div className="max-w-3xl mx-auto px-6 sm:px-8 pt-4 sm:pt-6">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 pt-4 sm:pt-6">
         {/* Redesigned Header: Back Arrow on left, Centered title, Mark all read on right in cyan */}
         <div className="grid grid-cols-3 items-center mb-6 pb-2">
           <div className="flex justify-start">
@@ -651,7 +651,7 @@ export default function Notifications({ onNavigate, user }) {
       </div>
 
       {/* Notification List Container */}
-      <div className="max-w-3xl mx-auto px-6 sm:px-8 pb-24">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 pb-24">
         {loading ? (
           <div className="space-y-3 mt-4">
             {[1, 2, 3, 4].map(i => (
