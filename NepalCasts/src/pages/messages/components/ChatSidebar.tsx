@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MessageSquare, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, ArrowLeft } from 'lucide-react';
+import { Search, MessageSquare, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, ChevronLeft } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
 
 interface ChatSidebarProps {
@@ -52,10 +52,10 @@ export default function ChatSidebar({
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate('/')}
-              className="p-1.5 hover:bg-white/5 rounded-xl text-nc-muted hover:text-white transition-colors"
+              className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0"
               title="Go to Home"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <h2 className="text-lg font-black text-white">Inbox</h2>
           </div>

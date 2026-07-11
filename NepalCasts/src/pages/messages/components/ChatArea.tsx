@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Phone, Video, MoreVertical, Reply, Check, Trash2, ArrowLeft, X } from 'lucide-react';
+import { Phone, Video, MoreVertical, Reply, Check, Trash2, ChevronLeft, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar } from '../../../components/ui';
 import type { Message } from '../../../types';
@@ -45,9 +45,10 @@ export default function ChatArea({
         <div className="flex items-center gap-3">
           <button 
             onClick={onBack}
-            className="md:hidden text-nc-muted hover:text-white transition-colors"
+            className="md:hidden w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0"
+            title="Back to Inbox"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ChevronLeft className="w-5 h-5" />
           </button>
           <Avatar src={chat.avatar} name={chat.name} size="sm" />
           <div className="text-left">

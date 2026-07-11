@@ -587,7 +587,7 @@ export default function Notifications({ onNavigate, user }) {
           <div className="flex justify-start">
             <button
               onClick={() => onNavigate('home')}
-              className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+              className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors"
               aria-label="Back"
             >
               <ChevronLeft className="w-5 h-5" />
