@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { Phone, Video, MoreVertical, Reply, Check, Trash2, ArrowLeft } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Phone, Video, MoreVertical, Reply, Check, Trash2, ArrowLeft, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar } from '../../../components/ui';
 import type { Message } from '../../../types';
 
@@ -25,6 +26,7 @@ export default function ChatArea({
   onDeleteMessage
 }: ChatAreaProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -107,7 +109,7 @@ export default function ChatArea({
                           src={msg.text} 
                           alt="Sent a photo" 
                           className="max-w-full sm:max-w-[280px] max-h-[200px] rounded-2xl object-cover cursor-pointer hover:opacity-90 transition-opacity border border-black/20"
-                          onClick={() => window.open(msg.text, '_blank')}
+                          onClick={() => setLightboxUrl(msg.text)}
                         />
                         <span className="text-[10px] opacity-60 block italic text-left">Sent a photo</span>
                       </div>
@@ -179,6 +181,41 @@ export default function ChatArea({
           </div>
         )}
       </div>
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxUrl(null)}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out animate-in fade-in duration-200"
+          >
+            <motion.div 
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative max-w-full max-h-full flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={lightboxUrl} 
+                alt="Fullscreen Preview" 
+                className="max-w-[90vw] max-h-[90vh] object-contain rounded-2xl shadow-2xl border border-white/10"
+              />
+              <button
+                onClick={() => setLightboxUrl(null)}
+                className="absolute -top-12 right-0 md:-top-4 md:-right-12 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer border border-white/5 active:scale-95"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
