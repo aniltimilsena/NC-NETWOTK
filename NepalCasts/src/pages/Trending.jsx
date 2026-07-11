@@ -128,7 +128,7 @@ export default function Trending({ onNavigate }) {
 
     setProfiles(prev => prev.map(p => {
       if (p.id === talentId) {
-        return { ...p, followers: (p.followers || 0) + (isFollowing ? -1 : 1) };
+        return { ...p, followers: Math.max(0, (p.followers || 0) + (isFollowing ? -1 : 1)) };
       }
       return p;
     }));
@@ -373,7 +373,7 @@ export default function Trending({ onNavigate }) {
                       <div className={`w-full ${item.height} bg-gradient-to-b from-[#111]/90 to-[#0A0A0A]/40 border-t ${item.borderGlow} rounded-t-[2.5rem] flex flex-col justify-between p-5 text-center transition-all duration-300 group-hover:border-white/10`}>
                         <div className="space-y-1">
                           <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">Followers</p>
-                          <p className="text-xl sm:text-2xl font-black text-white">{prof.followers || 0}</p>
+                          <p className="text-xl sm:text-2xl font-black text-white">{Math.max(0, prof.followers || 0)}</p>
                         </div>
 
                         {isNew && (
@@ -496,9 +496,9 @@ export default function Trending({ onNavigate }) {
 
                       {/* Right Side: Follower count & Follow button */}
                       <div className="flex items-center gap-4 sm:gap-6 shrink-0">
-                        <div className="text-right hidden sm:block">
+                        <div className="text-center hidden sm:block">
                           <p className="text-[9px] text-gray-500 uppercase tracking-widest font-black">Followers</p>
-                          <p className="text-sm font-extrabold text-white">{prof.followers || 0}</p>
+                          <p className="text-sm font-extrabold text-white">{Math.max(0, prof.followers || 0)}</p>
                         </div>
 
                         <button
