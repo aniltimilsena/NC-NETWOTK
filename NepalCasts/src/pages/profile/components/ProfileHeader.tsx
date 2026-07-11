@@ -89,7 +89,7 @@ export default function ProfileHeader({
         
         {/* Back Arrow */}
         <button
-          onClick={() => onNavigate('home')}
+          onClick={() => onNavigate('back')}
           className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white transition-colors border border-white/10"
           aria-label="Back"
         >

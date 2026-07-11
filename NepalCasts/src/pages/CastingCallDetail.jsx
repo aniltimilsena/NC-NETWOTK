@@ -416,7 +416,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         {/* Back navigation overlay */}
         <div className="absolute top-6 left-6 sm:left-10 z-20">
           <button
-            onClick={() => onNavigate('casting')}
+            onClick={() => onNavigate('back')}
             className="flex items-center gap-1.5 bg-black/60 hover:bg-black/80 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border border-white/10 transition-all shadow-md"
           >
             <ChevronLeft size={16} />

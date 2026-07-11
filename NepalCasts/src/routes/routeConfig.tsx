@@ -70,6 +70,11 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
   const navigate = useNavigate();
 
   const onNavigate = (page: string, param?: any) => {
+    if (page === 'back') {
+      navigate(-1);
+      return;
+    }
+
     let targetPage = page;
     if (page === 'casting-detail') targetPage = 'casting';
     if (page === 'listing') targetPage = 'talents';

@@ -593,7 +593,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
           <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/5">
             <button
               type="button"
-              onClick={() => step > 1 ? setStep(s => s - 1) : onNavigate('casting')}
+              onClick={() => step > 1 ? setStep(s => s - 1) : onNavigate('back')}
               className="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
             >
               <ChevronLeft size={14} />

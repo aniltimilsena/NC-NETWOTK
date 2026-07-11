@@ -586,7 +586,7 @@ export default function Notifications({ onNavigate, user }) {
         <div className="grid grid-cols-3 items-center mb-6 pb-2">
           <div className="flex justify-start">
             <button
-              onClick={() => onNavigate('home')}
+              onClick={() => onNavigate('back')}
               className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors"
               aria-label="Back"
             >

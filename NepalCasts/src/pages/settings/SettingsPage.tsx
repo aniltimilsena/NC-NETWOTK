@@ -74,7 +74,7 @@ export default function SettingsPage({
     if (currentMobileView === 'content') {
       setCurrentMobileView('menu');
     } else {
-      onNavigate('profile', profile.uid);
+      onNavigate('back');
     }
   };
 

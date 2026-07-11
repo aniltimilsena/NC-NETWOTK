@@ -51,7 +51,7 @@ export default function ChatSidebar({
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate(-1)}
               className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0"
               title="Go to Home"
             >
