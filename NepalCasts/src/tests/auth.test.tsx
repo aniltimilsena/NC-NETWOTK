@@ -75,7 +75,7 @@ describe('Authentication', () => {
     render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
 
     
-    fireEvent.change(screen.getByPlaceholderText('you@example.com'), {
+    fireEvent.change(screen.getByPlaceholderText('you@example.com or +977...'), {
       target: { value: 'wrong@email.com' }
     });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), {
@@ -103,7 +103,7 @@ describe('Authentication', () => {
 
     
     const { unmount } = render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
-    fireEvent.change(screen.getByPlaceholderText('you@example.com'), {
+    fireEvent.change(screen.getByPlaceholderText('you@example.com or +977...'), {
       target: { value: 'wrong-email@email.com' }
     });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), {
@@ -119,7 +119,7 @@ describe('Authentication', () => {
 
     
     render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
-    fireEvent.change(screen.getByPlaceholderText('you@example.com'), {
+    fireEvent.change(screen.getByPlaceholderText('you@example.com or +977...'), {
       target: { value: 'correct-email@email.com' }
     });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), {

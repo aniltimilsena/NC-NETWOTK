@@ -173,7 +173,11 @@ app.use('/api', globalRouter);
 // Unhandled error processing
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`NC Network Secure API running on http://localhost:${PORT}`);
-  startFirestoreListeners();
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`NC Network Secure API running on http://localhost:${PORT}`);
+    startFirestoreListeners();
+  });
+}
+
+export { app };

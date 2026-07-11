@@ -6,7 +6,7 @@ import { db } from '../config';
 import {
   getProfileByUid,
   updateProfileByUid
-} from '../services/profile';
+} from '../services/profile.service';
 import {
   bloomFilterMiddleware,
   cacheMiddleware,
