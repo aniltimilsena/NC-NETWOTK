@@ -1,26 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, MapPin, Home, Users, Briefcase, MessageSquare, Bell, Settings } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import { db } from "@/lib/firebase";
 import Avatar from "./Avatar";
 import { collection, getDocs, query as firestoreQuery } from "firebase/firestore";
-
-interface PageLink {
-    id: string;
-    label: string;
-    description: string;
-    icon: React.ReactNode;
-}
-
-const PAGE_LINKS: PageLink[] = [
-    { id: 'home', label: 'Home', description: 'Dashboard & Feed', icon: <Home className="w-4 h-4" /> },
-    { id: 'listing', label: 'Directory', description: 'Browse Professionals', icon: <Users className="w-4 h-4" /> },
-    { id: 'casting', label: 'Casting', description: 'Auditions & Roles', icon: <Briefcase className="w-4 h-4" /> },
-    { id: 'messages', label: 'Messages', description: 'Conversations & Chat', icon: <MessageSquare className="w-4 h-4" /> },
-    { id: 'notifications', label: 'Alerts', description: 'Notification Panel', icon: <Bell className="w-4 h-4" /> },
-    { id: 'settings', label: 'Settings', description: 'Account Management', icon: <Settings className="w-4 h-4" /> },
-];
 
 interface ProfileSuggestion {
     uid: string;
@@ -129,27 +113,7 @@ export function ActionSearchBar({
             {/* Results Container - Relative & Transparent */}
             <div className="relative w-full bg-transparent z-50 overflow-hidden text-left pt-2">
                 <div className="max-h-[380px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] space-y-6">
-                    {!query && (
-                        <div>
-                            <div className="px-1 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 mb-3">
-                                Quick Navigation
-                            </div>
-                            <div className="grid grid-cols-3 gap-2.5">
-                                {PAGE_LINKS.map(page => (
-                                    <button 
-                                        key={page.id}
-                                        onClick={() => onPageNavigate?.(page.id)}
-                                        className="flex flex-col items-center justify-center p-3 bg-white/[0.01] hover:bg-[#D4AF37]/5 rounded-2xl text-center transition-all border border-white/[0.03] hover:border-[#D4AF37]/20 group gap-1.5"
-                                    >
-                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 group-hover:text-[#D4AF37] transition-colors">
-                                            {page.icon}
-                                        </div>
-                                        <div className="text-[10px] font-bold text-white/70 group-hover:text-white truncate w-full">{page.label}</div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+
 
                     <div>
                         <div className="px-1 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 mb-3">
