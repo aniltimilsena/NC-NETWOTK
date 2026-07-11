@@ -101,7 +101,40 @@ export default function ChatArea({
                       ? 'bg-[#00BFFF] text-black font-semibold rounded-tr-none' 
                       : 'bg-white/5 text-white border border-white/5 rounded-tl-none'
                   }`}>
-                    {msg.text}
+                    {msg.type === 'image' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/image/upload/') || msg.text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i))) ? (
+                      <div className="space-y-1.5">
+                        <img 
+                          src={msg.text} 
+                          alt="Sent a photo" 
+                          className="max-w-full sm:max-w-[280px] max-h-[200px] rounded-2xl object-cover cursor-pointer hover:opacity-90 transition-opacity border border-black/20"
+                          onClick={() => window.open(msg.text, '_blank')}
+                        />
+                        <span className="text-[10px] opacity-60 block italic text-left">Sent a photo</span>
+                      </div>
+                    ) : msg.type === 'video' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/video/upload/') || msg.text.match(/\.(mp4|webm|ogg|mov)/i))) ? (
+                      <div className="space-y-1.5">
+                        <video 
+                          src={msg.text} 
+                          controls 
+                          className="max-w-full sm:max-w-[280px] max-h-[200px] rounded-2xl object-cover border border-black/20"
+                        />
+                        <span className="text-[10px] opacity-60 block italic text-left">Sent a video</span>
+                      </div>
+                    ) : msg.type === 'file' || (msg.text && msg.text.startsWith('http') && msg.text.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|zip|rar)/i)) ? (
+                      <div className="flex items-center gap-2">
+                        <span>📁</span>
+                        <a 
+                          href={msg.text} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className={`hover:underline font-bold break-all ${isMe ? 'text-black' : 'text-sky-400'}`}
+                        >
+                          Document File
+                        </a>
+                      </div>
+                    ) : (
+                      msg.text
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1.5 justify-end text-[9px] text-nc-muted">

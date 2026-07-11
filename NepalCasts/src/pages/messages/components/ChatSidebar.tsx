@@ -12,6 +12,20 @@ interface ChatSidebarProps {
   onStartNewChat: () => void;
 }
 
+const formatLastMessage = (text?: string) => {
+  if (!text || typeof text !== 'string') return '';
+  if (text.startsWith('http') && (text.includes('/image/upload/') || text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i))) {
+    return '📷 Sent a photo';
+  }
+  if (text.startsWith('http') && (text.includes('/video/upload/') || text.match(/\.(mp4|webm|ogg|mov)/i))) {
+    return '🎥 Sent a video';
+  }
+  if (text.startsWith('http')) {
+    return '📁 Sent a file';
+  }
+  return text;
+};
+
 export default function ChatSidebar({
   conversations,
   activeChatId,
@@ -105,7 +119,7 @@ export default function ChatSidebar({
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-nc-muted truncate font-medium mt-0.5">{c.lastMessage}</p>
+                      <p className="text-xs text-nc-muted truncate font-medium mt-0.5">{formatLastMessage(c.lastMessage)}</p>
                     </div>
                   </div>
                 );
