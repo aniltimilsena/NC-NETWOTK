@@ -24,6 +24,7 @@ const Messages = lazy(() => import('../pages/Messages'));
 const Notifications = lazy(() => import('../pages/Notifications'));
 const Settings = lazy(() => import('../pages/Settings'));
 const SavedCastingCalls = lazy(() => import('../pages/SavedCastingCalls'));
+const CallPage = lazy(() => import('../pages/CallPage'));
 
 // Admin Pages
 const AdminOverview = lazy(() => import('../pages/admin/AdminOverview'));
@@ -125,6 +126,7 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
           <Route path="/notifications" element={<Notifications onNavigate={onNavigate} user={user} />} />
           <Route path="/settings" element={<Settings onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert} />} />
           <Route path="/saved-castings" element={<SavedCastingCalls user={user} onNavigate={onNavigate} showToast={showToast} />} />
+          <Route path="/call" element={<CallPage />} />
         </Route>
       </Route>
 

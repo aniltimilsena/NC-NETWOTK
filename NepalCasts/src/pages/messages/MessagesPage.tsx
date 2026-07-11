@@ -53,12 +53,18 @@ export default function MessagesPage({
     if (!activeChat) return;
     const otherParticipantId = activeChat.participants?.find((p: string) => p !== user.uid);
     if (otherParticipantId) {
-      initiateCall({
-        calleeId: otherParticipantId,
-        calleeName: activeChat.name || 'User',
-        calleePhoto: activeChat.avatar || '',
-        callType: type
-      });
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (!isMobile) {
+        const url = `/call?initiate=true&type=${type}&calleeId=${otherParticipantId}&calleeName=${encodeURIComponent(activeChat.name || 'User')}&calleePhoto=${encodeURIComponent(activeChat.avatar || '')}`;
+        window.open(url, '_blank');
+      } else {
+        initiateCall({
+          calleeId: otherParticipantId,
+          calleeName: activeChat.name || 'User',
+          calleePhoto: activeChat.avatar || '',
+          callType: type
+        });
+      }
     }
   };
 

@@ -43,7 +43,7 @@ export default function UserLayout({
     }
   };
 
-  const showNavbar = !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications');
+  const showNavbar = !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications') && !location.pathname.startsWith('/call');
 
   return (
     <div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
