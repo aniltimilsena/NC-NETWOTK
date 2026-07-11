@@ -479,8 +479,8 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
 
             <div className="w-full max-w-xl space-y-6 animate-slide-up relative z-10 pb-12">
               <div className="text-center space-y-1.5 mb-6">
-                <h2 className="text-4xl sm:text-5xl font-light tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-[#D4AF37] uppercase">Search</h2>
-                <p className="text-white/40 text-xs italic font-light tracking-wide">Find talent by name, role, or location.</p>
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Search</h2>
+                <p className="text-nc-muted text-xs font-semibold">Find talent by name, role, or location.</p>
               </div>
 
               <div className="relative z-50">
