@@ -45,7 +45,7 @@ export default function ChatSidebar({
   return (
     <div className="flex flex-col h-full border-r border-white/5 bg-[#0E0E0E]">
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-white/5 space-y-3">
+      <div className="p-4 pt-6 md:p-4 border-b border-white/5 space-y-3">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-black text-white">Inbox</h2>
           <button

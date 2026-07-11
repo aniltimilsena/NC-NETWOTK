@@ -43,7 +43,7 @@ export default function MessageInput({
   };
 
   return (
-    <div className="p-4 bg-[#0E0E0E] border-t border-white/5 space-y-3">
+    <div className="p-4 pb-6 md:p-4 bg-[#0E0E0E] border-t border-white/5 space-y-3">
       {/* Replying Preview block */}
       {replyingTo && (
         <div className="flex justify-between items-center bg-white/5 border border-white/5 p-3 rounded-2xl text-xs text-nc-muted">

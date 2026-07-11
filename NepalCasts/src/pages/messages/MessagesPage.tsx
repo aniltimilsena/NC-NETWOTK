@@ -103,7 +103,7 @@ export default function MessagesPage({
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] min-h-[450px] bg-nc-dark flex">
+    <div className="h-screen md:h-[calc(100vh-64px)] min-h-[450px] bg-nc-dark flex">
       {/* Messages Grid Container */}
       <div className="w-full max-w-5xl mx-auto flex h-full border border-white/5 md:rounded-[2rem] overflow-hidden my-0 md:my-4 shadow-2xl">
         {/* Sidebar Column */}

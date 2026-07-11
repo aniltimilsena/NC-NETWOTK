@@ -39,7 +39,7 @@ export default function ChatArea({
   return (
     <div className="flex flex-col h-full bg-[#0b0b0c]">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+      <div className="px-6 py-4 pt-6 md:py-4 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button 
             onClick={onBack}
