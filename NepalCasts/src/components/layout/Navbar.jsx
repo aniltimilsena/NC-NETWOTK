@@ -70,6 +70,17 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   useEffect(() => {
+    if (showSearchOverlay || menuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showSearchOverlay, menuOpen]);
+
+  useEffect(() => {
     if (!user) {
       setUnreadCount(0);
       return;
