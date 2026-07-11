@@ -377,7 +377,7 @@ export default function Trending({ onNavigate }) {
                         </div>
 
                         {isNew && (
-                          <span className="inline-block px-1.5 py-0.5 rounded-full text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse">
+                          <span className="self-center px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse">
                             New
                           </span>
                         )}
@@ -458,7 +458,7 @@ export default function Trending({ onNavigate }) {
                               {prof.name}
                             </h3>
                             {isNew && (
-                              <span className="shrink-0 px-1.5 py-0.5 rounded-full text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse">
+                              <span className="shrink-0 px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse">
                                 New
                               </span>
                             )}
