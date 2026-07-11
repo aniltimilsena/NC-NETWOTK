@@ -190,7 +190,7 @@ export function ActionSearchBar({
                                             </div>
                                         </div>
                                     </div>
-                                    <span className="text-[10px] font-bold text-[#D4AF37]/60 group-hover:text-[#D4AF37] transition-colors">
+                                    <span className="text-[10px] font-bold text-[#00BFFF]/60 group-hover:text-[#00BFFF] transition-colors">
                                         View
                                     </span>
                                 </li>
