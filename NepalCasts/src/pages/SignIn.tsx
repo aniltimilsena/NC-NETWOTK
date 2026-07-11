@@ -708,7 +708,7 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
                         type="text"
                         value={form.email}
                         onChange={e => handleEmailChange(e.target.value)}
-                        placeholder="you@example.com or +977..."
+                        placeholder="you@example.com"
                         disabled={lockoutTimeLeft > 0}
                         className={getInputStyles('email')}
                       />
