@@ -40,8 +40,8 @@ export default function MessagesPage({
 
   const activeChat = conversations.find((c) => c.id === activeChatId);
 
-  const handleSendMessage = async (text: string) => {
-    const res = await dispatchMessage(text, replyingTo);
+  const handleSendMessage = async (text: string, type: 'text' | 'image' | 'video' = 'text') => {
+    const res = await dispatchMessage(text, replyingTo, type);
     if (res.success) {
       setReplyingTo(null);
     } else {

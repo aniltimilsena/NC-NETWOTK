@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, X, Paperclip } from 'lucide-react';
+import { uploadMedia } from '../../../utils/uploadMedia';
 import type { Message } from '../../../types';
 
 interface MessageInputProps {
-  onSend: (text: string) => void;
+  onSend: (text: string, type?: 'text' | 'image' | 'video') => void;
   replyingTo: Message | null;
   onCancelReply: () => void;
   onTyping: (isTyping: boolean) => void;
@@ -16,13 +17,16 @@ export default function MessageInput({
   onTyping
 }: MessageInputProps) {
   const [text, setText] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const typingTimeoutRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
 
-    onSend(text.trim());
+    onSend(text.trim(), 'text');
     setText('');
     onTyping(false);
     if (typingTimeoutRef.current) {
@@ -40,6 +44,39 @@ export default function MessageInput({
     typingTimeoutRef.current = setTimeout(() => {
       onTyping(false);
     }, 2000);
+  };
+
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      alert('Only images and videos are supported.');
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const result = await uploadMedia(file, 'chat', (progress) => {
+        setUploadProgress(progress);
+      });
+      onSend(result.url, result.type);
+    } catch (err: any) {
+      console.error('Failed to upload chat media:', err);
+      alert(err.message || 'Failed to upload file.');
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   return (
@@ -60,20 +97,55 @@ export default function MessageInput({
         </div>
       )}
 
+      {/* Uploading progress bar */}
+      {uploading && (
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-[10px] text-[#00BFFF] font-bold">
+            <span>Uploading attachment...</span>
+            <span>{uploadProgress}%</span>
+          </div>
+          <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-[#00BFFF] transition-all duration-300 rounded-full" 
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Input row */}
       <form onSubmit={handleSend} className="flex gap-3 items-center">
+        <button
+          type="button"
+          onClick={handleAttachClick}
+          disabled={uploading}
+          className="w-11 h-11 bg-white/5 hover:bg-white/10 disabled:opacity-50 rounded-2xl flex items-center justify-center text-nc-muted hover:text-white transition-all shrink-0 active:scale-95"
+          title="Attach photo or video"
+        >
+          <Paperclip className="w-4 h-4" />
+        </button>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*,video/*"
+          className="hidden"
+        />
+
         <input
           type="text"
-          placeholder="Write your message..."
+          placeholder={uploading ? "Uploading media..." : "Write your message..."}
           value={text}
+          disabled={uploading}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="flex-1 bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-[#00BFFF]/20 transition-colors"
+          className="flex-1 bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-[#00BFFF]/20 transition-colors disabled:opacity-50"
         />
 
         <button
           type="submit"
-          disabled={!text.trim()}
+          disabled={!text.trim() || uploading}
           className="w-11 h-11 bg-[#00BFFF] hover:bg-[#00BFFF]/80 disabled:opacity-50 disabled:hover:bg-[#00BFFF] rounded-2xl flex items-center justify-center text-black font-black transition-all shrink-0 active:scale-95"
         >
           <Send className="w-4 h-4" />

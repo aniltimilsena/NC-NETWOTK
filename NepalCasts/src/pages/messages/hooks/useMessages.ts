@@ -143,11 +143,11 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     }
   }, [activeChatId, currentUser?.uid]);
 
-  const dispatchMessage = useCallback(async (text: string, replyTo: any = null): Promise<ServiceResult> => {
+  const dispatchMessage = useCallback(async (text: string, replyTo: any = null, type: 'text' | 'image' | 'video' = 'text'): Promise<ServiceResult> => {
     if (!activeChatId || !currentUser?.uid) {
       return { success: false, error: 'No active chat thread' };
     }
-    return sendMessage(activeChatId, currentUser.uid, text, false, replyTo, 'text');
+    return sendMessage(activeChatId, currentUser.uid, text, false, replyTo, type);
   }, [activeChatId, currentUser?.uid]);
 
   return {
