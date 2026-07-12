@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, ArrowLeft, X } from "lucide-react";
 import { db } from "@/lib/firebase";
 import Avatar from "./Avatar";
 import { collection, getDocs, query as firestoreQuery } from "firebase/firestore";
@@ -16,24 +16,37 @@ interface ProfileSuggestion {
     verified?: boolean;
 }
 
+interface HistoryItem {
+    type: 'text' | 'profile';
+    value: string;
+    name: string;
+    image?: string;
+    verified?: boolean;
+    role?: string;
+    location?: string;
+}
+
 export function ActionSearchBar({
     onActionSelect,
     onPageNavigate,
+    onClose,
 }: {
     onActionSelect?: (profileId: string) => void;
     onPageNavigate?: (page: string) => void;
+    onClose?: () => void;
 }) {
     const [query, setQuery] = useState("");
     const [profiles, setProfiles] = useState<ProfileSuggestion[]>([]);
     const [loading, setLoading] = useState(false);
     const [allProfiles, setAllProfiles] = useState<ProfileSuggestion[]>([]);
     const [hasLoaded, setHasLoaded] = useState(false);
-    const [history, setHistory] = useState<string[]>([]);
+    const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [dismissedSuggestionIds, setDismissedSuggestionIds] = useState<string[]>([]);
 
     // Load search history from localStorage on mount
     useEffect(() => {
         try {
-            const saved = localStorage.getItem("nc_search_history");
+            const saved = localStorage.getItem("nc_search_history_v3");
             if (saved) {
                 setHistory(JSON.parse(saved));
             }
@@ -42,16 +55,14 @@ export function ActionSearchBar({
         }
     }, []);
 
-    // Helper to add search query to history
-    const addToHistory = (searchTerm: string) => {
-        const cleanTerm = searchTerm.trim();
-        if (!cleanTerm) return;
-
+    // Helper to add search query or profile to history
+    const addToHistory = (item: HistoryItem) => {
         setHistory((prev) => {
-            const filtered = prev.filter((item) => item.toLowerCase() !== cleanTerm.toLowerCase());
-            const updated = [cleanTerm, ...filtered].slice(0, 6); // Keep latest 6 items
+            const filtered = prev.filter((h) => h.value !== item.value);
+            const updated = [item, ...filtered].slice(0, 8); // Keep latest 8 items
             try {
-                localStorage.setItem("nc_search_history", JSON.stringify(updated));
+                localStorage.setItem("nc_search_history_v3", JSON.stringify(updated));
+                localStorage.removeItem("nc_search_history_cleared"); // Reset flag
             } catch (err) {
                 console.error("Failed to save search history to localStorage:", err);
             }
@@ -59,12 +70,12 @@ export function ActionSearchBar({
         });
     };
 
-    // Helper to remove search query from history
-    const removeFromHistory = (searchTerm: string) => {
+    // Helper to remove search query or profile from history
+    const removeFromHistory = (value: string) => {
         setHistory((prev) => {
-            const updated = prev.filter((item) => item !== searchTerm);
+            const updated = prev.filter((item) => item.value !== value);
             try {
-                localStorage.setItem("nc_search_history", JSON.stringify(updated));
+                localStorage.setItem("nc_search_history_v3", JSON.stringify(updated));
             } catch (err) {
                 console.error("Failed to update search history in localStorage:", err);
             }
@@ -76,7 +87,8 @@ export function ActionSearchBar({
     const clearHistory = () => {
         setHistory([]);
         try {
-            localStorage.removeItem("nc_search_history");
+            localStorage.removeItem("nc_search_history_v3");
+            localStorage.setItem("nc_search_history_cleared", "true"); // Save explicitly cleared flag
         } catch (err) {
             console.error("Failed to clear search history in localStorage:", err);
         }
@@ -111,37 +123,78 @@ export function ActionSearchBar({
         loadAllProfiles();
     }, [hasLoaded]);
 
+    // Pre-populate "Recent" list with real profiles if search history is empty and not explicitly cleared
+    useEffect(() => {
+        if (hasLoaded && allProfiles.length > 0 && history.length === 0) {
+            const wasCleared = localStorage.getItem("nc_search_history_cleared") === "true";
+            if (wasCleared) return;
+
+            const initialHistory: HistoryItem[] = allProfiles.slice(0, 5).map(p => ({
+                type: 'profile',
+                value: p.uid,
+                name: p.name,
+                image: p.image,
+                verified: p.verified,
+                role: p.role,
+                location: p.location
+            }));
+            setHistory(initialHistory);
+            try {
+                localStorage.setItem("nc_search_history_v3", JSON.stringify(initialHistory));
+            } catch (err) {
+                console.error("Failed to save default history to localStorage:", err);
+            }
+        }
+    }, [hasLoaded, allProfiles, history.length]);
+
     useEffect(() => {
         const normalized = query.trim().toLowerCase();
+        const historyProfileUids = history
+            .filter(h => h.type === 'profile')
+            .map(h => h.value);
+
+        const isExcluded = (uid: string) => {
+            return dismissedSuggestionIds.includes(uid) || historyProfileUids.includes(uid);
+        };
+
         if (!normalized) {
-            setProfiles(allProfiles.slice(0, 6));
+            setProfiles(allProfiles.filter(p => !isExcluded(p.uid)).slice(0, 6));
             return;
         }
 
         const filtered = allProfiles.filter((p) => {
             return (
-                p.name?.toLowerCase().includes(normalized) ||
-                p.role?.toLowerCase().includes(normalized) ||
-                p.location?.toLowerCase().includes(normalized) ||
-                p.uid?.toLowerCase() === normalized
+                !isExcluded(p.uid) && (
+                    p.name?.toLowerCase().includes(normalized) ||
+                    p.role?.toLowerCase().includes(normalized) ||
+                    p.location?.toLowerCase().includes(normalized) ||
+                    p.uid?.toLowerCase() === normalized
+                )
             );
         });
         setProfiles(filtered.slice(0, 6));
-    }, [query, allProfiles]);
+    }, [query, allProfiles, dismissedSuggestionIds, history]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter" && query.trim()) {
-            addToHistory(query);
+            addToHistory({
+                type: 'text',
+                value: query.trim(),
+                name: query.trim()
+            });
         }
     };
 
     const handleProfileSelect = (profile: ProfileSuggestion) => {
-        // Save query or profile name to history
-        if (query.trim()) {
-            addToHistory(query);
-        } else {
-            addToHistory(profile.name);
-        }
+        addToHistory({
+            type: 'profile',
+            value: profile.uid,
+            name: profile.name,
+            image: profile.image,
+            verified: profile.verified,
+            role: profile.role,
+            location: profile.location
+        });
         onActionSelect?.(profile.uid);
     };
 
@@ -157,156 +210,216 @@ export function ActionSearchBar({
 
         const term = tag === 'Actors' ? 'Actor' : 'Director';
         setQuery(term);
-        addToHistory(term);
+        addToHistory({
+            type: 'text',
+            value: term,
+            name: term
+        });
     };
 
     return (
-        <div className="w-full relative space-y-5">
+        <div className="w-full relative space-y-5 max-w-3xl mx-auto">
             {/* Input Capsule Box */}
-            <div className="relative flex items-center bg-white/[0.02] border border-white/10 focus-within:border-[#D4AF37]/50 focus-within:shadow-[0_0_20px_rgba(212,175,55,0.05)] rounded-2xl px-5 py-3.5 transition-all duration-300 group">
-                <input
-                    type="text"
-                    placeholder="Search talent, names, roles..."
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="w-full bg-transparent outline-none text-white text-base transition-all placeholder:text-white/20 pr-10"
-                />
-                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <Search className="w-5 h-5 text-gray-500 group-focus-within:text-[#D4AF37] transition-colors" strokeWidth={2} />
+            <div className="flex items-center gap-3">
+                {onClose && (
+                    <button
+                        onClick={onClose}
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shrink-0 cursor-pointer"
+                        title="Go Back"
+                        aria-label="Go Back"
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                )}
+                <div className="relative flex-1 flex items-center bg-[#242526] rounded-full px-4 py-2 border-0">
+                    <input
+                        type="text"
+                        placeholder="Search NepalCasts"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="w-full bg-transparent outline-none text-white text-[15px] placeholder:text-white/40 pr-10 border-0"
+                    />
+                    {query && (
+                        <button 
+                            onClick={() => setQuery("")}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                        >
+                            <X size={15} />
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* Quick Filter Chips */}
-            <div className="flex flex-wrap gap-2.5 justify-center relative z-10 pt-1">
-                {['Actors', 'Directors', 'Casting Calls', 'Movies'].map(tag => (
-                    <button 
-                        key={tag} 
-                        onClick={() => handleChipClick(tag)}
-                        className="px-4 py-1.5 rounded-full border border-white/5 hover:border-[#D4AF37] bg-white/[0.02] hover:bg-[#D4AF37]/5 text-white/50 hover:text-[#D4AF37] transition-all duration-300 text-[10px] font-extrabold uppercase tracking-wider"
-                    >
-                        {tag}
-                    </button>
-                ))}
-            </div>
-
             {/* Results Container - Relative & Transparent */}
-            <div className="relative w-full bg-transparent z-50 overflow-hidden text-left pt-2">
-                <div className="max-h-[380px] md:max-h-[580px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] space-y-6">
+            <div className="relative w-full bg-transparent z-50 text-left pt-2">
+                <div className="space-y-6">
                     {/* Recent Searches Section */}
                     {!query && history.length > 0 && (
                         <div>
-                            <div className="flex items-center justify-between px-1 py-2 border-b border-white/5 mb-3">
-                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                                    Recent Searches
+                            <div className="flex items-center justify-between px-1 py-2 mb-3">
+                                <span className="text-base font-extrabold text-white">
+                                    Recent
                                 </span>
-                                <button 
-                                    onClick={clearHistory}
-                                    className="text-[9px] font-bold text-red-500/80 hover:text-red-400 uppercase tracking-wider transition-colors"
-                                >
-                                    Clear All
-                                </button>
                             </div>
-                            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                                {history.map((term, idx) => (
+                            <ul className="space-y-1">
+                                {history.map((item, idx) => (
                                     <li 
-                                        key={`${term}-${idx}`}
-                                        className="group/history flex items-center justify-between p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-white/[0.02] hover:border-white/5 rounded-xl cursor-pointer transition-all duration-200"
+                                        key={`${item.value}-${idx}`}
+                                        className="flex items-center justify-between py-2.5 px-1 hover:bg-white/[0.04] transition-colors rounded-xl cursor-pointer"
                                     >
                                         <div 
                                             onClick={() => {
-                                                setQuery(term);
-                                                addToHistory(term);
+                                                if (item.type === 'text') {
+                                                    setQuery(item.value);
+                                                } else {
+                                                    onActionSelect?.(item.value);
+                                                }
+                                                addToHistory(item);
                                             }}
-                                            className="flex items-center gap-2.5 min-w-0 flex-1"
+                                            className="flex items-center gap-3.5 min-w-0 flex-1 text-left"
                                         >
-                                            <svg className="w-3.5 h-3.5 text-gray-600 group-hover/history:text-[#00BFFF] transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                            </svg>
-                                            <span className="text-xs text-gray-300 group-hover/history:text-white transition-colors truncate">
-                                                {term}
-                                            </span>
+                                            {item.type === 'text' ? (
+                                                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
+                                                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                    </svg>
+                                                </div>
+                                            ) : (
+                                                <div className="w-10 h-10 md:w-11 md:h-11 shrink-0">
+                                                    <Avatar 
+                                                        user={{
+                                                            image: item.image,
+                                                            displayName: item.name
+                                                        }}
+                                                        size="sm"
+                                                        name={item.name}
+                                                        verified={item.verified}
+                                                    />
+                                                </div>
+                                            )}
+                                            
+                                            <div className="min-w-0">
+                                                <span className="text-[15px] font-bold text-white truncate flex items-center gap-1.5">
+                                                    {item.name}
+                                                    {item.type === 'profile' && item.verified && (
+                                                        <span 
+                                                            className="w-3.5 h-3.5 rounded-full bg-[#1877F2] flex items-center justify-center text-white text-[8px] font-black shrink-0" 
+                                                            title="Verified"
+                                                        >
+                                                            ✓
+                                                        </span>
+                                                    )}
+                                                </span>
+                                                {item.type === 'profile' && (
+                                                    <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-[#1877F2] shrink-0" />
+                                                        <span className="truncate">{item.role || 'Talent'} {item.location ? `• ${item.location}` : ""}</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <button 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                removeFromHistory(term);
-                                            }}
-                                            className="p-1 rounded-lg hover:bg-white/5 text-gray-500 hover:text-red-400 transition-colors"
-                                            title="Delete search history item"
-                                        >
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
+                                        <div className="flex items-center gap-3 shrink-0" onClick={e => e.stopPropagation()}>
+                                            {item.type === 'profile' && item.image && (
+                                                <img 
+                                                    src={item.image} 
+                                                    alt="" 
+                                                    className="w-7 h-7 object-cover rounded-[6px] border border-white/5 opacity-80" 
+                                                />
+                                            )}
+                                            <button 
+                                                onClick={() => removeFromHistory(item.value)}
+                                                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-colors shrink-0"
+                                                title="Remove"
+                                            >
+                                                <X size={15} />
+                                            </button>
+                                        </div>
                                     </li>
                                 ))}
                             </ul>
                         </div>
                     )}
 
-                    <div>
-                        <div className="px-1 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 mb-3">
-                            {query ? `Searching for "${query}"` : "Suggested for you"}
-                        </div>
-
-                        {loading ? (
-                            <div className="py-12 text-center text-xs text-gray-500 flex flex-col items-center justify-center gap-3">
-                                <div className="w-6 h-6 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
-                                <span>Suggested for you...</span>
-                            </div>
-                        ) : profiles.length === 0 ? (
-                            <div className="py-12 text-center text-sm text-gray-500">
-                                {query ? `No profiles found for "${query}"` : "No profiles available"}
-                            </div>
-                        ) : (
-                            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                {profiles.map((profile) => (
-                                    <li
-                                        key={profile.uid}
-                                        onClick={() => handleProfileSelect(profile)}
-                                        className="group p-4 flex flex-col justify-between bg-white/[0.01] hover:bg-white/[0.04] active:bg-white/[0.02] border border-white/[0.03] hover:border-white/10 rounded-2xl cursor-pointer transition-all duration-300 gap-4"
-                                    >
-                                        <div className="flex items-start gap-3.5 min-w-0">
-                                            <div className="w-12 h-12 flex-shrink-0">
-                                                <Avatar 
-                                                    user={{
-                                                        image: profile.image,
-                                                        gender: profile.gender,
-                                                        displayName: profile.name
-                                                    }}
-                                                    size="md"
-                                                    name={profile.name}
-                                                    verified={profile.verified}
-                                                />
-                                            </div>
-
-                                            <div className="min-w-0 flex-1">
-                                                <div className="text-sm font-bold text-white group-hover:text-[#00BFFF] transition-colors flex items-center gap-1.5 truncate">
-                                                    {profile.name}
-                                                    {profile.verified && (
-                                                        <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
-                                                    )}
+                    {query && (
+                        <div>
+                            {loading ? (
+                                <div className="py-12 text-center text-xs text-gray-500 flex flex-col items-center justify-center gap-3">
+                                    <div className="w-6 h-6 border-2 border-[#1877F2] border-t-transparent rounded-full animate-spin" />
+                                    <span>Searching...</span>
+                                </div>
+                            ) : profiles.length === 0 ? (
+                                <div className="py-12 text-center text-sm text-gray-500">
+                                    No profiles found for "{query}"
+                                </div>
+                            ) : (
+                                <ul className="space-y-1.5">
+                                    {profiles.map((profile) => (
+                                        <li
+                                            key={profile.uid}
+                                            onClick={() => handleProfileSelect(profile)}
+                                            className="flex items-center justify-between py-2 px-1 hover:bg-white/[0.04] transition-colors rounded-xl cursor-pointer"
+                                        >
+                                            <div className="flex items-start gap-3.5 min-w-0 text-left">
+                                                <div className="w-10 h-10 md:w-11 md:h-11 shrink-0">
+                                                    <Avatar 
+                                                        user={{
+                                                            image: profile.image,
+                                                            gender: profile.gender,
+                                                            displayName: profile.name
+                                                        }}
+                                                        size="sm"
+                                                        name={profile.name}
+                                                        verified={profile.verified}
+                                                    />
                                                 </div>
-                                                <div className="text-xs text-gray-400 mt-1">
-                                                    {profile.role}
-                                                </div>
-                                                {profile.location && (
-                                                    <div className="text-xs text-gray-500 flex items-center gap-1 mt-1 truncate">
-                                                        <MapPin className="w-3 h-3 text-gray-600 shrink-0" />
-                                                        <span>{profile.location}</span>
+
+                                                <div className="min-w-0">
+                                                    <h3 className="font-bold text-white text-[15px] tracking-tight truncate flex items-center gap-1.5">
+                                                        {profile.name}
+                                                        {profile.verified && (
+                                                            <span 
+                                                                className="w-3.5 h-3.5 rounded-full bg-[#1877F2] flex items-center justify-center text-white text-[8px] font-black shrink-0" 
+                                                                title="Verified"
+                                                            >
+                                                                ✓
+                                                            </span>
+                                                        )}
+                                                    </h3>
+                                                    <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-[#1877F2] shrink-0" />
+                                                        <span className="truncate">{profile.role} {profile.location ? `• ${profile.location}` : ""}</span>
                                                     </div>
-                                                )}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <span className="text-[10px] font-black uppercase tracking-wider text-center py-2.5 rounded-xl bg-[#0099FF]/5 border border-[#0099FF]/20 text-[#0099FF] group-hover:bg-[#0099FF] group-hover:text-black group-hover:border-transparent group-hover:shadow-md group-hover:shadow-[#0099FF]/20 transition-all duration-300 w-full block">
-                                            View Profile
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
+                                            
+                                            <div className="flex items-center gap-3 shrink-0" onClick={e => e.stopPropagation()}>
+                                                {profile.image && (
+                                                    <img 
+                                                        src={profile.image} 
+                                                        alt="" 
+                                                        className="w-7 h-7 object-cover rounded-[6px] border border-white/5 opacity-80" 
+                                                    />
+                                                )}
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setDismissedSuggestionIds(prev => [...prev, profile.uid]);
+                                                    }}
+                                                    className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-colors shrink-0"
+                                                    title="Remove"
+                                                >
+                                                    <X size={15} />
+                                                </button>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

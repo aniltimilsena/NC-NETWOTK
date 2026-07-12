@@ -11,8 +11,6 @@ export function useSettings(currentUser: any) {
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [blockedUsersList, setBlockedUsersList] = useState<any[]>([]);
   const [loadingBlocks, setLoadingBlocks] = useState(true);
-  const [dataRequests, setDataRequests] = useState<any[]>([]);
-  const [loadingDataRequests, setLoadingDataRequests] = useState(true);
 
   // Load Profile
   useEffect(() => {
@@ -97,29 +95,7 @@ export function useSettings(currentUser: any) {
   }, [currentUser?.uid]);
 
   // Subscribe to user's GDPR data export requests
-  useEffect(() => {
-    if (!currentUser?.uid) {
-      setLoadingDataRequests(false);
-      return;
-    }
-    const q = query(
-      collection(db, 'data_requests'),
-      where('userId', '==', currentUser.uid)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data()
-      }));
-      setDataRequests(list);
-      setLoadingDataRequests(false);
-    }, (err) => {
-      console.warn("Failed to subscribe to data requests:", err);
-      setDataRequests([]);
-      setLoadingDataRequests(false);
-    });
-    return () => unsub();
-  }, [currentUser?.uid]);
+
 
   const updateProfileSettings = useCallback(async (data: Partial<UserProfile>): Promise<ServiceResult> => {
     if (!currentUser?.uid) {
@@ -158,22 +134,7 @@ export function useSettings(currentUser: any) {
     }
   }, [currentUser?.uid, blockedUsersList]);
 
-  const createDataExportRequest = useCallback(async (): Promise<ServiceResult> => {
-    if (!currentUser?.uid || !currentUser?.email) {
-      return { success: false, error: 'Authentication required' };
-    }
-    try {
-      await addDoc(collection(db, 'data_requests'), {
-        userId: currentUser.uid,
-        userEmail: currentUser.email,
-        status: 'pending',
-        createdAt: serverTimestamp(),
-      });
-      return { success: true, error: null };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to create export request' };
-    }
-  }, [currentUser?.uid, currentUser?.email]);
+
 
   return {
     profile,
@@ -182,12 +143,9 @@ export function useSettings(currentUser: any) {
     loadingSessions,
     blockedUsersList,
     loadingBlocks,
-    dataRequests,
-    loadingDataRequests,
     updateProfileSettings,
     revokeSession,
-    unblockUserAction,
-    createDataExportRequest
+    unblockUserAction
   };
 }
 export type UseSettingsReturn = ReturnType<typeof useSettings>;

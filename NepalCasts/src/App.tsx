@@ -2,7 +2,11 @@ import React, { Suspense } from 'react';
 import AppProviders, { useApp } from './providers/AppProviders';
 import RouteConfig from './routes/routeConfig';
 import RouteLoader from './components/RouteLoader';
-import { Agentation } from "agentation";
+
+// Only loaded in dev — completely excluded from production bundle
+const AgentationWidget = import.meta.env.DEV
+  ? React.lazy(() => import('agentation').then(m => ({ default: m.Agentation })))
+  : null;
 
 function MainApp() {
   const { user, isAdmin, authReady, handleLogout, showAlert, showToast } = useApp();
@@ -25,7 +29,11 @@ export default function App() {
   return (
     <AppProviders>
       <MainApp />
-      <Agentation />
+      {import.meta.env.DEV && AgentationWidget && (
+        <Suspense fallback={null}>
+          <AgentationWidget />
+        </Suspense>
+      )}
     </AppProviders>
   );
 }

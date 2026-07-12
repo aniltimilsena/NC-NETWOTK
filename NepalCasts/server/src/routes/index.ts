@@ -6,6 +6,7 @@ import castingRoutes from './casting.routes';
 import messagingRoutes from './messaging.routes';
 import uploadRoutes from './upload.routes';
 import notificationRoutes from './notification.routes';
+import adminRoutes from './admin.routes';
 
 const router = Router();
 
@@ -16,6 +17,7 @@ router.use(castingRoutes);
 router.use(messagingRoutes);
 router.use(uploadRoutes);
 router.use(notificationRoutes);
+router.use(adminRoutes);
 
 // General client error logger route: POST /api/errors/log
 router.post('/errors/log', async (req, res) => {

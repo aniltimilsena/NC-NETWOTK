@@ -34,13 +34,6 @@ type SafetyReport = {
 };
 
 export default function AdminModeration() {
-  const [adminTab, setAdminTab] = useState<'safety' | 'data-exports'>('safety');
-  const [exportRequests, setExportRequests] = useState<any[]>([]);
-  const [exportLoading, setExportLoading] = useState(true);
-  const [rejectRequestId, setRejectRequestId] = useState<string | null>(null);
-  const [rejectionReason, setRejectionReason] = useState('');
-  const [isProcessingRequest, setIsProcessingRequest] = useState<string | null>(null);
-
   const [reports, setReports] = useState<SafetyReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<'Pending' | 'Resolved' | 'Dismissed' | 'All'>('Pending');
@@ -79,69 +72,7 @@ export default function AdminModeration() {
   }, []);
 
   
-  useEffect(() => {
-    if (adminTab !== 'data-exports') return;
-    const unsub = onSnapshot(collection(db, COLLECTIONS.DATA_EXPORT_REQUESTS), (snap) => {
-      const data = snap.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data()
-      }));
-      
-      data.sort((a: any, b: any) => {
-        const timeA = a.createdAt?.toDate?.()?.getTime() || 0;
-        const timeB = b.createdAt?.toDate?.()?.getTime() || 0;
-        return timeB - timeA;
-      });
-      setExportRequests(data);
-      setExportLoading(false);
-    }, (error) => {
-      console.error("Failed to sync data export requests", error);
-      setExportLoading(false);
-    });
-    return () => unsub();
-  }, [adminTab]);
 
-  const handleApproveRequest = async (requestId: string) => {
-    setIsProcessingRequest(requestId);
-    try {
-      await apiClient.post("/admin/data-export/approve", { requestId });
-      await logAdminAction(adminEmail, "Approve Data Export", requestId, "Approved data export request");
-      alert("Data export request approved successfully!");
-    } catch (err) {
-      console.error("Failed to approve request:", err);
-      alert("Error approving request.");
-    } finally {
-      setIsProcessingRequest(null);
-    }
-  };
-
-  const handleRejectRequestSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!rejectRequestId) return;
-    if (!rejectionReason.trim()) {
-      alert("Please provide a rejection reason.");
-      return;
-    }
-    
-    const rid = rejectRequestId;
-    setIsProcessingRequest(rid);
-    try {
-      await updateDoc(doc(db, COLLECTIONS.DATA_EXPORT_REQUESTS, rid), {
-        status: 'rejected',
-        rejectionReason: rejectionReason.trim(),
-        updatedAt: new Date()
-      });
-      await logAdminAction(adminEmail, "Reject Data Export", rid, `Rejected request. Reason: ${rejectionReason}`);
-      setRejectRequestId(null);
-      setRejectionReason('');
-      alert("Data export request rejected.");
-    } catch (err) {
-      console.error("Failed to reject data export request:", err);
-      alert("Error rejecting request.");
-    } finally {
-      setIsProcessingRequest(null);
-    }
-  };
 
   const handleResolveReport = async (reportId: string, actionType: string = 'Resolved') => {
     try {
@@ -306,32 +237,7 @@ export default function AdminModeration() {
         onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
       />
 
-      {/* Trust & Safety Tabs */}
-      <div className="flex bg-admin-surface border border-admin-border p-1 rounded-xl w-fit">
-        <button
-          onClick={() => setAdminTab('safety')}
-          className={`px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
-            adminTab === 'safety' 
-              ? 'bg-admin-primary text-white' 
-              : 'text-nc-muted hover:text-white'
-          }`}
-        >
-          Safety Reports
-        </button>
-        <button
-          onClick={() => setAdminTab('data-exports')}
-          className={`px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
-            adminTab === 'data-exports' 
-              ? 'bg-admin-primary text-white' 
-              : 'text-nc-muted hover:text-white'
-          }`}
-        >
-          Data Export Requests
-        </button>
-      </div>
-
-      {adminTab === 'safety' ? (
-        <>
+      <>
           <div className="flex flex-col md:flex-row justify-between items-end gap-4">
             <div>
               <h2 className="text-3xl font-bold text-white tracking-tight">Trust & Safety</h2>
@@ -448,107 +354,6 @@ export default function AdminModeration() {
             )}
           </div>
         </>
-      ) : (
-        <>
-          <div className="flex flex-col md:flex-row justify-between items-end gap-4">
-            <div>
-              <h2 className="text-3xl font-bold text-white tracking-tight">Data Export Requests</h2>
-              <p className="text-nc-muted text-sm mt-1">Review and approve user requests to export their complete data archives.</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {exportLoading ? (
-              <p className="text-xs text-nc-muted p-6">Loading export requests...</p>
-            ) : exportRequests.length === 0 ? (
-              <div className="py-20 text-center bg-admin-surface rounded-2xl border border-dashed border-admin-border">
-                <p className="text-nc-muted text-sm font-medium">No data export requests found.</p>
-              </div>
-            ) : (
-              exportRequests.map((req) => {
-                const isPending = req.status === 'pending';
-                const isApproved = req.status === 'approved';
-                const isRejected = req.status === 'rejected';
-                const formattedDate = req.createdAt?.toDate?.()?.toLocaleDateString() || (req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'N/A');
-
-                return (
-                  <div key={req.id} className="bg-admin-surface border border-admin-border rounded-2xl p-6 hover:bg-admin-surface-light/30 transition-all flex flex-col lg:flex-row lg:items-center gap-6 relative group overflow-hidden">
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                      isPending ? 'bg-yellow-500' :
-                      isApproved ? 'bg-green-500' :
-                      'bg-red-500'
-                    }`}></div>
-
-                    <div className="lg:w-1/4">
-                      <h4 className="font-bold text-white text-sm mb-1">{req.displayName || 'User'}</h4>
-                      <p className="text-xs text-nc-muted">{req.email}</p>
-                    </div>
-
-                    <div className="lg:w-1/4">
-                      <span className="text-[10px] font-black text-nc-muted uppercase tracking-widest block mb-1">Requested On</span>
-                      <p className="text-xs text-white/85">{formattedDate}</p>
-                    </div>
-
-                    <div className="lg:w-1/4">
-                      <span className="text-[10px] font-black text-nc-muted uppercase tracking-widest block mb-1">Status</span>
-                      {isPending && (
-                        <span className="inline-block px-2.5 py-1 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-[10px] font-bold uppercase rounded-lg">
-                          Pending
-                        </span>
-                      )}
-                      {isApproved && (
-                        <span className="inline-block px-2.5 py-1 bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-bold uppercase rounded-lg">
-                          Approved
-                        </span>
-                      )}
-                      {isRejected && (
-                        <div className="space-y-1">
-                          <span className="inline-block px-2.5 py-1 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase rounded-lg">
-                            Rejected
-                          </span>
-                          {req.rejectionReason && (
-                            <p className="text-[10px] text-red-400 italic max-w-[200px] truncate" title={req.rejectionReason}>
-                              Reason: {req.rejectionReason}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="lg:ml-auto flex items-center gap-2">
-                      {isPending ? (
-                        <>
-                          <button
-                            onClick={() => handleApproveRequest(req.id)}
-                            disabled={isProcessingRequest !== null}
-                            className="px-4 py-2 bg-admin-success/20 hover:bg-[#22c55e]/20 text-[#22c55e] hover:text-white text-[10px] font-black uppercase rounded-lg border border-admin-success/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {isProcessingRequest === req.id ? "Approving..." : "Approve"}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setRejectRequestId(req.id);
-                              setRejectionReason('');
-                            }}
-                            disabled={isProcessingRequest !== null}
-                            className="px-4 py-2 bg-admin-error/20 hover:bg-[#ef4444]/20 text-[#ef4444] hover:text-white text-[10px] font-black uppercase rounded-lg border border-admin-error/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      ) : (
-                        <span className="text-xs font-bold text-nc-muted">
-                          Processed
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </>
-      )}
 
       {/* Moderation Inspector Modal */}
       {selectedReport && (
@@ -718,50 +523,7 @@ export default function AdminModeration() {
         </div>
       )}
 
-      {/* Rejection Reason Input Modal */}
-      {rejectRequestId && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <form 
-            onSubmit={handleRejectRequestSubmit}
-            className="bg-admin-surface border border-admin-border rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
-          >
-            <div className="p-6 border-b border-admin-border bg-admin-surface-light/30">
-              <h3 className="font-bold text-white text-lg">Reject Data Export Request</h3>
-              <p className="text-xs text-nc-muted uppercase tracking-widest font-black">Provide Justification for Auditing</p>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-gray-400 text-[10px] font-bold uppercase tracking-[1px] mb-2">
-                  Rejection Reason
-                </label>
-                <textarea
-                  required
-                  placeholder="Explain why this request is being rejected..."
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  className="w-full bg-[#161617] border border-[#333] focus:border-admin-error/50 text-white py-2.5 px-4 rounded-xl outline-none text-xs h-28 resize-none"
-                />
-              </div>
-            </div>
-            <div className="p-4 bg-admin-surface-light/20 border-t border-admin-border flex justify-end gap-3">
-              <button 
-                type="button"
-                onClick={() => setRejectRequestId(null)}
-                className="px-4 py-2 bg-admin-surface-light text-white text-xs font-bold rounded-lg border border-admin-border hover:bg-white/5 transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit"
-                disabled={isProcessingRequest !== null}
-                className="px-4 py-2 bg-admin-error text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-              >
-                Confirm Rejection
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+
     </div>
   );
 }

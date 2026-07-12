@@ -257,7 +257,10 @@ export default function Home({ onNavigate, user }) {
         <div className="absolute top-1/4 left-1/4 w-[250px] h-[250px] bg-gradient-to-br from-[#FACC15]/8 via-sky-400/5 to-transparent rounded-full blur-3xl z-[1] animate-pulse" style={{ animationDuration: '6s' }} />
 
         <div className="relative z-10 max-w-4xl space-y-2 -ml-6 sm:-ml-8 lg:-ml-20">
-          <h1 className="font-sans font-bold text-[36px] text-[#00BFFF] hero-text-shadow leading-tight">
+          <h1 
+            className="font-sans font-bold text-[36px] hero-text-shadow leading-tight"
+            style={{ color: '#FACC15' }}
+          >
             Discover
           </h1>
           <h2 className="text-[18px] font-bold text-white hero-text-shadow">
@@ -273,11 +276,11 @@ export default function Home({ onNavigate, user }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -15, scale: 0.95 }}
             onClick={() => currentPremiumUser.id && onNavigate('profile', currentPremiumUser.id)}
-            className="relative z-30 cursor-pointer group mt-16 sm:mt-20 self-start -ml-6 sm:-ml-8 lg:-ml-20"
+            className="relative z-30 cursor-pointer group mt-12 sm:mt-20 self-start -ml-6 sm:-ml-8 lg:-ml-20"
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
+              gap: '16px',
               background: 'none',
               border: 'none',
               backdropFilter: 'none',
@@ -293,7 +296,7 @@ export default function Home({ onNavigate, user }) {
                 src={heroPhotoURL} 
                 alt={currentPremiumUser.name} 
                 onError={() => setHeroImageError(true)}
-                className="w-[80px] h-[120px] object-cover flex-shrink-0"
+                className="w-[110px] h-[160px] sm:w-[140px] sm:h-[200px] object-cover flex-shrink-0"
                 style={{
                   borderRadius: '0px',
                   boxShadow: '0 0 0 2px rgba(255,255,255,0.15)'
@@ -301,26 +304,26 @@ export default function Home({ onNavigate, user }) {
               />
             ) : (
               <div 
-                className="w-[80px] h-[120px] flex-shrink-0 flex items-center justify-center bg-[#3a3a3a]"
+                className="w-[110px] h-[160px] sm:w-[140px] sm:h-[200px] flex-shrink-0 flex items-center justify-center bg-[#3a3a3a]"
                 style={{
                   borderRadius: '0px',
                   boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.15)'
                 }}
               >
-                <svg viewBox="0 0 100 100" fill="#888888" className="w-10 h-10">
+                <svg viewBox="0 0 100 100" fill="#888888" className="w-12 h-12">
                   <circle cx="50" cy="35" r="20"/>
                   <ellipse cx="50" cy="85" rx="35" ry="25"/>
                 </svg>
               </div>
             )}
 
-            <div className="flex flex-col justify-center min-w-0" style={{ gap: '4px' }}>
+            <div className="flex flex-col justify-center min-w-0" style={{ gap: '6px' }}>
               <h3 
                 className="font-bold text-white truncate"
                 style={{
-                  fontSize: '17px',
+                  fontSize: window.innerWidth < 640 ? '20px' : '23px',
                   background: 'none',
-                  textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.85)',
                   lineHeight: '1.2'
                 }}
               >
@@ -329,9 +332,9 @@ export default function Home({ onNavigate, user }) {
               <p 
                 className="capitalize truncate"
                 style={{
-                  color: '#999',
-                  fontSize: '14px',
-                  textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+                  color: '#aaa',
+                  fontSize: window.innerWidth < 640 ? '15px' : '17px',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.85)',
                   lineHeight: '1.2'
                 }}
               >
@@ -346,15 +349,14 @@ export default function Home({ onNavigate, user }) {
                     onNavigate('profile', currentPremiumUser.id);
                   }
                 }}
-                className="hover:text-[#00BFFF]/80 transition-all cursor-pointer text-left"
+                className="hover:text-[#00BFFF]/80 transition-all cursor-pointer text-left font-semibold"
                 style={{
                   color: '#00BFFF',
-                  fontSize: '13px',
+                  fontSize: window.innerWidth < 640 ? '14px' : '16px',
                   lineHeight: '1.2',
                   background: 'none',
                   border: 'none',
-                  padding: 0,
-                  fontWeight: 'normal'
+                  padding: 0
                 }}
               >
                 Browse profile &gt;

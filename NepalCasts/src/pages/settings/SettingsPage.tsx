@@ -5,8 +5,7 @@ import SkillsSettings from './components/SkillsSettings';
 import ExperienceSettings from './components/ExperienceSettings';
 import SecuritySettings from './components/SecuritySettings';
 import NotificationSettings from './components/NotificationSettings';
-import DataSettings from './components/DataSettings';
-import { ChevronLeft, User, Briefcase, Lock, Bell, Shield, Database } from 'lucide-react';
+import { ChevronLeft, User, Briefcase, Lock, Bell, Shield } from 'lucide-react';
 
 interface SettingsPageProps {
   onNavigate: (page: string, param?: any) => void;
@@ -24,14 +23,12 @@ export default function SettingsPage({
     loading,
     sessions,
     blockedUsersList,
-    dataRequests,
     updateProfileSettings,
     revokeSession,
-    unblockUserAction,
-    createDataExportRequest
+    unblockUserAction
   } = useSettings(user);
 
-  const [activeTab, setActiveTab] = useState<'about' | 'skills' | 'experience' | 'password' | 'notifications' | 'data'>('about');
+  const [activeTab, setActiveTab] = useState<'about' | 'skills' | 'experience' | 'password' | 'notifications'>('about');
   const [currentMobileView, setCurrentMobileView] = useState<'menu' | 'content'>('menu');
 
   const tabsConfig = [
@@ -40,7 +37,6 @@ export default function SettingsPage({
     { id: 'experience', label: 'Work History', icon: Briefcase },
     { id: 'password', label: 'Password & Security', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'data', label: 'GDPR & Privacy', icon: Database },
   ] as const;
 
   if (loading) {
@@ -109,13 +105,13 @@ export default function SettingsPage({
                   setActiveTab(tab.id);
                   setCurrentMobileView('content');
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all text-left ${
+                className={`w-full flex items-center gap-4 md:gap-3 px-5 py-4 md:px-4 md:py-3 rounded-2xl text-base md:text-sm font-bold transition-all text-left ${
                   isSelected 
                     ? 'bg-[#00BFFF]/10 text-[#00BFFF] border border-[#00BFFF]/20' 
                     : 'text-nc-muted hover:text-white hover:bg-white/5 border border-transparent'
                 }`}
               >
-                <Icon className="w-4 h-4 shrink-0" />
+                <Icon className="w-5 h-5 md:w-4 md:h-4 shrink-0" />
                 <span>{tab.label}</span>
               </button>
             );
@@ -166,13 +162,7 @@ export default function SettingsPage({
             />
           )}
 
-          {activeTab === 'data' && (
-            <DataSettings 
-              requests={dataRequests}
-              onRequestExport={createDataExportRequest}
-              showAlert={showAlert}
-            />
-          )}
+
         </div>
       </div>
     </div>

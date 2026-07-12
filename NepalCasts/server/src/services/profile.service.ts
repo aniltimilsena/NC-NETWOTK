@@ -102,7 +102,9 @@ export const deleteUserAccount = async (userId: string, adminUid: string, adminE
     { name: 'notifications', field: 'senderId' },
     { name: 'reviews', field: 'reviewerId' },
     { name: 'reviews', field: 'targetUserId' },
-    { name: 'reviews', field: 'targetUid' }
+    { name: 'reviews', field: 'targetUid' },
+    { name: 'reports', field: 'reporterId' },
+    { name: 'reports', field: 'targetUserId' }
   ];
 
   for (const col of collectionsToClean) {

@@ -83,12 +83,70 @@ export const adminDeleteUser = onCall(callableOptions, async (request) => {
     try { await auth.deleteUser(userId); } catch {}
 
     const sessionsSnap = await db.collection("profiles").doc(userId).collection("sessions").get();
-    const batch = db.batch();
-    sessionsSnap.docs.forEach((doc) => batch.delete(doc.ref));
+    let batch = db.batch();
+    let count = 0;
+    for (const doc of sessionsSnap.docs) {
+      batch.delete(doc.ref);
+      count++;
+      if (count === 400) {
+        await batch.commit();
+        batch = db.batch();
+        count = 0;
+      }
+    }
     
     batch.delete(db.collection("users").doc(userId));
     batch.delete(db.collection("profiles").doc(userId));
     await batch.commit();
+
+    const collectionsToClean = [
+      { name: "casting_calls", field: "createdBy" },
+      { name: "saved_calls", field: "userId" },
+      { name: "data_requests", field: "userId" },
+      { name: "follows", field: "followerId" },
+      { name: "follows", field: "followingId" },
+      { name: "applications", field: "userId" },
+      { name: "applications", field: "creatorId" },
+      { name: "notifications", field: "userId" },
+      { name: "notifications", field: "recipientId" },
+      { name: "notifications", field: "receiverId" },
+      { name: "notifications", field: "senderId" },
+      { name: "reviews", field: "reviewerId" },
+      { name: "reviews", field: "targetUserId" },
+      { name: "reviews", field: "targetUid" },
+      { name: "reports", field: "reporterId" },
+      { name: "reports", field: "targetUserId" }
+    ];
+
+    for (const col of collectionsToClean) {
+      try {
+        const snap = await db.collection(col.name).where(col.field, "==", userId).get();
+        if (!snap.empty) {
+          let colBatch = db.batch();
+          let colCount = 0;
+          for (const doc of snap.docs) {
+            colBatch.delete(doc.ref);
+            colCount++;
+            if (colCount === 400) {
+              await colBatch.commit();
+              colBatch = db.batch();
+              colCount = 0;
+            }
+          }
+          if (colCount > 0) {
+            await colBatch.commit();
+          }
+        }
+      } catch (colErr) {
+        logger.error(`Error cleaning up collection ${col.name} (field ${col.field}) for user ${userId}:`, colErr);
+      }
+    }
+
+    await db.collection("deleted_users").add({
+      userId,
+      deletedAt: FieldValue.serverTimestamp(),
+      deletedBy: authCtx.uid,
+    });
 
     await logSecurityEvent("user.admin.delete", "critical", authCtx.uid, { deletedUserId: userId });
     await db.collection("admin_logs").add({

@@ -25,7 +25,6 @@ const menuItems = [
   { to: '/admin/messages', label: 'Activity Monitoring', icon: MessageSquare },
   { to: '/admin/pro', label: 'PRO Members', icon: CreditCard },
   { to: '/admin/moderation', label: 'Moderation', icon: ShieldAlert },
-  { to: '/admin/data-requests', label: 'Data Requests', icon: Database },
   { to: '/admin/settings', label: 'Platform Settings', icon: Settings },
 ];
 

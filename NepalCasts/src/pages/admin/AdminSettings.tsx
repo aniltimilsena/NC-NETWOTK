@@ -685,7 +685,9 @@ export default function AdminSettings() {
                     </span>
                   </td>
                   <td className="px-4 py-3 font-mono text-white/60 select-all">{log.targetId}</td>
-                  <td className="px-4 py-3 text-white/70 max-w-xs truncate" title={log.details}>{log.details}</td>
+                  <td className="px-4 py-3 text-white/70 max-w-xs truncate" title={typeof log.details === 'object' ? JSON.stringify(log.details) : log.details}>
+                    {typeof log.details === 'object' ? JSON.stringify(log.details) : log.details}
+                  </td>
                 </tr>
               ))}
               {logs.length === 0 && (

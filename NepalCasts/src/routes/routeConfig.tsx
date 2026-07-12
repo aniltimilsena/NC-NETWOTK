@@ -36,7 +36,6 @@ const AdminMessages = lazy(() => import('../pages/admin/AdminMessages'));
 const AdminPro = lazy(() => import('../pages/admin/AdminPro'));
 const AdminModeration = lazy(() => import('../pages/admin/AdminModeration'));
 const AdminSettings = lazy(() => import('../pages/admin/AdminSettings'));
-const AdminDataRequests = lazy(() => import('../pages/admin/DataRequests'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 
 // Route Guards
@@ -147,7 +146,6 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
           <Route path="/admin/pro" element={<AdminPro />} />
           <Route path="/admin/moderation" element={<AdminModeration />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
-          <Route path="/admin/data-requests" element={<AdminDataRequests />} />
         </Route>
       </Route>
 

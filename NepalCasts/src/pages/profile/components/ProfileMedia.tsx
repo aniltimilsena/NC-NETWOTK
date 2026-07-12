@@ -39,15 +39,46 @@ export default function ProfileMedia({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Intro Video Card */}
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6">
-        <h2 className="text-xl font-black text-white mb-4 flex items-center gap-2">
+    <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 md:p-8 space-y-6">
+      {/* Unified Media Header */}
+      <div className="flex items-center gap-3 border-b border-white/5 pb-5">
+        <div className="w-10 h-10 rounded-2xl bg-[#00BFFF]/10 flex items-center justify-center">
           <Film className="w-5 h-5 text-[#00BFFF]" />
-          Video Showreel
-        </h2>
+        </div>
+        <div>
+          <h2 className="text-sm font-black text-white uppercase tracking-widest">Media Showcase</h2>
+          <p className="text-[10px] text-nc-muted">Showcase your introduction videos and portfolio lookbook</p>
+        </div>
+      </div>
+
+      {/* Video Showreel Section */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+            <Film className="w-4 h-4 text-[#00BFFF]" />
+            Video
+          </h3>
+          {isOwnProfile && onUploadIntroVideo && !introVideo && (
+            <div>
+              <input 
+                type="file" 
+                id="intro-video-upload" 
+                accept="video/mp4,video/quicktime,video/webm" 
+                className="hidden" 
+                onChange={handleIntroChange}
+              />
+              <button 
+                onClick={() => document.getElementById('intro-video-upload')?.click()}
+                className="text-[10px] font-black uppercase py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10"
+              >
+                Upload Video
+              </button>
+            </div>
+          )}
+        </div>
+
         {introVideo ? (
-          <div className="relative aspect-video rounded-3xl overflow-hidden border border-white/5 bg-black">
+          <div className="relative aspect-video rounded-3xl overflow-hidden border border-white/5 bg-black max-w-2xl">
             <video 
               src={introVideo} 
               controls 
@@ -64,41 +95,27 @@ export default function ProfileMedia({
             )}
           </div>
         ) : (
-          <div className="border border-dashed border-white/10 rounded-3xl py-12 px-6 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto">
-              <Video className="w-6 h-6 text-nc-muted" />
+          <div className="border border-dashed border-white/10 rounded-3xl py-10 px-6 text-center space-y-3.5">
+            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto">
+              <Video className="w-5 h-5 text-nc-muted" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">No Intro Video Yet</h3>
-              <p className="text-xs text-nc-muted max-w-xs mx-auto mt-1 leading-relaxed">
-                Add an introduction video to showcase your performance and acting range to casting directors.
-              </p>
+              <h4 className="text-xs font-bold text-white">No Intro Video Yet</h4>
             </div>
-            {isOwnProfile && onUploadIntroVideo && (
-              <div>
-                <input 
-                  type="file" 
-                  id="intro-video-upload" 
-                  accept="video/mp4,video/quicktime,video/webm" 
-                  className="hidden" 
-                  onChange={handleIntroChange}
-                />
-                <Button size="sm" onClick={() => document.getElementById('intro-video-upload')?.click()}>
-                  Upload Intro Video
-                </Button>
-              </div>
-            )}
           </div>
         )}
       </div>
 
-      {/* Portfolio Gallery */}
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-black text-white flex items-center gap-2">
-            <ImageIcon className="w-5 h-5 text-[#00BFFF]" />
-            Photo Portfolio
-          </h2>
+      {/* Divider */}
+      <div className="h-px bg-white/5 my-6" />
+
+      {/* Photo Portfolio Section */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-[#00BFFF]" />
+            Photo
+          </h3>
           {isOwnProfile && onUploadMedia && (
             <div>
               <input 
@@ -109,14 +126,13 @@ export default function ProfileMedia({
                 className="hidden" 
                 onChange={handleMediaChange}
               />
-              <Button 
-                size="sm" 
+              <button 
                 onClick={() => document.getElementById('portfolio-upload')?.click()}
-                className="flex items-center gap-1.5"
+                className="text-[10px] font-black uppercase py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10 flex items-center gap-1.5"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
                 Add Photos
-              </Button>
+              </button>
             </div>
           )}
         </div>
@@ -151,15 +167,12 @@ export default function ProfileMedia({
             ))}
           </div>
         ) : (
-          <div className="border border-dashed border-white/10 rounded-3xl py-16 px-6 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto">
-              <ImageIcon className="w-6 h-6 text-nc-muted" />
+          <div className="border border-dashed border-white/10 rounded-3xl py-12 px-6 text-center space-y-3.5">
+            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto">
+              <ImageIcon className="w-5 h-5 text-nc-muted" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">No Portfolio Photos</h3>
-              <p className="text-xs text-nc-muted max-w-xs mx-auto mt-1 leading-relaxed">
-                Upload photos to display your headshots, modeling shots, and performance stills.
-              </p>
+              <h4 className="text-xs font-bold text-white">No Portfolio Photos</h4>
             </div>
           </div>
         )}

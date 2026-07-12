@@ -47,6 +47,8 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                 ...castingDoc.data(),
               };
             }
+            // Delete orphaned saved call doc
+            deleteDoc(doc(db, 'saved_calls', savedDoc.id)).catch(err => console.warn(err));
             return null; 
           } catch {
             return null;

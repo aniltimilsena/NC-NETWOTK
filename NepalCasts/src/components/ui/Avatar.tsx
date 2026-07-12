@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
-import { UserContext } from '../../context/UserContext';
+import React, { useState, useEffect, useRef } from 'react';
+import { auth, db } from '../../lib/firebase';
+import { updateProfile } from 'firebase/auth';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { uploadProfileMedia } from '../../services/profile';
 import ConfirmDialog from './ConfirmDialog';
 import CropModal from './CropModal';
@@ -26,17 +28,13 @@ export default function Avatar(props: AvatarProps) {
     name,
     className = '',
     verified = false,
-    user: propUser
+    user: propUser,
+    userId
   } = props;
 
   
-  const context = useContext(UserContext);
-
-  
   const isExplicit = 'user' in props || 'src' in props || 'name' in props;
-  const user = propUser || ((isExplicit && !editable) ? null : context?.user);
-  const updateAvatar = context?.updateAvatar;
-  const deleteAvatar = context?.deleteAvatar;
+  const user = propUser || ((isExplicit && !editable) ? null : auth.currentUser);
 
   const [imageError, setImageError] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -118,9 +116,9 @@ export default function Avatar(props: AvatarProps) {
 
   const handleCropConfirm = async (croppedFile: File) => {
     setCropSrc(null);
-    if (!user?.uid || !updateAvatar) return;
+    const activeUserId = userId || user?.uid || auth.currentUser?.uid;
+    if (!activeUserId) return;
 
-    
     const reader = new FileReader();
     reader.onload = () => {
       setPreviewSrc(reader.result as string);
@@ -131,16 +129,23 @@ export default function Avatar(props: AvatarProps) {
     setProgress(0);
 
     try {
-      const avatarPath = `profiles/${user.uid}/avatar.jpg`;
-      const downloadUrl = await uploadProfileMedia(user.uid, croppedFile, (percent) => {
+      const avatarPath = `profiles/${activeUserId}/avatar.jpg`;
+      const downloadUrl = await uploadProfileMedia(activeUserId, croppedFile, (percent) => {
         setProgress(Math.round(percent));
       }, avatarPath);
 
       if (downloadUrl) {
         if (props.onUploadSuccess) {
           await props.onUploadSuccess(downloadUrl);
-        } else if (updateAvatar) {
-          await updateAvatar(downloadUrl);
+        } else {
+          if (auth.currentUser) {
+            await updateProfile(auth.currentUser, { photoURL: downloadUrl });
+            await updateDoc(doc(db, 'profiles', activeUserId), {
+              image: downloadUrl,
+              photoURL: downloadUrl,
+              updatedAt: serverTimestamp()
+            });
+          }
         }
         triggerToast("Profile picture updated successfully!", "success");
       } else {
@@ -159,11 +164,20 @@ export default function Avatar(props: AvatarProps) {
   const handleConfirmDelete = async () => {
     setConfirmDeleteOpen(false);
     setUploading(true);
+    const activeUserId = userId || user?.uid || auth.currentUser?.uid;
     try {
-      if (!deleteAvatar) {
-        throw new Error("deleteAvatar function not available");
+      if (props.onUploadSuccess) {
+        await props.onUploadSuccess("");
+      } else {
+        if (auth.currentUser && activeUserId) {
+          await updateProfile(auth.currentUser, { photoURL: "" });
+          await updateDoc(doc(db, 'profiles', activeUserId), {
+            image: null,
+            photoURL: null,
+            updatedAt: serverTimestamp()
+          });
+        }
       }
-      await deleteAvatar();
       triggerToast("Profile picture removed.", "success");
     } catch (err) {
       console.error(err);
@@ -207,22 +221,30 @@ export default function Avatar(props: AvatarProps) {
 
           {/* Upload Spinner Ring */}
           {uploading && (
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex flex-col items-center justify-center rounded-full z-10 animate-fade-in">
-              <svg className="w-10 h-10 transform -rotate-90">
-                <circle cx="20" cy="20" r="16" stroke="rgba(255,255,255,0.1)" strokeWidth="3" fill="transparent" />
-                <circle 
-                  cx="20" 
-                  cy="20" 
-                  r="16" 
-                  stroke="#00BFFF" 
-                  strokeWidth="3" 
-                  fill="transparent" 
-                  strokeDasharray={2 * Math.PI * 16}
-                  strokeDashoffset={2 * Math.PI * 16 * (1 - progress / 100)}
-                  className="transition-all duration-150"
-                />
-              </svg>
-              <span className="text-[10px] text-white font-black mt-1">{progress}%</span>
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex items-center justify-center rounded-full z-10 animate-fade-in">
+              <div className="relative w-12 h-12 flex items-center justify-center">
+                <svg className="absolute w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    className="text-white/10"
+                    strokeWidth="2.5"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className="text-[#00BFFF] transition-all duration-300"
+                    strokeDasharray={`${progress}, 100`}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <span className="text-[10px] text-white font-extrabold tracking-tighter">
+                  {progress}%
+                </span>
+              </div>
             </div>
           )}
         </div>

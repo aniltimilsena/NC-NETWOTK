@@ -68,7 +68,7 @@ export const ConversationSchema = z.object({
 export const AdminLogSchema = z.object({
   action: z.string().min(1).max(200),
   targetId: z.string().max(200).optional(),
-  details: z.record(z.string(), z.unknown()).optional(),
+  details: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
 });
 
 export const AdminSettingsSchema = z.object({

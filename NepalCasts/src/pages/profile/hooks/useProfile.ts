@@ -183,8 +183,24 @@ export function useProfile(profileId: string | null, currentUser: any) {
   useEffect(() => {
     if (!isOwnProfile || !currentUser?.uid) return;
     const q = query(collection(db, 'saved_calls'), where('userId', '==', currentUser.uid));
-    const unsubscribe = onSnapshot(q, (snap) => {
-      setSavedCount(snap.size);
+    const unsubscribe = onSnapshot(q, async (snap) => {
+      let activeCount = 0;
+      const checks = snap.docs.map(async (savedDoc) => {
+        const data = savedDoc.data();
+        try {
+          const castingDoc = await getDoc(doc(db, 'casting_calls', data.castingId));
+          if (castingDoc.exists()) {
+            activeCount++;
+          } else {
+            // Automatically clean up orphaned saved_calls document
+            await deleteDoc(doc(db, 'saved_calls', savedDoc.id));
+          }
+        } catch (err) {
+          console.warn("Failed to check casting call existence:", err);
+        }
+      });
+      await Promise.all(checks);
+      setSavedCount(activeCount);
     }, (err) => {
       console.warn("Failed to subscribe to saved calls count:", err);
     });

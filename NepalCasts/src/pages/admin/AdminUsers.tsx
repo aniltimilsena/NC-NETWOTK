@@ -151,13 +151,8 @@ export default function AdminUsers() {
 
   const handleUpdateRole = async (userId: string, makeAdmin: boolean) => {
     try {
-      const { data, error } = await callSecureFunction<
-        { userId: string; makeAdmin: boolean },
-        { role: string; isAdmin: boolean }
-      >("adminUpdateUserRole", { userId, makeAdmin });
-
-      if (error) throw new Error(error);
-      const nextRole = data?.role || (makeAdmin ? 'Admin' : 'Talent');
+      const response = await apiClient.post(`/admin/users/${userId}/role`, { makeAdmin });
+      const nextRole = response.data?.role || (makeAdmin ? 'Admin' : 'Talent');
       
       if (selectedUser?.id === userId) {
         setSelectedUser(prev => prev ? { ...prev, role: nextRole, isAdmin: makeAdmin } : null);
@@ -165,7 +160,8 @@ export default function AdminUsers() {
       alert(makeAdmin ? "Promoted user to Admin successfully!" : "Removed Admin role from user successfully!");
     } catch (err: any) {
       console.error("Failed to update user role:", err);
-      alert(getUserFriendlyError(err));
+      const errMsg = err.response?.data?.error || err.message || "Failed to update user role";
+      alert(errMsg);
     }
   };
 
@@ -224,11 +220,7 @@ export default function AdminUsers() {
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
         try {
-          const { error } = await callSecureFunction<{ userId: string }, { success: boolean }>(
-            "adminDeleteUser",
-            { userId }
-          );
-          if (error) throw new Error(error);
+          await apiClient.post(`/admin/users/${userId}/delete`);
           
           if (selectedUser?.id === userId) {
             setSelectedUser(null);
@@ -237,7 +229,8 @@ export default function AdminUsers() {
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         } catch (err: any) {
           console.error("Failed to delete user:", err);
-          alert(getUserFriendlyError(err));
+          const errMsg = err.response?.data?.error || err.message || "Failed to delete user";
+          alert(errMsg);
         } finally {
           setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
@@ -266,12 +259,7 @@ export default function AdminUsers() {
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
         try {
-          const { error } = await callSecureFunction<
-            { userId: string; reason: string; duration: string },
-            { success: boolean }
-          >("adminBanUser", { userId, reason: reason || "", duration: duration || "" });
-
-          if (error) throw new Error(error);
+          await apiClient.post(`/admin/users/${userId}/ban`, { reason: reason || "", duration: duration || "" });
 
           if (selectedUser?.id === userId) {
             setSelectedUser(prev => prev ? { ...prev, status: 'banned', banReason: reason, banExpiresAt: duration } : null);
@@ -280,7 +268,8 @@ export default function AdminUsers() {
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         } catch (err: any) {
           console.error("Failed to ban user:", err);
-          alert(getUserFriendlyError(err));
+          const errMsg = err.response?.data?.error || err.message || "Failed to ban user";
+          alert(errMsg);
         } finally {
           setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }
@@ -300,11 +289,7 @@ export default function AdminUsers() {
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
         try {
-          const { error } = await callSecureFunction<{ userId: string }, { success: boolean }>(
-            "adminUnbanUser",
-            { userId }
-          );
-          if (error) throw new Error(error);
+          await apiClient.post(`/admin/users/${userId}/unban`);
 
           if (selectedUser?.id === userId) {
             setSelectedUser(prev => prev ? { ...prev, status: 'Active' } : null);
@@ -313,7 +298,8 @@ export default function AdminUsers() {
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         } catch (err: any) {
           console.error("Failed to unban user:", err);
-          alert(getUserFriendlyError(err));
+          const errMsg = err.response?.data?.error || err.message || "Failed to unban user";
+          alert(errMsg);
         } finally {
           setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         }

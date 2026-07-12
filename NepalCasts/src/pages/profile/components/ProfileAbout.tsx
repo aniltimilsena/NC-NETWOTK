@@ -101,7 +101,7 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
             <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center space-y-2">
               <Eye className="w-5 h-5 text-nc-muted mx-auto" />
               <p className="text-[11px] text-nc-muted leading-relaxed">
-                Contact information is locked. Follow this user or enable "Show Contact Info" to unlock.
+                Contact information is locked. Follow this user to unlock.
               </p>
             </div>
           )}

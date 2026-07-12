@@ -460,31 +460,15 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-[#121212]/95 backdrop-blur-md flex flex-col items-center justify-start pt-16 px-4 overflow-y-auto"
+            className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-start pt-6 px-4 overflow-y-auto"
           >
-            {/* Soft gold glow backdrop */}
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-gradient-to-r from-[#D4AF37]/10 to-transparent blur-[100px] rounded-full pointer-events-none z-0" />
+            {/* Soft glow backdrop */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-gradient-to-r from-[#1877F2]/5 to-transparent blur-[100px] rounded-full pointer-events-none z-0" />
 
-            {/* Close Button */}
-            <button 
-              onClick={() => setShowSearchOverlay(false)}
-              className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 z-[110]"
-              title="Close Search"
-              aria-label="Close Search"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            <div className="w-full max-w-xl md:max-w-4xl lg:max-w-6xl space-y-6 animate-slide-up relative z-10 pb-12">
-              <div className="text-center space-y-1.5 mb-6">
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Search</h2>
-                <p className="text-white/40 text-[11px] sm:text-xs tracking-wider uppercase font-semibold">Find talent by name, role, or location.</p>
-              </div>
-
+            <div className="w-full max-w-3xl animate-slide-up relative z-10 pb-12">
               <div className="relative z-50">
                 <ActionSearchBar 
+                  onClose={() => setShowSearchOverlay(false)}
                   onActionSelect={(profileId) => {
                     setShowSearchOverlay(false);
                     navigate(`/profile/${profileId}`);
