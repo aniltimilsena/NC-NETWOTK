@@ -1,7 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-
-
-
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 import { motion } from 'framer-motion';
 import GlassCard from '../components/ui/GlassCard';
@@ -10,9 +7,6 @@ import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
 import { subscribeToTalents } from '../services/users';
 import { subscribeToCastingCalls } from '../services/casting';
-
-
-
 
 
 

@@ -7,7 +7,7 @@ import ProfileReviews from './components/ProfileReviews';
 import ProfileAnalytics from './components/ProfileAnalytics';
 import FollowModal from './components/FollowModal';
 import ReviewModal from './components/ReviewModal';
-import { doc, getDoc, setDoc, query, collection, where, getDocs, deleteDoc, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, query, collection, where, getDocs, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { updateProfileData, uploadProfileMedia } from '../../services/profile';
 import type { Review } from './components/ProfileReviews';

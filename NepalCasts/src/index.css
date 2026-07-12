@@ -66,27 +66,6 @@
     box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
   }
   
-  /* Ticker Animation Utilities */
-  .mask-edge-fade {
-    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-  }
-  .animate-ticker {
-    animation: ticker 30s linear infinite;
-  }
-  .animate-ticker:hover {
-    animation-play-state: paused;
-  }
-
-  @keyframes ticker {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      /* Translate exactly -50% to seamlessly loop 2 identical blocks side-by-side */
-      transform: translateX(-50%);
-    }
-  }
 
   .scrollbar-hide {
     -ms-overflow-style: none;

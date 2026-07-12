@@ -1,4 +1,4 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { UploadCloud, X, CheckCircle2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -171,7 +171,7 @@ export const FileUploadCard = React.forwardRef<HTMLDivElement, FileUploadCardPro
                            {file.status === "completed" && (
                             <span>{formatFileSize(file.file.size)}</span>
                           )}
-                          <span className="mx-1">•</span>
+                          <span className="mx-1">ΓÇó</span>
                           <span className={cn(
                              {"text-primary": file.status === 'uploading'},
                              {"text-green-500": file.status === 'completed'},

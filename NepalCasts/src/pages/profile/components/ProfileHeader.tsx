@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, Trash2, ChevronLeft, ShieldCheck, Mail, Phone, MapPin, Eye, Search, MessageSquare, Award } from 'lucide-react';
+import { Camera, Trash2, ChevronLeft, ShieldCheck, MapPin } from 'lucide-react';
 import { Button, Avatar } from '../../../components/ui';
 import { uploadProfileMedia, updateProfileData } from '../../../services/profile';
 import type { UserProfile } from '../../../types';
