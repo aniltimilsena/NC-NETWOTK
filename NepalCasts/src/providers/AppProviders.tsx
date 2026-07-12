@@ -204,7 +204,7 @@ export default function AppProviders({ children }: { children: React.ReactNode }
 
   return (
     <PermissionProvider>
-      <CallProvider user={user}>
+      <CallProvider user={enrichedUser}>
         <AppContext.Provider value={{
           user: enrichedUser,
           isAdmin,

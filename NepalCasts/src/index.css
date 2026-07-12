@@ -11,14 +11,17 @@
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    font-size: 16px; /* Ensure baseline font size is at least 16px to prevent mobile zoom frustations */
   }
 
   body {
     margin: 0;
     padding: 0;
     background-color: #0a0a0a;
-    color: #CCCCCC;
+    color: #D1D5DB; /* Reduced contrast for a softer aesthetic */
     font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.6; /* Increased leading to let text breathe */
+    letter-spacing: -0.011em; /* Improved tracking for optimized typography legibility */
     -webkit-font-smoothing: antialiased;
   }
   
@@ -454,4 +457,24 @@ body.font-devanagari * {
   box-shadow: 0 0 8px rgba(255, 140, 0, 0.9), 0 0 15px rgba(255, 140, 0, 0.5);
 }
 
+/* Mobile Usability & Accessibility Overrides (max-width: 640px) */
+@media (max-width: 640px) {
+  /* 1. Ensure touch/tap targets meet WCAG standards (at least 44px) for all buttons and clickable elements */
+  button:not(.hidden), 
+  a.button:not(.hidden),
+  .btn:not(.hidden),
+  .button:not(.hidden),
+  .category-card:not(.hidden) {
+    min-height: 44px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 
+  /* 2. Prevent micro-copy/text sizes from dropping below legible limits (13px) on mobile */
+  .text-[10px],
+  .text-[11px],
+  .text-xs {
+    font-size: 0.8125rem !important; /* Forces it to be at least ~13px for readable display */
+  }
+}

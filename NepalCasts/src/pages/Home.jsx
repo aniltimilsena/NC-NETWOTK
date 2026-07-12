@@ -269,8 +269,7 @@ export default function Home({ onNavigate, user }) {
             initial={{ opacity: 0, y: 15, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -15, scale: 0.95 }}
-            onClick={() => currentPremiumUser.id && onNavigate('profile', currentPremiumUser.id)}
-            className="relative z-30 cursor-pointer group mt-12 sm:mt-20 self-start -ml-6 sm:-ml-8 lg:-ml-20"
+            className="relative z-30 group mt-12 sm:mt-20 self-start -ml-6 sm:-ml-8 lg:-ml-20"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -298,13 +297,13 @@ export default function Home({ onNavigate, user }) {
               />
             ) : (
               <div 
-                className="w-[110px] h-[160px] sm:w-[140px] sm:h-[200px] flex-shrink-0 flex items-center justify-center bg-[#3a3a3a]"
+                className="w-[110px] h-[160px] sm:w-[140px] sm:h-[200px] flex-shrink-0 flex items-center justify-center bg-gradient-to-b from-[#1E1E26] to-[#111116]"
                 style={{
                   borderRadius: '0px',
                   boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.15)'
                 }}
               >
-                <svg viewBox="0 0 100 100" fill="#888888" className="w-12 h-12">
+                <svg viewBox="0 0 100 100" fill="#5A5A75" className="w-16 h-16 sm:w-20 sm:h-20">
                   <circle cx="50" cy="35" r="20"/>
                   <ellipse cx="50" cy="85" rx="35" ry="25"/>
                 </svg>
@@ -513,15 +512,15 @@ export default function Home({ onNavigate, user }) {
                   <h2 className="font-sans text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Browse by Category</h2>
                 </div>
                 <button
-                  onClick={() => setShowAllCategories(!showAllCategories)}
+                  onClick={() => onNavigate('listing')}
                   className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
                 >
-                  {showAllCategories ? 'Show less' : 'View all'}
+                  View all
                 </button>
               </div>
               {/* ── Category cards with staggered reveal ────────── */}
               {categoriesReady ? (
-                <div className="flex flex-wrap gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-6 max-w-3xl mx-auto">
                   {categories?.map((cat, idx) => {
                     const categoryColor = cat.color;
                     const CatIcon = cat.icon;
@@ -530,30 +529,31 @@ export default function Home({ onNavigate, user }) {
                         key={cat.id}
                         onClick={() => onNavigate('listing', cat.name)}
                         style={{ animationDelay: `${idx * 40}ms` }}
-                        className={`cat-card-reveal category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-5 sm:p-6 flex flex-col items-center gap-3 sm:gap-4 group ${idx >= 4 && !showAllCategories ? 'hidden sm:flex' : 'flex'
-                          }`}
+                        className={`cat-card-reveal category-card w-full p-5 sm:p-8 lg:p-10 flex-col items-center gap-3 sm:gap-4 lg:gap-5 group ${
+                          idx >= 2 ? 'hidden' : 'flex'
+                        }`}
                       >
                         {/* Circular glow background container with accent color at 15% opacity */}
                         <div
-                          className="relative z-10 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
+                          className="relative z-10 w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
                           style={{
                             backgroundColor: `${categoryColor}26`,
                             color: categoryColor,
                             boxShadow: `0 0 15px ${categoryColor}15`
                           }}
                         >
-                          <CatIcon size={38} className="w-[38px] h-[38px] sm:w-[44px] sm:h-[44px]" strokeWidth={1.5} />
+                          <CatIcon className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12" strokeWidth={1.5} />
                         </div>
 
-                        <span className="text-base sm:text-lg font-extrabold text-white/90 group-hover:text-white transition-colors relative z-10">{cat.name}</span>
+                        <span className="text-base sm:text-xl lg:text-2xl font-black text-white/90 group-hover:text-white transition-colors relative z-10">{cat.name}</span>
 
                         {/* Talent count or Be the first invite */}
                         {cat.count === 0 ? (
-                          <span className="text-xs sm:text-sm font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
+                          <span className="text-xs sm:text-sm lg:text-base font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
                             Be the first →
                           </span>
                         ) : (
-                          <span className="text-xs sm:text-sm font-semibold text-nc-muted relative z-10">
+                          <span className="text-xs sm:text-sm lg:text-base font-semibold text-nc-muted relative z-10">
                             {cat.count} {cat.count === 1 ? 'talent' : 'talents'}
                           </span>
                         )}
@@ -711,20 +711,47 @@ export default function Home({ onNavigate, user }) {
       {/* CTA Section - Only show if not logged in */}
       {!isLoggedIn && (
         <section className="pt-2 pb-12 sm:pt-2 sm:pb-16 lg:pt-2 lg:pb-20">
-          <div className="max-w-4xl mx-auto px-6">
-            <GlassCard strong className="p-8 sm:p-14 relative overflow-hidden">
-              <div className="absolute top-0 left-1/3 w-72 h-72 bg-nc-accent/10 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 right-1/4 w-56 h-56 bg-[#FACC15]/8 rounded-full blur-3xl" />
-              <div className="relative z-10 space-y-5 sm:space-y-7 text-center">
-                <h2 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-bold text-white px-2 leading-tight">
-                  Ready to Get Discovered?
-                </h2>
-                <p className="text-nc-secondary text-sm sm:text-lg max-w-xl mx-auto px-2 leading-relaxed">
-                  Join 25,000+ talents on NepalCasts. Create your profile and start getting noticed by top productions today.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-2">
-                  <Button size="lg" className="w-full sm:w-auto" onClick={() => onNavigate('profile-create')}>Create Your Profile</Button>
-                  <Button variant="secondary" size="lg" className="w-full sm:w-auto" onClick={() => onNavigate('listing')}>Browse Talent</Button>
+          <div className="max-w-2xl mx-auto px-6">
+            <GlassCard strong className="p-6 sm:p-10 relative overflow-hidden border border-white/5 shadow-2xl">
+              {/* Premium Background Glow Orbs */}
+              <div className="absolute -top-12 -left-12 w-80 h-80 bg-[#00BFFF]/10 rounded-full blur-[100px] pointer-events-none" />
+              <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-[#FACC15]/5 rounded-full blur-[80px] pointer-events-none" />
+              
+              <div className="relative z-10 space-y-5 sm:space-y-6 text-center flex flex-col items-center">
+                {/* Platform Badge */}
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md shadow-sm">
+                  <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase text-[#00BFFF] flex items-center gap-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse"></span>
+                    Nepal's Premier Network
+                  </span>
+                </div>
+
+                <div className="space-y-2.5 sm:space-y-3">
+                  <h2 className="font-sans text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight bg-gradient-to-r from-white via-white to-[#00BFFF] bg-clip-text text-transparent px-2">
+                    Ready to Get Discovered?
+                  </h2>
+                  <p className="text-nc-secondary text-xs sm:text-sm max-w-lg mx-auto px-2 leading-relaxed font-medium">
+                    Join <span className="text-[#00BFFF] font-bold">25,000+</span> models, actors, and creators on NepalCasts. Build your showcase profile and connect with top production houses today.
+                  </p>
+                </div>
+
+                <div className="flex flex-row gap-3 sm:gap-4 justify-center w-full pt-2">
+                  <Button 
+                    size="lg" 
+                    className="flex-1 sm:flex-none bg-gradient-to-r from-[#00F2FE] to-[#4FACFE] hover:from-[#00E5F5] hover:to-[#3CA4FC] text-black font-extrabold shadow-[0_0_20px_rgba(0,242,254,0.25)] hover:shadow-[0_0_35px_rgba(0,242,254,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out border-none flex items-center justify-center gap-1.5 text-xs sm:text-base px-3 sm:px-6" 
+                    onClick={() => onNavigate('profile-create')}
+                  >
+                    <span className="truncate">Build Profile Now</span>
+                    <span className="text-sm sm:text-lg leading-none shrink-0">→</span>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="lg" 
+                    className="flex-1 sm:flex-none bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white font-bold transition-all duration-300 ease-out shadow-inner hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center text-xs sm:text-base px-3 sm:px-6 truncate" 
+                    onClick={() => onNavigate('listing')}
+                  >
+                    Browse Talent
+                  </Button>
                 </div>
               </div>
             </GlassCard>

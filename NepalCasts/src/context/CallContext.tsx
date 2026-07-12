@@ -84,7 +84,22 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
       const callTypeStr = call.callType || "audio";
       const callLabel = callTypeStr.charAt(0).toUpperCase() + callTypeStr.slice(1);
-      let outcome = "";
+      let resolvedCallerName = call.callerName || 'Caller';
+      if (!resolvedCallerName || resolvedCallerName === 'Unknown' || resolvedCallerName === 'Caller' || /^[a-zA-Z0-9]{28}$/.test(resolvedCallerName)) {
+        try {
+          const profileRes = await getProfile(callerId);
+          if (profileRes.data) {
+            const profileData = profileRes.data as any;
+            resolvedCallerName = profileData.name || [profileData.firstName, profileData.lastName].filter(Boolean).join(' ') || profileData.username || resolvedCallerName;
+          }
+        } catch (err) {
+          console.warn("Failed to fetch caller profile for logCallOutcome:", err);
+        }
+      }
+
+      if (resolvedCallerName && /^[a-zA-Z0-9]{28}$/.test(resolvedCallerName)) {
+        resolvedCallerName = 'Caller';
+      }
 
       if (finalStatus === "rejected") {
         outcome = "Declined";
@@ -97,11 +112,11 @@ export function CallProvider({ children, user }: CallProviderProps) {
       } else if (finalStatus === "network-error") {
         outcome = "Network Error";
       } else if (finalStatus === "cancelled") {
-        outcome = `Cancelled by ${callerId}`;
+        outcome = `Cancelled by ${resolvedCallerName}`;
       } else if (duration > 0) {
         outcome = `${Math.floor(duration / 60)}m ${duration % 60}s`;
       } else {
-        outcome = `Cancelled by ${callerId}`;
+        outcome = `Cancelled by ${resolvedCallerName}`;
       }
 
       await sendMessage(convoId, "system", `${callLabel} call • ${outcome}`, true);

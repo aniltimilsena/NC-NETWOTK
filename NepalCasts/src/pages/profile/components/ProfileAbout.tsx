@@ -23,7 +23,7 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Columns - Bio & Physical */}
-      <div className="lg:col-span-2 space-y-6">
+      <div className={`${showContact ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-6`}>
         {/* Bio Panel */}
         <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2rem] p-6 space-y-4">
           <h2 className="text-xl font-black text-white flex items-center gap-2">
@@ -33,15 +33,39 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
           <p className="text-nc-muted text-sm leading-relaxed whitespace-pre-line">{bio}</p>
         </div>
 
-        {/* Physical Appearance Panel */}
-        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2rem] p-6 space-y-4">
+        {/* Physical Appearance & Details Panel */}
+        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2rem] p-6 space-y-6">
           <h2 className="text-xl font-black text-white flex items-center gap-2">
             <User className="w-5 h-5 text-[#00BFFF]" />
-            Appearance & Attributes
+            Details & Attributes
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          
+          {/* Top row: Category, Gender, Languages */}
+          <div className="grid grid-cols-3 gap-6 pb-6 border-b border-white/5">
+            <div>
+              <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">
+                Category
+              </span>
+              <span className="text-white text-sm font-black">{category}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">
+                Gender
+              </span>
+              <span className="text-white text-sm font-black">{gender}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">
+                Languages
+              </span>
+              <span className="text-white text-sm font-black truncate max-w-[150px]">{languages}</span>
+            </div>
+          </div>
+
+          {/* Bottom row: Height, Weight, Eye Color, Hair Color */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             {physicalDetails.map((detail, idx) => (
-              <div key={idx} className="bg-white/5 border border-white/5 rounded-2xl p-3.5 text-center">
+              <div key={idx} className="text-left sm:text-center">
                 <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">
                   {detail.label}
                 </span>
@@ -52,31 +76,12 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
         </div>
       </div>
 
-      {/* Right Column - Stats & Contact details */}
-      <div className="space-y-6">
-        {/* Talent Details */}
-        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2rem] p-6 space-y-4">
-          <h2 className="text-xl font-black text-white">Details</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center text-sm py-1 border-b border-white/5">
-              <span className="text-nc-muted">Category</span>
-              <span className="text-white font-bold">{category}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm py-1 border-b border-white/5">
-              <span className="text-nc-muted">Gender</span>
-              <span className="text-white font-bold">{gender}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm py-1">
-              <span className="text-nc-muted">Languages</span>
-              <span className="text-white font-bold truncate max-w-[150px]">{languages}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Info (with PII Redaction Guard) */}
-        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2rem] p-6 space-y-4">
-          <h2 className="text-xl font-black text-white">Contact Information</h2>
-          {showContact ? (
+      {/* Right Column - Contact details */}
+      {showContact && (
+        <div className="space-y-6">
+          {/* Contact Info (with PII Redaction Guard) */}
+          <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2rem] p-6 space-y-4">
+            <h2 className="text-xl font-black text-white">Contact Information</h2>
             <div className="space-y-3.5">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center">
@@ -97,16 +102,9 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center space-y-2">
-              <Eye className="w-5 h-5 text-nc-muted mx-auto" />
-              <p className="text-[11px] text-nc-muted leading-relaxed">
-                Contact information is locked. Follow this user to unlock.
-              </p>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

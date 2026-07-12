@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProfile } from './hooks/useProfile';
 import ProfileHeader from './components/ProfileHeader';
 import ProfileAbout from './components/ProfileAbout';
@@ -47,6 +47,12 @@ export default function ProfilePage({
   } = useProfile(profileId, user);
 
   const [activeTab, setActiveTab] = useState('about');
+  
+  // Reset tab to 'about' when profile changes
+  useEffect(() => {
+    setActiveTab('about');
+  }, [resolvedUid]);
+
   const [showFollowModal, setShowFollowModal] = useState<'followers' | 'following' | 'projects' | null>(null);
   const [followList, setFollowList] = useState<any[]>([]);
   const [loadingFollowList, setLoadingFollowList] = useState(false);
@@ -388,6 +394,7 @@ export default function ProfilePage({
         onFollowToggle={handleFollowToggle}
         onNavigate={onNavigate}
         showAlert={showAlert}
+        onFollowClick={handleFollowModalOpen}
       />
 
       {/* Tabs */}
@@ -435,7 +442,7 @@ export default function ProfilePage({
               currentUserId={user?.uid}
             />
           )}
-          {activeTab === 'analytics' && (
+          {activeTab === 'analytics' && isOwnProfile && (
             <ProfileAnalytics 
               analytics={analytics}
               loading={loadingAnalytics}

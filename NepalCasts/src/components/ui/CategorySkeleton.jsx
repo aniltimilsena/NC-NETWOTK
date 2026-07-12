@@ -1,31 +1,27 @@
 import { memo } from 'react';
 
-
-
-const CARD_COUNT = 8;
-
 /* ── Single skeleton card ──────────────────────────────────────── */
 const SkeletonCard = memo(function SkeletonCard() {
   return (
     <div
       /* Same sizing / responsive classes as the real category card */
-      className="w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] h-[156px] skeleton rounded-[20px]"
+      className="w-full h-[156px] skeleton rounded-[20px]"
       aria-hidden="true"
     />
   );
 });
 
-/* ── Grid of 8 skeleton cards ──────────────────────────────────── */
-const CategorySkeleton = memo(function CategorySkeleton() {
+/* ── Grid of skeleton cards ──────────────────────────────────── */
+const CategorySkeleton = memo(function CategorySkeleton({ count = 2 }) {
   return (
     <div
-      className="flex flex-wrap gap-3"
+      className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8 max-w-3xl mx-auto"
       role="status"
       aria-busy="true"
       aria-label="Loading categories"
     >
-      {Array.from({ length: CARD_COUNT }, (_, i) => (
-        <SkeletonCard key={i} index={i} />
+      {Array.from({ length: count }, (_, i) => (
+        <SkeletonCard key={i} />
       ))}
 
       {/* SR‑only live text */}

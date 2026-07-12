@@ -95,13 +95,9 @@ export default function ProfileMedia({
             )}
           </div>
         ) : (
-          <div className="border border-dashed border-white/10 rounded-3xl py-10 px-6 text-center space-y-3.5">
-            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto">
-              <Video className="w-5 h-5 text-nc-muted" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-white">No Intro Video Yet</h4>
-            </div>
+          <div className="py-6 text-center space-y-2">
+            <Video className="w-6 h-6 text-nc-muted mx-auto opacity-40" />
+            <p className="text-[11px] text-nc-muted">No intro video yet</p>
           </div>
         )}
       </div>
@@ -167,13 +163,9 @@ export default function ProfileMedia({
             ))}
           </div>
         ) : (
-          <div className="border border-dashed border-white/10 rounded-3xl py-12 px-6 text-center space-y-3.5">
-            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto">
-              <ImageIcon className="w-5 h-5 text-nc-muted" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-white">No Portfolio Photos</h4>
-            </div>
+          <div className="py-6 text-center space-y-2">
+            <ImageIcon className="w-6 h-6 text-nc-muted mx-auto opacity-40" />
+            <p className="text-[11px] text-nc-muted">No photos yet</p>
           </div>
         )}
       </div>

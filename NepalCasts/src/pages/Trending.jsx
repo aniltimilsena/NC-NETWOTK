@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Crown, MapPin, Search, TrendingUp, ChevronLeft
+import { motion, AnimatePresence } from 'framer-motion';
+import { Crown, MapPin, Search, TrendingUp, ChevronLeft, SlidersHorizontal
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { 
@@ -20,6 +20,7 @@ export default function Trending({ onNavigate }) {
   
   const [selectedPeriod, setSelectedPeriod] = useState('This Week'); 
   const [selectedCategory, setSelectedCategory] = useState('All'); 
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   
   
   const [visibleCount, setVisibleCount] = useState(10);
@@ -213,33 +214,98 @@ export default function Trending({ onNavigate }) {
       />
 
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        {/* Back Button */}
-        <div className="mb-6 flex justify-start">
+        {/* Header Navigation / Centered Title / Filter Button */}
+        <div className="flex items-center justify-between pb-2.5 border-b border-white/5 relative mb-6">
+          {/* Left Side: Back button */}
           <button
             onClick={() => onNavigate('back')}
-            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors"
+            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors cursor-pointer z-20"
             aria-label="Back"
             title="Go Back"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-        </div>
 
-        {/* Header with yellow left bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5 mb-10 text-left">
-          <div className="flex items-start gap-4">
-            <div className="w-1.5 h-12 bg-yellow-400 rounded-full self-center shrink-0"></div>
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight flex items-center gap-2">
-                Trending Now
-                <TrendingUp className="w-6 h-6 text-yellow-400" />
-              </h1>
-              <p className="text-sm text-gray-500 mt-1 font-medium">Discover Nepal's most active and popular creators</p>
-            </div>
+          {/* Center: Centered Title & Count */}
+          <div className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-center pointer-events-none z-10">
+            <h1 className="text-xl sm:text-2xl font-black text-white pointer-events-auto flex items-center gap-1.5 leading-none">
+              Trending Now
+              <TrendingUp className="w-5 h-5 text-yellow-400" />
+            </h1>
+            <p className="text-[10px] sm:text-xs text-nc-muted pointer-events-auto mt-1 font-semibold">
+              {selectedCategory === 'All' ? 'All Talent' : getCategoryConfig(selectedCategory).label} • {rankedProfiles.length} {rankedProfiles.length === 1 ? 'talent' : 'talents'}
+            </p>
           </div>
 
-          {/* Period Selector Tabs */}
-          <div className="flex bg-[#111] border border-white/5 rounded-2xl p-1 shrink-0 self-start md:self-center">
+          {/* Right Side: Category filter dropdown button */}
+          <div className="relative z-20">
+            <button
+              onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+              className="w-7 h-7 flex items-center justify-center text-sky-400 hover:text-sky-300 transition-colors duration-200 cursor-pointer"
+              aria-label="Category Filter"
+              title="Category Filter"
+            >
+              <SlidersHorizontal className="w-[18px] h-[18px] text-sky-400" strokeWidth={2} />
+            </button>
+
+            <AnimatePresence>
+              {isFilterDropdownOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-30" 
+                    onClick={() => setIsFilterDropdownOpen(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-2 w-36 bg-[#111116] border border-white/10 rounded-xl shadow-2xl py-1 z-40 text-left"
+                  >
+                    <button
+                      onClick={() => {
+                        setSelectedCategory('All');
+                        setVisibleCount(10);
+                        setIsFilterDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                        selectedCategory === 'All'
+                          ? 'text-sky-400 bg-sky-400/5'
+                          : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      All Talent
+                    </button>
+                    {CATEGORIES.map(cat => {
+                      const isActive = selectedCategory === cat;
+                      return (
+                        <button
+                          key={cat}
+                          onClick={() => {
+                            setSelectedCategory(cat);
+                            setVisibleCount(10);
+                            setIsFilterDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                            isActive
+                              ? 'text-sky-400 bg-sky-400/5'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          }`}
+                        >
+                          {getCategoryConfig(cat).label}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Period Selector Tabs */}
+        <div className="flex justify-center mb-8">
+          <div className="flex bg-[#111] border border-white/5 rounded-2xl p-1">
             {['Today', 'This Week', 'This Month'].map(p => (
               <button
                 key={p}
@@ -247,7 +313,7 @@ export default function Trending({ onNavigate }) {
                   setSelectedPeriod(p);
                   setVisibleCount(10);
                 }}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase tracking-wider ${
+                className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider ${
                   selectedPeriod === p
                     ? 'bg-[#0099FF] text-black shadow-md shadow-[#0099FF]/10'
                     : 'text-gray-400 hover:text-white'
@@ -257,39 +323,6 @@ export default function Trending({ onNavigate }) {
               </button>
             ))}
           </div>
-        </div>
-
-        {/* Category Filter Pills */}
-        <div className="flex overflow-x-auto gap-2.5 pb-6 mb-8 scrollbar-hide -mx-6 px-6 sm:mx-0 sm:px-0">
-          <button
-            onClick={() => {
-              setSelectedCategory('All');
-              setVisibleCount(10);
-            }}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 uppercase tracking-wider ${
-              selectedCategory === 'All'
-                ? 'bg-white text-black font-extrabold'
-                : 'bg-[#111] border border-white/5 text-gray-400 hover:text-white hover:border-white/10'
-            }`}
-          >
-            All Talent
-          </button>
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              onClick={() => {
-                setSelectedCategory(cat);
-                setVisibleCount(10);
-              }}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 uppercase tracking-wider ${
-                selectedCategory === cat
-                  ? 'bg-white text-black font-extrabold shadow-lg'
-                  : 'bg-[#111] border border-white/5 text-gray-400 hover:text-white hover:border-white/10'
-              }`}
-            >
-              {getCategoryConfig(cat).label}
-            </button>
-          ))}
         </div>
 
         {loading ? (

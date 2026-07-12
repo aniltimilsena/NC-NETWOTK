@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Phone, Video, MoreVertical, Reply, Check, Trash2, ChevronLeft, X } from 'lucide-react';
+import { PhoneOff, VideoOff, Phone, Video, MoreVertical, Reply, Check, Trash2, ChevronLeft, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar } from '../../../components/ui';
 import type { Message } from '../../../types';
@@ -86,6 +86,28 @@ export default function ChatArea({
             const isMe = msg.senderId === currentUser.uid;
             
             return (
+              msg.senderId === 'system' ? (
+                /* ── System / Call-log pill ── */
+                (() => {
+                  const text = msg.text || '';
+                  const isVideo = text.toLowerCase().startsWith('video');
+                  const isMissed = text.includes('Missed') || text.includes('Cancelled') || text.includes('Declined') || text.includes('Busy');
+                  const Icon = isMissed
+                    ? (isVideo ? VideoOff : PhoneOff)
+                    : (isVideo ? Video : Phone);
+                  const color = isMissed ? 'text-red-400' : 'text-emerald-400';
+                  const borderColor = isMissed ? 'border-red-500/15' : 'border-emerald-500/15';
+                  const bgColor = isMissed ? 'bg-red-950/20' : 'bg-emerald-950/20';
+                  return (
+                    <div key={msg.id} className="flex justify-center my-1">
+                      <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border ${borderColor} ${bgColor} backdrop-blur-sm`}>
+                        <Icon className={`w-3 h-3 ${color} shrink-0`} />
+                        <span className={`text-[11px] font-medium ${color}`}>{text}</span>
+                      </div>
+                    </div>
+                  );
+                })()
+              ) : (
               <div 
                 key={msg.id} 
                 className={`flex gap-3 max-w-[75%] ${isMe ? 'ml-auto flex-row-reverse text-right' : 'mr-auto text-left'}`}
@@ -166,6 +188,7 @@ export default function ChatArea({
                   )}
                 </div>
               </div>
+              )
             );
           })
         ) : (

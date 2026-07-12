@@ -47,8 +47,7 @@ export default function ProfileReviews({
             <MessageSquare className="w-5 h-5 text-[#00BFFF]" />
           </div>
           <div>
-            <h2 className="text-sm font-black text-white uppercase tracking-widest">Client & Peer Feedback</h2>
-            <p className="text-[10px] text-nc-muted">Verified reviews and ratings from casting calls</p>
+            <h2 className="text-sm font-black text-white uppercase tracking-widest">Reviews</h2>
           </div>
         </div>
 

@@ -16,6 +16,7 @@ interface ProfileHeaderProps {
   onFollowToggle: () => void;
   onNavigate: (page: string, param?: any) => void;
   showAlert: (message: string, type?: any, detail?: string, action?: any) => void;
+  onFollowClick?: (type: 'followers' | 'following') => void;
 }
 
 export default function ProfileHeader({
@@ -27,7 +28,8 @@ export default function ProfileHeader({
   savedCount,
   onFollowToggle,
   onNavigate,
-  showAlert
+  showAlert,
+  onFollowClick
 }: ProfileHeaderProps) {
   const coverFileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
@@ -249,11 +251,17 @@ export default function ProfileHeader({
 
           {/* Stats Bar */}
           <div className={`grid gap-2 mt-6 pt-4 border-t border-white/5 w-full ${(isOwnProfile && savedCount > 0) ? 'grid-cols-4' : 'grid-cols-3'}`}>
-            <div className="flex flex-col items-center justify-center text-center py-1">
+            <div 
+              onClick={() => isOwnProfile && onFollowClick?.('followers')}
+              className={`flex flex-col items-center justify-center text-center py-1 ${isOwnProfile ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+            >
               <span className="text-white text-lg font-black">{followerCount}</span>
               <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Followers</span>
             </div>
-            <div className="flex flex-col items-center justify-center text-center py-1 border-l border-white/5">
+            <div 
+              onClick={() => isOwnProfile && onFollowClick?.('following')}
+              className={`flex flex-col items-center justify-center text-center py-1 border-l border-white/5 ${isOwnProfile ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+            >
               <span className="text-white text-lg font-black">{followingCount}</span>
               <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Following</span>
             </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bookmark, SortDesc, ChevronDown, Check, 
-  MapPin, Plus, Search, AlertCircle, Clock 
+  MapPin, Plus, Search, AlertCircle, Clock, SlidersHorizontal, ChevronLeft
 } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -48,12 +48,14 @@ const getRolesSummary = (call) => {
 export default function CastingCall({ onNavigate, user, isAdmin }) {
   const [activeFilter, setActiveFilter] = useState('All'); 
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [calls, setCalls] = useState([]);
   const [savedIds, setSavedIds] = useState([]); 
   const [appliedCastingIds, setAppliedCastingIds] = useState([]);
   const [activeSort, setActiveSort] = useState('Latest'); 
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
 
   const filterPills = [
     { id: 'All', label: 'All' },
@@ -214,105 +216,152 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
       <main className="max-w-5xl mx-auto px-6 sm:px-12 md:px-16 py-12 md:py-20 w-full">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-white/5 pb-8 mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">Opportunities</h2>
-            <p className="text-xs text-gray-500 mt-1 font-medium">Open casting calls from verified productions</p>
-          </div>
-          {canPostCall && (
-            <button
-              onClick={() => onNavigate('casting-create')}
-              className="bg-gradient-to-br from-sky-400 to-sky-600 text-black px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-sky-500/10 active:scale-[0.98] flex items-center gap-1.5 shrink-0"
-            >
-              <Plus size={15} strokeWidth={3} />
-              Post a Call
-            </button>
-          )}
-        </div>
-
-        {/* SEARCH & FILTERS BAR */}
-        <div className="flex flex-col gap-4 md:gap-6 mb-6 md:mb-10">
+        <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-8 relative min-h-[52px]">
           
-          {/* Filter pills */}
-          <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide w-full border-b border-white/5">
-            {filterPills.map(pill => {
-              const isActive = activeFilter === pill.id;
-              return (
-                <button
-                  key={pill.id}
-                  onClick={() => setActiveFilter(pill.id)}
-                  className={`flex-shrink-0 px-4 md:px-8 py-2 rounded-full text-[10px] md:text-xs font-medium uppercase tracking-wider md:tracking-[0.2em] transition-all duration-300 ${
-                    isActive
-                      ? 'border border-sky-400 bg-gradient-to-b from-sky-400/10 to-transparent text-sky-400 shadow-lg shadow-sky-500/5'
-                      : 'bg-transparent text-gray-500 hover:text-white border border-transparent'
-                  }`}
-                >
-                  {pill.label}
-                </button>
-              );
-            })}
+          {/* Left Side: Back button */}
+          <button
+            onClick={() => onNavigate('back')}
+            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors cursor-pointer z-20"
+            aria-label="Back"
+            title="Go Back"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          {/* Center: Centered Title & Description */}
+          <div className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-center pointer-events-none z-10 text-center px-28">
+            <h2 className="text-xl sm:text-2xl font-black text-white pointer-events-auto tracking-tight uppercase leading-none">
+              Opportunities
+            </h2>
+            <p className="text-[10px] sm:text-xs text-gray-500 pointer-events-auto mt-1 font-medium whitespace-nowrap">
+              Open casting calls from verified productions
+            </p>
           </div>
 
-          {/* Search Input & Sort dropdown */}
-          <div className="flex items-center justify-between gap-4 w-full pt-1 md:pt-2">
-            {/* Search Box */}
-            <div className="relative flex-1 max-w-[200px] sm:max-w-xs">
-              <Search className="absolute left-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-b border-white/10 focus:border-sky-400 pl-7 pr-2 py-2 text-xs text-white placeholder-gray-500 outline-none transition-all duration-300 focus:shadow-[0_1px_0_0_#38bdf8]"
-              />
+          {/* Right Side: Search (expanding), Filters & Post button */}
+          <div className="flex items-center gap-3 z-20">
+            
+            {/* Search Box (Icon Only, Expanding to the left) */}
+            <div className="flex items-center gap-2 relative">
+              <AnimatePresence>
+                {isSearchActive && (
+                  <motion.div
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: 140, opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <input
+                      type="text"
+                      placeholder="Search projects..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="bg-transparent border-b border-white/10 focus:border-sky-400 pb-1 text-xs text-white placeholder-gray-500 outline-none w-full transition-all duration-300 focus:shadow-[0_1px_0_0_#38bdf8]"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <button
+                onClick={() => {
+                  if (isSearchActive) setSearchQuery('');
+                  setIsSearchActive(!isSearchActive);
+                }}
+                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-white transition-colors duration-200 cursor-pointer"
+                aria-label="Search"
+              >
+                <Search className="w-[18px] h-[18px]" />
+              </button>
             </div>
 
-            {/* Sort Toggle */}
-            <div className="relative shrink-0">
-              <button 
+            {/* Filter/Sort Dropdown Button (Icon Only) */}
+            <div className="relative">
+              <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className={`flex items-center gap-1.5 px-1 py-2 bg-transparent border-b border-white/10 text-xs font-medium uppercase tracking-[0.1em] md:tracking-[0.2em] text-gray-400 hover:text-white transition-all duration-300 ${isSortOpen ? 'border-sky-400 text-sky-400 shadow-[0_1px_0_0_#38bdf8]' : ''}`}
+                className="w-7 h-7 flex items-center justify-center text-sky-400 hover:text-sky-300 transition-colors duration-200 cursor-pointer"
+                aria-label="Filter and Sort options"
+                title="Filter and Sort options"
               >
-                <span>{activeSort}</span>
-                <svg 
-                  className={`w-3.5 h-3.5 transition-transform duration-300 ${isSortOpen ? 'rotate-180' : ''}`} 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor" 
-                  strokeWidth={2.5}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                </svg>
+                <SlidersHorizontal className="w-[18px] h-[18px] text-sky-400" strokeWidth={2} />
               </button>
 
               <AnimatePresence>
                 {isSortOpen && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-44 bg-[#111] border border-white/5 rounded-2xl shadow-2xl z-[100] py-1.5 overflow-hidden"
-                  >
-                    {sortOptions.map(opt => (
-                      <button
-                        key={opt.id}
-                        onClick={() => { setActiveSort(opt.id); setIsSortOpen(false); }}
-                        className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold transition-all uppercase tracking-wider ${
-                          activeSort === opt.id 
-                            ? 'bg-sky-400/10 text-sky-400' 
-                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                        }`}
-                      >
-                        {opt.label}
-                        {activeSort === opt.id && <Check size={12} />}
-                      </button>
-                    ))}
-                  </motion.div>
+                  <>
+                    <div 
+                      className="fixed inset-0 z-30" 
+                      onClick={() => setIsSortOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-44 bg-[#111116] border border-white/10 rounded-xl shadow-2xl py-2 z-40 text-left"
+                    >
+                      {/* Section 1: Filter */}
+                      <div className="px-4 py-1 text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Filter By</div>
+                      {filterPills.map(pill => {
+                        const isActive = activeFilter === pill.id;
+                        return (
+                          <button
+                            key={pill.id}
+                            onClick={() => {
+                                setActiveFilter(pill.id);
+                                setIsSortOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                              isActive
+                                ? 'text-sky-400 bg-sky-400/5'
+                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                          >
+                            {pill.label}
+                          </button>
+                        );
+                      })}
+
+                      <div className="h-px bg-white/5 my-2" />
+
+                      {/* Section 2: Sort */}
+                      <div className="px-4 py-1 text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Sort By</div>
+                      {sortOptions.map(opt => {
+                        const isActive = activeSort === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            onClick={() => {
+                                setActiveSort(opt.id);
+                                setIsSortOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                              isActive
+                                ? 'text-sky-400 bg-sky-400/5'
+                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </motion.div>
+                  </>
                 )}
               </AnimatePresence>
             </div>
-          </div>
 
+            {/* Post button */}
+            {canPostCall && (
+              <button
+                onClick={() => onNavigate('casting-create')}
+                className="bg-gradient-to-br from-sky-400 to-sky-600 text-black px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-sky-500/10 active:scale-[0.98] flex items-center gap-1.5 shrink-0 cursor-pointer"
+              >
+                <Plus size={15} strokeWidth={3} />
+                Post a Call
+              </button>
+            )}
+          </div>
         </div>
 
         {/* LISTINGS */}

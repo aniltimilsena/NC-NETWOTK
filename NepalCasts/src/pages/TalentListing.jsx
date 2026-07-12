@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X,
-  ArrowLeft, MapPin, MoreVertical, Share2, ChevronLeft
+import {
+  Search, X,
+  ArrowLeft, MapPin, MoreVertical, Share2, ChevronLeft, SlidersHorizontal
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, onSnapshot, query, orderBy, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';
@@ -27,15 +28,16 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     return 'categories';
   });
 
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilters, setSelectedFilters] = useState({
     category: initialCategory || 'All',
     location: 'All',
     experienceLevel: 'All',
   });
-  
-  const [activeSort, setActiveSort] = useState('trending'); 
+
+  const [activeSort, setActiveSort] = useState('trending');
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [notifySaved, setNotifySaved] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [activeShareTalent, setActiveShareTalent] = useState(null);
@@ -53,8 +55,8 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     const resolveCategory = (catStr) => {
       if (!catStr) return null;
       const clean = catStr.trim().toLowerCase();
-      return CATEGORIES.find(cat => 
-        cat.toLowerCase() === clean || 
+      return CATEGORIES.find(cat =>
+        cat.toLowerCase() === clean ||
         cat.toLowerCase() + 's' === clean ||
         cat.toLowerCase() === clean + 's' ||
         (cat === 'voiceover' && (clean === 'voice over' || clean === 'voiceover'))
@@ -72,7 +74,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
   }, [initialCategory]);
 
   useEffect(() => {
-    
+
     const q = query(collection(db, "profiles"), orderBy("updatedAt", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -85,7 +87,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     return () => unsub();
   }, []);
 
-  
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       if (currentUser) {
@@ -104,7 +106,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     return () => unsubscribe();
   }, []);
 
-  
+
   useEffect(() => {
     if (!loading) {
       const t = setTimeout(() => setProfilesReady(true), 80);
@@ -125,14 +127,14 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     return talents.filter(t => {
       if (t.deactivated === true) return false;
 
-      
-      const matchesSearch = !searchQuery || 
-        t.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+
+      const matchesSearch = !searchQuery ||
+        t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.location?.toLowerCase().includes(searchQuery.toLowerCase());
       if (!matchesSearch) return false;
 
-      
+
       if (filterKey !== 'category' && selectedFilters.category !== 'All') {
         if (t.role?.toLowerCase() !== selectedFilters.category.toLowerCase()) return false;
       }
@@ -143,7 +145,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         if (getExperienceLevel(t) !== selectedFilters.experienceLevel) return false;
       }
 
-      
+
       if (filterKey === 'category') {
         if (optionValue === 'All') return true;
         return t.role?.toLowerCase() === optionValue.toLowerCase();
@@ -167,19 +169,19 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
       alert("Please sign in to follow talents.");
       return;
     }
-    
+
     const followId = `${currentUser.uid}_${talentId}`;
     const followDocRef = doc(db, "follows", followId);
     const isFollowing = followingIds.includes(talentId);
-    
+
     try {
       if (isFollowing) {
-        
+
         await deleteDoc(followDocRef);
         await updateDoc(doc(db, "profiles", talentId), { followers: increment(-1) });
         await updateDoc(doc(db, "profiles", currentUser.uid), { following: increment(-1) });
       } else {
-        
+
         await setDoc(followDocRef, {
           followerId: currentUser.uid,
           followingId: talentId,
@@ -187,8 +189,8 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         });
         await updateDoc(doc(db, "profiles", talentId), { followers: increment(1) });
         await updateDoc(doc(db, "profiles", currentUser.uid), { following: increment(1) });
-        
-        
+
+
         await addDoc(collection(db, "notifications"), {
           userId: talentId,
           recipientId: talentId,
@@ -215,20 +217,20 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     .filter(t => {
       if (t.deactivated === true) return false;
 
-      
-      const matchesSearch = !searchQuery || 
-        t.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+
+      const matchesSearch = !searchQuery ||
+        t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.location?.toLowerCase().includes(searchQuery.toLowerCase());
       if (!matchesSearch) return false;
 
-      
+
       if (selectedFilters.category !== 'All' && t.role?.toLowerCase() !== selectedFilters.category.toLowerCase()) return false;
 
-      
+
       if (selectedFilters.location !== 'All' && t.location !== selectedFilters.location) return false;
 
-      
+
       if (selectedFilters.experienceLevel !== 'All' && getExperienceLevel(t) !== selectedFilters.experienceLevel) return false;
 
       return true;
@@ -236,8 +238,8 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     .sort((a, b) => {
       if (activeSort === 'followers') return (b.followers || 0) - (a.followers || 0);
       if (activeSort === 'trending') return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0) || (b.followers || 0) - (a.followers || 0);
-      
-      
+
+
       const timeA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
       const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
       return timeB - timeA;
@@ -245,7 +247,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
 
   const handleClearFilters = () => {
     setSelectedFilters({
-      category: selectedFilters.category, 
+      category: selectedFilters.category,
       location: 'All',
       experienceLevel: 'All',
     });
@@ -254,9 +256,9 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-32 md:pb-20 relative font-sans">
-      <SEO 
-        title="Browse Professional Talent | NepalCasts" 
-        description="Premium directory of cinema professionals in Nepal." 
+      <SEO
+        title="Browse Professional Talent | NepalCasts"
+        description="Premium directory of cinema professionals in Nepal."
       />
 
       {/* Obsidian Gallery Portrait Reveal Background */}
@@ -300,7 +302,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="text-3xl sm:text-4xl font-serif italic font-medium text-white tracking-tight leading-none mb-1.5">Browse by Category</h1>
+                <h1 className="text-3xl sm:text-4xl font-sans font-black text-white tracking-tight leading-none mb-2">Browse by Category</h1>
                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[1.5px]">Discover Nepal's finest cinema professionals</p>
               </div>
             </div>
@@ -312,7 +314,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                 {CATEGORIES.map((cat, idx) => {
                   const count = getFacetedCount('category', cat);
                   const detail = getCategoryConfig(cat);
-                  const Icon = detail.icon; 
+                  const Icon = detail.icon;
 
                   return (
                     <motion.button
@@ -325,30 +327,30 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.04 }}
-                      className="category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-5 sm:p-6 flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer"
+                      className="category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-6 sm:p-10 lg:p-12 flex flex-col items-center gap-4 sm:gap-6 lg:gap-8 group cursor-pointer"
                     >
                       {/* Circular icon — same as Home */}
                       <div
-                        className="relative z-10 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
+                        className="relative z-10 w-16 h-16 sm:w-24 sm:h-24 lg:w-28 lg:h-28 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
                         style={{
                           backgroundColor: `${detail.color}26`,
                           color: detail.color,
-                          boxShadow: `0 0 15px ${detail.color}15`,
+                          boxShadow: `0 0 25px ${detail.color}15`,
                         }}
                       >
-                        <Icon size={38} className="w-[38px] h-[38px] sm:w-[44px] sm:h-[44px]" strokeWidth={1.5} />
+                        <Icon className="w-[38px] h-[38px] sm:w-[52px] sm:h-[52px] lg:w-[60px] lg:h-[60px]" strokeWidth={1.5} />
                       </div>
 
-                      <span className="text-base sm:text-lg font-extrabold text-white/90 group-hover:text-white transition-colors relative z-10">
+                      <span className="text-base sm:text-xl lg:text-2xl font-black text-white/90 group-hover:text-white transition-colors relative z-10">
                         {detail.label}
                       </span>
 
                       {count === 0 ? (
-                        <span className="text-xs sm:text-sm font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
+                        <span className="text-xs sm:text-base lg:text-lg font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
                           Be the first →
                         </span>
                       ) : (
-                        <span className="text-xs sm:text-sm font-semibold text-nc-muted relative z-10">
+                        <span className="text-xs sm:text-base lg:text-lg font-semibold text-nc-muted relative z-10">
                           {count} {count === 1 ? 'talent' : 'talents'}
                         </span>
                       )}
@@ -359,14 +361,12 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
             )}
           </div>
         )}
-
-
         {/* VIEW 2: TALENTS GRID LISTING */}
         {viewMode === 'talents' && (
-          <div className="animate-fade-in space-y-8 text-left">
-            
-            {/* Filter header showing selected category */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/5">
+          <div className="animate-fade-in space-y-3 text-left">
+            <div className="flex items-center justify-between pb-2.5 border-b border-white/5 relative">
+              
+              {/* Left Side: Back button */}
               <button
                 onClick={() => {
                   setSelectedFilters(prev => ({ ...prev, category: 'All' }));
@@ -378,88 +378,65 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <div className="text-right">
-                <h2 className="text-2xl font-black text-white">
+
+              {/* Center: Title & Count */}
+              <div className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                <h2 className="text-xl sm:text-2xl font-black text-white pointer-events-auto">
                   {selectedFilters.category === 'All' ? 'All' : getCategoryConfig(selectedFilters.category).label}
                 </h2>
-                <p className="text-xs text-gray-500">{filteredTalents.length} {filteredTalents.length === 1 ? 'talent' : 'talents'} found</p>
+                <p className="text-[10px] sm:text-xs text-nc-muted pointer-events-auto mt-0.5">
+                  {filteredTalents.length} {filteredTalents.length === 1 ? 'talent' : 'talents'} found
+                </p>
               </div>
-            </div>
 
-            {/* Search, Sort, and Filters Panel */}
-            <div className="flex flex-col gap-6 pt-2 pb-6 border-b border-white/5">
-              
-              {/* Row 1: Search & Filter Selects */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
-                
-                {/* Search Box */}
-                <div className="relative flex-1 max-w-md w-full">
-                  <Search className="absolute left-1 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                  <input
-                    type="text"
-                    placeholder={`Search ${selectedFilters.category === 'All' ? 'talents' : getCategoryConfig(selectedFilters.category).pluralLabel.toLowerCase()} by name or location...`}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-transparent border-b border-white/10 focus:border-sky-400 pl-7 pr-8 py-2 text-xs text-white placeholder-gray-500 outline-none transition-all duration-300 focus:shadow-[0_1px_0_0_#38bdf8]"
-                  />
-                  {searchQuery && (
-                    <button 
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
-                    >
-                      <X size={14} />
-                    </button>
+              {/* Right Side: Sort dropdown wrapper */}
+              <div className="relative z-20">
+                <button
+                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                  className="w-7 h-7 flex items-center justify-center text-sky-400 hover:text-sky-300 transition-colors duration-200 cursor-pointer"
+                  aria-label="Sort options"
+                  title="Sort options"
+                >
+                  <SlidersHorizontal className="w-[18px] h-[18px] text-sky-400" strokeWidth={2} />
+                </button>
+
+                <AnimatePresence>
+                  {isSortDropdownOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-30" 
+                        onClick={() => setIsSortDropdownOpen(false)}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 w-36 bg-[#111116] border border-white/10 rounded-xl shadow-2xl py-1 z-40 text-left"
+                      >
+                        {sortOptions.map(opt => {
+                          const isActive = activeSort === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              onClick={() => {
+                                  setActiveSort(opt.id);
+                                  setIsSortDropdownOpen(false);
+                              }}
+                              className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                                isActive
+                                  ? 'text-sky-400 bg-sky-400/5'
+                                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    </>
                   )}
-                </div>
-
-                {/* Dropdowns (Location & Experience) */}
-                <div className="flex items-center gap-4 w-full sm:w-auto">
-                  {/* Location Filter */}
-                  <select
-                    value={selectedFilters.location}
-                    onChange={e => setSelectedFilters(prev => ({ ...prev, location: e.target.value }))}
-                    className="flex-1 sm:flex-initial bg-transparent border-b border-white/10 text-xs text-gray-400 py-2 px-1 outline-none focus:border-sky-400 cursor-pointer transition-all duration-300"
-                  >
-                    <option value="All" className="bg-[#111] text-white">All Locations</option>
-                    {locationsList.filter(l => l !== 'All').map(loc => (
-                      <option key={loc} value={loc} className="bg-[#111] text-white">{loc}</option>
-                    ))}
-                  </select>
-
-                  {/* Experience Level Filter */}
-                  <select
-                    value={selectedFilters.experienceLevel}
-                    onChange={e => setSelectedFilters(prev => ({ ...prev, experienceLevel: e.target.value }))}
-                    className="flex-1 sm:flex-initial bg-transparent border-b border-white/10 text-xs text-gray-400 py-2 px-1 outline-none focus:border-sky-400 cursor-pointer transition-all duration-300"
-                  >
-                    <option value="All" className="bg-[#111] text-white">All Experience</option>
-                    {experienceLevels.filter(l => l !== 'All').map(lvl => (
-                      <option key={lvl} value={lvl} className="bg-[#111] text-white">{lvl}</option>
-                    ))}
-                  </select>
-                </div>
-
-              </div>
-
-              {/* Row 2: Sort Toggle Options */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide w-full">
-                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mr-2 shrink-0">Sort By:</span>
-                {sortOptions.map(opt => {
-                  const isActive = activeSort === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => setActiveSort(opt.id)}
-                      className={`flex-shrink-0 px-5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 ${
-                        isActive
-                          ? 'border border-sky-400 bg-gradient-to-b from-sky-400/10 to-transparent text-sky-400 shadow-md shadow-sky-500/5'
-                          : 'bg-transparent text-gray-500 hover:text-white border border-transparent'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
+                </AnimatePresence>
               </div>
 
             </div>
@@ -487,7 +464,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                       <button onClick={() => setSearchQuery('')}><X size={10} /></button>
                     </Tag>
                   )}
-                  <button 
+                  <button
                     onClick={handleClearFilters}
                     className="text-[10px] font-black text-gray-400 hover:text-white transition-colors ml-2 underline underline-offset-4 uppercase"
                   >
@@ -514,14 +491,14 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                 <div className="space-y-1">
                   {filteredTalents.map((talent, idx) => {
                     const isFollowing = followingIds.includes(talent.id);
-                    
+
                     let createdDate = null;
                     if (talent.createdAt) {
                       createdDate = talent.createdAt.toDate ? talent.createdAt.toDate() : new Date(talent.createdAt);
                     } else if (talent.joinedYear) {
                       createdDate = new Date(`${talent.joinedYear}-01-01`);
                     }
-                    
+
                     if (!createdDate) {
                       createdDate = new Date('2026-07-01');
                     }
@@ -572,15 +549,14 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                           <button
                             type="button"
                             onClick={(e) => handleToggleFollow(e, talent.id)}
-                            className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
-                              isFollowing
+                            className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 ${isFollowing
                                 ? 'border border-white/10 text-gray-400 hover:bg-white/5'
                                 : 'bg-gradient-to-br from-sky-400 to-sky-600 text-black hover:brightness-110 shadow-lg shadow-sky-500/10 active:scale-[0.98]'
-                            }`}
+                              }`}
                           >
                             {isFollowing ? 'Following' : 'Follow'}
                           </button>
-                          
+
                           <button
                             type="button"
                             onClick={() => setActiveMenuId(activeMenuId === talent.id ? null : talent.id)}
@@ -615,22 +591,22 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
           </div>
         )}
 
-      {activeShareTalent && (
-        <ShareSheet
-          profile={{
-            id: activeShareTalent.id,
-            name: activeShareTalent.name,
-            role: activeShareTalent.role || 'Talent',
-            location: activeShareTalent.location || 'Nepal',
-            followers: activeShareTalent.followers || 0,
-            rating: parseFloat(activeShareTalent.rating) || 0,
-            image: activeShareTalent.photoURL || activeShareTalent.profileImage || activeShareTalent.image || null,
-            verified: activeShareTalent.verified || false,
-            username: activeShareTalent.username || null,
-          }}
-          onClose={() => setActiveShareTalent(null)}
-        />
-      )}
+        {activeShareTalent && (
+          <ShareSheet
+            profile={{
+              id: activeShareTalent.id,
+              name: activeShareTalent.name,
+              role: activeShareTalent.role || 'Talent',
+              location: activeShareTalent.location || 'Nepal',
+              followers: activeShareTalent.followers || 0,
+              rating: parseFloat(activeShareTalent.rating) || 0,
+              image: activeShareTalent.photoURL || activeShareTalent.profileImage || activeShareTalent.image || null,
+              verified: activeShareTalent.verified || false,
+              username: activeShareTalent.username || null,
+            }}
+            onClose={() => setActiveShareTalent(null)}
+          />
+        )}
       </div>
     </div>
   );

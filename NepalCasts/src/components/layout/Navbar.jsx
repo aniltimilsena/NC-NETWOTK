@@ -230,72 +230,61 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                 </svg>
               </button>
               
-              {/* Notifications Link */}
-              <Link
-                to="/notifications"
-                className={`text-nc-secondary hover:text-white p-1.5 relative transition-colors ${isActionActive('notifications') ? 'text-white' : ''}`}
-                aria-label="Notifications"
-              >
-                <NotificationIcon size={24} color="currentColor" active={false} />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#ef4444]" />
-                )}
-              </Link>
-              <Link
-                to="/messages"
-                className={`text-nc-secondary hover:text-white p-1.5 relative transition-colors ${isActionActive('messages') ? 'text-white' : ''}`}
-                aria-label="Messages"
-              >
-                <SendIcon size={24} color="currentColor" active={isActionActive('messages')} />
-                {unreadMessagesCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#00BFFF] rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#00BFFF]" />
-                )}
-              </Link>
- 
-              {!isAdmin && !user?.premium && (
-                <Link
-                  to="/premium"
-                  className={`hidden lg:block px-3 py-1.5 rounded-lg text-sm font-bold transition-all ml-1 ${
-                    isActionActive('premium')
-                      ? 'text-nc-darker bg-nc-pro hover:bg-yellow-400'
-                      : 'text-nc-pro hover:bg-nc-pro/10 border border-nc-pro/20'
-                  }`}
-                >
-                  {t('nav_go_pro')}
-                </Link>
-              )}
- 
               {isLoggedIn ? (
-                <div className="relative group">
-                  <Link 
-                    to={user ? `/profile/${user.uid}` : '/signin'}
-                    className="w-10 h-10 rounded-full overflow-hidden hover:border-nc-accent transition-all flex items-center justify-center p-0 block"
+                <>
+                  {/* Notifications Link */}
+                  <Link
+                    to="/notifications"
+                    className={`text-nc-secondary hover:text-white p-1.5 relative transition-colors ${isActionActive('notifications') ? 'text-white' : ''}`}
+                    aria-label="Notifications"
                   >
-                    <Avatar 
-                      user={user} 
-                      size="sm" 
-                      name={user.displayName}
-                      className="w-full h-full"
-                    />
+                    <NotificationIcon size={24} color="currentColor" active={false} />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#ef4444]" />
+                    )}
                   </Link>
- 
-                  <div className="absolute top-full right-0 mt-2 w-48 rounded-3xl bg-[#0A0A0A] border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-50 py-2">
-                    <div className="px-4 py-2 border-b border-white/5 mb-1">
-                      <p className="text-white text-xs font-bold truncate">{user.displayName || 'Discovery Talent'}</p>
-                      <p className="text-nc-muted text-[10px] truncate">{user.email}</p>
+                  <Link
+                    to="/messages"
+                    className={`text-nc-secondary hover:text-white p-1.5 relative transition-colors ${isActionActive('messages') ? 'text-white' : ''}`}
+                    aria-label="Messages"
+                  >
+                    <SendIcon size={24} color="currentColor" active={isActionActive('messages')} />
+                    {unreadMessagesCount > 0 && (
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#00BFFF] rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#00BFFF]" />
+                    )}
+                  </Link>
+
+                  <div className="relative group">
+                    <Link 
+                      to={user ? `/profile/${user.uid}` : '/signin'}
+                      className="w-10 h-10 rounded-full overflow-hidden hover:border-nc-accent transition-all flex items-center justify-center p-0 block"
+                    >
+                      <Avatar 
+                        user={user} 
+                        size="sm" 
+                        name={user.displayName}
+                        className="w-full h-full"
+                      />
+                    </Link>
+  
+                    <div className="absolute top-full right-0 mt-2 w-48 rounded-3xl bg-[#0A0A0A] border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-50 py-2">
+                      <div className="px-4 py-2 border-b border-white/5 mb-1">
+                        <p className="text-white text-xs font-bold truncate">{user.displayName || 'Discovery Talent'}</p>
+                        <p className="text-nc-muted text-[10px] truncate">{user.email}</p>
+                      </div>
+                      <Link to={user ? `/profile/${user.uid}` : '/signin'} className="w-full text-left block px-4 py-2 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_profile')}</Link>
+                      <Link to="/settings?tab=about" className="w-full text-left block px-4 py-2 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
+                      <div className="mx-2 my-1 border-t border-white/5"></div>
+                      <button onClick={onLogout} className="w-full text-left block px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">{t('nav_logout')}</button>
                     </div>
-                    <Link to={user ? `/profile/${user.uid}` : '/signin'} className="w-full text-left block px-4 py-2 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_profile')}</Link>
-                    <Link to="/settings?tab=about" className="w-full text-left block px-4 py-2 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
-                    <div className="mx-2 my-1 border-t border-white/5"></div>
-                    <button onClick={onLogout} className="w-full text-left block px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">{t('nav_logout')}</button>
                   </div>
-                </div>
+                </>
               ) : (
                 <Link
                   to="/signup"
-                  className="hidden md:block bg-nc-accent text-nc-darker text-sm px-4 py-1.5 rounded-lg font-bold hover:bg-sky-400 transition-all ml-1 shadow-lg shadow-nc-accent/20"
+                  className="bg-nc-accent text-nc-darker text-xs sm:text-sm px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full font-extrabold hover:bg-sky-400 transition-all ml-1 shadow-lg shadow-nc-accent/20"
                 >
-                  {t('nav_signup')}
+                  Join Now
                 </Link>
               )}
               <button
@@ -332,8 +321,10 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                 { name: "Trending", path: "/trending", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
                 { name: "Casting", path: "/casting", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
                 { name: "Create", path: "/casting/create", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-                { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
-                { name: "Profile", path: user ? `/profile/${user.uid}` : '/signin', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/> },
+                ...(isLoggedIn ? [
+                  { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
+                  { name: "Profile", path: `/profile/${user?.uid}`, icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/> }
+                ] : [])
               ].map((item, i) => {
                 const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
                 return (
