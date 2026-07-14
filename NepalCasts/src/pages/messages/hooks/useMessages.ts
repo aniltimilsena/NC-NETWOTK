@@ -51,6 +51,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
 
     const unsubMessages = subscribeToMessages(activeChatId, (list) => {
       setMessages(list as Message[]);
+      markConversationAsRead(activeChatId).catch(console.warn);
     });
 
     const convoRef = doc(db, 'conversations', activeChatId);

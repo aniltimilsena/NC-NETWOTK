@@ -681,16 +681,13 @@ export const markConversationAsRead = async (convoId: string) => {
         const updatePayload: Record<string, any> = {};
 
         if (data.readBy && typeof data.readBy === 'object') {
-          
           updatePayload[`readBy.${uid}`] = true;
-        } else if (data.unreadCounts && typeof data.unreadCounts === 'object') {
-          
+        }
+        if (data.unreadCounts && typeof data.unreadCounts === 'object') {
           updatePayload[`unreadCounts.${uid}`] = 0;
-        } else {
-          
-          if (data.lastSenderId !== uid) {
-            updatePayload['unread'] = false;
-          }
+        }
+        if (data.lastSenderId !== uid) {
+          updatePayload['unread'] = false;
         }
 
         if (Object.keys(updatePayload).length > 0) {
