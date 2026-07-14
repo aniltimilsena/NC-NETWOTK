@@ -102,6 +102,14 @@ export function CallProvider({ children, user }: CallProviderProps) {
   const webrtc = useWebRTC();
 
   const loggedCallsRef = useRef<Record<string, boolean>>({});
+  const callerHungUpRef = useRef(false);
+  const activeCallRef = useRef<CallDoc | null>(null);
+
+  useEffect(() => {
+    if (activeCall) {
+      activeCallRef.current = activeCall;
+    }
+  }, [activeCall]);
 
   const logCallOutcome = useCallback(async (call: CallDoc, duration: number, finalStatus?: string) => {
     const callId = call.id || call.createdAt?.toString() || "unknown";
@@ -120,6 +128,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
       const callLabel = callTypeStr.charAt(0).toUpperCase() + callTypeStr.slice(1);
       const resolvedCallerName = await resolveUserName(callerId, call.callerName || 'Caller');
 
+      let outcome = "";
       if (finalStatus === "rejected") {
         outcome = "Declined";
       } else if (finalStatus === "busy") {
@@ -190,6 +199,18 @@ export function CallProvider({ children, user }: CallProviderProps) {
     }
   }, [webrtc.callState, webrtc.errorMessage, activeCall, user?.uid, logCallOutcome]);
 
+  // Log call outcome when call state changes to ended on caller's side
+  useEffect(() => {
+    if (webrtc.callState === "ended" && activeCallRef.current && activeCallRef.current.callerId === user?.uid) {
+      let finalStatus: string | undefined = undefined;
+      if (webrtc.callDuration === 0) {
+        finalStatus = callerHungUpRef.current ? "cancelled" : "no-answer";
+      }
+      logCallOutcome(activeCallRef.current, webrtc.callDuration, finalStatus);
+      activeCallRef.current = null;
+    }
+  }, [webrtc.callState, user?.uid, webrtc.callDuration, logCallOutcome]);
+
   
 
   useEffect(() => {
@@ -257,6 +278,8 @@ export function CallProvider({ children, user }: CallProviderProps) {
       callType: "audio" | "video";
     }) => {
       if (!user?.uid) return;
+
+      callerHungUpRef.current = false;
 
       
       const initialActiveCall = {
@@ -407,6 +430,9 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
   const hangUp = useCallback(async () => {
     if (activeCall) {
+      if (activeCall.callerId === user?.uid) {
+        callerHungUpRef.current = true;
+      }
       const targetReceiverId = activeCall.calleeId || activeCall.receiverId;
       
       if (webrtc.callDuration === 0 && activeCall.callerId === user?.uid) {
