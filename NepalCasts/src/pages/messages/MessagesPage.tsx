@@ -179,6 +179,7 @@ export default function MessagesPage({
             loadingCalls={loadingCalls}
             currentUser={user}
             onStartNewChat={() => setShowNewChatModal(true)}
+            onNavigate={onNavigate}
           />
         </div>
 

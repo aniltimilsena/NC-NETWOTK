@@ -11,6 +11,7 @@ interface ChatSidebarProps {
   loadingCalls: boolean;
   currentUser: any;
   onStartNewChat: () => void;
+  onNavigate?: (page: string, param?: any) => void;
 }
 
 const formatLastMessage = (text?: string) => {
@@ -34,7 +35,8 @@ export default function ChatSidebar({
   callHistory,
   loadingCalls,
   currentUser,
-  onStartNewChat
+  onStartNewChat,
+  onNavigate
 }: ChatSidebarProps) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'chats' | 'calls'>('chats');
@@ -51,7 +53,7 @@ export default function ChatSidebar({
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => onNavigate ? onNavigate('back') : navigate(-1)}
               className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0 no-min-h"
               title="Go to Home"
             >

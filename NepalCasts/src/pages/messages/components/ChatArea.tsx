@@ -15,6 +15,17 @@ interface ChatAreaProps {
   onDeleteMessage?: (msgId: string) => void;
 }
 
+const formatMessageTime = (timestamp?: any) => {
+  if (!timestamp) return '';
+  try {
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return '';
+  }
+};
+
 export default function ChatArea({
   chat,
   messages,
@@ -110,40 +121,47 @@ export default function ChatArea({
               ) : (
               <div 
                 key={msg.id} 
-                className={`flex gap-3 max-w-[75%] ${isMe ? 'ml-auto flex-row-reverse text-right' : 'mr-auto text-left'}`}
+                className={`group flex items-end gap-2.5 max-w-[85%] sm:max-w-[75%] my-2 ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
               >
-                {/* Bubble Container */}
-                <div className="space-y-1">
+                {/* Sender Avatar for incoming messages */}
+                {!isMe && (
+                  <div className="shrink-0 mb-1.5">
+                    <Avatar src={chat.avatar} name={chat.name} size="sm" />
+                  </div>
+                )}
+
+                {/* Bubble and Timestamp Container */}
+                <div className="flex-1 min-w-0">
                   {/* Reply block if exists */}
                   {msg.replyTo && (
-                    <div className="bg-white/5 border-l-2 border-[#00BFFF] p-2 rounded-xl text-[10px] text-nc-muted mb-1 max-w-[200px] truncate">
+                    <div className="bg-white/5 border-l-2 border-[#00BFFF] p-2 rounded-xl text-[10px] text-nc-muted mb-1 max-w-[240px] truncate text-left">
                       {msg.replyTo.text}
                     </div>
                   )}
 
-                  <div className={`px-4 py-3 rounded-3xl text-sm ${
+                  <div className={`px-4 py-3 text-sm text-left ${
                     isMe 
-                      ? 'bg-[#00BFFF] text-black font-semibold rounded-tr-none' 
-                      : 'bg-white/5 text-white border border-white/5 rounded-tl-none'
+                      ? 'bg-gradient-to-br from-sky-400 to-sky-500 text-black font-semibold shadow-[0_4px_12px_rgba(56,189,248,0.15)] rounded-2xl rounded-tr-none' 
+                      : 'bg-[#18181b] text-gray-200 border border-white/[0.03] shadow-sm rounded-2xl rounded-tl-none'
                   }`}>
                     {msg.type === 'image' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/image/upload/') || msg.text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i))) ? (
                       <div className="space-y-1.5">
                         <img 
                           src={msg.text} 
                           alt="Sent a photo" 
-                          className="max-w-full sm:max-w-[280px] max-h-[200px] rounded-2xl object-cover cursor-pointer hover:opacity-90 transition-opacity border border-black/20"
+                          className="max-w-full sm:max-w-[280px] max-h-[200px] rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity border border-black/20"
                           onClick={() => setLightboxUrl(msg.text)}
                         />
-                        <span className="text-[10px] opacity-60 block italic text-left">Sent a photo</span>
+                        <span className="text-[10px] opacity-60 block italic">Sent a photo</span>
                       </div>
                     ) : msg.type === 'video' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/video/upload/') || msg.text.match(/\.(mp4|webm|ogg|mov)/i))) ? (
                       <div className="space-y-1.5">
                         <video 
                           src={msg.text} 
                           controls 
-                          className="max-w-full sm:max-w-[280px] max-h-[200px] rounded-2xl object-cover border border-black/20"
+                          className="max-w-full sm:max-w-[280px] max-h-[200px] rounded-xl object-cover border border-black/20"
                         />
-                        <span className="text-[10px] opacity-60 block italic text-left">Sent a video</span>
+                        <span className="text-[10px] opacity-60 block italic">Sent a video</span>
                       </div>
                     ) : msg.type === 'file' || (msg.text && msg.text.startsWith('http') && msg.text.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|zip|rar)/i)) ? (
                       <div className="flex items-center gap-2">
@@ -162,14 +180,15 @@ export default function ChatArea({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1.5 justify-end text-[9px] text-nc-muted">
-                    {/* Timestamp & read check */}
+                  {/* Timestamp & read check */}
+                  <div className={`flex items-center gap-1.5 mt-1 text-[9px] text-nc-muted ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <span>{formatMessageTime(msg.createdAt)}</span>
                     {isMe && <Check className="w-3 h-3 text-[#00BFFF]" />}
                   </div>
                 </div>
 
-                {/* Popover action hooks */}
-                <div className="self-center opacity-0 hover:opacity-100 transition-opacity flex items-center gap-1">
+                {/* Hover Popover Action Controls */}
+                <div className="self-center opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0">
                   <button 
                     onClick={() => onReplyTo(msg)}
                     className="p-1.5 hover:bg-white/5 rounded-lg text-nc-muted hover:text-white transition-colors"
