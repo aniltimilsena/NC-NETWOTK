@@ -14,6 +14,7 @@ import {
   markConversationAsRead
 } from '../../../services/messaging';
 import type { Conversation, Message, ServiceResult } from '../../../types';
+import { subscribeToCallHistory } from '../../../services/call';
 
 export function useMessages(currentUser: any, initialUserId: string | null) {
   const [conversations, setConversations] = useState<any[]>([]);
@@ -94,38 +95,18 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
       return;
     }
 
-    const q = query(
-      collection(db, 'calls'),
-      where('participants', 'array-contains', currentUser.uid)
-    );
-    const unsub = onSnapshot(q, async (snap) => {
-      const list = [];
-      for (const d of snap.docs) {
-        const call = d.id;
-        const cData = d.data();
-        const otherId = cData.callerId === currentUser.uid ? cData.calleeId : cData.callerId;
-        
-        let otherProfile = { name: 'Discovery User', image: '' };
-        try {
-          const profileDoc = await getDoc(doc(db, 'profiles', otherId));
-          if (profileDoc.exists()) {
-            otherProfile = {
-              name: profileDoc.data().name || 'Discovery User',
-              image: profileDoc.data().image || ''
-            };
-          }
-        } catch (e) {}
-
-        list.push({
-          id: d.id,
+    const unsub = subscribeToCallHistory(currentUser.uid, (historyList) => {
+      const formattedHistory = historyList.map(cData => {
+        const isCaller = cData.callerId === currentUser.uid;
+        return {
           ...cData,
-          otherUser: otherProfile
-        });
-      }
-      setCallHistory(list);
-      setLoadingCalls(false);
-    }, (err) => {
-      console.warn("Failed to subscribe to calls:", err);
+          otherUser: {
+            name: isCaller ? (cData.calleeName || 'Discovery User') : (cData.callerName || 'Discovery User'),
+            image: isCaller ? (cData.calleePhoto || cData.receiverAvatar || '') : (cData.callerPhoto || cData.callerAvatar || '')
+          }
+        };
+      });
+      setCallHistory(formattedHistory);
       setLoadingCalls(false);
     });
 
