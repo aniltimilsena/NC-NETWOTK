@@ -352,9 +352,12 @@ export const subscribeToConversations = (
   return onSnapshot(
     q,
     async (snapshot) => {
-      const convos = await Promise.all(
+      const convos = (await Promise.all(
         snapshot.docs.map(async (d) => {
           const data = d.data();
+          if (data.deletedFor && data.deletedFor[uid] === true) {
+            return null;
+          }
           const otherParticipantId = data.participants.find((p: string) => p !== uid);
 
           let participantInfo: any = {
@@ -421,7 +424,7 @@ export const subscribeToConversations = (
           };
 
         })
-      );
+      )).filter((c): c is any => c !== null);
 
       
       convos.sort((a: any, b: any) => {

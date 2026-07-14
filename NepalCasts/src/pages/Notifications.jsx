@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../lib/firebase';
 import { 
   collection, 
@@ -15,6 +15,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import Avatar from '../components/ui/Avatar';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { 
   ChevronLeft, 
   MessageSquare, 
@@ -168,66 +169,89 @@ function NotificationCard({
   followingIds, 
   handleFollowBack, 
   markAsRead, 
-  deleteNotification, 
+  onDeleteRequest, 
   handleNotificationClick,
   timeAgo
 }) {
-  const controls = useAnimation();
-  const [isSwiped, setIsSwiped] = useState(false);
-
   const details = getNotificationDetails(notif);
   const showAvatar = details.iconName === 'message_received' || details.iconName === 'missed_call' || details.iconName === 'call_cancelled';
 
-  
-  const handleDragEnd = (event, info) => {
-    if (info.offset.x < -30) {
-      controls.start({ x: -80 });
-      setIsSwiped(true);
-    } else {
-      controls.start({ x: 0 });
-      setIsSwiped(false);
+  // Refs for tracking long press
+  const longPressTimer = useRef(null);
+  const isLongPressActive = useRef(false);
+
+  const startPress = useCallback(() => {
+    isLongPressActive.current = false;
+    longPressTimer.current = setTimeout(() => {
+      isLongPressActive.current = true;
+      if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+      }
+      onDeleteRequest(notif.id);
+    }, 600); // 600ms long press threshold
+  }, [notif.id, onDeleteRequest]);
+
+  const endPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  const handleTouchStart = (e) => {
+    startPress();
+  };
+
+  const handleTouchEnd = (e) => {
+    endPress();
+    if (isLongPressActive.current) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   };
 
-  const handleCardClick = () => {
-    if (isSwiped) {
-      controls.start({ x: 0 });
-      setIsSwiped(false);
-    } else {
-      handleNotificationClick(notif);
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return; // Only trigger for left click
+    startPress();
+  };
+
+  const handleMouseUp = (e) => {
+    endPress();
+    if (isLongPressActive.current) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   };
 
-  
-  
-  
+  const handleMouseLeave = () => {
+    endPress();
+  };
+
+  const handleCardClick = (e) => {
+    if (isLongPressActive.current) {
+      e.stopPropagation();
+      e.preventDefault();
+      isLongPressActive.current = false;
+      return;
+    }
+    handleNotificationClick(notif);
+  };
+
   const cardBgClass = notif.read 
-    ? 'bg-[#111111] border-l-[3px] border-l-transparent hover:bg-white/[0.02]' 
-    : 'bg-[#1a2744] border-l-[3px] border-l-[#00BFFF] hover:bg-[#203154]';
+    ? 'bg-transparent hover:bg-white/[0.02]' 
+    : 'bg-[#00BFFF]/[0.03] hover:bg-[#00BFFF]/[0.06]';
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-[#0a0a0a] w-full">
-      {/* Delete button (revealed underneath card when swiped left) */}
-      <div className="absolute inset-y-0 right-0 w-20 flex items-center justify-center bg-red-600 rounded-r-2xl z-0">
-        <button
-          onClick={(e) => deleteNotification(e, notif.id)}
-          className="w-full h-full flex items-center justify-center text-white transition-colors hover:bg-red-700 active:bg-red-800"
-          title="Delete"
-        >
-          <Trash2 className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Main draggable Card UI */}
-      <motion.div
-        drag="x"
-        dragDirectionLock
-        dragConstraints={{ left: -80, right: 0 }}
-        dragElastic={{ left: 0.1, right: 0 }}
-        animate={controls}
-        onDragEnd={handleDragEnd}
+    <div className="relative w-full border-b border-white/5">
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={endPress}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
         onClick={handleCardClick}
-        className={`relative z-10 p-4 cursor-pointer transition-colors duration-200 flex items-center gap-4 select-none ${cardBgClass} w-full`}
+        className={`relative z-10 py-4 px-2 sm:px-3 cursor-pointer transition-colors duration-200 flex items-center gap-4 select-none ${cardBgClass} w-full`}
       >
         {/* Left icon / Avatar */}
         {showAvatar && (notif.senderAvatar || notif.senderName) ? (
@@ -289,7 +313,7 @@ function NotificationCard({
             </button>
           )}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -301,6 +325,7 @@ export default function Notifications({ onNavigate, user }) {
   const [followingIds, setFollowingIds] = useState(new Set());
   const [visibleLimit, setVisibleLimit] = useState(15);
   const [hasMore, setHasMore] = useState(false);
+  const [deletingNotifId, setDeletingNotifId] = useState(null);
 
   const filters = [
     { id: 'all', label: 'All' },
@@ -382,9 +407,7 @@ export default function Notifications({ onNavigate, user }) {
     }
   };
 
-  const deleteNotification = async (e, notifId) => {
-    e.stopPropagation();
-    
+  const deleteNotification = async (notifId) => {
     setNotifications(prev => prev.filter(n => n.id !== notifId));
     if (user?.uid) {
       try {
@@ -552,7 +575,7 @@ export default function Notifications({ onNavigate, user }) {
   );
 
   const renderGroupList = (groupItems) => (
-    <ul className="space-y-3 w-full">
+    <ul className="w-full">
       <AnimatePresence initial={false}>
         {groupItems.map((notif) => (
           <motion.li
@@ -568,7 +591,7 @@ export default function Notifications({ onNavigate, user }) {
               followingIds={followingIds}
               handleFollowBack={handleFollowBack}
               markAsRead={markAsRead}
-              deleteNotification={deleteNotification}
+              onDeleteRequest={(id) => setDeletingNotifId(id)}
               handleNotificationClick={handleNotificationClick}
               timeAgo={timeAgo}
             />
@@ -709,6 +732,21 @@ export default function Notifications({ onNavigate, user }) {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={deletingNotifId !== null}
+        title="Delete Notification?"
+        description="Are you sure you want to delete this notification? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        onClose={() => setDeletingNotifId(null)}
+        onConfirm={async () => {
+          if (deletingNotifId) {
+            await deleteNotification(deletingNotifId);
+            setDeletingNotifId(null);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -4,8 +4,9 @@ import ChatSidebar from './components/ChatSidebar';
 import ChatArea from './components/ChatArea';
 import MessageInput from './components/MessageInput';
 import NewChatModal from './components/NewChatModal';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useCall } from '../../context/CallContext';
-import { deleteMessage } from '../../services/messaging';
+import { deleteMessage, deleteConversation } from '../../services/messaging';
 import type { Message } from '../../types';
 
 interface MessagesPageProps {
@@ -37,8 +38,26 @@ export default function MessagesPage({
   const { initiateCall } = useCall();
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [deletingConvoId, setDeletingConvoId] = useState<string | null>(null);
 
   const activeChat = conversations.find((c) => c.id === activeChatId);
+
+  const handleDeleteConversation = async (convoId: string) => {
+    try {
+      const res = await deleteConversation(convoId);
+      if (res.success) {
+        showAlert('Conversation deleted.', 'info');
+        if (activeChatId === convoId) {
+          setActiveChatId(null);
+        }
+      } else {
+        showAlert(res.error || 'Failed to delete conversation.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showAlert('Failed to delete conversation.', 'error');
+    }
+  };
 
   const handleSendMessage = async (text: string, type: 'text' | 'image' | 'video' = 'text') => {
     const res = await dispatchMessage(text, replyingTo, type);
@@ -127,16 +146,16 @@ export default function MessagesPage({
 
             {/* Message History */}
             <div className="flex-1 py-6 space-y-5 overflow-hidden">
-              <div className="flex gap-3 max-w-md">
-                <div className="w-8 h-8 rounded-full skeleton shrink-0" />
-                <div className="h-14 skeleton w-64 rounded-2xl rounded-tl-none" />
+              <div className="flex items-end gap-2.5 max-w-md">
+                <div className="w-8 h-8 rounded-full skeleton shrink-0 mb-1.5" />
+                <div className="h-14 skeleton w-64 rounded-2xl rounded-bl-none" />
               </div>
-              <div className="flex gap-3 max-w-md ml-auto justify-end">
-                <div className="h-10 skeleton w-48 rounded-2xl rounded-tr-none" />
+              <div className="flex items-end gap-2.5 max-w-md ml-auto justify-end">
+                <div className="h-10 skeleton w-48 rounded-2xl rounded-br-none" />
               </div>
-              <div className="flex gap-3 max-w-md">
-                <div className="w-8 h-8 rounded-full skeleton shrink-0" />
-                <div className="h-12 skeleton w-56 rounded-2xl rounded-tl-none" />
+              <div className="flex items-end gap-2.5 max-w-md">
+                <div className="w-8 h-8 rounded-full skeleton shrink-0 mb-1.5" />
+                <div className="h-12 skeleton w-56 rounded-2xl rounded-bl-none" />
               </div>
             </div>
 
@@ -175,6 +194,7 @@ export default function MessagesPage({
             conversations={conversations}
             activeChatId={activeChatId}
             onSelectChat={setActiveChatId}
+            onDeleteChat={setDeletingConvoId}
             callHistory={callHistory}
             loadingCalls={loadingCalls}
             currentUser={user}
@@ -221,6 +241,22 @@ export default function MessagesPage({
         isOpen={showNewChatModal}
         onClose={() => setShowNewChatModal(false)}
         onSelectUser={handleSelectUser}
+      />
+
+      <ConfirmDialog
+        isOpen={deletingConvoId !== null}
+        title="Delete Chat Thread?"
+        description="Are you sure you want to delete this chat conversation? All messages in this thread will be permanently deleted."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        onClose={() => setDeletingConvoId(null)}
+        onConfirm={async () => {
+          if (deletingConvoId) {
+            await handleDeleteConversation(deletingConvoId);
+            setDeletingConvoId(null);
+          }
+        }}
       />
     </div>
   );

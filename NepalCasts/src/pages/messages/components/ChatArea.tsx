@@ -131,7 +131,7 @@ export default function ChatArea({
                 )}
 
                 {/* Bubble and Timestamp Container */}
-                <div className="flex-1 min-w-0">
+                <div className={`flex flex-col min-w-0 ${isMe ? 'items-end' : 'items-start'}`}>
                   {/* Reply block if exists */}
                   {msg.replyTo && (
                     <div className="bg-white/5 border-l-2 border-[#00BFFF] p-2 rounded-xl text-[10px] text-nc-muted mb-1 max-w-[240px] truncate text-left">
@@ -141,8 +141,8 @@ export default function ChatArea({
 
                   <div className={`px-4 py-3 text-sm text-left ${
                     isMe 
-                      ? 'bg-gradient-to-br from-sky-400 to-sky-500 text-black font-semibold shadow-[0_4px_12px_rgba(56,189,248,0.15)] rounded-2xl rounded-tr-none' 
-                      : 'bg-[#18181b] text-gray-200 border border-white/[0.03] shadow-sm rounded-2xl rounded-tl-none'
+                      ? 'bg-gradient-to-br from-sky-400 to-sky-500 text-black font-semibold shadow-[0_4px_12px_rgba(56,189,248,0.15)] rounded-2xl rounded-br-none' 
+                      : 'bg-[#18181b] text-gray-200 border border-white/[0.03] shadow-sm rounded-2xl rounded-bl-none'
                   }`}>
                     {msg.type === 'image' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/image/upload/') || msg.text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i))) ? (
                       <div className="space-y-1.5">

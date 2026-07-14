@@ -30,12 +30,12 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "react": path.resolve(__dirname, "./node_modules/react"),
+      "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
     },
     dedupe: ['react', 'react-dom'],
   },
-  optimizeDeps: {
-    exclude: ['agentation'],
-  },
+
   define: {
     __BUILD_VERSION__: JSON.stringify(buildVersion),
   },

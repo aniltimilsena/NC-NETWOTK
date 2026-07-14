@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MessageSquare, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, ChevronLeft } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
@@ -7,6 +7,7 @@ interface ChatSidebarProps {
   conversations: any[];
   activeChatId: string | null;
   onSelectChat: (id: string) => void;
+  onDeleteChat: (id: string) => void;
   callHistory: any[];
   loadingCalls: boolean;
   currentUser: any;
@@ -32,6 +33,7 @@ export default function ChatSidebar({
   conversations,
   activeChatId,
   onSelectChat,
+  onDeleteChat,
   callHistory,
   loadingCalls,
   currentUser,
@@ -41,6 +43,28 @@ export default function ChatSidebar({
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'chats' | 'calls'>('chats');
   const [query, setQuery] = useState('');
+
+  // Long press timer tracking for ChatSidebar
+  const longPressTimer = useRef<any>(null);
+  const isLongPressActive = useRef(false);
+
+  const startPress = useCallback((convoId: string) => {
+    isLongPressActive.current = false;
+    longPressTimer.current = setTimeout(() => {
+      isLongPressActive.current = true;
+      if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+      }
+      onDeleteChat(convoId);
+    }, 600); // 600ms threshold
+  }, [onDeleteChat]);
+
+  const endPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
 
   const filteredConversations = conversations.filter((c) =>
     (c.name || '').toLowerCase().includes(query.toLowerCase())
@@ -106,10 +130,10 @@ export default function ChatSidebar({
       </div>
 
       {/* List Container */}
-      <div className="flex-1 overflow-y-auto no-scrollbar p-2">
+      <div className="flex-1 overflow-y-auto no-scrollbar">
         {activeTab === 'chats' ? (
           filteredConversations.length > 0 ? (
-            <div className="space-y-1">
+            <div className="flex flex-col">
               {filteredConversations.map((c) => {
                 const isSelected = c.id === activeChatId;
                 const unreadCount = c.unreadCounts?.[currentUser.uid] || 0;
@@ -117,22 +141,39 @@ export default function ChatSidebar({
                 return (
                   <div
                     key={c.id}
-                    onClick={() => onSelectChat(c.id)}
-                    className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
-                      isSelected ? 'bg-white/10' : 'hover:bg-white/5'
+                    onTouchStart={() => startPress(c.id)}
+                    onTouchEnd={endPress}
+                    onTouchMove={endPress}
+                    onMouseDown={(e) => {
+                      if (e.button !== 0) return;
+                      startPress(c.id);
+                    }}
+                    onMouseUp={endPress}
+                    onMouseLeave={endPress}
+                    onClick={(e) => {
+                      if (isLongPressActive.current) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        isLongPressActive.current = false;
+                        return;
+                      }
+                      onSelectChat(c.id);
+                    }}
+                    className={`flex items-center gap-3 py-3.5 px-4 border-b border-white/5 cursor-pointer transition-all ${
+                      isSelected ? 'bg-white/10' : 'bg-transparent hover:bg-white/5'
                     }`}
                   >
-                    <Avatar src={c.avatar} name={c.name} size="sm" />
+                    <Avatar src={c.avatar} name={c.name} size="md" />
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex justify-between items-start gap-2">
-                        <span className="text-sm font-bold text-white block truncate">{c.name}</span>
+                        <span className="text-[15px] font-bold text-white block truncate">{c.name}</span>
                         {unreadCount > 0 && (
                           <span className="w-5 h-5 rounded-full bg-[#00BFFF] text-black font-black text-[10px] flex items-center justify-center shrink-0">
                             {unreadCount}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-nc-muted truncate font-medium mt-0.5">{formatLastMessage(c.lastMessage)}</p>
+                      <p className="text-[13px] text-nc-muted truncate font-medium mt-0.5">{formatLastMessage(c.lastMessage)}</p>
                     </div>
                   </div>
                 );
@@ -145,7 +186,7 @@ export default function ChatSidebar({
           /* Calls History List */
           !loadingCalls ? (
             callHistory.length > 0 ? (
-              <div className="space-y-1">
+              <div className="flex flex-col">
                 {callHistory.map((call) => {
                   const isIncoming = call.calleeId === currentUser.uid;
                   const date = call.createdAt?.toDate ? call.createdAt.toDate().toLocaleDateString() : 'N/A';
@@ -153,19 +194,19 @@ export default function ChatSidebar({
                   return (
                     <div
                       key={call.id}
-                      className="flex justify-between items-center p-3 rounded-2xl hover:bg-white/5 transition-all"
+                      className="flex justify-between items-center py-3.5 px-4 border-b border-white/5 bg-transparent hover:bg-white/5 transition-all"
                     >
                       <div className="flex items-center gap-3">
-                        <Avatar src={call.otherUser?.image} name={call.otherUser?.name} size="sm" />
+                        <Avatar src={call.otherUser?.image} name={call.otherUser?.name} size="md" />
                         <div className="text-left">
-                          <span className="text-sm font-bold text-white block">{call.otherUser?.name}</span>
+                          <span className="text-[15px] font-bold text-white block">{call.otherUser?.name}</span>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             {isIncoming ? (
                               <PhoneIncoming className="w-3 h-3 text-[#00BFFF]" />
                             ) : (
                               <PhoneOutgoing className="w-3 h-3 text-nc-muted" />
                             )}
-                            <span className="text-[10px] text-nc-muted font-medium">{date}</span>
+                            <span className="text-[11px] text-nc-muted font-medium">{date}</span>
                           </div>
                         </div>
                       </div>
