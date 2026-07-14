@@ -45,7 +45,7 @@ export default function ChatArea({
         <div className="flex items-center gap-3">
           <button 
             onClick={onBack}
-            className="md:hidden w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0"
+            className="md:hidden w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0 no-min-h"
             title="Back to Inbox"
           >
             <ChevronLeft className="w-5 h-5" />

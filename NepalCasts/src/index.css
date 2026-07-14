@@ -460,11 +460,11 @@ body.font-devanagari * {
 /* Mobile Usability & Accessibility Overrides (max-width: 640px) */
 @media (max-width: 640px) {
   /* 1. Ensure touch/tap targets meet WCAG standards (at least 44px) for all buttons and clickable elements */
-  button:not(.hidden), 
-  a.button:not(.hidden),
-  .btn:not(.hidden),
-  .button:not(.hidden),
-  .category-card:not(.hidden) {
+  button:not(.hidden):not(.no-min-h):not(.rounded-full), 
+  a.button:not(.hidden):not(.no-min-h):not(.rounded-full),
+  .btn:not(.hidden):not(.no-min-h):not(.rounded-full),
+  .button:not(.hidden):not(.no-min-h):not(.rounded-full),
+  .category-card:not(.hidden):not(.no-min-h) {
     min-height: 44px !important;
     display: inline-flex;
     align-items: center;
@@ -472,9 +472,9 @@ body.font-devanagari * {
   }
 
   /* 2. Prevent micro-copy/text sizes from dropping below legible limits (13px) on mobile */
-  .text-\[10px\],
-  .text-\[11px\],
-  .text-xs {
+  .text-\[10px\]:not(.no-scale),
+  .text-\[11px\]:not(.no-scale),
+  .text-xs:not(.no-scale) {
     font-size: 0.8125rem !important; /* Forces it to be at least ~13px for readable display */
   }
 }

@@ -52,7 +52,7 @@ export default function ChatSidebar({
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate(-1)}
-              className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0"
+              className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0 no-min-h"
               title="Go to Home"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -86,7 +86,7 @@ export default function ChatSidebar({
         <div className="flex bg-white/5 rounded-2xl p-1 gap-1">
           <button
             onClick={() => setActiveTab('chats')}
-            className={`flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors ${
+            className={`flex-1 py-1.5 rounded-xl text-[10px] no-scale no-min-h font-black uppercase tracking-wider transition-colors ${
               activeTab === 'chats' ? 'bg-[#00BFFF] text-black' : 'text-nc-muted hover:text-white'
             }`}
           >
@@ -94,7 +94,7 @@ export default function ChatSidebar({
           </button>
           <button
             onClick={() => setActiveTab('calls')}
-            className={`flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors ${
+            className={`flex-1 py-1.5 rounded-xl text-[10px] no-scale no-min-h font-black uppercase tracking-wider transition-colors ${
               activeTab === 'calls' ? 'bg-[#00BFFF] text-black' : 'text-nc-muted hover:text-white'
             }`}
           >
