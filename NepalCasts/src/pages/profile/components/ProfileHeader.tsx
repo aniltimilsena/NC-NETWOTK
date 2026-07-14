@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, Trash2, ChevronLeft, ShieldCheck, MapPin } from 'lucide-react';
+import { Camera, Trash2, ChevronLeft, ShieldCheck, MapPin, MessageSquare } from 'lucide-react';
 import { Button, Avatar } from '../../../components/ui';
 import { uploadProfileMedia, updateProfileData } from '../../../services/profile';
 import type { UserProfile } from '../../../types';
@@ -238,13 +238,15 @@ export default function ProfileHeader({
                  >
                    {isFollowing ? 'Following' : 'Follow'}
                  </Button>
-                 <Button
-                   variant="outline"
-                   onClick={() => { trackProfileClick(); onNavigate('messages', profile.uid); }}
-                   className="flex-1 sm:flex-initial"
-                 >
-                   Message
-                 </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => { trackProfileClick(); onNavigate('messages', profile.uid); }}
+                    className="flex-shrink-0 flex items-center justify-center !p-0 w-11 h-11"
+                    aria-label="Message"
+                    title="Message"
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                  </Button>
                </div>
              )}
            </div>
