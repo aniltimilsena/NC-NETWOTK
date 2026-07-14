@@ -472,8 +472,8 @@ body.font-devanagari * {
   }
 
   /* 2. Prevent micro-copy/text sizes from dropping below legible limits (13px) on mobile */
-  .text-[10px],
-  .text-[11px],
+  .text-\[10px\],
+  .text-\[11px\],
   .text-xs {
     font-size: 0.8125rem !important; /* Forces it to be at least ~13px for readable display */
   }
