@@ -18,7 +18,7 @@ import { getProfile } from "../services/profile";
 import { playRingtone, stopRingtone, playEndCallSound } from "../utils/ringtone";
 import { findOrCreateConversation, sendMessage } from "../services/messaging";
 import { db } from "../lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 
 
 
@@ -56,6 +56,40 @@ const CallContext = createContext<CallContextValue | null>(null);
 
 
 
+const resolveUserName = async (userId: string, defaultName: string): Promise<string> => {
+  let resolvedName = defaultName || 'Caller';
+  const trimmed = resolvedName.trim();
+  
+  if (!resolvedName || resolvedName === 'Unknown' || resolvedName === 'Caller' || /^[a-zA-Z0-9_-]{20,40}$/.test(trimmed)) {
+    try {
+      // 1. Try profiles
+      const profileRes = await getProfile(userId);
+      if (profileRes.data) {
+        const profileData = profileRes.data as any;
+        resolvedName = profileData.name || [profileData.firstName, profileData.lastName].filter(Boolean).join(' ') || profileData.username || resolvedName;
+      }
+      
+      // 2. Try users
+      const currentTrimmed = resolvedName.trim();
+      if (currentTrimmed === 'Unknown' || currentTrimmed === 'Caller' || /^[a-zA-Z0-9_-]{20,40}$/.test(currentTrimmed)) {
+        const userSnap = await getDoc(doc(db, 'users', userId));
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          resolvedName = userData.name || userData.displayName || resolvedName;
+        }
+      }
+    } catch (e) {
+      console.warn("resolveUserName error:", e);
+    }
+  }
+  
+  const finalTrimmed = resolvedName.trim();
+  if (finalTrimmed && /^[a-zA-Z0-9_-]{20,40}$/.test(finalTrimmed)) {
+    return 'Caller';
+  }
+  return resolvedName;
+};
+
 interface CallProviderProps {
   children: ReactNode;
   user: any; 
@@ -84,22 +118,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
       const callTypeStr = call.callType || "audio";
       const callLabel = callTypeStr.charAt(0).toUpperCase() + callTypeStr.slice(1);
-      let resolvedCallerName = call.callerName || 'Caller';
-      if (!resolvedCallerName || resolvedCallerName === 'Unknown' || resolvedCallerName === 'Caller' || /^[a-zA-Z0-9]{28}$/.test(resolvedCallerName)) {
-        try {
-          const profileRes = await getProfile(callerId);
-          if (profileRes.data) {
-            const profileData = profileRes.data as any;
-            resolvedCallerName = profileData.name || [profileData.firstName, profileData.lastName].filter(Boolean).join(' ') || profileData.username || resolvedCallerName;
-          }
-        } catch (err) {
-          console.warn("Failed to fetch caller profile for logCallOutcome:", err);
-        }
-      }
-
-      if (resolvedCallerName && /^[a-zA-Z0-9]{28}$/.test(resolvedCallerName)) {
-        resolvedCallerName = 'Caller';
-      }
+      const resolvedCallerName = await resolveUserName(callerId, call.callerName || 'Caller');
 
       if (finalStatus === "rejected") {
         outcome = "Declined";
@@ -350,12 +369,11 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
     
     try {
-      let senderName = incomingCall.callerName;
+      const senderName = await resolveUserName(incomingCall.callerId, incomingCall.callerName);
       let senderAvatar = incomingCall.callerPhoto || "";
       const profileRes = await getProfile(incomingCall.callerId);
       if (profileRes.data) {
         const profileData = profileRes.data as any;
-        senderName = profileData.name || senderName;
         senderAvatar = profileData.image || senderAvatar;
       }
 
@@ -393,12 +411,11 @@ export function CallProvider({ children, user }: CallProviderProps) {
       
       if (webrtc.callDuration === 0 && activeCall.callerId === user?.uid) {
         try {
-          let senderName = activeCall.callerName;
+          const senderName = await resolveUserName(activeCall.callerId, activeCall.callerName);
           let senderAvatar = activeCall.callerPhoto || "";
           const profileRes = await getProfile(activeCall.callerId);
           if (profileRes.data) {
             const profileData = profileRes.data as any;
-            senderName = profileData.name || senderName;
             senderAvatar = profileData.image || senderAvatar;
           }
 
