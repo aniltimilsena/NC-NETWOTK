@@ -52,7 +52,14 @@ export const assertMessageOwner = async (conversationId: string, messageId: stri
 };
 
 export const checkBlockStatus = async (uid: string, otherParticipants: string[]): Promise<void> => {
+  const requesterDoc = await db.collection('users').doc(uid).get();
+  const requesterBlocked: string[] = requesterDoc.exists ? (requesterDoc.data()?.blockedUsers || []) : [];
+
   for (const participantId of otherParticipants) {
+    if (requesterBlocked.includes(participantId)) {
+      throw { status: 403, message: 'You have blocked this user' };
+    }
+
     const participantDoc = await db.collection('users').doc(participantId).get();
     if (participantDoc.exists) {
       const blockedUsers: string[] = participantDoc.data()?.blockedUsers || [];
@@ -60,15 +67,9 @@ export const checkBlockStatus = async (uid: string, otherParticipants: string[])
         throw { status: 403, message: 'You cannot message this user' };
       }
     }
-    const requesterDoc = await db.collection('users').doc(uid).get();
-    if (requesterDoc.exists) {
-      const requesterBlocked: string[] = requesterDoc.data()?.blockedUsers || [];
-      if (requesterBlocked.includes(participantId)) {
-        throw { status: 403, message: 'You have blocked this user' };
-      }
-    }
   }
 };
+
 
 export const getConversationsForUser = async (uid: string): Promise<any[]> => {
   const snapshot = await db.collection('conversations')
@@ -106,6 +107,7 @@ export const createConversation = async (uid: string, participants: string[], in
   }
 
   const docRef = await db.collection('conversations').add({
+    createdBy: uid,
     participants: sorted,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -316,7 +318,7 @@ export const sendMessageInConversation = async (conversationId: string, uid: str
     }
 
     const allTokens: string[] = [];
-    await Promise.all(otherParticipants.map(async (pId) => {
+    await Promise.all(otherParticipants.map(async (pId: string) => {
       const tokenDoc = await db.collection('users').doc(pId).collection('private').doc('settings').get();
       if (tokenDoc.exists) {
         const data = tokenDoc.data();
@@ -367,7 +369,8 @@ export const deleteMessageText = async (conversationId: string, messageId: strin
 };
 
 export const reactToMessageId = async (conversationId: string, messageId: string, uid: string, emoji: string): Promise<void> => {
-  const convo = await assertParticipant(conversationId, uid);
+  await assertParticipant(conversationId, uid);
+
   const messageRef = db.collection('conversations')
     .doc(conversationId)
     .collection('messages')
@@ -385,7 +388,8 @@ export const reactToMessageId = async (conversationId: string, messageId: string
 };
 
 export const removeReactionFromMessageId = async (conversationId: string, messageId: string, uid: string): Promise<void> => {
-  const convo = await assertParticipant(conversationId, uid);
+  await assertParticipant(conversationId, uid);
+
   const messageRef = db.collection('conversations')
     .doc(conversationId)
     .collection('messages')
@@ -403,7 +407,8 @@ export const removeReactionFromMessageId = async (conversationId: string, messag
 };
 
 export const pinMessageId = async (conversationId: string, messageId: string, uid: string, pinned: boolean): Promise<void> => {
-  const convo = await assertParticipant(conversationId, uid);
+  await assertParticipant(conversationId, uid);
+
   const messageRef = db.collection('conversations')
     .doc(conversationId)
     .collection('messages')

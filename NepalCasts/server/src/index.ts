@@ -7,14 +7,19 @@ import { app, PORT } from './config';
 import { configureCloudinary } from './config/cloudinary';
 import { getAllowedOrigins } from './config/cors';
 import { rateLimitMiddleware } from './middleware/cacheProtection';
+import { requestIdMiddleware } from './middleware/requestId';
 import globalRouter from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { startFirestoreListeners } from './services/listeners.service';
+import { initBloomFilters } from './services/cacheService';
+import { db } from './config';
 
 // Initialize Cloudinary SDK
 configureCloudinary();
 
 const allowedOrigins = getAllowedOrigins();
+
+app.use(requestIdMiddleware);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -37,7 +42,7 @@ app.use(helmet({
 app.use((req, res, next) => {
   const path = req.path;
   
-  if (path.startsWith('/api/2fa') || path.startsWith('/api/admin')) {
+  if (path.startsWith('/api/admin')) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
@@ -177,6 +182,7 @@ if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`NC Network Secure API running on http://localhost:${PORT}`);
     startFirestoreListeners();
+    initBloomFilters(db);
   });
 }
 

@@ -1,4 +1,4 @@
-import { fromBuffer } from 'file-type';
+import { fileTypeFromBuffer } from 'file-type';
 import { randomUUID } from 'crypto';
 import path from 'path';
 import sharp from 'sharp';
@@ -12,11 +12,11 @@ const ALLOWED_TYPES = new Set([
 ]);
 
 const DANGEROUS_EXTENSIONS = new Set([
-  '.php', '.php3', '.php4', '.php5',
+  '.php', '.php3', '.php4', '.php5', '.phtml',
   '.asp', '.aspx', '.jsp', '.jspx',
   '.sh', '.bash', '.py', '.rb', '.pl',
   '.cgi', '.exe', '.bat', '.cmd',
-  '.svg', '.html', '.htm', '.js',
+  '.svg', '.html', '.htm', '.js', '.xml',
   '.htaccess', '.htpasswd',
 ]);
 
@@ -32,93 +32,96 @@ const MIME_TO_EXT: Record<string, string> = {
   'video/3gpp': 'mp4',
 };
 
+export interface ProcessedFileInfo {
+  buffer: Buffer;
+  safeName: string;
+  mimeType: string;
+  size: number;
+  isVideo: boolean;
+}
 
 export interface ValidatedRequest extends Request {
-  validatedFile?: {
-    buffer: Buffer;
-    safeName: string;
-    mimeType: string;
-    size: number;
-    isVideo: boolean;
-  };
+  validatedFile?: ProcessedFileInfo;
+  validatedFiles?: ProcessedFileInfo[];
 }
+
+export const processSingleFileBuffer = async (file: Express.Multer.File): Promise<ProcessedFileInfo> => {
+  const originalExt = path.extname(file.originalname).toLowerCase();
+  if (DANGEROUS_EXTENSIONS.has(originalExt)) {
+    throw new Error('File type extension not allowed');
+  }
+
+  const detected = await fileTypeFromBuffer(file.buffer);
+  if (!detected) {
+    throw new Error('Could not verify file binary signature magic numbers');
+  }
+
+  if (!ALLOWED_TYPES.has(detected.mime)) {
+    throw new Error('File type binary format not supported. Use valid images or videos only.');
+  }
+
+  if (file.mimetype !== detected.mime) {
+    console.warn(`[Upload Security Alert] MIME mismatch detected: claimed=${file.mimetype}, actual=${detected.mime}`);
+  }
+
+  const safeExt = MIME_TO_EXT[detected.mime] || 'bin';
+  const safeName = `${randomUUID().replace(/-/g, '')}.${safeExt}`;
+
+  // Neutralize EXIF/IPTC/XMP polyglot script payloads via Sharp image re-encoding
+  let processedBuffer = file.buffer;
+  if (detected.mime.startsWith('image/') && detected.mime !== 'image/gif') {
+    try {
+      processedBuffer = await sharp(file.buffer)
+        .rotate()
+        .withMetadata({}) // Strips metadata completely
+        .toBuffer();
+    } catch (sharpError) {
+      console.warn('Image metadata stripping warning, using validated original buffer:', sharpError);
+    }
+  }
+
+  return {
+    buffer: processedBuffer,
+    safeName,
+    mimeType: detected.mime,
+    size: processedBuffer.length,
+    isVideo: detected.mime.startsWith('video/'),
+  };
+};
 
 export const validateUpload = async (
   req: ValidatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<any> => {
-  const file = req.file;
-  if (!file) return next();
-
   try {
-    
-    const originalExt = path.extname(file.originalname).toLowerCase();
-    if (DANGEROUS_EXTENSIONS.has(originalExt)) {
-      return res.status(400).json({ 
-        error: 'File type not allowed' 
-      });
+    // Process single file upload if present
+    if (req.file) {
+      req.validatedFile = await processSingleFileBuffer(req.file);
     }
 
-    
-    const detected = await fromBuffer(file.buffer);
-    
-    if (!detected) {
-      return res.status(400).json({ 
-        error: 'Could not determine file type' 
-      });
-    }
+    // Process file array uploads if present
+    if (req.files) {
+      const filesArray = Array.isArray(req.files)
+        ? req.files
+        : Object.values(req.files).flat();
 
-    if (!ALLOWED_TYPES.has(detected.mime)) {
-      return res.status(400).json({ 
-        error: 'File type not supported. Use images or videos only.' 
-      });
-    }
-
-    
-    if (file.mimetype !== detected.mime) {
-      console.warn(`Upload MIME mismatch: 
-        claimed=${file.mimetype} 
-        real=${detected.mime}
-        ip=${req.ip}
-      `);
-      
-    }
-
-    
-    // Safe filename from detected MIME — prevents extension spoofing
-    const safeExt = MIME_TO_EXT[detected.mime] || 'bin';
-    const safeName = `${randomUUID().replace(/-/g, '')}.${safeExt}`;
-
-    // Strip metadata from images to neutralize polyglot/EXIF attacks.
-    // GIFs are excluded because sharp converts animated GIFs to single frames.
-    let processedBuffer = file.buffer;
-    if (detected.mime.startsWith('image/') && detected.mime !== 'image/gif') {
-      try {
-        processedBuffer = await sharp(file.buffer)
-          .rotate()           // auto-rotate based on EXIF orientation before stripping
-          .withMetadata({})    // strip all EXIF/XMP/IPTC metadata
-          .toBuffer();
-      } catch (sharpError) {
-        console.warn('Image metadata stripping failed, using original buffer:', sharpError);
-        // Fall through with original buffer — validation already passed
+      if (filesArray.length > 0) {
+        req.validatedFiles = [];
+        for (const f of filesArray) {
+          const processed = await processSingleFileBuffer(f);
+          req.validatedFiles.push(processed);
+        }
       }
     }
 
-    req.validatedFile = {
-      buffer: processedBuffer,
-      safeName,
-      mimeType: detected.mime,
-      size: file.size,
-      isVideo: detected.mime.startsWith('video/'),
-    };
-
     next();
-
-  } catch (error) {
-    console.error('File validation error:', error);
-    return res.status(400).json({ 
-      error: 'File validation failed' 
+  } catch (error: any) {
+    console.error('File validation security failure:', error.message);
+    return res.status(400).json({
+      success: false,
+      error: error.message || 'File security validation failed',
+      errorCode: 'INVALID_FILE_SECURITY'
     });
   }
 };

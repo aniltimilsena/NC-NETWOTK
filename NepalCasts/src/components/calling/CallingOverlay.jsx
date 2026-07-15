@@ -164,7 +164,6 @@ export default function CallingOverlay() {
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
-      remoteVideoRef.current.muted = isSpeakerMuted;
       
       
       remoteStream.getAudioTracks().forEach(track => {
@@ -176,10 +175,19 @@ export default function CallingOverlay() {
         track.enabled = true;
       });
       
-      
-      remoteVideoRef.current.play().catch(err => {
-        console.warn("[CallingOverlay] Remote stream play failed or interrupted:", err);
-      });
+      // Desktop browsers block unmuted autoplay. Start muted to guarantee
+      // play() succeeds, then unmute after playback begins.
+      remoteVideoRef.current.muted = true;
+      remoteVideoRef.current.play()
+        .then(() => {
+          // Playback started — now unmute if speaker is not muted
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.muted = isSpeakerMuted;
+          }
+        })
+        .catch(err => {
+          console.warn("[CallingOverlay] Remote stream play failed or interrupted:", err);
+        });
     }
   }, [remoteStream, isSpeakerMuted]);
 

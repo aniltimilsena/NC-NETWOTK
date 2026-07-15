@@ -97,9 +97,6 @@ export const setInCache = (
   }
 };
 
-export const deleteFromCache = (key: string) => {
-  cache.del(key);
-};
 
 export const deleteFromCacheByPattern = (pattern: string) => {
   const keys = cache.keys();

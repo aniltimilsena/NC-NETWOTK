@@ -58,24 +58,10 @@ export const isAdmin = async (req: AuthedRequest, res: Response, next: NextFunct
     return;
   }
 
-  // Safe fallback to auto-set claims for legacy users who haven't logged in since custom claims migration
-  const userDoc = await db.collection('users').doc(uid).get();
-  if (userDoc.exists && userDoc.data()?.isAdmin === true) {
-    try {
-      await admin.auth().setCustomUserClaims(uid, { admin: true });
-      if (req.user) {
-        req.user.admin = true;
-      }
-    } catch (err) {
-      console.error(`Failed to auto-set custom claim for user ${uid}:`, err);
-    }
-    next();
-    return;
-  }
-
   res.status(403).json({
     success: false,
     message: 'Forbidden: Admin access required',
     errorCode: 'FORBIDDEN'
   });
 };
+

@@ -3,11 +3,8 @@ import { verifyToken, isAdmin } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
 import { CastingCallSchema } from '../schemas';
 import { db, admin } from '../config';
-import {
-  bloomFilterMiddleware,
-  cacheMiddleware,
-  scrapingPreventerMiddleware
-} from '../middleware/cacheProtection';
+import { bloomFilterMiddleware, cacheMiddleware, scrapingPreventerMiddleware } from '../middleware/cacheProtection';
+import { publicApiLimiter } from '../middleware/rateLimiter';
 import { addToBloomFilter, deleteFromCacheByPattern } from '../services/cacheService';
 import type { AuthedRequest } from '../types';
 
@@ -17,6 +14,7 @@ const router = Router();
 router.get(
   '/casting',
   verifyToken,
+  publicApiLimiter,
   scrapingPreventerMiddleware,
   async (req: Request, res: Response): Promise<any> => {
     try {
@@ -80,6 +78,8 @@ router.get(
 // GET /api/discovery
 router.get(
   '/discovery',
+  verifyToken,
+  scrapingPreventerMiddleware,
   cacheMiddleware(
     (req) => `discovery:${req.query.category || 'all'}:${req.query.page || '1'}`,
     120

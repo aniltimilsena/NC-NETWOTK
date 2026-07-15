@@ -8,7 +8,10 @@ export const ProfileSchema = z.object({
   phone: z.string().optional(),
   gender: z.string().optional(),
   bio: z.string().max(500).optional(),
-  role: z.enum(['Actors', 'Directors', 'Models', 'Dancers', 'Musicians', 'Voice Over', 'VFX', 'Writers']).optional(),
+  role: z.enum([
+    'Actor', 'Director', 'Model', 'Dancer', 'Musician', 'Voice Over', 'VFX', 'Writer',
+    'Actors', 'Directors', 'Models', 'Dancers', 'Musicians', 'Writers'
+  ]).optional(),
   location: z.string().optional(),
   languages: z.array(z.string()).optional(),
   skills: z.array(z.union([z.string(), z.record(z.string(), z.unknown())])).optional(),
@@ -25,8 +28,8 @@ export const ProfileSchema = z.object({
   coverImage: z.string().nullable().optional(),
   email: z.union([z.string().email(), z.literal(''), z.null()]).optional(),
   showContactInfo: z.boolean().optional(),
-  twoFactorEnabled: z.boolean().optional(),
 });
+
 
 export const CastingCallSchema = z.object({
   title: z.string().min(2),
@@ -79,4 +82,5 @@ export const AdminSettingsSchema = z.object({
   siteName: z.string().max(200).optional(),
   supportEmail: z.string().email().optional(),
   maxMessageLength: z.number().min(1).max(10000).optional(),
-}).passthrough();
+});
+

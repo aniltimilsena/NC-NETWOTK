@@ -114,7 +114,6 @@ export interface UserRecord {
   deletionScheduled?: boolean;
   deletionGracePeriodEndsAt?: Timestamp | null;
   status?: 'active' | 'banned';
-  twoFactorEnabled?: boolean;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

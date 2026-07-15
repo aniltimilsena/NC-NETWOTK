@@ -1,7 +1,8 @@
-import { Router, type Response } from 'express';
+import { Router, type Response, type NextFunction } from 'express';
 import * as admin from 'firebase-admin';
 import { verifyToken, isAdmin } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
+import { adminActionLimiter } from '../middleware/rateLimiter';
 import { AdminLogSchema, AdminSettingsSchema } from '../schemas';
 import { db } from '../config';
 import {
@@ -16,18 +17,13 @@ import type { AuthedRequest } from '../types';
 const router = Router();
 
 // GET /api/admin/users
-router.get('/admin/users', verifyToken, isAdmin, async (req: AuthedRequest, res: Response): Promise<any> => {
+router.get('/admin/users', verifyToken, isAdmin, adminActionLimiter, async (req: AuthedRequest, res: Response, next: NextFunction): Promise<any> => {
   try {
     const users = await getAllProfiles();
-    const cleanUsers = users.map((user) => {
-      delete user.twoFactorBackupCodes;
-      delete user.twoFactorSecret;
-      return user;
-    });
-    return res.json(cleanUsers);
+    return res.json(users);
+
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch users';
-    return res.status(500).json({ error: message });
+    next(error);
   }
 });
 
@@ -37,19 +33,20 @@ router.post(
   verifyToken,
   isAdmin,
   validateBody(AdminLogSchema),
-  async (req: AuthedRequest, res: Response): Promise<any> => {
+  async (req: AuthedRequest, res: Response, next: NextFunction): Promise<any> => {
     try {
       const adminEmail = req.user?.email || "Unknown Admin";
+      const body = req.body as any;
       await db.collection('admin_logs').add({
         adminEmail,
-        action: req.body.action,
-        targetId: req.body.targetId || null,
-        details: req.body.details || {},
+        action: body?.action,
+        targetId: body?.targetId || null,
+        details: body?.details || {},
         timestamp: admin.firestore.FieldValue.serverTimestamp()
       });
       return res.json({ success: true });
     } catch (error: unknown) {
-      return res.status(500).json({ error: 'Failed to write admin log' });
+      next(error);
     }
   }
 );
@@ -60,21 +57,22 @@ router.post(
   verifyToken,
   isAdmin,
   validateBody(AdminSettingsSchema),
-  async (req: AuthedRequest, res: Response): Promise<any> => {
+  async (req: AuthedRequest, res: Response, next: NextFunction): Promise<any> => {
     try {
+      const body = (req.body as any) || {};
       await db.collection('settings').doc('global').set({
-        ...req.body,
+        ...body,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
       return res.json({ success: true });
     } catch (error: unknown) {
-      return res.status(500).json({ error: 'Failed to update global settings' });
+      next(error);
     }
   }
 );
 
 // POST /api/admin/users/:userId/role
-router.post('/admin/users/:userId/role', verifyToken, isAdmin, async (req: AuthedRequest<{ userId: string }>, res: Response): Promise<any> => {
+router.post('/admin/users/:userId/role', verifyToken, isAdmin, async (req: AuthedRequest<{ userId: string }>, res: Response, next: NextFunction): Promise<any> => {
   const { userId } = req.params;
   const { makeAdmin } = req.body as any;
   const adminUid = req.user?.uid || 'unknown_admin';
@@ -93,14 +91,12 @@ router.post('/admin/users/:userId/role', verifyToken, isAdmin, async (req: Authe
     const nextRole = await updateUserRole(userId, makeAdmin, adminUid);
     return res.json({ success: true, role: nextRole, isAdmin: makeAdmin });
   } catch (error: unknown) {
-    console.error('Failed to update user role:', error);
-    const message = error instanceof Error ? error.message : 'Failed to update user role';
-    return res.status(500).json({ success: false, error: message });
+    next(error);
   }
 });
 
 // POST /api/admin/users/:userId/delete
-router.post('/admin/users/:userId/delete', verifyToken, isAdmin, async (req: AuthedRequest<{ userId: string }>, res: Response): Promise<any> => {
+router.post('/admin/users/:userId/delete', verifyToken, isAdmin, async (req: AuthedRequest<{ userId: string }>, res: Response, next: NextFunction): Promise<any> => {
   const { userId } = req.params;
   const adminUid = req.user?.uid || 'unknown_admin';
   const adminEmail = req.user?.email || 'Unknown Admin';
@@ -113,14 +109,12 @@ router.post('/admin/users/:userId/delete', verifyToken, isAdmin, async (req: Aut
     await deleteUserAccount(userId, adminUid, adminEmail);
     return res.json({ success: true });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to delete user';
-    console.error('Delete user error:', error);
-    return res.status(500).json({ error: message });
+    next(error);
   }
 });
 
 // POST /api/admin/users/:userId/ban
-router.post('/admin/users/:userId/ban', verifyToken, isAdmin, async (req: AuthedRequest<{ userId: string }>, res: Response): Promise<any> => {
+router.post('/admin/users/:userId/ban', verifyToken, isAdmin, async (req: AuthedRequest<{ userId: string }>, res: Response, next: NextFunction): Promise<any> => {
   const { userId } = req.params;
   const { reason, duration } = req.body as any;
   const adminUid = req.user?.uid || 'unknown_admin';
@@ -134,14 +128,12 @@ router.post('/admin/users/:userId/ban', verifyToken, isAdmin, async (req: Authed
     await banUserAccount(userId, adminUid, adminEmail, reason, duration);
     return res.json({ success: true });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to ban user';
-    console.error('Ban user error:', error);
-    return res.status(500).json({ error: message });
+    next(error);
   }
 });
 
 // POST /api/admin/users/:userId/unban
-router.post('/admin/users/:userId/unban', verifyToken, isAdmin, async (req: AuthedRequest<{ userId: string }>, res: Response): Promise<any> => {
+router.post('/admin/users/:userId/unban', verifyToken, isAdmin, async (req: AuthedRequest<{ userId: string }>, res: Response, next: NextFunction): Promise<any> => {
   const { userId } = req.params;
   const adminUid = req.user?.uid || 'unknown_admin';
   const adminEmail = req.user?.email || 'Unknown Admin';
@@ -154,9 +146,7 @@ router.post('/admin/users/:userId/unban', verifyToken, isAdmin, async (req: Auth
     await unbanUserAccount(userId, adminUid, adminEmail);
     return res.json({ success: true });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to unban user';
-    console.error('Unban user error:', error);
-    return res.status(500).json({ error: message });
+    next(error);
   }
 });
 

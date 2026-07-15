@@ -1,7 +1,7 @@
 import { Router, type Response } from 'express';
-import rateLimit from 'express-rate-limit';
 import { verifyToken } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
+import { messagingLimiter } from '../middleware/rateLimiter';
 import { ConversationSchema, MessageSchema } from '../schemas';
 import { db, admin } from '../config';
 import {
@@ -21,16 +21,11 @@ import type { AuthedRequest } from '../types';
 
 const router = Router();
 
-const messageWriteLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 20,
-  message: 'Too many messages from this IP, please try again in a minute',
-});
-
 // POST /api/messaging/conversations
 router.post(
   '/messaging/conversations',
   verifyToken,
+  messagingLimiter,
   validateBody(ConversationSchema),
   async (req: AuthedRequest, res: Response): Promise<any> => {
     try {
@@ -119,7 +114,7 @@ router.get(
 router.post(
   '/messaging/:conversationId/messages',
   verifyToken,
-  messageWriteLimiter,
+  messagingLimiter,
   validateBody(MessageSchema),
   async (req: AuthedRequest<{ conversationId: string }>, res: Response): Promise<any> => {
     try {

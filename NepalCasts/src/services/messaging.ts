@@ -28,6 +28,9 @@ export const sendMessage = async (
   type: "text" | "image" | "video" = "text",
   clientMsgId?: string
 ) => {
+  if (text && typeof text === 'string' && text.length > 2000) {
+    return { success: false, error: "Message exceeds maximum length of 2000 characters" };
+  }
   try {
     await apiClient.post(`/messaging/${convoId}/messages`, {
       text,
@@ -228,6 +231,9 @@ export const updateMessage = async (
   messageId: string,
   newText: string
 ) => {
+  if (newText && typeof newText === 'string' && newText.length > 2000) {
+    return { success: false, error: "Message exceeds maximum length of 2000 characters" };
+  }
   try {
     await apiClient.put(`/messaging/${convoId}/messages/${messageId}`, { text: newText }, { timeout: 1500 });
     return { success: true, error: null };

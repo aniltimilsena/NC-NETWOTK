@@ -1,9 +1,9 @@
 import { Router, type Response } from 'express';
 import multer from 'multer';
-import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { verifyToken } from '../middleware/auth';
-import { validateUpload } from '../middleware/uploadSecurity';
+import { validateUpload, type ValidatedRequest } from '../middleware/uploadSecurity';
+import { uploadLimiter } from '../middleware/rateLimiter';
 import { db, admin } from '../config';
 import { getCloudinaryConfig } from '../config/cloudinary';
 import {
@@ -17,14 +17,8 @@ import type { AuthedRequest } from '../types';
 
 const router = Router();
 
-const uploadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: 'Too many upload attempts from this IP, please try again later',
-});
-
-const allowedImageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-const allowedVideoMimeTypes = new Set(['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime']);
+const allowedImageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic']);
+const allowedVideoMimeTypes = new Set(['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/3gpp']);
 
 const multerFileFilter = (
   _req: any,
@@ -42,27 +36,39 @@ const multerFileFilter = (
 
   const ext = path.extname(file.originalname).toLowerCase();
   if (dangerousExtensions.includes(ext)) {
-    callback(new Error('File type not allowed'));
+    callback(new Error('File type extension not allowed'));
     return;
   }
 
   const isImage = allowedImageMimeTypes.has(file.mimetype);
   const isVideo = allowedVideoMimeTypes.has(file.mimetype);
   if (!isImage && !isVideo) {
-    callback(new Error('Only image and video uploads are allowed'));
+    callback(new Error('Only standard image and video uploads are allowed'));
     return;
   }
 
   callback(null, true);
 };
 
-const upload = multer({
+// Avatar uploads: 5MB limit
+const avatarUpload = multer({
   storage: multer.memoryStorage(),
   fileFilter: multerFileFilter,
-  limits: {
-    fileSize: 100 * 1024 * 1024, 
-    files: 10,
-  },
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+});
+
+// Banner uploads: 10MB limit
+const bannerUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: multerFileFilter,
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+});
+
+// General media uploads: 50MB limit per file, max 10 files batch
+const mediaUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: multerFileFilter,
+  limits: { fileSize: 50 * 1024 * 1024, files: 10 },
 });
 
 // GET /api/config/cloudinary
@@ -79,26 +85,26 @@ router.post(
   '/upload',
   verifyToken,
   uploadLimiter,
-  upload.single('file'),
+  mediaUpload.single('file'),
   validateUpload,
-  async (req: AuthedRequest, res: Response): Promise<any> => {
+  async (req: ValidatedRequest & AuthedRequest, res: Response): Promise<any> => {
     try {
       if (!req.validatedFile) {
         return res.status(400).json({
           success: false,
-          message: 'No file provided',
+          message: 'No file provided or file validation failed',
           errorCode: 'NO_FILE_PROVIDED'
         });
       }
 
       const { buffer, safeName, mimeType, isVideo } = req.validatedFile;
       
-      const rawFolder = req.body.folder;
+      const rawFolder = (req.body as any)?.folder;
       const sanitizedFolder = (typeof rawFolder === 'string'
         ? rawFolder.replace(/\.{2,}/g, '').replace(/[/\\]/g, '').replace(/[^a-zA-Z0-9_-]/g, '')
         : 'general') || 'general';
 
-      console.log(`[Upload API] Starting upload. Size: ${buffer.length} bytes, Target Folder: ${sanitizedFolder}`);
+      console.log(`[Upload API] Starting validated upload. Size: ${buffer.length} bytes, Target Folder: ${sanitizedFolder}`);
 
       const result: any = await uploadValidatedFile(buffer, safeName, mimeType, isVideo, sanitizedFolder);
 
@@ -131,7 +137,7 @@ router.delete(
   async (req: AuthedRequest<{ publicId: string }>, res: Response): Promise<any> => {
     try {
       const publicId = decodeURIComponent(req.params.publicId);
-      const resourceType = req.body.resourceType || 'image';
+      const resourceType = (req.body as any)?.resourceType || 'image';
       const isVideo = resourceType === 'video';
 
       await deleteGeneralMedia(publicId, isVideo);
@@ -148,15 +154,16 @@ router.post(
   '/upload/avatar',
   verifyToken,
   uploadLimiter,
-  upload.single('avatar'),
-  async (req: AuthedRequest, res: Response): Promise<any> => {
+  avatarUpload.single('avatar'),
+  validateUpload,
+  async (req: ValidatedRequest & AuthedRequest, res: Response): Promise<any> => {
     try {
-      if (!req.file || !req.user) {
-        return res.status(400).json({ error: 'No file provided' });
+      if (!req.validatedFile || !req.user) {
+        return res.status(400).json({ error: 'No validated avatar file provided' });
       }
 
       const userId = req.user.uid;
-      const avatarUrl = await uploadAvatar(userId, req.file.buffer, req.file.mimetype);
+      const avatarUrl = await uploadAvatar(userId, req.validatedFile.buffer, req.validatedFile.mimeType);
 
       const userRef = db.collection('users').doc(userId);
       const profileRef = db.collection('profiles').doc(userId);
@@ -172,7 +179,7 @@ router.post(
       });
     } catch (error: any) {
       console.error('Avatar upload error:', error);
-      return res.status(500).json({ error: error.message || 'Upload failed' });
+      return res.status(500).json({ error: error.message || 'Avatar upload failed' });
     }
   }
 );
@@ -181,11 +188,13 @@ router.post(
 router.post(
   '/upload/casting/:castingId',
   verifyToken,
-  upload.single('banner'),
-  async (req: AuthedRequest, res: Response): Promise<any> => {
+  uploadLimiter,
+  bannerUpload.single('banner'),
+  validateUpload,
+  async (req: ValidatedRequest & AuthedRequest, res: Response): Promise<any> => {
     try {
-      if (!req.file || !req.user) {
-        return res.status(400).json({ error: 'No file provided' });
+      if (!req.validatedFile || !req.user) {
+        return res.status(400).json({ error: 'No validated banner file provided' });
       }
 
       const { castingId } = req.params;
@@ -201,7 +210,7 @@ router.post(
         }
       }
 
-      const bannerUrl = await uploadCastingBanner(castingId, req.file.buffer, req.file.mimetype);
+      const bannerUrl = await uploadCastingBanner(castingId, req.validatedFile.buffer, req.validatedFile.mimeType);
 
       return res.json({ 
         success: true, 
@@ -219,27 +228,43 @@ router.post(
   '/upload/media',
   verifyToken,
   uploadLimiter,
-  upload.array('media', 10),
-  async (req: AuthedRequest, res: Response): Promise<any> => {
+  mediaUpload.array('media', 10),
+  validateUpload,
+  async (req: ValidatedRequest & AuthedRequest, res: Response): Promise<any> => {
     try {
-      if (!req.files || !req.user) {
-        return res.status(400).json({ error: 'No files provided' });
+      const validFiles = req.validatedFiles || (req.validatedFile ? [req.validatedFile] : []);
+
+      if (validFiles.length === 0 || !req.user) {
+        return res.status(400).json({ error: 'No valid files provided' });
       }
 
-      const files = req.files as Express.Multer.File[];
       const userId = req.user.uid;
+
+      // Enforce Account Storage Quota: Max 50 items stored per user
+      const existingMediaSnap = await db
+        .collection('users').doc(userId)
+        .collection('media')
+        .get();
+
+      if (existingMediaSnap.size + validFiles.length > 50) {
+        return res.status(400).json({
+          success: false,
+          error: `Storage quota exceeded. Maximum allowed media items is 50. Currently stored: ${existingMediaSnap.size}.`,
+          errorCode: 'STORAGE_QUOTA_EXCEEDED'
+        });
+      }
+
       const results = [];
 
-      for (const file of files) {
-        const isVideo = file.mimetype.startsWith('video/');
-        const result = await uploadGeneralMedia(userId, file.buffer, file.mimetype, isVideo);
+      for (const item of validFiles) {
+        const result = await uploadGeneralMedia(userId, item.buffer, item.mimeType, item.isVideo);
         
         const mediaRef = await db
           .collection('users').doc(userId)
           .collection('media').add({
             url: result.secure_url,
             publicId: result.public_id,
-            type: isVideo ? 'video' : 'image',
+            type: item.isVideo ? 'video' : 'image',
             width: result.width,
             height: result.height,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),

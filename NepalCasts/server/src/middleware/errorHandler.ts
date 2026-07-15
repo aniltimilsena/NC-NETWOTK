@@ -9,15 +9,17 @@ export const errorHandler = async (
   res: Response,
   _next: NextFunction
 ): Promise<any> => {
-  console.error('[Unhandled Server Error]:', error);
+  const isProd = process.env.NODE_ENV === 'production';
+  const requestId = (req as any).id || res.getHeader('X-Request-ID') || 'unknown';
 
   let statusCode = 500;
-  let message = 'An unexpected error occurred. Please try again later.';
+  let clientMessage = 'An unexpected error occurred. Please try again later.';
   let errorCode = 'INTERNAL_SERVER_ERROR';
+  let issueDetails: any = undefined;
 
   if (error instanceof multer.MulterError) {
     statusCode = 400;
-    message = error.message;
+    clientMessage = error.message;
     errorCode = 'MULTER_ERROR';
   } else if (
     error instanceof Error &&
@@ -25,43 +27,39 @@ export const errorHandler = async (
       error.message === 'Only image and video uploads are allowed')
   ) {
     statusCode = 400;
-    message = error.message;
+    clientMessage = error.message;
     errorCode = 'INVALID_FILE_TYPE';
   } else if (error instanceof z.ZodError) {
     statusCode = 400;
-    message = 'Validation failed';
+    clientMessage = 'Validation failed';
     errorCode = 'VALIDATION_ERROR';
-
-    try {
-      const firestoreDb = admin.firestore();
-      await firestoreDb.collection('error_logs').add({
-        message: 'Validation failed',
-        stack: error.stack || null,
-        method: req.method,
-        url: req.url,
-        userId: (req as any).user?.uid || null,
-        ip: req.ip || null,
-        statusCode,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    } catch (logError) {
-      console.error('[ErrorLogger] Failed to write validation error to Firestore:', logError);
-    }
-
-    return res.status(statusCode).json({
-      success: false,
-      message,
-      errorCode,
-      details: error.issues,
-    });
+    issueDetails = error.issues;
   } else if (error.status || error.statusCode) {
     statusCode = error.status || error.statusCode;
-    message = error.message || message;
+    if (statusCode < 500) {
+      clientMessage = error.message || 'Bad Request';
+    } else {
+      clientMessage = isProd ? 'An unexpected error occurred. Please try again later.' : (error.message || clientMessage);
+    }
   }
 
+  // Server-side structured error log
+  console.error(`[Server Error] [ReqID: ${requestId}] [${req.method} ${req.url}] Status: ${statusCode}`, {
+    requestId,
+    method: req.method,
+    url: req.url,
+    userId: (req as any).user?.uid || null,
+    ip: req.ip || null,
+    statusCode,
+    message: error.message || 'Unknown error',
+    stack: error.stack || null,
+  });
+
+  // Log complete error details asynchronously to Firestore error_logs
   try {
     const firestoreDb = admin.firestore();
     await firestoreDb.collection('error_logs').add({
+      requestId,
       message: error.message || 'Unknown error',
       stack: error.stack || null,
       method: req.method,
@@ -75,12 +73,22 @@ export const errorHandler = async (
     console.error('[ErrorLogger] Failed to write error to Firestore:', logError);
   }
 
-  return res.status(statusCode).json({
+  // Prevent leaking internal paths or stack traces in responses
+  if (isProd && statusCode >= 500) {
+    clientMessage = 'An unexpected error occurred. Please try again later.';
+  }
+
+  const responsePayload: Record<string, any> = {
     success: false,
-    message:
-      statusCode === 500 && process.env.NODE_ENV === 'production'
-        ? 'An unexpected error occurred. Please try again later.'
-        : message,
+    message: clientMessage,
+    error: clientMessage,
     errorCode,
-  });
+    requestId,
+  };
+
+  if (issueDetails && (!isProd || errorCode === 'VALIDATION_ERROR')) {
+    responsePayload.details = issueDetails;
+  }
+
+  return res.status(statusCode).json(responsePayload);
 };

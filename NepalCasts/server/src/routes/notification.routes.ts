@@ -14,13 +14,13 @@ const FCM_TOKEN_LIMIT_REACHED = 'FCM_TOKEN_LIMIT_REACHED';
 
 const handleSendNotification = async (req: AuthedRequest, res: Response): Promise<any> => {
   try {
-    const { userId, title, body, data, url, convoId, senderName, previewText, otherParticipants } = req.body;
+    const { userId, title, body, data, url, convoId, senderName, previewText, otherParticipants } = (req.body as any) || {};
 
     const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
-    const appId = process.env.ONESIGNAL_APP_ID || 'a9962176-972c-4874-8161-ec84428e9036';
+    const appId = process.env.ONESIGNAL_APP_ID;
 
-    if (!restApiKey) {
-      console.error('OneSignal REST API Key is not configured on the server.');
+    if (!appId || !restApiKey) {
+      console.error('OneSignal Configuration Error: ONESIGNAL_APP_ID or ONESIGNAL_REST_API_KEY is missing on server.');
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
@@ -124,21 +124,24 @@ router.get('/notifications/unread-count', verifyToken, async (req: AuthedRequest
       .where('participants', 'array-contains', uid)
       .get();
 
-    let unreadMessages = 0;
-    
-    const messagePromises = conversationsSnapshot.docs.map(convo => 
-      db.collection('conversations')
-        .doc(convo.id)
-        .collection('messages')
-        .where('createdAt', '>', lastCheckedAt)
-        .where('senderId', '!=', uid)
-        .get()
-    );
+    const userConvoIds = new Set(conversationsSnapshot.docs.map(doc => doc.id));
 
-    const messageSnapshots = await Promise.all(messagePromises);
-    messageSnapshots.forEach(snap => {
-      unreadMessages += snap.size;
-    });
+    let unreadMessages = 0;
+
+    if (userConvoIds.size > 0) {
+      const messagesSnapshot = await db.collectionGroup('messages')
+        .where('createdAt', '>', lastCheckedAt)
+        .get();
+
+      messagesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const convoId = doc.ref.parent.parent?.id;
+        if (convoId && userConvoIds.has(convoId) && data.senderId !== uid) {
+          unreadMessages++;
+        }
+      });
+    }
+
 
     let castingSnapshot = await db.collection('casting_calls')
       .where('createdAt', '>', lastCheckedAt)

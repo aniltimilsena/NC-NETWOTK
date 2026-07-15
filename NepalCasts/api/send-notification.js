@@ -82,10 +82,10 @@ export default async function handler(req, res) {
     }
 
     
-    const appId = process.env.ONESIGNAL_APP_ID || 'a9962176-972c-4874-8161-ec84428e9036';
+    const appId = process.env.ONESIGNAL_APP_ID;
     const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
 
-    if (!restApiKey) {
+    if (!appId || !restApiKey) {
       return res.status(500).json({ error: 'Server configuration error' });
     }
 

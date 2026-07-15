@@ -3,6 +3,8 @@ import { verifyToken } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
 import { ProfileSchema } from '../schemas';
 import { db } from '../config';
+import type { firestore } from 'firebase-admin';
+
 import {
   getProfileByUid,
   updateProfileByUid
@@ -26,7 +28,8 @@ router.get(
     try {
       const { q, category } = req.query;
 
-      let queryRef: admin.firestore.Query = db.collection('profiles');
+      let queryRef: firestore.Query = db.collection('profiles');
+
 
       if (category) {
         queryRef = queryRef.where('category', '==', category);
@@ -39,8 +42,6 @@ router.get(
         const { 
           fcmToken, 
           fcmTokens,
-          twoFactorSecret, 
-          twoFactorBackupCodes,
           loginAttempts,
           email,
           phone,
@@ -97,8 +98,6 @@ router.get(
       const { 
         fcmToken, 
         fcmTokens,
-        twoFactorSecret,
-        twoFactorBackupCodes,
         loginAttempts,
         ...safeProfile 
       } = data;
@@ -137,8 +136,6 @@ router.get(
         return res.status(404).send('Profile not found');
       }
 
-      delete data.twoFactorBackupCodes;
-      delete data.twoFactorSecret;
 
       const isOwner = req.user?.uid === req.params.uid;
       const isAdminUser = req.user?.admin === true;

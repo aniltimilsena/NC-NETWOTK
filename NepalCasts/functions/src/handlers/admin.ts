@@ -158,7 +158,9 @@ export const adminDeleteUser = onCall(callableOptions, async (request) => {
     });
     return { success: true };
   } catch (err: any) {
-    throw new HttpsError("internal", err.message || "Failed to delete user");
+    logger.error("adminDeleteUser internal error:", err);
+    if (err instanceof HttpsError) throw err;
+    throw new HttpsError("internal", "An unexpected error occurred while deleting user.");
   }
 });
 
@@ -212,7 +214,9 @@ export const adminBanUser = onCall(callableOptions, async (request) => {
     });
     return { success: true };
   } catch (err: any) {
-    throw new HttpsError("internal", err.message || "Failed to ban user");
+    logger.error("adminBanUser internal error:", err);
+    if (err instanceof HttpsError) throw err;
+    throw new HttpsError("internal", "An unexpected error occurred while banning user.");
   }
 });
 
@@ -253,7 +257,9 @@ export const adminUnbanUser = onCall(callableOptions, async (request) => {
     });
     return { success: true };
   } catch (err: any) {
-    throw new HttpsError("internal", err.message || "Failed to unban user");
+    logger.error("adminUnbanUser internal error:", err);
+    if (err instanceof HttpsError) throw err;
+    throw new HttpsError("internal", "An unexpected error occurred while unbanning user.");
   }
 });
 
@@ -293,7 +299,9 @@ export const adminUpdateUserRole = onCall(callableOptions, async (request) => {
     });
     return { success: true, role: nextRole, isAdmin: makeAdmin };
   } catch (err: any) {
-    throw new HttpsError("internal", err.message || "Failed to update user role");
+    logger.error("adminUpdateUserRole internal error:", err);
+    if (err instanceof HttpsError) throw err;
+    throw new HttpsError("internal", "An unexpected error occurred while updating user role.");
   }
 });
 
@@ -344,8 +352,9 @@ export const adminApproveDataRequest = onCall(callableOptions, async (request) =
     await logSecurityEvent("dataRequest.admin.approve", "info", authCtx.uid, { requestId, targetUserId: requestData.userId });
     return { success: true, downloadLink };
   } catch (err: any) {
+    logger.error("adminApproveDataRequest internal error:", err);
     if (err instanceof HttpsError) throw err;
-    throw new HttpsError("internal", err.message || "Failed to approve data request");
+    throw new HttpsError("internal", "An unexpected error occurred while approving data request.");
   }
 });
 
@@ -387,7 +396,8 @@ export const adminRejectDataRequest = onCall(callableOptions, async (request) =>
     await logSecurityEvent("dataRequest.admin.reject", "info", authCtx.uid, { requestId, reason, targetUserId: requestData.userId });
     return { success: true };
   } catch (err: any) {
+    logger.error("adminRejectDataRequest internal error:", err);
     if (err instanceof HttpsError) throw err;
-    throw new HttpsError("internal", err.message || "Failed to reject data request");
+    throw new HttpsError("internal", "An unexpected error occurred while rejecting data request.");
   }
 });

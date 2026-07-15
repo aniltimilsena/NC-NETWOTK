@@ -28,6 +28,13 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(userId)).data.get('premium', false) == true;
     }
 
+    function isBlockedBy(targetUserId) {
+      return exists(/databases/$(database)/documents/users/$(targetUserId)) &&
+        'blockedUsers' in get(/databases/$(database)/documents/users/$(targetUserId)).data &&
+        get(/databases/$(database)/documents/users/$(targetUserId)).data.blockedUsers is list &&
+        request.auth.uid in get(/databases/$(database)/documents/users/$(targetUserId)).data.blockedUsers;
+    }
+
     
     
     
@@ -39,8 +46,6 @@ service cloud.firestore {
       allow create, update: if (isOwner(userId) || isAdmin()) &&
         !('password' in request.resource.data) &&
         !('passwordHash' in request.resource.data) &&
-        !('twoFactorBackupCodes' in request.resource.data) &&
-        !('twoFactorSecret' in request.resource.data) &&
         !('fcmToken' in request.resource.data) &&
         !('fcmTokens' in request.resource.data) &&
         
@@ -110,6 +115,8 @@ service cloud.firestore {
           request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
           request.resource.data.senderId == request.auth.uid &&
           
+          (!('text' in request.resource.data) || (request.resource.data.text is string && request.resource.data.text.size() <= 2000)) &&
+          
           request.resource.data.keys().hasOnly([
             'senderId', 'text', 'mediaUrl', 'mediaType', 'mediaWidth', 'mediaHeight',
             'mediaDuration', 'createdAt', 'type', 'isSystem', 'status',
@@ -144,10 +151,13 @@ service cloud.firestore {
          request.resource.data.senderId == 'system' ||
          isAdmin()) &&
         request.resource.data.recipientId is string &&
+        !isBlockedBy(request.resource.data.recipientId) &&
         (isAdmin() || request.resource.data.type in [
           'message', 'messages', 'follow', 'casting', 'casting_match',
           'review', 'call_missed', 'call_ended', 'system'
-        ]);
+        ]) &&
+        (!('body' in request.resource.data) || (request.resource.data.body is string && request.resource.data.body.size() <= 1000)) &&
+        (!('title' in request.resource.data) || (request.resource.data.title is string && request.resource.data.title.size() <= 200));
         
       allow update, delete: if isSignedIn() && !isBanned() && 
         (resource.data.userId == request.auth.uid || 
@@ -195,8 +205,13 @@ service cloud.firestore {
       allow read, update, delete: if isSignedIn() && 
         (resource.data.callerId == request.auth.uid || 
          resource.data.calleeId == request.auth.uid);
-      allow create: if isSignedIn() && 
-        request.resource.data.callerId == request.auth.uid;
+      allow create: if isSignedIn() && !isBanned() && 
+        request.resource.data.callerId == request.auth.uid &&
+        request.resource.data.calleeId is string &&
+        request.resource.data.calleeId != request.auth.uid &&
+        !isBlockedBy(request.resource.data.calleeId) &&
+        (!('callerName' in request.resource.data) || (request.resource.data.callerName is string && request.resource.data.callerName.size() <= 100)) &&
+        (!('calleeName' in request.resource.data) || (request.resource.data.calleeName is string && request.resource.data.calleeName.size() <= 100));
 
       match /callerCandidates/{candId} {
         allow read, write: if isSignedIn() && 

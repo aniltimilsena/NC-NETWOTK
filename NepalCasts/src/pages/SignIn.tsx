@@ -9,12 +9,13 @@ import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import { auth, googleProvider, db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCustomToken } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+
 import SEO from '../components/SEO';
 
 import { signInUser, ensureUserProfile, sendPasswordReset } from '../services/auth';
-import OtpInput from '../components/ui/OtpInput';
 import apiClient from '../api/client';
+
 import { logLoginAttempt } from '../utils/security';
 import { getUserFriendlyError } from '../utils/errorHandler';
 
@@ -139,88 +140,8 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
     return () => clearInterval(interval);
   }, [lockoutTimeLeft]);
 
-  const [show2fa, setShow2fa] = useState<boolean>(false);
-  const [verificationCode, setVerificationCode] = useState<string>('');
-  const [tempCredentials, setTempCredentials] = useState<any>(null);
-  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
-  const [twoFactorError, setTwoFactorError] = useState<string>('');
-  const [twoFactorMethod, setTwoFactorMethod] = useState<string>('sms');
-  const [twoFactorDestination, setTwoFactorDestination] = useState<string>('');
-  const [countdown, setCountdown] = useState<number>(120);
-  const [resendActive, setResendActive] = useState<boolean>(false);
-  const [useBackupCode, setUseBackupCode] = useState<boolean>(false);
-  const [isShake, setIsShake] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (show2fa && countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (show2fa && countdown === 0) {
-      setResendActive(true);
-    }
-  }, [countdown, show2fa]);
 
-  useEffect(() => {
-    if (show2fa && !useBackupCode && verificationCode.length === 6 && !isLoading) {
-      const triggerVerify = async () => {
-        setIsLoading(true);
-        setTwoFactorError('');
-        try {
-          const res = await apiClient.post('/2fa/verify-otp', {
-            userId: pendingUserId,
-            code: verificationCode
-          });
-
-          if (res.data.success && res.data.customToken) {
-            await signInWithCustomToken(auth, res.data.customToken);
-            localStorage.removeItem('login_attempts');
-            localStorage.removeItem('login_lockout_until');
-            const logRes = await logLoginAttempt(tempCredentials.email, 'success');
-            if (logRes?.suspicious) {
-              localStorage.setItem('nc_suspicious_login', 'true');
-            }
-            onNavigate('home');
-          } else {
-            setTwoFactorError(res.data.error || 'Invalid code.');
-            setIsShake(true);
-            setTimeout(() => setIsShake(false), 500);
-            setIsLoading(false);
-          }
-        } catch (err: any) {
-          console.error("2FA verify login error:", err);
-          setTwoFactorError(err.response?.data?.error || 'Verification failed. Try again.');
-          setIsShake(true);
-          setTimeout(() => setIsShake(false), 500);
-          setIsLoading(false);
-        }
-      };
-      triggerVerify();
-    }
-  }, [verificationCode, useBackupCode, show2fa, pendingUserId, isLoading, onNavigate, tempCredentials]);
-
-  const handleResend2faCode = async () => {
-    setIsLoading(true);
-    setTwoFactorError('');
-    try {
-      const res = await apiClient.post('/2fa/send-login-otp', {
-        userId: pendingUserId,
-        method: twoFactorMethod
-      });
-      if (res.data.success) {
-        setCountdown(120);
-        setResendActive(false);
-        setVerificationCode('');
-        if (showAlert) showAlert('Verification code resent!', 'success');
-      } else {
-        setTwoFactorError(res.data.error || 'Failed to resend code.');
-      }
-    } catch (err: any) {
-      console.error("2FA resend error:", err);
-      setTwoFactorError(err.response?.data?.error || 'Failed to resend code.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const checkUserBanStatus = async (uid: string) => {
     try {
@@ -352,44 +273,8 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
     return { valid: true, msg: '' };
   };
 
-  const handleVerify2fa = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!verificationCode || verificationCode.length !== (useBackupCode ? 8 : 6)) {
-      setTwoFactorError(useBackupCode ? 'Please enter your 8-digit backup code.' : 'Please enter the 6-digit verification code.');
-      return;
-    }
-    setIsLoading(true);
-    setTwoFactorError('');
 
-    try {
-      const res = await apiClient.post('/2fa/verify-otp', {
-        userId: pendingUserId,
-        code: verificationCode
-      });
 
-      if (res.data.success && res.data.customToken) {
-        await signInWithCustomToken(auth, res.data.customToken);
-        localStorage.removeItem('login_attempts');
-        localStorage.removeItem('login_lockout_until');
-        const logRes = await logLoginAttempt(tempCredentials.email, 'success');
-        if (logRes?.suspicious) {
-          localStorage.setItem('nc_suspicious_login', 'true');
-        }
-        onNavigate('home');
-      } else {
-        setTwoFactorError(res.data.error || 'Invalid code.');
-        setIsShake(true);
-        setTimeout(() => setIsShake(false), 500);
-        setIsLoading(false);
-      }
-    } catch (err: any) {
-      console.error("2FA verify login error:", err);
-      setTwoFactorError(err.response?.data?.error || 'Verification failed. Try again.');
-      setIsShake(true);
-      setTimeout(() => setIsShake(false), 500);
-      setIsLoading(false);
-    }
-  };
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -481,111 +366,7 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
     return common + "border-white/5 focus:border-yellow-500/50 focus:shadow-[0_0_0_3px_rgba(250,204,21,0.15)]";
   };
 
-  if (show2fa) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 relative overflow-hidden font-sans">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl" />
-        <div className="w-full max-w-md z-10">
-          <div className="text-center mb-8">
-            <Logo size="lg" className="mx-auto mb-6" />
-            <h1 className="text-2xl font-black text-white">Two-Factor Verification</h1>
-            <p className="text-gray-400 mt-1 text-sm">
-              {useBackupCode ? 'Enter one of your 8-digit recovery backup codes' : `Enter the 6-digit code sent to ${twoFactorDestination}`}
-            </p>
-          </div>
-          
-          <GlassCard 
-            strong
-            className="p-6 sm:p-8 border border-white/5 bg-[#111]/90 shadow-2xl relative"
-            onClick={undefined}
-          >
-            <motion.div 
-              animate={isShake ? { x: [-10, 10, -10, 10, -5, 5, 0], transition: { duration: 0.4 } } : {}}
-            >
-              <form onSubmit={handleVerify2fa} className="space-y-6">
-                {twoFactorError && (
-                  <div className="text-red-500 text-xs text-center bg-red-500/10 py-2.5 rounded-lg border border-red-500/20">
-                    {twoFactorError}
-                  </div>
-                )}
-                
-                {!useBackupCode ? (
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2 text-center">Verification Code</label>
-                    <OtpInput value={verificationCode} onChange={setVerificationCode} error={!!twoFactorError} />
-                  </div>
-                ) : (
-                  <div className="text-left">
-                    <label className="block text-[10px] uppercase tracking-[1px] text-[#888] font-bold mb-2 text-center">Backup Code</label>
-                    <input
-                      type="text"
-                      maxLength={8}
-                      value={verificationCode}
-                      onChange={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                      placeholder="8-digit code"
-                      className="w-full bg-[#1a1a1a] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 outline-none focus:border-yellow-500 transition-colors text-center font-mono text-xl tracking-[0.3em] font-bold"
-                    />
-                  </div>
-                )}
-                
-                <div className="space-y-3">
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    disabled={isLoading || (useBackupCode ? verificationCode.length !== 8 : verificationCode.length !== 6)}
-                    onClick={undefined}
-                    className="w-full rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 text-black py-3.5 text-sm font-extrabold border-none"
-                  >
-                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-black" /> : 'Verify & Sign In'}
-                  </Button>
 
-                  {!useBackupCode && (
-                    <div className="text-center">
-                      <button
-                        type="button"
-                        onClick={handleResend2faCode}
-                        disabled={!resendActive || isLoading}
-                        className="text-xs text-yellow-500 disabled:text-gray-600 font-bold transition-colors py-1"
-                      >
-                        {resendActive ? 'Resend Code' : `Resend code in ${countdown}s`}
-                      </button>
-                    </div>
-                  )}
-                  
-                  <div className="flex flex-col gap-2 pt-2 border-t border-white/5 mt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUseBackupCode(!useBackupCode);
-                        setVerificationCode('');
-                        setTwoFactorError('');
-                      }}
-                      className="text-center text-xs text-yellow-500 hover:underline transition-colors py-1"
-                    >
-                      {useBackupCode ? 'Use verification code instead' : 'Use backup code instead'}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShow2fa(false);
-                        setVerificationCode('');
-                        setTwoFactorError('');
-                        setTempCredentials(null);
-                      }}
-                      className="w-full text-center text-xs text-gray-500 hover:text-white transition-colors py-1"
-                    >
-                      Back to Sign In
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </motion.div>
-          </GlassCard>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col md:flex-row relative overflow-hidden font-sans">

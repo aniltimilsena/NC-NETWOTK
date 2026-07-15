@@ -80,6 +80,8 @@ export function useWebRTC(): UseWebRTCReturn {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const noAnswerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const remoteCandidatesQueueRef = useRef<RTCIceCandidateInit[]>([]);
+  const localStreamRef = useRef<MediaStream | null>(null);
+
 
   
 
@@ -109,8 +111,9 @@ export function useWebRTC(): UseWebRTCReturn {
     }
 
     
-    if (localStream) {
-      localStream.getTracks().forEach((t) => t.stop());
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
     }
     setLocalStream(null);
     setRemoteStream(null);
@@ -121,7 +124,8 @@ export function useWebRTC(): UseWebRTCReturn {
     setIsRemoteVideoOff(false);
     setErrorMessage("");
     remoteCandidatesQueueRef.current = [];
-  }, [localStream]);
+  }, []);
+
 
   
 
@@ -156,6 +160,7 @@ export function useWebRTC(): UseWebRTCReturn {
           track.enabled = true;
           logger.log("[WebRTC] Local track enabled:", track.kind, "id:", track.id);
         });
+        localStreamRef.current = stream;
         setLocalStream(stream);
         localStorage.setItem("nc_perm_media", "granted");
         return stream;
@@ -222,7 +227,11 @@ export function useWebRTC(): UseWebRTCReturn {
         }
 
         if (event.track.kind === "video") {
-          setIsRemoteVideoOff(!event.track.enabled || event.track.muted);
+          // Don't check event.track.muted on initial arrival — desktop Chrome
+          // reports muted=true momentarily before data starts flowing, which
+          // causes a false "Camera Off" overlay that hides the actual video.
+          // Instead, assume video is on and rely on onmute/onunmute events.
+          setIsRemoteVideoOff(!event.track.enabled);
           event.track.onmute = () => {
             setIsRemoteVideoOff(true);
             logger.log("[WebRTC] Remote video track muted (camera turned off)");
@@ -300,10 +309,11 @@ export function useWebRTC(): UseWebRTCReturn {
   const startCall = useCallback(
     async (params: StartCallParams, preAcquiredStream?: MediaStream) => {
       try {
+        setCallState("calling");
+        callStateRef.current = "calling";
+
         const stream = preAcquiredStream || await getUserMedia(params.callType);
         const pc = createPeerConnection(stream);
-
-        setCallState("creating-offer");
 
         const candidateQueue: RTCIceCandidateInit[] = [];
         
@@ -332,7 +342,7 @@ export function useWebRTC(): UseWebRTCReturn {
           throw new Error(error || "Failed to create call");
         }
 
-        if (callStateRef.current === "ended") {
+        if ((callStateRef.current as string) === "ended") {
           logger.log("[WebRTC] Call was ended during setup. Cleaning up created Firestore call:", callId);
           await updateCallStatus(callId, "ended");
           cleanupCall(callId);
@@ -497,14 +507,15 @@ export function useWebRTC(): UseWebRTCReturn {
         unsubsRef.current.push(unsubCall);
       } catch (err: any) {
         console.error("[WebRTC] answerCall error:", err);
-        if (callState !== "error") {
+        if (callStateRef.current !== "error") {
           setErrorMessage((prev) => prev || err.message || "Failed to answer call");
           setCallState("error");
         }
       }
     },
-    [getUserMedia, createPeerConnection, cleanup, callState]
+    [getUserMedia, createPeerConnection, cleanup]
   );
+
 
   
 

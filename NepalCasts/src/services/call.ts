@@ -50,35 +50,32 @@ export interface CallDoc {
 
 
 
-export const ICE_SERVERS: RTCConfiguration = {
-  iceServers: [
-    
+export const getIceServers = (): RTCConfiguration => {
+  const customTurnUrl = import.meta.env.VITE_TURN_SERVER;
+  const customTurnUsername = import.meta.env.VITE_TURN_USERNAME;
+  const customTurnCredential = import.meta.env.VITE_TURN_CREDENTIAL;
+
+  const servers: RTCIceServer[] = [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun2.l.google.com:19302" },
-    
-    
-    {
-      urls: "turn:openrelay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443?transport=tcp",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-  ],
-  iceCandidatePoolSize: 10,
+  ];
+
+  if (customTurnUrl && customTurnUsername && customTurnCredential) {
+    servers.push({
+      urls: customTurnUrl,
+      username: customTurnUsername,
+      credential: customTurnCredential,
+    });
+  }
+
+  return {
+    iceServers: servers,
+    iceCandidatePoolSize: 10,
+  };
 };
 
-
-
+export const ICE_SERVERS: RTCConfiguration = getIceServers();
 
 export const createCall = async (params: {
   callerId: string;
@@ -95,17 +92,19 @@ export const createCall = async (params: {
   offer: RTCSessionDescriptionInit;
 }): Promise<{ callId: string | null; error: string | null }> => {
   try {
+    const sanitizeStr = (str: string, maxLen: number = 100) => (str || "").substring(0, maxLen);
+
     const callRef = await addDoc(collection(db, COLLECTIONS.CALLS), {
       callerId: params.callerId,
-      callerName: params.callerName,
-      callerPhoto: params.callerPhoto,
-      callerAvatar: params.callerAvatar,
+      callerName: sanitizeStr(params.callerName, 100),
+      callerPhoto: sanitizeStr(params.callerPhoto, 500),
+      callerAvatar: sanitizeStr(params.callerAvatar, 500),
       calleeId: params.calleeId,
-      calleeName: params.calleeName,
-      calleePhoto: params.calleePhoto,
+      calleeName: sanitizeStr(params.calleeName, 100),
+      calleePhoto: sanitizeStr(params.calleePhoto, 500),
       receiverId: params.receiverId,
-      receiverName: params.receiverName,
-      receiverAvatar: params.receiverAvatar,
+      receiverName: sanitizeStr(params.receiverName, 100),
+      receiverAvatar: sanitizeStr(params.receiverAvatar, 500),
       callType: params.callType,
       status: "pending" as CallStatus,
       callStatus: "pending" as CallStatus,

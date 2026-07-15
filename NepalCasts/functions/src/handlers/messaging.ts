@@ -120,7 +120,7 @@ export const sendMessage = onCall(callableOptions, async (request) => {
       code: error.code,
     });
     if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", error.message || "Message sending failed");
+    throw new HttpsError("internal", "An unexpected error occurred while sending your message. Please try again later.");
   }
 });
 
@@ -361,11 +361,11 @@ export const onMessageCreated = onDocumentCreated(
         preview = "🎥 Sent a video";
       }
 
-      const appId = process.env.ONESIGNAL_APP_ID || "a9962176-972c-4874-8161-ec84428e9036";
+      const appId = process.env.ONESIGNAL_APP_ID;
       const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
 
-      if (!restApiKey) {
-        logger.warn("⚠️ OneSignal REST API Key is not configured in Cloud Functions environment variables.");
+      if (!appId || !restApiKey) {
+        logger.warn("⚠️ OneSignal App ID or REST API Key is not configured in Cloud Functions environment variables.");
         return;
       }
 

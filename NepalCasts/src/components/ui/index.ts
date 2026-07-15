@@ -7,7 +7,6 @@ export { default as ConfirmDialog } from './ConfirmDialog';
 export { default as CropModal } from './CropModal';
 export { default as GlassCard } from './GlassCard';
 export { default as Logo } from './Logo';
-export { default as OtpInput } from './OtpInput';
 export { default as PermissionModal } from './PermissionModal';
 export { default as PullToRefresh } from './PullToRefresh';
 export { default as ShareSheet } from './ShareSheet';

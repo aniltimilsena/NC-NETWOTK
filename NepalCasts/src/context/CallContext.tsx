@@ -301,61 +301,66 @@ export function CallProvider({ children, user }: CallProviderProps) {
       };
       setActiveCall(initialActiveCall as any);
 
-      
+      // Start WebRTC initialization immediately in parallel with profile name enrichment
       const streamPromise = webrtc.getUserMedia(params.callType);
 
-      
+      // Background profile resolution for avatar/display name enrichment
+      Promise.allSettled([
+        getProfile(user.uid),
+        getProfile(params.calleeId)
+      ]).then(([callerRes, calleeRes]) => {
+        let callerName = user.displayName || "Unknown";
+        let callerAvatar = user.photoURL || "";
+        let calleeName = params.calleeName;
+        let calleePhoto = params.calleePhoto;
+
+        if (callerRes.status === "fulfilled" && callerRes.value.data) {
+          const callerData = callerRes.value.data as any;
+          callerName = callerData.name || [callerData.firstName, callerData.lastName].filter(Boolean).join(' ') || callerData.username || callerName;
+          callerAvatar = callerData.image || callerData.avatar || callerData.photoURL || callerAvatar;
+        }
+
+        if (calleeRes.status === "fulfilled" && calleeRes.value.data) {
+          const calleeData = calleeRes.value.data as any;
+          calleeName = calleeData.name || [calleeData.firstName, calleeData.lastName].filter(Boolean).join(' ') || calleeData.username || calleeName;
+          calleePhoto = calleeData.image || calleeData.avatar || calleeData.photoURL || calleePhoto;
+        }
+
+        setActiveCall((prev) => prev ? {
+          ...prev,
+          callerName,
+          callerPhoto: callerAvatar,
+          callerAvatar,
+          calleeName,
+          calleePhoto,
+          receiverName: calleeName,
+          receiverAvatar: calleePhoto,
+        } as any : null);
+      }).catch((profileErr) => {
+        console.warn("[CallContext] Background profile resolution notice:", profileErr);
+      });
+
       (async () => {
         try {
           const stream = await streamPromise;
 
-          let callerName = user.displayName || "Unknown";
-          let callerAvatar = user.photoURL || "";
-          let calleeName = params.calleeName;
-          let calleePhoto = params.calleePhoto;
-
-          
-          const [callerRes, calleeRes] = await Promise.allSettled([
-            getProfile(user.uid),
-            getProfile(params.calleeId)
-          ]);
-
-          if (callerRes.status === "fulfilled" && callerRes.value.data) {
-            const callerData = callerRes.value.data as any;
-            callerName = callerData.name || [callerData.firstName, callerData.lastName].filter(Boolean).join(' ') || callerData.username || callerName;
-            callerAvatar = callerData.image || callerData.avatar || callerData.photoURL || callerAvatar;
-          }
-
-          if (calleeRes.status === "fulfilled" && calleeRes.value.data) {
-            const calleeData = calleeRes.value.data as any;
-            calleeName = calleeData.name || [calleeData.firstName, calleeData.lastName].filter(Boolean).join(' ') || calleeData.username || calleeName;
-            calleePhoto = calleeData.image || calleeData.avatar || calleeData.photoURL || calleePhoto;
-          }
-
-          const callParams = {
+          const immediateCallParams = {
             callerId: user.uid,
-            callerName,
-            callerPhoto: callerAvatar,
-            callerAvatar,
+            callerName: user.displayName || "Unknown",
+            callerPhoto: user.photoURL || "",
+            callerAvatar: user.photoURL || "",
             calleeId: params.calleeId,
-            calleeName,
-            calleePhoto,
+            calleeName: params.calleeName,
+            calleePhoto: params.calleePhoto,
             receiverId: params.calleeId,
-            receiverName: calleeName,
-            receiverAvatar: calleePhoto,
+            receiverName: params.calleeName,
+            receiverAvatar: params.calleePhoto,
             callType: params.callType,
           };
 
-          
-          setActiveCall((prev) => prev ? {
-            ...prev,
-            ...callParams,
-          } as any : null);
-
-          await webrtc.startCall(callParams, stream);
+          await webrtc.startCall(immediateCallParams, stream);
         } catch (err: any) {
           console.error("Failed to start call:", err);
-          
           setActiveCall(null);
         }
       })();

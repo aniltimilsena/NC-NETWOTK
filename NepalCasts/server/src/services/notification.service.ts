@@ -8,11 +8,11 @@ interface OneSignalNotificationPayload {
 }
 
 export async function sendOneSignalNotification({ userIds, title, body, url }: OneSignalNotificationPayload): Promise<void> {
-  const appId = process.env.ONESIGNAL_APP_ID || "a9962176-972c-4874-8161-ec84428e9036";
+  const appId = process.env.ONESIGNAL_APP_ID;
   const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
 
-  if (!restApiKey || restApiKey === 'your_onesignal_rest_api_key_here') {
-    console.warn("⚠️ OneSignal Notification skipped: ONESIGNAL_REST_API_KEY is placeholder or not defined.");
+  if (!appId || !restApiKey || restApiKey === 'your_onesignal_rest_api_key_here') {
+    console.warn("⚠️ OneSignal Notification skipped: ONESIGNAL_APP_ID or ONESIGNAL_REST_API_KEY is placeholder or not defined.");
     return;
   }
 
@@ -68,28 +68,5 @@ export async function sendFcmMulticastNotification(tokens: string[], title: stri
     console.log(`${response.successCount} FCM push notifications were sent successfully`);
   } catch (err) {
     console.error('Failed to send FCM multicast notifications:', err);
-  }
-}
-
-export async function sendFcmMulticastCallAlert(tokens: string[], callId: string, callerName: string, callerAvatar: string, callType: string): Promise<void> {
-  if (tokens.length === 0) return;
-
-  const payload = {
-    data: {
-      type: 'incoming_call',
-      callId,
-      callerName,
-      callerAvatar,
-      callType,
-      link: `/call/${callId}`,
-    },
-    tokens,
-  };
-
-  try {
-    const response = await admin.messaging().sendEachForMulticast(payload);
-    console.log(`[Call Push] Sent ${response.successCount} call alert pushes for call ${callId}`);
-  } catch (err) {
-    console.error(`[Call Push] Error sending alert for call ${callId}:`, err);
   }
 }
