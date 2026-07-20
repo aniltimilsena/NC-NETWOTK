@@ -60,7 +60,7 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
   return (
     <div className="space-y-6">
       {/* Add Experience Panel */}
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 space-y-4">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 space-y-4">
         <h2 className="text-xl font-black text-white flex items-center gap-2">
           <Briefcase className="w-5 h-5 text-[#00BFFF]" />
           Add Professional Experience
@@ -122,7 +122,7 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
       </div>
 
       {/* Experience History List */}
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 space-y-4">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 space-y-4">
         <h2 className="text-lg font-black text-white">Work History</h2>
 
         {experienceList.length > 0 ? (

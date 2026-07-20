@@ -19,8 +19,6 @@ export function useProfile(profileId: string | null, currentUser: any) {
   const [savedCount, setSavedCount] = useState(0);
 
   const [hasWorkedTogether, setHasWorkedTogether] = useState(false);
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   // Resolve UID (handle @username)
   useEffect(() => {
@@ -207,43 +205,6 @@ export function useProfile(profileId: string | null, currentUser: any) {
     return () => unsubscribe();
   }, [isOwnProfile, currentUser?.uid]);
 
-  // Subscribe to own profile analytics
-  useEffect(() => {
-    if (!isOwnProfile || !targetUid) {
-      setLoadingAnalytics(false);
-      return;
-    }
-    const analyticRef = doc(db, "profiles", targetUid, "analytics", "views");
-    const unsub = onSnapshot(analyticRef, (snap) => {
-      if (snap.exists()) {
-        setAnalytics(snap.data());
-      } else {
-        setAnalytics({
-          totalViews: 0,
-          uniqueViewers: 0,
-          searchAppearances: 0,
-          messageConversions: 0,
-          viewTrend: []
-        });
-      }
-      setLoadingAnalytics(false);
-    }, (err) => {
-      console.warn("Failed to subscribe to analytics:", err);
-      setLoadingAnalytics(false);
-    });
-    return () => unsub();
-  }, [isOwnProfile, targetUid]);
-
-  // Increment profile views
-  useEffect(() => {
-    if (isOwnProfile || !currentUser?.uid || !targetUid) return;
-    const viewRef = doc(db, "profiles", targetUid, "analytics", "views");
-    setDoc(viewRef, {
-      totalViews: increment(1),
-      lastViewedAt: serverTimestamp()
-    }, { merge: true }).catch(err => console.warn("Failed to increment views:", err));
-  }, [isOwnProfile, currentUser?.uid, targetUid]);
-
   // Toggle follow action
   const toggleFollow = useCallback(async (): Promise<ServiceResult> => {
     if (!currentUser || !targetUid) {
@@ -283,8 +244,6 @@ export function useProfile(profileId: string | null, currentUser: any) {
     loadingReviews,
     savedCount,
     hasWorkedTogether,
-    analytics,
-    loadingAnalytics,
     toggleFollow
   };
 }

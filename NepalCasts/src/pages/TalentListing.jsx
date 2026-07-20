@@ -287,7 +287,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         </AnimatePresence>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-12 relative z-10">
 
         {/* VIEW 1: CATEGORIES GRID SELECTION */}
         {viewMode === 'categories' && (
@@ -327,7 +327,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.04 }}
-                      className="category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-6 sm:p-10 lg:p-12 flex flex-col items-center gap-4 sm:gap-6 lg:gap-8 group cursor-pointer"
+                      className="category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-3.5 sm:p-10 lg:p-12 flex flex-col items-center gap-4 sm:gap-6 lg:gap-8 group cursor-pointer"
                     >
                       {/* Circular icon — same as Home */}
                       <div

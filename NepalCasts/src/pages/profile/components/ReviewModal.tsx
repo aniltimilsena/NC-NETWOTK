@@ -50,7 +50,7 @@ export default function ReviewModal({
       <div className="bg-[#0E0E0E] border border-[#1A1A1A] w-full max-w-md rounded-[2.2rem] overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-5 border-b border-white/5">
-          <h3 className="text-lg font-black text-white">Write a Review</h3>
+          <h3 className="text-lg font-bold text-gray-100">Write a Review</h3>
           <button 
             onClick={onClose} 
             className="text-nc-muted hover:text-white transition-colors"
@@ -63,7 +63,7 @@ export default function ReviewModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Star Rating */}
           <div className="space-y-1.5">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-black block">Rating</label>
+            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Rating</label>
             <div className="flex gap-1.5">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -82,25 +82,25 @@ export default function ReviewModal({
 
           {/* Worked As */}
           <div className="space-y-1.5">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-black block">Worked as</label>
+            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Worked as</label>
             <input
               type="text"
               placeholder="e.g. Actor, Director, Cameraman"
               value={workedAs}
               onChange={(e) => setWorkedAs(e.target.value)}
-              className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#00BFFF]/30 transition-colors"
+              className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-gray-200 placeholder-white/20 focus:outline-none focus:border-[#00BFFF]/30 transition-colors"
             />
           </div>
 
           {/* Review Text */}
           <div className="space-y-1.5">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-black block">Review Details</label>
+            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Review Details</label>
             <textarea
               rows={4}
               placeholder="Describe your working experience with this talent..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#00BFFF]/30 transition-colors resize-none"
+              className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-gray-200 placeholder-white/20 focus:outline-none focus:border-[#00BFFF]/30 transition-colors resize-none"
             />
           </div>
 

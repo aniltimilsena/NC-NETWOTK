@@ -47,7 +47,7 @@ export default function FollowModal({
       <div className="bg-[#0E0E0E] border border-white/5 w-full max-w-md rounded-[2.2rem] overflow-hidden flex flex-col max-h-[500px]">
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-5 border-b border-white/5">
-          <h3 className="text-lg font-black text-white">{titleMap[type]}</h3>
+          <h3 className="text-lg font-bold text-gray-100">{titleMap[type]}</h3>
           <button 
             onClick={onClose} 
             className="text-nc-muted hover:text-white transition-colors"
@@ -77,7 +77,7 @@ export default function FollowModal({
                         onNavigate('casting_detail', item.id);
                       }}
                     >
-                      <span className="text-sm font-bold text-white block mb-1">{item.title}</span>
+                      <span className="text-sm font-bold text-gray-100 block mb-1">{item.title}</span>
                       <div className="flex justify-between text-[10px] text-nc-muted font-bold uppercase tracking-wider">
                         <span>{item.production}</span>
                         <span>{item.location}</span>
@@ -98,7 +98,7 @@ export default function FollowModal({
                     <div className="flex items-center gap-3">
                       <Avatar src={item.image} name={item.name} size="sm" />
                       <div>
-                        <span className="text-sm font-bold text-white block">{item.name}</span>
+                        <span className="text-sm font-bold text-gray-100 block">{item.name}</span>
                         <span className="text-[10px] text-nc-muted font-semibold uppercase tracking-wider">{item.role}</span>
                       </div>
                     </div>

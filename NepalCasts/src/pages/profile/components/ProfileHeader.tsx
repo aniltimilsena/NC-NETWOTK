@@ -1,10 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, Trash2, ChevronLeft, ShieldCheck, MapPin, MessageSquare } from 'lucide-react';
+import { Camera, Trash2, ChevronLeft, ShieldCheck, MapPin, MessageSquare, Star } from 'lucide-react';
 import { Button, Avatar } from '../../../components/ui';
 import { uploadProfileMedia, updateProfileData } from '../../../services/profile';
 import type { UserProfile } from '../../../types';
-import { db } from '../../../lib/firebase';
-import { doc, setDoc, increment } from 'firebase/firestore';
 
 interface ProfileHeaderProps {
   profile: UserProfile;
@@ -48,7 +46,6 @@ export default function ProfileHeader({
   const name = profile.name || 'Discovery Talent';
   const role = profile.role || 'New User';
   const location = profile.location || 'Not Specified';
-  const premium = profile.verified || false; // Or tier status
 
   const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -89,21 +86,10 @@ export default function ProfileHeader({
     }
   };
 
-  const trackProfileClick = async () => {
-    if (isOwnProfile) return;
-    try {
-      const clickRef = doc(db, "profiles", profile.uid, "analytics", "views");
-      await setDoc(clickRef, {
-        profileClicks: increment(1)
-      }, { merge: true });
-    } catch (err) {
-      console.warn("Failed to increment click analytics:", err);
-    }
-  };
-
   return (
     <div className="relative">
-      <div className="block h-[130px] sm:h-[160px] relative w-full overflow-hidden bg-nc-dark-900">
+      {/* Cover Banner */}
+      <div className="block h-[140px] sm:h-[180px] relative w-full overflow-hidden bg-nc-dark-900">
         <img 
           src={coverImage} 
           alt="Cover" 
@@ -111,168 +97,173 @@ export default function ProfileHeader({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
         
-        {/* Back Arrow */}
+        {/* Back Button */}
         <button
           onClick={() => onNavigate('back')}
-          className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white transition-colors border border-white/10"
+          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white transition-colors border border-white/10 active:scale-95 z-20"
           aria-label="Back"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
- 
-         {isOwnProfile && (
-           <div className="absolute top-3 right-3 z-20" onClick={e => e.stopPropagation()}>
-             {/* Camera icon trigger */}
-             <button
-               onClick={() => setShowCoverMenu(v => !v)}
-               className="w-9 h-9 rounded-full bg-black/55 backdrop-blur-md border border-white/15 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
-               title="Edit Cover Photo"
-             >
-               <Camera className="w-4 h-4 text-[#00BFFF]" />
-             </button>
 
-             {/* Dropdown menu */}
-             {showCoverMenu && (
-               <div className="absolute top-11 right-0 bg-[#111]/90 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl min-w-[160px]">
-                 <label
-                   htmlFor="cover-file-input"
-                   className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors"
-                   onClick={() => setShowCoverMenu(false)}
-                 >
-                   <Camera className="w-4 h-4 text-[#00BFFF]" />
-                   <span className="text-[13px] font-semibold text-white">Change Cover</span>
-                 </label>
-                 {profile.coverImage && profile.coverImage !== '/hero-bg.png' && (
-                   <>
-                     <div className="h-px bg-white/5 mx-3" />
-                     <button
-                       onClick={() => { handleDeleteCover(); setShowCoverMenu(false); }}
-                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-950/30 active:bg-red-950/50 transition-colors"
-                     >
-                       <Trash2 className="w-4 h-4 text-red-400" />
-                       <span className="text-[13px] font-semibold text-red-400">Delete Cover</span>
-                     </button>
-                   </>
-                 )}
-               </div>
-             )}
-           </div>
-         )}
- 
-         {isUploadingCover && (
-           <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-30">
-             <div className="max-w-xs w-full px-6 space-y-2">
-               <div className="flex justify-between items-center text-xs">
-                 <span className="text-[#00BFFF] font-black animate-pulse uppercase tracking-wider">Uploading Cover...</span>
-                 <span className="text-white font-black">{coverUploadProgress}%</span>
-               </div>
-               <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden relative">
-                 <div
-                   className="absolute inset-y-0 left-0 bg-[#00BFFF] transition-all duration-150 rounded-full"
-                   style={{ width: `${coverUploadProgress}%` }}
-                 />
-               </div>
-             </div>
-           </div>
-         )}
- 
-         {isOwnProfile && (
-           <input
-             type="file"
-             id="cover-file-input"
-             ref={coverFileInputRef}
-             onChange={handleCoverFileChange}
-             accept="image/jpeg,image/png,image/webp"
-             className="hidden"
-           />
-         )}
-       </div>
- 
-       {/* Hero Header Card */}
-       <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 relative -mt-10 sm:-mt-24 z-10">
-         <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.5rem] p-5 sm:p-7 shadow-2xl">
-           <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
-             {/* Avatar */}
-             <div className="relative flex-shrink-0">
-               <Avatar 
-                 src={profile.image}
-                 gender={profile.gender || ''}
-                 name={name}
-                 size="lg"
-                 editable={isOwnProfile}
-                 userId={profile.uid}
-                 onUploadSuccess={(url: string) => updateProfileData(profile.uid, { image: url })}
-                 showAlert={showAlert}
-               />
-             </div>
- 
-             {/* Info */}
-             <div className="flex-1 space-y-1">
-               <div className="flex items-center gap-2 flex-wrap">
-                 <h1 className="text-2xl sm:text-3xl font-black text-white">{name}</h1>
-                 {profile.verified && <ShieldCheck className="w-6 h-6 text-[#00BFFF]" />}
-                 {profile.openToWork && (
-                   <span className="text-[9px] font-black tracking-widest bg-[#00BFFF]/10 text-[#00BFFF] border border-[#00BFFF]/20 uppercase px-2 py-0.5 rounded-full">
-                     Open To Work
-                   </span>
-                 )}
-               </div>
- 
-               <div className="text-nc-muted text-sm flex flex-wrap items-center gap-x-4 gap-y-1.5 font-medium">
-                 <span className="text-white font-bold">{role}</span>
-                 <span className="w-1.5 h-1.5 rounded-full bg-white/10 hidden sm:inline" />
-                 <span className="flex items-center gap-1.5">
-                   <MapPin className="w-4 h-4 text-[#00BFFF]" />
-                   {location}
-                 </span>
-               </div>
-             </div>
- 
-             {/* Actions */}
-             {!isOwnProfile && (
-               <div className="flex items-center gap-3 w-full sm:w-auto">
-                 <Button
-                   variant={isFollowing ? 'secondary' : 'primary'}
-                   onClick={() => { trackProfileClick(); onFollowToggle(); }}
-                   className="flex-1 sm:flex-initial"
-                 >
-                   {isFollowing ? 'Following' : 'Follow'}
-                 </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => { trackProfileClick(); onNavigate('messages', profile.uid); }}
-                    className="flex-shrink-0 flex items-center justify-center !p-0 w-11 h-11"
-                    aria-label="Message"
-                  >
-                    <MessageSquare className="w-5 h-5" />
-                  </Button>
-               </div>
-             )}
-           </div>
+        {isOwnProfile && (
+          <div className="absolute top-4 right-4 z-20" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setShowCoverMenu(v => !v)}
+              className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+              title="Edit Cover Photo"
+            >
+              <Camera className="w-4 h-4 text-[#00BFFF]" />
+            </button>
+
+            {showCoverMenu && (
+              <div className="absolute top-12 right-0 bg-[#121212]/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl min-w-[170px] z-30">
+                <label
+                  htmlFor="cover-file-input"
+                  className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors"
+                  onClick={() => setShowCoverMenu(false)}
+                >
+                  <Camera className="w-4 h-4 text-[#00BFFF]" />
+                  <span className="text-[13px] font-semibold text-white">Change Cover</span>
+                </label>
+                {profile.coverImage && profile.coverImage !== '/hero-bg.png' && (
+                  <>
+                    <div className="h-px bg-white/5 mx-3" />
+                    <button
+                      onClick={() => { handleDeleteCover(); setShowCoverMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-950/30 active:bg-red-950/50 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                      <span className="text-[13px] font-semibold text-red-400">Delete Cover</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {isUploadingCover && (
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-30">
+            <div className="max-w-xs w-full px-6 space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#00BFFF] font-black animate-pulse uppercase tracking-wider">Uploading Cover...</span>
+                <span className="text-white font-black">{coverUploadProgress}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden relative">
+                <div
+                  className="absolute inset-y-0 left-0 bg-[#00BFFF] transition-all duration-150 rounded-full"
+                  style={{ width: `${coverUploadProgress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isOwnProfile && (
+          <input
+            type="file"
+            id="cover-file-input"
+            ref={coverFileInputRef}
+            onChange={handleCoverFileChange}
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+          />
+        )}
+      </div>
+
+      {/* Hero Profile Card */}
+      <div className="max-w-5xl mx-auto px-3.5 sm:px-8 lg:px-12 relative -mt-10 sm:-mt-20 z-10">
+        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden group">
+          {/* Top Gradient Accent Bar */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00BFFF] via-[#0050cd] to-[#00BFFF]/30" />
+
+          <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              <Avatar 
+                src={profile.image}
+                gender={profile.gender || ''}
+                name={name}
+                size="lg"
+                editable={isOwnProfile}
+                userId={profile.uid}
+                onUploadSuccess={(url: string) => updateProfileData(profile.uid, { image: url })}
+                showAlert={showAlert}
+              />
+            </div>
+
+            {/* Profile Info */}
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center justify-center sm:justify-start gap-2.5 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 tracking-tight">{name}</h1>
+                {profile.verified && <ShieldCheck className="w-6 h-6 text-[#00BFFF]" />}
+                {profile.openToWork && (
+                  <span className="px-3 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[10px] font-bold tracking-wider uppercase border border-[#00BFFF]/20 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse" />
+                    OPEN TO WORK
+                  </span>
+                )}
+              </div>
+
+              <div className="text-nc-muted text-sm flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1.5 font-medium">
+                <span className="text-gray-200 font-semibold">{role}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-white/20 hidden sm:inline" />
+                <span className="flex items-center gap-1.5 text-nc-muted">
+                  <MapPin className="w-4 h-4 text-[#00BFFF]" />
+                  {location}
+                </span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            {!isOwnProfile && (
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-center">
+                <Button
+                  variant={isFollowing ? 'secondary' : 'primary'}
+                  onClick={() => onFollowToggle()}
+                  className="flex-1 sm:flex-initial min-w-[120px]"
+                >
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => onNavigate('messages', profile.uid)}
+                  className="flex-shrink-0 flex items-center justify-center !p-0 w-11 h-11 border-white/10 hover:border-white/20"
+                  aria-label="Message"
+                >
+                  <MessageSquare className="w-5 h-5 text-gray-200" />
+                </Button>
+              </div>
+            )}
+          </div>
 
           {/* Stats Bar */}
-          <div className={`grid gap-2 mt-6 pt-4 border-t border-white/5 w-full ${(isOwnProfile && savedCount > 0) ? 'grid-cols-4' : 'grid-cols-3'}`}>
+          <div className={`grid gap-2 mt-6 pt-5 border-t border-white/5 w-full ${(isOwnProfile && savedCount > 0) ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <div 
               onClick={() => isOwnProfile && onFollowClick?.('followers')}
-              className={`flex flex-col items-center justify-center text-center py-1 ${isOwnProfile ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+              className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
             >
-              <span className="text-white text-lg font-black">{followerCount}</span>
+              <span className="text-gray-200 text-xl font-bold">{followerCount}</span>
               <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Followers</span>
             </div>
             <div 
               onClick={() => isOwnProfile && onFollowClick?.('following')}
-              className={`flex flex-col items-center justify-center text-center py-1 border-l border-white/5 ${isOwnProfile ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+              className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl border-l border-white/5 transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
             >
-              <span className="text-white text-lg font-black">{followingCount}</span>
+              <span className="text-gray-200 text-xl font-bold">{followingCount}</span>
               <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Following</span>
             </div>
-            <div className="flex flex-col items-center justify-center text-center py-1 border-l border-white/5">
-              <span className="text-white text-lg font-black">{profile.rating || 0} ★</span>
+            <div className="flex flex-col items-center justify-center text-center py-1.5 rounded-xl border-l border-white/5">
+              <span className="text-gray-200 text-xl font-bold flex items-center justify-center gap-1">
+                {profile.rating || 0} 
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+              </span>
               <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Rating</span>
             </div>
             {isOwnProfile && savedCount > 0 && (
-              <div className="flex flex-col items-center justify-center text-center py-1 border-l border-white/5">
-                <span className="text-white text-lg font-black">{savedCount}</span>
+              <div className="flex flex-col items-center justify-center text-center py-1.5 rounded-xl border-l border-white/5">
+                <span className="text-gray-200 text-xl font-bold">{savedCount}</span>
                 <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Saved</span>
               </div>
             )}

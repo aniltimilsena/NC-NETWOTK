@@ -40,7 +40,7 @@ export default function NotificationSettings({ profile, onUpdate, showAlert }: N
 
   return (
     <div className="space-y-6">
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 space-y-4">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 space-y-4">
         <h2 className="text-xl font-black text-white flex items-center gap-2">
           <Bell className="w-5 h-5 text-[#00BFFF]" />
           Notification Preferences

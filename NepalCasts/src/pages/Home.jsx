@@ -236,7 +236,7 @@ export default function Home({ onNavigate, user }) {
   return (
     <div className="min-h-screen bg-nc-dark">
       {/* Hero Section */}
-      <section className="relative flex flex-col justify-start items-start overflow-hidden pt-16 pb-4 px-6 sm:px-8 lg:px-20">
+      <section className="relative flex flex-col justify-start items-start overflow-hidden pt-16 pb-4 px-3.5 sm:px-8 lg:px-20">
         {/* Background */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <img
@@ -250,7 +250,7 @@ export default function Home({ onNavigate, user }) {
         {/* Animated gradient orb for depth */}
         <div className="absolute top-1/4 left-1/4 w-[250px] h-[250px] bg-gradient-to-br from-[#FACC15]/8 via-sky-400/5 to-transparent rounded-full blur-3xl z-[1] animate-pulse" style={{ animationDuration: '6s' }} />
 
-        <div className="relative z-10 max-w-4xl space-y-2 -ml-6 sm:-ml-8 lg:-ml-20">
+        <div className="relative z-10 max-w-4xl space-y-2">
           <h1 
             className="font-sans font-bold text-[36px] hero-text-shadow leading-tight"
             style={{ color: '#FACC15' }}
@@ -269,7 +269,7 @@ export default function Home({ onNavigate, user }) {
             initial={{ opacity: 0, y: 15, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -15, scale: 0.95 }}
-            className="relative z-30 group mt-12 sm:mt-20 self-start -ml-6 sm:-ml-8 lg:-ml-20"
+            className="relative z-30 group mt-12 sm:mt-20 self-start"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -363,7 +363,7 @@ export default function Home({ onNavigate, user }) {
 
 
       {isLoading ? (
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20 py-14 space-y-12">
+        <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-20 py-6 sm:py-14 space-y-12">
           {/* 1. Actors/Actress Horizontal Showcase Skeleton */}
           <section className="pt-2 pb-6">
             <div className="flex items-center mb-6">
@@ -429,7 +429,7 @@ export default function Home({ onNavigate, user }) {
           {/* Featured Actors Showcase */}
           {talents.filter(t => t.role?.toLowerCase().includes('actor') && !t.deactivated).length > 0 && (
             <section className="pt-2 pb-0 bg-nc-dark relative overflow-hidden">
-              <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
+              <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-20">
                 {/* Editorial Header */}
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center">
@@ -504,7 +504,7 @@ export default function Home({ onNavigate, user }) {
 
           {/* Categories */}
           <section className="pt-2 pb-10 lg:pt-2 lg:pb-14 bg-nc-dark">
-            <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
+            <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-20">
               {/* Editorial Header */}
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center">
@@ -615,7 +615,7 @@ export default function Home({ onNavigate, user }) {
           {/* Trending Talents */}
           {talents.length > 0 && (
             <section className="pt-2 pb-8 lg:pt-2 lg:pb-10">
-              <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-20">
+              <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-20">
                 {/* Editorial Header */}
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center">
@@ -711,8 +711,8 @@ export default function Home({ onNavigate, user }) {
       {/* CTA Section - Only show if not logged in */}
       {!isLoggedIn && (
         <section className="pt-2 pb-12 sm:pt-2 sm:pb-16 lg:pt-2 lg:pb-20">
-          <div className="max-w-2xl mx-auto px-6">
-            <GlassCard strong className="p-6 sm:p-10 relative overflow-hidden border border-white/5 shadow-2xl">
+          <div className="max-w-2xl mx-auto px-3.5">
+            <GlassCard strong className="p-4 sm:p-10 relative overflow-hidden border border-white/5 shadow-2xl">
               {/* Premium Background Glow Orbs */}
               <div className="absolute -top-12 -left-12 w-80 h-80 bg-[#00BFFF]/10 rounded-full blur-[100px] pointer-events-none" />
               <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-[#FACC15]/5 rounded-full blur-[80px] pointer-events-none" />

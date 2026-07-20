@@ -4,7 +4,6 @@ import ProfileHeader from './components/ProfileHeader';
 import ProfileAbout from './components/ProfileAbout';
 import ProfileMedia from './components/ProfileMedia';
 import ProfileReviews from './components/ProfileReviews';
-import ProfileAnalytics from './components/ProfileAnalytics';
 import FollowModal from './components/FollowModal';
 import ReviewModal from './components/ReviewModal';
 import { doc, getDoc, setDoc, query, collection, where, getDocs, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
@@ -41,8 +40,6 @@ export default function ProfilePage({
     loadingReviews,
     savedCount,
     hasWorkedTogether,
-    analytics,
-    loadingAnalytics,
     toggleFollow
   } = useProfile(profileId, user);
 
@@ -303,7 +300,7 @@ export default function ProfilePage({
         </div>
 
         {/* Header content skeleton */}
-        <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 relative -mt-16 sm:-mt-24 z-10">
+        <div className="max-w-5xl mx-auto px-3.5 sm:px-8 lg:px-12 relative -mt-16 sm:-mt-24 z-10">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-white/5">
             <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 text-center sm:text-left">
               {/* Avatar circle */}
@@ -345,7 +342,7 @@ export default function ProfilePage({
 
           {/* Content Block */}
           <div className="mt-8 space-y-6">
-            <div className="bg-[#111]/80 border border-white/5 rounded-[2rem] p-6 sm:p-8 space-y-6">
+            <div className="bg-[#111]/80 border border-white/5 rounded-[2rem] p-4 sm:p-8 space-y-6">
               <div className="h-5 skeleton w-32" />
               <div className="space-y-3">
                 <div className="h-3.5 skeleton w-full" />
@@ -377,10 +374,12 @@ export default function ProfilePage({
   }
 
   const showContact = isOwnProfile || isFollowing || profile.showContactInfo === true;
-  const tabs = ['about', 'media', 'reviews'];
-  if (isOwnProfile) {
-    tabs.push('analytics');
+  const hasMediaContent = Boolean(profile.introVideo || (profile.media && profile.media.length > 0));
+  const tabs = ['about'];
+  if (isOwnProfile || hasMediaContent) {
+    tabs.push('media');
   }
+  tabs.push('reviews');
 
   return (
     <div className="min-h-screen bg-nc-dark pb-24">
@@ -398,7 +397,7 @@ export default function ProfilePage({
       />
 
       {/* Tabs */}
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 mt-8">
+      <div className="max-w-5xl mx-auto px-3.5 sm:px-8 lg:px-12 mt-8">
         <div className="flex border-b border-white/5 gap-6 mb-8 overflow-x-auto scrollbar-none">
           {tabs.map((tab) => (
             <button
@@ -421,7 +420,7 @@ export default function ProfilePage({
           {activeTab === 'about' && (
             <ProfileAbout profile={profile} showContact={showContact} />
           )}
-          {activeTab === 'media' && (
+          {(isOwnProfile || hasMediaContent) && activeTab === 'media' && (
             <ProfileMedia 
               profile={profile}
               isOwnProfile={isOwnProfile}
@@ -437,15 +436,15 @@ export default function ProfilePage({
               loading={loadingReviews}
               isOwnProfile={isOwnProfile}
               hasWorkedTogether={hasWorkedTogether}
-              onWriteReviewClick={() => setShowReviewModal(true)}
+              onWriteReviewClick={() => {
+                if (!user) {
+                  onNavigate('signin');
+                } else {
+                  setShowReviewModal(true);
+                }
+              }}
               onHelpfulToggle={handleHelpfulToggle}
               currentUserId={user?.uid}
-            />
-          )}
-          {activeTab === 'analytics' && isOwnProfile && (
-            <ProfileAnalytics 
-              analytics={analytics}
-              loading={loadingAnalytics}
             />
           )}
         </div>

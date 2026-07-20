@@ -211,7 +211,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
         </div>
 
 
-        <GlassCard strong className="p-6 sm:p-8 border border-white/5 rounded-[2rem] bg-[#111]/90">
+        <GlassCard strong className="p-4 sm:p-8 border border-white/5 rounded-[2rem] bg-[#111]/90">
           
           {/* STEP 1: PROJECT INFO */}
           {step === 1 && (

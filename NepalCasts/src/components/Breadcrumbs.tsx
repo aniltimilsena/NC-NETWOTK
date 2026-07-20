@@ -29,7 +29,7 @@ export default function Breadcrumbs() {
   const pathnames = location.pathname.split('/').filter((x) => x);
 
   
-  const excludedPaths = ['profile', 'signin', 'signup', 'premium', 'messages', 'notifications', 'settings', 'casting'];
+  const excludedPaths = ['profile', 'signin', 'signup', 'premium', 'messages', 'notifications', 'settings', 'casting', 'talents'];
   if (
     pathnames.length === 0 || 
     excludedPaths.includes(pathnames[0])

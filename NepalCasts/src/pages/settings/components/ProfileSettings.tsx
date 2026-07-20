@@ -54,10 +54,54 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
     }
   };
 
+  const handleHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (!val.trim()) {
+      setHeight('');
+      return;
+    }
+    const clean = val.replace(/\s*ft\.?$/i, '').trim();
+    if (/[\d'"\.]_?$/.test(clean)) {
+      setHeight(`${clean} ft`);
+    } else {
+      setHeight(val);
+    }
+  };
+
+  const handleHeightBlur = () => {
+    if (!height) return;
+    const clean = height.replace(/\s*ft\.?$/i, '').trim();
+    if (/[\d'"\.]_?$/.test(clean)) {
+      setHeight(`${clean} ft`);
+    }
+  };
+
+  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (!val.trim()) {
+      setWeight('');
+      return;
+    }
+    const clean = val.replace(/\s*kgs?$/i, '').trim();
+    if (/[\d\.]_?$/.test(clean)) {
+      setWeight(`${clean} kg`);
+    } else {
+      setWeight(val);
+    }
+  };
+
+  const handleWeightBlur = () => {
+    if (!weight) return;
+    const clean = weight.replace(/\s*kgs?$/i, '').trim();
+    if (/[\d\.]_?$/.test(clean)) {
+      setWeight(`${clean} kg`);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Avatar Settings Section */}
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 flex flex-col sm:flex-row gap-5 items-center">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 flex flex-col sm:flex-row gap-5 items-center">
         <Avatar
           src={profile.image}
           gender={profile.gender || ''}
@@ -77,7 +121,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
       </div>
 
       {/* Main Info */}
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 space-y-4">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 space-y-4">
         <h2 className="text-xl font-black text-white flex items-center gap-2">
           <User className="w-5 h-5 text-[#00BFFF]" />
           Basic Profile Information
@@ -131,13 +175,24 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
               <option value="" disabled>Select Gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
+              <option value="Non-Binary">Non-Binary</option>
               <option value="Other">Other</option>
             </select>
           </div>
         </div>
 
-        {/* Bio */}
-        <div className="space-y-1.5 text-left pt-2">
+        <div className="space-y-1.5 text-left">
+          <label className="text-[10px] text-nc-muted uppercase tracking-wider font-black block">Location</label>
+          <input
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="e.g. Kathmandu, Nepal"
+            className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white outline-none transition-all"
+          />
+        </div>
+
+        <div className="space-y-1.5 text-left">
           <label className="text-[10px] text-nc-muted uppercase tracking-wider font-black block">Bio</label>
           <textarea
             rows={4}
@@ -150,7 +205,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
       </div>
 
       {/* Appearance Info */}
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 space-y-4">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 space-y-4">
         <h2 className="text-xl font-black text-white flex items-center gap-2">
           <User className="w-5 h-5 text-[#00BFFF]" />
           Physical Appearance
@@ -161,8 +216,9 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
             <input
               type="text"
               value={height}
-              placeholder={"e.g. 5'10\""}
+              placeholder={"e.g. 5'10 ft"}
               onChange={(e) => setHeight(e.target.value)}
+              onBlur={handleHeightBlur}
               className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white outline-none transition-all"
             />
           </div>
@@ -173,6 +229,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
               value={weight}
               placeholder="e.g. 70 kg"
               onChange={(e) => setWeight(e.target.value)}
+              onBlur={handleWeightBlur}
               className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white outline-none transition-all"
             />
           </div>
@@ -200,7 +257,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
       </div>
 
       {/* Safety Preference toggle */}
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 flex justify-between items-center">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 flex justify-between items-center">
         <div className="text-left space-y-1">
           <h3 className="text-sm font-bold text-white">Show Contact Info</h3>
           <p className="text-xs text-nc-muted leading-relaxed">

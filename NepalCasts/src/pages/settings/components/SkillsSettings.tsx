@@ -15,7 +15,7 @@ export default function SkillsSettings({ profile, onUpdate, showAlert }: SkillsS
     currentSkills.map(s => typeof s === 'string' ? { name: s, level: 80 } : { name: s.name, level: s.level ?? 80 })
   );
   const [newSkillName, setNewSkillName] = useState('');
-  const [newSkillLevel, setNewSkillLevel] = useState(80);
+  const [newSkillLevel, setNewSkillLevel] = useState<number | ''>('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleAddSkill = (e: React.FormEvent) => {
@@ -27,9 +27,10 @@ export default function SkillsSettings({ profile, onUpdate, showAlert }: SkillsS
       return;
     }
 
-    setSkills([...skills, { name: newSkillName.trim(), level: newSkillLevel }]);
+    const levelVal = typeof newSkillLevel === 'number' && !isNaN(newSkillLevel) ? newSkillLevel : 80;
+    setSkills([...skills, { name: newSkillName.trim(), level: levelVal }]);
     setNewSkillName('');
-    setNewSkillLevel(80);
+    setNewSkillLevel('');
   };
 
   const handleRemoveSkill = (name: string) => {
@@ -56,7 +57,7 @@ export default function SkillsSettings({ profile, onUpdate, showAlert }: SkillsS
   return (
     <div className="space-y-6">
       {/* Add Skill Panel */}
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 space-y-4">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 space-y-4">
         <h2 className="text-xl font-black text-white flex items-center gap-2">
           <Award className="w-5 h-5 text-[#00BFFF]" />
           Add Professional Skills
@@ -80,9 +81,13 @@ export default function SkillsSettings({ profile, onUpdate, showAlert }: SkillsS
               type="number"
               min={10}
               max={100}
+              placeholder="e.g. 80"
               value={newSkillLevel}
-              onChange={(e) => setNewSkillLevel(parseInt(e.target.value, 10))}
-              className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white outline-none transition-all"
+              onChange={(e) => {
+                const val = e.target.value;
+                setNewSkillLevel(val === '' ? '' : parseInt(val, 10));
+              }}
+              className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-all"
             />
           </div>
 
@@ -93,7 +98,7 @@ export default function SkillsSettings({ profile, onUpdate, showAlert }: SkillsS
       </div>
 
       {/* Skills Showcase Grid */}
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 space-y-4">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 space-y-4">
         <h2 className="text-lg font-black text-white">Your Skills</h2>
 
         {skills.length > 0 ? (

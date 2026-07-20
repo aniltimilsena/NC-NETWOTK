@@ -221,7 +221,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
   };
 
   return (
-    <div className="fixed inset-0 bg-[#07070A] z-[9999] flex flex-col justify-between p-6 sm:p-10 select-none overflow-y-auto">
+    <div className="fixed inset-0 bg-[#07070A] z-[9999] flex flex-col justify-between p-3 sm:p-10 select-none overflow-y-auto">
       {/* Background radial glows */}
       <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-nc-accent/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] bg-[#FACC15]/3 rounded-full blur-[120px] pointer-events-none" />

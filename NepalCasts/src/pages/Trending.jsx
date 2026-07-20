@@ -213,7 +213,7 @@ export default function Trending({ onNavigate }) {
         description="Check out who's trending now on Nepal's premier casting and cinema professional network." 
       />
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-12">
         {/* Header Navigation / Centered Title / Filter Button */}
         <div className="flex items-center justify-between pb-2.5 border-b border-white/5 relative mb-6">
           {/* Left Side: Back button */}

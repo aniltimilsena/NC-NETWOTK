@@ -77,7 +77,7 @@ export default function SettingsPage({
   return (
     <div className="min-h-screen bg-nc-dark pb-24">
       {/* Header */}
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 pt-6 flex items-center gap-4">
+      <div className="max-w-5xl mx-auto px-3.5 sm:px-8 lg:px-12 pt-6 flex items-center gap-4">
         <button
           onClick={handleBack}
           className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors"
@@ -91,9 +91,9 @@ export default function SettingsPage({
         </h1>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 mt-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-5xl mx-auto px-3.5 sm:px-8 lg:px-12 mt-8 grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Left Hand Sidebar Navigation */}
-        <div className={`md:col-span-1 space-y-1 ${currentMobileView === 'menu' ? 'block' : 'hidden md:block'}`}>
+        <div className={`md:col-span-1 space-y-1 flex flex-col items-stretch justify-start text-left ${currentMobileView === 'menu' ? 'block' : 'hidden md:block'}`}>
           {tabsConfig.map((tab) => {
             const Icon = tab.icon;
             const isSelected = activeTab === tab.id;
@@ -105,14 +105,16 @@ export default function SettingsPage({
                   setActiveTab(tab.id);
                   setCurrentMobileView('content');
                 }}
-                className={`w-full flex items-center gap-4 md:gap-3 px-5 py-4 md:px-4 md:py-3 rounded-2xl text-base md:text-sm font-bold transition-all text-left ${
+                className={`w-fit md:w-full flex items-center justify-start text-left gap-4 px-4 py-3.5 rounded-2xl text-lg font-bold transition-all border ${
                   isSelected 
-                    ? 'bg-[#00BFFF]/10 text-[#00BFFF] border border-[#00BFFF]/20' 
-                    : 'text-nc-muted hover:text-white hover:bg-white/5 border border-transparent'
+                    ? 'bg-[#00BFFF]/10 text-[#00BFFF] border-[#00BFFF]/20 shadow-sm' 
+                    : 'text-nc-muted hover:text-white hover:bg-white/5 border-transparent'
                 }`}
               >
-                <Icon className="w-5 h-5 md:w-4 md:h-4 shrink-0" />
-                <span>{tab.label}</span>
+                <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                  <Icon className="w-6 h-6" />
+                </div>
+                <span className="truncate text-left">{tab.label}</span>
               </button>
             );
           })}

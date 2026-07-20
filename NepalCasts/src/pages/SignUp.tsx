@@ -408,9 +408,9 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
       </div>
 
       {/* RIGHT COLUMN: Signup Form */}
-      <div className="w-full md:w-1/2 flex flex-col justify-start items-center p-6 sm:p-12 md:p-16 z-10 overflow-y-auto max-h-screen relative pt-4 md:pt-4">
+      <div className="w-full md:w-1/2 flex flex-col justify-start items-center p-3.5 sm:p-12 md:p-16 z-10 overflow-y-auto max-h-screen relative pt-4 md:pt-4">
         
-        <GlassCard strong className="p-8 border border-white/5 bg-[#111]/90 w-full max-w-[450px] flex flex-col items-center shadow-2xl relative" onClick={undefined}>
+        <GlassCard strong className="p-4 sm:p-8 border border-white/5 bg-[#111]/90 w-full max-w-[450px] flex flex-col items-center shadow-2xl relative" onClick={undefined}>
           
           {/* Back Button */}
           <button 

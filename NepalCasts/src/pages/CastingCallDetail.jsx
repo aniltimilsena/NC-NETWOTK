@@ -385,12 +385,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       </div>
 
       {/* 2. Content Skeleton */}
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 mt-8">
+      <div className="max-w-5xl mx-auto px-3.5 sm:px-8 mt-8">
         <div className="flex flex-col lg:flex-row gap-8">
           
           {/* Main Details (Left Column) */}
           <div className="flex-[2] space-y-6">
-            <div className="bg-[#111]/80 border border-white/5 rounded-[2rem] p-6 sm:p-8 space-y-8">
+            <div className="bg-[#111]/80 border border-white/5 rounded-[2rem] p-4 sm:p-8 space-y-8">
               {/* Description */}
               <div className="space-y-3">
                 <div className="h-4 skeleton w-36" />
@@ -515,7 +515,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 mt-8">
+      <div className="max-w-5xl mx-auto px-3.5 sm:px-8 mt-8">
         
         <div className="flex flex-col lg:flex-row gap-8">
           
@@ -523,7 +523,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           <div className="flex-[2] space-y-6 text-left">
             
             {/* Main Project Details Container */}
-            <div className="bg-[#111]/80 backdrop-blur-md border border-white/5 rounded-[2rem] p-6 sm:p-8 space-y-8 shadow-xl">
+            <div className="bg-[#111]/80 backdrop-blur-md border border-white/5 rounded-[2rem] p-4 sm:p-8 space-y-8 shadow-xl">
               
               {/* Description Section */}
               <div className="space-y-3">
@@ -597,7 +597,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
             {/* Creator Portal / Applications Received */}
             {isCreator && (
-              <div className="bg-[#111] border border-white/5 rounded-3xl p-6 sm:p-8 space-y-4">
+              <div className="bg-[#111] border border-white/5 rounded-3xl p-4 sm:p-8 space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-white/5">
                   <h2 className="text-lg font-black text-white uppercase tracking-wider">Applications Received ({apps.length})</h2>
                   <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-[#00BFFF]/10 text-[#00BFFF] border border-[#00BFFF]/20 uppercase tracking-widest">

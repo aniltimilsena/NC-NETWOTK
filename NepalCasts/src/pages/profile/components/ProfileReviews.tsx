@@ -47,14 +47,14 @@ export default function ProfileReviews({
             <MessageSquare className="w-5 h-5 text-[#00BFFF]" />
           </div>
           <div>
-            <h2 className="text-sm font-black text-white uppercase tracking-widest">Reviews</h2>
+            <h2 className="text-sm font-bold text-gray-100 uppercase tracking-widest">Reviews</h2>
           </div>
         </div>
 
         {/* Rating Score Summary Pill */}
         <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl py-2.5 px-4 self-stretch md:self-auto justify-between md:justify-start">
           <div className="flex flex-col items-center shrink-0">
-            <span className="text-2xl font-black text-white leading-none">{averageRating}</span>
+            <span className="text-2xl font-bold text-gray-100 leading-none">{averageRating}</span>
             <span className="text-[8px] text-nc-muted uppercase tracking-widest mt-1.5 font-bold">Average</span>
           </div>
           <div className="h-6 w-px bg-white/10" />
@@ -70,12 +70,12 @@ export default function ProfileReviews({
             <span className="text-[9px] text-nc-muted font-bold block">{reviews.length} Verified Reviews</span>
           </div>
 
-          {!isOwnProfile && hasWorkedTogether && (
+          {!isOwnProfile && (
             <>
               <div className="h-6 w-px bg-white/10" />
               <button 
                 onClick={onWriteReviewClick} 
-                className="text-[10px] font-black uppercase py-2 px-4 rounded-xl bg-[#00BFFF] hover:bg-[#00BFFF]/85 text-black transition-all hover:scale-105 active:scale-95 shrink-0"
+                className="text-[10px] font-bold uppercase py-2 px-4 rounded-xl bg-[#00BFFF] hover:bg-[#00BFFF]/85 text-black transition-all hover:scale-105 active:scale-95 shrink-0"
               >
                 Write Review
               </button>
@@ -106,7 +106,7 @@ export default function ProfileReviews({
                         size="sm"
                       />
                       <div>
-                        <span className="text-sm font-bold text-white block">{review.reviewerName}</span>
+                        <span className="text-sm font-bold text-gray-100 block">{review.reviewerName}</span>
                         <span className="text-[10px] text-nc-muted font-semibold block uppercase tracking-wider">
                           Worked as: {review.workedAs}
                         </span>

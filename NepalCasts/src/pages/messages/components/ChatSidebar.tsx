@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MessageSquare, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, ChevronLeft } from 'lucide-react';
+import { Search, MessageSquare, Phone, Video, PhoneIncoming, PhoneOutgoing, PhoneMissed, ChevronLeft } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
 
 interface ChatSidebarProps {
@@ -13,6 +13,7 @@ interface ChatSidebarProps {
   currentUser: any;
   onStartNewChat: () => void;
   onNavigate?: (page: string, param?: any) => void;
+  onInitiateCall?: (type: 'audio' | 'video', calleeId: string, calleeName: string, calleePhoto: string) => void;
 }
 
 const formatLastMessage = (text?: string) => {
@@ -38,14 +39,15 @@ export default function ChatSidebar({
   loadingCalls,
   currentUser,
   onStartNewChat,
-  onNavigate
+  onNavigate,
+  onInitiateCall
 }: ChatSidebarProps) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'chats' | 'calls'>('chats');
   const [query, setQuery] = useState('');
 
   // Long press timer tracking for ChatSidebar
-  const longPressTimer = useRef<any>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPressActive = useRef(false);
 
   const startPress = useCallback((convoId: string) => {
@@ -75,19 +77,19 @@ export default function ChatSidebar({
       {/* Sidebar Header */}
       <div className="p-4 pt-6 md:p-4 border-b border-white/5 space-y-3">
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onNavigate ? onNavigate('back') : navigate(-1)}
-              className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0 no-min-h"
-              title="Go to Home"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <h2 className="text-lg font-black text-white">Inbox</h2>
-          </div>
+          <button
+            onClick={() => onNavigate ? onNavigate('back') : navigate(-1)}
+            className="w-8 h-8 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0 no-min-h"
+            title="Go Back"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          <h2 className="text-base font-bold text-gray-100 tracking-wide">Inbox</h2>
+
           <button
             onClick={onStartNewChat}
-            className="w-8 h-8 rounded-xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] hover:bg-[#00BFFF]/20 transition-all flex items-center justify-center"
+            className="w-8 h-8 rounded-xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] hover:bg-[#00BFFF]/20 transition-all flex items-center justify-center shrink-0"
             title="New Chat"
           >
             <MessageSquare className="w-4 h-4" />
@@ -112,17 +114,15 @@ export default function ChatSidebar({
         <div className="flex bg-white/5 rounded-2xl p-1 gap-1">
           <button
             onClick={() => setActiveTab('chats')}
-            className={`flex-1 py-1.5 rounded-xl text-[10px] no-scale no-min-h font-black uppercase tracking-wider transition-colors ${
-              activeTab === 'chats' ? 'bg-[#00BFFF] text-black' : 'text-nc-muted hover:text-white'
-            }`}
+            className={`flex-1 py-1.5 rounded-xl text-[10px] no-scale no-min-h font-black uppercase tracking-wider transition-colors ${activeTab === 'chats' ? 'bg-[#00BFFF] text-black' : 'text-nc-muted hover:text-white'
+              }`}
           >
             Chats
           </button>
           <button
             onClick={() => setActiveTab('calls')}
-            className={`flex-1 py-1.5 rounded-xl text-[10px] no-scale no-min-h font-black uppercase tracking-wider transition-colors ${
-              activeTab === 'calls' ? 'bg-[#00BFFF] text-black' : 'text-nc-muted hover:text-white'
-            }`}
+            className={`flex-1 py-1.5 rounded-xl text-[10px] no-scale no-min-h font-black uppercase tracking-wider transition-colors ${activeTab === 'calls' ? 'bg-[#00BFFF] text-black' : 'text-nc-muted hover:text-white'
+              }`}
           >
             Calls
           </button>
@@ -137,7 +137,7 @@ export default function ChatSidebar({
               {filteredConversations.map((c) => {
                 const isSelected = c.id === activeChatId;
                 const unreadCount = c.unreadCounts?.[currentUser.uid] || 0;
-                
+
                 return (
                   <div
                     key={c.id}
@@ -159,9 +159,8 @@ export default function ChatSidebar({
                       }
                       onSelectChat(c.id);
                     }}
-                    className={`flex items-center gap-3 py-3.5 px-4 border-b border-white/5 cursor-pointer transition-all ${
-                      isSelected ? 'bg-white/10' : 'bg-transparent hover:bg-white/5'
-                    }`}
+                    className={`flex items-center gap-3 py-3.5 px-4 border-b border-white/5 cursor-pointer transition-all ${isSelected ? 'bg-white/10' : 'bg-transparent hover:bg-white/5'
+                      }`}
                   >
                     <Avatar src={c.avatar} name={c.name} size="md" />
                     <div className="flex-1 min-w-0 text-left">
@@ -189,12 +188,27 @@ export default function ChatSidebar({
               <div className="flex flex-col">
                 {callHistory.map((call) => {
                   const isIncoming = call.calleeId === currentUser.uid;
+                  const targetUserId = isIncoming ? call.callerId : call.calleeId;
+                  const callType: 'audio' | 'video' = call.callType === 'video' ? 'video' : 'audio';
                   const date = call.createdAt?.toDate ? call.createdAt.toDate().toLocaleDateString() : 'N/A';
-                  
+
+                  const handleCallClick = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    if (targetUserId && onInitiateCall) {
+                      onInitiateCall(
+                        callType,
+                        targetUserId,
+                        call.otherUser?.name || 'User',
+                        call.otherUser?.image || ''
+                      );
+                    }
+                  };
+
                   return (
                     <div
                       key={call.id}
-                      className="flex justify-between items-center py-3.5 px-4 border-b border-white/5 bg-transparent hover:bg-white/5 transition-all"
+                      onClick={handleCallClick}
+                      className="flex justify-between items-center py-3.5 px-4 border-b border-white/5 bg-transparent hover:bg-white/5 transition-all cursor-pointer group"
                     >
                       <div className="flex items-center gap-3">
                         <Avatar src={call.otherUser?.image} name={call.otherUser?.name} size="md" />
@@ -206,14 +220,22 @@ export default function ChatSidebar({
                             ) : (
                               <PhoneOutgoing className="w-3 h-3 text-nc-muted" />
                             )}
-                            <span className="text-[11px] text-nc-muted font-medium">{date}</span>
+                            <span className="text-[11px] text-nc-muted font-medium">{date} • {callType}</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-white/55">
-                        <Phone className="w-4 h-4" />
-                      </div>
+                      <button
+                        onClick={handleCallClick}
+                        className="w-8 h-8 rounded-xl bg-white/5 group-hover:bg-[#00BFFF] group-hover:text-black flex items-center justify-center text-white/70 hover:text-black transition-all active:scale-95 shrink-0"
+                        title={`Call ${call.otherUser?.name || 'User'} (${callType})`}
+                      >
+                        {callType === 'video' ? (
+                          <Video className="w-4 h-4" />
+                        ) : (
+                          <Phone className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
                   );
                 })}

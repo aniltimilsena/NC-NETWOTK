@@ -68,22 +68,27 @@ export default function MessagesPage({
     }
   };
 
+  const handleInitiateDirectCall = (type: 'audio' | 'video', calleeId: string, calleeName: string, calleePhoto: string) => {
+    if (!calleeId) return;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (!isMobile) {
+      const url = `/call?initiate=true&type=${type}&calleeId=${calleeId}&calleeName=${encodeURIComponent(calleeName || 'User')}&calleePhoto=${encodeURIComponent(calleePhoto || '')}`;
+      window.open(url, '_blank');
+    } else {
+      initiateCall({
+        calleeId,
+        calleeName: calleeName || 'User',
+        calleePhoto: calleePhoto || '',
+        callType: type
+      });
+    }
+  };
+
   const handleInitiateCall = (type: 'audio' | 'video') => {
     if (!activeChat) return;
     const otherParticipantId = activeChat.participants?.find((p: string) => p !== user.uid);
     if (otherParticipantId) {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (!isMobile) {
-        const url = `/call?initiate=true&type=${type}&calleeId=${otherParticipantId}&calleeName=${encodeURIComponent(activeChat.name || 'User')}&calleePhoto=${encodeURIComponent(activeChat.avatar || '')}`;
-        window.open(url, '_blank');
-      } else {
-        initiateCall({
-          calleeId: otherParticipantId,
-          calleeName: activeChat.name || 'User',
-          calleePhoto: activeChat.avatar || '',
-          callType: type
-        });
-      }
+      handleInitiateDirectCall(type, otherParticipantId, activeChat.name || 'User', activeChat.avatar || '');
     }
   };
 
@@ -106,7 +111,7 @@ export default function MessagesPage({
     return (
       <div className="min-h-screen bg-nc-dark text-white flex">
         {/* Messages Shell Container */}
-        <div className="max-w-7xl mx-auto w-full px-6 sm:px-8 lg:px-12 py-8 flex gap-6 h-[calc(100vh-80px)]">
+        <div className="max-w-7xl mx-auto w-full px-3.5 sm:px-8 lg:px-12 py-3 sm:py-8 flex gap-6 h-[calc(100vh-80px)]">
           {/* Left Column: Sidebar Skeleton */}
           <div className="w-80 border border-white/5 bg-[#111]/80 rounded-[2rem] p-5 hidden md:flex flex-col space-y-6 shrink-0">
             <div className="flex items-center justify-between pb-2">
@@ -200,6 +205,7 @@ export default function MessagesPage({
             currentUser={user}
             onStartNewChat={() => setShowNewChatModal(true)}
             onNavigate={onNavigate}
+            onInitiateCall={handleInitiateDirectCall}
           />
         </div>
 
