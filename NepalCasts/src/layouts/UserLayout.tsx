@@ -55,7 +55,7 @@ export default function UserLayout({
           onNavigate={handleLegacyNavigate}
         />
       )}
-      <main className={`flex-1 px-4 sm:px-0 ${showNavbar ? 'pt-28 sm:pt-32' : 'pt-0'}`}>
+      <main className="flex-1 px-4 sm:px-0 py-6 sm:py-8">
         {showNavbar && <Breadcrumbs />}
         <Outlet context={{ user, isAdmin, showAlert, showToast }} />
       </main>

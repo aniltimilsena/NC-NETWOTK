@@ -213,7 +213,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
       />
 
       {/* Main Feed: Full width centered on desktop */}
-      <main className="max-w-5xl mx-auto px-3.5 sm:px-12 md:px-16 py-6 md:py-20 w-full">
+      <div className="max-w-5xl mx-auto px-3.5 sm:px-12 md:px-16 w-full">
         
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-4 mb-8">
@@ -485,7 +485,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
           )}
         </div>
 
-      </main>
+      </div>
     </div>
   );
 }
