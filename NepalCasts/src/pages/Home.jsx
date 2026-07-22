@@ -571,13 +571,36 @@ export default function Home({ onNavigate, user }) {
                 <AdBanner
                   id="home-partner-spotlight"
                   variant="card"
-                  badge="FEATURED PARTNER"
-                  discount="20% OFF"
-                  title="RED 8K Cinema Camera & Studio Package"
-                  subtitle="Exclusive 20% discount on professional camera rigs & sound stages in Kathmandu."
-                  ctaText="Book Studio Package"
-                  ctaUrl="/premium"
-                  image="/assets/ads/masterclass_promo.png"
+                  intervalMs={4000}
+                  items={[
+                    {
+                      badge: 'FEATURED PARTNER',
+                      discount: '20% OFF',
+                      title: 'RED 8K Cinema Camera & Studio Package',
+                      subtitle: 'Exclusive 20% discount on professional camera rigs & sound stages in Kathmandu.',
+                      ctaText: 'Book Studio Package',
+                      ctaUrl: '/premium',
+                      image: '/assets/ads/masterclass_promo.png',
+                    },
+                    {
+                      badge: 'ACTING MASTERCLASS',
+                      discount: 'EARLY BIRD',
+                      title: 'National Acting & Audition Workshop',
+                      subtitle: '2-day intensive camera acting workshop with industry mentors in Kathmandu.',
+                      ctaText: 'Reserve Your Seat',
+                      ctaUrl: '/casting',
+                      image: '/assets/ads/masterclass_promo.png',
+                    },
+                    {
+                      badge: 'CASTING SPOTLIGHT',
+                      discount: 'URGENT',
+                      title: "Feature Film 'Himalayan Dreams' Open Calls",
+                      subtitle: 'Direct audition opportunities for lead and supporting actors across Nepal.',
+                      ctaText: 'Submit Application',
+                      ctaUrl: '/casting',
+                      image: '/assets/ads/masterclass_promo.png',
+                    },
+                  ]}
                 />
               </div>
 

@@ -162,11 +162,30 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
         <AdBanner
           id="demo-top-announcement"
           variant="top-bar"
-          badge="MASTERCLASS 2026"
-          title="🎬 Kathmandu Acting & Directing Masterclass with National Award Directors"
-          subtitle="Early Bird 20% Discount Available"
-          ctaText="Explore"
-          ctaUrl="/casting"
+          intervalMs={4000}
+          items={[
+            {
+              badge: 'MASTERCLASS 2026',
+              title: '🎬 Kathmandu Acting & Directing Masterclass with National Award Directors',
+              subtitle: 'Early Bird 20% Discount Available',
+              ctaText: 'Explore',
+              ctaUrl: '/casting',
+            },
+            {
+              badge: 'AUDITION ALERT',
+              title: "🎭 Open Casting Call for Feature Film 'Himalayan Dreams'",
+              subtitle: 'Lead & Supporting Roles Open in Pokhara & Kathmandu',
+              ctaText: 'Apply Now',
+              ctaUrl: '/casting',
+            },
+            {
+              badge: 'STUDIO RENTAL',
+              title: '🎥 RED 8K Camera & Sound Stage Rentals in Lalitpur',
+              subtitle: '20% Off for Verified NepalCasts Creators',
+              ctaText: 'Book Studio',
+              ctaUrl: '/premium',
+            },
+          ]}
         />
         <nav className="bg-nc-dark/80 backdrop-blur-md border-b border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
