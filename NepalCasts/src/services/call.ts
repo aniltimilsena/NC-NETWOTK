@@ -268,57 +268,6 @@ export const cleanupCall = async (callId: string): Promise<void> => {
 
 
 
-export const getCallHistory = async (
-  userId: string,
-  maxResults: number = 50
-): Promise<CallDoc[]> => {
-  try {
-    
-    const callerQuery = query(
-      collection(db, COLLECTIONS.CALLS),
-      where("callerId", "==", userId),
-      limit(maxResults)
-    );
-
-    
-    const calleeQuery = query(
-      collection(db, COLLECTIONS.CALLS),
-      where("calleeId", "==", userId),
-      limit(maxResults)
-    );
-
-    const [callerSnap, calleeSnap] = await Promise.all([
-      getDocs(callerQuery),
-      getDocs(calleeQuery),
-    ]);
-
-    const callMap = new Map<string, CallDoc>();
-
-    callerSnap.docs.forEach((d) => {
-      callMap.set(d.id, { id: d.id, ...d.data() } as CallDoc);
-    });
-    calleeSnap.docs.forEach((d) => {
-      if (!callMap.has(d.id)) {
-        callMap.set(d.id, { id: d.id, ...d.data() } as CallDoc);
-      }
-    });
-
-    
-    const allCalls = Array.from(callMap.values());
-    allCalls.sort((a, b) => {
-      const aTime = a.createdAt?.toMillis?.() || a.createdAt?.seconds * 1000 || 0;
-      const bTime = b.createdAt?.toMillis?.() || b.createdAt?.seconds * 1000 || 0;
-      return bTime - aTime;
-    });
-
-    return allCalls.slice(0, maxResults);
-  } catch (err) {
-    console.error("[CallService] getCallHistory error:", err);
-    return [];
-  }
-};
-
-
 export const subscribeToCallHistory = (
   userId: string,
   callback: (calls: CallDoc[]) => void,

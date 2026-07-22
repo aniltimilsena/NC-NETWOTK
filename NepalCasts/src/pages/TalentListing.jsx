@@ -169,6 +169,9 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
       alert("Please sign in to follow talents.");
       return;
     }
+    if (currentUser.uid === talentId) {
+      return;
+    }
 
     const followId = `${currentUser.uid}_${talentId}`;
     const followDocRef = doc(db, "follows", followId);
@@ -546,16 +549,18 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                         </div>
 
                         <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            onClick={(e) => handleToggleFollow(e, talent.id)}
-                            className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 ${isFollowing
-                                ? 'border border-white/10 text-gray-400 hover:bg-white/5'
-                                : 'bg-gradient-to-br from-sky-400 to-sky-600 text-black hover:brightness-110 shadow-lg shadow-sky-500/10 active:scale-[0.98]'
-                              }`}
-                          >
-                            {isFollowing ? 'Following' : 'Follow'}
-                          </button>
+                          {talent.id !== auth.currentUser?.uid && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleFollow(e, talent.id)}
+                              className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 ${isFollowing
+                                  ? 'border border-white/10 text-gray-400 hover:bg-white/5'
+                                  : 'bg-gradient-to-br from-sky-400 to-sky-600 text-black hover:brightness-110 shadow-lg shadow-sky-500/10 active:scale-[0.98]'
+                                }`}
+                            >
+                              {isFollowing ? 'Following' : 'Follow'}
+                            </button>
+                          )}
 
                           <button
                             type="button"

@@ -120,19 +120,3 @@ export const uploadMedia = async (
     xhr.send(formData);
   });
 };
-
-
-export const uploadChatMedia = (file: File, conversationId: string, onProgress?: (progress: number) => void) =>
-  uploadMedia(file, `chat/${conversationId}`, onProgress);
-
-export const uploadAvatar = (file: File, userId: string, onProgress?: (progress: number) => void) =>
-  uploadMedia(file, `avatars/${userId}`, onProgress);
-
-export const uploadCover = (file: File, userId: string, onProgress?: (progress: number) => void) =>
-  uploadMedia(file, `covers/${userId}`, onProgress);
-
-export const uploadCastingBanner = (file: File, castingId: string, onProgress?: (progress: number) => void) =>
-  uploadMedia(file, `castings/${castingId}`, onProgress);
-
-export const uploadGalleryMedia = (file: File, userId: string, onProgress?: (progress: number) => void) =>
-  uploadMedia(file, `gallery/${userId}`, onProgress);

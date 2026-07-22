@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Search, MapPin, ArrowLeft, X } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import Avatar from "./Avatar";
 import { collection, getDocs, query as firestoreQuery } from "firebase/firestore";
 
@@ -102,15 +102,18 @@ export function ActionSearchBar({
             try {
                 const q = firestoreQuery(collection(db, "profiles"));
                 const snap = await getDocs(q);
-                const loaded = snap.docs.map((doc) => ({
-                    uid: doc.id,
-                    name: (doc.data().name as string) || "Unknown User",
-                    role: (doc.data().role as string) || "Talent",
-                    location: doc.data().location as string | undefined,
-                    image: (doc.data().image || doc.data().photoURL) as string | undefined,
-                    gender: doc.data().gender as string | undefined,
-                    verified: !!doc.data().verified,
-                }));
+                const currentUid = auth.currentUser?.uid;
+                const loaded = snap.docs
+                    .filter((doc) => !currentUid || doc.id !== currentUid)
+                    .map((doc) => ({
+                        uid: doc.id,
+                        name: (doc.data().name as string) || "Unknown User",
+                        role: (doc.data().role as string) || "Talent",
+                        location: doc.data().location as string | undefined,
+                        image: (doc.data().image || doc.data().photoURL) as string | undefined,
+                        gender: doc.data().gender as string | undefined,
+                        verified: !!doc.data().verified,
+                    }));
                 setAllProfiles(loaded);
                 setHasLoaded(true);
             } catch (err) {
@@ -129,15 +132,19 @@ export function ActionSearchBar({
             const wasCleared = localStorage.getItem("nc_search_history_cleared") === "true";
             if (wasCleared) return;
 
-            const initialHistory: HistoryItem[] = allProfiles.slice(0, 5).map(p => ({
-                type: 'profile',
-                value: p.uid,
-                name: p.name,
-                image: p.image,
-                verified: p.verified,
-                role: p.role,
-                location: p.location
-            }));
+            const currentUid = auth.currentUser?.uid;
+            const initialHistory: HistoryItem[] = allProfiles
+                .filter(p => !currentUid || p.uid !== currentUid)
+                .slice(0, 5)
+                .map(p => ({
+                    type: 'profile',
+                    value: p.uid,
+                    name: p.name,
+                    image: p.image,
+                    verified: p.verified,
+                    role: p.role,
+                    location: p.location
+                }));
             setHistory(initialHistory);
             try {
                 localStorage.setItem("nc_search_history_v3", JSON.stringify(initialHistory));
@@ -152,9 +159,10 @@ export function ActionSearchBar({
         const historyProfileUids = history
             .filter(h => h.type === 'profile')
             .map(h => h.value);
+        const currentUid = auth.currentUser?.uid;
 
         const isExcluded = (uid: string) => {
-            return dismissedSuggestionIds.includes(uid) || historyProfileUids.includes(uid);
+            return (currentUid && uid === currentUid) || dismissedSuggestionIds.includes(uid) || historyProfileUids.includes(uid);
         };
 
         if (!normalized) {

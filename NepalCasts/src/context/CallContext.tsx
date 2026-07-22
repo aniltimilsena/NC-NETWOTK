@@ -16,7 +16,7 @@ import {
 } from "../services/call";
 import { getProfile } from "../services/profile";
 import { playRingtone, stopRingtone, playEndCallSound } from "../utils/ringtone";
-import { findOrCreateConversation, sendMessage } from "../services/messaging";
+import { createConversation, sendMessage } from "../services/messaging";
 import { db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 
@@ -121,7 +121,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
       const callerId = call.callerId;
       if (!targetReceiverId || !callerId) return;
 
-      const { id: convoId } = await findOrCreateConversation([callerId, targetReceiverId]);
+      const { id: convoId } = await createConversation([callerId, targetReceiverId]);
       if (!convoId) return;
 
       const callTypeStr = call.callType || "audio";

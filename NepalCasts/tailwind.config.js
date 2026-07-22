@@ -12,7 +12,7 @@ export default {
         'nc-accent': '#00BFFF',
         'nc-pro': '#FFD700',
         'nc-blue': '#00BFFF',
-        'nc-text': '#FFFFFF',
+        'nc-text': '#E2E8F0',
         'nc-secondary': '#CCCCCC',
         'nc-muted': '#666666',
         // Admin Dashboard Semantic Colors

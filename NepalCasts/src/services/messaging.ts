@@ -448,22 +448,6 @@ export const subscribeToConversations = (
   );
 };
 
-export const getConversations = async (uid: string) => {
-  
-  try {
-    const q = query(
-      collection(db, COLLECTIONS.CONVERSATIONS),
-      where("participants", "array-contains", uid),
-      orderBy("lastMessageAt", "desc")
-    );
-    const snapshot = await getDocs(q);
-    
-    return []; 
-  } catch (error) {
-    return [];
-  }
-};
-
 export const deleteConversation = async (convoId: string) => {
   try {
     await apiClient.delete(`/messaging/${convoId}`, { timeout: 1500 });
@@ -671,10 +655,6 @@ export const createConversation = async (
       return { id: null, error: fallbackError.message || "Failed to create conversation" };
     }
   }
-};
-
-export const findOrCreateConversation = async (participants: string[]) => {
-  return createConversation(participants);
 };
 
 export const markConversationAsRead = async (convoId: string) => {

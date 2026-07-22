@@ -5,7 +5,7 @@ import {
   subscribeToConversations,
   subscribeToMessages,
   sendMessage,
-  findOrCreateConversation,
+  createConversation,
   deleteConversation,
   updateMessage,
   deleteMessage,
@@ -77,7 +77,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
 
     const resolveConvo = async () => {
       try {
-        const res = await findOrCreateConversation([currentUser.uid, initialUserId]);
+        const res = await createConversation([currentUser.uid, initialUserId]);
         if (res?.id) {
           setActiveChatId(res.id);
         }

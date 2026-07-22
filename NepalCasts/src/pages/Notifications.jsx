@@ -445,7 +445,7 @@ export default function Notifications({ onNavigate, user }) {
 
   const handleFollowBack = async (e, senderId) => {
     e.stopPropagation();
-    if (!user?.uid) return;
+    if (!user?.uid || !senderId || user.uid === senderId) return;
 
     const followId = `${user.uid}_${senderId}`;
     const followDocRef = doc(db, "follows", followId);

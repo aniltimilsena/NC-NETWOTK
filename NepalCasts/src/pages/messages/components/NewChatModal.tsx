@@ -44,6 +44,7 @@ export default function NewChatModal({
   if (!isOpen) return null;
 
   const filtered = profiles.filter(p =>
+    p.id !== user?.uid && p.uid !== user?.uid &&
     (p.name || '').toLowerCase().includes(search.toLowerCase())
   );
 

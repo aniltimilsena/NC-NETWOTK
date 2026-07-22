@@ -14,26 +14,6 @@ import { rateLimitedGet } from "../utils/rateLimitedFirestore";
 import apiClient from "../api/client";
 import { COLLECTIONS } from "../constants/collections";
 
-export const getCastingCalls = async (filter?: string) => {
-  try {
-    let q;
-    if (filter && filter.toLowerCase() !== "all") {
-      q = query(
-        collection(db, COLLECTIONS.CASTING_CALLS),
-        where("type", "==", filter),
-        orderBy("createdAt", "desc")
-      );
-    } else {
-      q = query(collection(db, COLLECTIONS.CASTING_CALLS), orderBy("createdAt", "desc"));
-    }
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-  } catch (error) {
-    console.error("Error fetching casting calls:", error);
-    return [];
-  }
-};
-
 export const subscribeToCastingCalls = (
   filter: string,
   callback: (data: any, error: any) => void

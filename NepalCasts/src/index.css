@@ -24,6 +24,19 @@
     letter-spacing: -0.011em; /* Improved tracking for optimized typography legibility */
     -webkit-font-smoothing: antialiased;
   }
+
+  /* Softened off-white contrast for headings and names to prevent eye glare and flashiness */
+  h1, h2, h3, h4, h5, h6 {
+    color: #e2e8f0;
+  }
+
+  .text-white {
+    color: #e2e8f0;
+  }
+
+  .text-gray-100 {
+    color: #cbd5e1;
+  }
   
   ::-webkit-scrollbar {
     width: 6px;

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { doc, getDoc, collection, query, where, getDocs, onSnapshot, setDoc, deleteDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, or, updateDoc, getDocs, onSnapshot, setDoc, deleteDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { subscribeToProfile, uploadProfileMedia, updateProfileData } from '../../../services/profile';
 import type { UserProfile, ServiceResult } from '../../../types';
@@ -109,29 +109,44 @@ export function useProfile(profileId: string | null, currentUser: any) {
     return () => unsub();
   }, [currentUser?.uid, targetUid]);
 
-  // Subscribe to reviews list
+  // Subscribe to reviews list and calculate live rating
   useEffect(() => {
     if (!targetUid) {
       setLoadingReviews(false);
       return;
     }
-    const q = query(collection(db, "reviews"), where("targetUid", "==", targetUid));
+    const q = query(
+      collection(db, "reviews"), 
+      or(where("targetUid", "==", targetUid), where("targetUserId", "==", targetUid))
+    );
     const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map(docSnap => {
+      const listMap = new Map();
+      snap.docs.forEach(docSnap => {
         const r = docSnap.data();
         let dateStr = 'Just now';
         if (r.createdAt) {
           const date = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
           dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
         }
-        return {
+        listMap.set(docSnap.id, {
           id: docSnap.id,
           ...r,
           dateFormatted: dateStr
-        };
+        });
       });
+      const list = Array.from(listMap.values());
       setReviewsList(list);
       setLoadingReviews(false);
+
+      // Auto sync rating to Firestore if reviews exist
+      if (list.length > 0) {
+        const totalRating = list.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+        const avg = parseFloat((totalRating / list.length).toFixed(1));
+        updateDoc(doc(db, "profiles", targetUid), {
+          rating: avg,
+          reviews: list.length
+        }).catch((e) => console.warn("Failed to auto-sync rating:", e));
+      }
     }, (err) => {
       console.warn("Failed to subscribe to reviews:", err);
       setLoadingReviews(false);
@@ -210,6 +225,9 @@ export function useProfile(profileId: string | null, currentUser: any) {
     if (!currentUser || !targetUid) {
       return { success: false, error: "Authentication required" };
     }
+    if (currentUser.uid === targetUid) {
+      return { success: false, error: "Cannot follow yourself" };
+    }
     const followId = `${currentUser.uid}_${targetUid}`;
     const followDocRef = doc(db, "follows", followId);
 
@@ -230,8 +248,17 @@ export function useProfile(profileId: string | null, currentUser: any) {
     }
   }, [currentUser, targetUid, isFollowing]);
 
+  const computedRating = reviewsList.length > 0
+    ? parseFloat((reviewsList.reduce((acc, r) => acc + (Number(r.rating) || 0), 0) / reviewsList.length).toFixed(1))
+    : (profile?.rating || (profile?.totalRating && profile?.reviewCount ? parseFloat((profile.totalRating / profile.reviewCount).toFixed(1)) : 0));
+
+  const effectiveProfile = profile ? {
+    ...profile,
+    rating: computedRating
+  } : null;
+
   return {
-    profile,
+    profile: effectiveProfile,
     resolvedUid,
     resolvingUid,
     loading,

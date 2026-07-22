@@ -41,8 +41,3 @@ export const getUserFriendlyError = (error: any): string => {
   const code = error?.code || error?.message || 'default';
   return ERROR_MAP[code] || ERROR_MAP['default'];
 };
-
-export const handleError = (error: unknown, userMessage = 'Something went wrong. Please try again.') => {
-  logger.error(error);
-  return userMessage;
-};
