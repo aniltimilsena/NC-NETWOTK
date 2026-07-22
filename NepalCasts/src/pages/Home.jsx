@@ -5,6 +5,7 @@ import GlassCard from '../components/ui/GlassCard';
 import CategorySkeleton from '../components/ui/CategorySkeleton';
 import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
+import { AdBanner } from '../components/ui/AdBanner';
 import { subscribeToTalents } from '../services/users';
 import { subscribeToCastingCalls } from '../services/casting';
 
@@ -564,6 +565,20 @@ export default function Home({ onNavigate, user }) {
               ) : (
                 <CategorySkeleton />
               )}
+
+              {/* Featured Sponsor / Partner Spotlight Ad */}
+              <div className="my-6 max-w-4xl mx-auto">
+                <AdBanner
+                  id="home-partner-spotlight"
+                  variant="card"
+                  badge="FEATURED PARTNER"
+                  title="RED V-Raptor 8K Cinema Camera & Studio Rentals"
+                  subtitle="Special 20% discount on professional camera packages, lighting rigs, and sound stages in Kathmandu for verified NepalCasts directors & cinematographers."
+                  ctaText="Book Studio Package"
+                  ctaUrl="/premium"
+                  image="/assets/ads/masterclass_promo.png"
+                />
+              </div>
 
               {/* CastingCall & Audition Update Strip */}
               {castingCalls.length > 0 && (

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
 import { ActionSearchBar } from "@/components/ui/ActionSearchBar";
+import { AdBanner } from '@/components/ui/AdBanner';
 import Logo from '../ui/Logo';
 import { 
   NotificationIcon, 
@@ -157,8 +158,18 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-nc-dark/80 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <AdBanner
+          id="demo-top-announcement"
+          variant="top-bar"
+          badge="MASTERCLASS 2026"
+          title="🎬 Kathmandu Acting & Directing Masterclass with National Award Directors"
+          subtitle="Early Bird 20% Discount Available"
+          ctaText="Explore Masterclass"
+          ctaUrl="/casting"
+        />
+        <nav className="bg-nc-dark/80 backdrop-blur-md border-b border-white/5">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20">
             {/* Logo & Back */}
             <div className="flex items-center gap-4 sm:gap-8">
@@ -299,6 +310,7 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
           </div>
         </div>
       </nav>
+    </div>
         
       {/* Mobile Menu Overlay */}
       {menuOpen && (
