@@ -165,7 +165,7 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
           badge="MASTERCLASS 2026"
           title="🎬 Kathmandu Acting & Directing Masterclass with National Award Directors"
           subtitle="Early Bird 20% Discount Available"
-          ctaText="Explore Masterclass"
+          ctaText="Explore"
           ctaUrl="/casting"
         />
         <nav className="bg-nc-dark/80 backdrop-blur-md border-b border-white/5">

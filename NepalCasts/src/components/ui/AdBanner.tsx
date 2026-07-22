@@ -98,9 +98,9 @@ export const AdBanner: React.FC<AdBannerProps> = ({
               <a
                 href={ctaUrl}
                 onClick={handleCta}
-                className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-extrabold px-3 py-1 rounded-lg text-xs transition-all shadow-md shadow-cyan-500/20 hover:shadow-cyan-500/40"
+                className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-bold text-xs transition-colors hover:underline"
               >
-                <span className="truncate max-w-[120px] sm:max-w-none">{ctaText}</span>
+                <span>{ctaText}</span>
                 <ArrowRight className="w-3.5 h-3.5 shrink-0" />
               </a>
               {dismissible && (
