@@ -46,9 +46,21 @@ export const AdBanner: React.FC<AdBannerProps> = ({
 
   if (dismissed) return null;
 
-  // 1. TOP ANNOUNCEMENT BAR (Smooth Moving Ticker / Marquee)
+  // 1. TOP ANNOUNCEMENT BAR (Entire Track Scrolls: Badge + Moving Text)
   if (variant === 'top-bar') {
     const fullText = `${title} ${subtitle ? `— ${subtitle}` : ''}`;
+
+    const MarqueeItem = () => (
+      <span className="inline-flex items-center gap-2.5">
+        <span className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500/25 via-blue-500/25 to-purple-500/25 text-cyan-300 font-extrabold px-2.5 py-0.5 rounded-full text-[10px] tracking-wider uppercase border border-cyan-400/40 shadow-sm shrink-0">
+          <Sparkles className="w-3 h-3 text-cyan-300 animate-pulse" />
+          {badge}
+        </span>
+        <span className="text-gray-200 font-semibold">{fullText}</span>
+        <span className="text-cyan-400/50 font-black ml-2">✦</span>
+      </span>
+    );
+
     return (
       <AnimatePresence>
         <motion.div
@@ -58,46 +70,26 @@ export const AdBanner: React.FC<AdBannerProps> = ({
           className="relative bg-gradient-to-r from-[#0B132B]/95 via-[#1C2541]/95 to-[#0B132B]/95 border-b border-cyan-500/30 backdrop-blur-md text-xs py-2 px-3 sm:px-4 z-[51] shadow-lg group overflow-hidden"
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
-            {/* Fixed Left Badge */}
-            <div className="shrink-0 z-10 flex items-center bg-[#0B132B]/90 pr-2 rounded-r-lg">
-              <span className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500/25 via-blue-500/25 to-purple-500/25 text-cyan-300 font-extrabold px-2.5 py-0.5 rounded-full text-[10px] tracking-wider uppercase border border-cyan-400/40 shadow-sm">
-                <Sparkles className="w-3 h-3 text-cyan-300 animate-pulse" />
-                {badge}
-              </span>
-            </div>
-
-            {/* Smooth Moving Marquee Text in Middle */}
-            <div className="relative flex-1 overflow-hidden h-5 flex items-center mx-1 sm:mx-2 select-none">
+            {/* Smooth Moving Marquee Track (Includes Badge + Text) */}
+            <div className="relative flex-1 overflow-hidden h-6 flex items-center select-none">
               {/* Fade Edges for Marquee Mask */}
-              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-[#0B132B] to-transparent z-10 pointer-events-none" />
-              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#0B132B] to-transparent z-10 pointer-events-none" />
+              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#0B132B] to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0B132B] to-transparent z-10 pointer-events-none" />
 
               <motion.div
-                className="flex whitespace-nowrap gap-10 text-gray-200 font-semibold cursor-default"
+                className="flex whitespace-nowrap gap-10 cursor-default"
                 animate={{ x: ['0%', '-50%'] }}
                 transition={{
                   repeat: Infinity,
                   ease: 'linear',
-                  duration: 20,
+                  duration: 22,
                 }}
                 style={{ willChange: 'transform' }}
               >
-                <span className="inline-flex items-center gap-3">
-                  <span>{fullText}</span>
-                  <span className="text-cyan-400/60 font-black">✦</span>
-                </span>
-                <span className="inline-flex items-center gap-3">
-                  <span>{fullText}</span>
-                  <span className="text-cyan-400/60 font-black">✦</span>
-                </span>
-                <span className="inline-flex items-center gap-3">
-                  <span>{fullText}</span>
-                  <span className="text-cyan-400/60 font-black">✦</span>
-                </span>
-                <span className="inline-flex items-center gap-3">
-                  <span>{fullText}</span>
-                  <span className="text-cyan-400/60 font-black">✦</span>
-                </span>
+                <MarqueeItem />
+                <MarqueeItem />
+                <MarqueeItem />
+                <MarqueeItem />
               </motion.div>
             </div>
 
