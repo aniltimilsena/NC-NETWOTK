@@ -46,35 +46,70 @@ export const AdBanner: React.FC<AdBannerProps> = ({
 
   if (dismissed) return null;
 
-  // 1. TOP ANNOUNCEMENT BAR
+  // 1. TOP ANNOUNCEMENT BAR (Smooth Moving Ticker / Marquee)
   if (variant === 'top-bar') {
+    const fullText = `${title} ${subtitle ? `— ${subtitle}` : ''}`;
     return (
       <AnimatePresence>
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="relative bg-gradient-to-r from-cyan-950/80 via-purple-950/80 to-cyan-950/80 border-b border-cyan-500/20 backdrop-blur-md text-xs py-2 px-4 z-[51]"
+          className="relative bg-gradient-to-r from-[#0B132B]/95 via-[#1C2541]/95 to-[#0B132B]/95 border-b border-cyan-500/30 backdrop-blur-md text-xs py-2 px-3 sm:px-4 z-[51] shadow-lg group overflow-hidden"
         >
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5 overflow-hidden text-ellipsis whitespace-nowrap">
-              <span className="shrink-0 inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-300 font-bold px-2 py-0.5 rounded-full text-[10px] tracking-wider uppercase border border-cyan-500/30">
-                <Sparkles className="w-3 h-3 text-cyan-400" />
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+            {/* Fixed Left Badge */}
+            <div className="shrink-0 z-10 flex items-center bg-[#0B132B]/90 pr-2 rounded-r-lg">
+              <span className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500/25 via-blue-500/25 to-purple-500/25 text-cyan-300 font-extrabold px-2.5 py-0.5 rounded-full text-[10px] tracking-wider uppercase border border-cyan-400/40 shadow-sm">
+                <Sparkles className="w-3 h-3 text-cyan-300 animate-pulse" />
                 {badge}
-              </span>
-              <span className="text-gray-200 font-medium truncate">
-                {title} {subtitle && <span className="text-gray-400 font-normal hidden sm:inline">— {subtitle}</span>}
               </span>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
+            {/* Smooth Moving Marquee Text in Middle */}
+            <div className="relative flex-1 overflow-hidden h-5 flex items-center mx-1 sm:mx-2 select-none">
+              {/* Fade Edges for Marquee Mask */}
+              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-[#0B132B] to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#0B132B] to-transparent z-10 pointer-events-none" />
+
+              <motion.div
+                className="flex whitespace-nowrap gap-10 text-gray-200 font-semibold cursor-default"
+                animate={{ x: ['0%', '-50%'] }}
+                transition={{
+                  repeat: Infinity,
+                  ease: 'linear',
+                  duration: 20,
+                }}
+                style={{ willChange: 'transform' }}
+              >
+                <span className="inline-flex items-center gap-3">
+                  <span>{fullText}</span>
+                  <span className="text-cyan-400/60 font-black">✦</span>
+                </span>
+                <span className="inline-flex items-center gap-3">
+                  <span>{fullText}</span>
+                  <span className="text-cyan-400/60 font-black">✦</span>
+                </span>
+                <span className="inline-flex items-center gap-3">
+                  <span>{fullText}</span>
+                  <span className="text-cyan-400/60 font-black">✦</span>
+                </span>
+                <span className="inline-flex items-center gap-3">
+                  <span>{fullText}</span>
+                  <span className="text-cyan-400/60 font-black">✦</span>
+                </span>
+              </motion.div>
+            </div>
+
+            {/* Fixed Right CTA & Dismiss Button */}
+            <div className="shrink-0 z-10 flex items-center gap-2 sm:gap-3 bg-[#0B132B]/90 pl-2 rounded-l-lg">
               <a
                 href={ctaUrl}
                 onClick={handleCta}
-                className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-semibold transition-colors hover:underline text-xs"
+                className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-extrabold px-3 py-1 rounded-lg text-xs transition-all shadow-md shadow-cyan-500/20 hover:shadow-cyan-500/40"
               >
-                <span>{ctaText}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span className="truncate max-w-[120px] sm:max-w-none">{ctaText}</span>
+                <ArrowRight className="w-3.5 h-3.5 shrink-0" />
               </a>
               {dismissible && (
                 <button
