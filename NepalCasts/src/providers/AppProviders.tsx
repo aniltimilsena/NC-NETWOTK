@@ -46,11 +46,25 @@ export default function AppProviders({ children }: { children: React.ReactNode }
   const [userProfile, setUserProfile] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(false);
-  const [minSplashTimeElapsed, setMinSplashTimeElapsed] = useState(false);
+  const [minSplashTimeElapsed, setMinSplashTimeElapsed] = useState(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('nc_splash_shown') === 'true') {
+      return true;
+    }
+    return false;
+  });
   const [alerts, setAlerts] = useState<AlertPayload[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setMinSplashTimeElapsed(true), 2000);
+    if (typeof window !== 'undefined' && sessionStorage.getItem('nc_splash_shown') === 'true') {
+      setMinSplashTimeElapsed(true);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setMinSplashTimeElapsed(true);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('nc_splash_shown', 'true');
+      }
+    }, 2000);
     return () => clearTimeout(timer);
   }, []);
 

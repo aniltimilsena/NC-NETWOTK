@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, ExternalLink, Megaphone, ArrowRight, Clapperboard, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -30,6 +31,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   dismissible = true,
 }) => {
   const [dismissed, setDismissed] = useState(false);
+  const navigate = useNavigate();
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -41,6 +43,11 @@ export const AdBanner: React.FC<AdBannerProps> = ({
     if (onCtaClick) {
       e.preventDefault();
       onCtaClick();
+      return;
+    }
+    if (ctaUrl && ctaUrl.startsWith('/')) {
+      e.preventDefault();
+      navigate(ctaUrl);
     }
   };
 
