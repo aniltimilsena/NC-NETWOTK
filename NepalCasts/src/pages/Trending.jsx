@@ -217,31 +217,31 @@ export default function Trending({ onNavigate }) {
       />
 
       <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-12">
-        {/* Header Navigation / Centered Title / Filter Button */}
-        <div className="flex items-center justify-between pb-2.5 border-b border-white/5 relative mb-6">
-          {/* Left Side: Back button */}
-          <button
-            onClick={() => onNavigate('back')}
-            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors cursor-pointer z-20"
-            aria-label="Back"
-            title="Go Back"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          {/* Center: Centered Title & Count */}
-          <div className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-center pointer-events-none z-10">
-            <h1 className="text-xl sm:text-2xl font-black text-white pointer-events-auto flex items-center gap-1.5 leading-none">
-              Trending Now
-              <TrendingUp className="w-5 h-5 text-yellow-400" />
-            </h1>
-            <p className="text-[10px] sm:text-xs text-nc-muted pointer-events-auto mt-1 font-semibold">
-              {selectedCategory === 'All' ? 'All Talent' : getCategoryConfig(selectedCategory).label} • {rankedProfiles.length} {rankedProfiles.length === 1 ? 'talent' : 'talents'}
-            </p>
+        {/* Header Navigation / Title / Filter Button */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-white/5 mb-6">
+          {/* Left Side: Back button & Title */}
+          <div className="flex items-center gap-3.5">
+            <button
+              onClick={() => onNavigate('back')}
+              className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
+              aria-label="Back"
+              title="Go Back"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-white flex items-center gap-1.5 leading-none">
+                Trending Now
+                <TrendingUp className="w-5 h-5 text-yellow-400" />
+              </h1>
+              <p className="text-[10px] sm:text-xs text-nc-muted mt-1 font-semibold">
+                {selectedCategory === 'All' ? 'All Talent' : getCategoryConfig(selectedCategory).label} • {rankedProfiles.length} {rankedProfiles.length === 1 ? 'talent' : 'talents'}
+              </p>
+            </div>
           </div>
 
           {/* Right Side: Category filter dropdown button */}
-          <div className="relative z-20">
+          <div className="relative self-end sm:self-center">
             <button
               onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
               className="w-7 h-7 flex items-center justify-center text-sky-400 hover:text-sky-300 transition-colors duration-200 cursor-pointer"

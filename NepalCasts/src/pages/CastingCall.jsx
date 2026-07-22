@@ -216,30 +216,29 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
       <main className="max-w-5xl mx-auto px-3.5 sm:px-12 md:px-16 py-6 md:py-20 w-full">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-8 relative min-h-[52px]">
-          
-          {/* Left Side: Back button */}
-          <button
-            onClick={() => onNavigate('back')}
-            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors cursor-pointer z-20"
-            aria-label="Back"
-            title="Go Back"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          {/* Center: Centered Title & Description */}
-          <div className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-center pointer-events-none z-10 text-center px-28">
-            <h2 className="text-xl sm:text-2xl font-black text-white pointer-events-auto tracking-tight uppercase leading-none">
-              Opportunities
-            </h2>
-            <p className="text-[10px] sm:text-xs text-gray-500 pointer-events-auto mt-1 font-medium whitespace-nowrap">
-              Open casting calls from verified productions
-            </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-4 mb-8">
+          {/* Left Side: Back button & Title */}
+          <div className="flex items-center gap-3.5">
+            <button
+              onClick={() => onNavigate('back')}
+              className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
+              aria-label="Back"
+              title="Go Back"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase leading-none">
+                Opportunities
+              </h2>
+              <p className="text-[10px] sm:text-xs text-gray-400 mt-1 font-medium">
+                Open casting calls from verified productions
+              </p>
+            </div>
           </div>
 
-          {/* Right Side: Search (expanding), Filters & Post button */}
-          <div className="flex items-center gap-3 z-20">
+          {/* Right Side: Search, Filters & Post button */}
+          <div className="flex items-center gap-3 self-end sm:self-center">
             
             {/* Search Box (Icon Only, Expanding to the left) */}
             <div className="flex items-center gap-2 relative">

@@ -367,33 +367,32 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         {/* VIEW 2: TALENTS GRID LISTING */}
         {viewMode === 'talents' && (
           <div className="animate-fade-in space-y-3 text-left">
-            <div className="flex items-center justify-between pb-2.5 border-b border-white/5 relative">
-              
-              {/* Left Side: Back button */}
-              <button
-                onClick={() => {
-                  setSelectedFilters(prev => ({ ...prev, category: 'All' }));
-                  setViewMode('categories');
-                }}
-                className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors shadow-md z-20 cursor-pointer"
-                aria-label="Back to Categories"
-                title="Back to Categories"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-
-              {/* Center: Title & Count */}
-              <div className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-center pointer-events-none z-10">
-                <h2 className="text-xl sm:text-2xl font-black text-white pointer-events-auto">
-                  {selectedFilters.category === 'All' ? 'All' : getCategoryConfig(selectedFilters.category).label}
-                </h2>
-                <p className="text-[10px] sm:text-xs text-nc-muted pointer-events-auto mt-0.5">
-                  {filteredTalents.length} {filteredTalents.length === 1 ? 'talent' : 'talents'} found
-                </p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-white/5 mb-6">
+              {/* Left Side: Back button & Title */}
+              <div className="flex items-center gap-3.5">
+                <button
+                  onClick={() => {
+                    setSelectedFilters(prev => ({ ...prev, category: 'All' }));
+                    setViewMode('categories');
+                  }}
+                  className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors shadow-md cursor-pointer shrink-0"
+                  aria-label="Back to Categories"
+                  title="Back to Categories"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-black text-white leading-none">
+                    {selectedFilters.category === 'All' ? 'All' : getCategoryConfig(selectedFilters.category).label}
+                  </h2>
+                  <p className="text-[10px] sm:text-xs text-nc-muted mt-1 font-semibold">
+                    {filteredTalents.length} {filteredTalents.length === 1 ? 'talent' : 'talents'} found
+                  </p>
+                </div>
               </div>
 
               {/* Right Side: Sort dropdown wrapper */}
-              <div className="relative z-20">
+              <div className="relative self-end sm:self-center">
                 <button
                   onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
                   className="w-7 h-7 flex items-center justify-center text-sky-400 hover:text-sky-300 transition-colors duration-200 cursor-pointer"
