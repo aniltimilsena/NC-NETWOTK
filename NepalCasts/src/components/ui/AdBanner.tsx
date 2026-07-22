@@ -105,33 +105,36 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   const currentCtaUrl = currentAd.ctaUrl || ctaUrl;
   const currentImage = currentAd.image || image;
 
-  // 1. TOP ANNOUNCEMENT BAR (Entire Track Scrolls: Badge + Moving Text)
+  // 1. TOP ANNOUNCEMENT BAR (Unbroken Infinite Line — No Blinking)
   if (variant === 'top-bar') {
-    const fullText = `${currentTitle} ${currentSubtitle ? `— ${currentSubtitle}` : ''}`;
-
-    const MarqueeItem = () => (
-      <span className="inline-flex items-center gap-2.5">
-        <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-cyan-500/25 via-blue-500/25 to-purple-500/25 text-cyan-300 font-extrabold px-2.5 py-0.5 rounded-full text-[10px] tracking-wider uppercase border border-cyan-400/40 shadow-sm shrink-0">
-          <Clapperboard className="w-3 h-3 text-cyan-300" />
-          {currentBadge}
-        </span>
-        <span className="text-gray-200 font-semibold">{fullText}</span>
-        <span className="text-cyan-400/50 font-bold ml-2">•</span>
-      </span>
-    );
+    const renderAdSet = (prefix: string) =>
+      adList.map((ad, idx) => {
+        const adTitle = ad.title || title;
+        const adSubtitle = ad.subtitle || subtitle;
+        const adBadge = ad.badge || badge;
+        const fullText = `${adTitle} ${adSubtitle ? `— ${adSubtitle}` : ''}`;
+        return (
+          <span key={`${prefix}-${idx}`} className="inline-flex items-center gap-2.5">
+            <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-cyan-500/25 via-blue-500/25 to-purple-500/25 text-cyan-300 font-extrabold px-2.5 py-0.5 rounded-full text-[10px] tracking-wider uppercase border border-cyan-400/40 shadow-sm shrink-0">
+              <Clapperboard className="w-3 h-3 text-cyan-300" />
+              {adBadge}
+            </span>
+            <span className="text-gray-200 font-semibold">{fullText}</span>
+            <span className="text-cyan-400/50 font-bold ml-2">•</span>
+          </span>
+        );
+      });
 
     return (
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 4 }}
-          transition={{ duration: 0.4 }}
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
           className="relative bg-gradient-to-r from-[#0B132B]/95 via-[#1C2541]/95 to-[#0B132B]/95 border-b border-cyan-500/30 backdrop-blur-md text-xs py-2 px-3 sm:px-4 z-[51] shadow-lg group overflow-hidden"
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
-            {/* Smooth Moving Marquee Track (Includes Badge + Text) */}
+            {/* Smooth Moving Marquee Track (All Ads in One Unbroken Line) */}
             <div className="relative flex-1 overflow-hidden h-6 flex items-center select-none">
               {/* Fade Edges for Marquee Mask */}
               <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#0B132B] to-transparent z-10 pointer-events-none" />
@@ -143,14 +146,12 @@ export const AdBanner: React.FC<AdBannerProps> = ({
                 transition={{
                   repeat: Infinity,
                   ease: 'linear',
-                  duration: 22,
+                  duration: adList.length > 1 ? 30 : 20,
                 }}
                 style={{ willChange: 'transform' }}
               >
-                <MarqueeItem />
-                <MarqueeItem />
-                <MarqueeItem />
-                <MarqueeItem />
+                <div className="flex items-center gap-10">{renderAdSet('track1')}</div>
+                <div className="flex items-center gap-10">{renderAdSet('track2')}</div>
               </motion.div>
             </div>
 
