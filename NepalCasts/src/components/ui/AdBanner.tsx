@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ExternalLink, Sparkles, Megaphone, ArrowRight } from 'lucide-react';
+import { X, ExternalLink, Megaphone, ArrowRight, Clapperboard, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export interface AdBannerProps {
@@ -52,12 +52,12 @@ export const AdBanner: React.FC<AdBannerProps> = ({
 
     const MarqueeItem = () => (
       <span className="inline-flex items-center gap-2.5">
-        <span className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500/25 via-blue-500/25 to-purple-500/25 text-cyan-300 font-extrabold px-2.5 py-0.5 rounded-full text-[10px] tracking-wider uppercase border border-cyan-400/40 shadow-sm shrink-0">
-          <Sparkles className="w-3 h-3 text-cyan-300 animate-pulse" />
+        <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-cyan-500/25 via-blue-500/25 to-purple-500/25 text-cyan-300 font-extrabold px-2.5 py-0.5 rounded-full text-[10px] tracking-wider uppercase border border-cyan-400/40 shadow-sm shrink-0">
+          <Clapperboard className="w-3 h-3 text-cyan-300" />
           {badge}
         </span>
         <span className="text-gray-200 font-semibold">{fullText}</span>
-        <span className="text-cyan-400/50 font-black ml-2">✦</span>
+        <span className="text-cyan-400/50 font-bold ml-2">•</span>
       </span>
     );
 
@@ -141,7 +141,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({
               {/* Big Premium Discount Badge Overlay */}
               {discount && (
                 <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black font-black px-3 py-1 rounded-full text-xs tracking-wider uppercase shadow-[0_4px_16px_rgba(245,158,11,0.6)] border border-yellow-200/60 backdrop-blur-md transition-all duration-300 group-hover/img:scale-105">
-                  <Sparkles className="w-3.5 h-3.5 fill-black stroke-none" />
+                  <Tag className="w-3.5 h-3.5 fill-black text-black" />
                   <span className="drop-shadow-sm">{discount}</span>
                 </div>
               )}
