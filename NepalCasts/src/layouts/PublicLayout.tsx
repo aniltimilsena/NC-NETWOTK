@@ -22,7 +22,7 @@ export default function PublicLayout({
   const location = useLocation();
   const navigate = useNavigate();
 
-  
+
   const handleLegacyNavigate = (page: string, param: any = null) => {
     switch (page) {
       case 'home': navigate('/'); break;
@@ -58,7 +58,7 @@ export default function PublicLayout({
           onNavigate={handleLegacyNavigate}
         />
       )}
-      <main className="flex-1 px-2 sm:px-0 pb-8">
+      <main className="flex-1 px-1 sm:px-0 pb-8">
         {!isAuthPage && <Breadcrumbs />}
         <Outlet context={{ user, isAdmin, showAlert, showToast }} />
       </main>

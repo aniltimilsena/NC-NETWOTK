@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Bookmark, SortDesc, ChevronDown, Check, 
+import {
+  Bookmark, SortDesc, ChevronDown, Check,
   MapPin, Plus, Search, AlertCircle, Clock, SlidersHorizontal, ChevronLeft
 } from 'lucide-react';
 import { db } from '../lib/firebase';
@@ -13,13 +13,13 @@ const getDeadlineStatus = (deadlineStr) => {
   if (!deadlineStr) return { color: 'text-gray-400 border-white/5 bg-white/5', label: 'No deadline' };
   const dDate = new Date(deadlineStr);
   if (isNaN(dDate.getTime())) {
-    
+
     return { color: 'text-gray-400 border-white/5 bg-white/5', label: deadlineStr };
   }
   const now = new Date();
   const diffTime = dDate.getTime() - now.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
+
   if (diffDays < 0) {
     return { color: 'text-red-500/60 border-red-500/10 bg-red-500/5', label: 'Closed' };
   }
@@ -46,14 +46,14 @@ const getRolesSummary = (call) => {
 };
 
 export default function CastingCall({ onNavigate, user, isAdmin }) {
-  const [activeFilter, setActiveFilter] = useState('All'); 
+  const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [calls, setCalls] = useState([]);
-  const [savedIds, setSavedIds] = useState([]); 
+  const [savedIds, setSavedIds] = useState([]);
   const [appliedCastingIds, setAppliedCastingIds] = useState([]);
-  const [activeSort, setActiveSort] = useState('Latest'); 
+  const [activeSort, setActiveSort] = useState('Latest');
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
 
@@ -70,7 +70,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
     { id: 'Category', label: 'Category' }
   ];
 
-  
+
   useEffect(() => {
     setIsLoading(true);
     const unsubscribe = subscribeToCastingCalls('All', (data) => {
@@ -80,7 +80,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
     return () => unsubscribe();
   }, []);
 
-  
+
   useEffect(() => {
     if (!user) {
       setSavedIds([]);
@@ -99,7 +99,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
     return () => unsub();
   }, [user?.uid]);
 
-  
+
   useEffect(() => {
     if (!user) {
       setAppliedCastingIds([]);
@@ -118,14 +118,14 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
     return () => unsub();
   }, [user?.uid]);
 
-  
+
   const canPostCall = user && (user.role === 'Director' || user.role === 'Directors' || isAdmin);
 
-  
+
   const filteredCalls = calls
     .filter(call => {
-      
-      const matchesSearch = !searchQuery || 
+
+      const matchesSearch = !searchQuery ||
         call.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         call.production?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         call.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -134,14 +134,14 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
 
       if (!matchesSearch) return false;
 
-      
+
       if (activeFilter === 'Open') {
         if (!call.deadline) return true;
         const dDate = new Date(call.deadline);
-        if (isNaN(dDate.getTime())) return true; 
+        if (isNaN(dDate.getTime())) return true;
         return dDate.getTime() >= new Date().getTime();
       }
-      
+
       if (activeFilter === 'Closing Soon') {
         if (!call.deadline) return false;
         const dDate = new Date(call.deadline);
@@ -154,7 +154,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
         return appliedCastingIds.includes(call.id);
       }
 
-      return true; 
+      return true;
     })
     .sort((a, b) => {
       if (activeSort === 'Deadline') {
@@ -167,7 +167,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
         const catB = b.category || b.type || '';
         return catA.localeCompare(catB);
       }
-      
+
       const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return timeB - timeA;
@@ -207,14 +207,14 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white relative font-sans">
-      <SEO 
-        title="Casting Calls & Auditions | NepalCasts" 
-        description="Find Nepali movie casting calls, short films, models, and dancers auditions." 
+      <SEO
+        title="Casting Calls & Auditions | NepalCasts"
+        description="Find Nepali movie casting calls, short films, models, and dancers auditions."
       />
 
       {/* Main Feed: Full width centered on desktop */}
-      <div className="max-w-5xl mx-auto px-2 sm:px-8 md:px-12 w-full">
-        
+      <div className="max-w-5xl mx-auto px-1 sm:px-8 md:px-12 w-full">
+
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-4 mb-8">
           {/* Left Side: Back button & Title */}
@@ -239,7 +239,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
 
           {/* Right Side: Search, Filters & Post button */}
           <div className="flex items-center gap-3 self-end sm:self-center">
-            
+
             {/* Search Box (Icon Only, Expanding to the left) */}
             <div className="flex items-center gap-2 relative">
               <AnimatePresence>
@@ -288,8 +288,8 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
               <AnimatePresence>
                 {isSortOpen && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-30" 
+                    <div
+                      className="fixed inset-0 z-30"
                       onClick={() => setIsSortOpen(false)}
                     />
                     <motion.div
@@ -307,14 +307,13 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
                           <button
                             key={pill.id}
                             onClick={() => {
-                                setActiveFilter(pill.id);
-                                setIsSortOpen(false);
+                              setActiveFilter(pill.id);
+                              setIsSortOpen(false);
                             }}
-                            className={`w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
-                              isActive
+                            className={`w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
                                 ? 'text-sky-400 bg-sky-400/5'
                                 : 'text-gray-400 hover:text-white hover:bg-white/5'
-                            }`}
+                              }`}
                           >
                             {pill.label}
                           </button>
@@ -331,14 +330,13 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
                           <button
                             key={opt.id}
                             onClick={() => {
-                                setActiveSort(opt.id);
-                                setIsSortOpen(false);
+                              setActiveSort(opt.id);
+                              setIsSortOpen(false);
                             }}
-                            className={`w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
-                              isActive
+                            className={`w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
                                 ? 'text-sky-400 bg-sky-400/5'
                                 : 'text-gray-400 hover:text-white hover:bg-white/5'
-                            }`}
+                              }`}
                           >
                             {opt.label}
                           </button>
@@ -406,79 +404,79 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
               const roleNeeded = getRolesSummary(call);
 
               return (
-                 <div
-                   key={call.id}
-                   onClick={() => onNavigate('casting-detail', call.id)}
-                   className="group flex flex-col sm:flex-row items-start sm:items-center justify-between py-8 border-b border-white/10 hover:border-sky-400/50 transition-all duration-300 cursor-pointer gap-6"
-                 >
-                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-1 w-full min-w-0">
-                     {/* Widescreen image thumbnail */}
-                     <div className="w-full sm:w-48 h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/5">
-                       <img 
-                         src={bannerImage} 
-                         alt={call.title} 
-                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                         onError={(e) => {
-                           e.currentTarget.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=640&auto=format&fit=crop';
-                         }}
-                       />
-                       {isApplied && (
-                         <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-sky-400 text-black text-[9px] font-black uppercase tracking-wider">
-                           Applied
-                         </div>
-                       )}
-                     </div>
+                <div
+                  key={call.id}
+                  onClick={() => onNavigate('casting-detail', call.id)}
+                  className="group flex flex-col sm:flex-row items-start sm:items-center justify-between py-8 border-b border-white/10 hover:border-sky-400/50 transition-all duration-300 cursor-pointer gap-6"
+                >
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-1 w-full min-w-0">
+                    {/* Widescreen image thumbnail */}
+                    <div className="w-full sm:w-48 h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/5">
+                      <img
+                        src={bannerImage}
+                        alt={call.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=640&auto=format&fit=crop';
+                        }}
+                      />
+                      {isApplied && (
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-sky-400 text-black text-[9px] font-black uppercase tracking-wider">
+                          Applied
+                        </div>
+                      )}
+                    </div>
 
-                     {/* Text content details */}
-                     <div className="space-y-2 flex-1 min-w-0">
-                       <div className="flex items-center gap-3">
-                         <span className="text-[10px] font-black uppercase tracking-wider text-sky-400">
-                           {call.category || call.type || 'Nepali Project'}
-                         </span>
-                       </div>
-                       
-                       <h2 className="text-2xl sm:text-3xl font-black text-white group-hover:text-sky-400 transition-colors leading-tight truncate">
-                         {call.title}
-                       </h2>
-                       
-                       <p className="text-sm text-gray-400 font-medium line-clamp-1 leading-relaxed">
-                         {roleNeeded}
-                       </p>
+                    {/* Text content details */}
+                    <div className="space-y-2 flex-1 min-w-0">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-sky-400">
+                          {call.category || call.type || 'Nepali Project'}
+                        </span>
+                      </div>
 
-                       <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 pt-1">
-                         <span className="flex items-center gap-1.5">
-                           <MapPin className="w-3.5 h-3.5 text-gray-600 shrink-0" />
-                           {call.location || 'Nepal'}
-                         </span>
-                         {call.budget && (
-                           <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                             <span className="text-gray-600 text-[10px] font-black">Rs.</span>
-                             {call.budget}
-                           </span>
-                         )}
-                       </div>
-                     </div>
-                   </div>
+                      <h2 className="text-2xl sm:text-3xl font-black text-white group-hover:text-sky-400 transition-colors leading-tight truncate">
+                        {call.title}
+                      </h2>
 
-                   {/* Right: Deadline & Action */}
-                   <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
-                     <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${deadlineInfo.color}`}>
-                       <Clock className="w-3 h-3 shrink-0" />
-                       {deadlineInfo.label}
-                     </span>
-                     
-                     <div className="flex items-center gap-3">
-                       <button
-                         onClick={(e) => toggleSave(e, call.id)}
-                         className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-gray-400 hover:text-white"
-                       >
-                         <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-sky-400' : ''} />
-                       </button>
-                       <span className="text-xs font-bold text-sky-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 whitespace-nowrap">
-                         View Role &gt;
-                       </span>
-                     </div>
-                   </div>
+                      <p className="text-sm text-gray-400 font-medium line-clamp-1 leading-relaxed">
+                        {roleNeeded}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 pt-1">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-gray-600 shrink-0" />
+                          {call.location || 'Nepal'}
+                        </span>
+                        {call.budget && (
+                          <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                            <span className="text-gray-600 text-[10px] font-black">Rs.</span>
+                            {call.budget}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Deadline & Action */}
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
+                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${deadlineInfo.color}`}>
+                      <Clock className="w-3 h-3 shrink-0" />
+                      {deadlineInfo.label}
+                    </span>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={(e) => toggleSave(e, call.id)}
+                        className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-gray-400 hover:text-white"
+                      >
+                        <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-sky-400' : ''} />
+                      </button>
+                      <span className="text-xs font-bold text-sky-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 whitespace-nowrap">
+                        View Role &gt;
+                      </span>
+                    </div>
+                  </div>
                 </div>
               );
             })

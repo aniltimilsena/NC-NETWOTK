@@ -290,7 +290,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         </AnimatePresence>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-12 relative z-10">
+      <div className="max-w-7xl mx-auto px-1 sm:px-8 lg:px-12 relative z-10">
 
         {/* VIEW 1: CATEGORIES GRID SELECTION */}
         {viewMode === 'categories' && (
