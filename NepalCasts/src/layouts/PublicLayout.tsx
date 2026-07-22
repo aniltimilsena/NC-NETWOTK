@@ -58,7 +58,7 @@ export default function PublicLayout({
           onNavigate={handleLegacyNavigate}
         />
       )}
-      <main className="flex-1 px-4 sm:px-0 py-6 sm:py-8">
+      <main className="flex-1 px-4 sm:px-0 pb-8">
         {!isAuthPage && <Breadcrumbs />}
         <Outlet context={{ user, isAdmin, showAlert, showToast }} />
       </main>
