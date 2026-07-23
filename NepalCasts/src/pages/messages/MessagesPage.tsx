@@ -70,18 +70,12 @@ export default function MessagesPage({
 
   const handleInitiateDirectCall = (type: 'audio' | 'video', calleeId: string, calleeName: string, calleePhoto: string) => {
     if (!calleeId) return;
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (!isMobile) {
-      const url = `/call?initiate=true&type=${type}&calleeId=${calleeId}&calleeName=${encodeURIComponent(calleeName || 'User')}&calleePhoto=${encodeURIComponent(calleePhoto || '')}`;
-      window.open(url, '_blank');
-    } else {
-      initiateCall({
-        calleeId,
-        calleeName: calleeName || 'User',
-        calleePhoto: calleePhoto || '',
-        callType: type
-      });
-    }
+    initiateCall({
+      calleeId,
+      calleeName: calleeName || 'User',
+      calleePhoto: calleePhoto || '',
+      callType: type
+    });
   };
 
   const handleInitiateCall = (type: 'audio' | 'video') => {
