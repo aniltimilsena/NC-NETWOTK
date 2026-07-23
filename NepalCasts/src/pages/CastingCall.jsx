@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bookmark, SortDesc, ChevronDown, Check,
@@ -48,8 +48,18 @@ const getRolesSummary = (call) => {
 export default function CastingCall({ onNavigate, user, isAdmin }) {
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchActive, setIsSearchActive] = useState(false);
+  const searchInputRef = useRef(null);
+  const searchTimerRef = useRef(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  const triggerSearchLoading = () => {
+    setIsSearching(true);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setIsSearching(false);
+    }, 450);
+  };
   const [calls, setCalls] = useState([]);
   const [savedIds, setSavedIds] = useState([]);
   const [appliedCastingIds, setAppliedCastingIds] = useState([]);
@@ -240,37 +250,37 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
           {/* Right Side: Search, Filters & Post button */}
           <div className="flex items-center gap-3 self-end sm:self-center">
 
-            {/* Search Box (Icon Only, Expanding to the left) */}
-            <div className="flex items-center gap-2 relative">
-              <AnimatePresence>
-                {isSearchActive && (
-                  <motion.div
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 140, opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <input
-                      type="text"
-                      placeholder="Search projects..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="bg-transparent border-b border-white/10 focus:border-sky-400 pb-1 text-xs text-white placeholder-gray-500 outline-none w-full transition-all duration-300 focus:shadow-[0_1px_0_0_#38bdf8]"
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <button
-                onClick={() => {
-                  if (isSearchActive) setSearchQuery('');
-                  setIsSearchActive(!isSearchActive);
+            {/* Always Visible Search Box with Clickable Search Icon on Right Side */}
+            <div className="relative flex items-center">
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  triggerSearchLoading();
                 }}
-                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-white transition-colors duration-200 cursor-pointer"
-                aria-label="Search"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    triggerSearchLoading();
+                  }
+                }}
+                className="bg-white/5 border border-white/10 focus:border-sky-400/60 rounded-full py-1.5 pl-4 pr-9 text-xs text-white placeholder-gray-500 outline-none w-36 sm:w-52 transition-all duration-300"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  triggerSearchLoading();
+                  if (searchInputRef.current) {
+                    searchInputRef.current.focus();
+                  }
+                }}
+                className="absolute right-2.5 text-gray-400 hover:text-sky-400 transition-colors p-1 cursor-pointer"
+                title="Search projects"
+                aria-label="Search projects"
               >
-                <Search className="w-[18px] h-[18px]" />
+                <Search className="w-4 h-4" />
               </button>
             </div>
 
@@ -348,22 +358,13 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
               </AnimatePresence>
             </div>
 
-            {/* Post button */}
-            {canPostCall && (
-              <button
-                onClick={() => onNavigate('casting-create')}
-                className="bg-gradient-to-br from-sky-400 to-sky-600 text-black px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-sky-500/10 active:scale-[0.98] flex items-center gap-1.5 shrink-0 cursor-pointer"
-              >
-                <Plus size={15} strokeWidth={3} />
-                Post a Call
-              </button>
-            )}
+
           </div>
         </div>
 
         {/* LISTINGS */}
         <div className="flex flex-col">
-          {isLoading ? (
+          {isLoading || isSearching ? (
             <>
               {[1, 2, 3].map(i => (
                 <div key={i} className="animate-pulse flex flex-col sm:flex-row items-start sm:items-center justify-between py-8 border-b border-white/5 gap-6">
@@ -389,9 +390,10 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
               {canPostCall && (
                 <button
                   onClick={() => onNavigate('casting-create')}
-                  className="bg-gradient-to-br from-sky-400 to-sky-600 text-black px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-sky-500/10 hover:brightness-110 active:scale-[0.98]"
+                  className="bg-gradient-to-br from-sky-400 to-sky-600 text-black px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-sky-500/10 hover:brightness-110 active:scale-[0.98] inline-flex items-center gap-1.5"
                 >
-                  Create Casting Call
+                  <Plus size={15} strokeWidth={3} />
+                  Post a Call
                 </button>
               )}
             </div>

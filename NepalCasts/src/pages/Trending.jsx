@@ -182,8 +182,13 @@ export default function Trending({ onNavigate }) {
   
   const rankedProfiles = profiles
     .filter(p => {
-      if (p.deactivated === true) return false;
-      if (selectedCategory !== 'All' && p.role?.toLowerCase() !== selectedCategory.toLowerCase()) return false;
+      if (selectedCategory !== 'All') {
+        const catClean = selectedCategory.trim().toLowerCase();
+        const roleClean = (p.role || '').trim().toLowerCase();
+        const categoryClean = (p.category || '').trim().toLowerCase();
+        const isMatch = (v) => v === catClean || v === catClean + 's' || v.includes(catClean);
+        if (!isMatch(roleClean) && !isMatch(categoryClean)) return false;
+      }
       return true;
     })
     .map(p => ({
@@ -307,8 +312,8 @@ export default function Trending({ onNavigate }) {
         </div>
 
         {/* Period Selector Tabs */}
-        <div className="flex justify-center mb-8">
-          <div className="flex bg-[#111] border border-white/5 rounded-2xl p-1">
+        <div className="flex justify-center mb-6 sm:mb-8">
+          <div className="flex bg-[#111] border border-white/5 rounded-xl sm:rounded-2xl p-0.5 sm:p-1 max-w-full overflow-x-auto">
             {['Today', 'This Week', 'This Month'].map(p => (
               <button
                 key={p}
@@ -316,7 +321,7 @@ export default function Trending({ onNavigate }) {
                   setSelectedPeriod(p);
                   setVisibleCount(10);
                 }}
-                className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider ${
+                className={`px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all uppercase tracking-wider whitespace-nowrap ${
                   selectedPeriod === p
                     ? 'bg-[#0099FF] text-black shadow-md shadow-[#0099FF]/10'
                     : 'text-gray-400 hover:text-white'
@@ -532,7 +537,7 @@ export default function Trending({ onNavigate }) {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: (index % 10) * 0.05 }}
                       onClick={() => onNavigate('profile', prof.id)}
-                      className="group flex items-center justify-between gap-4 py-5 border-b border-white/5 hover:border-white/10 active:bg-white/[0.01] transition-all duration-300 cursor-pointer text-left"
+                      className="group flex items-center justify-between gap-4 py-4 active:bg-white/[0.01] transition-all duration-300 cursor-pointer text-left"
                     >
                       {/* Left Side: Rank, Avatar and details */}
                       <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">

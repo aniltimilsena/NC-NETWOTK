@@ -56,33 +56,35 @@ export default function ChatArea({
         <div className="flex items-center gap-3">
           <button 
             onClick={onBack}
-            className="md:hidden w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0 no-min-h"
+            className="md:hidden w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0 no-min-h shadow-sm active:scale-95"
             title="Back to Inbox"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
           </button>
-          <Avatar src={chat.avatar} name={chat.name} size="sm" />
+          <Avatar src={chat.avatar} name={chat.name} size="md" className="w-11 h-11 sm:w-12 sm:h-12 shrink-0" />
           <div className="text-left">
-            <span className="text-sm font-bold text-white block">{chat.name}</span>
-            <span className="text-[10px] text-nc-muted block uppercase tracking-wider font-semibold">
+            <span className="text-base sm:text-lg font-extrabold text-white block leading-tight">{chat.name}</span>
+            <span className="text-xs text-nc-muted block uppercase tracking-wider font-semibold mt-0.5">
               {isTyping ? <span className="text-[#00BFFF] animate-pulse">Typing...</span> : 'Online'}
             </span>
           </div>
         </div>
 
         {/* Action controls */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button 
             onClick={() => onInitiateCall('audio')}
-            className="text-nc-muted hover:text-white transition-colors p-2"
+            title="Start Voice Call"
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 text-white/80 hover:text-white border border-white/10 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95"
           >
-            <Phone className="w-4 h-4" />
+            <Phone className="w-5 h-5 text-white/90" strokeWidth={2} />
           </button>
           <button 
             onClick={() => onInitiateCall('video')}
-            className="text-nc-muted hover:text-white transition-colors p-2"
+            title="Start Video Call"
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 text-white/80 hover:text-white border border-white/10 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95"
           >
-            <Video className="w-4 h-4" />
+            <Video className="w-5.5 h-5.5 text-white/90" strokeWidth={2} />
           </button>
         </div>
       </div>

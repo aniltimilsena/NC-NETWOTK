@@ -237,7 +237,7 @@ export default function Home({ onNavigate, user }) {
   return (
     <div className="min-h-screen bg-nc-dark">
       {/* Hero Section */}
-      <section className="relative flex flex-col justify-start items-start overflow-hidden pt-16 pb-4 px-3.5 sm:px-8 lg:px-20">
+      <section className="relative flex flex-col justify-start items-start overflow-hidden pt-3 sm:pt-4 pb-4 px-3.5 sm:px-8 lg:px-20">
         {/* Background */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <img
@@ -270,7 +270,7 @@ export default function Home({ onNavigate, user }) {
             initial={{ opacity: 0, y: 15, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -15, scale: 0.95 }}
-            className="relative z-30 group mt-12 sm:mt-20 self-start"
+            className="relative z-30 group mt-4 sm:mt-6 self-start -ml-3.5 sm:-ml-8 lg:-ml-20"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -284,13 +284,13 @@ export default function Home({ onNavigate, user }) {
               marginBottom: '12px'
             }}
           >
-            {/* Tall portrait photo on LEFT */}
+            {/* Portrait photo on LEFT */}
             {hasHeroPhoto ? (
               <img 
                 src={heroPhotoURL} 
                 alt={currentPremiumUser.name} 
                 onError={() => setHeroImageError(true)}
-                className="w-[110px] h-[160px] sm:w-[140px] sm:h-[200px] object-cover flex-shrink-0"
+                className="w-[100px] h-[140px] sm:w-[125px] sm:h-[175px] object-cover flex-shrink-0"
                 style={{
                   borderRadius: '0px',
                   boxShadow: '0 0 0 2px rgba(255,255,255,0.15)'
@@ -298,13 +298,13 @@ export default function Home({ onNavigate, user }) {
               />
             ) : (
               <div 
-                className="w-[110px] h-[160px] sm:w-[140px] sm:h-[200px] flex-shrink-0 flex items-center justify-center bg-gradient-to-b from-[#1E1E26] to-[#111116]"
+                className="w-[100px] h-[140px] sm:w-[125px] sm:h-[175px] flex-shrink-0 flex items-center justify-center bg-gradient-to-b from-[#1E1E26] to-[#111116]"
                 style={{
                   borderRadius: '0px',
                   boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.15)'
                 }}
               >
-                <svg viewBox="0 0 100 100" fill="#5A5A75" className="w-16 h-16 sm:w-20 sm:h-20">
+                <svg viewBox="0 0 100 100" fill="#5A5A75" className="w-14 h-14 sm:w-18 sm:h-18">
                   <circle cx="50" cy="35" r="20"/>
                   <ellipse cx="50" cy="85" rx="35" ry="25"/>
                 </svg>
@@ -315,7 +315,7 @@ export default function Home({ onNavigate, user }) {
               <h3 
                 className="font-bold text-white truncate"
                 style={{
-                  fontSize: window.innerWidth < 640 ? '20px' : '23px',
+                  fontSize: window.innerWidth < 640 ? '22px' : '25px',
                   background: 'none',
                   textShadow: '0 1px 4px rgba(0,0,0,0.85)',
                   lineHeight: '1.2'
@@ -327,7 +327,7 @@ export default function Home({ onNavigate, user }) {
                 className="capitalize truncate"
                 style={{
                   color: '#aaa',
-                  fontSize: window.innerWidth < 640 ? '15px' : '17px',
+                  fontSize: window.innerWidth < 640 ? '16px' : '18px',
                   textShadow: '0 1px 4px rgba(0,0,0,0.85)',
                   lineHeight: '1.2'
                 }}
@@ -346,7 +346,7 @@ export default function Home({ onNavigate, user }) {
                 className="hover:text-[#00BFFF]/80 transition-all cursor-pointer text-left font-semibold"
                 style={{
                   color: '#00BFFF',
-                  fontSize: window.innerWidth < 640 ? '14px' : '16px',
+                  fontSize: window.innerWidth < 640 ? '15px' : '17px',
                   lineHeight: '1.2',
                   background: 'none',
                   border: 'none',
@@ -371,13 +371,13 @@ export default function Home({ onNavigate, user }) {
               <div className="section-accent-bar"></div>
               <div className="h-7 skeleton w-48" />
             </div>
-            <div className="flex gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-hide">
+            <div className="flex gap-3 overflow-x-auto pb-4 scroll-smooth scrollbar-hide">
               {Array.from({ length: 6 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="flex flex-col items-center w-[120px] min-w-[120px] flex-shrink-0"
+                  className="flex flex-col items-center w-[160px] min-w-[160px] flex-shrink-0"
                 >
-                  <div className="w-[90px] h-[90px] rounded-full skeleton" />
+                  <div className="w-[130px] h-[130px] rounded-full skeleton" />
                   <div className="h-4 skeleton w-20 mt-3" />
                   <div className="h-3.5 skeleton w-24 mt-1.5" />
                 </div>
@@ -449,7 +449,7 @@ export default function Home({ onNavigate, user }) {
                 <div className="relative group">
                   <div
                     ref={actorsScrollRef}
-                    className="flex gap-6 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+                    className="flex gap-3 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
                   >
                     {talents
                       .filter(t => t.role?.toLowerCase().includes('actor') && !t.deactivated)
@@ -468,15 +468,15 @@ export default function Home({ onNavigate, user }) {
                         <div
                           key={actor.id}
                           onClick={() => onNavigate('profile', actor.id)}
-                          className="flex flex-col items-center w-[140px] min-w-[140px] flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-1 group/actor"
+                          className="flex flex-col items-center w-[160px] min-w-[160px] flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-1 group/actor"
                         >
                           <Avatar
                             user={actor}
                             size="none"
                             name={actor.name}
-                            className="w-[110px] h-[110px] shadow-md border border-white/5"
+                            className="w-[130px] h-[130px] shadow-md border border-white/5"
                           />
-                          <p className="text-white font-bold text-[13px] text-center mt-2 truncate w-full">{actor.name}</p>
+                          <p className="text-white font-bold text-[14px] text-center mt-2.5 truncate w-full">{actor.name}</p>
                           <p className="text-nc-muted text-xs text-center mt-0.5 font-medium truncate w-full flex items-center justify-center gap-1">
                             <span>{actor.location || 'Nepal'}</span>
                             <span>•</span>
@@ -493,7 +493,7 @@ export default function Home({ onNavigate, user }) {
                   {showRightArrow && (
                     <button
                       onClick={scrollRight}
-                      className="absolute right-0 top-[55px] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#12121A]/90 border border-white/10 flex items-center justify-center text-white font-black text-lg hover:bg-nc-accent hover:border-nc-accent transition-all shadow-xl shadow-black/40"
+                      className="absolute right-0 top-[65px] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#12121A]/90 border border-white/10 flex items-center justify-center text-white font-black text-lg hover:bg-nc-accent hover:border-nc-accent transition-all shadow-xl shadow-black/40"
                     >
                       &gt;
                     </button>

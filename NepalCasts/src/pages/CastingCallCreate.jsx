@@ -147,9 +147,22 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
     <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-24 font-sans">
       <div className="max-w-3xl mx-auto px-6 py-8">
         
-        <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">Post a Casting Call</h1>
-          <p className="text-sm text-gray-500 mt-2 font-medium">Find the perfect talent for your next production</p>
+        {/* Header with Back Button */}
+        <div className="relative mb-8 flex items-center justify-between sm:block">
+          <button
+            type="button"
+            onClick={() => onNavigate('back')}
+            className="sm:absolute sm:left-0 sm:top-1/2 sm:-translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shadow-sm active:scale-95 cursor-pointer shrink-0"
+            title="Go Back"
+            aria-label="Go Back"
+          >
+            <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
+          </button>
+          
+          <div className="flex-1 text-center pr-10 sm:pr-0">
+            <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">Post a Casting Call</h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2 font-medium">Find the perfect talent for your next production</p>
+          </div>
         </div>
         
         {/* ── Wizard Steps indicator ─────────────────────────────── */}
@@ -284,12 +297,12 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
 
                 {/* Category & Type row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
+                  <div className="min-w-0 w-full">
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Target Talent Type *</label>
                     <select 
                       value={form.type} 
                       onChange={e => setForm({...form, type: e.target.value})} 
-                      className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none transition-all text-sm font-bold cursor-pointer"
+                      className="w-full max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-white placeholder-gray-500 outline-none transition-all text-sm font-bold cursor-pointer"
                     >
                       {CATEGORIES.map(catId => {
                         const cfg = getCategoryConfig(catId);
@@ -299,12 +312,12 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
                       })}
                     </select>
                   </div>
-                  <div>
+                  <div className="min-w-0 w-full">
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Project Category *</label>
                     <select 
                       value={form.category} 
                       onChange={e => setForm({...form, category: e.target.value})} 
-                      className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none transition-all text-sm font-bold cursor-pointer"
+                      className="w-full max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-white placeholder-gray-500 outline-none transition-all text-sm font-bold cursor-pointer"
                     >
                       {CATEGORY_OPTIONS.map(opt => (
                         <option key={opt} value={opt}>{opt}</option>
@@ -327,23 +340,25 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
                 
                 {/* Pay & Deadline */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
+                  <div className="min-w-0 w-full">
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Pay Range / Budget *</label>
                     <input 
                       type="text" 
                       value={form.budget} 
                       onChange={e => setForm({...form, budget: e.target.value})} 
                       placeholder="e.g. Rs. 10,000 / Day or Competitive" 
-                      className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none transition-all focus:shadow-[0_0_0_3px_rgba(0,191,255,0.15)] text-sm font-medium" 
+                      className="w-full max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-white placeholder-gray-500 outline-none transition-all focus:shadow-[0_0_0_3px_rgba(0,191,255,0.15)] text-sm font-medium" 
                     />
                   </div>
-                  <div>
+                  <div className="min-w-0 w-full">
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Application Deadline *</label>
                     <input 
                       type="date" 
                       value={form.deadline} 
                       onChange={e => setForm({...form, deadline: e.target.value})} 
-                      className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none transition-all focus:shadow-[0_0_0_3px_rgba(0,191,255,0.15)] text-sm font-medium cursor-pointer" 
+                      onClick={e => { try { e.target.showPicker?.(); } catch(_) {} }}
+                      style={{ colorScheme: 'dark' }}
+                      className="w-full max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-white placeholder-gray-500 outline-none transition-all focus:shadow-[0_0_0_3px_rgba(0,191,255,0.15)] text-sm font-medium cursor-pointer" 
                     />
                   </div>
                 </div>

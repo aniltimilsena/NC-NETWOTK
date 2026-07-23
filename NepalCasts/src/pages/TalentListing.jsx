@@ -123,20 +123,39 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     return 'Pro';
   };
 
+  const matchesCategory = (talent, categoryFilter) => {
+    if (!categoryFilter || categoryFilter === 'All') return true;
+    const filterClean = categoryFilter.trim().toLowerCase();
+    
+    const roleClean = (talent.role || '').trim().toLowerCase();
+    const catClean = (talent.category || '').trim().toLowerCase();
+
+    const isMatch = (val) => {
+      if (!val) return false;
+      if (val === filterClean) return true;
+      if (val === filterClean + 's' || val + 's' === filterClean) return true;
+      if (filterClean === 'actor' && (val === 'actor' || val === 'actress' || val.includes('actor') || val.includes('actress'))) return true;
+      if (filterClean === 'voiceover' && (val === 'voice over' || val === 'voiceover' || val.includes('voice'))) return true;
+      if (filterClean === 'vfx' && (val === 'vfx' || val.includes('vfx') || val.includes('visual effects'))) return true;
+      return val.includes(filterClean) || filterClean.includes(val);
+    };
+
+    return isMatch(roleClean) || isMatch(catClean);
+  };
+
   const getFacetedCount = (filterKey, optionValue) => {
     return talents.filter(t => {
       if (t.deactivated === true) return false;
 
-
       const matchesSearch = !searchQuery ||
         t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.location?.toLowerCase().includes(searchQuery.toLowerCase());
       if (!matchesSearch) return false;
 
-
       if (filterKey !== 'category' && selectedFilters.category !== 'All') {
-        if (t.role?.toLowerCase() !== selectedFilters.category.toLowerCase()) return false;
+        if (!matchesCategory(t, selectedFilters.category)) return false;
       }
       if (filterKey !== 'location' && selectedFilters.location !== 'All') {
         if (t.location !== selectedFilters.location) return false;
@@ -145,10 +164,9 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         if (getExperienceLevel(t) !== selectedFilters.experienceLevel) return false;
       }
 
-
       if (filterKey === 'category') {
         if (optionValue === 'All') return true;
-        return t.role?.toLowerCase() === optionValue.toLowerCase();
+        return matchesCategory(t, optionValue);
       }
       if (filterKey === 'location') {
         if (optionValue === 'All') return true;
@@ -224,11 +242,11 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
       const matchesSearch = !searchQuery ||
         t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.location?.toLowerCase().includes(searchQuery.toLowerCase());
       if (!matchesSearch) return false;
 
-
-      if (selectedFilters.category !== 'All' && t.role?.toLowerCase() !== selectedFilters.category.toLowerCase()) return false;
+      if (selectedFilters.category !== 'All' && !matchesCategory(t, selectedFilters.category)) return false;
 
 
       if (selectedFilters.location !== 'All' && t.location !== selectedFilters.location) return false;
@@ -519,7 +537,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                         onMouseEnter={() => setHoveredTalent(talent)}
                         onMouseLeave={() => setHoveredTalent(null)}
                         onClick={() => onNavigate('profile', talent.id)}
-                        className="flex items-center justify-between py-5 border-b border-white/5 hover:border-white/10 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group"
+                        className="flex items-center justify-between py-4 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group"
                       >
                         <div className="flex items-center gap-4 min-w-0">
                           <Avatar

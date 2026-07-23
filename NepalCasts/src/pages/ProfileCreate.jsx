@@ -283,6 +283,7 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                 try {
                   const profileData = {
                     ...form,
+                    category: form.role,
                     image: form.photoURL,
                     name: form.name.trim(),
                     updatedAt: serverTimestamp(),

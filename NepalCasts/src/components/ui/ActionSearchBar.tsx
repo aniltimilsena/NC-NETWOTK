@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, ArrowLeft, X } from "lucide-react";
 import { db, auth } from "@/lib/firebase";
 import Avatar from "./Avatar";
@@ -38,6 +38,17 @@ export function ActionSearchBar({
     const [query, setQuery] = useState("");
     const [profiles, setProfiles] = useState<ProfileSuggestion[]>([]);
     const [loading, setLoading] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const triggerSearchAnimation = () => {
+        setIsSearching(true);
+        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = setTimeout(() => {
+            setIsSearching(false);
+        }, 450);
+    };
     const [allProfiles, setAllProfiles] = useState<ProfileSuggestion[]>([]);
     const [hasLoaded, setHasLoaded] = useState(false);
     const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -243,21 +254,48 @@ export function ActionSearchBar({
                 )}
                 <div className="relative flex-1 flex items-center bg-[#242526] rounded-full px-4 py-2 border-0">
                     <input
+                        ref={inputRef}
                         type="text"
                         placeholder="Search NepalCasts"
                         value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        className="w-full bg-transparent outline-none text-white text-[15px] placeholder:text-white/40 pr-10 border-0"
+                        onChange={(e) => {
+                            setQuery(e.target.value);
+                            triggerSearchAnimation();
+                        }}
+                        onKeyDown={(e) => {
+                            handleKeyDown(e);
+                            if (e.key === 'Enter') {
+                                triggerSearchAnimation();
+                            }
+                        }}
+                        className="w-full bg-transparent outline-none text-white text-[15px] placeholder:text-white/40 pr-16 border-0"
                     />
-                    {query && (
-                        <button 
-                            onClick={() => setQuery("")}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        {query && (
+                            <button 
+                                type="button"
+                                onClick={() => setQuery("")}
+                                className="text-gray-400 hover:text-white p-0.5 cursor-pointer transition-colors"
+                                title="Clear"
+                            >
+                                <X size={15} />
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                triggerSearchAnimation();
+                                if (inputRef.current) {
+                                    inputRef.current.focus();
+                                }
+                            }}
+                            className="text-gray-400 hover:text-sky-400 p-0.5 cursor-pointer transition-colors"
+                            title="Search"
+                            aria-label="Search"
                         >
-                            <X size={15} />
+                            <Search className="w-4 h-4" />
                         </button>
-                    )}
+                    </div>
                 </div>
             </div>
 
@@ -353,10 +391,19 @@ export function ActionSearchBar({
 
                     {query && (
                         <div>
-                            {loading ? (
-                                <div className="py-12 text-center text-xs text-gray-500 flex flex-col items-center justify-center gap-3">
-                                    <div className="w-6 h-6 border-2 border-[#1877F2] border-t-transparent rounded-full animate-spin" />
-                                    <span>Searching...</span>
+                            {loading || isSearching ? (
+                                <div className="py-4 space-y-3">
+                                    {[1, 2, 3, 4].map((i) => (
+                                        <div key={i} className="animate-pulse flex items-center justify-between py-2 px-1">
+                                            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                                                <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/5 shrink-0" />
+                                                <div className="space-y-2 flex-1 min-w-0">
+                                                    <div className="h-3.5 bg-white/5 rounded w-1/3" />
+                                                    <div className="h-2.5 bg-white/5 rounded w-1/2" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             ) : profiles.length === 0 ? (
                                 <div className="py-12 text-center text-sm text-gray-500">

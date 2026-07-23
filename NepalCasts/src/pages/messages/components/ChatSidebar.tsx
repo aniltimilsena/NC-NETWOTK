@@ -79,20 +79,20 @@ export default function ChatSidebar({
         <div className="flex justify-between items-center">
           <button
             onClick={() => onNavigate ? onNavigate('back') : navigate(-1)}
-            className="w-8 h-8 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0 no-min-h"
+            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0 no-min-h shadow-sm active:scale-95"
             title="Go Back"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
           </button>
 
-          <h2 className="text-base font-bold text-gray-100 tracking-wide">Inbox</h2>
+          <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Inbox</h2>
 
           <button
             onClick={onStartNewChat}
-            className="w-8 h-8 rounded-xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] hover:bg-[#00BFFF]/20 transition-all flex items-center justify-center shrink-0"
+            className="w-10 h-10 rounded-xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] hover:bg-[#00BFFF]/20 transition-all flex items-center justify-center shrink-0 active:scale-95"
             title="New Chat"
           >
-            <MessageSquare className="w-4 h-4" />
+            <MessageSquare className="w-5 h-5" />
           </button>
         </div>
 

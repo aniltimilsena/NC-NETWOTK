@@ -242,7 +242,7 @@ function NotificationCard({
     : 'bg-[#00BFFF]/[0.03] hover:bg-[#00BFFF]/[0.06]';
 
   return (
-    <div className="relative w-full border-b border-white/5">
+    <div className="relative w-full">
       <div
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -610,14 +610,14 @@ export default function Notifications({ onNavigate, user }) {
           <div className="flex justify-start">
             <button
               onClick={() => onNavigate('back')}
-              className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors"
+              className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shadow-sm active:scale-95"
               aria-label="Back"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
             </button>
           </div>
           <div className="flex justify-center">
-            <h1 className="text-base font-bold text-white tracking-tight whitespace-nowrap">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight whitespace-nowrap">
               Notifications
             </h1>
           </div>
@@ -625,7 +625,7 @@ export default function Notifications({ onNavigate, user }) {
             <button
               onClick={handleMarkAllRead}
               disabled={unreadCount === 0}
-              className={`text-xs font-bold transition-colors px-3 py-1.5 rounded-lg ${
+              className={`text-xs sm:text-sm font-bold transition-colors px-3 py-1.5 rounded-lg ${
                 unreadCount > 0
                   ? 'text-[#00BFFF] hover:text-[#0099e6] hover:bg-white/5 cursor-pointer'
                   : 'text-gray-600 cursor-not-allowed'

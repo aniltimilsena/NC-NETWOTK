@@ -28,10 +28,11 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
     e.preventDefault();
     setSubmitting(true);
     try {
+      const selectedRole = category || role;
       const res = await onUpdate({
         name,
-        role,
-        category,
+        role: selectedRole,
+        category: selectedRole,
         gender,
         bio,
         location,
@@ -114,9 +115,6 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
         />
         <div className="text-center sm:text-left space-y-1">
           <h3 className="text-lg font-black text-white">Profile Photo</h3>
-          <p className="text-xs text-nc-muted leading-relaxed">
-            Click the camera icon to upload a new profile photo. Max file size: 5MB.
-          </p>
         </div>
       </div>
 
@@ -155,8 +153,11 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
           <div className="space-y-1.5 text-left">
             <label className="text-[10px] text-nc-muted uppercase tracking-wider font-black block">Role / Specialty</label>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={category || role}
+              onChange={(e) => {
+                setCategory(e.target.value);
+                setRole(e.target.value);
+              }}
               className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white outline-none transition-all appearance-none cursor-pointer"
             >
               <option value="" disabled>Select Specialty</option>
