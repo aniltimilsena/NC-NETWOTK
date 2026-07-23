@@ -227,18 +227,16 @@ export function useWebRTC(): UseWebRTCReturn {
         }
 
         if (event.track.kind === "video") {
-          // Don't check event.track.muted on initial arrival — desktop Chrome
-          // reports muted=true momentarily before data starts flowing, which
-          // causes a false "Camera Off" overlay that hides the actual video.
-          // Instead, assume video is on and rely on onmute/onunmute events.
-          setIsRemoteVideoOff(!event.track.enabled);
+          setIsRemoteVideoOff(false);
           event.track.onmute = () => {
-            setIsRemoteVideoOff(true);
-            logger.log("[WebRTC] Remote video track muted (camera turned off)");
+            logger.log("[WebRTC] Remote video track muted event received");
+            if (event.track.readyState === "ended") {
+              setIsRemoteVideoOff(true);
+            }
           };
           event.track.onunmute = () => {
             setIsRemoteVideoOff(false);
-            logger.log("[WebRTC] Remote video track onunmuted (camera turned on)");
+            logger.log("[WebRTC] Remote video track onunmuted (camera active)");
           };
           event.track.onended = () => {
             setIsRemoteVideoOff(true);

@@ -43,9 +43,7 @@ export default function ProfileReviews({
       {/* Unified Reviews Header & Rating Summary */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/5 pb-5 gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#00BFFF]/10 flex items-center justify-center">
-            <MessageSquare className="w-5 h-5 text-[#00BFFF]" />
-          </div>
+          <MessageSquare className="w-5 h-5 text-[#00BFFF]" />
           <div>
             <h2 className="text-sm font-bold text-gray-100 uppercase tracking-widest">Reviews</h2>
           </div>

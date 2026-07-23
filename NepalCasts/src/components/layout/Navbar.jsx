@@ -187,7 +187,7 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-48 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-50 py-2">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-48 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
                   <Link to="/talents" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_talent_directory')}</Link>
                   <Link to="/trending" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_trending_now')}</Link>
                   <Link to="/" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_upcoming_movies')}</Link>
@@ -211,7 +211,7 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-52 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-50 py-2">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-52 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
                   <Link to="/casting" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_casting_calls')}</Link>
                   <Link to="/casting/create" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_post_project')}</Link>
                 </div>
@@ -269,7 +269,7 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                       />
                     </Link>
   
-                    <div className="absolute top-full right-0 mt-2 w-48 rounded-3xl bg-[#0A0A0A] border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-50 py-2">
+                    <div className="absolute top-full right-0 mt-2 w-48 rounded-3xl bg-[#0A0A0A] border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
                       <div className="px-4 py-2 border-b border-white/5 mb-1">
                         <p className="text-white text-xs font-bold truncate">{user.displayName || 'Discovery Talent'}</p>
                         <p className="text-nc-muted text-[10px] truncate">{user.email}</p>

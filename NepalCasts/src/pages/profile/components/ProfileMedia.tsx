@@ -42,9 +42,7 @@ export default function ProfileMedia({
     <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-6 md:p-8 space-y-6">
       {/* Unified Media Header */}
       <div className="flex items-center gap-3 border-b border-white/5 pb-5">
-        <div className="w-10 h-10 rounded-2xl bg-[#00BFFF]/10 flex items-center justify-center">
-          <Film className="w-5 h-5 text-[#00BFFF]" />
-        </div>
+        <Film className="w-5 h-5 text-[#00BFFF]" />
         <div>
           <h2 className="text-sm font-bold text-gray-100 uppercase tracking-widest">Media Showcase</h2>
           <p className="text-[10px] text-nc-muted">Showcase your introduction videos and portfolio lookbook</p>

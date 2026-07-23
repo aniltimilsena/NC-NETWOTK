@@ -163,31 +163,31 @@ export default function CallingOverlay() {
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
-      
+      if (remoteVideoRef.current.srcObject !== remoteStream) {
+        remoteVideoRef.current.srcObject = remoteStream;
+      }
       
       remoteStream.getAudioTracks().forEach(track => {
         track.enabled = !isSpeakerMuted;
       });
 
-      
       remoteStream.getVideoTracks().forEach(track => {
         track.enabled = true;
       });
       
-      // Desktop browsers block unmuted autoplay. Start muted to guarantee
-      // play() succeeds, then unmute after playback begins.
-      remoteVideoRef.current.muted = true;
-      remoteVideoRef.current.play()
-        .then(() => {
-          // Playback started — now unmute if speaker is not muted
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.muted = isSpeakerMuted;
-          }
-        })
-        .catch(err => {
-          console.warn("[CallingOverlay] Remote stream play failed or interrupted:", err);
+      const playVideo = () => {
+        if (!remoteVideoRef.current) return;
+        remoteVideoRef.current.play().catch(err => {
+          console.warn("[CallingOverlay] Remote stream play retry required:", err);
+          setTimeout(() => {
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.play().catch(() => {});
+            }
+          }, 350);
         });
+      };
+
+      playVideo();
     }
   }, [remoteStream, isSpeakerMuted]);
 
@@ -312,9 +312,13 @@ export default function CallingOverlay() {
           ref={remoteVideoRef}
           autoPlay
           playsInline
-          muted={isSpeakerMuted}
+          onLoadedMetadata={() => {
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.play().catch(() => {});
+            }
+          }}
           className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 ${
-            isVideoCall && isConnected && remoteStream
+            isVideoCall && (isConnected || remoteStream)
               ? 'opacity-100'
               : 'opacity-0 pointer-events-none'
           }`}
