@@ -157,8 +157,8 @@ const renderIconCircle = (iconName) => {
   }
 
   return (
-    <div className={`w-10 h-10 rounded-full border flex items-center justify-center flex-shrink-0 ${colorClasses}`}>
-      <IconComponent className="w-5 h-5" />
+    <div className={`w-10 h-10 md:w-14 md:h-14 rounded-full border flex items-center justify-center flex-shrink-0 ${colorClasses}`}>
+      <IconComponent className="w-5 h-5 md:w-7 md:h-7" />
     </div>
   );
 };
@@ -251,7 +251,7 @@ function NotificationCard({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         onClick={handleCardClick}
-        className={`relative z-10 py-4 px-2 sm:px-3 cursor-pointer transition-colors duration-200 flex items-center gap-4 select-none ${cardBgClass} w-full`}
+        className={`relative z-10 py-4 md:py-5 px-2 sm:px-4 md:px-6 cursor-pointer transition-colors duration-200 flex items-center gap-4 md:gap-6 select-none ${cardBgClass} w-full`}
       >
         {/* Left icon / Avatar */}
         {showAvatar && (notif.senderAvatar || notif.senderName) ? (
@@ -259,7 +259,7 @@ function NotificationCard({
             src={notif.senderAvatar} 
             name={notif.senderName} 
             size="sm" 
-            className="!w-10 !h-10 !rounded-full border-none shrink-0" 
+            className="!w-10 !h-10 md:!w-14 md:!h-14 !rounded-full border-none shrink-0" 
           />
         ) : (
           renderIconCircle(details.iconName)
@@ -267,7 +267,7 @@ function NotificationCard({
 
         {/* Middle content */}
         <div className="flex-1 min-w-0 pr-2">
-          <div className={`text-sm leading-snug break-words ${notif.read ? 'text-[#888888] font-normal' : 'text-white font-semibold'}`}>
+          <div className={`text-sm md:text-base leading-snug break-words ${notif.read ? 'text-[#888888] font-normal' : 'text-white font-semibold'}`}>
             {details.text}
           </div>
 
@@ -277,14 +277,14 @@ function NotificationCard({
               {followingIds.has(notif.senderId) ? (
                 <button
                   disabled
-                  className="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-gray-500 text-xs font-bold uppercase tracking-wider cursor-not-allowed"
+                  className="px-3 py-1 md:px-5 md:py-2 rounded-xl bg-white/5 border border-white/10 text-gray-500 text-xs md:text-sm font-bold uppercase tracking-wider cursor-not-allowed"
                 >
                   Following
                 </button>
               ) : (
                 <button
                   onClick={(e) => handleFollowBack(e, notif.senderId)}
-                  className="px-3 py-1 rounded-xl bg-[#00BFFF] hover:bg-[#0099e6] text-[#0A0A0A] text-xs font-bold uppercase tracking-wider transition-all active:scale-95"
+                  className="px-3 py-1 md:px-5 md:py-2 rounded-xl bg-[#00BFFF] hover:bg-[#0099e6] text-[#0A0A0A] text-xs md:text-sm font-bold uppercase tracking-wider transition-all active:scale-95"
                 >
                   Follow Back
                 </button>
@@ -295,7 +295,7 @@ function NotificationCard({
 
         {/* Right side: Timestamp & Unread checkmark button */}
         <div className="flex flex-col items-end gap-1.5 self-start pt-0.5 shrink-0">
-          <span className="text-[11px] text-nc-muted font-medium">
+          <span className="text-[11px] md:text-sm text-nc-muted font-medium whitespace-nowrap">
             {timeAgo(notif.createdAt?.seconds)}
           </span>
           
@@ -305,11 +305,11 @@ function NotificationCard({
                 e.stopPropagation();
                 markAsRead(notif.id);
               }}
-              className="group/btn relative w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+              className="group/btn relative w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
               title="Mark as read"
             >
-              <span className="absolute w-2 h-2 rounded-full bg-[#00BFFF] group-hover/btn:opacity-0 transition-opacity" />
-              <Check className="w-3.5 h-3.5 text-[#00BFFF] opacity-0 group-hover/btn:opacity-100 transition-opacity shrink-0" />
+              <span className="absolute w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#00BFFF] group-hover/btn:opacity-0 transition-opacity" />
+              <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#00BFFF] opacity-0 group-hover/btn:opacity-100 transition-opacity shrink-0" />
             </button>
           )}
         </div>
@@ -566,8 +566,8 @@ export default function Notifications({ onNavigate, user }) {
   };
 
   const renderSectionHeader = (label) => (
-    <div className="flex items-center gap-3 my-5">
-      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap">
+    <div className="flex items-center gap-3 my-5 md:my-7">
+      <span className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap">
         {label}
       </span>
       <div className="h-[1px] w-full bg-white/5" />
@@ -604,9 +604,9 @@ export default function Notifications({ onNavigate, user }) {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       {/* Header Container */}
-      <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 pt-4 sm:pt-6">
+      <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-8 md:px-12 pt-4 sm:pt-6 md:pt-10">
         {/* Redesigned Header: Back Arrow on left, Centered title, Mark all read on right in cyan */}
-        <div className="grid grid-cols-3 items-center mb-6 pb-2">
+        <div className="grid grid-cols-3 items-center mb-6 md:mb-8 pb-2">
           <div className="flex justify-start">
             <button
               onClick={() => onNavigate('back')}
@@ -617,7 +617,7 @@ export default function Notifications({ onNavigate, user }) {
             </button>
           </div>
           <div className="flex justify-center">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight whitespace-nowrap">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight whitespace-nowrap">
               Notifications
             </h1>
           </div>
@@ -625,7 +625,7 @@ export default function Notifications({ onNavigate, user }) {
             <button
               onClick={handleMarkAllRead}
               disabled={unreadCount === 0}
-              className={`text-xs sm:text-sm font-bold transition-colors px-3 py-1.5 rounded-lg ${
+              className={`text-xs sm:text-sm md:text-base font-bold transition-colors px-3 md:px-4 py-1.5 md:py-2 rounded-lg ${
                 unreadCount > 0
                   ? 'text-[#00BFFF] hover:text-[#0099e6] hover:bg-white/5 cursor-pointer'
                   : 'text-gray-600 cursor-not-allowed'
@@ -637,14 +637,14 @@ export default function Notifications({ onNavigate, user }) {
         </div>
 
         {/* Filter Tabs Pills row: All | Unread | Messages | Casting | System */}
-        <div className="relative flex gap-2 border-b border-white/5 pb-3 overflow-x-auto scrollbar-hide">
+        <div className="relative flex gap-2 md:gap-3 border-b border-white/5 pb-3 md:pb-4 overflow-x-auto scrollbar-hide">
           {filters.map(f => {
             const isActive = filter === f.id;
             return (
               <button
                 key={f.id}
                 onClick={() => setFilter(f.id)}
-                className={`relative px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 ${
+                className={`relative px-4 py-2 md:px-6 md:py-2.5 rounded-xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
                   isActive 
                     ? 'bg-[#00BFFF] text-white shadow-[0_0_12px_rgba(0,191,255,0.25)]' 
                     : 'bg-[#111111] text-gray-400 hover:text-white hover:bg-white/[0.02] border border-white/5'
@@ -674,7 +674,7 @@ export default function Notifications({ onNavigate, user }) {
       </div>
 
       {/* Notification List Container */}
-      <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 pb-24">
+      <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-8 md:px-12 pb-24">
         {loading ? (
           <div className="space-y-3 mt-4">
             {[1, 2, 3, 4].map(i => (
