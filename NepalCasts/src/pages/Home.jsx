@@ -364,7 +364,7 @@ export default function Home({ onNavigate, user }) {
 
 
       {isLoading ? (
-        <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-20 py-6 sm:py-14 space-y-12">
+        <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-20 py-6 sm:py-14 space-y-12">
           {/* 1. Actors/Actress Horizontal Showcase Skeleton */}
           <section className="pt-2 pb-6">
             <div className="flex items-center mb-6">
@@ -404,7 +404,7 @@ export default function Home({ onNavigate, user }) {
               {Array.from({ length: 3 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between py-5 border-b border-white/5 gap-4"
+                  className="flex items-center justify-between py-5 gap-4"
                 >
                   <div className="flex items-center gap-4 min-w-0 flex-1">
                     {/* Rank Number Placeholder */}
@@ -430,7 +430,7 @@ export default function Home({ onNavigate, user }) {
           {/* Featured Actors Showcase */}
           {talents.filter(t => t.role?.toLowerCase().includes('actor') && !t.deactivated).length > 0 && (
             <section className="pt-2 pb-0 bg-nc-dark relative overflow-hidden">
-              <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-20">
+              <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-20">
                 {/* Editorial Header */}
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center">
@@ -505,7 +505,7 @@ export default function Home({ onNavigate, user }) {
 
           {/* Categories */}
           <section className="pt-2 pb-10 lg:pt-2 lg:pb-14 bg-nc-dark">
-            <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-20">
+            <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-20">
               {/* Editorial Header */}
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center">
@@ -654,7 +654,7 @@ export default function Home({ onNavigate, user }) {
           {/* Trending Talents */}
           {talents.length > 0 && (
             <section className="pt-2 pb-8 lg:pt-2 lg:pb-10">
-              <div className="max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-20">
+              <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-20">
                 {/* Editorial Header */}
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center">
@@ -687,7 +687,7 @@ export default function Home({ onNavigate, user }) {
                       <div
                         key={talent.id}
                         onClick={() => onNavigate('profile', talent.id)}
-                        className="group flex items-center justify-between py-5 border-b border-white/5 hover:border-white/10 active:bg-white/[0.01] transition-all duration-300 cursor-pointer text-left gap-4"
+                        className="group flex items-center justify-between py-5 active:bg-white/[0.01] transition-all duration-300 cursor-pointer text-left gap-4"
                       >
                         <div className="flex items-center gap-4 min-w-0 flex-1">
                           {/* Rank Number */}

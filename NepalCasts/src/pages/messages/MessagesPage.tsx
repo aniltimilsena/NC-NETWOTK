@@ -111,7 +111,7 @@ export default function MessagesPage({
     return (
       <div className="min-h-screen bg-nc-dark text-white flex">
         {/* Messages Shell Container */}
-        <div className="max-w-7xl mx-auto w-full px-3.5 sm:px-8 lg:px-12 py-3 sm:py-8 flex gap-6 h-[calc(100vh-80px)]">
+        <div className="max-w-[1600px] mx-auto w-full px-3.5 sm:px-8 lg:px-12 py-3 sm:py-8 flex gap-6 h-[calc(100vh-80px)]">
           {/* Left Column: Sidebar Skeleton */}
           <div className="w-80 border border-white/5 bg-[#111]/80 rounded-[2rem] p-5 hidden md:flex flex-col space-y-6 shrink-0">
             <div className="flex items-center justify-between pb-2">

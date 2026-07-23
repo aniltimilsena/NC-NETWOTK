@@ -320,6 +320,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Global Settings (Maintenance Mode, feature flags, categories)
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // SERVER-ONLY — Managed exclusively via Admin SDK (firebase-admin).
     // Client access is intentionally blocked. Used for data export download tokens.
     match /one_time_tokens/{tokenId} {

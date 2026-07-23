@@ -77,7 +77,7 @@ export default function SettingsPage({
   return (
     <div className="min-h-screen bg-nc-dark pb-24">
       {/* Header */}
-      <div className="max-w-5xl mx-auto px-3.5 sm:px-8 lg:px-12 pt-6 flex items-center gap-4">
+      <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 pt-6 flex items-center gap-4">
         <button
           onClick={handleBack}
           className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors"
@@ -91,7 +91,7 @@ export default function SettingsPage({
         </h1>
       </div>
 
-      <div className="max-w-5xl mx-auto px-3.5 sm:px-8 lg:px-12 mt-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 mt-8 grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Left Hand Sidebar Navigation */}
         <div className={`md:col-span-1 space-y-1 flex flex-col items-stretch justify-start text-left ${currentMobileView === 'menu' ? 'block' : 'hidden md:block'}`}>
           {tabsConfig.map((tab) => {

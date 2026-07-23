@@ -43,11 +43,11 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
       {/* Left Columns - Bio & Physical */}
-      <div className={`${showContact ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-6`}>
+      <div className={`${showContact ? 'lg:col-span-2 xl:col-span-3' : 'lg:col-span-3 xl:col-span-4'} space-y-6 w-full`}>
         {/* Bio Panel */}
-        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[1.5rem] p-5 sm:p-6 space-y-3 shadow-xl">
+        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[1.5rem] p-5 sm:p-6 space-y-3 shadow-xl w-full">
           <h2 className="text-base sm:text-lg font-bold text-gray-100 flex items-center gap-2">
             <FileText className="w-4 h-4 text-[#00BFFF]" />
             About Me
@@ -58,7 +58,7 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
         </div>
 
         {/* Details & Attributes Panel */}
-        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[1.5rem] p-5 sm:p-6 space-y-4 shadow-xl">
+        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[1.5rem] p-5 sm:p-6 space-y-4 shadow-xl w-full">
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
             <h2 className="text-base sm:text-lg font-bold text-gray-100 flex items-center gap-2">
               <User className="w-4 h-4 text-[#00BFFF]" />
@@ -68,7 +68,7 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
           </div>
           
           {/* Tile Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 w-full">
             {/* Category Tile */}
             <div className="bg-[#131313] border border-white/[0.06] rounded-xl p-3 flex flex-col justify-between hover:border-white/10 transition-colors">
               <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">

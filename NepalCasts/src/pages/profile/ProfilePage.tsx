@@ -300,7 +300,7 @@ export default function ProfilePage({
         </div>
 
         {/* Header content skeleton */}
-        <div className="max-w-5xl mx-auto px-3.5 sm:px-8 lg:px-12 relative -mt-16 sm:-mt-24 z-10">
+        <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 relative -mt-16 sm:-mt-24 z-10">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-white/5">
             <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 text-center sm:text-left">
               {/* Avatar circle */}
@@ -397,7 +397,7 @@ export default function ProfilePage({
       />
 
       {/* Tabs */}
-      <div className="max-w-5xl mx-auto px-3.5 sm:px-8 lg:px-12 mt-8">
+      <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 mt-8">
         <div className="flex border-b border-white/5 gap-6 mb-8 overflow-x-auto scrollbar-none">
           {tabs.map((tab) => (
             <button

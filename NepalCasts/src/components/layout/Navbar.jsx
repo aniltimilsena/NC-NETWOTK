@@ -159,8 +159,8 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
   return (
     <>
       <header className="sticky top-0 left-0 right-0 z-50">
-        <nav className="bg-nc-dark/80 backdrop-blur-md border-b border-white/5">
-          <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+        <nav className="relative z-30 bg-nc-dark/80 backdrop-blur-md border-b border-white/5">
+          <div className="max-w-[1600px] mx-auto px-2 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-14 sm:h-20">
             {/* Logo & Back */}
             <div className="flex items-center gap-4 sm:gap-8">
@@ -190,7 +190,6 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-48 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
                   <Link to="/talents" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_talent_directory')}</Link>
                   <Link to="/trending" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_trending_now')}</Link>
-                  <Link to="/" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_upcoming_movies')}</Link>
                   <Link to="/settings" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
                   {isAdmin && (
                     <>

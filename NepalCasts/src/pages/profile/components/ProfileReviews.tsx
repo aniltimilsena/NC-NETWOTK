@@ -91,7 +91,7 @@ export default function ProfileReviews({
             ))}
           </div>
         ) : reviews.length > 0 ? (
-          <div className="space-y-5 divide-y divide-white/5">
+          <div className="space-y-5">
             {reviews.map((review, idx) => {
               const hasLiked = currentUserId && review.helpfulUsers?.includes(currentUserId);
               return (

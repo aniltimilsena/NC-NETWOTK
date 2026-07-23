@@ -77,7 +77,7 @@ export default function ProfileMedia({
           </div>
 
           {introVideo ? (
-            <div className="relative aspect-video rounded-3xl overflow-hidden border border-white/5 bg-black max-w-2xl">
+            <div className="relative aspect-video rounded-3xl overflow-hidden border border-white/5 bg-black w-full max-w-4xl">
               <video 
                 src={introVideo} 
                 controls 

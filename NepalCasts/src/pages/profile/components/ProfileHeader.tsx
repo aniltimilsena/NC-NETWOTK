@@ -173,7 +173,7 @@ export default function ProfileHeader({
       </div>
 
       {/* Hero Profile Card */}
-      <div className="max-w-5xl mx-auto px-3.5 sm:px-8 lg:px-12 relative -mt-10 sm:-mt-20 z-10">
+      <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 relative -mt-10 sm:-mt-20 z-10">
         <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden group">
           {/* Top Gradient Accent Bar */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00BFFF] via-[#0050cd] to-[#00BFFF]/30" />

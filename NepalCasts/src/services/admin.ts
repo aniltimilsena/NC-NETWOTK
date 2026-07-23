@@ -2,6 +2,7 @@ import { db } from "../lib/firebase";
 import { 
   collection, 
   doc, 
+  setDoc,
   query, 
   orderBy, 
   limit, 
@@ -85,7 +86,13 @@ export const subscribeToGlobalSettings = (callback: (settings: GlobalSettings) =
 
 export const updateGlobalSettings = async (settings: Partial<GlobalSettings>) => {
   try {
-    await apiClient.post("/admin/settings", settings);
+    const settingsDocRef = doc(db, COLLECTIONS.SETTINGS, "global");
+    await setDoc(settingsDocRef, settings, { merge: true });
+    try {
+      await apiClient.post("/admin/settings", settings);
+    } catch (apiErr) {
+      // Backend server may be offline, Firestore update succeeded
+    }
     return { success: true, error: null };
   } catch (err: any) {
     console.error("Error updating global settings:", err);

@@ -345,6 +345,7 @@ export default function CallingOverlay() {
                   className="w-24 h-24 sm:w-28 sm:h-28 text-3xl border-4 border-white/10 shadow-2xl"
                 />
               </div>
+              <h3 className="text-white text-lg font-extrabold tracking-tight mb-1">{remoteName}</h3>
               <p className="text-white/60 text-xs font-bold uppercase tracking-wider">Camera Off</p>
             </div>
           </div>
@@ -372,13 +373,19 @@ export default function CallingOverlay() {
                 className={`w-full h-full object-cover -scale-x-100 ${isVideoOff ? 'hidden' : ''}`}
               />
               {isVideoOff && (
-                <div className="w-full h-full flex items-center justify-center bg-[#111] p-4">
+                <div className="w-full h-full flex flex-col items-center justify-center bg-[#111116] p-3 text-center">
                   <Avatar 
                     src={currentUser?.photoURL || currentUser?.profileImage || currentUser?.image}
-                    name={currentUser?.displayName || "Me"}
+                    name={currentUser?.displayName || currentUser?.name || "Me"}
                     size="none"
-                    className="w-16 h-16 sm:w-20 sm:h-20 text-xl border border-white/10 shadow-lg"
+                    className="w-12 h-12 sm:w-16 sm:h-16 text-lg border border-white/10 shadow-lg mb-2"
                   />
+                  <span className="text-white text-xs font-extrabold truncate max-w-full px-1 leading-tight">
+                    {currentUser?.displayName || currentUser?.name || "Me"}
+                  </span>
+                  <span className="text-gray-400 text-[9px] font-bold uppercase tracking-wider mt-1">
+                    Camera Off
+                  </span>
                 </div>
               )}
             </motion.div>

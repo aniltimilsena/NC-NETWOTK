@@ -131,9 +131,9 @@ export const AdBanner: React.FC<AdBannerProps> = ({
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="relative bg-gradient-to-r from-[#0B132B]/95 via-[#1C2541]/95 to-[#0B132B]/95 border-b border-cyan-500/30 backdrop-blur-md text-xs py-2 px-3 sm:px-4 z-20 shadow-lg group overflow-hidden"
+          className="relative bg-gradient-to-r from-[#0B132B]/95 via-[#1C2541]/95 to-[#0B132B]/95 border-b border-cyan-500/30 backdrop-blur-md text-xs py-2 px-3 sm:px-4 z-10 shadow-lg group overflow-hidden"
         >
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+          <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-2 sm:gap-4">
             {/* Smooth Moving Marquee Track (All Ads in One Unbroken Line) */}
             <div className="relative flex-1 overflow-hidden h-6 flex items-center select-none">
               {/* Fade Edges for Marquee Mask */}
