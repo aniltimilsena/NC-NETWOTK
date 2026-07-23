@@ -96,7 +96,12 @@ export const subscribeToProfile = (
   return onSnapshot(
     doc(db, COLLECTIONS.PROFILES, uid),
     (snap) => {
-      callback(snap.exists() ? (snap.data() as ProfileData) : null);
+      if (snap.exists()) {
+        // Always inject the document ID as `uid` to prevent profile.uid being undefined
+        callback({ uid, ...snap.data() } as ProfileData);
+      } else {
+        callback(null);
+      }
     },
     (error) => {
       console.error("Profile subscription error:", error);

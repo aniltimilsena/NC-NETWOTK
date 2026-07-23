@@ -49,7 +49,7 @@ export default function ProfileHeader({
 
   const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !profile.uid) return;
 
     if (file.size > 10 * 1024 * 1024) {
       showAlert('File Too Large', 'error', 'Cover image exceeds the 10MB size limit.');
@@ -78,6 +78,7 @@ export default function ProfileHeader({
   };
 
   const handleDeleteCover = async () => {
+    if (!profile.uid) return;
     try {
       await updateProfileData(profile.uid, { coverImage: null });
       showAlert('Cover Image Removed', 'info');
