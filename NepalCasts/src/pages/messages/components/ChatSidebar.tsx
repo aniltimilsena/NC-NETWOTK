@@ -191,7 +191,7 @@ export default function ChatSidebar({
             callHistory.length > 0 ? (
               <div className="flex flex-col">
                 {callHistory.map((call) => {
-                  const isIncoming = call.calleeId === currentUser.uid;
+                  const isIncoming = call.calleeId === currentUser?.uid;
                   const targetUserId = isIncoming ? call.callerId : call.calleeId;
                   const callType: 'audio' | 'video' = call.callType === 'video' ? 'video' : 'audio';
                   const date = call.createdAt?.toDate ? call.createdAt.toDate().toLocaleDateString() : 'N/A';

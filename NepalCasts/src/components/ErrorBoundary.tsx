@@ -225,10 +225,8 @@ export default class ErrorBoundary extends Component<Props, State> {
                     {this.state.error && (
                       <div className="flex flex-col pt-1">
                         <span className="text-white/40 uppercase font-black text-[8px] tracking-wider mb-1">Error Trace</span>
-                        <span className="text-red-400/90 whitespace-pre-wrap leading-normal break-all">
-                          {import.meta.env.DEV
-                            ? (this.state.error.stack || this.state.error.toString())
-                            : "Error details logged automatically for investigation."}
+                        <span className="text-red-400/90 whitespace-pre-wrap leading-normal break-all font-mono text-[10px]">
+                          {this.state.error.stack || this.state.error.toString()}
                         </span>
                       </div>
                     )}

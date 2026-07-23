@@ -46,8 +46,8 @@ export default function ChatArea({
     }
   }, [messages, typingUsers]);
 
-  const otherParticipantId = chat.participants?.find((p: string) => p !== currentUser.uid);
-  const isTyping = typingUsers[otherParticipantId] === true;
+  const otherParticipantId = chat?.participants?.find((p: string) => p !== currentUser?.uid);
+  const isTyping = otherParticipantId ? typingUsers?.[otherParticipantId] === true : false;
 
   return (
     <div className="flex flex-col h-full bg-[#0b0b0c]">
@@ -61,9 +61,9 @@ export default function ChatArea({
           >
             <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5} />
           </button>
-          <Avatar src={chat.avatar} name={chat.name} size="md" className="w-11 h-11 sm:w-12 sm:h-12 shrink-0" />
+          <Avatar src={chat?.avatar} name={chat?.name} size="md" className="w-11 h-11 sm:w-12 sm:h-12 shrink-0" />
           <div className="text-left">
-            <span className="text-base sm:text-lg font-extrabold text-white block leading-tight">{chat.name}</span>
+            <span className="text-base sm:text-lg font-extrabold text-white block leading-tight">{chat?.name}</span>
             <span className="text-xs text-nc-muted block uppercase tracking-wider font-semibold mt-0.5">
               {isTyping ? <span className="text-[#00BFFF] animate-pulse">Typing...</span> : 'Online'}
             </span>
@@ -96,7 +96,7 @@ export default function ChatArea({
       >
         {messages.length > 0 ? (
           messages.map((msg) => {
-            const isMe = msg.senderId === currentUser.uid;
+            const isMe = msg.senderId === currentUser?.uid;
             
             return (
               (msg.senderId === 'system' || msg.isSystem || (typeof msg.text === 'string' && (msg.text.includes('call •') || msg.text.includes('Call •')))) ? (
