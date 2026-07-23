@@ -12,7 +12,7 @@ import type { Message } from '../../types';
 interface MessagesPageProps {
   onNavigate: (page: string, param?: any) => void;
   user: any;
-  initialUserId: string | null;
+  initialUserId?: string | null;
   showAlert: (message: string, type?: any, detail?: string) => void;
 }
 
@@ -33,7 +33,7 @@ export default function MessagesPage({
     loadingCalls,
     updateTyping,
     dispatchMessage
-  } = useMessages(user, initialUserId);
+  } = useMessages(user, initialUserId ?? null);
 
   const { initiateCall } = useCall();
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);

@@ -11,6 +11,7 @@ interface SettingsPageProps {
   onNavigate: (page: string, param?: any) => void;
   user: any;
   showAlert: (message: string, type?: any, detail?: string) => void;
+  showToast?: (message: string, type?: any) => void;
 }
 
 export default function SettingsPage({

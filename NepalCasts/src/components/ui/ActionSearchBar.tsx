@@ -40,7 +40,7 @@ export function ActionSearchBar({
     const [loading, setLoading] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
-    const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const triggerSearchAnimation = () => {
         setIsSearching(true);
