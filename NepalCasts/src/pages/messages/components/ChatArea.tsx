@@ -99,23 +99,23 @@ export default function ChatArea({
             const isMe = msg.senderId === currentUser.uid;
             
             return (
-              msg.senderId === 'system' ? (
+              (msg.senderId === 'system' || msg.isSystem || (typeof msg.text === 'string' && (msg.text.includes('call •') || msg.text.includes('Call •')))) ? (
                 /* ── System / Call-log pill ── */
                 (() => {
                   const text = msg.text || '';
-                  const isVideo = text.toLowerCase().startsWith('video');
-                  const isMissed = text.includes('Missed') || text.includes('Cancelled') || text.includes('Declined') || text.includes('Busy');
+                  const isVideo = text.toLowerCase().includes('video');
+                  const isMissed = text.includes('Missed') || text.includes('Cancelled') || text.includes('Declined') || text.includes('Busy') || text.includes('Failed') || text.includes('Offline') || text.includes('Error');
                   const Icon = isMissed
                     ? (isVideo ? VideoOff : PhoneOff)
                     : (isVideo ? Video : Phone);
                   const color = isMissed ? 'text-red-400' : 'text-emerald-400';
-                  const borderColor = isMissed ? 'border-red-500/15' : 'border-emerald-500/15';
-                  const bgColor = isMissed ? 'bg-red-950/20' : 'bg-emerald-950/20';
+                  const borderColor = isMissed ? 'border-red-900/50' : 'border-emerald-900/50';
+                  const bgColor = isMissed ? 'bg-[#1F0A0B]' : 'bg-[#0B1F12]';
                   return (
-                    <div key={msg.id} className="flex justify-center my-1">
-                      <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border ${borderColor} ${bgColor} backdrop-blur-sm`}>
-                        <Icon className={`w-3 h-3 ${color} shrink-0`} />
-                        <span className={`text-[11px] font-medium ${color}`}>{text}</span>
+                    <div key={msg.id} className="flex justify-center my-3">
+                      <div className={`inline-flex items-center gap-2.5 px-5 py-2 rounded-full border ${borderColor} ${bgColor} shadow-md backdrop-blur-md`}>
+                        <Icon className={`w-4 h-4 ${color} shrink-0`} />
+                        <span className={`text-xs sm:text-sm font-semibold ${color}`}>{text}</span>
                       </div>
                     </div>
                   );

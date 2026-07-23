@@ -27,6 +27,10 @@ const formatLastMessage = (text?: string) => {
   if (text.startsWith('http')) {
     return '📁 Sent a file';
   }
+  if (text.includes('call •') || text.includes('Call •')) {
+    const isVideo = text.toLowerCase().includes('video');
+    return isVideo ? `📹 ${text}` : `📞 ${text}`;
+  }
   return text;
 };
 
