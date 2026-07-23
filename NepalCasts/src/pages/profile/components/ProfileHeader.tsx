@@ -90,13 +90,13 @@ export default function ProfileHeader({
     <div className="relative">
       {/* Cover Banner */}
       <div className="block h-[140px] sm:h-[180px] relative w-full overflow-hidden bg-nc-dark-900">
-        <img 
-          src={coverImage} 
-          alt="Cover" 
-          className="w-full h-full object-cover select-none" 
+        <img
+          src={coverImage}
+          alt="Cover"
+          className="w-full h-full object-cover select-none"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
-        
+
         {/* Back Button */}
         <button
           onClick={() => onNavigate('back')}
@@ -181,7 +181,7 @@ export default function ProfileHeader({
           <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
             {/* Avatar */}
             <div className="relative flex-shrink-0">
-              <Avatar 
+              <Avatar
                 src={profile.image}
                 gender={profile.gender || ''}
                 name={name}
@@ -240,14 +240,14 @@ export default function ProfileHeader({
 
           {/* Stats Bar */}
           <div className={`grid gap-2 mt-6 pt-5 border-t border-white/5 w-full ${(isOwnProfile && savedCount > 0) ? 'grid-cols-4' : 'grid-cols-3'}`}>
-            <div 
+            <div
               onClick={() => isOwnProfile && onFollowClick?.('followers')}
               className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
             >
               <span className="text-gray-200 text-xl font-bold">{followerCount}</span>
               <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Followers</span>
             </div>
-            <div 
+            <div
               onClick={() => isOwnProfile && onFollowClick?.('following')}
               className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl border-l border-white/5 transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
             >
@@ -256,7 +256,7 @@ export default function ProfileHeader({
             </div>
             <div className="flex flex-col items-center justify-center text-center py-1.5 rounded-xl border-l border-white/5">
               <span className="text-gray-200 text-xl font-bold flex items-center justify-center gap-1">
-                {profile.rating || 0} 
+                {profile.rating || 0}
                 <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
               </span>
               <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Rating</span>
