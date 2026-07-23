@@ -610,10 +610,10 @@ export default function Notifications({ onNavigate, user }) {
           <div className="flex justify-start">
             <button
               onClick={() => onNavigate('back')}
-              className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shadow-sm active:scale-95"
+              className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer"
               aria-label="Back"
             >
-              <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
+              <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5} />
             </button>
           </div>
           <div className="flex justify-center">

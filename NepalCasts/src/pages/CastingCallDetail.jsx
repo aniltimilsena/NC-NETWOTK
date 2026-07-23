@@ -498,11 +498,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         <div className="absolute top-6 left-6 sm:left-10 z-20">
           <button
             onClick={() => onNavigate('back')}
-            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shadow-md"
+            className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-md shrink-0"
             aria-label="Back"
             title="Go Back"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
           </button>
         </div>
 

@@ -152,11 +152,11 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
           <button
             type="button"
             onClick={() => onNavigate('back')}
-            className="sm:absolute sm:left-0 sm:top-1/2 sm:-translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shadow-sm active:scale-95 cursor-pointer shrink-0"
+            className="sm:absolute sm:left-0 sm:top-1/2 sm:-translate-y-1/2 w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
             title="Go Back"
             aria-label="Go Back"
           >
-            <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
+            <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5} />
           </button>
           
           <div className="flex-1 text-center pr-10 sm:pr-0">

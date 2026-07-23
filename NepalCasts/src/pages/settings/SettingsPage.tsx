@@ -80,10 +80,10 @@ export default function SettingsPage({
       <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 pt-6 flex items-center gap-4">
         <button
           onClick={handleBack}
-          className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors"
+          className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 cursor-pointer"
           aria-label="Back"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
         </button>
         <h1 className="text-2xl font-black text-white">
           <span className="md:inline hidden">Account Settings</span>

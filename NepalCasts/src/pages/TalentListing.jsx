@@ -316,11 +316,11 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
             <div className="flex items-center gap-4 border-b border-white/5 pb-6">
               <button
                 onClick={() => onNavigate('back')}
-                className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors shadow-md shrink-0 cursor-pointer"
+                className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all shadow-md shrink-0 cursor-pointer"
                 aria-label="Back"
                 title="Go Back"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <div>
                 <h1 className="text-3xl sm:text-4xl font-sans font-black text-white tracking-tight leading-none mb-2">Browse by Category</h1>
@@ -391,13 +391,13 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                 <button
                   onClick={() => {
                     setSelectedFilters(prev => ({ ...prev, category: 'All' }));
-                    setViewMode('categories');
+                    navigate('/talents', { replace: true });
                   }}
-                  className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-colors shadow-md cursor-pointer shrink-0"
+                  className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all shadow-md cursor-pointer shrink-0"
                   aria-label="Back to Categories"
                   title="Back to Categories"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
                 </button>
                 <div>
                   <h2 className="text-xl sm:text-2xl font-black text-white leading-none">

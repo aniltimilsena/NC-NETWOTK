@@ -79,10 +79,10 @@ export default function ChatSidebar({
         <div className="flex justify-between items-center">
           <button
             onClick={() => onNavigate ? onNavigate('back') : navigate(-1)}
-            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white border border-white/10 transition-colors shrink-0 no-min-h shadow-sm active:scale-95"
+            className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 no-min-h shadow-sm active:scale-95 cursor-pointer"
             title="Go Back"
           >
-            <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
+            <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5} />
           </button>
 
           <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Inbox</h2>

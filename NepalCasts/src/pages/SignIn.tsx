@@ -428,11 +428,11 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
           <button 
             onClick={handleBack} 
             type="button"
-            className="absolute top-6 left-6 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 border border-white/10 flex items-center justify-center text-white transition-all shadow-md z-20 cursor-pointer"
+            className="absolute top-6 left-6 w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all shadow-md z-20 cursor-pointer shrink-0"
             aria-label="Back"
             title="Go Back"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
           </button>
 
           {/* Logo component */}

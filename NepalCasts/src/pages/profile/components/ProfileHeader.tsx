@@ -100,10 +100,10 @@ export default function ProfileHeader({
         {/* Back Button */}
         <button
           onClick={() => onNavigate('back')}
-          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 flex items-center justify-center text-white transition-colors border border-white/10 active:scale-95 z-20"
+          className="absolute top-4 left-4 w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all border border-white/10 active:scale-95 z-20 shrink-0 cursor-pointer"
           aria-label="Back"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
         </button>
 
         {isOwnProfile && (
