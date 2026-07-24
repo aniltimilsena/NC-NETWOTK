@@ -149,7 +149,8 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
       if (err.code !== 'permission-denied') {
         console.error("Conversations snapshot listener failed in Navbar:", err);
       }
-    });
+    return () => unsubscribe();
+  }, [user]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
