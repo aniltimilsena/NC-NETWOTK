@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCall } from '../../context/CallContext';
 import { getProfile } from '../../services';
 import Avatar from '../ui/Avatar';
+import { logger } from '../../utils/logger';
 
 export default function IncomingCallPopup() {
   const { incomingCall, acceptCall, rejectCall } = useCall();
@@ -13,6 +14,7 @@ export default function IncomingCallPopup() {
       setCallerProfile(null);
       return;
     }
+    logger.log(`[PERF TIMING 4] T3: Incoming Call UI Displayed for call ${incomingCall.id}`);
     let isMounted = true;
     getProfile(incomingCall.callerId).then((res) => {
       if (isMounted && res.data) {

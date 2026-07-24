@@ -209,7 +209,7 @@ export default function CallingOverlay() {
     };
 
     const handlePlaying = () => {
-      console.log('[CallingOverlay] remoteVideo started playing successfully!');
+      console.log(`[PERF TIMING 8] T7: First remote video frame rendered! (${vEl.videoWidth}x${vEl.videoHeight})`);
     };
 
     vEl.addEventListener('loadedmetadata', handleLoadedMetadata);

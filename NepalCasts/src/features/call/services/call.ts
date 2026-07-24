@@ -14,8 +14,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { COLLECTIONS } from "../../../constants/collections";
-
-
+import { logger } from "../../../utils/logger";
 
 export type CallStatus =
   | "pending"
@@ -46,10 +45,6 @@ export interface CallDoc {
   endedAt?: any;
 }
 
-
-
-
-
 export const getIceServers = (): RTCConfiguration => {
   const customTurnUrl = import.meta.env.VITE_TURN_SERVER;
   const customTurnUsername = import.meta.env.VITE_TURN_USERNAME;
@@ -77,7 +72,11 @@ export const getIceServers = (): RTCConfiguration => {
 
 export const ICE_SERVERS: RTCConfiguration = getIceServers();
 
-export const createCall = async (params: {
+/**
+ * Creates a lightweight call document immediately upon caller tap (T0 -> T1 < 300ms)
+ * before acquiring media or generating SDP offer.
+ */
+export const createCallPending = async (params: {
   callerId: string;
   callerName: string;
   callerPhoto: string;
@@ -89,8 +88,8 @@ export const createCall = async (params: {
   receiverName: string;
   receiverAvatar: string;
   callType: "audio" | "video";
-  offer: RTCSessionDescriptionInit;
 }): Promise<{ callId: string | null; error: string | null }> => {
+  const tStart = performance.now();
   try {
     const sanitizeStr = (str: string, maxLen: number = 100) => (str || "").substring(0, maxLen);
 
@@ -108,17 +107,35 @@ export const createCall = async (params: {
       callType: params.callType,
       status: "pending" as CallStatus,
       callStatus: "pending" as CallStatus,
-      offer: params.offer,
+      offer: null,
       answer: null,
       createdAt: serverTimestamp(),
     });
+    const duration = (performance.now() - tStart).toFixed(1);
+    logger.log(`[PERF TIMING 2] T1: Call doc created in Firestore (${duration}ms). Call ID: ${callRef.id}`);
     return { callId: callRef.id, error: null };
   } catch (err: any) {
-    console.error("[CallService] createCall error:", err);
+    console.error("[CallService] createCallPending error:", err);
     return { callId: null, error: err.message };
   }
 };
 
+/**
+ * Updates an existing call document with the generated SDP offer.
+ */
+export const setCallOffer = async (
+  callId: string,
+  offer: RTCSessionDescriptionInit
+): Promise<void> => {
+  const tStart = performance.now();
+  try {
+    await updateDoc(doc(db, COLLECTIONS.CALLS, callId), { offer });
+    const duration = (performance.now() - tStart).toFixed(1);
+    logger.log(`[PERF TIMING 6] T5: SDP Offer updated in Firestore (${duration}ms)`);
+  } catch (err) {
+    console.error("[CallService] setCallOffer error:", err);
+  }
+};
 
 export const updateCallStatus = async (
   callId: string,
@@ -130,27 +147,29 @@ export const updateCallStatus = async (
       updates.endedAt = serverTimestamp();
     }
     await updateDoc(doc(db, COLLECTIONS.CALLS, callId), updates);
+    logger.log(`[CallService] Updated call ${callId} status to: ${status}`);
   } catch (err) {
     console.error("[CallService] updateCallStatus error:", err);
   }
 };
 
-
 export const setCallAnswer = async (
   callId: string,
   answer: RTCSessionDescriptionInit
 ): Promise<void> => {
+  const tStart = performance.now();
   try {
     await updateDoc(doc(db, COLLECTIONS.CALLS, callId), {
       answer,
       status: "accepted" as CallStatus,
       callStatus: "accepted" as CallStatus,
     });
+    const duration = (performance.now() - tStart).toFixed(1);
+    logger.log(`[PERF TIMING 6] T5: SDP Answer updated in Firestore (${duration}ms)`);
   } catch (err) {
     console.error("[CallService] setCallAnswer error:", err);
   }
 };
-
 
 export const addIceCandidate = async (
   callId: string,
@@ -158,19 +177,18 @@ export const addIceCandidate = async (
   candidate: RTCIceCandidateInit
 ): Promise<void> => {
   try {
-    const subCol =
-      role === "caller" ? "callerCandidates" : "calleeCandidates";
+    const subCol = role === "caller" ? "callerCandidates" : "calleeCandidates";
     await addDoc(collection(db, COLLECTIONS.CALLS, callId, subCol), candidate);
   } catch (err) {
     console.error("[CallService] addIceCandidate error:", err);
   }
 };
 
-
 export const subscribeToIncomingCalls = (
   userId: string,
   callback: (call: CallDoc | null) => void
 ): Unsubscribe => {
+  logger.log(`[CallService] Registering real-time incoming call listener for user: ${userId}`);
   const q = query(
     collection(db, COLLECTIONS.CALLS),
     where("calleeId", "==", userId),
@@ -186,7 +204,9 @@ export const subscribeToIncomingCalls = (
       }
       
       const callDoc = snapshot.docs[0];
-      callback({ id: callDoc.id, ...callDoc.data() } as CallDoc);
+      const data = { id: callDoc.id, ...callDoc.data() } as CallDoc;
+      logger.log(`[PERF TIMING 3] T2: Incoming call onSnapshot fired for callee ${userId}. Call ID: ${data.id}`);
+      callback(data);
     },
     (err) => {
       console.error("[CallService] subscribeToIncomingCalls error:", err);
@@ -194,7 +214,6 @@ export const subscribeToIncomingCalls = (
     }
   );
 };
-
 
 export const subscribeToCall = (
   callId: string,
@@ -216,15 +235,12 @@ export const subscribeToCall = (
   );
 };
 
-
 export const subscribeToIceCandidates = (
   callId: string,
   role: "caller" | "callee",
   callback: (candidate: RTCIceCandidateInit) => void
 ): Unsubscribe => {
-  
-  const subCol =
-    role === "caller" ? "calleeCandidates" : "callerCandidates";
+  const subCol = role === "caller" ? "calleeCandidates" : "callerCandidates";
 
   return onSnapshot(
     collection(db, COLLECTIONS.CALLS, callId, subCol),
@@ -241,10 +257,8 @@ export const subscribeToIceCandidates = (
   );
 };
 
-
 export const cleanupCall = async (callId: string): Promise<void> => {
   try {
-    
     const callerCands = await getDocs(
       collection(db, COLLECTIONS.CALLS, callId, "callerCandidates")
     );
@@ -260,20 +274,17 @@ export const cleanupCall = async (callId: string): Promise<void> => {
     }
     
     await deleteDoc(doc(db, COLLECTIONS.CALLS, callId));
+    logger.log(`[CallService] Cleaned up call ${callId} and ICE subcollections`);
   } catch (err) {
     console.error("[CallService] cleanupCall error:", err);
   }
 };
-
-
-
 
 export const subscribeToCallHistory = (
   userId: string,
   callback: (calls: CallDoc[]) => void,
   maxResults: number = 50
 ): Unsubscribe => {
-  
   const callerQ = query(
     collection(db, COLLECTIONS.CALLS),
     where("callerId", "==", userId),
@@ -309,7 +320,7 @@ export const subscribeToCallHistory = (
       merge();
     },
     (err) => {
-      console.warn("[CallService] callerQ subscription failed (likely missing index):", err);
+      console.warn("[CallService] callerQ subscription failed:", err);
     }
   );
 
@@ -319,7 +330,7 @@ export const subscribeToCallHistory = (
       merge();
     },
     (err) => {
-      console.warn("[CallService] calleeQ subscription failed (likely missing index):", err);
+      console.warn("[CallService] calleeQ subscription failed:", err);
     }
   );
 
