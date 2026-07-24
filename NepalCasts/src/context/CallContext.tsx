@@ -286,7 +286,23 @@ export function CallProvider({ children, user }: CallProviderProps) {
 export function useCall(): CallContextValue {
   const ctx = useContext(CallContext);
   if (!ctx) {
-    throw new Error("useCall must be used within a CallProvider");
+    return {
+      callState: "idle",
+      activeCall: null,
+      incomingCall: null,
+      localStream: null,
+      remoteStream: null,
+      isMuted: false,
+      callDuration: 0,
+      errorMessage: "",
+      currentUser: null,
+      initiateCall: async () => {},
+      acceptCall: async () => {},
+      rejectCall: async () => {},
+      hangUp: async () => {},
+      toggleMute: () => {},
+      dismissError: () => {},
+    };
   }
   return ctx;
 }
