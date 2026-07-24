@@ -13,6 +13,7 @@ import Avatar from '../ui/Avatar';
 import { db } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
+import { cacheManager } from '@/utils/cacheManager';
 
 
 export default function Navbar({ onNavigate, onBack = () => {}, showBack = false, isAdmin = false, user = null, onLogout = () => {} }) {
@@ -87,26 +88,33 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
       return;
     }
 
-    const q = query(
-      collection(db, 'notifications'),
-      where('recipientId', '==', user.uid),
-      orderBy('createdAt', 'desc'),
-      limit(20)
-    );
+    return cacheManager.subscribePooled(
+      `user_notifications_${user.uid}`,
+      (pooledCb) => {
+        const q = query(
+          collection(db, 'notifications'),
+          where('recipientId', '==', user.uid),
+          orderBy('createdAt', 'desc'),
+          limit(20)
+        );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const notifs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setUnreadCount(notifs.filter(n => !n.read).length);
-    }, (err) => {
-      if (err.code !== 'permission-denied') {
-        console.error("Notifications snapshot listener failed:", err);
+        return onSnapshot(q, (snapshot) => {
+          const notifs = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          pooledCb(notifs, null);
+        }, (err) => {
+          if (err.code !== 'permission-denied') {
+            console.error("Notifications snapshot listener failed:", err);
+          }
+          pooledCb([], err);
+        });
+      },
+      (notifs) => {
+        setUnreadCount(notifs.filter(n => !n.read).length);
       }
-    });
-
-    return () => unsubscribe();
+    );
   }, [user]);
 
   useEffect(() => {
@@ -115,43 +123,50 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
       return;
     }
 
-    const q = query(
-      collection(db, 'conversations'),
-      where('participants', 'array-contains', user.uid)
-    );
+    return cacheManager.subscribePooled(
+      `user_conversations_${user.uid}`,
+      (pooledCb) => {
+        const q = query(
+          collection(db, 'conversations'),
+          where('participants', 'array-contains', user.uid)
+        );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      let count = 0;
-      snapshot.docs.forEach(d => {
-        const data = d.data();
-        const uid = user.uid;
-        const lastSender = data.lastSenderId;
-        
-        if (lastSender && lastSender !== uid) {
-          let isUnread = false;
-          if (data.readBy && typeof data.readBy === 'object' && !Array.isArray(data.readBy)) {
-            isUnread = data.readBy[uid] === false;
-          } else if (data.unreadCounts && typeof data.unreadCounts === 'object') {
-            isUnread = (data.unreadCounts[uid] || 0) > 0;
-          } else if (typeof data.unread === 'boolean') {
-            isUnread = data.unread === true;
-          } else if (typeof data.unread === 'number') {
-            isUnread = data.unread > 0;
+        return onSnapshot(q, (snapshot) => {
+          let count = 0;
+          snapshot.docs.forEach(d => {
+            const data = d.data();
+            const uid = user.uid;
+            const lastSender = data.lastSenderId;
+            
+            if (lastSender && lastSender !== uid) {
+              let isUnread = false;
+              if (data.readBy && typeof data.readBy === 'object' && !Array.isArray(data.readBy)) {
+                isUnread = data.readBy[uid] === false;
+              } else if (data.unreadCounts && typeof data.unreadCounts === 'object') {
+                isUnread = (data.unreadCounts[uid] || 0) > 0;
+              } else if (typeof data.unread === 'boolean') {
+                isUnread = data.unread === true;
+              } else if (typeof data.unread === 'number') {
+                isUnread = data.unread > 0;
+              }
+              
+              if (isUnread) {
+                count++;
+              }
+            }
+          });
+          pooledCb(count, null);
+        }, (err) => {
+          if (err.code !== 'permission-denied') {
+            console.error("Conversations snapshot listener failed in Navbar:", err);
           }
-          
-          if (isUnread) {
-            count++;
-          }
-        }
-      });
-      setUnreadMessagesCount(count);
-    }, (err) => {
-      if (err.code !== 'permission-denied') {
-        console.error("Conversations snapshot listener failed in Navbar:", err);
+          pooledCb(0, err);
+        });
+      },
+      (count) => {
+        setUnreadMessagesCount(count);
       }
-    });
-
-    return () => unsubscribe();
+    );
   }, [user]);
 
 

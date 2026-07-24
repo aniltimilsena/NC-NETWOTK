@@ -9,6 +9,7 @@ import {
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import { CATEGORIES, getCategoryColor, getCategoryConfig } from '../constants/categories';
+import { cacheManager } from '../utils/cacheManager';
 
 
 
@@ -28,35 +29,50 @@ export default function Trending({ onNavigate }) {
   
   useEffect(() => {
     setLoading(true);
-    const q = query(collection(db, "profiles"));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setProfiles(data);
-      setLoading(false);
-    }, (err) => {
-      console.warn("Profiles fetch failed or permission denied:", err);
-      setLoading(false);
-    });
-    return () => unsub();
+    return cacheManager.subscribePooled(
+      "trending_profiles_all",
+      (pooledCb) => {
+        const q = query(collection(db, "profiles"));
+        return onSnapshot(q, (snapshot) => {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          pooledCb(data, null);
+        }, (err) => {
+          console.warn("Profiles fetch failed or permission denied:", err);
+          pooledCb([], err);
+        });
+      },
+      (data) => {
+        setProfiles(data);
+        setLoading(false);
+      }
+    );
   }, []);
 
   
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+    const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
       if (currentUser) {
-        const q = query(collection(db, "follows"), where("followerId", "==", currentUser.uid));
-        const unsub = onSnapshot(q, (snapshot) => {
-          const ids = snapshot.docs.map(doc => doc.data().followingId);
-          setFollowingIds(ids);
-        }, (err) => {
-          console.warn("Follows listener error in Trending:", err);
-        });
-        return () => unsub();
+        return cacheManager.subscribePooled(
+          `user_follows_${currentUser.uid}`,
+          (pooledCb) => {
+            const q = query(collection(db, "follows"), where("followerId", "==", currentUser.uid));
+            return onSnapshot(q, (snapshot) => {
+              const ids = snapshot.docs.map(doc => doc.data().followingId);
+              pooledCb(ids, null);
+            }, (err) => {
+              console.warn("Follows listener error in Trending:", err);
+              pooledCb([], err);
+            });
+          },
+          (ids) => {
+            setFollowingIds(ids);
+          }
+        );
       } else {
         setFollowingIds([]);
       }
     });
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
   

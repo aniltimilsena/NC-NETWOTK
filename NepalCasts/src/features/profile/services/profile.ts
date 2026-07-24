@@ -19,19 +19,27 @@ type ProfileResponse = {
 };
 
 
+import { cacheManager } from "../../../utils/cacheManager";
+
 export const getProfile = async (uid: string): Promise<ProfileResponse> => {
-  try {
-    const snap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, uid));
-    if (snap.exists()) {
-      return { data: snap.data() as ProfileData, error: null };
-    }
-    return { data: null, error: null };
-  } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch profile";
-    console.error("Error fetching profile:", message);
-    return { data: null, error: message };
-  }
+  return cacheManager.fetchWithCache(
+    `profile_${uid}`,
+    async () => {
+      try {
+        const snap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, uid));
+        if (snap.exists()) {
+          return { data: { uid, ...snap.data() } as ProfileData, error: null };
+        }
+        return { data: null, error: null };
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : "Failed to fetch profile";
+        console.error("Error fetching profile:", message);
+        return { data: null, error: message };
+      }
+    },
+    10 * 60 * 1000 // 10 minutes cache
+  );
 };
 
 export const updateProfileData = async (
@@ -90,6 +98,7 @@ export const updateProfileData = async (
       }, { merge: true });
     }
 
+    cacheManager.invalidateCache(`profile_${uid}`);
     return { success: true, error: null };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to update profile";
@@ -103,20 +112,25 @@ export const subscribeToProfile = (
   uid: string,
   callback: (data: ProfileData | null) => void,
 ) => {
-  return onSnapshot(
-    doc(db, COLLECTIONS.PROFILES, uid),
-    (snap) => {
-      if (snap.exists()) {
-        // Always inject the document ID as `uid` to prevent profile.uid being undefined
-        callback({ uid, ...snap.data() } as ProfileData);
-      } else {
-        callback(null);
-      }
+  return cacheManager.subscribePooled(
+    `profile_sub_${uid}`,
+    (pooledCb) => {
+      return onSnapshot(
+        doc(db, COLLECTIONS.PROFILES, uid),
+        (snap) => {
+          if (snap.exists()) {
+            pooledCb({ uid, ...snap.data() } as ProfileData, null);
+          } else {
+            pooledCb(null, null);
+          }
+        },
+        (error) => {
+          console.error("Profile subscription error:", error);
+          pooledCb(null, error);
+        }
+      );
     },
-    (error) => {
-      console.error("Profile subscription error:", error);
-      callback(null);
-    },
+    (data) => callback(data)
   );
 };
 

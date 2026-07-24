@@ -13,6 +13,8 @@ import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
 
+import { cacheManager } from "../../../utils/cacheManager";
+
 export const subscribeToCastingCalls = (
   filter?: string | ((data: any, error?: any) => void),
   callback?: (data: any, error?: any) => void
@@ -27,41 +29,57 @@ export const subscribeToCastingCalls = (
     actualFilter = filter;
   }
 
-  let q;
-  if (actualFilter && typeof actualFilter === "string" && actualFilter.toLowerCase() !== "all") {
-    q = query(
-      collection(db, COLLECTIONS.CASTING_CALLS),
-      where("type", "==", actualFilter),
-      orderBy("createdAt", "desc")
-    );
-  } else {
-    q = query(collection(db, COLLECTIONS.CASTING_CALLS), orderBy("createdAt", "desc"));
-  }
+  const poolKey = `casting_calls_${actualFilter.toLowerCase()}`;
 
-  return onSnapshot(
-    q,
-    (snapshot) => {
-      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      if (actualCallback) actualCallback(data, null);
+  return cacheManager.subscribePooled(
+    poolKey,
+    (pooledCb) => {
+      let q;
+      if (actualFilter && typeof actualFilter === "string" && actualFilter.toLowerCase() !== "all") {
+        q = query(
+          collection(db, COLLECTIONS.CASTING_CALLS),
+          where("type", "==", actualFilter),
+          orderBy("createdAt", "desc")
+        );
+      } else {
+        q = query(collection(db, COLLECTIONS.CASTING_CALLS), orderBy("createdAt", "desc"));
+      }
+
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          pooledCb(data, null);
+        },
+        (error) => {
+          console.error("Casting calls subscription error:", error);
+          pooledCb([], error);
+        }
+      );
     },
-    (error) => {
-      console.error("Casting calls subscription error:", error);
-      if (actualCallback) actualCallback([], error);
+    (data, error) => {
+      if (actualCallback) actualCallback(data, error);
     }
   );
 };
 
 export const getCastingCallById = async (id: string) => {
-  try {
-    const snap = await rateLimitedGet(doc(db, COLLECTIONS.CASTING_CALLS, id));
-    if (snap.exists()) {
-      return { id: snap.id, ...snap.data() };
-    }
-    return null;
-  } catch (error) {
-    console.error("Error fetching casting call:", error);
-    return null;
-  }
+  return cacheManager.fetchWithCache(
+    `casting_call_${id}`,
+    async () => {
+      try {
+        const snap = await rateLimitedGet(doc(db, COLLECTIONS.CASTING_CALLS, id));
+        if (snap.exists()) {
+          return { id: snap.id, ...snap.data() };
+        }
+        return null;
+      } catch (error) {
+        console.error("Error fetching casting call:", error);
+        return null;
+      }
+    },
+    5 * 60 * 1000 // 5 minutes cache
+  );
 };
 
 export const createCastingCall = async (callData: any) => {

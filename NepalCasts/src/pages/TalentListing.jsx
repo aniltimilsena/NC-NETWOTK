@@ -11,6 +11,7 @@ import Tag from '../components/ui/Tag';
 import TalentCardSkeleton from '../components/ui/TalentCardSkeleton';
 import ShareSheet from '../components/ui/ShareSheet';
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
+import { cacheManager } from '../utils/cacheManager';
 
 
 
@@ -73,36 +74,50 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
   }, [initialCategory]);
 
   useEffect(() => {
-
-    const q = query(collection(db, "profiles"), orderBy("updatedAt", "desc"));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setTalents(data);
-      setLoading(false);
-    }, (err) => {
-      console.warn("Talents snapshot listener failed or permission denied:", err);
-      setLoading(false);
-    });
-    return () => unsub();
+    return cacheManager.subscribePooled(
+      "talent_listing_profiles",
+      (pooledCb) => {
+        const q = query(collection(db, "profiles"), orderBy("updatedAt", "desc"));
+        return onSnapshot(q, (snapshot) => {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          pooledCb(data, null);
+        }, (err) => {
+          console.warn("Talents snapshot listener failed or permission denied:", err);
+          pooledCb([], err);
+        });
+      },
+      (data) => {
+        setTalents(data);
+        setLoading(false);
+      }
+    );
   }, []);
 
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+    const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
       if (currentUser) {
-        const q = query(collection(db, "follows"), where("followerId", "==", currentUser.uid));
-        const unsub = onSnapshot(q, (snapshot) => {
-          const ids = snapshot.docs.map(doc => doc.data().followingId);
-          setFollowingIds(ids);
-        }, (err) => {
-          console.warn("Follows listener error:", err);
-        });
-        return () => unsub();
+        return cacheManager.subscribePooled(
+          `user_follows_${currentUser.uid}`,
+          (pooledCb) => {
+            const q = query(collection(db, "follows"), where("followerId", "==", currentUser.uid));
+            return onSnapshot(q, (snapshot) => {
+              const ids = snapshot.docs.map(doc => doc.data().followingId);
+              pooledCb(ids, null);
+            }, (err) => {
+              console.warn("Follows listener error:", err);
+              pooledCb([], err);
+            });
+          },
+          (ids) => {
+            setFollowingIds(ids);
+          }
+        );
       } else {
         setFollowingIds([]);
       }
     });
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
 
