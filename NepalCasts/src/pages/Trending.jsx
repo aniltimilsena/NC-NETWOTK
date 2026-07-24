@@ -517,56 +517,115 @@ export default function Trending({ onNavigate }) {
               </div>
             )}
 
-            {/* RANKED BENTO GRID OF CARDS */}
-            <div className="space-y-6">
-              <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest text-left">
+            {/* RANKED LIST OF CARDS */}
+            <div className="space-y-4 max-w-4xl mx-auto">
+              <h2 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 text-left">
                 {selectedCategory === 'All' ? 'All Ranked Talent' : `${getCategoryConfig(selectedCategory).label} Rankings`}
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 text-left">
+              <div className="flex flex-col text-left">
                 {remainingList.slice(0, visibleCount).map((prof, index) => {
                   const rank = index + 1;
                   const isFollowing = followingIds.includes(prof.id);
                   const isNew = isProfileNew(prof);
+                  const catColor = getCategoryColor(prof.role);
 
                   return (
                     <motion.div
                       key={prof.id}
-                      whileHover={{ y: -6 }}
+                      initial={{ opacity: 0, x: -15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: (index % 10) * 0.05 }}
                       onClick={() => onNavigate('profile', prof.id)}
-                      className="studio-card p-5 rounded-3xl flex flex-col justify-between cursor-pointer group space-y-4 text-left border border-white/10"
+                      className="group flex items-center justify-between gap-4 py-4 active:bg-white/[0.01] transition-all duration-300 cursor-pointer text-left"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="relative">
-                          <Avatar
-                            user={prof}
-                            size="lg"
-                            name={prof.name}
-                            className="w-16 h-16 border-2 border-white/10 group-hover:border-nc-accent transition-colors shadow-xl shrink-0"
-                          />
-                          <span
-                            className="absolute -top-2 -left-2 px-2 py-0.5 rounded-full text-[10px] font-black border backdrop-blur-md"
-                            style={{
-                              backgroundColor: '#050508',
-                              borderColor: getRankColor(rank),
-                              color: getRankColor(rank)
-                            }}
+                      {/* Left Side: Rank, Avatar and details */}
+                      <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
+                        
+                        {/* Rank Number with absolute background size for top ranks */}
+                        <div className="w-10 sm:w-14 flex items-center justify-center relative shrink-0">
+                          <span 
+                            className="text-2xl sm:text-3xl font-black select-none tracking-tighter"
+                            style={{ color: getRankColor(rank) }}
                           >
                             #{rank}
                           </span>
                         </div>
 
+                        {/* Avatar */}
+                        <div className="relative shrink-0">
+                          <Avatar
+                            user={prof}
+                            size="none"
+                            name={prof.name}
+                            className="w-20 h-20 sm:w-24 sm:h-24 border-white/5 group-hover:border-white/20"
+                          />
+                          {prof.openToWork && (
+                            <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-green-500 border border-[#111]"></span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Details */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h3 className="font-extrabold text-white text-sm sm:text-base tracking-tight truncate group-hover:text-[#0099FF] transition-colors">
+                              {prof.name}
+                            </h3>
+                            {isNew && (
+                              <span className="shrink-0 px-2 py-0.5 rounded-md text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 font-extrabold uppercase tracking-wide animate-pulse">
+                                New
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
+                            <span className="text-nc-accent font-semibold">
+                              @{prof.username || prof.name?.toLowerCase().replace(/\s+/g, '_') || 'talent'}
+                            </span>
+                            
+                            {prof.location && (
+                              <span className="flex items-center gap-1 text-gray-500">
+                                <MapPin className="w-3 h-3 text-gray-600 shrink-0" />
+                                {prof.location}
+                              </span>
+                            )}
+
+                            {/* Category Badge pill */}
+                            {prof.role && (
+                              <span 
+                                className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shrink-0"
+                                style={{ 
+                                  backgroundColor: `${catColor}15`, 
+                                  color: catColor,
+                                  border: `1px solid ${catColor}25`
+                                }}
+                              >
+                                {prof.role}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Right Side: Follower count & Follow button */}
+                      <div className="flex items-center gap-4 sm:gap-6 shrink-0">
+                        <div className="text-center hidden sm:block">
+                          <p className="text-[9px] text-gray-500 uppercase tracking-widest font-black">Followers</p>
+                          <p className="text-sm font-extrabold text-white">{Math.max(0, prof.followers || 0)}</p>
+                        </div>
+
                         {prof.id !== auth.currentUser?.uid && (
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleFollow(e, prof.id);
-                            }}
-                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                            onClick={(e) => handleToggleFollow(e, prof.id)}
+                            className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs font-black transition-all uppercase tracking-wider ${
                               isFollowing
-                                ? 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10'
-                                : 'bg-nc-accent text-black font-extrabold hover:bg-sky-400 shadow-md'
+                                ? 'bg-transparent border border-white/10 hover:border-red-500/30 hover:bg-red-500/5 hover:text-red-400 text-gray-300'
+                                : 'bg-[#0099FF] text-black hover:opacity-95 shadow-md shadow-[#0099FF]/10 active:scale-[0.98]'
                             }`}
                           >
                             {isFollowing ? 'Following' : 'Follow'}
@@ -574,23 +633,6 @@ export default function Trending({ onNavigate }) {
                         )}
                       </div>
 
-                      <div className="space-y-1">
-                        <h3 className="font-bold text-white text-base truncate group-hover:text-nc-accent transition-colors flex items-center gap-1.5">
-                          {prof.name}
-                          {prof.verified && <span className="verified-badge shrink-0" title="Verified">✓</span>}
-                        </h3>
-                        <p className="text-xs text-gray-400 font-medium truncate">
-                          {prof.role || prof.category || 'Talent'} • {prof.location || 'Nepal'}
-                        </p>
-                        <p className="text-xs text-nc-accent font-semibold truncate pt-1">
-                          🔥 {Math.max(0, prof.followers || 0)} Followers
-                        </p>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-3 border-t border-white/5 text-[11px] font-bold text-gray-400">
-                        <span>{isNew ? '✨ Rising Star' : `Score ${prof.trendingScore || 0}`}</span>
-                        <span className="text-nc-accent">View Profile →</span>
-                      </div>
                     </motion.div>
                   );
                 })}

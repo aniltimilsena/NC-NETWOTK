@@ -396,7 +396,7 @@ export default function ProfilePage({
       />
 
       {/* Tabs */}
-      <div className="max-w-4xl mx-auto px-4 mt-8">
+      <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 mt-8">
         <div className="flex border-b border-white/5 gap-6 mb-8 overflow-x-auto scrollbar-none">
           {tabs.map((tab) => (
             <button

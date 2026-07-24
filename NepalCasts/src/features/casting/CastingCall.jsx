@@ -398,82 +398,93 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCalls.map(call => {
-                const bannerImage = call.thumbnail || '/movie-banner.png';
-                const isSaved = savedIds.includes(call.id);
-                const isApplied = appliedCastingIds.includes(call.id);
-                const deadlineInfo = getDeadlineStatus(call.deadline);
-                const roleNeeded = getRolesSummary(call);
+            filteredCalls.map(call => {
+              const bannerImage = call.thumbnail || '/movie-banner.png';
+              const isSaved = savedIds.includes(call.id);
+              const isApplied = appliedCastingIds.includes(call.id);
+              const deadlineInfo = getDeadlineStatus(call.deadline);
+              const roleNeeded = getRolesSummary(call);
 
-                return (
-                  <motion.div
-                    key={call.id}
-                    whileHover={{ y: -6 }}
-                    onClick={() => onNavigate('casting-detail', call.id)}
-                    className="studio-card p-5 rounded-3xl flex flex-col justify-between cursor-pointer group space-y-4 text-left border border-white/10"
-                  >
-                    <div className="relative w-full h-44 rounded-2xl overflow-hidden bg-[#111] border border-white/10 shrink-0">
+              return (
+                <div
+                  key={call.id}
+                  onClick={() => onNavigate('casting-detail', call.id)}
+                  className="group flex flex-col sm:flex-row items-start sm:items-center justify-between py-8 border-b border-white/10 hover:border-sky-400/50 transition-all duration-300 cursor-pointer gap-6"
+                >
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-1 w-full min-w-0">
+                    {/* Widescreen image thumbnail */}
+                    <div className="w-full sm:w-48 h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/5">
                       <img
                         src={bannerImage}
                         alt={call.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=640&auto=format&fit=crop';
+                        }}
                       />
-                      <div className="absolute top-3 right-3 flex items-center gap-2">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md border ${deadlineInfo.color}`}>
-                          {deadlineInfo.label}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={(e) => toggleSave(e, call.id)}
-                          className={`p-2 rounded-full border backdrop-blur-md transition-all ${
-                            isSaved ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-black/40 border-white/10 text-white hover:bg-black/60'
-                          }`}
-                        >
-                          <Bookmark size={14} className={isSaved ? 'fill-amber-400' : ''} />
-                        </button>
-                      </div>
+                      {isApplied && (
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-sky-400 text-black text-[9px] font-black uppercase tracking-wider">
+                          Applied
+                        </div>
+                      )}
                     </div>
 
+                    {/* Text content details */}
                     <div className="space-y-2 flex-1 min-w-0">
-                      <span className="inline-block px-2.5 py-1 rounded-lg bg-sky-500/10 border border-sky-500/30 text-[10px] font-extrabold text-sky-400 uppercase tracking-wider">
-                        {call.category || call.type || 'Feature Film'}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-sky-400">
+                          {call.category || call.type || 'Nepali Project'}
+                        </span>
+                      </div>
 
-                      <h3 className="text-xl font-bold text-white truncate group-hover:text-nc-accent transition-colors">
+                      <h2 className="text-2xl sm:text-3xl font-black text-white group-hover:text-sky-400 transition-colors leading-tight truncate">
                         {call.title}
-                      </h3>
+                      </h2>
 
-                      <p className="text-xs text-gray-400 line-clamp-2 font-medium">
+                      <p className="text-sm text-gray-400 font-medium line-clamp-1 leading-relaxed">
                         {roleNeeded}
                       </p>
 
-                      <div className="flex items-center gap-1.5 text-xs text-nc-accent font-semibold pt-1">
-                        <MapPin size={13} />
-                        <span className="truncate">{call.location || 'Kathmandu, Nepal'}</span>
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 pt-1">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-gray-600 shrink-0" />
+                          {call.location || 'Nepal'}
+                        </span>
+                        {call.budget && (
+                          <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                            <span className="text-gray-600 text-[10px] font-black">Rs.</span>
+                            {call.budget}
+                          </span>
+                        )}
                       </div>
                     </div>
+                  </div>
 
-                    <div className="pt-3 border-t border-white/5 flex items-center justify-between">
-                      {isApplied ? (
-                        <span className="text-xs font-bold text-green-400 flex items-center gap-1">
-                          ✓ Application Sent
-                        </span>
-                      ) : (
-                        <span className="text-xs font-bold text-nc-accent group-hover:translate-x-1 transition-transform">
-                          Apply Now →
-                        </span>
-                      )}
-                      <span className="text-[11px] font-semibold text-gray-500">
-                        {call.postedDate || 'Open Audition'}
+                  {/* Right: Deadline & Action */}
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
+                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${deadlineInfo.color}`}>
+                      <Clock className="w-3 h-3 shrink-0" />
+                      {deadlineInfo.label}
+                    </span>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={(e) => toggleSave(e, call.id)}
+                        className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-gray-400 hover:text-white"
+                      >
+                        <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-sky-400' : ''} />
+                      </button>
+                      <span className="text-xs font-bold text-sky-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 whitespace-nowrap">
+                        View Role &gt;
                       </span>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
+
       </div>
     </div>
   );

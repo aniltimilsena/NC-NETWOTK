@@ -174,9 +174,12 @@ export default function ProfileHeader({
       </div>
 
       {/* Hero Profile Card */}
-      <div className="max-w-full sm:max-w-4xl lg:max-w-5xl mx-auto px-3.5 sm:px-6 relative -mt-12 sm:-mt-16 z-10">
-        <div className="studio-card studio-card-cyan p-4 sm:p-6 rounded-2xl shadow-xl relative overflow-hidden group">
-          <div className="flex items-center sm:items-start justify-between sm:justify-start gap-4 sm:gap-6 text-left">
+      <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 relative -mt-10 sm:-mt-20 z-10">
+        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden group">
+          {/* Top Gradient Accent Bar */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00BFFF] via-[#0050cd] to-[#00BFFF]/30" />
+
+          <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               <Avatar
@@ -188,85 +191,81 @@ export default function ProfileHeader({
                 userId={profile.uid}
                 onUploadSuccess={(url: string) => updateProfileData(profile.uid, { image: url })}
                 showAlert={showAlert}
-                className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 border-2 border-white/15"
               />
             </div>
 
             {/* Profile Info */}
-            <div className="flex-1 space-y-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h1 className="text-lg sm:text-2xl font-bold text-white tracking-tight truncate">{name}</h1>
-                {profile.verified && <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#00BFFF] shrink-0" />}
-              </div>
-
-              <div className="text-gray-400 text-xs flex flex-wrap items-center gap-x-2 gap-y-0.5 font-medium">
-                <span className="text-amber-400 font-bold uppercase tracking-wider text-[10px] sm:text-xs">{role}</span>
-                <span className="w-1 h-1 rounded-full bg-white/20" />
-                <span className="flex items-center gap-1 text-gray-400 text-[11px] sm:text-xs truncate">
-                  <MapPin className="w-3 h-3 text-[#00BFFF] shrink-0" />
-                  {location}
-                </span>
-              </div>
-
-              {profile.openToWork && (
-                <div className="pt-1">
-                  <span className="px-2 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[8px] sm:text-[9px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/30 inline-flex items-center gap-1">
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center justify-center sm:justify-start gap-2.5 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 tracking-tight">{name}</h1>
+                {profile.verified && <ShieldCheck className="w-6 h-6 text-[#00BFFF]" />}
+                {profile.openToWork && (
+                  <span className="px-3 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[10px] font-bold tracking-wider uppercase border border-[#00BFFF]/20 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse" />
                     OPEN TO WORK
                   </span>
-                </div>
-              )}
+                )}
+              </div>
+
+              <div className="text-nc-muted text-sm flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1.5 font-medium">
+                <span className="text-gray-200 font-semibold">{role}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-white/20 hidden sm:inline" />
+                <span className="flex items-center gap-1.5 text-nc-muted">
+                  <MapPin className="w-4 h-4 text-[#00BFFF]" />
+                  {location}
+                </span>
+              </div>
             </div>
 
             {/* Actions */}
             {!isOwnProfile && (
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-center">
                 <Button
                   variant={isFollowing ? 'secondary' : 'primary'}
                   onClick={() => onFollowToggle()}
-                  className="font-bold uppercase tracking-wider text-[10px] sm:text-xs py-1.5 px-3 sm:px-5 rounded-xl"
+                  className="flex-1 sm:flex-initial min-w-[120px]"
                 >
                   {isFollowing ? 'Following' : 'Follow'}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => onNavigate('messages', profile.uid)}
-                  className="flex items-center justify-center !p-0 w-8 h-8 sm:w-9 sm:h-9 border-white/15 hover:border-white/30 rounded-xl bg-white/5 shrink-0"
+                  className="flex-shrink-0 flex items-center justify-center !p-0 w-11 h-11 border-white/10 hover:border-white/20"
                   aria-label="Message"
                 >
-                  <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-200" />
+                  <MessageSquare className="w-5 h-5 text-gray-200" />
                 </Button>
               </div>
             )}
           </div>
 
           {/* Stats Bar */}
-          <div className={`grid gap-2 mt-4 pt-3.5 border-t border-white/10 w-full ${(isOwnProfile && savedCount > 0) ? 'grid-cols-4' : 'grid-cols-3'}`}>
+          <div className={`grid gap-2 mt-6 pt-5 border-t border-white/5 w-full ${(isOwnProfile && savedCount > 0) ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <div
               onClick={() => isOwnProfile && onFollowClick?.('followers')}
-              className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5 transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
+              className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
             >
-              <span className="text-white text-base sm:text-lg font-bold">{followerCount}</span>
-              <span className="text-gray-400 text-[8px] sm:text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Followers</span>
+              <span className="text-gray-200 text-xl font-bold">{followerCount}</span>
+              <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Followers</span>
             </div>
             <div
               onClick={() => isOwnProfile && onFollowClick?.('following')}
-              className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5 transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
+              className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl border-l border-white/5 transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
             >
-              <span className="text-white text-base sm:text-lg font-bold">{followingCount}</span>
-              <span className="text-gray-400 text-[8px] sm:text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Following</span>
+              <span className="text-gray-200 text-xl font-bold">{followingCount}</span>
+              <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Following</span>
             </div>
-            <div className="flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5">
-              <span className="text-amber-400 text-base sm:text-lg font-bold flex items-center justify-center gap-1">
+            <div className="flex flex-col items-center justify-center text-center py-1.5 rounded-xl border-l border-white/5">
+              <span className="text-gray-200 text-xl font-bold flex items-center justify-center gap-1">
                 {profile.rating || 0}
-                <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 fill-amber-400" />
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
               </span>
-              <span className="text-gray-400 text-[8px] sm:text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Rating</span>
+              <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Rating</span>
             </div>
             {isOwnProfile && savedCount > 0 && (
-              <div className="flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5">
-                <span className="text-white text-base sm:text-lg font-bold">{savedCount}</span>
-                <span className="text-gray-400 text-[8px] sm:text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Saved</span>
+              <div className="flex flex-col items-center justify-center text-center py-1.5 rounded-xl border-l border-white/5">
+                <span className="text-gray-200 text-xl font-bold">{savedCount}</span>
+                <span className="text-nc-muted text-[10px] uppercase tracking-wider font-bold">Saved</span>
               </div>
             )}
           </div>
