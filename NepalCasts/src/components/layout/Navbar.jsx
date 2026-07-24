@@ -188,47 +188,51 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                 <Logo onNavigate={onNavigate} size="md" showText={false} />
               </div>
               
-              {/* Desktop Command Navigation Links */}
-              <div className="hidden md:flex items-center justify-center flex-1 mx-8 gap-6">
+              {/* Desktop Professional Navigation Links */}
+              <div className="hidden md:flex items-center justify-center flex-1 mx-8 gap-2">
                 <Link
                   to="/talents"
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                     isDiscoverActive
-                      ? 'bg-nc-accent/10 border-nc-accent/40 text-nc-accent shadow-[0_0_15px_rgba(0,191,255,0.2)]'
-                      : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-white/10 text-white border border-white/15 shadow-sm'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
                   }`}
                 >
-                  {t('nav_talent_directory')}
+                  Talents
                 </Link>
 
                 <Link
                   to="/casting"
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                     isProjectsActive
-                      ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 shadow-[0_0_15px_rgba(250,204,21,0.2)]'
-                      : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-white/10 text-white border border-white/15 shadow-sm'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
                   }`}
                 >
-                  {t('nav_casting_calls')}
+                  Casting Calls
                 </Link>
 
                 <Link
                   to="/trending"
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                     pathname === '/trending'
-                      ? 'bg-purple-500/10 border-purple-500/40 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-                      : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-white/10 text-white border border-white/15 shadow-sm'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
                   }`}
                 >
-                  {t('nav_trending_now')}
+                  Trending
                 </Link>
 
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-all"
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                      pathname.startsWith('/admin')
+                        ? 'bg-red-500/20 text-red-400 border border-red-500/30 shadow-sm'
+                        : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                    }`}
                   >
-                    Studio Admin
+                    Admin
                   </Link>
                 )}
               </div>
