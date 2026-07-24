@@ -369,7 +369,8 @@ export const subscribeToConversations = (
           if (data.deletedFor && data.deletedFor[uid] === true) {
             return null;
           }
-          const otherParticipantId = data.participants.find((p: string) => p !== uid);
+          const participants = Array.isArray(data.participants) ? data.participants : [];
+          const otherParticipantId = participants.find((p: string) => p !== uid);
 
           let participantInfo: any = {
             name: "User",

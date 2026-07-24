@@ -9,8 +9,8 @@ import OneSignal from 'react-onesignal';
 import SplashScreen from '../components/SplashScreen';
 import Onboarding from '../components/Onboarding';
 import { AlertBanner } from '../components/ui/AlertBanner';
-import CallingOverlay from '../components/calling/CallingOverlay';
-import IncomingCallPopup from '../components/calling/IncomingCallPopup';
+import CallingOverlay from '../features/call/components/CallingOverlay';
+import IncomingCallPopup from '../features/call/components/IncomingCallPopup';
 import { AnimatePresence } from 'framer-motion';
 
 export interface AppContextType {
