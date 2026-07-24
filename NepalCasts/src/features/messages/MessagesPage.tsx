@@ -72,21 +72,21 @@ export default function MessagesPage({
     }
   };
 
-  const handleInitiateDirectCall = (type: 'audio' | 'video', calleeId: string, calleeName: string, calleePhoto: string) => {
+  const handleInitiateDirectCall = (calleeId: string, calleeName: string, calleePhoto: string) => {
     if (!calleeId) return;
     initiateCall({
       calleeId,
       calleeName: calleeName || 'User',
       calleePhoto: calleePhoto || '',
-      callType: type
+      callType: 'audio'
     });
   };
 
-  const handleInitiateCall = (type: 'audio' | 'video') => {
+  const handleInitiateCall = () => {
     if (!activeChat) return;
     const otherParticipantId = activeChat.participants?.find((p: string) => p !== user.uid);
     if (otherParticipantId) {
-      handleInitiateDirectCall(type, otherParticipantId, activeChat.name || 'User', activeChat.avatar || '');
+      handleInitiateDirectCall(otherParticipantId, activeChat.name || 'User', activeChat.avatar || '');
     }
   };
 

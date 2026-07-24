@@ -110,13 +110,6 @@ export default function ChatArea({
           >
             <Phone className="w-5 h-5 text-white/90" strokeWidth={2} />
           </button>
-          <button 
-            onClick={() => onInitiateCall('video')}
-            title="Start Video Call"
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 text-white/80 hover:text-white border border-white/10 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95"
-          >
-            <Video className="w-5.5 h-5.5 text-white/90" strokeWidth={2} />
-          </button>
           {onTogglePinnedDrawer && (
             <button 
               onClick={onTogglePinnedDrawer}

@@ -4,7 +4,6 @@ import { ICE_SERVERS } from "./ICEService";
 export interface PeerConnectionCallbacks {
   onIceCandidate: (candidate: RTCIceCandidateInit) => void;
   onRemoteStream: (stream: MediaStream) => void;
-  onRemoteTrackMute: (isMuted: boolean) => void;
   onIceStateChange: (state: RTCIceConnectionState) => void;
   onSignalingStateChange: (state: RTCSignalingState) => void;
 }
@@ -16,30 +15,25 @@ export class PeerConnectionService {
 
   public createPeerConnection(
     localStream: MediaStream,
-    callType: "audio" | "video",
     callbacks: PeerConnectionCallbacks
   ): RTCPeerConnection {
-    logger.log("[PeerConnectionService] Initializing RTCPeerConnection");
+    logger.log("[PeerConnectionService] Initializing Audio-Only RTCPeerConnection");
     this.close();
 
     const pc = new RTCPeerConnection(ICE_SERVERS);
     this.pc = pc;
 
-    // Maintain a single persistent remote stream instance
     this.remoteStream = new MediaStream();
 
     try {
       pc.addTransceiver("audio", { direction: "sendrecv" });
-      if (callType === "video") {
-        pc.addTransceiver("video", { direction: "sendrecv" });
-      }
     } catch (tErr) {
       logger.warn("[PeerConnectionService] addTransceiver warning:", tErr);
     }
 
-    localStream.getTracks().forEach((track) => {
+    localStream.getAudioTracks().forEach((track) => {
       track.enabled = true;
-      const existingSender = pc.getSenders().find((s) => s.track?.kind === track.kind);
+      const existingSender = pc.getSenders().find((s) => s.track?.kind === "audio");
       if (existingSender) {
         existingSender.replaceTrack(track).catch((err) => {
           logger.warn("[PeerConnectionService] replaceTrack error:", err);
@@ -56,25 +50,10 @@ export class PeerConnectionService {
     };
 
     pc.ontrack = (event) => {
-      logger.log("[PeerConnectionService] Track received:", event.track.kind, "id:", event.track.id);
+      logger.log("[PeerConnectionService] Remote audio track received:", event.track.kind, "id:", event.track.id);
 
       if (event.track) {
         event.track.enabled = true;
-      }
-
-      if (event.track.kind === "video") {
-        callbacks.onRemoteTrackMute(false);
-        event.track.onmute = () => {
-          if (event.track.readyState === "ended") {
-            callbacks.onRemoteTrackMute(true);
-          }
-        };
-        event.track.onunmute = () => {
-          callbacks.onRemoteTrackMute(false);
-        };
-        event.track.onended = () => {
-          callbacks.onRemoteTrackMute(true);
-        };
       }
 
       if (this.remoteStream) {
@@ -135,19 +114,6 @@ export class PeerConnectionService {
           console.error("[PeerConnectionService] Error flushing candidate:", err);
         }
       }
-    }
-  }
-
-  public async restartIce(): Promise<RTCSessionDescriptionInit | null> {
-    if (!this.pc) return null;
-    try {
-      logger.log("[PeerConnectionService] Initiating ICE restart...");
-      const offer = await this.pc.createOffer({ iceRestart: true });
-      await this.pc.setLocalDescription(offer);
-      return offer;
-    } catch (err) {
-      console.error("[PeerConnectionService] restartIce error:", err);
-      return null;
     }
   }
 

@@ -1,18 +1,4 @@
-/**
- * @module types/call
- * @description Domain types for WebRTC audio/video call signaling.
- *
- * Maps to Firestore collections:
- *   - `calls/{callId}`                          → CallDocument
- *   - `calls/{callId}/callerCandidates/{id}`     → ICE candidates
- *   - `calls/{callId}/calleeCandidates/{id}`     → ICE candidates
- */
-
 import type { Timestamp } from 'firebase/firestore';
-
-// ---------------------------------------------------------------------------
-// Call Status
-// ---------------------------------------------------------------------------
 
 export type CallStatus =
   | 'pending'
@@ -22,15 +8,11 @@ export type CallStatus =
   | 'no-answer'
   | 'busy';
 
-export type CallType = 'audio' | 'video';
+export type CallType = 'audio';
 
 export type CallRole = 'caller' | 'callee';
 
-// ---------------------------------------------------------------------------
-// Call Document
-// ---------------------------------------------------------------------------
-
-export interface CallDocument {
+export interface CallDoc {
   id: string;
   callerId: string;
   callerName: string;
@@ -42,7 +24,7 @@ export interface CallDocument {
   receiverId?: string;
   receiverName?: string;
   receiverAvatar?: string;
-  callType: CallType;
+  callType: 'audio';
   status: CallStatus;
   callStatus?: CallStatus;
   offer?: RTCSessionDescriptionInit | null;
@@ -51,21 +33,4 @@ export interface CallDocument {
   endedAt?: Timestamp | { seconds: number; nanoseconds: number };
 }
 
-// ---------------------------------------------------------------------------
-// Create Call Params
-// ---------------------------------------------------------------------------
-
-export interface CreateCallParams {
-  callerId: string;
-  callerName: string;
-  callerPhoto: string;
-  callerAvatar: string;
-  calleeId: string;
-  calleeName: string;
-  calleePhoto: string;
-  receiverId: string;
-  receiverName: string;
-  receiverAvatar: string;
-  callType: CallType;
-  offer: RTCSessionDescriptionInit;
-}
+export interface CallDocument extends CallDoc {}

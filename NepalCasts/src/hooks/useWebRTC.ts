@@ -31,18 +31,14 @@ interface UseWebRTCReturn {
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   isMuted: boolean;
-  isVideoOff: boolean;
-  isRemoteVideoOff: boolean;
   callDuration: number;
   errorMessage: string;
-  startCall: (params: StartCallParams, preAcquiredStream?: MediaStream) => Promise<void>;
-  answerCall: (callDoc: CallDoc, preAcquiredStream?: MediaStream) => Promise<void>;
+  startCall: (params: StartCallParams) => Promise<void>;
+  answerCall: (callDoc: CallDoc) => Promise<void>;
   endCall: () => Promise<void>;
   toggleMute: () => void;
-  toggleVideo: () => void;
-  switchCamera: () => Promise<void>;
   resetToIdle: () => void;
-  getUserMedia: (callType: "audio" | "video") => Promise<MediaStream>;
+  getUserMedia: () => Promise<MediaStream>;
 }
 
 interface StartCallParams {
@@ -56,7 +52,7 @@ interface StartCallParams {
   receiverId: string;
   receiverName: string;
   receiverAvatar: string;
-  callType: "audio" | "video";
+  callType?: "audio";
 }
 
 export function useWebRTC(): UseWebRTCReturn {
@@ -66,8 +62,6 @@ export function useWebRTC(): UseWebRTCReturn {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
-  const [isRemoteVideoOff, setIsRemoteVideoOff] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -83,7 +77,7 @@ export function useWebRTC(): UseWebRTCReturn {
   const remoteStreamRef = useRef<MediaStream | null>(null);
 
   const cleanup = useCallback(async () => {
-    logger.log("[WebRTC Cleanup] Performing complete WebRTC resources and subscription cleanup");
+    logger.log("[WebRTC Cleanup] Performing audio WebRTC cleanup");
     
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -105,13 +99,11 @@ export function useWebRTC(): UseWebRTCReturn {
       pcRef.current.onsignalingstatechange = null;
       pcRef.current.close();
       pcRef.current = null;
-      logger.log("[WebRTC Cleanup] PeerConnection closed and nullified");
     }
 
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((t) => {
         t.stop();
-        logger.log("[WebRTC Cleanup] Local media track stopped:", t.kind, t.id);
       });
       localStreamRef.current = null;
     }
@@ -123,82 +115,66 @@ export function useWebRTC(): UseWebRTCReturn {
     setActiveCallDoc(null);
     setCallDuration(0);
     setIsMuted(false);
-    setIsVideoOff(false);
-    setIsRemoteVideoOff(false);
     setErrorMessage("");
     remoteCandidatesQueueRef.current = [];
   }, []);
 
-  const getUserMedia = useCallback(
-    async (callType: "audio" | "video"): Promise<MediaStream> => {
-      const tStart = performance.now();
-      setCallState("requesting-media");
+  const getUserMedia = useCallback(async (): Promise<MediaStream> => {
+    const tStart = performance.now();
+    setCallState("requesting-media");
 
-      const isMobile = typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-      const constraints: MediaStreamConstraints = {
-        audio: isMobile
-          ? true
-          : {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-            },
-        video:
-          callType === "video"
-            ? isMobile
-              ? { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }
-              : { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
-            : false,
-      };
+    const isMobile = typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    const constraints: MediaStreamConstraints = {
+      audio: isMobile
+        ? true
+        : {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+      video: false,
+    };
 
+    try {
+      logger.log("[WebRTC getUserMedia] Requesting audio stream:", constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = true;
+      });
+      localStreamRef.current = stream;
+      setLocalStream(stream);
+      localStorage.setItem("nc_perm_media", "granted");
+      logger.log(`[PERF TIMING] Audio acquired in ${(performance.now() - tStart).toFixed(1)}ms.`);
+      return stream;
+    } catch (err: any) {
+      logger.warn("[WebRTC getUserMedia] Advanced audio constraints failed. Trying basic fallback. Error:", err);
       try {
-        logger.log("[WebRTC getUserMedia] Requesting media stream with constraints:", constraints);
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        
-        stream.getTracks().forEach((track) => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        stream.getAudioTracks().forEach((track) => {
           track.enabled = true;
         });
         localStreamRef.current = stream;
         setLocalStream(stream);
         localStorage.setItem("nc_perm_media", "granted");
-        logger.log(`[PERF TIMING] Camera/mic acquired in ${(performance.now() - tStart).toFixed(1)}ms. Tracks:`, stream.getTracks().map(t => t.kind));
         return stream;
-      } catch (err: any) {
-        logger.warn("[WebRTC getUserMedia] Advanced constraints failed. Trying basic fallback. Error:", err);
-        try {
-          const fallbackConstraints: MediaStreamConstraints = {
-            audio: true,
-            video: callType === "video" ? true : false,
-          };
-          const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
-          
-          stream.getTracks().forEach((track) => {
-            track.enabled = true;
-          });
-          localStreamRef.current = stream;
-          setLocalStream(stream);
-          localStorage.setItem("nc_perm_media", "granted");
-          logger.log(`[PERF TIMING] Fallback camera/mic acquired in ${(performance.now() - tStart).toFixed(1)}ms.`);
-          return stream;
-        } catch (fallbackErr: any) {
-          console.error("[WebRTC getUserMedia] Fallback failed:", fallbackErr);
-          if (fallbackErr.name === "NotAllowedError") {
-            localStorage.setItem("nc_perm_media", "denied");
-          }
-          const msg =
-            fallbackErr.name === "NotAllowedError"
-              ? "Camera/microphone permission denied. Please allow access in browser settings."
-              : fallbackErr.name === "NotFoundError"
-              ? "No camera or microphone found on this device."
-              : `Media error: ${fallbackErr.message}`;
-          setErrorMessage(msg);
-          setCallState("error");
-          throw fallbackErr;
+      } catch (fallbackErr: any) {
+        console.error("[WebRTC getUserMedia] Fallback audio failed:", fallbackErr);
+        if (fallbackErr.name === "NotAllowedError") {
+          localStorage.setItem("nc_perm_media", "denied");
         }
+        const msg =
+          fallbackErr.name === "NotAllowedError"
+            ? "Microphone permission denied. Please allow access in browser settings."
+            : fallbackErr.name === "NotFoundError"
+            ? "No microphone found on this device."
+            : `Audio error: ${fallbackErr.message}`;
+        setErrorMessage(msg);
+        setCallState("error");
+        throw fallbackErr;
       }
-    },
-    []
-  );
+    }
+  }, []);
 
   const flushRemoteCandidates = useCallback(async (pc: RTCPeerConnection) => {
     if (!pc.remoteDescription || !pc.remoteDescription.type) return;
@@ -208,7 +184,6 @@ export function useWebRTC(): UseWebRTCReturn {
       if (cand) {
         try {
           await pc.addIceCandidate(new RTCIceCandidate(cand));
-          logger.log("[WebRTC ICE Queue] Added queued candidate successfully");
         } catch (err) {
           console.error("[WebRTC ICE Queue] Error adding candidate:", err);
         }
@@ -217,22 +192,19 @@ export function useWebRTC(): UseWebRTCReturn {
   }, []);
 
   const createPeerConnection = useCallback(
-    (stream: MediaStream, callType: "audio" | "video"): RTCPeerConnection => {
-      logger.log("[WebRTC PC] Initializing RTCPeerConnection");
+    (stream: MediaStream): RTCPeerConnection => {
+      logger.log("[WebRTC PC] Initializing Audio RTCPeerConnection");
       const pc = new RTCPeerConnection(ICE_SERVERS);
 
       try {
         pc.addTransceiver("audio", { direction: "sendrecv" });
-        if (callType === "video") {
-          pc.addTransceiver("video", { direction: "sendrecv" });
-        }
       } catch (tErr) {
         logger.warn("[WebRTC PC] addTransceiver warning:", tErr);
       }
 
-      stream.getTracks().forEach((track) => {
+      stream.getAudioTracks().forEach((track) => {
         track.enabled = true;
-        const existingSender = pc.getSenders().find((s) => s.track?.kind === track.kind);
+        const existingSender = pc.getSenders().find((s) => s.track?.kind === "audio");
         if (existingSender) {
           existingSender.replaceTrack(track).catch((err) => {
             logger.warn("[WebRTC PC] replaceTrack error:", err);
@@ -243,25 +215,10 @@ export function useWebRTC(): UseWebRTCReturn {
       });
 
       pc.ontrack = (event) => {
-        logger.log("[WebRTC Track] Received remote track:", event.track.kind, "id:", event.track.id, "enabled:", event.track.enabled);
+        logger.log("[WebRTC Track] Received remote audio track:", event.track.kind, "id:", event.track.id);
 
         if (event.track) {
           event.track.enabled = true;
-        }
-
-        if (event.track.kind === "video") {
-          setIsRemoteVideoOff(false);
-          event.track.onmute = () => {
-            if (event.track.readyState === "ended") {
-              setIsRemoteVideoOff(true);
-            }
-          };
-          event.track.onunmute = () => {
-            setIsRemoteVideoOff(false);
-          };
-          event.track.onended = () => {
-            setIsRemoteVideoOff(true);
-          };
         }
 
         if (!remoteStreamRef.current) {
@@ -270,15 +227,6 @@ export function useWebRTC(): UseWebRTCReturn {
         const rStream = remoteStreamRef.current;
         if (!rStream.getTracks().some((t) => t.id === event.track.id)) {
           rStream.addTrack(event.track);
-        }
-
-        if (event.streams && event.streams[0]) {
-          event.streams[0].getTracks().forEach((track) => {
-            if (!rStream.getTracks().some((t) => t.id === track.id)) {
-              track.enabled = true;
-              rStream.addTrack(track);
-            }
-          });
         }
 
         setRemoteStream(new MediaStream(rStream.getTracks()));
@@ -290,7 +238,7 @@ export function useWebRTC(): UseWebRTCReturn {
 
         if (state === "connected" || state === "completed") {
           const tConnected = performance.now();
-          logger.log(`[PERF TIMING 7] T6: WebRTC ICE Connected (${tConnected.toFixed(1)}ms)`);
+          logger.log(`[PERF TIMING 7] T6: WebRTC Audio Connected (${tConnected.toFixed(1)}ms)`);
           setCallState("connected");
           callStateRef.current = "connected";
           
@@ -327,7 +275,7 @@ export function useWebRTC(): UseWebRTCReturn {
   );
 
   const startCall = useCallback(
-    async (params: StartCallParams, preAcquiredStream?: MediaStream) => {
+    async (params: StartCallParams) => {
       const t0 = performance.now();
       logger.log(`[PERF TIMING 1] T0: Call button pressed / startCall initiated`);
 
@@ -335,9 +283,9 @@ export function useWebRTC(): UseWebRTCReturn {
         setCallState("calling");
         callStateRef.current = "calling";
 
-        // STEP 1: Immediately create lightweight pending call doc in Firestore (< 200ms)
         const { callId, error } = await createCallPending({
-          ...params
+          ...params,
+          callType: "audio",
         });
 
         if (error || !callId) {
@@ -348,13 +296,10 @@ export function useWebRTC(): UseWebRTCReturn {
         setCallId(callId);
         roleRef.current = "caller";
 
-        // STEP 2: Initialize getUserMedia & SDP offer generation in parallel
-        const streamPromise = preAcquiredStream ? Promise.resolve(preAcquiredStream) : getUserMedia(params.callType);
-
         (async () => {
           try {
-            const stream = await streamPromise;
-            const pc = createPeerConnection(stream, params.callType);
+            const stream = await getUserMedia();
+            const pc = createPeerConnection(stream);
 
             pc.onicecandidate = (event) => {
               if (event.candidate) {
@@ -369,22 +314,20 @@ export function useWebRTC(): UseWebRTCReturn {
             await pc.setLocalDescription(offer);
 
             if ((callStateRef.current as string) === "ended") {
-              logger.log("[WebRTC startCall] Call ended during setup. Cleaning up created Firestore doc:", callId);
+              logger.log("[WebRTC startCall] Call ended during setup. Cleaning up doc:", callId);
               await updateCallStatus(callId, "ended");
               cleanupCall(callId);
               return;
             }
 
-            // Upload SDP offer to Firestore
             await setCallOffer(callId, { type: offer.type!, sdp: offer.sdp! });
           } catch (mErr: any) {
             console.error("[WebRTC startCall] Stream/Offer error:", mErr);
-            setErrorMessage(mErr.message || "Failed to initialize call media");
+            setErrorMessage(mErr.message || "Failed to initialize audio media");
             setCallState("error");
           }
         })();
 
-        // STEP 3: Single unified listener for call document updates
         const unsubCall = subscribeToCall(callId, async (callDoc: any) => {
           if (!callDoc || callDoc.status === "rejected" || callDoc.status === "no-answer" || callDoc.status === "ended") {
             setCallState("ended");
@@ -451,7 +394,7 @@ export function useWebRTC(): UseWebRTCReturn {
   );
 
   const answerCall = useCallback(
-    async (callDoc: CallDoc, preAcquiredStream?: MediaStream) => {
+    async (callDoc: CallDoc) => {
       const tAnswer = performance.now();
       logger.log(`[PERF TIMING 5] T4: Callee Accept pressed (${tAnswer.toFixed(1)}ms)`);
       try {
@@ -462,13 +405,10 @@ export function useWebRTC(): UseWebRTCReturn {
         setActiveCallDoc(callDoc);
         roleRef.current = "callee";
 
-        // STEP 1: Initialize getUserMedia in parallel with SDP answer setup
-        const streamPromise = preAcquiredStream ? Promise.resolve(preAcquiredStream) : getUserMedia(callDoc.callType);
-
         (async () => {
           try {
-            const stream = await streamPromise;
-            const pc = createPeerConnection(stream, callDoc.callType);
+            const stream = await getUserMedia();
+            const pc = createPeerConnection(stream);
 
             pc.onicecandidate = (event) => {
               if (event.candidate) {
@@ -497,7 +437,6 @@ export function useWebRTC(): UseWebRTCReturn {
           }
         })();
 
-        // STEP 2: Listen for ICE candidates and call status updates
         const unsubICE = subscribeToIceCandidates(
           callDoc.id,
           "callee",
@@ -576,45 +515,6 @@ export function useWebRTC(): UseWebRTCReturn {
     }
   }, [isMuted]);
 
-  const toggleVideo = useCallback(() => {
-    if (localStreamRef.current) {
-      const newVideoOff = !isVideoOff;
-      localStreamRef.current.getVideoTracks().forEach((track) => {
-        track.enabled = !newVideoOff;
-      });
-      setIsVideoOff(newVideoOff);
-    }
-  }, [isVideoOff]);
-
-  const switchCamera = useCallback(async () => {
-    if (!localStreamRef.current || !pcRef.current) return;
-
-    const videoTrack = localStreamRef.current.getVideoTracks()[0];
-    if (!videoTrack) return;
-
-    const currentFacing = videoTrack.getSettings().facingMode;
-    const newFacing = currentFacing === "user" ? "environment" : "user";
-
-    try {
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: newFacing, width: { ideal: 640 }, height: { ideal: 480 } },
-      });
-      const newTrack = newStream.getVideoTracks()[0];
-
-      const sender = pcRef.current.getSenders().find((s) => s.track?.kind === "video");
-      if (sender) {
-        await sender.replaceTrack(newTrack);
-      }
-
-      videoTrack.stop();
-      localStreamRef.current.removeTrack(videoTrack);
-      localStreamRef.current.addTrack(newTrack);
-      setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
-    } catch (err) {
-      console.error("[WebRTC switchCamera] Error:", err);
-    }
-  }, []);
-
   const resetToIdle = useCallback(() => {
     setCallState("idle");
     callStateRef.current = "idle";
@@ -637,16 +537,12 @@ export function useWebRTC(): UseWebRTCReturn {
     localStream,
     remoteStream,
     isMuted,
-    isVideoOff,
-    isRemoteVideoOff,
     callDuration,
     errorMessage,
     startCall,
     answerCall,
     endCall,
     toggleMute,
-    toggleVideo,
-    switchCamera,
     resetToIdle,
     getUserMedia,
   };
