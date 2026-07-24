@@ -174,9 +174,9 @@ export default function ProfileHeader({
       </div>
 
       {/* Hero Profile Card */}
-      <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 relative -mt-10 sm:-mt-20 z-10">
-        <div className="studio-card studio-card-cyan p-6 sm:p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
-          <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
+      <div className="max-w-4xl mx-auto px-4 relative -mt-10 sm:-mt-16 z-10">
+        <div className="studio-card studio-card-cyan p-5 rounded-2xl shadow-xl relative overflow-hidden group">
+          <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start text-center sm:text-left">
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               <Avatar
@@ -192,23 +192,23 @@ export default function ProfileHeader({
             </div>
 
             {/* Profile Info */}
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center justify-center sm:justify-start gap-2.5 flex-wrap">
-                <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">{name}</h1>
-                {profile.verified && <ShieldCheck className="w-6 h-6 text-[#00BFFF]" />}
+            <div className="flex-1 space-y-1.5 min-w-0">
+              <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">{name}</h1>
+                {profile.verified && <ShieldCheck className="w-5 h-5 text-[#00BFFF]" />}
                 {profile.openToWork && (
-                  <span className="px-3 py-1 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[10px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/30 flex items-center gap-1.5 shadow-sm">
-                    <span className="w-2 h-2 rounded-full bg-[#00BFFF] animate-pulse" />
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[9px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/30 flex items-center gap-1 shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse" />
                     OPEN TO WORK
                   </span>
                 )}
               </div>
 
-              <div className="text-gray-400 text-sm flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1.5 font-semibold">
-                <span className="text-amber-400 font-bold uppercase tracking-wider text-xs">{role}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-white/20 hidden sm:inline" />
-                <span className="flex items-center gap-1.5 text-gray-300">
-                  <MapPin className="w-4 h-4 text-[#00BFFF]" />
+              <div className="text-gray-400 text-xs flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 font-semibold">
+                <span className="text-amber-400 font-bold uppercase tracking-wider text-[11px]">{role}</span>
+                <span className="w-1 h-1 rounded-full bg-white/20 hidden sm:inline" />
+                <span className="flex items-center gap-1 text-gray-400">
+                  <MapPin className="w-3.5 h-3.5 text-[#00BFFF]" />
                   {location}
                 </span>
               </div>
@@ -216,53 +216,53 @@ export default function ProfileHeader({
 
             {/* Actions */}
             {!isOwnProfile && (
-              <div className="flex items-center gap-3 w-full sm:w-auto justify-center">
+              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center">
                 <Button
                   variant={isFollowing ? 'secondary' : 'primary'}
                   onClick={() => onFollowToggle()}
-                  className="flex-1 sm:flex-initial min-w-[130px] font-black uppercase tracking-wider text-xs"
+                  className="flex-1 sm:flex-initial min-w-[110px] font-bold uppercase tracking-wider text-xs py-2"
                 >
                   {isFollowing ? 'Following' : 'Follow'}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => onNavigate('messages', profile.uid)}
-                  className="flex-shrink-0 flex items-center justify-center !p-0 w-11 h-11 border-white/15 hover:border-white/30 rounded-2xl bg-white/5"
+                  className="flex-shrink-0 flex items-center justify-center !p-0 w-9 h-9 border-white/15 hover:border-white/30 rounded-xl bg-white/5"
                   aria-label="Message"
                 >
-                  <MessageSquare className="w-5 h-5 text-gray-200" />
+                  <MessageSquare className="w-4 h-4 text-gray-200" />
                 </Button>
               </div>
             )}
           </div>
 
-          {/* Widescreen Stats Bar */}
-          <div className={`grid gap-3 mt-8 pt-6 border-t border-white/10 w-full ${(isOwnProfile && savedCount > 0) ? 'grid-cols-4' : 'grid-cols-3'}`}>
+          {/* Stats Bar */}
+          <div className={`grid gap-2.5 mt-5 pt-4 border-t border-white/10 w-full ${(isOwnProfile && savedCount > 0) ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <div
               onClick={() => isOwnProfile && onFollowClick?.('followers')}
-              className={`flex flex-col items-center justify-center text-center py-2.5 rounded-2xl bg-white/[0.02] border border-white/5 transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5 hover:border-white/15' : ''}`}
+              className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5 transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
             >
-              <span className="text-white text-2xl font-black">{followerCount}</span>
-              <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-0.5">Followers</span>
+              <span className="text-white text-lg font-bold">{followerCount}</span>
+              <span className="text-gray-400 text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Followers</span>
             </div>
             <div
               onClick={() => isOwnProfile && onFollowClick?.('following')}
-              className={`flex flex-col items-center justify-center text-center py-2.5 rounded-2xl bg-white/[0.02] border border-white/5 transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5 hover:border-white/15' : ''}`}
+              className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5 transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
             >
-              <span className="text-white text-2xl font-black">{followingCount}</span>
-              <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-0.5">Following</span>
+              <span className="text-white text-lg font-bold">{followingCount}</span>
+              <span className="text-gray-400 text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Following</span>
             </div>
-            <div className="flex flex-col items-center justify-center text-center py-2.5 rounded-2xl bg-white/[0.02] border border-white/5">
-              <span className="text-amber-400 text-2xl font-black flex items-center justify-center gap-1">
+            <div className="flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5">
+              <span className="text-amber-400 text-lg font-bold flex items-center justify-center gap-1">
                 {profile.rating || 0}
-                <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
               </span>
-              <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-0.5">Rating</span>
+              <span className="text-gray-400 text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Rating</span>
             </div>
             {isOwnProfile && savedCount > 0 && (
-              <div className="flex flex-col items-center justify-center text-center py-2.5 rounded-2xl bg-white/[0.02] border border-white/5">
-                <span className="text-white text-2xl font-black">{savedCount}</span>
-                <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-0.5">Saved</span>
+              <div className="flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5">
+                <span className="text-white text-lg font-bold">{savedCount}</span>
+                <span className="text-gray-400 text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Saved</span>
               </div>
             )}
           </div>
