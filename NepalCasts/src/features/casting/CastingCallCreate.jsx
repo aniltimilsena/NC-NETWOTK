@@ -144,7 +144,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }) {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-24 font-sans">
-      <div className="max-w-3xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-6 py-8">
         
         {/* Header with Back Button */}
         <div className="relative mb-8 flex items-center justify-between sm:block">

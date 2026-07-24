@@ -515,7 +515,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-3.5 sm:px-8 mt-8">
+      <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 mt-8">
         
         <div className="flex flex-col lg:flex-row gap-8">
           
