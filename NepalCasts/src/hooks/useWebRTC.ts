@@ -396,6 +396,10 @@ export function useWebRTC(): UseWebRTCReturn {
 
           if (callDoc.answer && pcRef.current && pcRef.current.signalingState !== "stable") {
             try {
+              if (noAnswerTimerRef.current) {
+                clearTimeout(noAnswerTimerRef.current);
+                noAnswerTimerRef.current = null;
+              }
               logger.log("[WebRTC Answer] Setting remote SDP answer...");
               await pcRef.current.setRemoteDescription(new RTCSessionDescription(callDoc.answer));
               setCallState("connecting");
@@ -512,7 +516,7 @@ export function useWebRTC(): UseWebRTCReturn {
         unsubsRef.current.push(unsubICE);
 
         const unsubCall = subscribeToCall(callDoc.id, async (docData: any) => {
-          if (!docData || docData.status === "ended") {
+          if (!docData || docData.status === "ended" || docData.status === "rejected" || docData.status === "no-answer") {
             setCallState("ended");
             await cleanup();
             return;
