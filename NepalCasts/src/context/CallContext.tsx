@@ -12,6 +12,7 @@ import {
   subscribeToIncomingCalls,
   updateCallStatus,
   subscribeToCall,
+  updateCallVideoState,
   type CallDoc,
   getProfile,
 } from "../services";
@@ -487,6 +488,15 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
   
 
+  const toggleVideo = useCallback(() => {
+    const nextVideoOff = !webrtc.isVideoOff;
+    webrtc.toggleVideo();
+    if (activeCall?.id && user?.uid) {
+      const role = activeCall.callerId === user.uid ? "caller" : "callee";
+      updateCallVideoState(activeCall.id, role, nextVideoOff);
+    }
+  }, [webrtc, activeCall, user?.uid]);
+
   const value: CallContextValue = {
     callState: webrtc.callState,
     activeCall,
@@ -504,7 +514,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     rejectCall,
     hangUp,
     toggleMute: webrtc.toggleMute,
-    toggleVideo: webrtc.toggleVideo,
+    toggleVideo,
     switchCamera: webrtc.switchCamera,
     dismissError,
   };

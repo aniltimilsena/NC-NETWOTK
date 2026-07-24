@@ -137,6 +137,22 @@ export const setCallOffer = async (
   }
 };
 
+export const updateCallVideoState = async (
+  callId: string,
+  role: "caller" | "callee",
+  isVideoOff: boolean
+): Promise<void> => {
+  try {
+    const field = role === "caller" ? "callerVideoOff" : "calleeVideoOff";
+    await updateDoc(doc(db, COLLECTIONS.CALLS, callId), {
+      [field]: isVideoOff,
+    });
+    logger.log(`[CallService] Updated call ${callId} ${field} ->`, isVideoOff);
+  } catch (err) {
+    console.error("[CallService] updateCallVideoState error:", err);
+  }
+};
+
 export const updateCallStatus = async (
   callId: string,
   status: CallStatus

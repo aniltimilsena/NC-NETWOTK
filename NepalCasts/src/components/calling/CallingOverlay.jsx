@@ -122,7 +122,7 @@ export default function CallingOverlay() {
     remoteStream,
     isMuted,
     isVideoOff,
-    isRemoteVideoOff,
+    isRemoteVideoOff: isWebRTCRemoteVideoOff,
     callDuration,
     errorMessage,
     hangUp,
@@ -295,6 +295,11 @@ export default function CallingOverlay() {
   const isCalling = callState === 'calling' || callState === 'ringing';
 
   
+  const isRemoteVideoOffSignaled = isCaller
+    ? (activeCall?.calleeVideoOff === true)
+    : (activeCall?.callerVideoOff === true);
+  const isRemoteVideoOff = isRemoteVideoOffSignaled || isWebRTCRemoteVideoOff;
+
   const docRemoteName = isCaller 
     ? (activeCall?.calleeName || activeCall?.receiverName || 'Unknown') 
     : (activeCall?.callerName || 'Unknown');
@@ -346,7 +351,7 @@ export default function CallingOverlay() {
             }
           }}
           className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 ${
-            isVideoCall && (isConnected || remoteStream)
+            isVideoCall && (isConnected || remoteStream) && !isRemoteVideoOff
               ? 'opacity-100'
               : 'opacity-0 pointer-events-none'
           }`}
