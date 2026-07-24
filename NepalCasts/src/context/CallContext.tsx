@@ -156,33 +156,25 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
   
   useEffect(() => {
-    const callId = webrtc.callId;
-    if (!callId || !user?.uid) return;
-
-    const unsub = subscribeToCall(callId, (callDoc: any) => {
-      if (callDoc) {
-        setActiveCall(callDoc);
-
-        
-        const isCaller = callDoc.callerId === user.uid;
-        if (isCaller) {
-          if (callDoc.status === "rejected") {
-            logCallOutcome(callDoc, 0, "rejected");
-          } else if (callDoc.status === "busy") {
-            logCallOutcome(callDoc, 0, "busy");
-          } else if (callDoc.status === "no-answer") {
-            logCallOutcome(callDoc, 0, "no-answer");
-          } else if (callDoc.status === "ended") {
-            logCallOutcome(callDoc, webrtc.callDuration);
-          }
+    const callDoc = webrtc.activeCallDoc;
+    if (callDoc) {
+      setActiveCall(callDoc);
+      const isCaller = callDoc.callerId === user?.uid;
+      if (isCaller) {
+        if (callDoc.status === "rejected") {
+          logCallOutcome(callDoc, 0, "rejected");
+        } else if (callDoc.status === "busy") {
+          logCallOutcome(callDoc, 0, "busy");
+        } else if (callDoc.status === "no-answer") {
+          logCallOutcome(callDoc, 0, "no-answer");
+        } else if (callDoc.status === "ended") {
+          logCallOutcome(callDoc, webrtc.callDuration);
         }
-      } else {
-        setActiveCall(null);
       }
-    });
-
-    return () => unsub();
-  }, [webrtc.callId, user?.uid, webrtc.callDuration, logCallOutcome]);
+    } else {
+      setActiveCall(null);
+    }
+  }, [webrtc.activeCallDoc, user?.uid, webrtc.callDuration, logCallOutcome]);
 
   
   useEffect(() => {
