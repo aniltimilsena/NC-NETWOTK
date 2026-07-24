@@ -151,85 +151,116 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
       }
     });
 
-    return () => unsubscribe();
-  }, [user]);
-
-
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearchOverlay((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <>
       <header className="sticky top-0 left-0 right-0 z-50">
-        <nav className="relative z-30 bg-nc-dark/80 backdrop-blur-md border-b border-white/5">
-          <div className="max-w-[1600px] mx-auto px-2 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-14 sm:h-20">
-            {/* Logo & Back */}
-            <div className="flex items-center gap-4 sm:gap-8">
-              {showBack && (
-                <button 
-                  onClick={onBack} 
-                  className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shrink-0"
-                  title="Go Back"
-                  aria-label="Go Back"
+        <nav className="relative z-30 bg-[#050508]/90 backdrop-blur-xl border-b border-white/10 shadow-2xl">
+          <div className="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16 sm:h-20">
+              {/* Logo & Studio Badge */}
+              <div className="flex items-center gap-4 sm:gap-6">
+                {showBack && (
+                  <button 
+                    onClick={onBack} 
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shrink-0"
+                    title="Go Back"
+                    aria-label="Go Back"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                )}
+                <Logo onNavigate={onNavigate} size="md" showText={false} />
+                <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_#facc15]" />
+                  <span className="text-[10px] font-black tracking-widest text-amber-400 uppercase">
+                    STUDIO WORKSPACE
+                  </span>
+                </div>
+              </div>
+              
+              {/* Desktop Command Navigation Links */}
+              <div className="hidden md:flex items-center justify-center flex-1 mx-8 gap-6">
+                <Link
+                  to="/talents"
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                    isDiscoverActive
+                      ? 'bg-nc-accent/10 border-nc-accent/40 text-nc-accent shadow-[0_0_15px_rgba(0,191,255,0.2)]'
+                      : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
                 >
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-              )}
-              <Logo onNavigate={onNavigate} size="md" showText={false} />
-            </div>
-            
-            <div className="hidden md:flex items-center justify-center flex-1 mx-8 gap-8">
-              <div className="relative group">
-                <button className={`flex items-center gap-1.5 py-2 text-sm font-medium transition-colors ${isDiscoverActive ? 'text-white' : 'text-[#888] hover:text-white'}`}>
-                  {t('nav_discover')}
-                  <svg className="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-48 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
-                  <Link to="/talents" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_talent_directory')}</Link>
-                  <Link to="/trending" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_trending_now')}</Link>
-                  <Link to="/settings" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
-                  {isAdmin && (
-                    <>
-                      <div className="mx-2 my-1 border-t border-white/5"></div>
-                      <Link to="/admin" className="w-full text-left block px-4 py-2.5 text-[10px] uppercase tracking-widest font-black text-admin-primary hover:text-white hover:bg-admin-primary/20 transition-all flex items-center justify-between group/admin">
-                        <span>{t('nav_admin')}</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-admin-primary shadow-[0_0_8px_#38bdf8] group-hover/admin:scale-125 transition-transform"></span>
-                      </Link>
-                    </>
-                  )}
-                </div>
-              </div>
+                  {t('nav_talent_directory')}
+                </Link>
 
-              <div className="relative group">
-                <button className={`flex items-center gap-1.5 py-2 text-sm font-medium transition-colors ${isProjectsActive ? 'text-white' : 'text-[#888] hover:text-white'}`}>
-                  {t('nav_projects')}
-                  <svg className="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                <Link
+                  to="/casting"
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                    isProjectsActive
+                      ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 shadow-[0_0_15px_rgba(250,204,21,0.2)]'
+                      : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {t('nav_casting_calls')}
+                </Link>
+
+                <Link
+                  to="/trending"
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                    pathname === '/trending'
+                      ? 'bg-purple-500/10 border-purple-500/40 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                      : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {t('nav_trending_now')}
+                </Link>
+
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-all"
+                  >
+                    Studio Admin
+                  </Link>
+                )}
+              </div>
+              
+              {/* Actions & Command Search */}
+              <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                {/* Desktop Ctrl+K Quick Search Button */}
+                <button
+                  onClick={() => setShowSearchOverlay(true)}
+                  className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-all text-xs font-semibold group"
+                  aria-label="Quick Search"
+                >
+                  <svg className="w-4 h-4 text-nc-accent group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <span>Search Studio...</span>
+                  <kbd className="px-2 py-0.5 text-[10px] font-mono bg-white/10 rounded-md text-gray-400 border border-white/10">⌘K</kbd>
+                </button>
+
+                {/* Mobile Search Icon Fallback */}
+                <button
+                  onClick={() => setShowSearchOverlay(true)}
+                  className="sm:hidden text-nc-secondary hover:text-white p-1.5 transition-colors"
+                  aria-label="Search"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </button>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-52 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
-                  <Link to="/casting" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_casting_calls')}</Link>
-                  <Link to="/casting/create" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_post_project')}</Link>
-                </div>
-              </div>
-            </div>
-            
-            {/* Actions */}
-            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
-
-              {/* Removed redundant Sign In button as per user request */}
-              <button
-                onClick={() => setShowSearchOverlay(true)}
-                className="text-nc-secondary hover:text-white p-1.5 transition-colors"
-                aria-label="Search"
-              >
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
               
               {isLoggedIn ? (
                 <>

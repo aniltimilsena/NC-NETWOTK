@@ -17,12 +17,36 @@
   body {
     margin: 0;
     padding: 0;
-    background-color: #0a0a0a;
-    color: #D1D5DB; /* Reduced contrast for a softer aesthetic */
+    background-color: #050508;
+    color: #D1D5DB;
     font-family: 'Inter', system-ui, sans-serif;
-    line-height: 1.6; /* Increased leading to let text breathe */
-    letter-spacing: -0.011em; /* Improved tracking for optimized typography legibility */
+    line-height: 1.6;
+    letter-spacing: -0.011em;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Cinematic Studio Dark Workspace Utility Classes */
+  .studio-card {
+    background: rgba(14, 14, 22, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .studio-card:hover {
+    border-color: rgba(0, 191, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 191, 255, 0.12);
+  }
+
+  .studio-card-gold {
+    border-color: rgba(250, 204, 21, 0.25) !important;
+    box-shadow: 0 0 25px rgba(250, 204, 21, 0.08);
+  }
+
+  .studio-card-gold:hover {
+    border-color: rgba(250, 204, 21, 0.5) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 25px rgba(250, 204, 21, 0.2);
   }
 
   /* Softened off-white contrast for headings and names to prevent eye glare and flashiness */
