@@ -192,17 +192,16 @@ export default function CallingOverlay() {
   }, [remoteStream, isSpeakerMuted]);
 
   
+  const isCaller = currentUser?.uid === activeCall?.callerId;
+  const remoteId = isCaller 
+    ? (activeCall?.calleeId || activeCall?.receiverId) 
+    : activeCall?.callerId;
+
   useEffect(() => {
-    if (!activeCall || !currentUser?.uid) {
+    if (!remoteId) {
       setRemoteProfile(null);
       return;
     }
-    const isCaller = currentUser.uid === activeCall.callerId;
-    const remoteId = isCaller 
-      ? (activeCall.calleeId || activeCall.receiverId) 
-      : activeCall.callerId;
-
-    if (!remoteId) return;
 
     let isMounted = true;
     getProfile(remoteId).then((res) => {
@@ -214,7 +213,7 @@ export default function CallingOverlay() {
     return () => {
       isMounted = false;
     };
-  }, [activeCall, currentUser?.uid]);
+  }, [remoteId]);
 
   
   useEffect(() => {
@@ -266,7 +265,6 @@ export default function CallingOverlay() {
   const isCalling = callState === 'calling' || callState === 'ringing';
 
   
-  const isCaller = currentUser?.uid === activeCall?.callerId;
   const docRemoteName = isCaller 
     ? (activeCall?.calleeName || activeCall?.receiverName || 'Unknown') 
     : (activeCall?.callerName || 'Unknown');

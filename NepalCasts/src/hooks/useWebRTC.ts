@@ -140,15 +140,21 @@ export function useWebRTC(): UseWebRTCReturn {
         }
       }
 
+      // Use lower resolution and simple audio constraints on mobile to reduce camera/mic init time
+      const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
       const constraints: MediaStreamConstraints = {
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+        audio: isMobile
+          ? true
+          : {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
         video:
           callType === "video"
-            ? { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
+            ? isMobile
+              ? { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }
+              : { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
             : false,
       };
 
