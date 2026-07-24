@@ -157,38 +157,68 @@ export default function CallingOverlay() {
   
   useEffect(() => {
     if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
+      if (localVideoRef.current.srcObject !== localStream) {
+        localVideoRef.current.srcObject = localStream;
+      }
     }
   }, [localStream]);
 
   useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      if (remoteVideoRef.current.srcObject !== remoteStream) {
-        remoteVideoRef.current.srcObject = remoteStream;
-      }
-      
-      remoteStream.getAudioTracks().forEach(track => {
-        track.enabled = !isSpeakerMuted;
-      });
+    const vEl = remoteVideoRef.current;
+    if (!vEl || !remoteStream) return;
 
-      remoteStream.getVideoTracks().forEach(track => {
-        track.enabled = true;
+    if (vEl.srcObject !== remoteStream) {
+      vEl.srcObject = remoteStream;
+      console.log('[CallingOverlay] Attached remoteStream to remoteVideoRef', {
+        tracks: remoteStream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled, readyState: t.readyState, muted: t.muted }))
       });
-      
-      const playVideo = () => {
-        if (!remoteVideoRef.current) return;
-        remoteVideoRef.current.play().catch(err => {
-          console.warn("[CallingOverlay] Remote stream play retry required:", err);
-          setTimeout(() => {
+    }
+
+    remoteStream.getAudioTracks().forEach(track => {
+      track.enabled = !isSpeakerMuted;
+    });
+
+    remoteStream.getVideoTracks().forEach(track => {
+      track.enabled = true;
+    });
+
+    const playVideo = () => {
+      if (!remoteVideoRef.current) return;
+      const promise = remoteVideoRef.current.play();
+      if (promise !== undefined) {
+        promise.catch(err => {
+          console.warn("[CallingOverlay] Remote stream play() postponed by autoplay policy:", err);
+          const unlockPlay = () => {
             if (remoteVideoRef.current) {
               remoteVideoRef.current.play().catch(() => {});
             }
-          }, 350);
+            window.removeEventListener('click', unlockPlay);
+            window.removeEventListener('touchstart', unlockPlay);
+          };
+          window.addEventListener('click', unlockPlay, { once: true });
+          window.addEventListener('touchstart', unlockPlay, { once: true });
         });
-      };
+      }
+    };
 
+    playVideo();
+
+    const handleLoadedMetadata = () => {
+      console.log('[CallingOverlay] remoteVideo loadedmetadata dimensions:', vEl.videoWidth, 'x', vEl.videoHeight);
       playVideo();
-    }
+    };
+
+    const handlePlaying = () => {
+      console.log('[CallingOverlay] remoteVideo started playing successfully!');
+    };
+
+    vEl.addEventListener('loadedmetadata', handleLoadedMetadata);
+    vEl.addEventListener('playing', handlePlaying);
+
+    return () => {
+      vEl.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      vEl.removeEventListener('playing', handlePlaying);
+    };
   }, [remoteStream, isSpeakerMuted]);
 
   
