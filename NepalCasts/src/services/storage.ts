@@ -1,6 +1,7 @@
 import { auth } from "../lib/firebase";
-import imageCompression from "browser-image-compression";
-import { uploadMedia } from "../utils/uploadMedia";
+import { uploadMedia, type CloudinaryUploadResult } from "../utils/uploadMedia";
+import { mediaOptimizer } from "./MediaOptimizer";
+import { logger } from "../utils/logger";
 
 export const uploadFile = async (
   file: File,
@@ -12,7 +13,6 @@ export const uploadFile = async (
     throw new Error("Authentication is required for uploads");
   }
 
-  
   const isProfilePath = path.startsWith(`profiles/${uid}/`);
   const isMediaPath = path.startsWith(`media/${uid}/`);
   const isCastingPath = path.startsWith(`castings/`);
@@ -27,32 +27,24 @@ export const uploadFile = async (
 
   let fileToUpload = file;
 
-  
+  // Validation
   if (isProfilePath) {
     if (!isImage) {
-      throw new Error("Invalid file type. Please use JPG, PNG or WEBP");
-    }
-    const validImageTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!validImageTypes.includes(file.type)) {
-      throw new Error("Invalid file type. Please use JPG, PNG or WEBP");
+      throw new Error("Invalid file type. Please use JPG, PNG, WEBP, or HEIC");
     }
     const isCover = path.endsWith("cover.jpg");
-    const maxSize = isCover ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
+    const maxSize = isCover ? 15 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      throw new Error(`File too large. Maximum size is ${isCover ? '10MB' : '5MB'}`);
+      throw new Error(`File too large. Maximum size is ${isCover ? '15MB' : '10MB'}`);
     }
   } else if (isMediaPath) {
     if (isVideo) {
-      if (file.size > 50 * 1024 * 1024) {
-        throw new Error("File too large. Maximum video size is 50MB");
+      if (file.size > 200 * 1024 * 1024) {
+        throw new Error("File too large. Maximum video size is 200MB");
       }
     } else if (isImage) {
-      const validImageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-      if (!validImageTypes.includes(file.type)) {
-        throw new Error("Invalid file type. Please use JPG, PNG, WEBP or GIF");
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error("File too large. Maximum image size is 10MB");
+      if (file.size > 25 * 1024 * 1024) {
+        throw new Error("File too large. Maximum image size is 25MB");
       }
     } else {
       throw new Error("Invalid file type. Only images and videos are allowed");
@@ -61,34 +53,37 @@ export const uploadFile = async (
     if (!isImage) {
       throw new Error("Invalid file type. Only image banners are allowed");
     }
-    if (file.size > 10 * 1024 * 1024) {
-      throw new Error("File too large. Maximum banner size is 10MB");
+    if (file.size > 15 * 1024 * 1024) {
+      throw new Error("File too large. Maximum banner size is 15MB");
     }
   } else if (isConversationPath) {
     if (!isImage && !isVideo) {
       throw new Error("Invalid file type. Only images and videos are allowed as message attachments");
     }
-    const maxAllowedSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    const maxAllowedSize = isVideo ? 100 * 1024 * 1024 : 20 * 1024 * 1024;
     if (file.size > maxAllowedSize) {
-      throw new Error(`File too large. Maximum size is ${isVideo ? '50MB' : '10MB'}`);
+      throw new Error(`File too large. Maximum size is ${isVideo ? '100MB' : '20MB'}`);
     }
   }
 
-  
-  if (isImage && file.type !== "image/gif") {
+  // Client-side Optimization before upload
+  if (isImage) {
     try {
-      const options = {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1200,
-        useWebWorker: false,
-      };
-      fileToUpload = await imageCompression(file, options);
+      const optResult = await mediaOptimizer.optimizeImage(file);
+      fileToUpload = optResult.file;
     } catch (compressionError) {
-      console.warn("Client-side image compression failed. Using original file:", compressionError);
+      logger.warn("[Storage] Image optimization fallback to original file:", compressionError);
+    }
+  } else if (isVideo) {
+    try {
+      const meta = await mediaOptimizer.extractVideoMetadata(file);
+      logger.log(`[Storage] Video pre-upload check: ${meta.width}x${meta.height}, Duration: ${meta.duration.toFixed(1)}s`);
+    } catch (vErr) {
+      logger.warn("[Storage] Video metadata extraction error:", vErr);
     }
   }
 
-  
+  // Target folder mapping
   let folder = "general";
   if (isProfilePath) {
     folder = `avatars/${uid}`;
@@ -105,10 +100,10 @@ export const uploadFile = async (
   }
 
   try {
-    const result = await uploadMedia(fileToUpload, folder, onProgress);
+    const result: CloudinaryUploadResult = await uploadMedia(fileToUpload, folder, onProgress);
     return result.url;
   } catch (err: any) {
-    console.error("Cloudinary upload failed:", err);
-    throw new Error(err.message || "Cloudinary upload failed", { cause: err });
+    console.error("[Storage] Upload failed:", err);
+    throw new Error(err.message || "Upload failed", { cause: err });
   }
 };

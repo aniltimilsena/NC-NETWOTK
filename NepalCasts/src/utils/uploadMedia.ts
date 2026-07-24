@@ -56,6 +56,8 @@ export const uploadMedia = async (
     formData.append('file', file);
     formData.append('upload_preset', uploadPreset);
     formData.append('folder', `nc-network/${folder}`);
+    formData.append('quality', 'auto:good');
+    formData.append('fetch_format', 'auto');
 
     
     const xhr = new XMLHttpRequest();
