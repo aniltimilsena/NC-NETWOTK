@@ -149,6 +149,8 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
       if (err.code !== 'permission-denied') {
         console.error("Conversations snapshot listener failed in Navbar:", err);
       }
+    });
+
     return () => unsubscribe();
   }, [user]);
 
@@ -184,12 +186,6 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                   </button>
                 )}
                 <Logo onNavigate={onNavigate} size="md" showText={false} />
-                <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_#facc15]" />
-                  <span className="text-[10px] font-black tracking-widest text-amber-400 uppercase">
-                    STUDIO WORKSPACE
-                  </span>
-                </div>
               </div>
               
               {/* Desktop Command Navigation Links */}
