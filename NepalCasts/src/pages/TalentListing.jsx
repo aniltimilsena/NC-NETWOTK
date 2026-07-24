@@ -506,8 +506,8 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
               </div>
             ) : (
               <>
-                {/* Unified Cardless List View (Desktop & Mobile) */}
-                <div className="space-y-1">
+                {/* Desktop Studio Glass Bento Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                   {filteredTalents.map((talent, idx) => {
                     const isFollowing = followingIds.includes(talent.id);
 
@@ -531,52 +531,58 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                     const expLevel = getExperienceLevel(talent);
 
                     return (
-                      <div
+                      <motion.div
                         key={talent.id}
-                        onMouseEnter={() => setHoveredTalent(talent)}
-                        onMouseLeave={() => setHoveredTalent(null)}
+                        whileHover={{ y: -6 }}
                         onClick={() => onNavigate('profile', talent.id)}
-                        className="flex items-center justify-between py-4 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group"
+                        className="studio-card p-5 rounded-3xl flex flex-col justify-between cursor-pointer group space-y-4 text-left"
                       >
-                        <div className="flex items-center gap-4 min-w-0">
+                        <div className="flex items-start justify-between gap-3">
                           <Avatar
                             user={talent}
                             size="lg"
                             name={talent.name}
-                            className="w-12 h-12 md:w-14 md:h-14 transition-transform group-hover:scale-105 duration-300"
+                            className="w-16 h-16 border-2 border-white/10 group-hover:border-nc-accent transition-colors shadow-xl shrink-0"
                           />
-                          <div className="min-w-0 text-left">
-                            <h3 className="font-bold text-white text-base md:text-lg tracking-tight truncate flex items-center gap-1.5 group-hover:text-sky-400 transition-colors duration-300">
-                              {talent.name}
-                              {talent.verified && (
-                                <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
-                              )}
-                              {talent.openToWork && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 ring-2 ring-green-500/20" title="Open to Work" />
-                              )}
-                            </h3>
-                            <p className="text-xs text-gray-500 font-medium mt-0.5">
-                              {talent.role || 'Talent'} • {expLevel} Level • {isNew ? 'New' : `Since ${joinYear}`}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1 truncate">
-                              {talent.location || 'Nepal'}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
                           {talent.id !== auth.currentUser?.uid && (
                             <button
                               type="button"
-                              onClick={(e) => handleToggleFollow(e, talent.id)}
-                              className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 ${isFollowing
-                                  ? 'border border-white/10 text-gray-400 hover:bg-white/5'
-                                  : 'bg-gradient-to-br from-sky-400 to-sky-600 text-black hover:brightness-110 shadow-lg shadow-sky-500/10 active:scale-[0.98]'
-                                }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleFollow(e, talent.id);
+                              }}
+                              className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                isFollowing
+                                  ? 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10'
+                                  : 'bg-nc-accent text-black font-extrabold hover:bg-sky-400 shadow-md'
+                              }`}
                             >
                               {isFollowing ? 'Following' : 'Follow'}
                             </button>
                           )}
+                        </div>
+
+                        <div className="space-y-1">
+                          <h3 className="font-bold text-white text-base truncate group-hover:text-nc-accent transition-colors flex items-center gap-1.5">
+                            {talent.name}
+                            {talent.verified && <span className="verified-badge shrink-0" title="Verified">✓</span>}
+                          </h3>
+                          <p className="text-xs text-gray-400 font-medium truncate">
+                            {talent.role || 'Talent'} • {expLevel} Level
+                          </p>
+                          <p className="text-xs text-nc-accent font-semibold truncate pt-1">
+                            📍 {talent.location || 'Nepal'}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-3 border-t border-white/5 text-[11px] font-bold text-gray-400">
+                          <span>{isNew ? '✨ New Member' : `Since ${joinYear}`}</span>
+                          <span className="text-nc-accent">View Profile →</span>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
 
                           <button
                             type="button"
