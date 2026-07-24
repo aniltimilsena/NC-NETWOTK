@@ -162,8 +162,8 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
         <nav className="relative z-30 bg-nc-dark/80 backdrop-blur-md border-b border-white/5">
           <div className="max-w-[1600px] mx-auto px-2 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-14 sm:h-20">
-            {/* Logo & Back */}
-            <div className="flex items-center gap-4 sm:gap-8">
+            {/* Logo & Left Navigation Links */}
+            <div className="flex items-center gap-4 sm:gap-6">
               {showBack && (
                 <button 
                   onClick={onBack} 
@@ -177,42 +177,43 @@ export default function Navbar({ onNavigate, onBack = () => {}, showBack = false
                 </button>
               )}
               <Logo onNavigate={onNavigate} size="md" showText={false} />
-            </div>
-            
-            <div className="hidden md:flex items-center justify-center flex-1 mx-8 gap-8">
-              <div className="relative group">
-                <button className={`flex items-center gap-1.5 py-2 text-sm font-medium transition-colors ${isDiscoverActive ? 'text-white' : 'text-[#888] hover:text-white'}`}>
-                  {t('nav_discover')}
-                  <svg className="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-48 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
-                  <Link to="/talents" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_talent_directory')}</Link>
-                  <Link to="/trending" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_trending_now')}</Link>
-                  <Link to="/settings" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
-                  {isAdmin && (
-                    <>
-                      <div className="mx-2 my-1 border-t border-white/5"></div>
-                      <Link to="/admin" className="w-full text-left block px-4 py-2.5 text-[10px] uppercase tracking-widest font-black text-admin-primary hover:text-white hover:bg-admin-primary/20 transition-all flex items-center justify-between group/admin">
-                        <span>{t('nav_admin')}</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-admin-primary shadow-[0_0_8px_#38bdf8] group-hover/admin:scale-125 transition-transform"></span>
-                      </Link>
-                    </>
-                  )}
-                </div>
-              </div>
 
-              <div className="relative group">
-                <button className={`flex items-center gap-1.5 py-2 text-sm font-medium transition-colors ${isProjectsActive ? 'text-white' : 'text-[#888] hover:text-white'}`}>
-                  {t('nav_projects')}
-                  <svg className="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-52 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
-                  <Link to="/casting" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_casting_calls')}</Link>
-                  <Link to="/casting/create" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_post_project')}</Link>
+              {/* Discover & Projects Left-Aligned */}
+              <div className="hidden md:flex items-center gap-6 ml-4">
+                <div className="relative group">
+                  <button className={`flex items-center gap-1.5 py-2 text-sm font-medium transition-colors ${isDiscoverActive ? 'text-white' : 'text-[#888] hover:text-white'}`}>
+                    {t('nav_discover')}
+                    <svg className="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 w-48 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
+                    <Link to="/talents" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_talent_directory')}</Link>
+                    <Link to="/trending" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_trending_now')}</Link>
+                    <Link to="/settings" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
+                    {isAdmin && (
+                      <>
+                        <div className="mx-2 my-1 border-t border-white/5"></div>
+                        <Link to="/admin" className="w-full text-left block px-4 py-2.5 text-[10px] uppercase tracking-widest font-black text-admin-primary hover:text-white hover:bg-admin-primary/20 transition-all flex items-center justify-between group/admin">
+                          <span>{t('nav_admin')}</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-admin-primary shadow-[0_0_8px_#38bdf8] group-hover/admin:scale-125 transition-transform"></span>
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="relative group">
+                  <button className={`flex items-center gap-1.5 py-2 text-sm font-medium transition-colors ${isProjectsActive ? 'text-white' : 'text-[#888] hover:text-white'}`}>
+                    {t('nav_projects')}
+                    <svg className="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 w-52 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
+                    <Link to="/casting" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_casting_calls')}</Link>
+                    <Link to="/casting/create" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_post_project')}</Link>
+                  </div>
                 </div>
               </div>
             </div>
