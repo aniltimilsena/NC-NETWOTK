@@ -13,6 +13,7 @@ import {
   updateCallStatus,
   subscribeToCall,
   updateCallVideoState,
+  logCallOutcomeToFirestore,
   type CallDoc,
   getProfile,
 } from "../services";
@@ -114,45 +115,20 @@ export function CallProvider({ children, user }: CallProviderProps) {
 
   const logCallOutcome = useCallback(async (call: CallDoc, duration: number, finalStatus?: string) => {
     const callId = call.id || call.createdAt?.toString() || "unknown";
-    if (!callId || loggedCallsRef.current[callId]) return;
+    if (!callId || loggedCallsRef.current[callId] || !user?.uid) return;
     loggedCallsRef.current[callId] = true;
 
     try {
-      const targetReceiverId = call.calleeId || call.receiverId;
-      const callerId = call.callerId;
-      if (!targetReceiverId || !callerId) return;
-
-      const { id: convoId } = await createConversation([callerId, targetReceiverId]);
-      if (!convoId) return;
-
-      const callTypeStr = call.callType || "audio";
-      const callLabel = callTypeStr.charAt(0).toUpperCase() + callTypeStr.slice(1);
-      const resolvedCallerName = await resolveUserName(callerId, call.callerName || 'Caller');
-
-      let outcome = "";
-      if (finalStatus === "rejected") {
-        outcome = "Declined";
-      } else if (finalStatus === "busy") {
-        outcome = "Busy";
-      } else if (finalStatus === "no-answer") {
-        outcome = "Missed Call";
-      } else if (finalStatus === "offline") {
-        outcome = "Offline";
-      } else if (finalStatus === "network-error") {
-        outcome = "Network Error";
-      } else if (finalStatus === "cancelled") {
-        outcome = `Cancelled by ${resolvedCallerName}`;
-      } else if (duration > 0) {
-        outcome = `${Math.floor(duration / 60)}m ${duration % 60}s`;
-      } else {
-        outcome = `Cancelled by ${resolvedCallerName}`;
-      }
-
-      await sendMessage(convoId, "system", `${callLabel} call • ${outcome}`, true);
+      await logCallOutcomeToFirestore({
+        call,
+        duration,
+        finalStatus,
+        currentUserId: user.uid,
+      });
     } catch (e) {
-      console.error("Error logging call outcome:", e);
+      console.error("[CallContext] Error logging call outcome:", e);
     }
-  }, []);
+  }, [user?.uid]);
 
   
   useEffect(() => {
@@ -386,90 +362,56 @@ export function CallProvider({ children, user }: CallProviderProps) {
     if (!incomingCall) return;
 
     stopRingtone();
-    await updateCallStatus(incomingCall.id, "rejected");
+    const callDocToReject = incomingCall;
+    setIncomingCall(null);
+    await updateCallStatus(callDocToReject.id, "rejected");
+    await logCallOutcome(callDocToReject, 0, "rejected");
 
-    
     try {
-      const senderName = await resolveUserName(incomingCall.callerId, incomingCall.callerName);
-      let senderAvatar = incomingCall.callerPhoto || "";
-      const profileRes = await getProfile(incomingCall.callerId);
+      const senderName = await resolveUserName(callDocToReject.callerId, callDocToReject.callerName);
+      let senderAvatar = callDocToReject.callerPhoto || "";
+      const profileRes = await getProfile(callDocToReject.callerId);
       if (profileRes.data) {
         const profileData = profileRes.data as any;
         senderAvatar = profileData.image || senderAvatar;
       }
 
-      const targetReceiverId = incomingCall.calleeId || incomingCall.receiverId;
+      const targetReceiverId = callDocToReject.calleeId || callDocToReject.receiverId;
 
       await addDoc(collection(db, "notifications"), {
         userId: targetReceiverId,
         recipientId: targetReceiverId,
         receiverId: targetReceiverId,
-        senderId: incomingCall.callerId,
+        senderId: callDocToReject.callerId,
         senderName,
         senderAvatar,
         title: "Missed Call",
-        body: `Missed an ${incomingCall.callType} call from ${senderName}`,
+        body: `Missed an ${callDocToReject.callType} call from ${senderName}`,
         type: "messages",
         notificationType: "messages",
         isRead: false,
         read: false,
         createdAt: serverTimestamp(),
-        targetUrl: `/messages/${incomingCall.callerId}`,
-        profileUrl: `/messages/${incomingCall.callerId}`
+        targetUrl: `/messages/${callDocToReject.callerId}`,
+        profileUrl: `/messages/${callDocToReject.callerId}`
       });
     } catch (err) {
       console.warn("Failed to write missed call notification:", err);
     }
-
-    setIncomingCall(null);
-  }, [incomingCall]);
-
-  
+  }, [incomingCall, logCallOutcome]);
 
   const hangUp = useCallback(async () => {
     if (activeCall) {
-      if (activeCall.callerId === user?.uid) {
-        callerHungUpRef.current = true;
-      }
-      const targetReceiverId = activeCall.calleeId || activeCall.receiverId;
-      
-      if (webrtc.callDuration === 0 && activeCall.callerId === user?.uid) {
-        try {
-          const senderName = await resolveUserName(activeCall.callerId, activeCall.callerName);
-          let senderAvatar = activeCall.callerPhoto || "";
-          const profileRes = await getProfile(activeCall.callerId);
-          if (profileRes.data) {
-            const profileData = profileRes.data as any;
-            senderAvatar = profileData.image || senderAvatar;
-          }
-
-          await addDoc(collection(db, "notifications"), {
-            userId: targetReceiverId,
-            recipientId: targetReceiverId,
-            receiverId: targetReceiverId,
-            senderId: activeCall.callerId,
-            senderName,
-            senderAvatar,
-            title: "Missed Call",
-            body: `Missed an ${activeCall.callType} call from ${senderName}`,
-            type: "messages",
-            notificationType: "messages",
-            isRead: false,
-            read: false,
-            createdAt: serverTimestamp(),
-            targetUrl: `/messages/${activeCall.callerId}`,
-            profileUrl: `/messages/${activeCall.callerId}`
-          });
-        } catch (err) {
-          console.warn("Failed to write missed call notification on hangup:", err);
-        }
-      }
+      const callDocToLog = activeCall;
+      const duration = webrtc.callDuration;
+      const finalStatus = duration > 0 ? "ended" : (activeCall.callerId === user?.uid ? "cancelled" : "no-answer");
+      await logCallOutcome(callDocToLog, duration, finalStatus);
     }
     
     playEndCallSound();
     await webrtc.endCall();
     setActiveCall(null);
-  }, [activeCall, webrtc.endCall, webrtc.callDuration, user?.uid]);
+  }, [activeCall, webrtc, user?.uid, logCallOutcome]);
 
   
 

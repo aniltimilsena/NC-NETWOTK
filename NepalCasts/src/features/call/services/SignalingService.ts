@@ -258,3 +258,108 @@ export const subscribeToCallHistory = (
     unsub2();
   };
 };
+
+export const logCallOutcomeToFirestore = async (params: {
+  call: CallDoc;
+  duration: number;
+  finalStatus?: string;
+  currentUserId: string;
+}): Promise<void> => {
+  const { call, duration, finalStatus, currentUserId } = params;
+  const callId = call.id;
+  if (!callId || !currentUserId) return;
+
+  const callerId = call.callerId;
+  const receiverId = call.calleeId || call.receiverId;
+  if (!callerId || !receiverId) return;
+
+  logger.log(`[CallLog] Conversation lookup for participants: ${callerId}, ${receiverId}`);
+
+  try {
+    const sorted = [callerId, receiverId].sort();
+    let convoId: string | null = null;
+
+    const q = query(
+      collection(db, COLLECTIONS.CONVERSATIONS),
+      where("participants", "array-contains", currentUserId)
+    );
+    const snap = await getDocs(q);
+    const existing = snap.docs.find((d) => {
+      const p = d.data().participants;
+      if (!Array.isArray(p) || p.length !== 2) return false;
+      return p.slice().sort().every((v, i) => v === sorted[i]);
+    });
+
+    if (existing) {
+      convoId = existing.id;
+      logger.log(`[CallLog] Conversation found: ${convoId}`);
+    } else {
+      const newConvoRef = await addDoc(collection(db, COLLECTIONS.CONVERSATIONS), {
+        participants: sorted,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastMessage: "",
+        lastSenderId: "",
+        unreadCount: {},
+      });
+      convoId = newConvoRef.id;
+      logger.log(`[CallLog] New conversation created: ${convoId}`);
+    }
+
+    if (!convoId) return;
+
+    const callTypeStr = call.callType || "audio";
+    const iconSymbol = callTypeStr === "video" ? "🎥" : "📞";
+    const callLabel = callTypeStr.charAt(0).toUpperCase() + callTypeStr.slice(1);
+
+    let statusText = "";
+    if (finalStatus === "rejected" || finalStatus === "declined") {
+      statusText = "Declined";
+    } else if (finalStatus === "busy") {
+      statusText = "Busy";
+    } else if (finalStatus === "no-answer") {
+      statusText = "Missed";
+    } else if (finalStatus === "cancelled") {
+      statusText = "Cancelled";
+    } else if (finalStatus === "offline") {
+      statusText = "Offline";
+    } else if (finalStatus === "network-error") {
+      statusText = "Failed";
+    } else if (duration > 0) {
+      const mins = Math.floor(duration / 60);
+      const secs = duration % 60;
+      statusText = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    } else {
+      statusText = "Missed";
+    }
+
+    const messageText = `${iconSymbol} ${callLabel} call • ${statusText}`;
+    logger.log(`[CallLog] Writing call message: "${messageText}" to convo: ${convoId}`);
+
+    const msgRef = await addDoc(
+      collection(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES),
+      {
+        senderId: "system",
+        text: messageText,
+        type: "call",
+        callType: callTypeStr,
+        status: finalStatus || (duration > 0 ? "ended" : "missed"),
+        duration: duration || 0,
+        isSystem: true,
+        callerId,
+        receiverId,
+        createdAt: serverTimestamp(),
+      }
+    );
+
+    await updateDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId), {
+      lastMessage: messageText,
+      lastSenderId: "system",
+      updatedAt: serverTimestamp(),
+    });
+
+    logger.log(`[CallLog] Firestore write success. Message ID: ${msgRef.id}`);
+  } catch (err) {
+    console.error("[CallLog] Firestore write failure:", err);
+  }
+};
