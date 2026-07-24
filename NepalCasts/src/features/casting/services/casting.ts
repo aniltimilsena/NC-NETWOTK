@@ -14,14 +14,24 @@ import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
 
 export const subscribeToCastingCalls = (
-  filter: string,
-  callback: (data: any, error: any) => void
+  filter?: string | ((data: any, error?: any) => void),
+  callback?: (data: any, error?: any) => void
 ) => {
+  let actualFilter: string = "all";
+  let actualCallback: ((data: any, error?: any) => void) | undefined = callback;
+
+  if (typeof filter === "function") {
+    actualCallback = filter;
+    actualFilter = "all";
+  } else if (typeof filter === "string") {
+    actualFilter = filter;
+  }
+
   let q;
-  if (filter && filter.toLowerCase() !== "all") {
+  if (actualFilter && typeof actualFilter === "string" && actualFilter.toLowerCase() !== "all") {
     q = query(
       collection(db, COLLECTIONS.CASTING_CALLS),
-      where("type", "==", filter),
+      where("type", "==", actualFilter),
       orderBy("createdAt", "desc")
     );
   } else {
@@ -32,11 +42,11 @@ export const subscribeToCastingCalls = (
     q,
     (snapshot) => {
       const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      callback(data, null);
+      if (actualCallback) actualCallback(data, null);
     },
     (error) => {
       console.error("Casting calls subscription error:", error);
-      callback([], error);
+      if (actualCallback) actualCallback([], error);
     }
   );
 };
