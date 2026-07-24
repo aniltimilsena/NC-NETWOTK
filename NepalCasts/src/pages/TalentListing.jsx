@@ -583,36 +583,6 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                     );
                   })}
                 </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setActiveMenuId(activeMenuId === talent.id ? null : talent.id)}
-                            className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-white relative bg-transparent hover:bg-white/5 transition-colors"
-                          >
-                            <MoreVertical size={16} />
-                            {activeMenuId === talent.id && (
-                              <>
-                                <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)} />
-                                <div className="absolute right-0 top-10 mt-1 w-36 bg-[#121212]/95 border border-white/10 rounded-xl shadow-2xl z-20 py-1.5 backdrop-blur-lg overflow-hidden text-left">
-                                  <button
-                                    onClick={() => {
-                                      setActiveShareTalent(talent);
-                                      setActiveMenuId(null);
-                                    }}
-                                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-2 transition-colors"
-                                  >
-                                    <Share2 size={12} className="text-sky-400" />
-                                    Share Profile
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
               </>
             )}
           </div>
