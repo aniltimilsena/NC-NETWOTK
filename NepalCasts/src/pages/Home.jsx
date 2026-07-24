@@ -161,30 +161,34 @@ export default function Home({ onNavigate, user }) {
 
   return (
     <div className="min-h-screen bg-[#050508] text-white">
-      {/* Desktop Hero Section */}
-      <section className="relative overflow-hidden py-12 lg:py-16 px-4 sm:px-8 lg:px-12 max-w-[1720px] mx-auto">
+      {/* Desktop Hero Section with Background Image */}
+      <section className="relative overflow-hidden py-16 lg:py-24 px-4 sm:px-8 lg:px-12 max-w-[1720px] mx-auto rounded-3xl my-4">
+        {/* Hero Background Image & Gradient Overlay */}
+        <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl">
+          <img
+            src="/hero-bg.png"
+            alt="Hero Backstage"
+            className="w-full h-full object-cover animate-kenburns opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050508] via-[#050508]/80 to-[#050508]/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-transparent to-[#050508]/40" />
+        </div>
+
         {/* Ambient Glow Orbs */}
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-amber-500/10 via-sky-500/5 to-transparent rounded-full blur-[140px] pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-nc-accent/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-amber-500/10 via-sky-500/5 to-transparent rounded-full blur-[140px] pointer-events-none z-1" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-nc-accent/10 rounded-full blur-[120px] pointer-events-none z-1" />
 
         <div className="relative z-10 grid lg:grid-cols-12 gap-8 items-center">
           {/* Left Widescreen Hero Text */}
           <div className="lg:col-span-7 space-y-6 text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 backdrop-blur-md">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_#facc15]" />
-              <span className="text-xs font-black tracking-widest text-amber-400 uppercase">
-                NEPALCASTS CINEMA & TALENT NETWORK
-              </span>
-            </div>
-
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08] text-white font-sans">
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08] text-white font-sans drop-shadow-lg">
               Discover & Book <br />
               <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-sky-400 bg-clip-text text-transparent">
                 Nepal's Top Talent.
               </span>
             </h1>
 
-            <p className="text-gray-400 text-base sm:text-xl font-medium max-w-2xl leading-relaxed">
+            <p className="text-gray-300 text-base sm:text-xl font-medium max-w-2xl leading-relaxed drop-shadow-md">
               Connect directly with verified actors, directors, models, cinematographers, and production teams across Pokhara, Kathmandu, and nationwide.
             </p>
 
@@ -198,7 +202,7 @@ export default function Home({ onNavigate, user }) {
 
               <button
                 onClick={() => onNavigate('casting')}
-                className="px-8 py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm border border-white/15 backdrop-blur-md transition-all active:scale-95 cursor-pointer"
+                className="px-8 py-4 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-sm border border-white/20 backdrop-blur-md transition-all active:scale-95 cursor-pointer"
               >
                 Explore Casting Calls
               </button>
