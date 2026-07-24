@@ -46,11 +46,24 @@ const handleSendNotification = async (req: AuthedRequest, res: Response): Promis
       return res.json({ success: true, message: 'No recipients to notify' });
     }
 
+    let buttons: Array<{ id: string; text: string; icon?: string }> | undefined = undefined;
+    if (headingsText.toLowerCase().includes('message')) {
+      buttons = [
+        { id: 'reply_chat', text: 'Reply' },
+        { id: 'view_chat', text: 'Open Chat' }
+      ];
+    } else if (headingsText.toLowerCase().includes('call')) {
+      buttons = [
+        { id: 'call_back', text: 'Call Back' }
+      ];
+    }
+
     await sendOneSignalNotification({
       userIds: recipients,
       title: headingsText,
       body: contentsText,
-      url: targetUrl.replace('https://nc-netwotk.vercel.app', '') // Strip domain to match payload expectation
+      url: targetUrl.replace('https://nc-netwotk.vercel.app', ''), // Strip domain to match payload expectation
+      buttons
     });
 
     return res.json({ success: true });

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, X,
-  ArrowLeft, MapPin, MoreVertical, Share2, ChevronLeft, SlidersHorizontal
+  Search, X, MoreVertical, Share2, ChevronLeft, SlidersHorizontal
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, onSnapshot, query, orderBy, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';

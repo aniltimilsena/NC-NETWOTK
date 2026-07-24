@@ -48,6 +48,8 @@ service cloud.firestore {
         !('passwordHash' in request.resource.data) &&
         !('fcmToken' in request.resource.data) &&
         !('fcmTokens' in request.resource.data) &&
+        !('email' in request.resource.data) &&
+        !('phone' in request.resource.data) &&
         
         (!('image' in request.resource.data) || request.resource.data.image is string || request.resource.data.image == null) &&
         (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string || request.resource.data.photoURL == null) &&
@@ -88,6 +90,17 @@ service cloud.firestore {
       }
     }
 
+    match /contact_info/{userId} {
+      allow read: if isSignedIn() && (
+        isOwner(userId) ||
+        isAdmin() ||
+        isPremiumUser(request.auth.uid) ||
+        get(/databases/$(database)/documents/profiles/$(userId)).data.get('showContactInfo', false) == true ||
+        exists(/databases/$(database)/documents/follows/$(request.auth.uid + "_" + userId))
+      );
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
     
     
     
@@ -126,7 +139,7 @@ service cloud.firestore {
         allow update: if isSignedIn() && !isBanned() && 
           request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
           (resource.data.senderId == request.auth.uid || 
-           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions', 'read', 'delivered', 'status']));
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions', 'read', 'delivered', 'status', 'isPinned', 'updatedAt']));
         allow delete: if isSignedIn() && !isBanned() && 
           request.auth.uid in get(/databases/$(database)/documents/conversations/$(convoId)).data.participants && 
           resource.data.senderId == request.auth.uid;

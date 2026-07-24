@@ -14,7 +14,7 @@ import {
   ChevronRight,
   ArrowRight
 } from 'lucide-react';
-import { uploadProfileMedia } from '../services/profile';
+import { uploadProfileMedia } from '../services';
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 
 interface OnboardingProps {
@@ -198,7 +198,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
     setProgress(0);
 
     try {
-      const downloadUrl = await uploadProfileMedia(user.uid, file, (percent) => {
+      const downloadUrl = await uploadProfileMedia(user.uid, file, (percent: number) => {
         setProgress(Math.round(percent));
       });
       if (downloadUrl) {

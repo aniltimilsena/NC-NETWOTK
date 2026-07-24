@@ -146,7 +146,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({
                 transition={{
                   repeat: Infinity,
                   ease: 'linear',
-                  duration: adList.length > 1 ? 30 : 20,
+                  duration: adList.length > 1 ? 80 : 60,
                 }}
                 style={{ willChange: 'transform' }}
               >

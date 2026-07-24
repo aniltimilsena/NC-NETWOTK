@@ -10,7 +10,7 @@ import {
   subscribeToIceCandidates,
   cleanupCall,
   type CallDoc,
-} from "../services/call";
+} from "../services";
 
 
 
@@ -359,7 +359,7 @@ export function useWebRTC(): UseWebRTCReturn {
         }
 
         
-        const unsubCall = subscribeToCall(callId, async (callDoc) => {
+        const unsubCall = subscribeToCall(callId, async (callDoc: any) => {
           if (!callDoc || callDoc.status === "rejected" || callDoc.status === "no-answer" || callDoc.status === "ended") {
             setCallState("ended");
             await cleanup();
@@ -394,7 +394,7 @@ export function useWebRTC(): UseWebRTCReturn {
         const unsubICE = subscribeToIceCandidates(
           callId,
           "caller",
-          async (candidate) => {
+          async (candidate: any) => {
             try {
               if (pc.remoteDescription && pc.remoteDescription.type) {
                 await pc.addIceCandidate(new RTCIceCandidate(candidate));
@@ -481,7 +481,7 @@ export function useWebRTC(): UseWebRTCReturn {
         const unsubICE = subscribeToIceCandidates(
           callDoc.id,
           "callee",
-          async (candidate) => {
+          async (candidate: any) => {
             try {
               if (pc.remoteDescription && pc.remoteDescription.type) {
                 await pc.addIceCandidate(new RTCIceCandidate(candidate));
@@ -496,7 +496,7 @@ export function useWebRTC(): UseWebRTCReturn {
         unsubsRef.current.push(unsubICE);
 
         
-        const unsubCall = subscribeToCall(callDoc.id, async (doc) => {
+        const unsubCall = subscribeToCall(callDoc.id, async (doc: any) => {
           if (!doc || doc.status === "ended") {
             setCallState("ended");
             await cleanup();

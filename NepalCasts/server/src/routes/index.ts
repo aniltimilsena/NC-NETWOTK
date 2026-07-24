@@ -1,6 +1,5 @@
 import { Router, type Response } from 'express';
 import { db, admin } from '../config';
-import authRoutes from './auth.routes';
 import profileRoutes from './profile.routes';
 import castingRoutes from './casting.routes';
 import messagingRoutes from './messaging.routes';
@@ -11,7 +10,6 @@ import adminRoutes from './admin.routes';
 const router = Router();
 
 // Mount individual route domains
-router.use(authRoutes);
 router.use(profileRoutes);
 router.use(castingRoutes);
 router.use(messagingRoutes);

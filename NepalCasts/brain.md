@@ -253,20 +253,30 @@ Actions that are considered medium or high risk (such as deletion schedules, blo
 │   │   ├── CallContext.tsx         # Primary WebRTC execution context
 │   │   ├── UserContext.tsx         # Shared user account profile context
 │   │   └── PermissionContext.jsx   # Micro/Camera permissions provider
+│   ├── features/                   # Self-contained business module features
+│   │   ├── admin/                  # Admin dashboard & logs pages/services
+│   │   ├── auth/                   # SignIn, SignUp pages and auth service
+│   │   ├── call/                   # CallPage and WebRTC calling services/types
+│   │   ├── casting/                # CastingCall pages and casting services/types
+│   │   ├── messages/               # DM / Chat pages, components, hooks, services, and types
+│   │   ├── notifications/          # Notifications page and notification types
+│   │   ├── profile/                # ProfilePage, ProfileCreate page, and profile services/types
+│   │   └── settings/               # SettingsPage and sub-configuration panels
 │   ├── hooks/                      # Custom hooks
 │   │   ├── useWebRTC.ts            # RTCPeerConnection WebRTC logic handler
 │   │   └── useNotifications.tsx    # Notification handlers (FCM & local tokens)
 │   ├── layouts/                    # Structure layouts (Public, User, Admin)
-│   ├── pages/                      # Page components
-│   │   ├── admin/                  # Admin dashboard routes
-│   │   ├── CastingCall.jsx         # Casting listings
+│   ├── pages/                      # Global/Static page components
 │   │   ├── Home.jsx                # Landing & User dashboard
-│   │   ├── Messages.jsx            # Dynamic messaging component
-│   │   └── Profile.jsx             # Profile view & editing layout
-│   ├── services/                   # Frontend Firebase & Express wrappers
-│   │   ├── call.ts                 # WebRTC Firestore signaling operations
-│   │   ├── messaging.ts            # Conversation setup, fallback writes, and read receipts
-│   │   └── profile.ts              # Fetching and mutation wrapper using Functions
+│   │   ├── TalentListing.jsx       # Talent search/listing board
+│   │   ├── Trending.jsx            # Trending talents
+│   │   └── NotFound.tsx            # 404 page
+│   ├── services/                   # Frontend Firebase & Express barrel re-exporters
+│   │   ├── storage.ts              # Global storage uploads
+│   │   └── index.ts                # Services barrel index
+│   ├── types/                      # Global TypeScript type barrel re-exporters
+│   │   ├── api.ts                  # API contract models
+│   │   └── index.ts                # Types barrel index
 │   ├── App.tsx                     # Main Router, version check, visibility, presence system
 │   └── main.tsx                    # React Entrypoint
 ├── firestore.rules                 # Rules for DB collections

@@ -97,6 +97,10 @@ export default async function handler(req, res) {
       include_aliases: {
         external_id: recipients,
       },
+      buttons: [
+        { id: 'reply_chat', text: 'Reply' },
+        { id: 'view_chat', text: 'Open Chat' }
+      ],
       target_channel: 'push',
     };
 

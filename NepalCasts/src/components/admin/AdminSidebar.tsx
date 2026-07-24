@@ -12,8 +12,7 @@ import {
   ChevronLeft, 
   ChevronRight,
   LogOut,
-  LayoutDashboard,
-  Database
+  LayoutDashboard
 } from 'lucide-react';
 
 const menuItems = [

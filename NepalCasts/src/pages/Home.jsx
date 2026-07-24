@@ -6,8 +6,7 @@ import CategorySkeleton from '../components/ui/CategorySkeleton';
 import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
 import { AdBanner } from '../components/ui/AdBanner';
-import { subscribeToTalents } from '../services/users';
-import { subscribeToCastingCalls } from '../services/casting';
+import { subscribeToTalents, subscribeToCastingCalls } from '../services';
 
 
 

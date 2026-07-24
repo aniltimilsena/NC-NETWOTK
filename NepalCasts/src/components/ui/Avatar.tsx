@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { auth, db } from '../../lib/firebase';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { uploadProfileMedia } from '../../services/profile';
+import { uploadProfileMedia } from '../../services';
 import ConfirmDialog from './ConfirmDialog';
 import CropModal from './CropModal';
 
@@ -130,7 +130,7 @@ export default function Avatar(props: AvatarProps) {
 
     try {
       const avatarPath = `profiles/${activeUserId}/avatar.jpg`;
-      const downloadUrl = await uploadProfileMedia(activeUserId, croppedFile, (percent) => {
+      const downloadUrl = await uploadProfileMedia(activeUserId, croppedFile, (percent: number) => {
         setProgress(Math.round(percent));
       }, avatarPath);
 

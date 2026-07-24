@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Breadcrumbs from '../components/Breadcrumbs';
-import { subscribeToGlobalSettings } from '../services/admin';
+import { subscribeToGlobalSettings } from '../services';
 
 interface UserLayoutProps {
   user: any;
@@ -24,7 +24,7 @@ export default function UserLayout({
   const [maintenanceMode, setMaintenanceMode] = useState<boolean>(false);
 
   useEffect(() => {
-    const unsub = subscribeToGlobalSettings((settings) => {
+    const unsub = subscribeToGlobalSettings((settings: any) => {
       setMaintenanceMode(!!settings?.maintenanceMode);
     });
     return () => unsub();

@@ -5,9 +5,10 @@ interface OneSignalNotificationPayload {
   title: string;
   body: string;
   url?: string;
+  buttons?: Array<{ id: string; text: string; icon?: string }>;
 }
 
-export async function sendOneSignalNotification({ userIds, title, body, url }: OneSignalNotificationPayload): Promise<void> {
+export async function sendOneSignalNotification({ userIds, title, body, url, buttons }: OneSignalNotificationPayload): Promise<void> {
   const appId = process.env.ONESIGNAL_APP_ID;
   const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
 
@@ -17,7 +18,7 @@ export async function sendOneSignalNotification({ userIds, title, body, url }: O
   }
 
   try {
-    const payload = {
+    const payload: Record<string, any> = {
       app_id: appId,
       contents: { en: body },
       headings: { en: title },
@@ -27,6 +28,10 @@ export async function sendOneSignalNotification({ userIds, title, body, url }: O
       },
       target_channel: "push"
     };
+
+    if (buttons) {
+      payload.buttons = buttons;
+    }
 
     const response = await fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",

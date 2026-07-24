@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, MapPin, ArrowLeft, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { db, auth } from "@/lib/firebase";
 import Avatar from "./Avatar";
 import { collection, getDocs, query as firestoreQuery } from "firebase/firestore";

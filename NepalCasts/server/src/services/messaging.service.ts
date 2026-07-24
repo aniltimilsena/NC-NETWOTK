@@ -172,7 +172,10 @@ export const createConversation = async (uid: string, participants: string[], in
       userIds: [otherParticipantId],
       title: 'New Conversation',
       body: `${senderName} started a new conversation with you.`,
-      url: `/messages/${uid}`
+      url: `/messages/${uid}`,
+      buttons: [
+        { id: 'view_chat', text: 'Open Chat' }
+      ]
     });
   }
 
@@ -343,7 +346,11 @@ export const sendMessageInConversation = async (conversationId: string, uid: str
       userIds: otherParticipants,
       title: 'New Message',
       body: preview.length > 50 ? `${preview.substring(0, 47)}...` : preview,
-      url: `/messages/${conversationId}`
+      url: `/messages/${conversationId}`,
+      buttons: [
+        { id: 'reply_chat', text: 'Reply' },
+        { id: 'view_chat', text: 'Open Chat' }
+      ]
     });
   }
 };

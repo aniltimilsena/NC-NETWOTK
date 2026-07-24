@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import SignIn from '../pages/SignIn';
-import { signInUser } from '../services/auth';
+import SignIn from '../features/auth/SignIn';
+import { signInUser } from '../features/auth/services/auth';
 
 
 vi.mock('react-router-dom', () => ({
@@ -44,7 +44,7 @@ vi.mock('../lib/firebase', () => ({
 }));
 
 
-vi.mock('../services/auth', () => ({
+vi.mock('../features/auth/services/auth', () => ({
   signInUser: vi.fn(),
   ensureUserProfile: vi.fn(),
   logoutUser: vi.fn(),

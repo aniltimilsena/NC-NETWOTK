@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCall } from '../../context/CallContext';
-import { getProfile } from '../../services/profile';
+import { getProfile } from '../../services';
 import Avatar from '../ui/Avatar';
 
 export default function IncomingCallPopup() {

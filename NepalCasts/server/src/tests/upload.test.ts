@@ -101,7 +101,7 @@ describe('File Upload Security', () => {
       .attach('file', fakeImage, 'shell.jpg');
     
     expect(response.status).toBe(400);
-    expect(response.body.error).toContain('Could not determine file type');
+    expect(response.body.error).toContain('Could not verify file binary signature magic numbers');
   });
 
   it('accepts valid JPEG image', async () => {

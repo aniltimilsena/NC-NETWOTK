@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
 import { getDatabase } from "firebase/database";
@@ -25,6 +25,16 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
+
+if (typeof window !== 'undefined') {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn("Firestore persistence failed-precondition: multiple tabs open");
+    } else if (err.code === 'unimplemented') {
+      console.warn("Firestore persistence unimplemented in this browser");
+    }
+  });
+}
 export const rtdb = getDatabase(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app);

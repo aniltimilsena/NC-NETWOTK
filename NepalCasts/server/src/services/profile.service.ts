@@ -4,14 +4,32 @@ import { deleteFromCacheByPattern } from './cacheService';
 export const getProfileByUid = async (uid: string): Promise<any> => {
   const profileDoc = await db.collection('profiles').doc(uid).get();
   if (!profileDoc.exists) return null;
-  return profileDoc.data();
+  const profileData = profileDoc.data() || {};
+
+  const contactDoc = await db.collection('contact_info').doc(uid).get();
+  if (contactDoc.exists) {
+    const contactData = contactDoc.data() || {};
+    if (contactData.email !== undefined) profileData.email = contactData.email;
+    if (contactData.phone !== undefined) profileData.phone = contactData.phone;
+  }
+
+  return profileData;
 };
 
 export const updateProfileByUid = async (uid: string, validatedData: any): Promise<void> => {
+  const { email, phone, ...rest } = validatedData;
+
   await db.collection('profiles').doc(uid).set({
-    ...validatedData,
+    ...rest,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   }, { merge: true });
+
+  if (email !== undefined || phone !== undefined) {
+    const contactData: Record<string, any> = {};
+    if (email !== undefined) contactData.email = email;
+    if (phone !== undefined) contactData.phone = phone;
+    await db.collection('contact_info').doc(uid).set(contactData, { merge: true });
+  }
 
   const userUpdate: Record<string, any> = {};
   if (validatedData.name !== undefined) userUpdate.name = validatedData.name;
@@ -87,6 +105,7 @@ export const deleteUserAccount = async (userId: string, adminUid: string, adminE
 
   await db.collection('users').doc(userId).delete();
   await db.collection('profiles').doc(userId).delete();
+  await db.collection('contact_info').doc(userId).delete();
 
   const collectionsToClean = [
     { name: 'casting_calls', field: 'createdBy' },

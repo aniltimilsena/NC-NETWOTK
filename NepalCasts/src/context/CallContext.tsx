@@ -13,10 +13,10 @@ import {
   updateCallStatus,
   subscribeToCall,
   type CallDoc,
-} from "../services/call";
-import { getProfile } from "../services/profile";
+  getProfile,
+} from "../services";
 import { playRingtone, stopRingtone, playEndCallSound } from "../utils/ringtone";
-import { createConversation, sendMessage } from "../services/messaging";
+import { createConversation, sendMessage } from "../services";
 import { db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 
@@ -158,7 +158,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
     const callId = webrtc.callId;
     if (!callId || !user?.uid) return;
 
-    const unsub = subscribeToCall(callId, (callDoc) => {
+    const unsub = subscribeToCall(callId, (callDoc: any) => {
       if (callDoc) {
         setActiveCall(callDoc);
 
@@ -216,7 +216,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
   useEffect(() => {
     if (!user?.uid) return;
 
-    const unsub = subscribeToIncomingCalls(user.uid, (call) => {
+    const unsub = subscribeToIncomingCalls(user.uid, (call: any) => {
       if (call && webrtc.callState === "idle") {
         setIncomingCall(call);
         playRingtone();
@@ -326,7 +326,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
           calleePhoto = calleeData.image || calleeData.avatar || calleeData.photoURL || calleePhoto;
         }
 
-        setActiveCall((prev) => prev ? {
+        setActiveCall((prev: any) => prev ? {
           ...prev,
           callerName,
           callerPhoto: callerAvatar,
