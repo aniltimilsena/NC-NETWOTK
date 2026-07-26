@@ -3,65 +3,83 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { subscribeToGlobalSettings } from '../services';
-
 interface UserLayoutProps {
-  user: any;
-  isAdmin: boolean;
-  onLogout: () => void;
-  showAlert: any;
-  showToast: any;
+    user: any;
+    isAdmin: boolean;
+    onLogout: () => void;
+    showAlert: any;
+    showToast: any;
 }
-
-export default function UserLayout({
-  user,
-  isAdmin,
-  onLogout,
-  showAlert,
-  showToast,
-}: UserLayoutProps) {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [maintenanceMode, setMaintenanceMode] = useState<boolean>(false);
-
-  useEffect(() => {
-    const unsub = subscribeToGlobalSettings((settings: any) => {
-      setMaintenanceMode(!!settings?.maintenanceMode);
-    });
-    return () => unsub();
-  }, []);
-
-  const handleLegacyNavigate = (page: string, param: any = null) => {
-    switch (page) {
-      case 'home': navigate('/'); break;
-      case 'listing': navigate('/talents'); break;
-      case 'profile': navigate(param ? `/profile/${param}` : '/talents'); break;
-      case 'casting': navigate('/casting'); break;
-      case 'casting-detail': navigate(`/casting/${param}`); break;
-      case 'signin': navigate('/signin'); break;
-      case 'signup': navigate('/signup'); break;
-      case 'profile-create': navigate('/profile/create'); break;
-      case 'casting-create': navigate('/casting/create'); break;
-      case 'premium': navigate('/premium'); break;
-      case 'messages': navigate('/messages'); break;
-      case 'notifications': navigate('/notifications'); break;
-      case 'settings': navigate('/settings'); break;
-      case 'privacy': navigate('/privacy'); break;
-      case 'terms': navigate('/terms'); break;
-      case 'trust': navigate('/trust-safety'); break;
-      default: navigate('/');
-    }
-  };
-
-  const showNavbar = !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications') && !location.pathname.startsWith('/call');
-
-  // If maintenance mode is active and user is not an admin
-  if (maintenanceMode && !isAdmin && !location.pathname.startsWith('/admin')) {
-    return (
-      <div className="min-h-screen bg-[#070707] text-white flex flex-col items-center justify-center p-6 text-center">
+export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToast, }: UserLayoutProps) {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [maintenanceMode, setMaintenanceMode] = useState<boolean>(false);
+    useEffect(() => {
+        const unsub = subscribeToGlobalSettings((settings: any) => {
+            setMaintenanceMode(!!settings?.maintenanceMode);
+        });
+        return () => unsub();
+    }, []);
+    const handleLegacyNavigate = (page: string, param: any = null) => {
+        switch (page) {
+            case 'home':
+                navigate('/');
+                break;
+            case 'listing':
+                navigate('/talents');
+                break;
+            case 'profile':
+                navigate(param ? `/profile/${param}` : '/talents');
+                break;
+            case 'casting':
+                navigate('/casting');
+                break;
+            case 'casting-detail':
+                navigate(`/casting/${param}`);
+                break;
+            case 'signin':
+                navigate('/signin');
+                break;
+            case 'signup':
+                navigate('/signup');
+                break;
+            case 'profile-create':
+                navigate('/profile/create');
+                break;
+            case 'casting-create':
+                navigate('/casting/create');
+                break;
+            case 'premium':
+                navigate('/premium');
+                break;
+            case 'messages':
+                navigate('/messages');
+                break;
+            case 'notifications':
+                navigate('/notifications');
+                break;
+            case 'settings':
+                navigate('/settings');
+                break;
+            case 'privacy':
+                navigate('/privacy');
+                break;
+            case 'terms':
+                navigate('/terms');
+                break;
+            case 'trust':
+                navigate('/trust-safety');
+                break;
+            default: navigate('/');
+        }
+    };
+    const showNavbar = !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications') && !location.pathname.startsWith('/call');
+    if (maintenanceMode && !isAdmin && !location.pathname.startsWith('/admin')) {
+        return (<div className="min-h-screen bg-[#070707] text-white flex flex-col items-center justify-center p-6 text-center">
         <div className="max-w-md w-full space-y-6">
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto animate-pulse">
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
           </div>
           <div className="space-y-2">
@@ -75,24 +93,13 @@ export default function UserLayout({
             <span>We'll be back online shortly. Thank you for your patience!</span>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
-      {showNavbar && (
-        <Navbar
-          user={user}
-          isAdmin={isAdmin}
-          onLogout={onLogout}
-          onNavigate={handleLegacyNavigate}
-        />
-      )}
+      </div>);
+    }
+    return (<div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
+      {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate}/>)}
       <main className="flex-1 px-1 sm:px-0 pb-8">
         {showNavbar && <Breadcrumbs />}
-        <Outlet context={{ user, isAdmin, showAlert, showToast }} />
+        <Outlet context={{ user, isAdmin, showAlert, showToast }}/>
       </main>
-    </div>
-  );
+    </div>);
 }

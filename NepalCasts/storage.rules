@@ -12,12 +12,13 @@ service firebase.storage {
     
     function isValidImage() {
       return request.resource.size < 10 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.contentType != 'image/svg+xml';
     }
 
     function isValidMedia() {
       return request.resource.size < 100 * 1024 * 1024
-        && (request.resource.contentType.matches('image/.*')
+        && ((request.resource.contentType.matches('image/.*') && request.resource.contentType != 'image/svg+xml')
          || request.resource.contentType.matches('video/.*'));
     }
 
@@ -37,8 +38,8 @@ service firebase.storage {
     match /castings/{castingId}/{allPaths=**} {
       allow read: if true;
       allow write: if isAuthenticated() && isValidMedia() &&
-        (!firestore.exists(/databases/(default)/documents/casting_calls/$(castingId)) ||
-         firestore.get(/databases/(default)/documents/casting_calls/$(castingId)).data.createdBy == request.auth.uid);
+        firestore.exists(/databases/(default)/documents/casting_calls/$(castingId)) &&
+        firestore.get(/databases/(default)/documents/casting_calls/$(castingId)).data.createdBy == request.auth.uid;
     }
 
     

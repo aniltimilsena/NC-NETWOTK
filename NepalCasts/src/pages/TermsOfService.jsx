@@ -1,6 +1,5 @@
 export default function TermsOfService() {
-  return (
-    <div className="min-h-screen bg-nc-dark pt-2 pb-20">
+    return (<div className="min-h-screen bg-nc-dark pt-2 pb-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl sm:text-4xl font-black text-white mb-8">Terms of Service</h1>
         
@@ -31,6 +30,5 @@ export default function TermsOfService() {
           </section>
         </div>
       </div>
-    </div>
-  );
+    </div>);
 }

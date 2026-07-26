@@ -9,10 +9,6 @@
       "destination": "/api/send-notification"
     },
     {
-      "source": "/api/debug",
-      "destination": "/api/debug"
-    },
-    {
       "source": "/api/data-requests/:requestId/approve",
       "destination": "/api/data-requests-approve?requestId=:requestId"
     },

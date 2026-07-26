@@ -6,6 +6,7 @@ import CategorySkeleton from '../components/ui/CategorySkeleton';
 import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
 import { AdBanner } from '../components/ui/AdBanner';
+import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { subscribeToTalents, subscribeToCastingCalls } from '../services';
 
 
@@ -234,7 +235,14 @@ export default function Home({ onNavigate, user }) {
   const hasHeroPhoto = heroPhotoURL && !isDefaultImage(heroPhotoURL) && !heroImageError;
 
   return (
-    <div className="min-h-screen bg-nc-dark">
+    <Desktop3ColumnLayout
+      user={user}
+      onNavigate={onNavigate}
+      activeNav="discover"
+      featuredTalents={talents}
+      trendingCalls={castingCalls}
+    >
+      <div className="min-h-screen bg-nc-dark">
       {/* Hero Section */}
       <section className="relative flex flex-col justify-start items-start overflow-hidden pt-3 sm:pt-4 pb-4 px-3.5 sm:px-8 lg:px-20">
         {/* Background */}
@@ -787,5 +795,6 @@ export default function Home({ onNavigate, user }) {
 
 
     </div>
+    </Desktop3ColumnLayout>
   );
 }

@@ -1,175 +1,138 @@
 import { auth, db } from "../../../lib/firebase";
-import {
-  doc,
-  onSnapshot,
-  setDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import { doc, onSnapshot, setDoc, serverTimestamp, } from "firebase/firestore";
 import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import { uploadFile } from "../../../services/storage";
 import { COLLECTIONS } from "../../../constants/collections";
-
 export type ProfileData = {
-  [key: string]: unknown;
+    [key: string]: unknown;
 };
-
 type ProfileResponse = {
-  data: ProfileData | null;
-  error: string | null;
+    data: ProfileData | null;
+    error: string | null;
 };
-
-
 import { cacheManager } from "../../../utils/cacheManager";
-
 export const getProfile = async (uid: string): Promise<ProfileResponse> => {
-  return cacheManager.fetchWithCache(
-    `profile_${uid}`,
-    async () => {
-      try {
-        const snap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, uid));
-        if (snap.exists()) {
-          return { data: { uid, ...snap.data() } as ProfileData, error: null };
+    return cacheManager.fetchWithCache(`profile_${uid}`, async () => {
+        try {
+            const snap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, uid));
+            if (snap.exists()) {
+                return { data: { uid, ...snap.data() } as ProfileData, error: null };
+            }
+            return { data: null, error: null };
         }
-        return { data: null, error: null };
-      } catch (error: unknown) {
-        const message =
-          error instanceof Error ? error.message : "Failed to fetch profile";
-        console.error("Error fetching profile:", message);
-        return { data: null, error: message };
-      }
-    },
-    10 * 60 * 1000 // 10 minutes cache
-  );
+        catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to fetch profile";
+            console.error("Error fetching profile:", message);
+            return { data: null, error: message };
+        }
+    }, 10 * 60 * 1000);
 };
-
-export const updateProfileData = async (
-  uid: string,
-  data: ProfileData,
-): Promise<{ success: boolean; error: string | null }> => {
-  try {
-    const currentUserUid = auth.currentUser?.uid;
-    if (!currentUserUid || currentUserUid !== uid) {
-      return { success: false, error: "Unauthorized profile update" };
-    }
-
-    
-    const cleanData = Object.entries(data).reduce((acc, [k, v]) => {
-      if (v !== undefined) acc[k] = v;
-      return acc;
-    }, {} as ProfileData);
-
-    // Separate contact info and forbidden fields from public profile document
-    const { 
-      email, 
-      phone, 
-      password, 
-      passwordHash, 
-      passwordReset, 
-      fcmToken, 
-      fcmTokens, 
-      ...profileDataOnly 
-    } = cleanData;
-
-    // 1. Ensure users/{uid} document exists first so Firestore rule checks pass
-    const userRef = doc(db, COLLECTIONS.USERS, uid);
-    const userUpdate: Record<string, any> = { updatedAt: serverTimestamp() };
-    if (cleanData.name !== undefined) userUpdate.name = cleanData.name;
-    if (cleanData.role !== undefined) userUpdate.role = cleanData.role;
-    if (cleanData.gender !== undefined) userUpdate.gender = cleanData.gender;
-    if (cleanData.category !== undefined) userUpdate.category = cleanData.category;
-    if (cleanData.openToAudition !== undefined) userUpdate.openToAudition = cleanData.openToAudition;
-    if (cleanData.openToWork !== undefined) userUpdate.openToWork = cleanData.openToWork;
-    if (cleanData.image !== undefined) userUpdate.image = cleanData.image;
-    if (cleanData.photoURL !== undefined) userUpdate.photoURL = cleanData.photoURL;
-    if (cleanData.bio !== undefined) userUpdate.bio = cleanData.bio;
-    if (cleanData.location !== undefined) userUpdate.location = cleanData.location;
-    if (cleanData.skills !== undefined) userUpdate.skills = cleanData.skills;
-    if (cleanData.experience !== undefined) userUpdate.experience = cleanData.experience;
-
+export const updateProfileData = async (uid: string, data: ProfileData): Promise<{
+    success: boolean;
+    error: string | null;
+}> => {
     try {
-      await setDoc(userRef, userUpdate, { merge: true });
-    } catch (uErr) {
-      console.warn("User collection pre-sync warning:", uErr);
-    }
-
-    // 2. Save public profile document profiles/{uid}
-    const profileRef = doc(db, COLLECTIONS.PROFILES, uid);
-    await setDoc(profileRef, {
-      ...profileDataOnly,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-
-    // 3. Save contact info if email or phone is present
-    if (email !== undefined || phone !== undefined) {
-      try {
-        const contactRef = doc(db, "contact_info", uid);
-        const contactUpdate: Record<string, any> = {};
-        if (email !== undefined) contactUpdate.email = email;
-        if (phone !== undefined) contactUpdate.phone = phone;
-        await setDoc(contactRef, contactUpdate, { merge: true });
-      } catch (cErr) {
-        console.warn("contact_info sync warning:", cErr);
-      }
-    }
-
-    cacheManager.invalidateCache(`profile_${uid}`);
-    return { success: true, error: null };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to update profile";
-    console.error("Profile update error:", message);
-    return { success: false, error: message };
-  }
-};
-
-
-export const subscribeToProfile = (
-  uid: string,
-  callback: (data: ProfileData | null) => void,
-) => {
-  return cacheManager.subscribePooled(
-    `profile_sub_${uid}`,
-    (pooledCb) => {
-      return onSnapshot(
-        doc(db, COLLECTIONS.PROFILES, uid),
-        (snap) => {
-          if (snap.exists()) {
-            pooledCb({ uid, ...snap.data() } as ProfileData, null);
-          } else {
-            pooledCb(null, null);
-          }
-        },
-        (error) => {
-          console.error("Profile subscription error:", error);
-          pooledCb(null, error);
+        const currentUserUid = auth.currentUser?.uid;
+        if (!currentUserUid || currentUserUid !== uid) {
+            return { success: false, error: "Unauthorized profile update" };
         }
-      );
-    },
-    (data) => callback(data)
-  );
-};
-
-export const uploadProfileMedia = async (
-  uid: string,
-  file: File,
-  onProgress?: (progress: number) => void,
-  customPath?: string,
-): Promise<string | null> => {
-  try {
-    const targetUid = auth.currentUser?.uid || uid;
-    if (!targetUid) {
-      console.error("Unauthorized media upload attempt");
-      return null;
+        const cleanData = Object.entries(data).reduce((acc, [k, v]) => {
+            if (v !== undefined)
+                acc[k] = v;
+            return acc;
+        }, {} as ProfileData);
+        const { email, phone, password, passwordHash, passwordReset, fcmToken, fcmTokens, ...profileDataOnly } = cleanData;
+        const userRef = doc(db, COLLECTIONS.USERS, uid);
+        const userUpdate: Record<string, any> = { updatedAt: serverTimestamp() };
+        if (cleanData.name !== undefined)
+            userUpdate.name = cleanData.name;
+        if (cleanData.role !== undefined)
+            userUpdate.role = cleanData.role;
+        if (cleanData.gender !== undefined)
+            userUpdate.gender = cleanData.gender;
+        if (cleanData.category !== undefined)
+            userUpdate.category = cleanData.category;
+        if (cleanData.openToAudition !== undefined)
+            userUpdate.openToAudition = cleanData.openToAudition;
+        if (cleanData.openToWork !== undefined)
+            userUpdate.openToWork = cleanData.openToWork;
+        if (cleanData.image !== undefined)
+            userUpdate.image = cleanData.image;
+        if (cleanData.photoURL !== undefined)
+            userUpdate.photoURL = cleanData.photoURL;
+        if (cleanData.bio !== undefined)
+            userUpdate.bio = cleanData.bio;
+        if (cleanData.location !== undefined)
+            userUpdate.location = cleanData.location;
+        if (cleanData.skills !== undefined)
+            userUpdate.skills = cleanData.skills;
+        if (cleanData.experience !== undefined)
+            userUpdate.experience = cleanData.experience;
+        try {
+            await setDoc(userRef, userUpdate, { merge: true });
+        }
+        catch (uErr) {
+            console.warn("User collection pre-sync warning:", uErr);
+        }
+        const profileRef = doc(db, COLLECTIONS.PROFILES, uid);
+        await setDoc(profileRef, {
+            ...profileDataOnly,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        if (email !== undefined || phone !== undefined) {
+            try {
+                const contactRef = doc(db, "contact_info", uid);
+                const contactUpdate: Record<string, any> = {};
+                if (email !== undefined)
+                    contactUpdate.email = email;
+                if (phone !== undefined)
+                    contactUpdate.phone = phone;
+                await setDoc(contactRef, contactUpdate, { merge: true });
+            }
+            catch (cErr) {
+                console.warn("contact_info sync warning:", cErr);
+            }
+        }
+        cacheManager.invalidateCache(`profile_${uid}`);
+        return { success: true, error: null };
     }
-
-    const defaultPath = `media/${targetUid}/${Date.now()}_${file.name}`;
-    const targetPath = customPath
-      ? customPath.replace(uid, targetUid)
-      : defaultPath;
-
-    const url = await uploadFile(file, targetPath, onProgress);
-    return url;
-  } catch (error) {
-    console.error("Client-side storage upload failed:", error);
-    return null;
-  }
+    catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Failed to update profile";
+        console.error("Profile update error:", message);
+        return { success: false, error: message };
+    }
+};
+export const subscribeToProfile = (uid: string, callback: (data: ProfileData | null) => void) => {
+    return cacheManager.subscribePooled(`profile_sub_${uid}`, (pooledCb) => {
+        return onSnapshot(doc(db, COLLECTIONS.PROFILES, uid), (snap) => {
+            if (snap.exists()) {
+                pooledCb({ uid, ...snap.data() } as ProfileData, null);
+            }
+            else {
+                pooledCb(null, null);
+            }
+        }, (error) => {
+            console.error("Profile subscription error:", error);
+            pooledCb(null, error);
+        });
+    }, (data) => callback(data));
+};
+export const uploadProfileMedia = async (uid: string, file: File, onProgress?: (progress: number) => void, customPath?: string): Promise<string | null> => {
+    try {
+        const targetUid = auth.currentUser?.uid || uid;
+        if (!targetUid) {
+            console.error("Unauthorized media upload attempt");
+            return null;
+        }
+        const defaultPath = `media/${targetUid}/${Date.now()}_${file.name}`;
+        const targetPath = customPath
+            ? customPath.replace(uid, targetUid)
+            : defaultPath;
+        const url = await uploadFile(file, targetPath, onProgress);
+        return url;
+    }
+    catch (error) {
+        console.error("Client-side storage upload failed:", error);
+        return null;
+    }
 };

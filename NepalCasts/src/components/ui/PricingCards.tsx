@@ -1,159 +1,137 @@
-﻿"use client";
-
+"use client";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, CircleCheck } from "lucide-react";
-
 import { Button } from "./ShadcnButton";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "./ShadcnCard";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, } from "./ShadcnCard";
 import { Separator } from "./ShadcnSeparator";
-
 interface PricingFeature {
-  text: string;
+    text: string;
 }
 interface PricingPlan {
-  id: string;
-  name: string;
-  description: string;
-  monthlyPrice: string;
-  yearlyPrice: string;
-  features: PricingFeature[];
-  button: {
-    text: string;
-    url: string;
-  };
+    id: string;
+    name: string;
+    description: string;
+    monthlyPrice: string;
+    yearlyPrice: string;
+    features: PricingFeature[];
+    button: {
+        text: string;
+        url: string;
+    };
 }
 interface Pricing2Props {
-  heading?: string;
-  description?: string;
-  plans?: PricingPlan[];
+    heading?: string;
+    description?: string;
+    plans?: PricingPlan[];
 }
-
-const Pricing2 = ({
-  heading = "Plans & Pricing",
-  description = "Choose the plan that matches your workflow and scale with ease.",
-  plans = [
+const Pricing2 = ({ heading = "Plans & Pricing", description = "Choose the plan that matches your workflow and scale with ease.", plans = [
     {
-      id: "starter",
-      name: "Starter",
-      description: "For individuals just getting started",
-      monthlyPrice: "$12",
-      yearlyPrice: "$9",
-      features: [
-        { text: "1 project" },
-        { text: "Basic analytics" },
-        { text: "Email support" },
-        { text: "500MB storage" },
-      ],
-      button: {
-        text: "Get Started",
-        url: "#",
-      },
+        id: "starter",
+        name: "Starter",
+        description: "For individuals just getting started",
+        monthlyPrice: "$12",
+        yearlyPrice: "$9",
+        features: [
+            { text: "1 project" },
+            { text: "Basic analytics" },
+            { text: "Email support" },
+            { text: "500MB storage" },
+        ],
+        button: {
+            text: "Get Started",
+            url: "#",
+        },
     },
     {
-      id: "growth",
-      name: "Growth",
-      description: "For teams building serious products",
-      monthlyPrice: "$39",
-      yearlyPrice: "$29",
-      features: [
-        { text: "Unlimited projects" },
-        { text: "Team collaboration tools" },
-        { text: "Priority chat support" },
-        { text: "Advanced analytics" },
-      ],
-      button: {
-        text: "Upgrade Now",
-        url: "#",
-      },
+        id: "growth",
+        name: "Growth",
+        description: "For teams building serious products",
+        monthlyPrice: "$39",
+        yearlyPrice: "$29",
+        features: [
+            { text: "Unlimited projects" },
+            { text: "Team collaboration tools" },
+            { text: "Priority chat support" },
+            { text: "Advanced analytics" },
+        ],
+        button: {
+            text: "Upgrade Now",
+            url: "#",
+        },
     },
-  ],
-}: Pricing2Props) => {
-  const [isYearly] = useState(false);
-
-  
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-
-    const setSize = () => {
-      const rect = canvas.parentElement?.getBoundingClientRect();
-      const w = Math.max(1, Math.floor(rect?.width ?? window.innerWidth));
-      const h = Math.max(1, Math.floor(rect?.height ?? window.innerHeight));
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.floor(w * dpr);
-      canvas.height = Math.floor(h * dpr);
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    setSize();
-
-    type P = { x: number; y: number; v: number; o: number };
-    let parts: P[] = [];
-    let raf = 0;
-
-    const make = (): P => ({
-      x: Math.random() * (canvas.width / (window.devicePixelRatio || 1)),
-      y: Math.random() * (canvas.height / (window.devicePixelRatio || 1)),
-      v: Math.random() * 0.25 + 0.05,
-      o: Math.random() * 0.35 + 0.15,
-    });
-
-    const init = () => {
-      parts = [];
-      const w = canvas.width / (window.devicePixelRatio || 1);
-      const h = canvas.height / (window.devicePixelRatio || 1);
-      const count = Math.floor((w * h) / 12000);
-      for (let i = 0; i < count; i++) parts.push(make());
-    };
-
-    const draw = () => {
-      const w = canvas.width / (window.devicePixelRatio || 1);
-      const h = canvas.height / (window.devicePixelRatio || 1);
-      ctx.clearRect(0, 0, w, h);
-      parts.forEach((p) => {
-        p.y -= p.v;
-        if (p.y < 0) {
-          p.x = Math.random() * w;
-          p.y = h + Math.random() * 40;
-          p.v = Math.random() * 0.25 + 0.05;
-          p.o = Math.random() * 0.35 + 0.15;
-        }
-        ctx.fillStyle = `rgba(250,250,250,${p.o})`;
-        ctx.fillRect(p.x, p.y, 0.7, 2.2);
-      });
-      raf = requestAnimationFrame(draw);
-    };
-
-    const onResize = () => {
-      setSize();
-      init();
-    };
-
-    const ro = new ResizeObserver(onResize);
-    ro.observe(canvas.parentElement || document.body);
-
-    init();
-    raf = requestAnimationFrame(draw);
-    return () => {
-      ro.disconnect();
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  return (
-    <section
-      data-locked
-      className="relative min-h-screen py-16 md:py-32 bg-zinc-950 text-zinc-50 overflow-hidden isolate"
-    >
+], }: Pricing2Props) => {
+    const [isYearly] = useState(false);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext("2d");
+        if (!canvas || !ctx)
+            return;
+        const setSize = () => {
+            const rect = canvas.parentElement?.getBoundingClientRect();
+            const w = Math.max(1, Math.floor(rect?.width ?? window.innerWidth));
+            const h = Math.max(1, Math.floor(rect?.height ?? window.innerHeight));
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = Math.floor(w * dpr);
+            canvas.height = Math.floor(h * dpr);
+            canvas.style.width = `${w}px`;
+            canvas.style.height = `${h}px`;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        };
+        setSize();
+        type P = {
+            x: number;
+            y: number;
+            v: number;
+            o: number;
+        };
+        let parts: P[] = [];
+        let raf = 0;
+        const make = (): P => ({
+            x: Math.random() * (canvas.width / (window.devicePixelRatio || 1)),
+            y: Math.random() * (canvas.height / (window.devicePixelRatio || 1)),
+            v: Math.random() * 0.25 + 0.05,
+            o: Math.random() * 0.35 + 0.15,
+        });
+        const init = () => {
+            parts = [];
+            const w = canvas.width / (window.devicePixelRatio || 1);
+            const h = canvas.height / (window.devicePixelRatio || 1);
+            const count = Math.floor((w * h) / 12000);
+            for (let i = 0; i < count; i++)
+                parts.push(make());
+        };
+        const draw = () => {
+            const w = canvas.width / (window.devicePixelRatio || 1);
+            const h = canvas.height / (window.devicePixelRatio || 1);
+            ctx.clearRect(0, 0, w, h);
+            parts.forEach((p) => {
+                p.y -= p.v;
+                if (p.y < 0) {
+                    p.x = Math.random() * w;
+                    p.y = h + Math.random() * 40;
+                    p.v = Math.random() * 0.25 + 0.05;
+                    p.o = Math.random() * 0.35 + 0.15;
+                }
+                ctx.fillStyle = `rgba(250,250,250,${p.o})`;
+                ctx.fillRect(p.x, p.y, 0.7, 2.2);
+            });
+            raf = requestAnimationFrame(draw);
+        };
+        const onResize = () => {
+            setSize();
+            init();
+        };
+        const ro = new ResizeObserver(onResize);
+        ro.observe(canvas.parentElement || document.body);
+        init();
+        raf = requestAnimationFrame(draw);
+        return () => {
+            ro.disconnect();
+            cancelAnimationFrame(raf);
+        };
+    }, []);
+    return (<section data-locked className="relative min-h-screen py-16 md:py-32 bg-zinc-950 text-zinc-50 overflow-hidden isolate">
       <style>{`
         :where(html, body, #__next){
           margin:0; min-height:100%;
@@ -178,26 +156,23 @@ const Pricing2 = ({
         @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
       `}</style>
 
-      {/* Subtle vignette */}
-      <div className="pointer-events-none absolute inset-0 [background:radial-gradient(80%_60%_at_50%_15%,rgba(255,255,255,0.06),transparent_60%)]" />
+      
+      <div className="pointer-events-none absolute inset-0 [background:radial-gradient(80%_60%_at_50%_15%,rgba(255,255,255,0.06),transparent_60%)]"/>
 
-      {/* Animated accent lines */}
+      
       <div aria-hidden className="accent-lines">
-        <div className="hline" />
-        <div className="hline" />
-        <div className="hline" />
-        <div className="vline" />
-        <div className="vline" />
-        <div className="vline" />
+        <div className="hline"/>
+        <div className="hline"/>
+        <div className="hline"/>
+        <div className="vline"/>
+        <div className="vline"/>
+        <div className="vline"/>
       </div>
 
-      {/* Particles */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full opacity-50 pointer-events-none"
-      />
+      
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-50 pointer-events-none"/>
 
-      {/* Content */}
+      
       <div className="relative container mx-auto">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 text-center">
           <h2 className="text-4xl font-bold lg:text-6xl">{heading}</h2>
@@ -205,14 +180,7 @@ const Pricing2 = ({
 
 
           <div className="mt-8 flex flex-row items-stretch justify-start md:justify-center gap-3 overflow-x-auto pb-12 snap-x snap-mandatory scrollbar-hide w-full px-4 md:px-0">
-            {plans.map((plan, i) => (
-              <Card
-                key={plan.id}
-                className={`card-animate flex w-[240px] md:w-80 flex-shrink-0 snap-start flex-col justify-between text-left border-zinc-800 bg-zinc-900/70 backdrop-blur supports-[backdrop-filter]:bg-zinc-900/60 ${
-                  i === 1 ? "md:translate-y-2" : ""
-                }`}
-                style={{ animationDelay: `${0.25 + i * 0.08}s` }}
-              >
+            {plans.map((plan, i) => (<Card key={plan.id} className={`card-animate flex w-[240px] md:w-80 flex-shrink-0 snap-start flex-col justify-between text-left border-zinc-800 bg-zinc-900/70 backdrop-blur supports-[backdrop-filter]:bg-zinc-900/60 ${i === 1 ? "md:translate-y-2" : ""}`} style={{ animationDelay: `${0.25 + i * 0.08}s` }}>
                 <CardHeader className="p-5 md:p-6">
                   <CardTitle>
                     <p className="text-zinc-50">{plan.name}</p>
@@ -222,49 +190,35 @@ const Pricing2 = ({
                     {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
                   </span>
                   <p className="text-zinc-500 text-xs md:text-sm">
-                    {plan.monthlyPrice === "Free" || plan.monthlyPrice === "0" ? (
-                      "Always free for individuals"
-                    ) : (
-                      null
-                    )}
+                    {plan.monthlyPrice === "Free" || plan.monthlyPrice === "0" ? ("Always free for individuals") : (null)}
                   </p>
                 </CardHeader>
 
                 <CardContent className="px-4 pb-4 md:px-6 md:pb-6">
-                  <Separator className="mb-3 md:mb-6 bg-zinc-800" />
-                  {plan.id === "growth" && (
-                    <p className="mb-2 font-semibold text-zinc-200 text-xs md:text-sm">
+                  <Separator className="mb-3 md:mb-6 bg-zinc-800"/>
+                  {plan.id === "growth" && (<p className="mb-2 font-semibold text-zinc-200 text-xs md:text-sm">
                       Everything in Starter, and:
-                    </p>
-                  )}
+                    </p>)}
                   <ul className="space-y-3 md:space-y-4">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2 text-zinc-200">
-                        <CircleCheck className="size-3.5 mt-0.5 text-zinc-400 flex-shrink-0" />
+                    {plan.features.map((feature, index) => (<li key={index} className="flex items-start gap-2 text-zinc-200">
+                        <CircleCheck className="size-3.5 mt-0.5 text-zinc-400 flex-shrink-0"/>
                         <span className="text-[11px] md:text-sm leading-tight">{feature.text}</span>
-                      </li>
-                    ))}
+                      </li>))}
                   </ul>
                 </CardContent>
 
                 <CardFooter className="mt-auto p-5 md:p-6">
-                  <Button
-                    asChild
-                    className="w-full rounded-lg bg-zinc-100 text-zinc-900 hover:bg-zinc-200 py-2.5 md:py-3 h-auto"
-                  >
+                  <Button asChild className="w-full rounded-lg bg-zinc-100 text-zinc-900 hover:bg-zinc-200 py-2.5 md:py-3 h-auto">
                     <a href={plan.button.url} target="_blank" rel="noreferrer">
                       {plan.button.text}
-                      <ArrowRight className="ml-2 size-4" />
+                      <ArrowRight className="ml-2 size-4"/>
                     </a>
                   </Button>
                 </CardFooter>
-              </Card>
-            ))}
+              </Card>))}
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>);
 };
-
 export { Pricing2 };

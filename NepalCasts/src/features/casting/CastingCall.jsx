@@ -8,6 +8,7 @@ import { db } from '../../lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { subscribeToCastingCalls } from '../../services';
 import SEO from '../../components/SEO';
+import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 
 const getDeadlineStatus = (deadlineStr) => {
   if (!deadlineStr) return { color: 'text-gray-400 border-white/5 bg-white/5', label: 'No deadline' };
@@ -216,7 +217,8 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white relative font-sans">
+    <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting" trendingCalls={castingCalls}>
+      <div className="min-h-screen bg-[#0A0A0A] text-white relative font-sans">
       <SEO
         title="Casting Calls & Auditions | NepalCasts"
         description="Find Nepali movie casting calls, short films, models, and dancers auditions."
@@ -487,5 +489,6 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
 
       </div>
     </div>
+    </Desktop3ColumnLayout>
   );
 }

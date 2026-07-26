@@ -4,8 +4,6 @@ import PublicLayout from '../layouts/PublicLayout';
 import UserLayout from '../layouts/UserLayout';
 import AdminLayout from '../layouts/AdminLayout';
 import RouteLoader from '../components/RouteLoader';
-
-// Lazy load all pages
 const Home = lazy(() => import('../pages/Home'));
 const TalentListing = lazy(() => import('../pages/TalentListing'));
 const Trending = lazy(() => import('../pages/Trending'));
@@ -25,8 +23,6 @@ const Notifications = lazy(() => import('../features/notifications/Notifications
 const Settings = lazy(() => import('../features/settings/SettingsPage'));
 const SavedCastingCalls = lazy(() => import('../features/casting/SavedCastingCalls'));
 const CallPage = lazy(() => import('../features/call/CallPage'));
-
-// Admin Pages
 const AdminOverview = lazy(() => import('../features/admin/AdminOverview'));
 const AdminUsers = lazy(() => import('../features/admin/AdminUsers'));
 const AdminAnalytics = lazy(() => import('../features/admin/AdminAnalytics'));
@@ -37,122 +33,107 @@ const AdminPro = lazy(() => import('../features/admin/AdminPro'));
 const AdminModeration = lazy(() => import('../features/admin/AdminModeration'));
 const AdminSettings = lazy(() => import('../features/admin/AdminSettings'));
 const NotFound = lazy(() => import('../pages/NotFound'));
-
-// Route Guards
 const ProtectedRoute = ({ user, authReady, children }: any) => {
-  if (!authReady) return <RouteLoader />;
-  return user ? (children || <Outlet />) : <Navigate to="/signin" replace />;
+    if (!authReady)
+        return <RouteLoader />;
+    return user ? (children || <Outlet />) : <Navigate to="/signin" replace/>;
 };
-
 const AdminRoute = ({ user, isAdmin, authReady, children }: any) => {
-  if (!authReady) return <RouteLoader />;
-  return user && isAdmin ? (children || <Outlet />) : <Navigate to="/" replace />;
+    if (!authReady)
+        return <RouteLoader />;
+    return user && isAdmin ? (children || <Outlet />) : <Navigate to="/" replace/>;
 };
-
-// Parameterized wrappers to map router params to legacy component props
 const ProfileWrapper = ({ onNavigate, user, isAdmin, showAlert }: any) => {
-  const { id } = useParams();
-  return <Profile onNavigate={onNavigate} profileId={id || user?.uid} user={user} isAdmin={isAdmin} showAlert={showAlert} />;
+    const { id } = useParams();
+    return <Profile onNavigate={onNavigate} profileId={id || user?.uid} user={user} isAdmin={isAdmin} showAlert={showAlert}/>;
 };
-
 const CastingDetailWrapper = ({ onNavigate, user, showAlert }: any) => {
-  const { id } = useParams();
-  return <CastingDetail onNavigate={onNavigate} castingId={id} user={user} showAlert={showAlert} />;
+    const { id } = useParams();
+    return <CastingDetail onNavigate={onNavigate} castingId={id} user={user} showAlert={showAlert}/>;
 };
-
 const TalentListingWrapper = ({ onNavigate }: any) => {
-  const { category } = useParams();
-  return <TalentListing onNavigate={onNavigate} initialCategory={category || 'All'} />;
+    const { category } = useParams();
+    return <TalentListing onNavigate={onNavigate} initialCategory={category || 'All'}/>;
 };
-
 export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAlert, showToast }: any) {
-  const navigate = useNavigate();
-
-  const onNavigate = (page: string, param?: any) => {
-    if (page === 'back') {
-      navigate(-1);
-      return;
-    }
-
-    let targetPage = page;
-    if (page === 'casting-detail') targetPage = 'casting';
-    if (page === 'listing') targetPage = 'talents';
-
-    let path = '/' + targetPage;
-    if (targetPage === 'home') path = '/';
-    if (targetPage === 'profile-create') path = '/profile/create';
-    if (targetPage === 'casting-create') path = '/casting/create';
-    if (param) path = `/${targetPage}/${param}`;
-    navigate(path);
-  };
-
-  return (
-    <Routes>
-      {/* Public Routes */}
-      <Route element={
-        <PublicLayout 
-          user={user} 
-          isAdmin={isAdmin} 
-          onLogout={onLogout} 
-          showAlert={showAlert} 
-          showToast={showToast} 
-        />
-      }>
-        <Route path="/" element={<Home onNavigate={onNavigate} user={user} />} />
-        <Route path="/talents" element={<TalentListingWrapper onNavigate={onNavigate} />} />
-        <Route path="/talents/:category" element={<TalentListingWrapper onNavigate={onNavigate} />} />
-        <Route path="/trending" element={<Trending onNavigate={onNavigate} />} />
-        <Route path="/profile/:id" element={<ProfileWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} showAlert={showAlert} />} />
-        <Route path="/talent/:id" element={<ProfileWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} showAlert={showAlert} />} />
-        <Route path="/casting" element={<CastingCall onNavigate={onNavigate} user={user} isAdmin={isAdmin} />} />
-        <Route path="/casting/:id" element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
-        <Route path="/premium" element={<Premium />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<TermsOfService />} />
-        <Route path="/trust-safety" element={<TrustSafety />} />
-        <Route path="/signin" element={<SignIn onNavigate={onNavigate} />} />
-        <Route path="/signup" element={<SignUp onNavigate={onNavigate} />} />
+    const navigate = useNavigate();
+    const onNavigate = (page: string, param?: any) => {
+        if (page === 'back') {
+            navigate(-1);
+            return;
+        }
+        if (page && page.startsWith('/')) {
+            navigate(page);
+            return;
+        }
+        let targetPage = page;
+        if (page === 'casting-detail')
+            targetPage = 'casting';
+        if (page === 'listing' || page === 'talent' || page === 'talents')
+            targetPage = 'talents';
+        if (page === 'saved-casting' || page === 'saved-castings')
+            targetPage = 'saved-castings';
+        let path = '/' + targetPage;
+        if (targetPage === 'home')
+            path = '/';
+        if (targetPage === 'profile-create')
+            path = '/profile/create';
+        if (targetPage === 'casting-create')
+            path = '/casting/create';
+        if (param)
+            path = `/${targetPage}/${param}`;
+        path = path.replace(/\/+/g, '/');
+        navigate(path);
+    };
+    return (<Routes>
+      
+      <Route element={<PublicLayout user={user} isAdmin={isAdmin} onLogout={onLogout} showAlert={showAlert} showToast={showToast}/>}>
+        <Route path="/" element={<Home onNavigate={onNavigate} user={user}/>}/>
+        <Route path="/talents" element={<TalentListingWrapper onNavigate={onNavigate}/>}/>
+        <Route path="/talents/:category" element={<TalentListingWrapper onNavigate={onNavigate}/>}/>
+        <Route path="/trending" element={<Trending onNavigate={onNavigate}/>}/>
+        <Route path="/profile/:id" element={<ProfileWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} showAlert={showAlert}/>}/>
+        <Route path="/talent/:id" element={<ProfileWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} showAlert={showAlert}/>}/>
+        <Route path="/casting" element={<CastingCall onNavigate={onNavigate} user={user} isAdmin={isAdmin}/>}/>
+        <Route path="/casting/:id" element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert}/>}/>
+        <Route path="/premium" element={<Premium />}/>
+        <Route path="/privacy" element={<PrivacyPolicy />}/>
+        <Route path="/terms" element={<TermsOfService />}/>
+        <Route path="/trust-safety" element={<TrustSafety />}/>
+        <Route path="/signin" element={<SignIn onNavigate={onNavigate}/>}/>
+        <Route path="/signup" element={<SignUp onNavigate={onNavigate}/>}/>
       </Route>
 
-      {/* Protected Routes */}
-      <Route path="/" element={<ProtectedRoute user={user} authReady={authReady} />}>
-        <Route element={
-          <UserLayout 
-            user={user} 
-            isAdmin={isAdmin} 
-            onLogout={onLogout} 
-            showAlert={showAlert} 
-            showToast={showToast} 
-          />
-        }>
-          <Route path="/profile/create" element={<ProfileCreate onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
-          <Route path="/casting/create" element={<CastingCallCreate onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
-          <Route path="/messages" element={<Messages onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
-          <Route path="/messages/:id" element={<Messages onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
-          <Route path="/notifications" element={<Notifications onNavigate={onNavigate} user={user} />} />
-          <Route path="/settings" element={<Settings onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert} />} />
-          <Route path="/saved-castings" element={<SavedCastingCalls user={user} onNavigate={onNavigate} showToast={showToast} />} />
-          <Route path="/call" element={<CallPage />} />
+      
+      <Route path="/" element={<ProtectedRoute user={user} authReady={authReady}/>}>
+        <Route element={<UserLayout user={user} isAdmin={isAdmin} onLogout={onLogout} showAlert={showAlert} showToast={showToast}/>}>
+          <Route path="/profile/create" element={<ProfileCreate onNavigate={onNavigate} user={user} showAlert={showAlert}/>}/>
+          <Route path="/casting/create" element={<CastingCallCreate onNavigate={onNavigate} user={user} showAlert={showAlert}/>}/>
+          <Route path="/messages" element={<Messages onNavigate={onNavigate} user={user} showAlert={showAlert}/>}/>
+          <Route path="/messages/:id" element={<Messages onNavigate={onNavigate} user={user} showAlert={showAlert}/>}/>
+          <Route path="/notifications" element={<Notifications onNavigate={onNavigate} user={user}/>}/>
+          <Route path="/settings" element={<Settings onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert}/>}/>
+          <Route path="/saved-castings" element={<SavedCastingCalls user={user} onNavigate={onNavigate} showToast={showToast}/>}/>
+          <Route path="/call" element={<CallPage />}/>
         </Route>
       </Route>
 
-      {/* Admin Routes */}
-      <Route path="/" element={<AdminRoute user={user} isAdmin={isAdmin} authReady={authReady} />}>
-        <Route element={<AdminLayout showToast={showToast} />}>
-          <Route path="/admin" element={<AdminOverview />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/analytics" element={<AdminAnalytics />} />
-          <Route path="/admin/content" element={<AdminContent />} />
-          <Route path="/admin/casting" element={<AdminCasting />} />
-          <Route path="/admin/messages" element={<AdminMessages />} />
-          <Route path="/admin/pro" element={<AdminPro />} />
-          <Route path="/admin/moderation" element={<AdminModeration />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
+      
+      <Route path="/" element={<AdminRoute user={user} isAdmin={isAdmin} authReady={authReady}/>}>
+        <Route element={<AdminLayout showToast={showToast}/>}>
+          <Route path="/admin" element={<AdminOverview />}/>
+          <Route path="/admin/users" element={<AdminUsers />}/>
+          <Route path="/admin/analytics" element={<AdminAnalytics />}/>
+          <Route path="/admin/content" element={<AdminContent />}/>
+          <Route path="/admin/casting" element={<AdminCasting />}/>
+          <Route path="/admin/messages" element={<AdminMessages />}/>
+          <Route path="/admin/pro" element={<AdminPro />}/>
+          <Route path="/admin/moderation" element={<AdminModeration />}/>
+          <Route path="/admin/settings" element={<AdminSettings />}/>
         </Route>
       </Route>
 
-      {/* 404 Route */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
+      
+      <Route path="*" element={<NotFound />}/>
+    </Routes>);
 }
