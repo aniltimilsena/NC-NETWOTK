@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User } from 'lucide-react';
 import { Button, Avatar } from '../../../components/ui';
+import { auth } from '../../../lib/firebase';
 import { CATEGORIES } from '../../../constants/categories';
 import type { UserProfile } from '../../../types';
 
@@ -104,13 +105,13 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
       {/* Avatar Settings Section */}
       <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 flex flex-col sm:flex-row gap-5 items-center">
         <Avatar
-          src={profile.image}
+          src={profile.image || profile.photoURL || auth.currentUser?.photoURL || null}
           gender={profile.gender || ''}
           name={name}
           size="lg"
           editable={true}
           userId={profile.uid}
-          onUploadSuccess={(url: string) => onUpdate({ image: url })}
+          onUploadSuccess={(url: string) => onUpdate({ image: url, photoURL: url })}
           showAlert={showAlert}
         />
         <div className="text-center sm:text-left space-y-1">

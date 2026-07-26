@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { auth, db } from '../../lib/firebase';
 import { updateProfile } from 'firebase/auth';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { uploadProfileMedia } from '../../services';
 import ConfirmDialog from './ConfirmDialog';
 import CropModal from './CropModal';
@@ -16,23 +16,27 @@ interface AvatarProps {
   user?: any;
   gender?: string;
   userId?: string;
+  showStatus?: boolean;
+  status?: 'online' | 'busy' | 'offline' | 'in-call';
   onUploadSuccess?: (url: string) => any;
   showAlert?: (message: string, type?: any) => void;
 }
 
 export default function Avatar(props: AvatarProps) {
-  const { 
-    src: propSrc, 
-    size = 'md', 
+  const {
+    src: propSrc,
+    size = 'md',
     editable = false,
     name,
     className = '',
     verified = false,
     user: propUser,
-    userId
+    userId,
+    showStatus = false,
+    status = 'online'
   } = props;
 
-  
+
   const isExplicit = 'user' in props || 'src' in props || 'name' in props;
   const user = propUser || ((isExplicit && !editable) ? null : auth.currentUser);
 
@@ -46,28 +50,30 @@ export default function Avatar(props: AvatarProps) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  
-  const resolvedSrc = propSrc !== undefined ? propSrc : (user?.photoURL || user?.profileImage || user?.image || null);
+
+  const targetId = userId || user?.id || user?.uid;
+  const isSelf = editable || Boolean(targetId && auth.currentUser?.uid && targetId === auth.currentUser.uid);
+  const resolvedSrc = propSrc || user?.photoURL || user?.profileImage || user?.image || user?.avatar || user?.picture || user?.photo || (isSelf ? auth.currentUser?.photoURL : null);
 
   const isDefaultImage = (url?: string | null) => {
     if (!url) return true;
-    return url.includes('default-avatar.png') || 
-           url.includes('default-male.png') || 
-           url.includes('default-female.png') || 
-           url.includes('achyut.png') ||
-           url.startsWith('data:image/svg+xml');
+    return url.includes('default-avatar.png') ||
+      url.includes('default-male.png') ||
+      url.includes('default-female.png') ||
+      url.includes('achyut.png') ||
+      url.startsWith('data:image/svg+xml');
   };
 
   const hasPhoto = resolvedSrc && !isDefaultImage(resolvedSrc) && !imageError;
   const currentSrc = previewSrc || (hasPhoto ? resolvedSrc : null);
 
-  
+
   useEffect(() => {
     setImageError(false);
     setPreviewSrc(null);
   }, [resolvedSrc]);
 
-  
+
   const sizes: Record<string, string> = {
     xs: 'w-6 h-6 text-[8px]',
     sm: 'w-8 h-8 text-[10px]',
@@ -82,30 +88,30 @@ export default function Avatar(props: AvatarProps) {
   const sizeClass = isNumberSize ? '' : (sizes[size] || sizes.md);
   const sizeStyle = isNumberSize ? { width: `${size}px`, height: `${size}px` } : {};
 
-  
+
   const triggerToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     window.dispatchEvent(new CustomEvent('nc-alert', { detail: { message, type } }));
   };
 
-  
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    
+
     if (file.size > 5 * 1024 * 1024) {
       triggerToast("Photo exceeds the 5MB size limit.", "error");
       return;
     }
 
-    
+
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       triggerToast("Only JPG, PNG, and WEBP formats are allowed.", "error");
       return;
     }
 
-    
+
     const reader = new FileReader();
     reader.onload = () => {
       setCropSrc(reader.result as string);
@@ -116,7 +122,7 @@ export default function Avatar(props: AvatarProps) {
 
   const handleCropConfirm = async (croppedFile: File) => {
     setCropSrc(null);
-    const activeUserId = userId || user?.uid || auth.currentUser?.uid;
+    const activeUserId = auth.currentUser?.uid || userId || user?.uid;
     if (!activeUserId) return;
 
     const reader = new FileReader();
@@ -129,22 +135,32 @@ export default function Avatar(props: AvatarProps) {
     setProgress(0);
 
     try {
-      const avatarPath = `profiles/${activeUserId}/avatar.jpg`;
+      const avatarPath = `profiles/${activeUserId}/avatar.webp`;
       const downloadUrl = await uploadProfileMedia(activeUserId, croppedFile, (percent: number) => {
         setProgress(Math.round(percent));
       }, avatarPath);
 
       if (downloadUrl) {
+        setPreviewSrc(downloadUrl);
+        setImageError(false);
+        if (auth.currentUser) {
+          try {
+            await updateProfile(auth.currentUser, { photoURL: downloadUrl });
+          } catch {
+            // ignore auth profile update warning
+          }
+        }
         if (props.onUploadSuccess) {
           await props.onUploadSuccess(downloadUrl);
-        } else {
-          if (auth.currentUser) {
-            await updateProfile(auth.currentUser, { photoURL: downloadUrl });
-            await updateDoc(doc(db, 'profiles', activeUserId), {
+        } else if (auth.currentUser && activeUserId === auth.currentUser.uid) {
+          try {
+            await setDoc(doc(db, 'profiles', activeUserId), {
               image: downloadUrl,
               photoURL: downloadUrl,
               updatedAt: serverTimestamp()
-            });
+            }, { merge: true });
+          } catch (e) {
+            console.warn("Avatar doc update warning:", e);
           }
         }
         triggerToast("Profile picture updated successfully!", "success");
@@ -160,22 +176,30 @@ export default function Avatar(props: AvatarProps) {
     }
   };
 
-  
+
   const handleConfirmDelete = async () => {
     setConfirmDeleteOpen(false);
     setUploading(true);
     const activeUserId = userId || user?.uid || auth.currentUser?.uid;
     try {
+      if (auth.currentUser) {
+        try {
+          await updateProfile(auth.currentUser, { photoURL: "" });
+        } catch {
+          // ignore auth profile update warning
+        }
+      }
       if (props.onUploadSuccess) {
         await props.onUploadSuccess("");
-      } else {
-        if (auth.currentUser && activeUserId) {
-          await updateProfile(auth.currentUser, { photoURL: "" });
-          await updateDoc(doc(db, 'profiles', activeUserId), {
+      } else if (auth.currentUser && activeUserId === auth.currentUser.uid) {
+        try {
+          await setDoc(doc(db, 'profiles', activeUserId), {
             image: null,
             photoURL: null,
             updatedAt: serverTimestamp()
-          });
+          }, { merge: true });
+        } catch (e) {
+          console.warn("Avatar delete warning:", e);
         }
       }
       triggerToast("Profile picture removed.", "success");
@@ -187,7 +211,7 @@ export default function Avatar(props: AvatarProps) {
     }
   };
 
-  
+
   const handleAvatarClick = () => {
     if (!editable || uploading) return;
     if (hasPhoto) {
@@ -199,23 +223,23 @@ export default function Avatar(props: AvatarProps) {
 
   return (
     <>
-      <div 
+      <div
         onClick={handleAvatarClick}
         style={sizeStyle}
         className={`relative flex-shrink-0 rounded-full border-2 border-nc-accent/20 transition-all duration-300 select-none bg-gradient-to-b from-[#1E1E26] to-[#111116] ${sizeClass} ${className} ${editable ? 'cursor-pointer hover:border-nc-accent group/avatar' : ''}`}
       >
         <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
           {currentSrc ? (
-            <img 
-              src={currentSrc} 
-              alt={name || 'User avatar'} 
+            <img
+              src={currentSrc}
+              alt={name || 'User avatar'}
               onError={() => setImageError(true)}
-              className="w-full h-full object-cover transition-opacity duration-300 ease-in-out opacity-100" 
+              className="w-full h-full object-cover transition-opacity duration-300 ease-in-out opacity-100"
             />
           ) : (
             <svg viewBox="0 0 100 100" fill="#5A5A75" className="w-2/3 h-2/3">
-              <circle cx="50" cy="35" r="20"/>
-              <ellipse cx="50" cy="85" rx="35" ry="25"/>
+              <circle cx="50" cy="35" r="20" />
+              <ellipse cx="50" cy="85" rx="35" ry="25" />
             </svg>
           )}
 
@@ -251,8 +275,8 @@ export default function Avatar(props: AvatarProps) {
 
         {/* Edit Pencil Overlay Icon */}
         {editable && !uploading && (
-          <div className="absolute bottom-0 right-0 p-1.5 bg-[#00BFFF] text-[#0A0A0A] rounded-full hover:scale-110 active:scale-95 transition-all shadow-md border border-[#0A0A0A] z-20 flex items-center justify-center">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="absolute bottom-0 right-0 p-2 bg-black/80 hover:bg-black text-white rounded-full hover:scale-110 active:scale-95 transition-all shadow-xl border border-white/25 backdrop-blur-md z-20 flex items-center justify-center">
+            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
           </div>
@@ -263,15 +287,26 @@ export default function Avatar(props: AvatarProps) {
             ✓
           </div>
         )}
+
+        {showStatus && status && status !== 'offline' && !editable && (
+          <div className="absolute bottom-0 right-0 z-20 flex items-center justify-center">
+            <span className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full ring-2 ring-[#0A0A0F] shadow-lg ${status === 'in-call'
+                ? 'bg-[#00BFFF] shadow-[0_0_10px_rgba(0,191,255,0.9)] animate-pulse'
+                : status === 'busy'
+                  ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]'
+                  : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.9)] animate-pulse'
+              }`} />
+          </div>
+        )}
       </div>
 
       {/* Hidden File Input */}
       {editable && (
-        <input 
+        <input
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.gif,.bmp"
           className="hidden"
         />
       )}

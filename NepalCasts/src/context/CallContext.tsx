@@ -34,7 +34,7 @@ interface CallContextValue {
     calleeId: string;
     calleeName: string;
     calleePhoto: string;
-    callType?: "audio";
+    callType?: "audio" | "video";
   }) => Promise<void>;
   acceptCall: () => Promise<void>;
   rejectCall: () => Promise<void>;
@@ -146,7 +146,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
       calleeId: string;
       calleeName: string;
       calleePhoto: string;
-      callType?: "audio";
+      callType?: "audio" | "video";
     }) => {
       if (!user?.uid) return;
 
@@ -166,7 +166,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
         receiverAvatar: params.calleePhoto,
         callType: "audio",
         status: "pending",
-        createdAt: null,
+        createdAt: undefined,
       };
 
       setActiveCall(initialActiveCall);

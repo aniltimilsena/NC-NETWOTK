@@ -225,8 +225,12 @@ export const subscribeToCallHistory = (
     calleeCalls.forEach((c) => { if (!callMap.has(c.id)) callMap.set(c.id, c); });
 
     const sorted = Array.from(callMap.values()).sort((a, b) => {
-      const aTime = a.createdAt?.toMillis?.() || a.createdAt?.seconds * 1000 || 0;
-      const bTime = b.createdAt?.toMillis?.() || b.createdAt?.seconds * 1000 || 0;
+      const aTime = a.createdAt && typeof (a.createdAt as any).toMillis === 'function' 
+        ? (a.createdAt as any).toMillis() 
+        : ((a.createdAt as any)?.seconds ? (a.createdAt as any).seconds * 1000 : 0);
+      const bTime = b.createdAt && typeof (b.createdAt as any).toMillis === 'function' 
+        ? (b.createdAt as any).toMillis() 
+        : ((b.createdAt as any)?.seconds ? (b.createdAt as any).seconds * 1000 : 0);
       return bTime - aTime;
     });
 
@@ -308,7 +312,7 @@ export const logCallOutcomeToFirestore = async (params: {
 
     if (!convoId) return;
 
-    const callTypeStr = call.callType || "audio";
+    const callTypeStr: string = (call.callType as string) || "audio";
     const iconSymbol = callTypeStr === "video" ? "🎥" : "📞";
     const callLabel = callTypeStr.charAt(0).toUpperCase() + callTypeStr.slice(1);
 

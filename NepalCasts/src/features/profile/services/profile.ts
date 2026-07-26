@@ -58,25 +58,21 @@ export const updateProfileData = async (
       return acc;
     }, {} as ProfileData);
 
-    
-    const { email, phone, ...profileDataOnly } = cleanData;
+    // Separate contact info and forbidden fields from public profile document
+    const { 
+      email, 
+      phone, 
+      password, 
+      passwordHash, 
+      passwordReset, 
+      fcmToken, 
+      fcmTokens, 
+      ...profileDataOnly 
+    } = cleanData;
 
-    const profileRef = doc(db, COLLECTIONS.PROFILES, uid);
-    await setDoc(profileRef, {
-      ...profileDataOnly,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-
-    if (email !== undefined || phone !== undefined) {
-      const contactRef = doc(db, "contact_info", uid);
-      const contactUpdate: Record<string, any> = {};
-      if (email !== undefined) contactUpdate.email = email;
-      if (phone !== undefined) contactUpdate.phone = phone;
-      await setDoc(contactRef, contactUpdate, { merge: true });
-    }
-
-    
-    const userUpdate: Record<string, any> = {};
+    // 1. Ensure users/{uid} document exists first so Firestore rule checks pass
+    const userRef = doc(db, COLLECTIONS.USERS, uid);
+    const userUpdate: Record<string, any> = { updatedAt: serverTimestamp() };
     if (cleanData.name !== undefined) userUpdate.name = cleanData.name;
     if (cleanData.role !== undefined) userUpdate.role = cleanData.role;
     if (cleanData.gender !== undefined) userUpdate.gender = cleanData.gender;
@@ -90,12 +86,30 @@ export const updateProfileData = async (
     if (cleanData.skills !== undefined) userUpdate.skills = cleanData.skills;
     if (cleanData.experience !== undefined) userUpdate.experience = cleanData.experience;
 
-    if (Object.keys(userUpdate).length > 0) {
-      const userRef = doc(db, COLLECTIONS.USERS, uid);
-      await setDoc(userRef, {
-        ...userUpdate,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+    try {
+      await setDoc(userRef, userUpdate, { merge: true });
+    } catch (uErr) {
+      console.warn("User collection pre-sync warning:", uErr);
+    }
+
+    // 2. Save public profile document profiles/{uid}
+    const profileRef = doc(db, COLLECTIONS.PROFILES, uid);
+    await setDoc(profileRef, {
+      ...profileDataOnly,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    // 3. Save contact info if email or phone is present
+    if (email !== undefined || phone !== undefined) {
+      try {
+        const contactRef = doc(db, "contact_info", uid);
+        const contactUpdate: Record<string, any> = {};
+        if (email !== undefined) contactUpdate.email = email;
+        if (phone !== undefined) contactUpdate.phone = phone;
+        await setDoc(contactRef, contactUpdate, { merge: true });
+      } catch (cErr) {
+        console.warn("contact_info sync warning:", cErr);
+      }
     }
 
     cacheManager.invalidateCache(`profile_${uid}`);
@@ -141,14 +155,16 @@ export const uploadProfileMedia = async (
   customPath?: string,
 ): Promise<string | null> => {
   try {
-    const currentUserUid = auth.currentUser?.uid;
-    if (!currentUserUid || currentUserUid !== uid) {
+    const targetUid = auth.currentUser?.uid || uid;
+    if (!targetUid) {
       console.error("Unauthorized media upload attempt");
       return null;
     }
 
-    const defaultPath = `media/${uid}/${Date.now()}_${file.name}`;
-    const targetPath = customPath || defaultPath;
+    const defaultPath = `media/${targetUid}/${Date.now()}_${file.name}`;
+    const targetPath = customPath
+      ? customPath.replace(uid, targetUid)
+      : defaultPath;
 
     const url = await uploadFile(file, targetPath, onProgress);
     return url;

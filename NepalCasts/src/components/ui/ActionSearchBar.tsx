@@ -337,7 +337,8 @@ export function ActionSearchBar({
                                                 <div className="w-10 h-10 md:w-11 md:h-11 shrink-0">
                                                     <Avatar 
                                                         user={{
-                                                            image: item.image,
+                                                            image: item.image || (item as any).photoURL,
+                                                            photoURL: (item as any).photoURL || item.image,
                                                             displayName: item.name
                                                         }}
                                                         size="sm"
@@ -421,7 +422,8 @@ export function ActionSearchBar({
                                                 <div className="w-10 h-10 md:w-11 md:h-11 shrink-0">
                                                     <Avatar 
                                                         user={{
-                                                            image: profile.image,
+                                                            image: profile.image || (profile as any).photoURL,
+                                                            photoURL: (profile as any).photoURL || profile.image,
                                                             gender: profile.gender,
                                                             displayName: profile.name
                                                         }}

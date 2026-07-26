@@ -22,8 +22,8 @@ export const uploadFile = async (
     throw new Error("Upload failed. Unauthorized upload path or target directory.");
   }
 
-  const isVideo = file.type.startsWith("video/");
-  const isImage = file.type.startsWith("image/");
+  const isVideo = file.type.startsWith("video/") || Boolean(file.name.match(/\.(mp4|mov|webm|mkv|avi|m4v|3gp)$/i));
+  const isImage = file.type.startsWith("image/") || Boolean(file.name.match(/\.(jpg|jpeg|png|webp|heic|heif|gif|bmp)$/i));
 
   let fileToUpload = file;
 

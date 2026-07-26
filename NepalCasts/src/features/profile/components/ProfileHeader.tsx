@@ -1,7 +1,20 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, Trash2, ChevronLeft, ShieldCheck, MapPin, MessageSquare, Star } from 'lucide-react';
-import { Button, Avatar } from '../../../components/ui';
+import { 
+  Camera, 
+  Trash2, 
+  ChevronLeft, 
+  MapPin, 
+  MessageSquare, 
+  Star, 
+  Share2, 
+  MoreHorizontal, 
+  UserPlus, 
+  CheckCircle2 
+} from 'lucide-react';
+import { Avatar } from '../../../components/ui';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { uploadProfileMedia, updateProfileData } from '../../../services';
+import { auth } from '../../../lib/firebase';
 import type { UserProfile } from '../../../types';
 
 interface ProfileHeaderProps {
@@ -33,6 +46,8 @@ export default function ProfileHeader({
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [coverUploadProgress, setCoverUploadProgress] = useState(0);
   const [showCoverMenu, setShowCoverMenu] = useState(false);
+  const [confirmDeleteCoverOpen, setConfirmDeleteCoverOpen] = useState(false);
+  const [isDeletingCover, setIsDeletingCover] = useState(false);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -44,8 +59,23 @@ export default function ProfileHeader({
 
   const coverImage = profile.coverImage || '/hero-bg.png';
   const name = profile.name || 'Discovery Talent';
-  const role = profile.role || 'New User';
-  const location = profile.location || 'Not Specified';
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: name,
+          text: `Check out ${name}'s profile on NepalCasts!`,
+          url: window.location.href,
+        });
+      } catch {
+        // ignore
+      }
+    } else {
+      await navigator.clipboard.writeText(window.location.href);
+      showAlert('Link Copied', 'info', 'Profile link copied to clipboard.');
+    }
+  };
 
   const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,70 +109,86 @@ export default function ProfileHeader({
 
   const handleDeleteCover = async () => {
     if (!profile.uid) return;
+    setIsDeletingCover(true);
     try {
       await updateProfileData(profile.uid, { coverImage: null });
-      showAlert('Cover Image Removed', 'info');
     } catch (err: any) {
       showAlert('Error', 'error', 'Failed to remove cover image.');
+    } finally {
+      setIsDeletingCover(false);
+      setConfirmDeleteCoverOpen(false);
     }
   };
 
   return (
-    <div className="relative">
+    <div className="relative font-sans select-none">
       {/* Cover Banner */}
-      <div className="block h-[140px] sm:h-[180px] relative w-full overflow-hidden bg-nc-dark-900">
+      <div className="block h-[180px] sm:h-[240px] relative w-full overflow-hidden bg-nc-dark-900">
         <img
           src={coverImage}
           alt="Cover"
-          className="w-full h-full object-cover select-none"
+          className="w-full h-full object-cover select-none scale-105 transition-transform duration-700"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
+        {/* Multi-layered cinematic gradient vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none" />
 
-        {/* Back Button */}
+        {/* Back Button (Top Left) */}
         <button
           onClick={() => onNavigate('back')}
-          className="absolute top-4 left-4 w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all border border-white/10 active:scale-95 z-20 shrink-0 cursor-pointer"
+          className="absolute top-4 left-4 w-11 h-11 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/15 active:scale-95 z-20 shrink-0 cursor-pointer shadow-lg"
           aria-label="Back"
         >
           <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
         </button>
 
-        {isOwnProfile && (
-          <div className="absolute top-4 right-4 z-20" onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => setShowCoverMenu(v => !v)}
-              className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
-              title="Edit Cover Photo"
-            >
-              <Camera className="w-4 h-4 text-[#00BFFF]" />
-            </button>
+        {/* Top Right Action Buttons (Share & Options) */}
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2.5">
+          <button
+            onClick={handleShare}
+            className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 hover:bg-black/80 text-white flex items-center justify-center shadow-lg active:scale-95 transition-all"
+            title="Share Profile"
+          >
+            <Share2 className="w-4 h-4 text-white" />
+          </button>
 
-            {showCoverMenu && (
-              <div className="absolute top-12 right-0 bg-[#121212]/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl min-w-[170px] z-30">
-                <label
-                  htmlFor="cover-file-input"
-                  className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors"
-                  onClick={() => setShowCoverMenu(false)}
-                >
-                  <Camera className="w-4 h-4 text-[#00BFFF]" />
-                  <span className="text-[13px] font-semibold text-white">Change Cover</span>
-                </label>
-                {profile.coverImage && profile.coverImage !== '/hero-bg.png' && (
-                  <>
-                    <div className="h-px bg-white/5 mx-3" />
-                    <button
-                      onClick={() => { handleDeleteCover(); setShowCoverMenu(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-950/30 active:bg-red-950/50 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                      <span className="text-[13px] font-semibold text-red-400">Delete Cover</span>
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+          {isOwnProfile && (
+            <div className="relative" onClick={e => e.stopPropagation()}>
+              <button
+                onClick={() => setShowCoverMenu(v => !v)}
+                className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 hover:bg-black/80 text-white flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                title="Edit Cover Photo"
+              >
+                <MoreHorizontal className="w-5 h-5 text-white" />
+              </button>
+
+              {showCoverMenu && (
+                <div className="absolute top-12 right-0 bg-[#121212]/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl min-w-[170px] z-30">
+                  <label
+                    htmlFor="cover-file-input"
+                    className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors"
+                    onClick={() => setShowCoverMenu(false)}
+                  >
+                    <Camera className="w-4 h-4 text-[#00BFFF]" />
+                    <span className="text-[13px] font-semibold text-white">Change Cover</span>
+                  </label>
+                  {profile.coverImage && profile.coverImage !== '/hero-bg.png' && (
+                    <>
+                      <div className="h-px bg-white/5 mx-3" />
+                      <button
+                        onClick={() => { setShowCoverMenu(false); setConfirmDeleteCoverOpen(true); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-950/30 active:bg-red-950/50 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-400" />
+                        <span className="text-[13px] font-semibold text-red-400">Delete Cover</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {isUploadingCover && (
           <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-30">
@@ -167,111 +213,129 @@ export default function ProfileHeader({
             id="cover-file-input"
             ref={coverFileInputRef}
             onChange={handleCoverFileChange}
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.gif,.bmp"
             className="hidden"
           />
         )}
       </div>
 
-      {/* Hero Profile Card */}
-      <div className="max-w-4xl mx-auto px-4 relative -mt-10 sm:-mt-16 z-10">
-        <div className="bg-[#0E0E14]/95 border border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden group backdrop-blur-xl">
-          {/* Top Cyan Accent Line */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00BFFF] via-sky-400 to-[#00BFFF]/30" />
+      {/* Centered Hero Profile Section */}
+      <div className="max-w-4xl mx-auto px-4 -mt-16 sm:-mt-20 relative z-20 flex flex-col items-center text-center">
+        {/* Centered Avatar with Clean Ring */}
+        <div className="relative z-10 mb-3">
+          <Avatar
+            src={profile.image || profile.photoURL || (isOwnProfile ? auth.currentUser?.photoURL : null)}
+            gender={profile.gender || ''}
+            name={name}
+            size="none"
+            editable={isOwnProfile}
+            userId={profile.uid}
+            showStatus={profile.isOnline === true}
+            status={profile.isOnline === true ? 'online' : 'offline'}
+            onUploadSuccess={(url: string) => updateProfileData(auth.currentUser?.uid || profile.uid, { image: url, photoURL: url })}
+            showAlert={showAlert}
+            className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 border-[#0A0A0F] shadow-2xl ring-2 ring-white/15"
+          />
+        </div>
 
-          <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start text-center sm:text-left">
-            {/* Avatar */}
-            <div className="relative flex-shrink-0">
-              <Avatar
-                src={profile.image}
-                gender={profile.gender || ''}
-                name={name}
-                size="lg"
-                editable={isOwnProfile}
-                userId={profile.uid}
-                onUploadSuccess={(url: string) => updateProfileData(profile.uid, { image: url })}
-                showAlert={showAlert}
-                className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-white/15"
-              />
-            </div>
+        {/* Name Header */}
+        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2 flex items-center justify-center gap-2">
+          <span>{name}</span>
+        </h1>
 
-            {/* Profile Info */}
-            <div className="flex-1 space-y-1.5 min-w-0">
-              <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">{name}</h1>
-                {profile.verified && <ShieldCheck className="w-5 h-5 text-[#00BFFF] shrink-0" />}
-                {profile.openToWork && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[9px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/30 flex items-center gap-1 shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse" />
-                    OPEN TO WORK
-                  </span>
-                )}
-              </div>
+        {/* Centered Badges Row */}
+        <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
+          {profile.verified !== false && (
+            <CheckCircle2 className="w-5 h-5 text-[#00BFFF] fill-[#00BFFF]" />
+          )}
+          {profile.isPremium && (
+            <span className="px-3 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black text-[10px] tracking-widest uppercase shadow-md shadow-amber-400/20">
+              PREMIUM
+            </span>
+          )}
+          {profile.openToWork && (
+            <span className="px-2.5 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[9px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/30 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse" />
+              OPEN TO WORK
+            </span>
+          )}
+        </div>
 
-              <div className="text-gray-400 text-xs flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 font-semibold">
-                <span className="text-amber-400 font-bold uppercase tracking-wider text-[11px]">{role}</span>
-                <span className="w-1 h-1 rounded-full bg-white/20 hidden sm:inline" />
-                <span className="flex items-center gap-1 text-gray-400">
-                  <MapPin className="w-3.5 h-3.5 text-[#00BFFF]" />
-                  {location}
-                </span>
-              </div>
-            </div>
+        {/* Action Buttons Row (Follow & Message) */}
+        {!isOwnProfile && (
+          <div className="w-full max-w-sm flex items-center gap-3 mb-6">
+            <button
+              onClick={onFollowToggle}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border text-sm font-bold transition-all active:scale-95 ${
+                isFollowing 
+                  ? 'bg-white/10 border-white/20 text-white hover:bg-white/15' 
+                  : 'bg-white/[0.06] border-white/10 hover:bg-white/10 text-white'
+              }`}
+            >
+              <UserPlus className="w-4 h-4 text-white/80" />
+              <span>{isFollowing ? 'Following' : '+ Follow'}</span>
+            </button>
 
-            {/* Actions */}
-            {!isOwnProfile && (
-              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center">
-                <Button
-                  variant={isFollowing ? 'secondary' : 'primary'}
-                  onClick={() => onFollowToggle()}
-                  className="flex-1 sm:flex-initial min-w-[110px] font-bold uppercase tracking-wider text-xs py-2"
-                >
-                  {isFollowing ? 'Following' : 'Follow'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => onNavigate('messages', profile.uid)}
-                  className="flex-shrink-0 flex items-center justify-center !p-0 w-9 h-9 border-white/15 hover:border-white/30 rounded-xl bg-white/5"
-                  aria-label="Message"
-                >
-                  <MessageSquare className="w-4 h-4 text-gray-200" />
-                </Button>
-              </div>
-            )}
+            <button
+              onClick={() => onNavigate('messages', profile.uid)}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#00BFFF]/10 border border-[#00BFFF]/40 hover:bg-[#00BFFF]/20 text-[#00BFFF] text-sm font-bold transition-all active:scale-95 shadow-[0_0_15px_rgba(0,191,255,0.15)]"
+            >
+              <MessageSquare className="w-4 h-4 text-[#00BFFF]" />
+              <span>Message</span>
+            </button>
+          </div>
+        )}
+
+        {/* 3-Column Stats Bar */}
+        <div className={`grid grid-cols-3 divide-x divide-white/10 w-full max-w-md mx-auto py-2 my-2 ${isOwnProfile ? 'mt-4' : ''}`}>
+          <div
+            onClick={() => isOwnProfile && onFollowClick?.('followers')}
+            className={`group/followers flex flex-col items-center justify-center text-center py-1 transition-all ${isOwnProfile ? 'cursor-pointer' : ''}`}
+          >
+            <span className="text-white group-hover/followers:text-[#00BFFF] text-xl sm:text-2xl font-black transition-colors">
+              {followerCount !== undefined ? followerCount : 0}
+            </span>
+            <span className="text-gray-400 group-hover/followers:text-white text-[10px] uppercase tracking-widest font-semibold mt-1 transition-colors">
+              Followers
+            </span>
           </div>
 
-          {/* Compact Stats Bar */}
-          <div className={`grid gap-2 mt-5 pt-4 border-t border-white/10 w-full ${(isOwnProfile && savedCount > 0) ? 'grid-cols-4' : 'grid-cols-3'}`}>
-            <div
-              onClick={() => isOwnProfile && onFollowClick?.('followers')}
-              className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5 transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
-            >
-              <span className="text-white text-base sm:text-lg font-bold">{followerCount}</span>
-              <span className="text-gray-400 text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Followers</span>
-            </div>
-            <div
-              onClick={() => isOwnProfile && onFollowClick?.('following')}
-              className={`flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5 transition-all ${isOwnProfile ? 'cursor-pointer hover:bg-white/5' : ''}`}
-            >
-              <span className="text-white text-base sm:text-lg font-bold">{followingCount}</span>
-              <span className="text-gray-400 text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Following</span>
-            </div>
-            <div className="flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5">
-              <span className="text-amber-400 text-base sm:text-lg font-bold flex items-center justify-center gap-1">
-                {profile.rating || 0}
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-              </span>
-              <span className="text-gray-400 text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Rating</span>
-            </div>
-            {isOwnProfile && savedCount > 0 && (
-              <div className="flex flex-col items-center justify-center text-center py-1.5 rounded-xl bg-white/[0.02] border border-white/5">
-                <span className="text-white text-base sm:text-lg font-bold">{savedCount}</span>
-                <span className="text-gray-400 text-[9px] uppercase tracking-widest font-extrabold mt-0.5">Saved</span>
-              </div>
-            )}
+          <div
+            onClick={() => isOwnProfile && onFollowClick?.('following')}
+            className={`group/following flex flex-col items-center justify-center text-center py-1 transition-all ${isOwnProfile ? 'cursor-pointer' : ''}`}
+          >
+            <span className="text-white group-hover/following:text-[#00BFFF] text-xl sm:text-2xl font-black transition-colors">
+              {followingCount !== undefined ? followingCount : 0}
+            </span>
+            <span className="text-gray-400 group-hover/following:text-white text-[10px] uppercase tracking-widest font-semibold mt-1 transition-colors">
+              Following
+            </span>
+          </div>
+
+          <div className="flex flex-col items-center justify-center text-center py-1">
+            <span className="text-amber-400 text-xl sm:text-2xl font-black flex items-center justify-center gap-1.5">
+              <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+              {profile.rating ? (typeof profile.rating === 'number' ? profile.rating.toFixed(1) : profile.rating) : '0.0'}
+            </span>
+            <span className="text-gray-400 text-[10px] uppercase tracking-widest font-semibold mt-1">
+              Rating
+            </span>
           </div>
         </div>
       </div>
+
+      {/* Confirm Delete Cover Image Modal */}
+      <ConfirmDialog
+        isOpen={confirmDeleteCoverOpen}
+        title="Remove Cover Image?"
+        description="Are you sure you want to remove your profile banner background?"
+        confirmText="Remove Cover"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={isDeletingCover}
+        onClose={() => setConfirmDeleteCoverOpen(false)}
+        onConfirm={handleDeleteCover}
+      />
     </div>
   );
 }

@@ -3,11 +3,12 @@ import { useProfile } from './hooks/useProfile';
 import ProfileHeader from './components/ProfileHeader';
 import ProfileAbout from './components/ProfileAbout';
 import ProfileMedia from './components/ProfileMedia';
+import ProfileExperience from './components/ProfileExperience';
 import ProfileReviews from './components/ProfileReviews';
 import FollowModal from './components/FollowModal';
 import ReviewModal from './components/ReviewModal';
 import { doc, getDoc, setDoc, query, collection, where, getDocs, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db, auth } from '../../lib/firebase';
 import { updateProfileData, uploadProfileMedia } from '../../services';
 
 interface ProfilePageProps {
@@ -27,6 +28,7 @@ export default function ProfilePage({
 }: ProfilePageProps) {
   const {
     profile,
+    setProfile,
     resolvedUid,
     resolvingUid,
     loading,
@@ -232,59 +234,95 @@ export default function ProfilePage({
   };
 
   const handleUploadMedia = async (files: FileList) => {
-    if (!user) return;
-    let uploadedCount = 0;
+    const activeUid = auth.currentUser?.uid || user?.uid || profile?.uid;
+    if (!activeUid) return;
+    let newUrls: string[] = [];
+    let failedCount = 0;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
-        const url = await uploadProfileMedia(user.uid, file);
+        const url = await uploadProfileMedia(activeUid, file);
         if (url) {
-          const currentMedia = Array.isArray(profile?.media) ? profile.media : [];
-          await updateProfileData(user.uid, { media: [...currentMedia, url] });
-          uploadedCount++;
+          newUrls.push(url);
+        } else {
+          failedCount++;
         }
       } catch (err) {
-        console.error(err);
+        console.error("Photo upload error:", err);
+        failedCount++;
       }
     }
 
-    if (uploadedCount > 0) {
-      showAlert(`${uploadedCount} portfolio photos added!`, 'success');
+    if (newUrls.length > 0) {
+      const currentMedia = Array.isArray(profile?.media) ? profile.media : [];
+      const updatedMedia = [...currentMedia, ...newUrls];
+      setProfile((prev: any) => prev ? { ...prev, media: updatedMedia } : prev);
+      await updateProfileData(activeUid, { media: updatedMedia });
+      showAlert(`${newUrls.length} portfolio photo(s) added!`, 'success');
+    } else if (failedCount > 0) {
+      showAlert('Upload Failed', 'error', 'Failed to upload photo(s). Please check your file size or network connection.');
     }
   };
 
   const handleDeleteMedia = async (src: string) => {
-    if (!user || !profile) return;
+    const activeUid = auth.currentUser?.uid || user?.uid || profile?.uid;
+    if (!activeUid || !profile) return;
     try {
       const currentMedia = Array.isArray(profile.media) ? profile.media : [];
       const updatedMedia = currentMedia.filter(item => item !== src);
-      await updateProfileData(user.uid, { media: updatedMedia });
-      showAlert('Photo removed from portfolio.', 'info');
+      setProfile((prev: any) => prev ? { ...prev, media: updatedMedia } : prev);
+      await updateProfileData(activeUid, { media: updatedMedia });
     } catch (err) {
       console.error(err);
     }
   };
 
   const handleUploadIntroVideo = async (file: File) => {
-    if (!user) return;
+    const activeUid = auth.currentUser?.uid || user?.uid || profile?.uid;
+    if (!activeUid) return;
     try {
-      const url = await uploadProfileMedia(user.uid, file);
+      const url = await uploadProfileMedia(activeUid, file);
       if (url) {
-        await updateProfileData(user.uid, { introVideo: url });
-        showAlert('Showreel video uploaded successfully!', 'success');
+        setProfile((prev: any) => prev ? { 
+          ...prev, 
+          introVideo: url,
+          introVideoUrl: url,
+          showreel: url,
+          showreelUrl: url 
+        } : prev);
+        await updateProfileData(activeUid, { 
+          introVideo: url,
+          introVideoUrl: url,
+          showreel: url,
+          showreelUrl: url
+        });
+      } else {
+        showAlert('Upload Failed', 'error', 'Failed to upload intro video.');
       }
     } catch (err) {
-      console.error(err);
+      console.error("Video upload error:", err);
       showAlert('Failed to upload video.', 'error');
     }
   };
 
   const handleDeleteIntroVideo = async () => {
-    if (!user) return;
+    const activeUid = auth.currentUser?.uid || user?.uid || profile?.uid;
+    if (!activeUid) return;
     try {
-      await updateProfileData(user.uid, { introVideo: null });
-      showAlert('Showreel video removed.', 'info');
+      setProfile((prev: any) => prev ? { 
+        ...prev, 
+        introVideo: null,
+        introVideoUrl: null,
+        showreel: null,
+        showreelUrl: null 
+      } : prev);
+      await updateProfileData(activeUid, { 
+        introVideo: null,
+        introVideoUrl: null,
+        showreel: null,
+        showreelUrl: null
+      });
     } catch (err) {
       console.error(err);
     }
@@ -374,11 +412,23 @@ export default function ProfilePage({
 
   const showContact = isOwnProfile || isFollowing || profile.showContactInfo === true;
   const hasMediaContent = Boolean(profile.introVideo || (profile.media && profile.media.length > 0));
+  const hasExperience = Boolean(profile.experience && Array.isArray(profile.experience) && profile.experience.length > 0);
+
   const tabs = ['about'];
   if (isOwnProfile || hasMediaContent) {
     tabs.push('media');
   }
+  if (isOwnProfile || hasExperience) {
+    tabs.push('experience');
+  }
   tabs.push('reviews');
+
+  const tabLabelMap: Record<string, string> = {
+    about: 'About',
+    media: 'Media',
+    experience: 'Experience',
+    reviews: 'Reviews',
+  };
 
   return (
     <div className="min-h-screen bg-nc-dark pb-24">
@@ -396,19 +446,19 @@ export default function ProfilePage({
       />
 
       {/* Tabs */}
-      <div className="max-w-4xl mx-auto px-4 mt-8">
-        <div className="flex border-b border-white/5 gap-6 mb-8 overflow-x-auto scrollbar-none">
+      <div className="max-w-4xl mx-auto px-4 mt-6">
+        <div className="flex border-b border-white/10 gap-8 mb-8 overflow-x-auto scrollbar-none justify-center sm:justify-start">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-4 text-sm font-bold uppercase tracking-wider transition-colors relative whitespace-nowrap ${
-                activeTab === tab ? 'text-[#00BFFF]' : 'text-nc-muted hover:text-white'
+              className={`pb-3 text-sm sm:text-base font-bold capitalize tracking-wide transition-colors relative whitespace-nowrap ${
+                activeTab === tab ? 'text-[#00BFFF]' : 'text-gray-400 hover:text-white'
               }`}
             >
-              {tab}
+              {tabLabelMap[tab] || tab}
               {activeTab === tab && (
-                <div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#00BFFF] rounded-full" />
+                <div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#00BFFF] rounded-full shadow-[0_0_8px_rgba(0,191,255,0.8)]" />
               )}
             </button>
           ))}
@@ -427,6 +477,13 @@ export default function ProfilePage({
               onDeleteMedia={handleDeleteMedia}
               onUploadIntroVideo={handleUploadIntroVideo}
               onDeleteIntroVideo={handleDeleteIntroVideo}
+            />
+          )}
+          {(isOwnProfile || hasExperience) && activeTab === 'experience' && (
+            <ProfileExperience 
+              profile={profile} 
+              isOwnProfile={isOwnProfile} 
+              showAlert={showAlert} 
             />
           )}
           {activeTab === 'reviews' && (

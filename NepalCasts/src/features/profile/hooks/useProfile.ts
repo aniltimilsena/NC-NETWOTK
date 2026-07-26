@@ -139,8 +139,8 @@ export function useProfile(profileId: string | null, currentUser: any) {
       setReviewsList(list);
       setLoadingReviews(false);
 
-      // Auto sync rating to Firestore if reviews exist
-      if (list.length > 0) {
+      // Auto sync rating to Firestore if reviews exist (only for profile owner)
+      if (isOwnProfile && list.length > 0) {
         const totalRating = list.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
         const avg = parseFloat((totalRating / list.length).toFixed(1));
         updateDoc(doc(db, "profiles", targetUid), {
@@ -284,6 +284,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
 
   return {
     profile: effectiveProfile,
+    setProfile,
     resolvedUid,
     resolvingUid,
     loading,

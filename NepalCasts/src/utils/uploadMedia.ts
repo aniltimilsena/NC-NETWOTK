@@ -30,34 +30,32 @@ export const uploadMedia = async (
   let cloudName = 'du7zu8mca';
   let uploadPreset = 'stored_media';
   
-  try {
-    const configRes = await fetch('/api/config/cloudinary', {
-      headers: {
-        'Authorization': `Bearer ${token}`
+  if (!import.meta.env.DEV) {
+    try {
+      const configRes = await fetch('/api/config/cloudinary', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }).catch(() => null);
+
+      if (configRes && configRes.ok) {
+        const config = await configRes.json();
+        if (config.cloudName) cloudName = config.cloudName;
+        if (config.uploadPreset) uploadPreset = config.uploadPreset;
       }
-    });
-    if (configRes.ok) {
-      const config = await configRes.json();
-      if (config.cloudName) cloudName = config.cloudName;
-      if (config.uploadPreset) uploadPreset = config.uploadPreset;
-    } else {
-      console.warn(`Failed to fetch Cloudinary config from server (Status ${configRes.status}). Using defaults.`);
+    } catch {
+      // Quietly fallback to defaults
     }
-  } catch (err: any) {
-    console.warn('Failed to fetch Cloudinary config from server. Using defaults:', err);
   }
-  const isVideo = file.type.startsWith('video/');
+  const isVideo = file.type.startsWith('video/') || Boolean(file.name.match(/\.(mp4|mov|webm|mkv|avi|m4v|3gp)$/i));
   const resourceType = isVideo ? 'video' : 'image';
   const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
 
   return new Promise((resolve, reject) => {
-    
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', uploadPreset);
     formData.append('folder', `nc-network/${folder}`);
-    formData.append('quality', 'auto:good');
-    formData.append('fetch_format', 'auto');
 
     
     const xhr = new XMLHttpRequest();

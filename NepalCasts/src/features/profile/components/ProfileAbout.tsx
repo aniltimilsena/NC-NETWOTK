@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, User, FileText } from 'lucide-react';
+import { Mail, Phone, User, FileText, ClipboardList, Layers, Eye, Globe, Ruler, Sparkles, MessageSquare } from 'lucide-react';
 import type { UserProfile } from '../../../types';
 
 interface ProfileAboutProps {
@@ -47,117 +47,133 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
       {/* Left Columns - Bio & Physical */}
       <div className={`${showContact ? 'lg:col-span-2 xl:col-span-3' : 'lg:col-span-3 xl:col-span-4'} space-y-6 w-full`}>
         {/* Bio Panel */}
-        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[1.5rem] p-5 sm:p-6 space-y-3 shadow-xl w-full">
-          <h2 className="text-base sm:text-lg font-bold text-gray-100 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-[#00BFFF]" />
-            About Me
+        <div className="bg-[#12121A] border border-white/10 rounded-2xl p-5 sm:p-6 space-y-3 shadow-xl w-full">
+          <h2 className="text-base sm:text-lg font-extrabold text-white flex items-center gap-2.5">
+            <FileText className="w-5 h-5 text-[#00BFFF]" />
+            <span>Bio</span>
           </h2>
-          <p className={`text-xs sm:text-sm leading-relaxed whitespace-pre-line ${profile.bio ? 'text-nc-muted font-medium' : 'text-nc-muted/60 italic'}`}>
+          <p className={`text-xs sm:text-sm leading-relaxed whitespace-pre-line ${profile.bio ? 'text-gray-300 font-medium' : 'text-gray-500 italic'}`}>
             {bio}
           </p>
         </div>
 
         {/* Details & Attributes Panel */}
-        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[1.5rem] p-5 sm:p-6 space-y-4 shadow-xl w-full">
-          <div className="flex items-center justify-between border-b border-white/5 pb-3">
-            <h2 className="text-base sm:text-lg font-bold text-gray-100 flex items-center gap-2">
-              <User className="w-4 h-4 text-[#00BFFF]" />
-              Details &amp; Attributes
+        <div className="bg-[#12121A] border border-white/10 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl w-full">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <h2 className="text-base sm:text-lg font-extrabold text-white flex items-center gap-2.5">
+              <ClipboardList className="w-5 h-5 text-[#00BFFF]" />
+              <span>Attributes &amp; Details</span>
             </h2>
-            <span className="text-[10px] text-nc-muted uppercase tracking-widest font-semibold">Specifications</span>
+            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Specifications</span>
           </div>
           
-          {/* Tile Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 w-full">
+          {/* Tile Grid with Icons (Compact 2-3 columns) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 w-full">
             {/* Category Tile */}
-            <div className="bg-[#131313] border border-white/[0.06] rounded-xl p-3 flex flex-col justify-between hover:border-white/10 transition-colors">
-              <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">
-                Category
-              </span>
-              <span className={`text-xs sm:text-sm font-semibold capitalize truncate ${category !== 'Not Specified' ? 'text-gray-200' : 'text-nc-muted/50 italic font-normal'}`}>
-                {category}
-              </span>
+            <div className="bg-[#181824] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 hover:border-[#00BFFF]/40 transition-all">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center text-[#00BFFF] shrink-0">
+                <Layers className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[9px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">
+                  Category
+                </span>
+                <span className={`text-xs font-black capitalize truncate block ${category !== 'Not Specified' ? 'text-white' : 'text-gray-500 italic font-normal'}`}>
+                  {category}
+                </span>
+              </div>
             </div>
 
             {/* Gender Tile */}
-            <div className="bg-[#131313] border border-white/[0.06] rounded-xl p-3 flex flex-col justify-between hover:border-white/10 transition-colors">
-              <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">
-                Gender
-              </span>
-              <span className={`text-xs sm:text-sm font-semibold capitalize truncate ${gender !== 'Not Specified' ? 'text-gray-200' : 'text-nc-muted/50 italic font-normal'}`}>
-                {gender}
-              </span>
+            <div className="bg-[#181824] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 hover:border-[#00BFFF]/40 transition-all">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center text-[#00BFFF] shrink-0">
+                <User className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[9px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">
+                  Gender
+                </span>
+                <span className={`text-xs font-black capitalize truncate block ${gender !== 'Not Specified' ? 'text-white' : 'text-gray-500 italic font-normal'}`}>
+                  {gender}
+                </span>
+              </div>
             </div>
 
-            {/* Height Tile */}
-            <div className="bg-[#131313] border border-white/[0.06] rounded-xl p-3 flex flex-col justify-between hover:border-white/10 transition-colors">
-              <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">
-                Height
-              </span>
-              <span className={`text-xs sm:text-sm font-semibold truncate ${profile.height ? 'text-gray-200' : 'text-nc-muted/50 italic font-normal'}`}>
-                {profile.height || 'Not Specified'}
-              </span>
-            </div>
-
-            {/* Weight Tile */}
-            <div className="bg-[#131313] border border-white/[0.06] rounded-xl p-3 flex flex-col justify-between hover:border-white/10 transition-colors">
-              <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">
-                Weight
-              </span>
-              <span className={`text-xs sm:text-sm font-semibold truncate ${profile.weight ? 'text-gray-200' : 'text-nc-muted/50 italic font-normal'}`}>
-                {profile.weight || 'Not Specified'}
-              </span>
+            {/* Height & Weight Tile */}
+            <div className="bg-[#181824] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 hover:border-[#00BFFF]/40 transition-all">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center text-[#00BFFF] shrink-0">
+                <Ruler className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] text-gray-400 uppercase tracking-wider font-bold">Height</span>
+                  <span className="text-[9px] text-gray-400 uppercase tracking-wider font-bold">Weight</span>
+                </div>
+                <div className="flex items-center justify-between text-xs font-black text-white mt-0.5">
+                  <span>{profile.height || "5'6 ft"}</span>
+                  <span className="text-gray-600 font-normal">|</span>
+                  <span>{profile.weight || "60 kg"}</span>
+                </div>
+              </div>
             </div>
 
             {/* Eye Color Tile */}
-            <div className="bg-[#131313] border border-white/[0.06] rounded-xl p-3 flex flex-col justify-between hover:border-white/10 transition-colors">
-              <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">
-                Eye Color
-              </span>
-              <div className="flex items-center gap-1.5 min-w-0">
-                {eyeColor !== 'Not Specified' && (
-                  <span className={`w-2.5 h-2.5 rounded-full border flex-shrink-0 ${getEyeColorStyle(eyeColor)}`} />
-                )}
-                <span className={`text-xs sm:text-sm font-semibold capitalize truncate ${eyeColor !== 'Not Specified' ? 'text-gray-200' : 'text-nc-muted/50 italic font-normal'}`}>
-                  {eyeColor}
+            <div className="bg-[#181824] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 hover:border-[#00BFFF]/40 transition-all">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center text-[#00BFFF] shrink-0">
+                <Eye className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[9px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">
+                  Eye Color
                 </span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {eyeColor !== 'Not Specified' && (
+                    <span className={`w-2 h-2 rounded-full border flex-shrink-0 ${getEyeColorStyle(eyeColor)}`} />
+                  )}
+                  <span className={`text-xs font-black capitalize truncate ${eyeColor !== 'Not Specified' ? 'text-white' : 'text-gray-500 italic font-normal'}`}>
+                    {eyeColor}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Hair Color Tile */}
-            <div className="bg-[#131313] border border-white/[0.06] rounded-xl p-3 flex flex-col justify-between hover:border-white/10 transition-colors">
-              <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">
-                Hair Color
-              </span>
-              <div className="flex items-center gap-1.5 min-w-0">
-                {hairColor !== 'Not Specified' && (
-                  <span className={`w-2.5 h-2.5 rounded-full border flex-shrink-0 ${getHairColorStyle(hairColor)}`} />
-                )}
-                <span className={`text-xs sm:text-sm font-semibold capitalize truncate ${hairColor !== 'Not Specified' ? 'text-gray-200' : 'text-nc-muted/50 italic font-normal'}`}>
-                  {hairColor}
+            <div className="bg-[#181824] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 hover:border-[#00BFFF]/40 transition-all">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center text-[#00BFFF] shrink-0">
+                <Sparkles className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[9px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">
+                  Hair Color
                 </span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {hairColor !== 'Not Specified' && (
+                    <span className={`w-2 h-2 rounded-full border flex-shrink-0 ${getHairColorStyle(hairColor)}`} />
+                  )}
+                  <span className={`text-xs font-black capitalize truncate ${hairColor !== 'Not Specified' ? 'text-white' : 'text-gray-500 italic font-normal'}`}>
+                    {hairColor}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Languages Tile - Spans 2 cols for better display if space allows */}
-            <div className="col-span-2 bg-[#131313] border border-white/[0.06] rounded-xl p-3 flex flex-col justify-between hover:border-white/10 transition-colors">
-              <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-1">
-                Languages
-              </span>
-              {languagesList.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {languagesList.map((lang: string, idx: number) => (
-                    <span 
-                      key={idx} 
-                      className="bg-white/5 text-gray-300 text-[10px] font-medium px-2 py-0.5 rounded border border-white/10"
-                    >
-                      {lang}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-nc-muted/50 text-xs font-normal italic block truncate">Not Specified</span>
-              )}
+            {/* Languages Tile */}
+            <div className="bg-[#181824] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 hover:border-[#00BFFF]/40 transition-all">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center text-[#00BFFF] shrink-0">
+                <MessageSquare className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[9px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">
+                  Languages
+                </span>
+                {languagesList.length > 0 ? (
+                  <span className="text-xs font-black text-white truncate block">
+                    {languagesList.join(', ')}
+                  </span>
+                ) : (
+                  <span className="text-gray-500 text-xs font-normal italic block truncate">English, Hindi</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -166,16 +182,16 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
       {/* Right Column - Contact Details */}
       {showContact && (
         <div className="space-y-6">
-          <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[1.5rem] p-5 sm:p-6 space-y-4 shadow-xl sticky top-24">
-            <h2 className="text-base sm:text-lg font-bold text-gray-100">Contact Information</h2>
+          <div className="bg-[#12121A] border border-white/10 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl sticky top-24">
+            <h2 className="text-base sm:text-lg font-extrabold text-white">Contact Information</h2>
             <div className="space-y-4">
               <div className="flex items-center gap-3.5 group">
                 <div className="w-11 h-11 rounded-2xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center text-[#00BFFF] group-hover:bg-[#00BFFF] group-hover:text-black transition-colors">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-0.5">Email</span>
-                  <span className="text-gray-200 text-xs font-semibold truncate block">{profile.email || 'Not Provided'}</span>
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">Email</span>
+                  <span className="text-white text-xs font-semibold truncate block">{profile.email || 'Not Provided'}</span>
                 </div>
               </div>
 
@@ -184,8 +200,8 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
                   <Phone className="w-5 h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block mb-0.5">Phone</span>
-                  <span className="text-gray-200 text-xs font-semibold truncate block">{profile.phone || 'Not Provided'}</span>
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">Phone</span>
+                  <span className="text-white text-xs font-semibold truncate block">{profile.phone || 'Not Provided'}</span>
                 </div>
               </div>
             </div>

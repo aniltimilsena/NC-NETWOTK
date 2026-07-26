@@ -99,13 +99,13 @@ export default function CropModal({ imageSrc, isCircular, onConfirm, onClose }) 
 
     canvas.toBlob((blob) => {
       if (blob) {
-        const file = new File([blob], isCircular ? 'avatar.jpg' : 'cover.jpg', {
-          type: 'image/jpeg',
+        const file = new File([blob], isCircular ? 'avatar.webp' : 'cover.webp', {
+          type: 'image/webp',
           lastModified: Date.now(),
         });
         onConfirm(file);
       }
-    }, 'image/jpeg', 0.85);
+    }, 'image/webp', 0.85);
   };
 
   return (

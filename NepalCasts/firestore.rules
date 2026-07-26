@@ -25,7 +25,8 @@ service cloud.firestore {
 
     function isPremiumUser(userId) {
       return exists(/databases/$(database)/documents/users/$(userId)) &&
-        get(/databases/$(database)/documents/users/$(userId)).data.get('premium', false) == true;
+        ('premium' in get(/databases/$(database)/documents/users/$(userId)).data) &&
+        get(/databases/$(database)/documents/users/$(userId)).data.premium == true;
     }
 
     function isBlockedBy(targetUserId) {
@@ -55,8 +56,13 @@ service cloud.firestore {
         (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string || request.resource.data.photoURL == null) &&
         (!('coverUrl' in request.resource.data) || request.resource.data.coverUrl is string || request.resource.data.coverUrl == null) &&
         (!('coverPhoto' in request.resource.data) || request.resource.data.coverPhoto is string || request.resource.data.coverPhoto == null) &&
+        (!('coverImage' in request.resource.data) || request.resource.data.coverImage is string || request.resource.data.coverImage == null) &&
+        (!('introVideo' in request.resource.data) || request.resource.data.introVideo is string || request.resource.data.introVideo == null) &&
+        (!('introVideoUrl' in request.resource.data) || request.resource.data.introVideoUrl is string || request.resource.data.introVideoUrl == null) &&
+        (!('showreel' in request.resource.data) || request.resource.data.showreel is string || request.resource.data.showreel == null) &&
+        (!('showreelUrl' in request.resource.data) || request.resource.data.showreelUrl is string || request.resource.data.showreelUrl == null) &&
         
-        (!('media' in request.resource.data) || (request.resource.data.media is list && request.resource.data.media.size() <= (isPremiumUser(userId) ? 55 : 11)));
+        (!('media' in request.resource.data) || (request.resource.data.media is list && request.resource.data.media.size() <= (isPremiumUser(userId) ? 55 : 25)));
       allow delete: if isOwner(userId) || isAdmin();
 
       match /sessions/{sessionId} {
