@@ -250,18 +250,6 @@ export default function Home({ onNavigate, user }) {
         {/* Animated gradient orb for depth */}
         <div className="absolute top-1/4 left-1/4 w-[250px] h-[250px] bg-gradient-to-br from-[#FACC15]/8 via-sky-400/5 to-transparent rounded-full blur-3xl z-[1] animate-pulse" style={{ animationDuration: '6s' }} />
 
-        <div className="relative z-10 max-w-4xl space-y-2">
-          <h1 
-            className="font-sans font-bold text-[36px] hero-text-shadow leading-tight"
-            style={{ color: '#FACC15' }}
-          >
-            Discover
-          </h1>
-          <h2 className="text-[18px] font-bold text-white hero-text-shadow">
-            Multiple Talents in one place
-          </h2>
-        </div>
-
         {/* Profile Card */}
         {currentPremiumUser && (
           <motion.div
@@ -272,8 +260,8 @@ export default function Home({ onNavigate, user }) {
             className="relative z-30 group mt-4 sm:mt-6 self-start -ml-3.5 sm:-ml-8 lg:-ml-20"
             style={{
               display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
+              alignItems: 'flex-end',
+              gap: '12px',
               background: 'none',
               border: 'none',
               backdropFilter: 'none',
@@ -285,9 +273,9 @@ export default function Home({ onNavigate, user }) {
           >
             {/* Portrait photo on LEFT */}
             {hasHeroPhoto ? (
-              <img 
-                src={heroPhotoURL} 
-                alt={currentPremiumUser.name} 
+              <img
+                src={heroPhotoURL}
+                alt={currentPremiumUser.name}
                 onError={() => setHeroImageError(true)}
                 className="w-[100px] h-[140px] sm:w-[125px] sm:h-[175px] object-cover flex-shrink-0"
                 style={{
@@ -296,7 +284,7 @@ export default function Home({ onNavigate, user }) {
                 }}
               />
             ) : (
-              <div 
+              <div
                 className="w-[100px] h-[140px] sm:w-[125px] sm:h-[175px] flex-shrink-0 flex items-center justify-center bg-gradient-to-b from-[#1E1E26] to-[#111116]"
                 style={{
                   borderRadius: '0px',
@@ -304,31 +292,31 @@ export default function Home({ onNavigate, user }) {
                 }}
               >
                 <svg viewBox="0 0 100 100" fill="#5A5A75" className="w-14 h-14 sm:w-18 sm:h-18">
-                  <circle cx="50" cy="35" r="20"/>
-                  <ellipse cx="50" cy="85" rx="35" ry="25"/>
+                  <circle cx="50" cy="35" r="20" />
+                  <ellipse cx="50" cy="85" rx="35" ry="25" />
                 </svg>
               </div>
             )}
 
-            <div className="flex flex-col justify-center min-w-0" style={{ gap: '6px' }}>
-              <h3 
+            <div className="flex flex-col justify-end min-w-0 pb-1" style={{ gap: '2px' }}>
+              <h3
                 className="font-bold text-white truncate"
                 style={{
-                  fontSize: window.innerWidth < 640 ? '22px' : '25px',
+                  fontSize: window.innerWidth < 640 ? '20px' : '23px',
                   background: 'none',
                   textShadow: '0 1px 4px rgba(0,0,0,0.85)',
-                  lineHeight: '1.2'
+                  lineHeight: '1.15'
                 }}
               >
                 {currentPremiumUser.name}
               </h3>
-              <p 
+              <p
                 className="capitalize truncate"
                 style={{
                   color: '#aaa',
-                  fontSize: window.innerWidth < 640 ? '16px' : '18px',
+                  fontSize: window.innerWidth < 640 ? '14px' : '16px',
                   textShadow: '0 1px 4px rgba(0,0,0,0.85)',
-                  lineHeight: '1.2'
+                  lineHeight: '1.15'
                 }}
               >
                 {currentPremiumUser.category || currentPremiumUser.role || 'Actor'}
@@ -342,11 +330,11 @@ export default function Home({ onNavigate, user }) {
                     onNavigate('profile', currentPremiumUser.id);
                   }
                 }}
-                className="hover:text-[#00BFFF]/80 transition-all cursor-pointer text-left font-semibold"
+                className="hover:text-[#00BFFF]/80 transition-all cursor-pointer text-left font-semibold mt-0.5"
                 style={{
                   color: '#00BFFF',
-                  fontSize: window.innerWidth < 640 ? '15px' : '17px',
-                  lineHeight: '1.2',
+                  fontSize: window.innerWidth < 640 ? '14px' : '15px',
+                  lineHeight: '1.15',
                   background: 'none',
                   border: 'none',
                   padding: 0
@@ -529,9 +517,8 @@ export default function Home({ onNavigate, user }) {
                         key={cat.id}
                         onClick={() => onNavigate('listing', cat.name)}
                         style={{ animationDelay: `${idx * 40}ms` }}
-                        className={`cat-card-reveal category-card w-full p-5 sm:p-8 lg:p-10 flex-col items-center gap-3 sm:gap-4 lg:gap-5 group ${
-                          idx >= 2 ? 'hidden' : 'flex'
-                        }`}
+                        className={`cat-card-reveal category-card w-full p-5 sm:p-8 lg:p-10 flex-col items-center gap-3 sm:gap-4 lg:gap-5 group ${idx >= 2 ? 'hidden' : 'flex'
+                          }`}
                       >
                         {/* Circular glow background container with accent color at 15% opacity */}
                         <div
@@ -754,7 +741,7 @@ export default function Home({ onNavigate, user }) {
               {/* Premium Background Glow Orbs */}
               <div className="absolute -top-12 -left-12 w-80 h-80 bg-[#00BFFF]/10 rounded-full blur-[100px] pointer-events-none" />
               <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-[#FACC15]/5 rounded-full blur-[80px] pointer-events-none" />
-              
+
               <div className="relative z-10 space-y-5 sm:space-y-6 text-center flex flex-col items-center">
                 {/* Platform Badge */}
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md shadow-sm">
@@ -774,18 +761,18 @@ export default function Home({ onNavigate, user }) {
                 </div>
 
                 <div className="flex flex-row gap-3 sm:gap-4 justify-center w-full pt-2">
-                  <Button 
-                    size="lg" 
-                    className="flex-1 sm:flex-none bg-gradient-to-r from-[#00F2FE] to-[#4FACFE] hover:from-[#00E5F5] hover:to-[#3CA4FC] text-black font-extrabold shadow-[0_0_20px_rgba(0,242,254,0.25)] hover:shadow-[0_0_35px_rgba(0,242,254,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out border-none flex items-center justify-center gap-1.5 text-xs sm:text-base px-3 sm:px-6" 
+                  <Button
+                    size="lg"
+                    className="flex-1 sm:flex-none bg-gradient-to-r from-[#00F2FE] to-[#4FACFE] hover:from-[#00E5F5] hover:to-[#3CA4FC] text-black font-extrabold shadow-[0_0_20px_rgba(0,242,254,0.25)] hover:shadow-[0_0_35px_rgba(0,242,254,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out border-none flex items-center justify-center gap-1.5 text-xs sm:text-base px-3 sm:px-6"
                     onClick={() => onNavigate('profile-create')}
                   >
                     <span className="truncate">Build Profile Now</span>
                     <span className="text-sm sm:text-lg leading-none shrink-0">→</span>
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="lg" 
-                    className="flex-1 sm:flex-none bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white font-bold transition-all duration-300 ease-out shadow-inner hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center text-xs sm:text-base px-3 sm:px-6 truncate" 
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    className="flex-1 sm:flex-none bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white font-bold transition-all duration-300 ease-out shadow-inner hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center text-xs sm:text-base px-3 sm:px-6 truncate"
                     onClick={() => onNavigate('listing')}
                   >
                     Browse Talent

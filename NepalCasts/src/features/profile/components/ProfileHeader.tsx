@@ -220,7 +220,7 @@ export default function ProfileHeader({
       </div>
 
       {/* Centered Hero Profile Section */}
-      <div className="max-w-4xl mx-auto px-4 -mt-16 sm:-mt-20 relative z-20 flex flex-col items-center text-center">
+      <div className="max-w-4xl mx-auto px-4 -mt-24 sm:-mt-28 relative z-20 flex flex-col items-center text-center">
         {/* Centered Avatar with Clean Ring */}
         <div className="relative z-10 mb-3">
           <Avatar
@@ -234,7 +234,7 @@ export default function ProfileHeader({
             status={profile.isOnline === true ? 'online' : 'offline'}
             onUploadSuccess={(url: string) => updateProfileData(auth.currentUser?.uid || profile.uid, { image: url, photoURL: url })}
             showAlert={showAlert}
-            className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 border-[#0A0A0F] shadow-2xl ring-2 ring-white/15"
+            className="w-44 h-44 sm:w-56 sm:h-56 rounded-full border-4 border-[#0A0A0F] shadow-2xl ring-2 ring-white/15"
           />
         </div>
 
