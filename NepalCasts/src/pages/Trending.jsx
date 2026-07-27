@@ -197,27 +197,25 @@ export default function Trending({ onNavigate }) {
 
       <div className="max-w-[1600px] mx-auto px-1 sm:px-8 lg:px-12">
         
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 mb-6">
-          
-          <div className="flex items-center gap-3.5">
-            <button onClick={() => onNavigate('back')} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" aria-label="Back" title="Go Back">
-              <ChevronLeft className="w-6 h-6" strokeWidth={2.5}/>
+        <div className="flex items-center justify-between gap-4 pb-3 mb-6">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <button onClick={() => onNavigate('back')} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" aria-label="Back" title="Go Back">
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5}/>
             </button>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-white flex items-center gap-1.5 leading-none">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-black text-white flex items-center gap-1.5 leading-none truncate">
                 Trending Now
-                <TrendingUp className="w-5 h-5 text-yellow-400"/>
+                <TrendingUp className="w-5 h-5 text-yellow-400 shrink-0"/>
               </h1>
-              <p className="text-[10px] sm:text-xs text-nc-muted mt-1 font-semibold">
+              <p className="text-[10px] sm:text-xs text-nc-muted mt-1 font-semibold truncate">
                 {selectedCategory === 'All' ? 'All Talent' : getCategoryConfig(selectedCategory).label} • {rankedProfiles.length} {rankedProfiles.length === 1 ? 'talent' : 'talents'}
               </p>
             </div>
           </div>
 
-          
-          <div className="relative self-end sm:self-center">
-            <button onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)} className="w-7 h-7 flex items-center justify-center text-sky-400 hover:text-sky-300 transition-colors duration-200 cursor-pointer" aria-label="Category Filter" title="Category Filter">
-              <SlidersHorizontal className="w-[18px] h-[18px] text-sky-400" strokeWidth={2}/>
+          <div className="relative shrink-0">
+            <button onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-sky-400 hover:text-sky-300 transition-colors duration-200 cursor-pointer" aria-label="Category Filter" title="Category Filter">
+              <SlidersHorizontal className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-sky-400" strokeWidth={2}/>
             </button>
 
             <AnimatePresence>
@@ -372,7 +370,6 @@ export default function Trending({ onNavigate }) {
                         </div>
                       </div>
 
-                      
                       <div className="text-center mb-4 w-full px-2">
                         <h3 className="font-bold text-white text-base tracking-tight truncate max-w-[180px] mx-auto">
                           {prof.name}
@@ -389,7 +386,7 @@ export default function Trending({ onNavigate }) {
                           <p className="text-xl sm:text-2xl font-black text-white">{Math.max(0, prof.followers || 0)}</p>
                         </div>
 
-                        {isNew && (<span className="self-center px-2 py-0.5 rounded-md text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 font-extrabold uppercase tracking-wide animate-pulse">
+                        {isNew && (<span className="self-center px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] bg-blue-500/10 border border-blue-500/30 text-blue-400 font-extrabold uppercase tracking-wider animate-pulse">
                             New
                           </span>)}
 
@@ -419,14 +416,12 @@ export default function Trending({ onNavigate }) {
                       
                       <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
                         
-                        
                         <div className="w-10 sm:w-14 flex items-center justify-center relative shrink-0">
                           <span className="text-2xl sm:text-3xl font-black select-none tracking-tighter" style={{ color: getRankColor(rank) }}>
                             #{rank}
                           </span>
                         </div>
 
-                        
                         <div className="relative shrink-0">
                           <Avatar user={prof} size="none" name={prof.name} className="w-20 h-20 sm:w-24 sm:h-24 border-white/5 group-hover:border-white/20"/>
                           {prof.openToWork && (<span className="absolute bottom-0 right-0 flex h-3.5 w-3.5">
@@ -435,41 +430,37 @@ export default function Trending({ onNavigate }) {
                             </span>)}
                         </div>
 
-                        
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2 mb-1">
                             <h3 className="font-extrabold text-white text-sm sm:text-base tracking-tight truncate group-hover:text-[#0099FF] transition-colors">
                               {prof.name}
                             </h3>
-                            {isNew && (<span className="shrink-0 px-2 py-0.5 rounded-md text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 font-extrabold uppercase tracking-wide animate-pulse">
+                            {isNew && (<span className="shrink-0 px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] bg-blue-500/10 border border-blue-500/30 text-blue-400 font-extrabold uppercase tracking-wider animate-pulse">
                                 New
                               </span>)}
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
+                          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-gray-400">
                             <span className="text-nc-accent font-semibold">
                               @{prof.username || prof.name?.toLowerCase().replace(/\s+/g, '_') || 'talent'}
                             </span>
-                            
-                            {prof.location && (<span className="flex items-center gap-1 text-gray-500">
-                                <MapPin className="w-3 h-3 text-gray-600 shrink-0"/>
-                                {prof.location}
-                              </span>)}
-
-                            
-                            {prof.role && (<span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shrink-0" style={{
-                            backgroundColor: `${catColor}15`,
-                            color: catColor,
-                            border: `1px solid ${catColor}25`
-                        }}>
-                                {prof.role}
-                              </span>)}
+                            {prof.role && (<>
+                                <span className="text-gray-600">·</span>
+                                <span className="font-semibold text-gray-300 capitalize">
+                                  {prof.role?.split(',')[0]}
+                                </span>
+                              </>)}
+                            {prof.location && (<>
+                                <span className="text-gray-600">·</span>
+                                <span className="capitalize text-gray-400">
+                                  {prof.location}
+                                </span>
+                              </>)}
                           </div>
                         </div>
 
                       </div>
 
-                      
                       <div className="flex items-center gap-4 sm:gap-6 shrink-0">
                         <div className="text-center hidden sm:block">
                           <p className="text-[9px] text-gray-500 uppercase tracking-widest font-black">Followers</p>
@@ -487,7 +478,6 @@ export default function Trending({ onNavigate }) {
             })}
               </div>
 
-              
               {rankedProfiles.length > visibleCount && (<div className="pt-8 text-center">
                   <button onClick={() => setVisibleCount(prev => prev + 10)} className="inline-flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-white/5 hover:border-white/10 text-white font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-2xl transition-all shadow-lg active:scale-[0.98]">
                     Load More Profiles

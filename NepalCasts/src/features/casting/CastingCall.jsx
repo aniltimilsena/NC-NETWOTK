@@ -217,7 +217,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
   };
 
   return (
-    <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting" trendingCalls={castingCalls}>
+    <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting" trendingCalls={calls}>
       <div className="min-h-screen bg-[#0A0A0A] text-white relative font-sans">
       <SEO
         title="Casting Calls & Auditions | NepalCasts"

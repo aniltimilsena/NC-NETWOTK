@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { User, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, TrendingUp } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import { getAvatar } from '../../utils/avatars';
+import { AdBanner } from '../ui/AdBanner';
 import { db } from '../../lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -66,14 +68,17 @@ export default function Desktop3ColumnLayout({
   const isVerified = profileData?.verified || user?.verified;
   const gender = profileData?.gender || user?.gender;
 
+  const safeFeatured = Array.isArray(featuredTalents) ? featuredTalents : [];
+  const safeTrending = Array.isArray(trendingCalls) ? trendingCalls : [];
+
   return (
-    <div className="w-full min-h-screen">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="w-full">
+      <div className="max-w-[1600px] mx-auto px-0 sm:px-4 lg:px-6 pt-0 pb-0">
         <div className="grid grid-cols-12 gap-8">
-          
+
           {/* LEFT SIDEBAR (Desktop Only: xl+) */}
-          <aside className="hidden xl:block xl:col-span-3 sticky top-24 space-y-8 h-fit">
-            
+          <aside className="hidden xl:block xl:col-span-3 sticky top-24 space-y-8 h-fit pt-6">
+
             {/* Seamless User Profile Section */}
             {user ? (
               <div className="space-y-3 px-2">
@@ -114,15 +119,14 @@ export default function Desktop3ColumnLayout({
             {/* Quick Navigation Menu */}
             <div className="space-y-2 px-2">
               <span className="text-xs font-black uppercase tracking-widest text-gray-500 px-3 py-1 block">Quick Menu</span>
-              
+
               <button
                 type="button"
                 onClick={() => onNavigate?.('home')}
-                className={`w-full px-4 py-3.5 rounded-2xl text-base font-bold flex items-center justify-between transition-all cursor-pointer ${
-                  activeNav === 'discover'
-                    ? 'bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 shadow-lg shadow-[#00BFFF]/5'
-                    : 'text-gray-300 hover:bg-white/5 hover:text-white'
-                }`}
+                className={`w-full px-4 py-3.5 rounded-2xl text-base font-bold flex items-center justify-between transition-all cursor-pointer ${activeNav === 'discover'
+                  ? 'bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 shadow-lg shadow-[#00BFFF]/5'
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  }`}
               >
                 <div className="flex items-center gap-3.5">
                   <Compass className="w-5 h-5" />
@@ -134,11 +138,10 @@ export default function Desktop3ColumnLayout({
               <button
                 type="button"
                 onClick={() => onNavigate?.('talent')}
-                className={`w-full px-4 py-3.5 rounded-2xl text-base font-bold flex items-center justify-between transition-all cursor-pointer ${
-                  activeNav === 'talent'
-                    ? 'bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 shadow-lg shadow-[#00BFFF]/5'
-                    : 'text-gray-300 hover:bg-white/5 hover:text-white'
-                }`}
+                className={`w-full px-4 py-3.5 rounded-2xl text-base font-bold flex items-center justify-between transition-all cursor-pointer ${activeNav === 'talent'
+                  ? 'bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 shadow-lg shadow-[#00BFFF]/5'
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  }`}
               >
                 <div className="flex items-center gap-3.5">
                   <Users className="w-5 h-5" />
@@ -150,11 +153,10 @@ export default function Desktop3ColumnLayout({
               <button
                 type="button"
                 onClick={() => onNavigate?.('casting')}
-                className={`w-full px-4 py-3.5 rounded-2xl text-base font-bold flex items-center justify-between transition-all cursor-pointer ${
-                  activeNav === 'casting'
-                    ? 'bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 shadow-lg shadow-[#00BFFF]/5'
-                    : 'text-gray-300 hover:bg-white/5 hover:text-white'
-                }`}
+                className={`w-full px-4 py-3.5 rounded-2xl text-base font-bold flex items-center justify-between transition-all cursor-pointer ${activeNav === 'casting'
+                  ? 'bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 shadow-lg shadow-[#00BFFF]/5'
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  }`}
               >
                 <div className="flex items-center gap-3.5">
                   <Film className="w-5 h-5" />
@@ -168,11 +170,10 @@ export default function Desktop3ColumnLayout({
                   <button
                     type="button"
                     onClick={() => onNavigate?.('messages')}
-                    className={`w-full px-4 py-3.5 rounded-2xl text-base font-bold flex items-center justify-between transition-all cursor-pointer ${
-                      activeNav === 'messages'
-                        ? 'bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 shadow-lg shadow-[#00BFFF]/5'
-                        : 'text-gray-300 hover:bg-white/5 hover:text-white'
-                    }`}
+                    className={`w-full px-4 py-3.5 rounded-2xl text-base font-bold flex items-center justify-between transition-all cursor-pointer ${activeNav === 'messages'
+                      ? 'bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 shadow-lg shadow-[#00BFFF]/5'
+                      : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                      }`}
                   >
                     <div className="flex items-center gap-3.5">
                       <MessageSquare className="w-5 h-5" />
@@ -184,11 +185,10 @@ export default function Desktop3ColumnLayout({
                   <button
                     type="button"
                     onClick={() => onNavigate?.('saved-castings')}
-                    className={`w-full px-4 py-3.5 rounded-2xl text-base font-bold flex items-center justify-between transition-all cursor-pointer ${
-                      activeNav === 'saved-castings' || activeNav === 'saved-casting'
-                        ? 'bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 shadow-lg shadow-[#00BFFF]/5'
-                        : 'text-gray-300 hover:bg-white/5 hover:text-white'
-                    }`}
+                    className={`w-full px-4 py-3.5 rounded-2xl text-base font-bold flex items-center justify-between transition-all cursor-pointer ${activeNav === 'saved-castings' || activeNav === 'saved-casting'
+                      ? 'bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 shadow-lg shadow-[#00BFFF]/5'
+                      : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                      }`}
                   >
                     <div className="flex items-center gap-3.5">
                       <Bookmark className="w-5 h-5" />
@@ -199,6 +199,19 @@ export default function Desktop3ColumnLayout({
                 </>
               )}
             </div>
+
+            {/* Facebook-style footer links */}
+            <div className="px-3 pt-4 pb-2">
+              <p className="text-[10px] text-[#444] flex flex-wrap items-center gap-x-1 gap-y-0.5">
+                <Link to="/trust-safety" className="hover:underline">Trust</Link>
+                <span className="opacity-40">·</span>
+                <Link to="/privacy" className="hover:underline">Privacy</Link>
+                <span className="opacity-40">·</span>
+                <Link to="/terms" className="hover:underline">Terms</Link>
+                <span className="opacity-40">·</span>
+                <span>&copy; {new Date().getFullYear()} NepalCasts</span>
+              </p>
+            </div>
           </aside>
 
           {/* CENTER MAIN CONTENT */}
@@ -207,10 +220,22 @@ export default function Desktop3ColumnLayout({
           </main>
 
           {/* RIGHT SIDEBAR (Desktop Only: xl+) */}
-          <aside className="hidden xl:block xl:col-span-3 sticky top-24 space-y-8 h-fit">
-            
+          <aside className="hidden xl:block xl:col-span-3 sticky top-24 space-y-8 h-fit pt-6">
+
+            {/* Ad Banner */}
+            <div className="px-2">
+              <AdBanner
+                variant="card"
+                badge="SPONSORED"
+                title="Promote Your Casting"
+                subtitle="Reach thousands of talented actors across Nepal."
+                ctaText="Get Started"
+                ctaUrl="/premium"
+              />
+            </div>
+
             {/* Featured Talent Widget */}
-            {featuredTalents.length > 0 && (
+            {safeFeatured.length > 0 && (
               <div className="space-y-4 px-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-white font-black text-base">
@@ -227,16 +252,19 @@ export default function Desktop3ColumnLayout({
                 </div>
 
                 <div className="space-y-3">
-                  {featuredTalents.slice(0, 4).map((item) => (
+                  {safeFeatured.slice(0, 3).map((item) => (
                     <div
                       key={item.id}
                       onClick={() => onNavigate?.('profile', item.id)}
-                      className="flex items-center gap-3.5 p-2.5 rounded-2xl hover:bg-white/5 transition-all cursor-pointer group"
+                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all cursor-pointer group"
                     >
-                      <Avatar src={getAvatar(item.image || item.photoURL, item.gender)} size="lg" />
+                      <Avatar
+                        src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
+                        size="md"
+                      />
                       <div className="min-w-0 flex-1">
-                        <h5 className="text-white text-sm font-bold group-hover:text-[#00BFFF] transition-colors truncate">
-                          {item.name || [item.firstName, item.lastName].filter(Boolean).join(' ') || 'Artist'}
+                        <h5 className="text-white text-sm font-bold truncate group-hover:text-[#00BFFF] transition-colors">
+                          {item.name || 'Talent'}
                         </h5>
                         <p className="text-gray-400 text-xs truncate mt-0.5">{item.role || item.category || 'Talent'}</p>
                       </div>
@@ -247,7 +275,7 @@ export default function Desktop3ColumnLayout({
             )}
 
             {/* Trending Casting Calls Widget */}
-            {trendingCalls.length > 0 && (
+            {safeTrending.length > 0 && (
               <div className="space-y-4 px-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-white font-black text-base">
@@ -264,7 +292,7 @@ export default function Desktop3ColumnLayout({
                 </div>
 
                 <div className="space-y-3">
-                  {trendingCalls.slice(0, 3).map((call) => (
+                  {safeTrending.slice(0, 3).map((call) => (
                     <div
                       key={call.id}
                       onClick={() => onNavigate?.('casting-detail', call.id)}

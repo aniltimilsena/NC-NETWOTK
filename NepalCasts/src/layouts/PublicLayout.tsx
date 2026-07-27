@@ -70,7 +70,7 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
     const showNavbar = !isAuthPage && !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications');
     return (<div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
       {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate}/>)}
-      <main className="flex-1 px-1 sm:px-0 pb-8">
+      <main className="flex-1 px-0 pb-0">
         {!isAuthPage && <Breadcrumbs />}
         <Outlet context={{ user, isAdmin, showAlert, showToast }}/>
       </main>

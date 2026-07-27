@@ -9,12 +9,8 @@ import { AdBanner } from '../components/ui/AdBanner';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { subscribeToTalents, subscribeToCastingCalls } from '../services';
 
-
-
 export default function Home({ onNavigate, user }) {
   const isLoggedIn = !!user;
-  const [showAllCategories, setShowAllCategories] = useState(false);
-
   const [isLoading, setIsLoading] = useState(true);
   const [currentPremiumIdx, setCurrentPremiumIdx] = useState(0);
   const [talents, setTalents] = useState([]);
@@ -40,30 +36,37 @@ export default function Home({ onNavigate, user }) {
     container.scrollBy({ left: 300, behavior: 'smooth' });
   };
 
-  const getActorJoinStatus = (actor) => {
-    let createdDate = null;
-    if (actor.createdAt) {
-      createdDate = actor.createdAt.toDate ? actor.createdAt.toDate() : new Date(actor.createdAt);
-    } else if (actor.memberSince) {
-      const year = parseInt(actor.memberSince);
-      if (!isNaN(year)) createdDate = new Date(`${year}-01-01`);
-    } else if (actor.joined) {
-      const year = parseInt(actor.joined);
-      if (!isNaN(year)) createdDate = new Date(`${year}-01-01`);
+  const getTalentAge = (talent) => {
+    if (!talent) return null;
+    if (talent.age) return talent.age;
+    if (talent.dob || talent.dateOfBirth) {
+      const dob = new Date(talent.dob || talent.dateOfBirth);
+      if (!isNaN(dob.getTime())) {
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+          age--;
+        }
+        return age;
+      }
     }
+    return null;
+  };
 
-    if (!createdDate) {
-      createdDate = new Date('2026-07-01');
+  const getTalentRoleAndAge = (talent) => {
+    if (!talent) return 'Actor';
+    const role = talent.role?.split(',')[0] || talent.category || 'Actor';
+    const age = getTalentAge(talent);
+    return age ? `${role} (age-${age})` : role;
+  };
+
+  const formatTalentName = (name) => {
+    if (!name) return 'Talent';
+    if (name.length > 14) {
+      return name.slice(0, 13) + '...';
     }
-
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - createdDate.getTime());
-    const diffDays = diffTime / (1000 * 60 * 60 * 24);
-
-    if (diffDays <= 2) {
-      return "New";
-    }
-    return `Since ${createdDate.getFullYear()}`;
+    return name;
   };
 
   useEffect(() => {
@@ -73,7 +76,6 @@ export default function Home({ onNavigate, user }) {
     checkScrollPosition();
     container.addEventListener('scroll', checkScrollPosition);
     window.addEventListener('resize', checkScrollPosition);
-
     const timeout = setTimeout(checkScrollPosition, 500);
 
     return () => {
@@ -83,8 +85,6 @@ export default function Home({ onNavigate, user }) {
     };
   }, [talents]);
 
-
-
   const categories = CATEGORIES.map((catId) => {
     const cfg = getCategoryConfig(catId);
     return {
@@ -93,7 +93,7 @@ export default function Home({ onNavigate, user }) {
       icon: cfg.icon,
       color: cfg.color,
       bgColor: cfg.bgColor,
-      count: talents.filter(t => t.role?.toLowerCase() === catId.toLowerCase() && !t.deactivated).length
+      count: talents.filter(t => (t.role?.toLowerCase() === catId.toLowerCase() || t.category?.toLowerCase() === catId.toLowerCase()) && !t.deactivated).length
     };
   });
 
@@ -101,27 +101,25 @@ export default function Home({ onNavigate, user }) {
     let unsubUsers = () => { };
     let unsubCalls = () => { };
 
-
     const loaderTimeout = setTimeout(() => setIsLoading(false), 3000);
 
     try {
       unsubUsers = subscribeToTalents((data) => {
-        setTalents(data);
+        if (Array.isArray(data)) {
+          setTalents(data);
+        }
         setIsLoading(false);
       });
 
       unsubCalls = subscribeToCastingCalls('All', (data, error) => {
         if (error) {
-          console.warn("Home query issue (likely index building):", error);
+          console.warn("Home query issue:", error);
         }
         if (data) setCastingCalls(data);
         setIsLoading(false);
       });
-
-
     } catch (err) {
       console.error("Critical subscription crash:", err);
-      setQueryError(err.message);
       setIsLoading(false);
     }
 
@@ -132,7 +130,6 @@ export default function Home({ onNavigate, user }) {
     };
   }, []);
 
-
   useEffect(() => {
     if (!isLoading) {
       const t = setTimeout(() => setCategoriesReady(true), 80);
@@ -141,8 +138,6 @@ export default function Home({ onNavigate, user }) {
     setCategoriesReady(false);
   }, [isLoading]);
 
-
-
   const [shouldScroll, setShouldScroll] = useState(false);
 
   useEffect(() => {
@@ -150,7 +145,6 @@ export default function Home({ onNavigate, user }) {
     if (!container || castingCalls.length === 0) return;
 
     const checkScroll = () => {
-
       setShouldScroll(container.scrollWidth > container.offsetWidth);
     };
 
@@ -169,9 +163,7 @@ export default function Home({ onNavigate, user }) {
 
     const animate = () => {
       scrollPos += speed;
-
       const loopPoint = castingCalls.length > 3 ? container.scrollWidth / 2 : container.scrollWidth - container.offsetWidth;
-
       if (scrollPos >= loopPoint) {
         scrollPos = 0;
       }
@@ -183,39 +175,25 @@ export default function Home({ onNavigate, user }) {
     return () => cancelAnimationFrame(animationId);
   }, [shouldScroll, castingCalls.length]);
 
+  const activeTalentsList = talents
+    .filter(t => !t.deactivated && t.name)
+    .reduce((acc, current) => {
+      const isDuplicate = acc.some(item =>
+        item.id === current.id ||
+        (item.name && item.name.trim().toLowerCase() === current.name?.trim().toLowerCase())
+      );
+      if (!isDuplicate) {
+        acc.push(current);
+      }
+      return acc;
+    }, []);
 
+  const actorTalentsList = activeTalentsList.filter(t => {
+    const roleStr = (t.role || t.category || '').toLowerCase();
+    return !roleStr.includes('model');
+  });
 
-
-  const trendingList = talents
-    .filter(t => !t.deactivated)
-    .sort((a, b) => {
-      const followersA = a.followers || 0;
-      const followersB = b.followers || 0;
-      if (followersB !== followersA) return followersB - followersA;
-      const ratingA = parseFloat(a.rating) || 0;
-      const ratingB = parseFloat(b.rating) || 0;
-      return ratingB - ratingA;
-    })
-    .slice(0, 10);
-
-  useEffect(() => {
-    if (trendingList.length <= 1) return;
-
-    const interval = setInterval(() => {
-      setCurrentPremiumIdx(prev => {
-        let next = Math.floor(Math.random() * trendingList.length);
-
-        if (trendingList.length > 1) {
-          while (next === prev) {
-            next = Math.floor(Math.random() * trendingList.length);
-          }
-        }
-        return next;
-      });
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [talents]);
-
+  const trendingList = activeTalentsList.length > 0 ? activeTalentsList : talents;
   const currentPremiumUser = trendingList[currentPremiumIdx] || trendingList[0] || null;
 
   useEffect(() => {
@@ -242,559 +220,303 @@ export default function Home({ onNavigate, user }) {
       featuredTalents={talents}
       trendingCalls={castingCalls}
     >
-      <div className="min-h-screen bg-nc-dark">
-      {/* Hero Section */}
-      <section className="relative flex flex-col justify-start items-start overflow-hidden pt-3 sm:pt-4 pb-4 px-3.5 sm:px-8 lg:px-20">
-        {/* Background */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
-          <img
-            src="/hero-bg.png"
-            alt="Hero Background"
-            className="w-full h-full object-cover animate-kenburns"
-          />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)' }} />
-        </div>
+      <div className="min-h-screen bg-[#070709] text-white">
+        {/* Hero Section */}
+        <section className="relative flex flex-col justify-end overflow-hidden min-h-[210px] sm:min-h-[360px] px-3 sm:px-6 pb-4">
+          {/* Cover Background Image */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src={currentPremiumUser?.coverImage || currentPremiumUser?.heroBg || '/hero-bg.png'}
+              alt="Hero Background"
+              className="w-full h-full object-cover"
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(7,7,9,0.95) 100%)' }}
+            />
+          </div>
 
-        {/* Animated gradient orb for depth */}
-        <div className="absolute top-1/4 left-1/4 w-[250px] h-[250px] bg-gradient-to-br from-[#FACC15]/8 via-sky-400/5 to-transparent rounded-full blur-3xl z-[1] animate-pulse" style={{ animationDuration: '6s' }} />
-
-        {/* Profile Card */}
-        {currentPremiumUser && (
-          <motion.div
-            key={currentPremiumUser.id}
-            initial={{ opacity: 0, y: 15, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -15, scale: 0.95 }}
-            className="relative z-30 group mt-4 sm:mt-6 self-start -ml-3.5 sm:-ml-8 lg:-ml-20"
-            style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              gap: '12px',
-              background: 'none',
-              border: 'none',
-              backdropFilter: 'none',
-              WebkitBackdropFilter: 'none',
-              padding: 0,
-              boxShadow: 'none',
-              marginBottom: '12px'
-            }}
-          >
-            {/* Portrait photo on LEFT */}
-            {hasHeroPhoto ? (
-              <img
-                src={heroPhotoURL}
-                alt={currentPremiumUser.name}
-                onError={() => setHeroImageError(true)}
-                className="w-[100px] h-[140px] sm:w-[125px] sm:h-[175px] object-cover flex-shrink-0"
-                style={{
-                  borderRadius: '0px',
-                  boxShadow: '0 0 0 2px rgba(255,255,255,0.15)'
-                }}
-              />
-            ) : (
-              <div
-                className="w-[100px] h-[140px] sm:w-[125px] sm:h-[175px] flex-shrink-0 flex items-center justify-center bg-gradient-to-b from-[#1E1E26] to-[#111116]"
-                style={{
-                  borderRadius: '0px',
-                  boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.15)'
-                }}
-              >
-                <svg viewBox="0 0 100 100" fill="#5A5A75" className="w-14 h-14 sm:w-18 sm:h-18">
-                  <circle cx="50" cy="35" r="20" />
-                  <ellipse cx="50" cy="85" rx="35" ry="25" />
-                </svg>
+          {/* Overlaid Inset Profile Card (Matching Photo) */}
+          {currentPremiumUser && (
+            <div className="relative z-20 flex items-end gap-3.5 mt-12 sm:mt-16">
+              {/* Rectangular Portrait Photo with Blue Accent Line */}
+              <div className="relative shrink-0 flex flex-col items-center">
+                {hasHeroPhoto ? (
+                  <img
+                    src={heroPhotoURL}
+                    alt={currentPremiumUser.name || 'Featured Talent'}
+                    onError={() => setHeroImageError(true)}
+                    className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] object-cover shadow-2xl"
+                    style={{ borderRadius: '0px' }}
+                  />
+                ) : (
+                  <div className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] bg-gradient-to-b from-[#1E1E28] to-[#101018] flex items-center justify-center border border-white/10 shadow-2xl">
+                    <Avatar user={currentPremiumUser} size="lg" name={currentPremiumUser.name} />
+                  </div>
+                )}
+                {/* Blue Accent Bar Under Photo */}
+                <div className="w-full h-1.5 bg-[#00BFFF]" />
               </div>
-            )}
 
-            <div className="flex flex-col justify-end min-w-0 pb-1" style={{ gap: '2px' }}>
-              <h3
-                className="font-bold text-white truncate"
-                style={{
-                  fontSize: window.innerWidth < 640 ? '20px' : '23px',
-                  background: 'none',
-                  textShadow: '0 1px 4px rgba(0,0,0,0.85)',
-                  lineHeight: '1.15'
-                }}
-              >
-                {currentPremiumUser.name}
-              </h3>
-              <p
-                className="capitalize truncate"
-                style={{
-                  color: '#aaa',
-                  fontSize: window.innerWidth < 640 ? '14px' : '16px',
-                  textShadow: '0 1px 4px rgba(0,0,0,0.85)',
-                  lineHeight: '1.15'
-                }}
-              >
-                {currentPremiumUser.category || currentPremiumUser.role || 'Actor'}
-              </p>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (currentPremiumUser.id) {
-                    onNavigate('profile', currentPremiumUser.id);
-                  }
-                }}
-                className="hover:text-[#00BFFF]/80 transition-all cursor-pointer text-left font-semibold mt-0.5"
-                style={{
-                  color: '#00BFFF',
-                  fontSize: window.innerWidth < 640 ? '14px' : '15px',
-                  lineHeight: '1.15',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0
-                }}
-              >
-                Browse profile &gt;
-              </button>
-            </div>
-          </motion.div>
-        )}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-nc-dark to-transparent z-10" />
-      </section>
-
-
-
-      {isLoading ? (
-        <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-20 py-6 sm:py-14 space-y-12">
-          {/* 1. Actors/Actress Horizontal Showcase Skeleton */}
-          <section className="pt-2 pb-6">
-            <div className="flex items-center mb-6">
-              <div className="section-accent-bar"></div>
-              <div className="h-7 skeleton w-48" />
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-4 scroll-smooth scrollbar-hide">
-              {Array.from({ length: 6 }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className="flex flex-col items-center w-[160px] min-w-[160px] flex-shrink-0"
-                >
-                  <div className="w-[130px] h-[130px] rounded-full skeleton" />
-                  <div className="h-4 skeleton w-20 mt-3" />
-                  <div className="h-3.5 skeleton w-24 mt-1.5" />
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* 2. Browse by Category Skeleton */}
-          <section className="py-6">
-            <div className="flex items-center mb-8">
-              <div className="section-accent-bar"></div>
-              <div className="h-7 skeleton w-56" />
-            </div>
-            <CategorySkeleton />
-          </section>
-
-          {/* 3. Trending Now Skeleton */}
-          <section className="py-6">
-            <div className="flex items-center mb-8">
-              <div className="section-accent-bar"></div>
-              <div className="h-7 skeleton w-40" />
-            </div>
-            <div className="flex flex-col">
-              {Array.from({ length: 3 }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between py-5 gap-4"
-                >
-                  <div className="flex items-center gap-4 min-w-0 flex-1">
-                    {/* Rank Number Placeholder */}
-                    <div className="w-8 h-8 rounded-lg skeleton shrink-0" />
-                    {/* Avatar Placeholder */}
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full skeleton shrink-0" />
-                    {/* Basic Info Placeholder */}
-                    <div className="space-y-2 min-w-0 flex-1">
-                      <div className="h-4 skeleton w-1/3" />
-                      <div className="h-3.5 skeleton w-1/2" />
-                      <div className="h-5 skeleton w-20 mt-1" />
-                    </div>
-                  </div>
-                  {/* Arrow Button Placeholder */}
-                  <div className="w-8 h-8 rounded-full skeleton shrink-0" />
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      ) : (
-        <>
-          {/* Featured Actors Showcase */}
-          {talents.filter(t => t.role?.toLowerCase().includes('actor') && !t.deactivated).length > 0 && (
-            <section className="pt-2 pb-0 bg-nc-dark relative overflow-hidden">
-              <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-20">
-                {/* Editorial Header */}
-                <div className="flex items-center justify-between mb-10">
-                  <div className="flex items-center">
-                    <div className="section-accent-bar"></div>
-                    <h2 className="font-sans text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Actor & Actress</h2>
-                  </div>
-                  <button
-                    onClick={() => onNavigate('listing', 'actor')}
-                    className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
-                  >
-                    View all
-                  </button>
-                </div>
-
-                {/* Horizontal Scroll Area */}
-                <div className="relative group">
-                  <div
-                    ref={actorsScrollRef}
-                    className="flex gap-3 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
-                  >
-                    {talents
-                      .filter(t => t.role?.toLowerCase().includes('actor') && !t.deactivated)
-                      .sort((a, b) => {
-                        const followersA = a.followers || 0;
-                        const followersB = b.followers || 0;
-                        if (followersB !== followersA) {
-                          return followersB - followersA;
-                        }
-                        const ratingA = parseFloat(a.rating) || 0;
-                        const ratingB = parseFloat(b.rating) || 0;
-                        return ratingB - ratingA;
-                      })
-                      .slice(0, 10)
-                      .map((actor) => (
-                        <div
-                          key={actor.id}
-                          onClick={() => onNavigate('profile', actor.id)}
-                          className="flex flex-col items-center w-[160px] min-w-[160px] flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-1 group/actor"
-                        >
-                          <Avatar
-                            user={actor}
-                            size="none"
-                            name={actor.name}
-                            className="w-[130px] h-[130px] shadow-md border border-white/5"
-                          />
-                          <p className="text-white font-bold text-[14px] text-center mt-2.5 truncate w-full">{actor.name}</p>
-                          <p className="text-nc-muted text-xs text-center mt-0.5 font-medium truncate w-full flex items-center justify-center gap-1">
-                            <span>{actor.location || 'Nepal'}</span>
-                            <span>•</span>
-                            {getActorJoinStatus(actor) === 'New' ? (
-                              <span className="px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse shrink-0">New</span>
-                            ) : (
-                              <span>{getActorJoinStatus(actor)}</span>
-                            )}
-                          </p>
-                        </div>
-                      ))}
-                  </div>
-
-                  {showRightArrow && (
-                    <button
-                      onClick={scrollRight}
-                      className="absolute right-0 top-[65px] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#12121A]/90 border border-white/10 flex items-center justify-center text-white font-black text-lg hover:bg-nc-accent hover:border-nc-accent transition-all shadow-xl shadow-black/40"
-                    >
-                      &gt;
-                    </button>
-                  )}
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* Categories */}
-          <section className="pt-2 pb-10 lg:pt-2 lg:pb-14 bg-nc-dark">
-            <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-20">
-              {/* Editorial Header */}
-              <div className="flex items-center justify-between mb-10">
-                <div className="flex items-center">
-                  <div className="section-accent-bar"></div>
-                  <h2 className="font-sans text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Browse by Category</h2>
-                </div>
+              {/* Talent Meta beside photo */}
+              <div className="flex flex-col justify-end gap-1 min-w-0 self-end h-[166px] sm:h-[196px]">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight truncate drop-shadow-lg">
+                  {currentPremiumUser.name || 'Anil Timilsena'}
+                </h1>
+                <p className="text-sm sm:text-base text-gray-200 font-medium capitalize drop-shadow-md truncate">
+                  {currentPremiumUser.role || currentPremiumUser.category || 'Actor'}
+                </p>
                 <button
-                  onClick={() => onNavigate('listing')}
-                  className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
+                  type="button"
+                  onClick={() => onNavigate('profile', currentPremiumUser.id)}
+                  className="text-[#00BFFF] hover:underline text-sm sm:text-base font-semibold text-left transition-colors cursor-pointer"
                 >
-                  View all
+                  View profile
                 </button>
               </div>
-              {/* ── Category cards with staggered reveal ────────── */}
-              {categoriesReady ? (
-                <div className="grid grid-cols-2 gap-3 sm:gap-6 max-w-3xl mx-auto">
-                  {categories?.map((cat, idx) => {
-                    const categoryColor = cat.color;
-                    const CatIcon = cat.icon;
-                    return (
-                      <button
-                        key={cat.id}
-                        onClick={() => onNavigate('listing', cat.name)}
-                        style={{ animationDelay: `${idx * 40}ms` }}
-                        className={`cat-card-reveal category-card w-full p-5 sm:p-8 lg:p-10 flex-col items-center gap-3 sm:gap-4 lg:gap-5 group ${idx >= 2 ? 'hidden' : 'flex'
-                          }`}
-                      >
-                        {/* Circular glow background container with accent color at 15% opacity */}
-                        <div
-                          className="relative z-10 w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
-                          style={{
-                            backgroundColor: `${categoryColor}26`,
-                            color: categoryColor,
-                            boxShadow: `0 0 15px ${categoryColor}15`
-                          }}
-                        >
-                          <CatIcon className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12" strokeWidth={1.5} />
-                        </div>
-
-                        <span className="text-base sm:text-xl lg:text-2xl font-black text-white/90 group-hover:text-white transition-colors relative z-10">{cat.name}</span>
-
-                        {/* Talent count or Be the first invite */}
-                        {cat.count === 0 ? (
-                          <span className="text-xs sm:text-sm lg:text-base font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
-                            Be the first →
-                          </span>
-                        ) : (
-                          <span className="text-xs sm:text-sm lg:text-base font-semibold text-nc-muted relative z-10">
-                            {cat.count} {cat.count === 1 ? 'talent' : 'talents'}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <CategorySkeleton />
-              )}
-
-              {/* Featured Sponsor / Partner Spotlight Ad */}
-              <div className="my-6 max-w-4xl mx-auto">
-                <AdBanner
-                  id="home-partner-spotlight"
-                  variant="card"
-                  intervalMs={4000}
-                  items={[
-                    {
-                      badge: 'FEATURED PARTNER',
-                      discount: '20% OFF',
-                      title: 'RED 8K Cinema Camera & Studio Package',
-                      subtitle: 'Exclusive 20% discount on professional camera rigs & sound stages in Kathmandu.',
-                      ctaText: 'Book Studio Package',
-                      ctaUrl: '/premium',
-                      image: '/assets/ads/masterclass_promo.png',
-                    },
-                    {
-                      badge: 'ACTING MASTERCLASS',
-                      discount: 'EARLY BIRD',
-                      title: 'National Acting & Audition Workshop',
-                      subtitle: '2-day intensive camera acting workshop with industry mentors in Kathmandu.',
-                      ctaText: 'Reserve Your Seat',
-                      ctaUrl: '/casting',
-                      image: '/assets/ads/masterclass_promo.png',
-                    },
-                    {
-                      badge: 'CASTING SPOTLIGHT',
-                      discount: 'URGENT',
-                      title: "Feature Film 'Himalayan Dreams' Open Calls",
-                      subtitle: 'Direct audition opportunities for lead and supporting actors across Nepal.',
-                      ctaText: 'Submit Application',
-                      ctaUrl: '/casting',
-                      image: '/assets/ads/masterclass_promo.png',
-                    },
-                  ]}
-                />
-              </div>
-
-              {/* CastingCall & Audition Update Strip */}
-              {castingCalls.length > 0 && (
-                <div className="mt-6 lg:mt-8">
-                  {/* Editorial Header */}
-                  <div className="flex items-center justify-between mb-10">
-                    <div className="flex items-center">
-                      <div className="section-accent-bar"></div>
-                      <h2 className="font-sans text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Casting Calls & Auditions</h2>
-                    </div>
-                    <button
-                      onClick={() => onNavigate('casting')}
-                      className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
-                    >
-                      View all
-                    </button>
-                  </div>
-
-                  <div
-                    ref={scrollRef}
-                    className={`flex overflow-x-auto gap-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pr-6 sm:pr-8 mx-[-1.5rem] sm:mx-0 px-6 sm:px-0 ${shouldScroll ? '' : 'justify-start sm:justify-center'}`}
-                  >
-                    {/* Only double the items if we actually need to loop to fill the screen */}
-                    {(castingCalls.length > 3 ? [...castingCalls, ...castingCalls] : castingCalls)
-                      ?.slice(0, 12)
-                      ?.map((item, i) => (
-                        <div
-                          key={i}
-                          onClick={() => onNavigate('casting-detail', item.id)}
-                          className="flex-shrink-0 w-[240px] sm:w-[280px] bg-nc-card rounded-3xl flex items-center p-3 gap-4 border border-transparent snap-start hover:brightness-110 transition-all duration-300 cursor-pointer group"
-                        >
-                          <div className="w-16 h-20 sm:w-16 sm:h-24 bg-nc-surface overflow-hidden rounded-xl shadow-md border border-white/[0.06] group-hover:border-nc-accent/30 transition-colors">
-                            <img src={item.thumbnail || '/movie-banner.png'} alt={item.title} className="w-full h-full object-cover" />
-                          </div>
-                          <div className="flex-1 min-w-0 pr-2">
-                            <h4 className="text-white font-bold leading-tight truncate text-sm">{item.title}</h4>
-                            <p className="text-nc-muted text-xs mt-1 mb-2.5 line-clamp-2 leading-relaxed">{item.type}</p>
-                            <button className="text-nc-accent text-[11px] font-bold uppercase tracking-wider hover:text-sky-300 self-start transition-colors hidden sm:block">View more</button>
-                            <button className="text-nc-accent text-xs font-bold self-start sm:hidden">View more</button>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
             </div>
-          </section>
-
-          {/* Trending Talents */}
-          {talents.length > 0 && (
-            <section className="pt-2 pb-8 lg:pt-2 lg:pb-10">
-              <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-20">
-                {/* Editorial Header */}
-                <div className="flex items-center justify-between mb-10">
-                  <div className="flex items-center">
-                    <div className="section-accent-bar"></div>
-                    <h2 className="font-sans text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">Trending Now</h2>
-                  </div>
-                  <button
-                    onClick={() => onNavigate('trending')}
-                    className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm font-semibold transition-all mt-1"
-                  >
-                    View all
-                  </button>
-                </div>
-                <div className="flex flex-col">
-                  {talents
-                    .filter(t => !t.deactivated)
-                    .slice()
-                    .sort((a, b) => {
-                      const followersA = a.followers || 0;
-                      const followersB = b.followers || 0;
-                      if (followersB !== followersA) {
-                        return followersB - followersA;
-                      }
-                      const ratingA = parseFloat(a.rating) || 0;
-                      const ratingB = parseFloat(b.rating) || 0;
-                      return ratingB - ratingA;
-                    })
-                    .slice(0, 3)
-                    .map((talent, idx) => (
-                      <div
-                        key={talent.id}
-                        onClick={() => onNavigate('profile', talent.id)}
-                        className="group flex items-center justify-between py-5 active:bg-white/[0.01] transition-all duration-300 cursor-pointer text-left gap-4"
-                      >
-                        <div className="flex items-center gap-4 min-w-0 flex-1">
-                          {/* Rank Number */}
-                          <span className="font-sans text-2xl sm:text-3xl font-black text-white/10 group-hover:text-sky-400/30 transition-colors w-8 text-center shrink-0 select-none">
-                            {idx + 1}
-                          </span>
-                          <Avatar
-                            user={talent}
-                            size="none"
-                            name={talent.name}
-                            className="w-20 h-20 sm:w-24 sm:h-24 border-white/5"
-                          />
-
-                          {/* Basic Info */}
-                          <div className="space-y-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-white text-base sm:text-lg leading-tight truncate">{talent.name}</h3>
-                              {talent.verified && (
-                                <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 text-nc-muted text-xs sm:text-sm truncate">
-                              <span className="text-sky-400 font-medium truncate shrink-0">@{(talent.username || talent.name.toLowerCase().replace(/\s+/g, '')).replace(/^@/, '')}</span>
-                              <span className="shrink-0">•</span>
-                              <span className="capitalize truncate">{talent.location || 'Nepal'}</span>
-                            </div>
-                            <div className="mt-2 truncate">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/[0.06] text-[10px] font-bold text-nc-muted uppercase tracking-wider group-hover:border-nc-accent/20 truncate max-w-full">
-                                {talent.role?.split(',')[0]}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Right Status */}
-                        <div className="text-right flex flex-col items-end gap-1 px-2 shrink-0 justify-center">
-                          <span className="px-1.5 py-0.5 rounded-md text-[7px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wide animate-pulse shrink-0">New</span>
-                          <div className="mt-auto">
-                            <p className="text-nc-muted text-[10px] sm:text-xs font-medium">
-                              <span className="text-white font-bold">
-                                {(talent.followers || 0) >= 1000
-                                  ? `${((talent.followers || 0) / 1000).toFixed(1).replace(/\.0$/, '')}K`
-                                  : (talent.followers || 0)}
-                              </span> followers
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            </section>
           )}
+        </section>
 
+        {/* Ad Banner Section - mobile/tablet only */}
+        <section className="px-3 sm:px-6 py-3 lg:hidden">
+          <AdBanner
+            id="home-demo-ad"
+            variant="card"
+            badge="SPONSORED"
+            title="Kathmandu Acting & Directing Masterclass"
+            subtitle="Learn directly from National Award Directors in Lalitpur"
+            discount="20% OFF"
+            ctaText="Explore Now"
+            ctaUrl="/casting"
+            image="/assets/ads/masterclass_promo.png"
+          />
+        </section>
 
+        {/* Actor & Actress Section */}
+        <section className="px-3 sm:px-6 py-4">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center">
+              <div className="section-accent-bar" />
+              <h2 className="text-xl sm:text-2xl font-bold text-white font-sans tracking-tight leading-none">
+                Actor & Actress
+              </h2>
+            </div>
+            <button
+              onClick={() => onNavigate('listing')}
+              className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              View all &gt;
+            </button>
+          </div>
 
-        </>
-      )}
-
-      {/* CTA Section - Only show if not logged in */}
-      {!isLoggedIn && (
-        <section className="pt-2 pb-12 sm:pt-2 sm:pb-16 lg:pt-2 lg:pb-20">
-          <div className="max-w-2xl mx-auto px-3.5">
-            <GlassCard strong className="p-4 sm:p-10 relative overflow-hidden border border-white/5 shadow-2xl">
-              {/* Premium Background Glow Orbs */}
-              <div className="absolute -top-12 -left-12 w-80 h-80 bg-[#00BFFF]/10 rounded-full blur-[100px] pointer-events-none" />
-              <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-[#FACC15]/5 rounded-full blur-[80px] pointer-events-none" />
-
-              <div className="relative z-10 space-y-5 sm:space-y-6 text-center flex flex-col items-center">
-                {/* Platform Badge */}
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md shadow-sm">
-                  <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase text-[#00BFFF] flex items-center gap-1">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse"></span>
-                    Nepal's Premier Network
-                  </span>
-                </div>
-
-                <div className="space-y-2.5 sm:space-y-3">
-                  <h2 className="font-sans text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight bg-gradient-to-r from-white via-white to-[#00BFFF] bg-clip-text text-transparent px-2">
-                    Ready to Get Discovered?
-                  </h2>
-                  <p className="text-nc-secondary text-xs sm:text-sm max-w-lg mx-auto px-2 leading-relaxed font-medium">
-                    Join <span className="text-[#00BFFF] font-bold">25,000+</span> models, actors, and creators on NepalCasts. Build your showcase profile and connect with top production houses today.
+          {/* Horizontal Scrollable Circular Avatars */}
+          <div
+            ref={actorsScrollRef}
+            className="flex gap-3 sm:gap-4 overflow-x-auto pt-2 pb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+          >
+            {actorTalentsList.length > 0 ? (
+              actorTalentsList.map((talent) => (
+                <div
+                  key={talent.id}
+                  onClick={() => onNavigate('profile', talent.id)}
+                  className="flex flex-col items-center shrink-0 w-[140px] sm:w-[170px] cursor-pointer group transition-transform duration-300 hover:scale-105"
+                >
+                  <Avatar
+                    user={talent}
+                    size="none"
+                    name={talent.name}
+                    className="w-[125px] h-[125px] sm:w-[155px] sm:h-[155px] rounded-full object-cover border-2 border-white/10 shadow-xl group-hover:border-[#00BFFF] transition-all"
+                  />
+                  <p className="text-white font-bold text-sm sm:text-base text-center mt-2.5 truncate w-full">
+                    {formatTalentName(talent.name)}
+                  </p>
+                  <p className="text-[#00BFFF] text-xs sm:text-sm text-center font-semibold mt-0.5 truncate w-full">
+                    {getTalentRoleAndAge(talent)}
                   </p>
                 </div>
-
-                <div className="flex flex-row gap-3 sm:gap-4 justify-center w-full pt-2">
-                  <Button
-                    size="lg"
-                    className="flex-1 sm:flex-none bg-gradient-to-r from-[#00F2FE] to-[#4FACFE] hover:from-[#00E5F5] hover:to-[#3CA4FC] text-black font-extrabold shadow-[0_0_20px_rgba(0,242,254,0.25)] hover:shadow-[0_0_35px_rgba(0,242,254,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out border-none flex items-center justify-center gap-1.5 text-xs sm:text-base px-3 sm:px-6"
-                    onClick={() => onNavigate('profile-create')}
-                  >
-                    <span className="truncate">Build Profile Now</span>
-                    <span className="text-sm sm:text-lg leading-none shrink-0">→</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    className="flex-1 sm:flex-none bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white font-bold transition-all duration-300 ease-out shadow-inner hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center text-xs sm:text-base px-3 sm:px-6 truncate"
-                    onClick={() => onNavigate('listing')}
-                  >
-                    Browse Talent
-                  </Button>
-                </div>
-              </div>
-            </GlassCard>
+              ))
+            ) : (
+              <div className="text-gray-400 text-sm py-4">Loading talents...</div>
+            )}
           </div>
         </section>
-      )}
 
+        {/* Browse by Category Section */}
+        <section className="px-3 sm:px-6 py-4">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center">
+              <div className="section-accent-bar" />
+              <h2 className="text-xl sm:text-2xl font-bold text-white font-sans tracking-tight leading-none">
+                Browse by Category
+              </h2>
+            </div>
+            <button
+              onClick={() => onNavigate('listing')}
+              className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              View all &gt;
+            </button>
+          </div>
 
+          {categoriesReady ? (
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+              {categories.slice(0, 2).map((cat) => {
+                const CatIcon = cat.icon;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => onNavigate('listing', cat.name)}
+                    className="p-5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 transition-all duration-300 flex flex-col items-center gap-3 group cursor-pointer"
+                  >
+                    <div
+                      className="w-14 h-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
+                      style={{ backgroundColor: `${cat.color}20`, color: cat.color }}
+                    >
+                      {CatIcon && <CatIcon className="w-7 h-7" strokeWidth={1.5} />}
+                    </div>
+                    <span className="text-sm sm:text-base font-bold text-white group-hover:text-[#00BFFF] transition-colors">
+                      {cat.name}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {cat.count} {cat.count === 1 ? 'talent' : 'talents'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <CategorySkeleton />
+          )}
+        </section>
 
-    </div>
+        {/* Casting Calls & Auditions Section */}
+        {castingCalls.length > 0 && (
+          <section className="px-3 sm:px-6 py-4">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center">
+                <div className="section-accent-bar" />
+                <h2 className="text-xl sm:text-2xl font-bold text-white font-sans tracking-tight leading-none">
+                  Casting Calls & Auditions
+                </h2>
+              </div>
+              <button
+                onClick={() => onNavigate('casting')}
+                className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                View all &gt;
+              </button>
+            </div>
+
+            <div
+              ref={scrollRef}
+              className="flex overflow-x-auto gap-4 pb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+            >
+              {castingCalls.slice(0, 10).map((item, i) => (
+                <div
+                  key={item.id || i}
+                  onClick={() => onNavigate('casting-detail', item.id)}
+                  className="flex-shrink-0 w-[240px] sm:w-[280px] bg-white/[0.03] hover:bg-white/[0.07] rounded-2xl flex items-center p-3 gap-3.5 border border-white/5 hover:border-[#00BFFF]/30 transition-all duration-300 cursor-pointer group shadow-lg"
+                >
+                  <div className="w-16 h-20 sm:w-18 sm:h-24 bg-white/5 overflow-hidden rounded-xl shrink-0 shadow-md border border-white/10 group-hover:border-[#00BFFF]/40 transition-colors">
+                    <img src={item.thumbnail || '/movie-banner.png'} alt={item.title} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0 pr-1">
+                    <h4 className="text-white font-bold leading-snug truncate text-xs sm:text-sm group-hover:text-[#00BFFF] transition-colors">{item.title}</h4>
+                    <p className="text-gray-400 text-[11px] mt-0.5 mb-1.5 line-clamp-2 leading-relaxed">{item.type || 'Casting Call'}</p>
+                    <span className="text-[#00BFFF] text-[11px] font-bold uppercase tracking-wider hover:underline">View details &gt;</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Trending Now Section */}
+        {activeTalentsList.length > 0 && (
+          <section className="px-3 sm:px-6 py-4 pb-10">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center">
+                <div className="section-accent-bar" />
+                <h2 className="text-xl sm:text-2xl font-bold text-white font-sans tracking-tight leading-none">
+                  Trending Now
+                </h2>
+              </div>
+              <button
+                onClick={() => onNavigate('trending')}
+                className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold transition-all cursor-pointer"
+              >
+                View all &gt;
+              </button>
+            </div>
+            <div className="flex flex-col divide-y divide-white/5">
+              {activeTalentsList
+                .slice()
+                .sort((a, b) => {
+                  const followersA = a.followers || 0;
+                  const followersB = b.followers || 0;
+                  if (followersB !== followersA) return followersB - followersA;
+                  const ratingA = parseFloat(a.rating) || 0;
+                  const ratingB = parseFloat(b.rating) || 0;
+                  return ratingB - ratingA;
+                })
+                .slice(0, 3)
+                .map((talent, idx) => (
+                  <div
+                    key={talent.id}
+                    onClick={() => onNavigate('profile', talent.id)}
+                    className="group flex items-center justify-between py-3 hover:bg-white/[0.02] transition-all duration-300 cursor-pointer gap-4 px-1"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                      {/* Rank Number */}
+                      <span className="font-sans text-xl sm:text-2xl font-black text-white/20 group-hover:text-sky-400/50 transition-colors w-7 text-center shrink-0 select-none">
+                        {idx + 1}
+                      </span>
+                      <Avatar
+                        user={talent}
+                        size="none"
+                        name={talent.name}
+                        className="w-14 h-14 sm:w-18 sm:h-18 rounded-full object-cover border border-white/10"
+                      />
+
+                      {/* Basic Info */}
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-white text-sm sm:text-base leading-tight truncate">{talent.name}</h3>
+                          {talent.verified && (
+                            <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-gray-400 text-xs truncate">
+                          <span className="text-sky-400 font-medium truncate shrink-0">@{(talent.username || talent.name.toLowerCase().replace(/\s+/g, '')).replace(/^@/, '')}</span>
+                          <span className="shrink-0 text-gray-600">·</span>
+                          <span className="capitalize truncate font-semibold text-gray-300">{talent.role?.split(',')[0] || talent.category || 'Talent'}</span>
+                          <span className="shrink-0 text-gray-600">·</span>
+                          <span className="capitalize truncate">{talent.location || 'Nepal'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Status */}
+                    <div className="text-right flex flex-col items-end gap-1 px-1 shrink-0 justify-center">
+                      <span className="px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wider animate-pulse shrink-0">Trending</span>
+                      <div className="mt-0.5">
+                        <p className="text-gray-400 text-xs font-medium">
+                          <span className="text-white font-bold">
+                            {(talent.followers || 0) >= 1000
+                              ? `${((talent.followers || 0) / 1000).toFixed(1).replace(/\.0$/, '')}K`
+                              : (talent.followers || 0)}
+                          </span> followers
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </section>
+        )}
+      </div>
     </Desktop3ColumnLayout>
   );
 }
+
