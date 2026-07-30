@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import GlassCard from '../components/ui/GlassCard';
 import CategorySkeleton from '../components/ui/CategorySkeleton';
 import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
+import { getAvatar } from '../utils/avatars';
 import { AdBanner } from '../components/ui/AdBanner';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { subscribeToTalents, subscribeToCastingCalls } from '../services';
@@ -196,15 +197,16 @@ export default function Home({ onNavigate, user }) {
   });
 
   const defaultTalent = {
-    id: 'anil-timilsena',
-    name: 'Anil Timilsena',
-    role: 'Actor',
-    category: 'Actor',
-    coverImage: '/hero-bg.png'
+    id: user?.uid || 'anil-timilsena',
+    name: user?.displayName || user?.name || 'Anil Timilsena',
+    role: user?.role || 'Model',
+    category: user?.role || 'Model',
+    photoURL: user?.photoURL || user?.profileImage || user?.image || null,
+    coverImage: user?.coverImage || '/hero-bg.png'
   };
 
   const trendingList = activeTalentsList.length > 0 ? activeTalentsList : talents;
-  const currentPremiumUser = trendingList[currentPremiumIdx] || trendingList[0] || defaultTalent;
+  const currentPremiumUser = trendingList[currentPremiumIdx] || (user ? { ...defaultTalent, ...user } : defaultTalent);
 
   useEffect(() => {
     setHeroImageError(false);
@@ -219,7 +221,7 @@ export default function Home({ onNavigate, user }) {
       url.startsWith('data:image/svg+xml');
   };
 
-  const heroPhotoURL = currentPremiumUser?.photoURL || currentPremiumUser?.profileImage || currentPremiumUser?.image;
+  const heroPhotoURL = currentPremiumUser?.photoURL || currentPremiumUser?.profileImage || currentPremiumUser?.image || (user?.uid === currentPremiumUser?.id ? (user?.photoURL || user?.profileImage || user?.image) : null);
   const hasHeroPhoto = heroPhotoURL && !isDefaultImage(heroPhotoURL) && !heroImageError;
 
   return (
@@ -250,18 +252,17 @@ export default function Home({ onNavigate, user }) {
           {currentPremiumUser && (
             <div className="relative z-20 flex items-end gap-3.5 mt-12 sm:mt-16">
               {/* Rectangular Portrait Photo with Blue Accent Line */}
-              <div className="relative shrink-0 flex flex-col items-center">
+              <div className="relative shrink-0 flex flex-col items-center overflow-hidden rounded-md shadow-2xl border border-white/10 bg-[#10151c]">
                 {hasHeroPhoto ? (
                   <img
                     src={heroPhotoURL}
-                    alt={currentPremiumUser.name || 'Featured Talent'}
+                    alt={currentPremiumUser?.name || 'Featured Talent'}
                     onError={() => setHeroImageError(true)}
-                    className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] object-cover shadow-2xl"
-                    style={{ borderRadius: '0px' }}
+                    className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] object-cover"
                   />
                 ) : (
-                  <div className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] bg-gradient-to-b from-[#1E1E28] to-[#101018] flex items-center justify-center border border-white/10 shadow-2xl">
-                    <Avatar user={currentPremiumUser} size="lg" name={currentPremiumUser.name} />
+                  <div className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] bg-gradient-to-b from-[#1a2634] to-[#0a1017] flex items-center justify-center">
+                    <Avatar user={currentPremiumUser} size="lg" name={currentPremiumUser?.name} />
                   </div>
                 )}
                 {/* Blue Accent Bar Under Photo */}

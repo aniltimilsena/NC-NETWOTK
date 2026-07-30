@@ -127,7 +127,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({ id = 'demo-ad', variant = 'c
     </AnimatePresence>);
   }
   if (variant === 'card') {
-    return (<div className="relative group overflow-hidden rounded-xl border border-white/10 shadow-xl p-3 sm:p-4 backdrop-blur-xl transition-all duration-300 hover:border-white/20 bg-black/80">
+    return (<div className="relative group overflow-hidden rounded-xl lg:rounded-2xl border border-white/10 shadow-xl p-3 sm:p-4 lg:p-6 backdrop-blur-xl transition-all duration-300 hover:border-white/20 bg-black/80 lg:min-h-[165px] flex flex-col justify-center">
 
       {/* Ad Image Background */}
       {currentImage && (
@@ -138,22 +138,22 @@ export const AdBanner: React.FC<AdBannerProps> = ({ id = 'demo-ad', variant = 'c
       )}
 
       {/* Glowing background accents */}
-      <div className="absolute -top-24 -right-24 w-60 h-60 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-cyan-500/20 transition-all duration-500 z-0" />
-      <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-purple-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-purple-500/20 transition-all duration-500 z-0" />
+      <div className="absolute -top-24 -right-24 w-60 lg:w-64 h-60 lg:h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-cyan-500/20 transition-all duration-500 z-0" />
+      <div className="absolute -bottom-24 -left-24 w-60 lg:w-64 h-60 lg:h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-purple-500/20 transition-all duration-500 z-0" />
 
       <AnimatePresence mode="wait">
-        <motion.div key={currentIndex} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.5, ease: 'easeInOut' }} className="relative z-10 flex flex-row items-center gap-3">
+        <motion.div key={currentIndex} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.5, ease: 'easeInOut' }} className="relative z-10 flex flex-row items-center gap-3 lg:gap-4">
 
-          <div className="flex-1 min-w-0 space-y-1.5 text-left flex flex-col justify-center">
+          <div className="flex-1 min-w-0 space-y-1.5 lg:space-y-2.5 text-left flex flex-col justify-center">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 text-cyan-300 font-bold px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] tracking-wider uppercase border border-white/10 backdrop-blur-md">
-                  <Megaphone className="w-3 h-3 text-cyan-400 animate-pulse" />
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 text-cyan-300 font-bold px-1.5 py-0.5 lg:px-2.5 lg:py-1 rounded-md text-[8px] sm:text-[9px] lg:text-[11px] tracking-wider uppercase border border-white/10 backdrop-blur-md">
+                  <Megaphone className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-cyan-400 animate-pulse" />
                   {currentBadge}
                 </span>
                 {currentDiscount && (
-                  <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black font-black px-2 py-0.5 rounded-full text-[10px] tracking-wider uppercase shadow-sm">
-                    <Tag className="w-3 h-3 fill-black text-black" />
+                  <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black font-black px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-full text-[10px] lg:text-xs tracking-wider uppercase shadow-sm">
+                    <Tag className="w-3 h-3 lg:w-3.5 lg:h-3.5 fill-black text-black" />
                     {currentDiscount}
                   </span>
                 )}
@@ -163,21 +163,21 @@ export const AdBanner: React.FC<AdBannerProps> = ({ id = 'demo-ad', variant = 'c
               </button>)}
             </div>
 
-            <h3 className="text-sm sm:text-base font-bold text-white tracking-tight leading-snug group-hover:text-cyan-200 transition-colors line-clamp-2 drop-shadow text-justify">
+            <h3 className="text-sm sm:text-base lg:text-lg font-bold lg:font-black text-white tracking-tight leading-snug group-hover:text-cyan-200 transition-colors line-clamp-2 drop-shadow text-justify">
               {currentTitle}
             </h3>
 
-            {currentSubtitle && (<p className="text-gray-300 text-[11px] line-clamp-1 leading-normal drop-shadow text-justify">
+            {currentSubtitle && (<p className="text-gray-300 text-[11px] lg:text-sm line-clamp-1 lg:line-clamp-2 leading-normal lg:leading-relaxed drop-shadow text-justify">
               {currentSubtitle}
             </p>)}
 
-            <div className="pt-1 flex items-center justify-between">
-              <a href={currentCtaUrl} onClick={(e) => handleCta(e, currentCtaUrl, currentAd.onCtaClick)} className="inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold px-3.5 py-1.5 rounded-lg text-[11px] transition-all duration-200 shadow-md shadow-cyan-500/20 hover:shadow-cyan-500/30 hover:scale-[1.01] active:scale-[0.99]">
+            <div className="pt-1 lg:pt-2 flex items-center justify-between gap-3">
+              <a href={currentCtaUrl} onClick={(e) => handleCta(e, currentCtaUrl, currentAd.onCtaClick)} className="inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold lg:font-black px-3.5 py-1.5 lg:px-4 lg:py-2 rounded-lg lg:rounded-xl text-[11px] lg:text-xs transition-all duration-200 shadow-md shadow-cyan-500/20 hover:shadow-cyan-500/30 hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
                 <span>{currentCtaText}</span>
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
               </a>
               {adList.length > 1 && (<div className="flex items-center gap-1.5 pl-4">
-                {adList.map((_, idx) => (<button key={idx} onClick={() => setCurrentIndex(idx)} className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex ? 'w-5 bg-cyan-400' : 'w-1.5 bg-white/20 hover:bg-white/40'}`} aria-label={`Go to ad ${idx + 1}`} />))}
+                {adList.map((_, idx) => (<button key={idx} onClick={() => setCurrentIndex(idx)} className={`h-1.5 lg:h-2 rounded-full transition-all duration-300 ${idx === currentIndex ? 'w-5 lg:w-6 bg-cyan-400' : 'w-1.5 lg:w-2 bg-white/20 hover:bg-white/40'}`} aria-label={`Go to ad ${idx + 1}`} />))}
               </div>)}
             </div>
           </div>

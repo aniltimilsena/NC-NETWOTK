@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MoreVertical, Share2, ChevronLeft, SlidersHorizontal } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
@@ -12,6 +13,7 @@ import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 import { cacheManager } from '../utils/cacheManager';
 export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
+    const navigate = useNavigate();
     const [talents, setTalents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [profilesReady, setProfilesReady] = useState(false);
@@ -335,7 +337,12 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                             <div className="flex items-center gap-3.5">
                                 <button onClick={() => {
                                     setSelectedFilters(prev => ({ ...prev, category: 'All' }));
-                                    navigate('/talents', { replace: true });
+                                    setViewMode('categories');
+                                    if (typeof onNavigate === 'function') {
+                                        onNavigate('listing');
+                                    } else {
+                                        navigate('/talents', { replace: true });
+                                    }
                                 }} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all shadow-md cursor-pointer shrink-0" aria-label="Back to Categories" title="Back to Categories">
                                     <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
                                 </button>

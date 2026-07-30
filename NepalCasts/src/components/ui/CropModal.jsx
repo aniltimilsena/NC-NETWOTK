@@ -100,9 +100,11 @@ export default function CropModal({ imageSrc, isCircular, onConfirm, onClose }) 
           
           <img ref={imgRef} src={imageSrc} alt="Source preview" draggable={false} style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-            maxHeight: '100%',
-            maxWidth: '100%',
-            objectFit: 'contain',
+            minWidth: isCircular ? '200px' : '100%',
+            minHeight: isCircular ? '200px' : '100%',
+            width: 'auto',
+            height: 'auto',
+            objectFit: 'cover',
             transition: isDragging ? 'none' : 'transform 0.05s ease-out'
         }}/>
 

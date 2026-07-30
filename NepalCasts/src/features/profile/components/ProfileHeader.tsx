@@ -24,6 +24,14 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
     const [showCoverMenu, setShowCoverMenu] = useState(false);
     const [confirmDeleteCoverOpen, setConfirmDeleteCoverOpen] = useState(false);
     const [isDeletingCover, setIsDeletingCover] = useState(false);
+    const [localCover, setLocalCover] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (profile?.coverImage) {
+            setLocalCover(profile.coverImage);
+        }
+    }, [profile?.coverImage]);
+
     useEffect(() => {
         if (!showCoverMenu)
             return;
@@ -31,9 +39,18 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         document.addEventListener('click', close, { once: true });
         return () => document.removeEventListener('click', close);
     }, [showCoverMenu]);
-    const avatarUrl = (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo;
-    const validCover = profile.coverImage && profile.coverImage !== '/hero-bg.png' ? profile.coverImage : null;
-    const coverImage = validCover || avatarUrl || '/hero-bg.png';
+    const avatarUrl = (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isOwnProfile ? auth.currentUser?.photoURL : null);
+    const activeCover = localCover || profile.coverImage || (profile as any)?.coverPhoto;
+    const validCover = activeCover && activeCover !== '/hero-bg.png' ? activeCover : null;
+    const coverImage = validCover || '/hero-bg.png';
+    const canEditCover = isOwnProfile || Boolean(auth.currentUser?.uid && profile?.uid && (auth.currentUser.uid === profile.uid || auth.currentUser.uid === (profile as any).id));
+    const isPremiumUser = Boolean(
+        profile?.isPremium || 
+        profile?.premium || 
+        (profile as any)?.isPro || 
+        (isOwnProfile && (auth.currentUser as any)?.premium) || 
+        (isOwnProfile && (auth.currentUser as any)?.isPremium)
+    );
     const name = profile.name || 'Discovery Talent';
     const handleShare = async () => {
         if (navigator.share) {
@@ -54,7 +71,8 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
     };
     const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !profile.uid)
+        const targetUid = profile?.uid || (profile as any)?.id || auth.currentUser?.uid;
+        if (!file || !targetUid)
             return;
         if (file.size > 10 * 1024 * 1024) {
             showAlert('File Too Large', 'error', 'Cover image exceeds the 10MB size limit.');
@@ -63,11 +81,12 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         setIsUploadingCover(true);
         setCoverUploadProgress(0);
         try {
-            const url = await uploadProfileMedia(profile.uid, file, (progress: number) => {
+            const url = await uploadProfileMedia(targetUid, file, (progress: number) => {
                 setCoverUploadProgress(Math.round(progress));
             });
             if (url) {
-                await updateProfileData(profile.uid, { coverImage: url });
+                setLocalCover(url);
+                await updateProfileData(targetUid, { coverImage: url });
                 showAlert('Cover Image Updated', 'success');
             }
             else {
@@ -85,11 +104,14 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         }
     };
     const handleDeleteCover = async () => {
-        if (!profile.uid)
+        const targetUid = profile?.uid || (profile as any)?.id || auth.currentUser?.uid;
+        if (!targetUid)
             return;
         setIsDeletingCover(true);
         try {
-            await updateProfileData(profile.uid, { coverImage: null });
+            setLocalCover(null);
+            await updateProfileData(targetUid, { coverImage: '' });
+            showAlert('Cover Removed', 'info', 'Profile cover image has been removed.');
         }
         catch (err: any) {
             showAlert('Error', 'error', 'Failed to remove cover image.');
@@ -102,7 +124,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
     return (<div className="relative font-sans select-none">
       
       <div className="block h-[180px] sm:h-[240px] relative w-full overflow-hidden bg-nc-dark-900">
-        <img src={coverImage} alt="Cover" className="w-full h-full object-cover select-none scale-105 transition-transform duration-700"/>
+        <img src={coverImage} alt="Cover" className="w-full h-full object-cover object-center select-none"/>
         
         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/60 to-transparent"/>
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none"/>
@@ -112,29 +134,29 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
           <ChevronLeft className="w-6 h-6" strokeWidth={2.5}/>
         </button>
 
+
+
         
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2.5">
           <button onClick={handleShare} className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 hover:bg-black/80 text-white flex items-center justify-center shadow-lg active:scale-95 transition-all" title="Share Profile">
             <Share2 className="w-4 h-4 text-white"/>
           </button>
 
-          {isOwnProfile && (<div className="relative" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setShowCoverMenu(v => !v)} className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 hover:bg-black/80 text-white flex items-center justify-center shadow-lg active:scale-95 transition-all" title="Edit Cover Photo">
+          {canEditCover && (<div className="relative" onClick={e => e.stopPropagation()}>
+              <button onClick={() => setShowCoverMenu(v => !v)} className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 hover:bg-black/80 text-white flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer" title="Edit Cover Photo">
                 <MoreHorizontal className="w-5 h-5 text-white"/>
               </button>
 
               {showCoverMenu && (<div className="absolute top-12 right-0 bg-[#121212]/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl min-w-[170px] z-30">
-                  <label htmlFor="cover-file-input" className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors" onClick={() => setShowCoverMenu(false)}>
+                  <button type="button" className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors text-left" onClick={() => { setShowCoverMenu(false); coverFileInputRef.current?.click(); }}>
                     <Camera className="w-4 h-4 text-[#00BFFF]"/>
                     <span className="text-[13px] font-semibold text-white">Change Cover</span>
-                  </label>
-                  {profile.coverImage && profile.coverImage !== '/hero-bg.png' && (<>
-                      <div className="h-px bg-white/5 mx-3"/>
-                      <button onClick={() => { setShowCoverMenu(false); setConfirmDeleteCoverOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-950/30 active:bg-red-950/50 transition-colors">
-                        <Trash2 className="w-4 h-4 text-red-400"/>
-                        <span className="text-[13px] font-semibold text-red-400">Delete Cover</span>
-                      </button>
-                    </>)}
+                  </button>
+                  <div className="h-px bg-white/5 mx-3"/>
+                  <button type="button" onClick={() => { setShowCoverMenu(false); setConfirmDeleteCoverOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-950/30 active:bg-red-950/50 transition-colors cursor-pointer text-left">
+                    <Trash2 className="w-4 h-4 text-red-400"/>
+                    <span className="text-[13px] font-semibold text-red-400">Delete Cover</span>
+                  </button>
                 </div>)}
             </div>)}
         </div>
@@ -151,7 +173,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             </div>
           </div>)}
 
-        {isOwnProfile && (<input type="file" id="cover-file-input" ref={coverFileInputRef} onChange={handleCoverFileChange} accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.gif,.bmp" className="hidden"/>)}
+        {canEditCover && (<input type="file" id="cover-file-input" ref={coverFileInputRef} onChange={handleCoverFileChange} accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.gif,.bmp" className="hidden"/>)}
       </div>
 
       <div className="max-w-4xl mx-auto px-4 -mt-24 sm:-mt-28 relative z-20 flex flex-col items-center text-center">
@@ -172,15 +194,17 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
           />
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2 flex items-center justify-center gap-2">
+        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2 flex items-center justify-center gap-2.5 flex-wrap">
           <span>{name}</span>
+          {isPremiumUser && (
+            <span className="px-3 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black text-[10px] sm:text-xs tracking-widest uppercase shadow-md shadow-amber-400/20">
+              PREMIUM
+            </span>
+          )}
         </h1>
 
         <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
           {profile.verified !== false && (<CheckCircle2 className="w-5 h-5 text-[#00BFFF] fill-[#00BFFF]"/>)}
-          {profile.isPremium && (<span className="px-3 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black text-[10px] tracking-widest uppercase shadow-md shadow-amber-400/20">
-              PREMIUM
-            </span>)}
           {profile.openToWork && (<span className="px-2.5 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[9px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/30 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse"/>
               OPEN TO WORK

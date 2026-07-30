@@ -58,6 +58,8 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
             userUpdate.openToWork = cleanData.openToWork;
         if (cleanData.image !== undefined)
             userUpdate.image = cleanData.image;
+        if (cleanData.coverImage !== undefined)
+            userUpdate.coverImage = cleanData.coverImage;
         if (cleanData.photoURL !== undefined)
             userUpdate.photoURL = cleanData.photoURL;
         if (cleanData.bio !== undefined)

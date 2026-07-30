@@ -5,7 +5,8 @@ import Avatar from '../ui/Avatar';
 import { getAvatar } from '../../utils/avatars';
 import { AdBanner } from '../ui/AdBanner';
 import { db, auth } from '../../lib/firebase';
-import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, getDoc, collection, query, where, or } from 'firebase/firestore';
+import { updateProfileData } from '../../services';
 
 // Inline follow button that mirrors ProfileHeader's style and uses Firestore
 function FollowBtn({ targetUid }) {
@@ -52,11 +53,10 @@ function FollowBtn({ targetUid }) {
       type="button"
       onClick={handleToggle}
       disabled={loading}
-      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-[0.96] flex items-center gap-1 ${
-        following
-          ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
-          : 'bg-white/[0.06] border-white/10 hover:bg-white/10 text-white'
-      } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
+      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-[0.96] flex items-center gap-1 ${following
+        ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
+        : 'bg-white/[0.06] border-white/10 hover:bg-white/10 text-white'
+        } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
     >
       {following ? 'Following' : 'Follow'}
     </button>
@@ -73,11 +73,18 @@ export default function Desktop3ColumnLayout({
 }) {
   const [profileData, setProfileData] = useState(null);
 
+  const [realFollowers, setRealFollowers] = useState(0);
+  const [realFollowing, setRealFollowing] = useState(0);
+  const [realReviews, setRealReviews] = useState(0);
+
   const uid = user?.uid || user?.id;
 
   useEffect(() => {
     if (!uid) {
       setProfileData(null);
+      setRealFollowers(0);
+      setRealFollowing(0);
+      setRealReviews(0);
       return;
     }
 
@@ -94,7 +101,39 @@ export default function Desktop3ColumnLayout({
       }
     });
 
-    return () => unsubProfile();
+    // Real-time Followers count
+    const qFollowers = query(collection(db, 'follows'), where('followingId', '==', uid));
+    const unsubFollowers = onSnapshot(qFollowers, (snap) => {
+      setRealFollowers(snap.size);
+    }, (err) => console.warn('Followers listener warning:', err));
+
+    // Real-time Following count
+    const qFollowing = query(collection(db, 'follows'), where('followerId', '==', uid));
+    const unsubFollowing = onSnapshot(qFollowing, (snap) => {
+      setRealFollowing(snap.size);
+    }, (err) => console.warn('Following listener warning:', err));
+
+    // Real-time Reviews count
+    let unsubReviews = () => {};
+    try {
+      const qReviews = query(collection(db, 'reviews'), or(where('targetUid', '==', uid), where('targetUserId', '==', uid)));
+      unsubReviews = onSnapshot(qReviews, (snap) => {
+        setRealReviews(snap.size);
+      }, () => {
+        const qSingle = query(collection(db, 'reviews'), where('targetUid', '==', uid));
+        onSnapshot(qSingle, (sSnap) => setRealReviews(sSnap.size), () => {});
+      });
+    } catch {
+      const qSingle = query(collection(db, 'reviews'), where('targetUid', '==', uid));
+      unsubReviews = onSnapshot(qSingle, (sSnap) => setRealReviews(sSnap.size), () => {});
+    }
+
+    return () => {
+      unsubProfile();
+      unsubFollowers();
+      unsubFollowing();
+      unsubReviews();
+    };
   }, [uid]);
 
   const realName =
@@ -121,14 +160,19 @@ export default function Desktop3ColumnLayout({
     user?.photoURL ||
     user?.profileImage;
 
+  const coverBannerPhoto =
+    (profileData?.coverImage && profileData?.coverImage !== '/hero-bg.png' ? profileData.coverImage : null) ||
+    (profileData?.coverPhoto && profileData?.coverPhoto !== '/hero-bg.png' ? profileData.coverPhoto : null) ||
+    (user?.coverImage && user?.coverImage !== '/hero-bg.png' ? user.coverImage : null);
+
   const isVerified = profileData?.verified === true || user?.verified === true;
   const isPremium = profileData?.isPremium === true || user?.isPremium === true || user?.premium === true;
   const gender = profileData?.gender || user?.gender;
 
-  // Stats (will show 0 until these fields exist in Firestore)
-  const followersCount = profileData?.followersCount || 0;
-  const followingCount = profileData?.followingCount || 0;
-  const profileViewsCount = profileData?.profileViews || 0;
+  // Real-time stats from Firestore collections
+  const followersCount = realFollowers || profileData?.followersCount || 0;
+  const followingCount = realFollowing || profileData?.followingCount || 0;
+  const reviewsCount = realReviews || profileData?.reviewsCount || (Array.isArray(profileData?.reviews) ? profileData.reviews.length : 0) || user?.reviewsCount || 0;
 
   // Profile strength calculation
   const computeProfileStrength = () => {
@@ -159,35 +203,42 @@ export default function Desktop3ColumnLayout({
       <div className="max-w-[1600px] mx-auto px-0 sm:px-4 lg:px-6 pt-0 pb-0">
         <div className="grid grid-cols-12 gap-8">
 
-          {/* LEFT SIDEBAR (Desktop Only: xl+) */}
-          <aside className="hidden xl:block xl:col-span-3 sticky top-24 pt-6 max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-hide">
-            <div className="overflow-hidden">
+          {/* LEFT SIDEBAR (Desktop: lg+) */}
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-24 pt-6 max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-hide">
+            <div className="overflow-hidden bg-[#060709] rounded-3xl">
 
               {/* === PROFILE CARD === */}
               {user ? (
                 <>
                   {/* Cover Banner */}
-                  <div className="relative h-32 bg-gradient-to-br from-[#0a1628] via-[#0d1f3c] to-[#0a1628] overflow-hidden rounded-2xl">
-                    {profileData?.coverImage && profileData?.coverImage !== '/hero-bg.png' ? (
-                      <img src={profileData.coverImage} alt="Cover" className="w-full h-full object-cover opacity-80" />
-                    ) : realImage ? (
-                      <img src={realImage} alt="Cover" className="w-full h-full object-cover opacity-80" />
-                    ) : (
-                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(0,191,255,0.25),transparent_70%)]" />
-                    )}
+                  <div className="relative h-32 bg-gradient-to-b from-[#092238] via-[#07192b] to-[#040e1a] overflow-hidden rounded-t-3xl">
+                    <img
+                      src={coverBannerPhoto || '/hero-bg.png'}
+                      alt="Cover"
+                      className="w-full h-full object-cover object-center opacity-85 select-none"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#040e1a]" />
                   </div>
 
                   {/* Avatar + Info (Centered) */}
                   <div className="px-4 -mt-14 relative z-10 text-center flex flex-col items-center">
                     <div className="relative w-fit mx-auto">
-                      <Avatar src={getAvatar(realImage, gender)} size={78} className="ring-4 ring-[#0A0A0F] shadow-2xl" />
+                      <Avatar
+                        user={user}
+                        userId={user?.uid}
+                        src={realImage}
+                        gender={gender}
+                        name={realName}
+                        size={80}
+                        className="ring-4 ring-[#060709] shadow-2xl"
+                      />
                       {/* Online dot */}
-                      <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-[#0A0A0F] shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                      <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 ring-2 ring-[#060709] shadow-[0_0_10px_rgba(52,211,153,0.8)] pointer-events-none" />
                     </div>
 
-                    <div className="mt-3 space-y-2 flex flex-col items-center">
+                    <div className="mt-3 space-y-1 flex flex-col items-center">
                       <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                        <h3 className="text-white font-black text-lg leading-tight tracking-tight">{realName}</h3>
+                        <h3 className="text-white font-black text-2xl leading-tight tracking-tight">{realName}</h3>
                         {isVerified && <CheckCircle2 className="w-4 h-4 text-[#00BFFF] fill-[#00BFFF] flex-shrink-0" />}
                         {isPremium && (
                           <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-black text-[9px] tracking-widest uppercase shadow-md shadow-amber-400/20">
@@ -197,7 +248,7 @@ export default function Desktop3ColumnLayout({
                       </div>
 
                       <div className="flex items-center justify-center gap-2 flex-wrap">
-                        <span className="text-gray-400 text-xs font-semibold capitalize">{realRole}</span>
+                        <span className="text-gray-400 text-sm font-semibold capitalize">{realRole}</span>
                       </div>
 
                       {openToWork && (
@@ -211,34 +262,32 @@ export default function Desktop3ColumnLayout({
                     </div>
                   </div>
 
-                  {/* Stats Row (Centered with Vertical Dividers) */}
-                  <div className="grid grid-cols-3 divide-x divide-white/10 text-center py-3 my-4">
+                  {/* Stats Row (Centered with Vertical Dividers, No Outer Border Box) */}
+                  <div className="grid grid-cols-3 divide-x divide-white/10 text-center py-2 my-5">
                     <div className="flex flex-col items-center justify-center px-1">
-                      <span className="text-white text-lg font-black">{followersCount}</span>
-                      <span className="text-gray-400 text-[9px] uppercase tracking-widest font-bold mt-0.5">Followers</span>
+                      <span className="text-white text-2xl font-black">{followersCount}</span>
+                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-1">Followers</span>
                     </div>
                     <div className="flex flex-col items-center justify-center px-1">
-                      <span className="text-white text-lg font-black">{followingCount}</span>
-                      <span className="text-gray-400 text-[9px] uppercase tracking-widest font-bold mt-0.5">Following</span>
+                      <span className="text-white text-2xl font-black">{followingCount}</span>
+                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-bold mt-1">Following</span>
                     </div>
                     <div className="flex flex-col items-center justify-center px-1">
-                      <span className="text-white text-lg font-black">{profileViewsCount}</span>
-                      <span className="text-gray-400 text-[9px] uppercase tracking-widest font-bold mt-0.5">Views</span>
+                      <span className="text-white text-2xl font-black">{reviewsCount}</span>
+                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-1">Reviews</span>
                     </div>
                   </div>
 
                   {/* View My Profile Button */}
-                  <div className="px-4">
+                  <div className="px-4 mb-6">
                     <button
                       type="button"
-                      onClick={() => onNavigate?.('profile')}
-                      className="w-full py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center transition-all cursor-pointer active:scale-[0.98] bg-white/[0.06] hover:bg-white/10 text-white"
+                      onClick={() => onNavigate?.('profile', user?.uid)}
+                      className="w-full py-3.5 rounded-2xl text-sm font-extrabold flex items-center justify-center transition-all cursor-pointer active:scale-[0.98] bg-[#161619] hover:bg-[#202026] text-white shadow-sm"
                     >
                       <span>View My Profile</span>
                     </button>
                   </div>
-
-
                 </>
               ) : (
                 <div className="p-4 text-center space-y-4">
@@ -254,22 +303,21 @@ export default function Desktop3ColumnLayout({
                 </div>
               )}
 
-              {/* === MAIN NAVIGATION === */}
-              <div className="py-3">
-                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-500 px-5 mb-1 block">Main</span>
+              {/* === MAIN NAVIGATION (No divider line) === */}
+              <div className="py-2">
+                <span className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500 px-5 mb-2 block">MAIN</span>
 
                 <button
                   type="button"
                   onClick={() => onNavigate?.('home')}
-                  className={`w-full px-5 py-2.5 text-[13px] font-semibold flex items-center justify-between transition-all cursor-pointer relative ${
-                    activeNav === 'discover'
-                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.06]'
-                      : 'text-gray-400 hover:bg-white/[0.03] hover:text-gray-200'
-                  }`}
+                  className={`w-full px-5 py-3 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'discover'
+                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    }`}
                 >
-                  {activeNav === 'discover' && <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-[#00BFFF]" />}
+                  {activeNav === 'discover' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
                   <div className="flex items-center gap-3">
-                    <Compass className="w-[18px] h-[18px]" />
+                    <Compass className="w-5 h-5" />
                     <span>Discover Feed</span>
                   </div>
                 </button>
@@ -277,15 +325,14 @@ export default function Desktop3ColumnLayout({
                 <button
                   type="button"
                   onClick={() => onNavigate?.('talent')}
-                  className={`w-full px-5 py-2.5 text-[13px] font-semibold flex items-center justify-between transition-all cursor-pointer relative ${
-                    activeNav === 'talent'
-                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.06]'
-                      : 'text-gray-400 hover:bg-white/[0.03] hover:text-gray-200'
-                  }`}
+                  className={`w-full px-5 py-3 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'talent'
+                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    }`}
                 >
-                  {activeNav === 'talent' && <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-[#00BFFF]" />}
+                  {activeNav === 'talent' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
                   <div className="flex items-center gap-3">
-                    <Users className="w-[18px] h-[18px]" />
+                    <Users className="w-5 h-5" />
                     <span>Talent Directory</span>
                   </div>
                 </button>
@@ -293,37 +340,35 @@ export default function Desktop3ColumnLayout({
                 <button
                   type="button"
                   onClick={() => onNavigate?.('casting')}
-                  className={`w-full px-5 py-2.5 text-[13px] font-semibold flex items-center justify-between transition-all cursor-pointer relative ${
-                    activeNav === 'casting'
-                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.06]'
-                      : 'text-gray-400 hover:bg-white/[0.03] hover:text-gray-200'
-                  }`}
+                  className={`w-full px-5 py-3 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'casting'
+                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    }`}
                 >
-                  {activeNav === 'casting' && <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-[#00BFFF]" />}
+                  {activeNav === 'casting' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
                   <div className="flex items-center gap-3">
-                    <Film className="w-[18px] h-[18px]" />
+                    <Film className="w-5 h-5" />
                     <span>Casting Calls</span>
                   </div>
                 </button>
               </div>
 
-              {/* === PERSONAL NAVIGATION (logged-in only) === */}
+              {/* === PERSONAL NAVIGATION (No divider line) === */}
               {user && (
-                <div className="py-3">
-                  <span className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-500 px-5 mb-1 block">Personal</span>
+                <div className="py-2">
+                  <span className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500 px-5 mb-2 block">PERSONAL</span>
 
                   <button
                     type="button"
                     onClick={() => onNavigate?.('messages')}
-                    className={`w-full px-5 py-2.5 text-[13px] font-semibold flex items-center justify-between transition-all cursor-pointer relative ${
-                      activeNav === 'messages'
-                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.06]'
-                        : 'text-gray-400 hover:bg-white/[0.03] hover:text-gray-200'
-                    }`}
+                    className={`w-full px-5 py-3 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'messages'
+                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                        : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                      }`}
                   >
-                    {activeNav === 'messages' && <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-[#00BFFF]" />}
+                    {activeNav === 'messages' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
                     <div className="flex items-center gap-3">
-                      <MessageSquare className="w-[18px] h-[18px]" />
+                      <MessageSquare className="w-5 h-5" />
                       <span>Messages</span>
                     </div>
                   </button>
@@ -331,15 +376,14 @@ export default function Desktop3ColumnLayout({
                   <button
                     type="button"
                     onClick={() => onNavigate?.('saved-castings')}
-                    className={`w-full px-5 py-2.5 text-[13px] font-semibold flex items-center justify-between transition-all cursor-pointer relative ${
-                      activeNav === 'saved-castings' || activeNav === 'saved-casting'
-                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.06]'
-                        : 'text-gray-400 hover:bg-white/[0.03] hover:text-gray-200'
-                    }`}
+                    className={`w-full px-5 py-3 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'saved-castings' || activeNav === 'saved-casting'
+                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                        : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                      }`}
                   >
-                    {(activeNav === 'saved-castings' || activeNav === 'saved-casting') && <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-[#00BFFF]" />}
+                    {(activeNav === 'saved-castings' || activeNav === 'saved-casting') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
                     <div className="flex items-center gap-3">
-                      <Bookmark className="w-[18px] h-[18px]" />
+                      <Bookmark className="w-5 h-5" />
                       <span>Saved Calls</span>
                     </div>
                   </button>
@@ -348,67 +392,67 @@ export default function Desktop3ColumnLayout({
 
 
 
-            {/* === PEOPLE TO FOLLOW === */}
-            {safeFeatured.length > 0 && (
-              <div className="mt-6">
-                <div className="flex items-center justify-between px-1 mb-3">
-                  <h4 className="text-white font-extrabold text-sm">People to follow</h4>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('talent')}
-                    className="text-[11px] font-bold text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
-                  >
-                    View all <ChevronRight className="w-3 h-3" />
-                  </button>
-                </div>
-                <div className="px-1 space-y-3">
-                  {safeFeatured.slice(0, 3).map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-3 group"
+              {/* === PEOPLE TO FOLLOW === */}
+              {safeFeatured.length > 0 && (
+                <div className="mt-6">
+                  <div className="flex items-center justify-between px-1 mb-3">
+                    <h4 className="text-white font-extrabold text-sm">People to follow</h4>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate?.('talent')}
+                      className="text-[11px] font-bold text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
                     >
+                      View all <ChevronRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="px-1 space-y-3">
+                    {safeFeatured.slice(0, 3).map((item) => (
                       <div
-                        onClick={() => onNavigate?.('profile', item.id)}
-                        className="cursor-pointer flex-shrink-0"
+                        key={item.id}
+                        className="flex items-center gap-3 group"
                       >
-                        <Avatar
-                          src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
-                          size="md"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h5
+                        <div
                           onClick={() => onNavigate?.('profile', item.id)}
-                          className="text-white text-[13px] font-bold truncate cursor-pointer group-hover:text-[#00BFFF] transition-colors"
+                          className="cursor-pointer flex-shrink-0"
                         >
-                          {item.name || 'Talent'}
-                        </h5>
-                        <p className="text-gray-500 text-[11px] truncate mt-0.5">
-                          {item.role || item.category || 'Talent'}
-                          {item.location && <span> · {item.location}</span>}
-                        </p>
+                          <Avatar
+                            src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
+                            size="md"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h5
+                            onClick={() => onNavigate?.('profile', item.id)}
+                            className="text-white text-[13px] font-bold truncate cursor-pointer group-hover:text-[#00BFFF] transition-colors"
+                          >
+                            {item.name || 'Talent'}
+                          </h5>
+                          <p className="text-gray-500 text-[11px] truncate mt-0.5">
+                            {item.role || item.category || 'Talent'}
+                            {item.location && <span> · {item.location}</span>}
+                          </p>
+                        </div>
+                        <FollowBtn targetUid={item.id} />
                       </div>
-                      <FollowBtn targetUid={item.id} />
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Footer Links */}
-            <div className="px-3 py-4 mt-2">
-              <p className="text-[10px] text-[#555] flex flex-wrap items-center gap-x-1 gap-y-0.5">
-                <Link to="/trust-safety" className="hover:underline hover:text-gray-300">Trust</Link>
-                <span className="opacity-40">·</span>
-                <Link to="/privacy" className="hover:underline hover:text-gray-300">Privacy</Link>
-                <span className="opacity-40">·</span>
-                <Link to="/terms" className="hover:underline hover:text-gray-300">Terms</Link>
-                <span className="opacity-40">·</span>
-                <span>&copy; {new Date().getFullYear()} NepalCasts</span>
-              </p>
+              {/* Footer Links */}
+              <div className="px-3 py-4 mt-2">
+                <p className="text-[10px] text-[#555] flex flex-wrap items-center gap-x-1 gap-y-0.5">
+                  <Link to="/trust-safety" className="hover:underline hover:text-gray-300">Trust</Link>
+                  <span className="opacity-40">·</span>
+                  <Link to="/privacy" className="hover:underline hover:text-gray-300">Privacy</Link>
+                  <span className="opacity-40">·</span>
+                  <Link to="/terms" className="hover:underline hover:text-gray-300">Terms</Link>
+                  <span className="opacity-40">·</span>
+                  <span>&copy; {new Date().getFullYear()} NepalCasts</span>
+                </p>
+              </div>
             </div>
-          </div>
-        </aside>
+          </aside>
 
           {/* CENTER MAIN CONTENT */}
           <main className="col-span-12 xl:col-span-6 min-w-0">

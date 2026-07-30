@@ -29,7 +29,7 @@ export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToa
                 navigate('/talents');
                 break;
             case 'profile':
-                navigate(param ? `/profile/${param}` : '/talents');
+                navigate(param ? `/profile/${param}` : user?.uid ? `/profile/${user.uid}` : '/profile');
                 break;
             case 'casting':
                 navigate('/casting');

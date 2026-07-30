@@ -60,12 +60,49 @@ export function useProfile(profileId: string | null, currentUser: any) {
             setLoading(false);
             return;
         }
-        const unsubscribe = subscribeToProfile(targetUid, (data: any) => {
-            setProfile(data as unknown as UserProfile);
+        const unsubProfile = onSnapshot(doc(db, "profiles", targetUid), (pSnap) => {
+            const pData = pSnap.exists() ? pSnap.data() : {};
+            const unsubUser = onSnapshot(doc(db, "users", targetUid), (uSnap) => {
+                const uData = uSnap.exists() ? uSnap.data() : {};
+                const isPrem = Boolean(
+                    pData.isPremium || 
+                    pData.premium || 
+                    uData.isPremium || 
+                    uData.premium || 
+                    (currentUser?.uid === targetUid && (currentUser?.isPremium || currentUser?.premium))
+                );
+                const merged = {
+                    uid: targetUid,
+                    id: targetUid,
+                    ...uData,
+                    ...pData,
+                    isPremium: isPrem,
+                    premium: isPrem,
+                };
+                setProfile(merged as unknown as UserProfile);
+                setLoading(false);
+            }, () => {
+                const isPrem = Boolean(
+                    pData.isPremium || 
+                    pData.premium || 
+                    (currentUser?.uid === targetUid && (currentUser?.isPremium || currentUser?.premium))
+                );
+                const merged = {
+                    uid: targetUid,
+                    id: targetUid,
+                    ...pData,
+                    isPremium: isPrem,
+                    premium: isPrem,
+                };
+                setProfile(merged as unknown as UserProfile);
+                setLoading(false);
+            });
+            return () => unsubUser();
+        }, () => {
             setLoading(false);
         });
-        return () => unsubscribe();
-    }, [targetUid]);
+        return () => unsubProfile();
+    }, [targetUid, currentUser?.uid]);
     useEffect(() => {
         if (!targetUid)
             return;

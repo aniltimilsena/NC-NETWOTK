@@ -42,6 +42,8 @@ export interface UserProfile {
     openToAudition?: boolean;
     showContactInfo?: boolean;
     verified?: boolean;
+    premium?: boolean;
+    isPremium?: boolean;
     online?: boolean;
     deactivated?: boolean;
     lastSeen?: Timestamp | null;

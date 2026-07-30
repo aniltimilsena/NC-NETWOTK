@@ -340,7 +340,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             </div>
 
             
-            {!isAdmin && !user?.premium && (<div className="px-6 pb-4 mt-auto">
+            {!isAdmin && !(user?.premium || user?.isPremium) && (<div className="px-6 pb-4 mt-auto">
                 <div className="bg-[#1C1C1C] rounded-2xl p-3.5 border border-[#2A2A2A] relative overflow-hidden">
                   <h4 className="text-white font-bold text-[14px] mb-0.5 relative z-10">Go PRO</h4>
                   <p className="text-[#888] text-[11px] leading-snug mb-2.5 max-w-[200px] relative z-10">
