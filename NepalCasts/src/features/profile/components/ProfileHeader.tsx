@@ -197,14 +197,19 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2 flex items-center justify-center gap-2.5 flex-wrap">
           <span>{name}</span>
           {isPremiumUser && (
-            <span className="px-3 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black text-[10px] sm:text-xs tracking-widest uppercase shadow-md shadow-amber-400/20">
+            <span className="px-3 py-0.5 rounded-md badge-premium-shimmer font-black text-[10px] sm:text-xs tracking-widest uppercase no-scale">
               PREMIUM
             </span>
           )}
         </h1>
 
         <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
-          {profile.verified !== false && (<CheckCircle2 className="w-5 h-5 text-[#00BFFF] fill-[#00BFFF]"/>)}
+          {profile.verified !== false && (
+            <span className="px-2.5 py-0.5 rounded-full badge-verified-seal text-[10px] font-extrabold tracking-wider uppercase flex items-center gap-1.5 no-scale">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#00BFFF] fill-[#00BFFF]"/>
+              <span>VERIFIED</span>
+            </span>
+          )}
           {profile.openToWork && (<span className="px-2.5 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[9px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/30 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse"/>
               OPEN TO WORK

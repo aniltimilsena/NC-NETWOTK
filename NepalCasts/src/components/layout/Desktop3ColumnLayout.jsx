@@ -237,11 +237,16 @@ export default function Desktop3ColumnLayout({
                     </div>
 
                     <div className="mt-3 space-y-1 flex flex-col items-center">
-                      <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                      <div className="flex items-center justify-center gap-2 flex-wrap">
                         <h3 className="text-white font-black text-2xl leading-tight tracking-tight">{realName}</h3>
-                        {isVerified && <CheckCircle2 className="w-4 h-4 text-[#00BFFF] fill-[#00BFFF] flex-shrink-0" />}
+                        {isVerified && (
+                          <span className="px-2 py-0.5 rounded-full badge-verified-seal text-[9px] font-extrabold tracking-wider uppercase flex items-center gap-1 no-scale">
+                            <CheckCircle2 className="w-3 h-3 text-[#00BFFF] fill-[#00BFFF] flex-shrink-0" />
+                            <span>VERIFIED</span>
+                          </span>
+                        )}
                         {isPremium && (
-                          <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-black text-[9px] tracking-widest uppercase shadow-md shadow-amber-400/20">
+                          <span className="px-2.5 py-0.5 rounded badge-premium-shimmer font-black text-[9px] tracking-widest uppercase no-scale">
                             PREMIUM
                           </span>
                         )}

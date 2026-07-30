@@ -546,3 +546,26 @@ body.font-devanagari * {
     font-size: 0.8125rem !important; /* Forces it to be at least ~13px for readable display */
   }
 }
+
+/* Gold Shimmer & Premium Badge Utilities */
+@keyframes gold-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.badge-premium-shimmer {
+  background: linear-gradient(110deg, #d97706 0%, #f59e0b 25%, #fef08a 50%, #f59e0b 75%, #d97706 100%) !important;
+  background-size: 200% 100% !important;
+  animation: gold-shimmer 3s infinite linear !important;
+  border: 1px solid rgba(254, 240, 138, 0.8) !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.5), 0 0 4px rgba(254, 240, 138, 0.4) !important;
+  color: #090d16 !important;
+}
+
+/* Verified Blue Seal Utility */
+.badge-verified-seal {
+  background: rgba(14, 165, 233, 0.12) !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  color: #38bdf8 !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25) !important;
+}
