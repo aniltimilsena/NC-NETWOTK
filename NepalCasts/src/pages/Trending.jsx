@@ -101,7 +101,7 @@ export default function Trending({ onNavigate }) {
         e.stopPropagation();
         const currentUser = auth.currentUser;
         if (!currentUser) {
-            alert("Please sign in to follow talents.");
+            onNavigate('/signin');
             return;
         }
         if (currentUser.uid === talentId) {
@@ -393,7 +393,7 @@ export default function Trending({ onNavigate }) {
                         <button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`w-full py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-widest ${isFollowing
                             ? 'bg-white/5 border border-white/10 hover:border-red-500/30 hover:bg-red-500/5 hover:text-red-400 text-gray-300'
                             : 'bg-[#0099FF] text-black hover:opacity-95 shadow-md shadow-[#0099FF]/10 active:scale-[0.98]'}`}>
-                          {isFollowing ? 'Following' : 'Follow'}
+                          {!auth.currentUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
                         </button>
                       </div>
                     </motion.div>);
@@ -470,7 +470,7 @@ export default function Trending({ onNavigate }) {
                         {prof.id !== auth.currentUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs font-black transition-all uppercase tracking-wider ${isFollowing
                             ? 'bg-transparent border border-white/10 hover:border-red-500/30 hover:bg-red-500/5 hover:text-red-400 text-gray-300'
                             : 'bg-[#0099FF] text-black hover:opacity-95 shadow-md shadow-[#0099FF]/10 active:scale-[0.98]'}`}>
-                            {isFollowing ? 'Following' : 'Follow'}
+                            {!auth.currentUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
                           </button>)}
                       </div>
 

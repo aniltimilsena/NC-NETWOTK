@@ -37,6 +37,26 @@ export const verifyToken = async (req: AuthedRequest, res: Response, next: NextF
         });
     }
 };
+export const optionalAuth = async (req: AuthedRequest, _res: Response, next: NextFunction): Promise<void> => {
+    const bearerHeader = req.headers.authorization;
+    const match = bearerHeader?.match(/^Bearer\s+(.+)$/i);
+    const token = match?.[1];
+    if (!token) {
+        return next();
+    }
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        req.user = decodedToken;
+        const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+        if (userDoc.exists && userDoc.data()?.status === 'banned') {
+            req.user = undefined;
+        }
+    } catch (_error) {
+        req.user = undefined;
+    }
+    next();
+};
+
 export const isAdmin = async (req: AuthedRequest, res: Response, next: NextFunction): Promise<void> => {
     const uid = req.user?.uid;
     if (!uid) {

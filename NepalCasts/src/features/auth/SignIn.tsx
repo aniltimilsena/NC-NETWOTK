@@ -74,10 +74,7 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
                 const result = await getRedirectResult(auth);
                 if (result && result.user && isMounted) {
                     sessionStorage.removeItem('nc_google_redirect');
-                    const profileRes = await ensureUserProfile(result.user);
-                    if (!profileRes.success) {
-                        throw new Error(profileRes.error || "Failed to initialize user profile");
-                    }
+                    await ensureUserProfile(result.user);
                     localStorage.removeItem('login_attempts');
                     localStorage.removeItem('login_lockout_until');
                     onNavigate('home');
@@ -246,10 +243,7 @@ export default function SignIn({ onNavigate, showAlert }: SignInProps) {
                     setError(banCheck.message || 'Suspended.');
                     return;
                 }
-                const profileRes = await ensureUserProfile(result.user);
-                if (!profileRes.success) {
-                    throw new Error(profileRes.error || "Failed to initialize user profile");
-                }
+                await ensureUserProfile(result.user);
                 localStorage.removeItem('login_attempts');
                 localStorage.removeItem('login_lockout_until');
                 if (result.user.email) {

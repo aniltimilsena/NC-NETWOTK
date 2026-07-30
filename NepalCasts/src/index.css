@@ -388,16 +388,37 @@ html.font-size-large { font-size: 18px; }
 .category-card {
   position: relative;
   background: #111111 !important;
-  border: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
   border-radius: 20px !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
   overflow: hidden;
+  aspect-ratio: 1;
 }
 
 .category-card:hover {
-  transform: translateY(-4px) !important;
-  filter: brightness(1.1) !important;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+  transform: translateY(-6px) !important;
+  filter: brightness(1.08) !important;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(56, 189, 248, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Top accent glow on hover */
+.category-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent);
+  border-radius: 0 0 4px 4px;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  z-index: 20;
+}
+
+.category-card:hover::before {
+  opacity: 1;
 }
 
 /* Ripple effect on click */

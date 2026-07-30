@@ -163,11 +163,11 @@ export const AdBanner: React.FC<AdBannerProps> = ({ id = 'demo-ad', variant = 'c
               </button>)}
             </div>
 
-            <h3 className="text-sm sm:text-base font-bold text-white tracking-tight leading-snug group-hover:text-cyan-200 transition-colors line-clamp-2 drop-shadow">
+            <h3 className="text-sm sm:text-base font-bold text-white tracking-tight leading-snug group-hover:text-cyan-200 transition-colors line-clamp-2 drop-shadow text-justify">
               {currentTitle}
             </h3>
 
-            {currentSubtitle && (<p className="text-gray-300 text-[11px] line-clamp-1 leading-normal drop-shadow">
+            {currentSubtitle && (<p className="text-gray-300 text-[11px] line-clamp-1 leading-normal drop-shadow text-justify">
               {currentSubtitle}
             </p>)}
 

@@ -40,6 +40,7 @@ export default defineConfig({
     __BUILD_VERSION__: JSON.stringify(buildVersion),
   },
   server: {
+    port: 20128,
     proxy: {
       '/api': {
         target: 'http://localhost:5000',

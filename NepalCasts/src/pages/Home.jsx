@@ -12,6 +12,7 @@ import { subscribeToTalents, subscribeToCastingCalls } from '../services';
 export default function Home({ onNavigate, user }) {
   const isLoggedIn = !!user;
   const [isLoading, setIsLoading] = useState(true);
+  const [talentsReceived, setTalentsReceived] = useState(false);
   const [currentPremiumIdx, setCurrentPremiumIdx] = useState(0);
   const [talents, setTalents] = useState([]);
   const [castingCalls, setCastingCalls] = useState([]);
@@ -107,6 +108,7 @@ export default function Home({ onNavigate, user }) {
       unsubUsers = subscribeToTalents((data) => {
         if (Array.isArray(data)) {
           setTalents(data);
+          setTalentsReceived(true);
         }
         setIsLoading(false);
       });
@@ -193,8 +195,16 @@ export default function Home({ onNavigate, user }) {
     return !roleStr.includes('model');
   });
 
+  const defaultTalent = {
+    id: 'anil-timilsena',
+    name: 'Anil Timilsena',
+    role: 'Actor',
+    category: 'Actor',
+    coverImage: '/hero-bg.png'
+  };
+
   const trendingList = activeTalentsList.length > 0 ? activeTalentsList : talents;
-  const currentPremiumUser = trendingList[currentPremiumIdx] || trendingList[0] || null;
+  const currentPremiumUser = trendingList[currentPremiumIdx] || trendingList[0] || defaultTalent;
 
   useEffect(() => {
     setHeroImageError(false);
@@ -259,17 +269,17 @@ export default function Home({ onNavigate, user }) {
               </div>
 
               {/* Talent Meta beside photo */}
-              <div className="flex flex-col justify-end gap-1 min-w-0 self-end h-[166px] sm:h-[196px]">
-                <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight truncate drop-shadow-lg">
+              <div className="flex flex-col justify-end items-start gap-1 min-w-0 self-end h-[166px] sm:h-[196px] text-left">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight truncate drop-shadow-lg text-left w-full">
                   {currentPremiumUser.name || 'Anil Timilsena'}
                 </h1>
-                <p className="text-sm sm:text-base text-gray-200 font-medium capitalize drop-shadow-md truncate">
+                <p className="text-sm sm:text-base text-gray-200 font-medium capitalize drop-shadow-md truncate text-left w-full">
                   {currentPremiumUser.role || currentPremiumUser.category || 'Actor'}
                 </p>
                 <button
                   type="button"
                   onClick={() => onNavigate('profile', currentPremiumUser.id)}
-                  className="text-[#00BFFF] hover:underline text-sm sm:text-base font-semibold text-left transition-colors cursor-pointer"
+                  className="text-[#00BFFF] hover:underline text-sm sm:text-base font-semibold text-left transition-colors cursor-pointer block"
                 >
                   View profile
                 </button>
@@ -315,7 +325,9 @@ export default function Home({ onNavigate, user }) {
             ref={actorsScrollRef}
             className="flex gap-3 sm:gap-4 overflow-x-auto pt-2 pb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
           >
-            {actorTalentsList.length > 0 ? (
+            {(!talentsReceived) ? (
+              <div className="text-gray-400 text-sm py-4">Loading talents...</div>
+            ) : actorTalentsList.length > 0 ? (
               actorTalentsList.map((talent) => (
                 <div
                   key={talent.id}
@@ -337,7 +349,7 @@ export default function Home({ onNavigate, user }) {
                 </div>
               ))
             ) : (
-              <div className="text-gray-400 text-sm py-4">Loading talents...</div>
+              <div className="text-gray-400 text-sm py-4">No talents found</div>
             )}
           </div>
         </section>
@@ -360,26 +372,34 @@ export default function Home({ onNavigate, user }) {
           </div>
 
           {categoriesReady ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-5 sm:gap-6">
               {categories.slice(0, 2).map((cat) => {
                 const CatIcon = cat.icon;
                 return (
                   <button
                     key={cat.id}
                     onClick={() => onNavigate('listing', cat.name)}
-                    className="p-5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 transition-all duration-300 flex flex-col items-center gap-3 group cursor-pointer"
+                    className="p-7 sm:p-9 lg:p-11 rounded-3xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 transition-all duration-300 flex flex-col items-center gap-4 sm:gap-5 group cursor-pointer shadow-xl hover:border-[#00BFFF]/30"
                   >
                     <div
-                      className="w-14 h-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
-                      style={{ backgroundColor: `${cat.color}20`, color: cat.color }}
+                      className="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                      style={{
+                        backgroundColor: `${cat.color}20`,
+                        color: cat.color,
+                        boxShadow: `0 0 35px ${cat.color}15`,
+                      }}
                     >
-                      {CatIcon && <CatIcon className="w-7 h-7" strokeWidth={1.5} />}
+                      {CatIcon && <CatIcon className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14" strokeWidth={1.5} />}
                     </div>
-                    <span className="text-sm sm:text-base font-bold text-white group-hover:text-[#00BFFF] transition-colors">
+                    <span className="text-lg sm:text-xl lg:text-2xl font-black text-white group-hover:text-[#00BFFF] transition-colors">
                       {cat.name}
                     </span>
-                    <span className="text-xs text-gray-400">
-                      {cat.count} {cat.count === 1 ? 'talent' : 'talents'}
+                    <span className="text-sm sm:text-base text-gray-400 font-semibold">
+                      {cat.count === 0 ? (
+                        <span className="text-[#00BFFF] font-bold">Be the first →</span>
+                      ) : (
+                        `${cat.count} ${cat.count === 1 ? 'talent' : 'talents'}`
+                      )}
                     </span>
                   </button>
                 );
@@ -499,7 +519,6 @@ export default function Home({ onNavigate, user }) {
 
                     {/* Right Status */}
                     <div className="text-right flex flex-col items-end gap-1 px-1 shrink-0 justify-center">
-                      <span className="px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] bg-[#00BFFF]/10 border border-[#00BFFF]/25 text-[#00BFFF] font-extrabold uppercase tracking-wider animate-pulse shrink-0">Trending</span>
                       <div className="mt-0.5">
                         <p className="text-gray-400 text-xs font-medium">
                           <span className="text-white font-bold">

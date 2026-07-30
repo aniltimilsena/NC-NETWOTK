@@ -183,7 +183,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         e.stopPropagation();
         const currentUser = auth.currentUser;
         if (!currentUser) {
-            alert("Please sign in to follow talents.");
+            onNavigate('/signin');
             return;
         }
         if (currentUser.uid === talentId) {
@@ -296,7 +296,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                             </div>
                         </div>
 
-                        {loading ? (<TalentCardSkeleton count={8} />) : (<div className="flex flex-wrap gap-3 sm:gap-4">
+                        {loading ? (<TalentCardSkeleton count={8} />) : (<div className="grid grid-cols-2 gap-5 sm:gap-6">
                             {CATEGORIES.map((cat, idx) => {
                                 const count = getFacetedCount('category', cat);
                                 const detail = getCategoryConfig(cat);
@@ -305,23 +305,23 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                                     setSelectedFilters(prev => ({ ...prev, category: cat }));
                                     setViewMode('talents');
                                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }} className="category-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] p-3.5 sm:p-10 lg:p-12 flex flex-col items-center gap-4 sm:gap-6 lg:gap-8 group cursor-pointer">
+                                }} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }} className="category-card p-7 sm:p-9 lg:p-11 flex flex-col items-center justify-center gap-4 sm:gap-5 group cursor-pointer rounded-3xl">
 
-                                    <div className="relative z-10 w-16 h-16 sm:w-24 sm:h-24 lg:w-28 lg:h-28 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5" style={{
-                                        backgroundColor: `${detail.color}26`,
+                                    <div className="relative z-10 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1" style={{
+                                        backgroundColor: `${detail.color}20`,
                                         color: detail.color,
-                                        boxShadow: `0 0 25px ${detail.color}15`,
+                                        boxShadow: `0 0 35px ${detail.color}15`,
                                     }}>
-                                        <Icon className="w-[38px] h-[38px] sm:w-[52px] sm:h-[52px] lg:w-[60px] lg:h-[60px]" strokeWidth={1.5} />
+                                        <Icon className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14" strokeWidth={1.5} />
                                     </div>
 
-                                    <span className="text-base sm:text-xl lg:text-2xl font-black text-white/90 group-hover:text-white transition-colors relative z-10">
+                                    <span className="text-lg sm:text-xl lg:text-2xl font-black text-white/90 group-hover:text-white transition-colors relative z-10">
                                         {detail.label}
                                     </span>
 
-                                    {count === 0 ? (<span className="text-xs sm:text-base lg:text-lg font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
+                                    {count === 0 ? (<span className="text-sm sm:text-base lg:text-lg font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
                                         Be the first →
-                                    </span>) : (<span className="text-xs sm:text-base lg:text-lg font-semibold text-nc-muted relative z-10">
+                                    </span>) : (<span className="text-sm sm:text-base lg:text-lg font-semibold text-nc-muted relative z-10">
                                         {count} {count === 1 ? 'talent' : 'talents'}
                                     </span>)}
                                 </motion.button>);
@@ -444,10 +444,10 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
                                         </div>
 
                                         <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                                            {talent.id !== auth.currentUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, talent.id)} className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 ${isFollowing
-                                                ? 'border border-white/10 text-gray-400 hover:bg-white/5'
-                                                : 'bg-gradient-to-br from-sky-400 to-sky-600 text-black hover:brightness-110 shadow-lg shadow-sky-500/10 active:scale-[0.98]'}`}>
-                                                {isFollowing ? 'Following' : 'Follow'}
+                                            {talent.id !== auth.currentUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, talent.id)} className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 border active:scale-[0.98] ${isFollowing
+                                                ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
+                                                : 'bg-white/[0.06] border-white/10 hover:bg-white/10 text-white'}`}>
+                                                {!auth.currentUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
                                             </button>)}
 
                                             <button type="button" onClick={() => setActiveMenuId(activeMenuId === talent.id ? null : talent.id)} className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-white relative bg-transparent hover:bg-white/5 transition-colors">

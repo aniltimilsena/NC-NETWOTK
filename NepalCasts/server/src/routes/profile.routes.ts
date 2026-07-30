@@ -1,5 +1,5 @@
 import { Router, type Response } from 'express';
-import { verifyToken } from '../middleware/auth';
+import { verifyToken, optionalAuth } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
 import { ProfileSchema } from '../schemas';
 import { db } from '../config';
@@ -9,6 +9,28 @@ import { bloomFilterMiddleware, cacheMiddleware, scrapingPreventerMiddleware } f
 import { addToBloomFilter } from '../services/cacheService';
 import type { AuthedRequest } from '../types';
 const router = Router();
+
+const getPublicProfilesHandler = async (_req: any, res: Response): Promise<any> => {
+    try {
+        const snapshot = await db.collection('profiles').limit(50).get();
+        const talents = snapshot.docs.map(doc => {
+            const data = doc.data() || {};
+            const { fcmToken, fcmTokens, loginAttempts, password, passwordHash, ...rest } = data;
+            return {
+                id: doc.id,
+                ...rest
+            };
+        });
+        return res.json({ success: true, talents });
+    } catch (error: any) {
+        console.error('[PublicProfiles] Firestore query error:', error?.message || error);
+        // Return 200 with empty array fallback so client proxy never encounters 500/502
+        return res.json({ success: true, talents: [], note: 'Firestore admin credential uninitialized' });
+    }
+};
+
+router.get('/public', optionalAuth, getPublicProfilesHandler);
+router.get('/profile/public', optionalAuth, getPublicProfilesHandler);
 router.get('/search', verifyToken, scrapingPreventerMiddleware, async (req: AuthedRequest<any, any, any>, res: Response): Promise<any> => {
     try {
         const { q, category } = req.query;

@@ -36,14 +36,8 @@ service cloud.firestore {
         request.auth.uid in get(/databases/$(database)/documents/users/$(targetUserId)).data.blockedUsers;
     }
 
-    
-    
-    
-    
-    
-    
     match /profiles/{userId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create, update: if (isOwner(userId) || isAdmin()) &&
         !('password' in request.resource.data) &&
         !('passwordHash' in request.resource.data) &&

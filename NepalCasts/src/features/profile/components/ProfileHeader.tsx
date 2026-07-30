@@ -31,7 +31,9 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         document.addEventListener('click', close, { once: true });
         return () => document.removeEventListener('click', close);
     }, [showCoverMenu]);
-    const coverImage = profile.coverImage || '/hero-bg.png';
+    const avatarUrl = (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo;
+    const validCover = profile.coverImage && profile.coverImage !== '/hero-bg.png' ? profile.coverImage : null;
+    const coverImage = validCover || avatarUrl || '/hero-bg.png';
     const name = profile.name || 'Discovery Talent';
     const handleShare = async () => {
         if (navigator.share) {
@@ -152,19 +154,28 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         {isOwnProfile && (<input type="file" id="cover-file-input" ref={coverFileInputRef} onChange={handleCoverFileChange} accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.gif,.bmp" className="hidden"/>)}
       </div>
 
-      
       <div className="max-w-4xl mx-auto px-4 -mt-24 sm:-mt-28 relative z-20 flex flex-col items-center text-center">
-        
         <div className="relative z-10 mb-3">
-          <Avatar src={profile.image || profile.photoURL || (isOwnProfile ? auth.currentUser?.photoURL : null)} gender={profile.gender || ''} name={name} size="none" editable={isOwnProfile} userId={profile.uid} showStatus={profile.isOnline === true} status={profile.isOnline === true ? 'online' : 'offline'} onUploadSuccess={(url: string) => updateProfileData(auth.currentUser?.uid || profile.uid, { image: url, photoURL: url })} showAlert={showAlert} className="w-44 h-44 sm:w-56 sm:h-56 rounded-full border-4 border-[#0A0A0F] shadow-2xl ring-2 ring-white/15"/>
+          <Avatar 
+            user={profile}
+            src={(profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isOwnProfile ? auth.currentUser?.photoURL : null)} 
+            gender={profile.gender || ''} 
+            name={name} 
+            size="none" 
+            editable={isOwnProfile} 
+            userId={profile.uid} 
+            showStatus={profile.isOnline === true} 
+            status={profile.isOnline === true ? 'online' : 'offline'} 
+            onUploadSuccess={(url: string) => updateProfileData(auth.currentUser?.uid || profile.uid, { image: url, photoURL: url, profileImage: url })} 
+            showAlert={showAlert} 
+            className="w-44 h-44 sm:w-56 sm:h-56 rounded-full border-4 border-[#0A0A0F] shadow-2xl ring-2 ring-white/15"
+          />
         </div>
 
-        
         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2 flex items-center justify-center gap-2">
           <span>{name}</span>
         </h1>
 
-        
         <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
           {profile.verified !== false && (<CheckCircle2 className="w-5 h-5 text-[#00BFFF] fill-[#00BFFF]"/>)}
           {profile.isPremium && (<span className="px-3 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black text-[10px] tracking-widest uppercase shadow-md shadow-amber-400/20">
@@ -182,7 +193,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
                 ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
                 : 'bg-white/[0.06] border-white/10 hover:bg-white/10 text-white'}`}>
               <UserPlus className="w-4 h-4 text-white/80"/>
-              <span>{isFollowing ? 'Following' : '+ Follow'}</span>
+              <span>{isFollowing ? 'Following' : 'Follow'}</span>
             </button>
 
             <button onClick={() => onNavigate('messages', profile.uid)} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#00BFFF]/10 border border-[#00BFFF]/40 hover:bg-[#00BFFF]/20 text-[#00BFFF] text-sm font-bold transition-all active:scale-95 shadow-[0_0_15px_rgba(0,191,255,0.15)]">

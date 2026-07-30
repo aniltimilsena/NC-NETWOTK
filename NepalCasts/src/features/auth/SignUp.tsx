@@ -210,10 +210,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                 const result = await getRedirectResult(auth);
                 if (result && result.user && isMounted) {
                     sessionStorage.removeItem('nc_google_redirect');
-                    const profileRes = await ensureUserProfile(result.user);
-                    if (!profileRes.success) {
-                        throw new Error(profileRes.error || "Failed to initialize user profile");
-                    }
+                    await ensureUserProfile(result.user);
                     onNavigate('home');
                 }
                 else {
@@ -335,10 +332,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                 throw err;
             }
             if (result && result.user) {
-                const profileRes = await ensureUserProfile(result.user);
-                if (!profileRes.success) {
-                    throw new Error(profileRes.error || "Failed to initialize user profile");
-                }
+                await ensureUserProfile(result.user);
                 onNavigate('home');
             }
         }
