@@ -138,8 +138,8 @@ export default function AdminUsers() {
     const handleTogglePremium = async (userId: string, currentPremium: boolean) => {
         try {
             const targetPremium = !currentPremium;
-            await updateDoc(doc(db, "users", userId), { premium: targetPremium });
-            await updateDoc(doc(db, "profiles", userId), { premium: targetPremium });
+            await updateDoc(doc(db, "users", userId), { premium: targetPremium, isPremium: targetPremium });
+            await updateDoc(doc(db, "profiles", userId), { premium: targetPremium, isPremium: targetPremium });
             await logAdminAction(adminEmail, `Update Subscription`, userId, targetPremium ? `Granted PRO Membership` : `Revoked PRO Membership`);
             try {
                 await addDoc(collection(db, "notifications"), {
@@ -166,13 +166,53 @@ export default function AdminUsers() {
                 console.warn("Could not send premium status notification:", notifErr);
             }
             if (selectedUser?.id === userId) {
-                setSelectedUser(prev => prev ? { ...prev, premium: targetPremium } : null);
+                setSelectedUser(prev => prev ? { ...prev, premium: targetPremium, isPremium: targetPremium } : null);
             }
             alert(targetPremium ? "PRO membership granted successfully!" : "PRO membership revoked successfully!");
         }
         catch (err) {
             console.error("Failed to update subscription:", err);
             alert("Error updating subscription.");
+        }
+    };
+    const handleToggleVerification = async (userId: string, currentVerified: boolean) => {
+        try {
+            const targetVerified = !currentVerified;
+            await updateDoc(doc(db, "users", userId), { verified: targetVerified });
+            await updateDoc(doc(db, "profiles", userId), { verified: targetVerified });
+            await logAdminAction(adminEmail, `Update Verification`, userId, targetVerified ? `Granted Verified Blue Badge` : `Revoked Verified Blue Badge`);
+            try {
+                await addDoc(collection(db, "notifications"), {
+                    userId: userId,
+                    recipientId: userId,
+                    receiverId: userId,
+                    senderId: "system",
+                    senderName: "NepalCasts Team",
+                    senderAvatar: "",
+                    title: targetVerified ? "Account Verified" : "Verification Status Updated",
+                    body: targetVerified
+                        ? "Congratulations! Your account has been officially verified with the Blue Badge."
+                        : "Your verification badge status has been updated by administration.",
+                    type: "system",
+                    notificationType: "system",
+                    isRead: false,
+                    read: false,
+                    createdAt: serverTimestamp(),
+                    targetUrl: `/profile/${userId}`,
+                    profileUrl: `/profile/${userId}`
+                });
+            }
+            catch (notifErr) {
+                console.warn("Could not send verification notification:", notifErr);
+            }
+            if (selectedUser?.id === userId) {
+                setSelectedUser(prev => prev ? { ...prev, verified: targetVerified } : null);
+            }
+            alert(targetVerified ? "Verified Blue Badge granted successfully!" : "Verified Blue Badge revoked!");
+        }
+        catch (err) {
+            console.error("Failed to update verification:", err);
+            alert("Error updating verification badge.");
         }
     };
     const handleDeleteUser = (userId: string) => {
