@@ -230,7 +230,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                       <Trash2 className="w-3.5 h-3.5"/>
                     </button>)}
                 </div>
-              </div>));
+              </div>);
         })) : (<div className="h-full flex items-center justify-center text-center p-6 text-nc-muted text-xs">
             Start the conversation by sending a message below.
           </div>)}
