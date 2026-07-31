@@ -8,7 +8,7 @@ import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
 
-const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToast }) => {
+const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToast, activeTab }) => {
   const navigate = useNavigate();
   const context = useOutletContext();
   const currentUser = propUser || context?.user;
@@ -113,6 +113,30 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
             <span className="text-xs font-extrabold text-gray-400 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
               {savedCalls.length} Saved
             </span>
+          </div>
+
+          {/* Sub Navigation Tabs */}
+          <div className="flex gap-2 border-b border-white/10 pb-3 overflow-x-auto scrollbar-none">
+            {[
+              { id: 'casting', label: 'Casting Calls', path: '/saved/casting' },
+              { id: 'talent', label: 'Saved Talent', path: '/saved/talent' },
+              { id: 'posts', label: 'Saved Posts', path: '/saved/posts' },
+              { id: 'searches', label: 'Saved Searches', path: '/saved/searches' }
+            ].map(tab => {
+              const isActive = (activeTab || 'casting') === tab.id || (tab.id === 'casting' && !activeTab);
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => navigate(tab.path)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${isActive
+                    ? 'bg-[#00BFFF]/10 border border-[#00BFFF]/30 text-[#00BFFF]'
+                    : 'bg-white/[0.02] border border-white/5 text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Loading Skeletons */}

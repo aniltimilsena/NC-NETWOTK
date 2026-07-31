@@ -210,8 +210,8 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
       </div>
     </div>);
 }
-export default function Notifications({ onNavigate, user }) {
-    const [filter, setFilter] = useState('all');
+export default function Notifications({ onNavigate, user, initialFilter = 'all' }) {
+    const [filter, setFilter] = useState(initialFilter || 'all');
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [followingIds, setFollowingIds] = useState(new Set());
@@ -296,7 +296,7 @@ export default function Notifications({ onNavigate, user }) {
     };
     const handleNotificationClick = async (notif) => {
         await markAsRead(notif.id);
-        const target = notif.targetUrl || notif.profileUrl;
+        const target = notif.targetUrl || notif.profileUrl || notif.link;
         if (target) {
             if (target.startsWith('/profile/')) {
                 const id = target.split('/').pop();
@@ -447,24 +447,22 @@ export default function Notifications({ onNavigate, user }) {
         {groupItems.map((notif) => (<motion.li key={notif.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }} className="w-full">
             <NotificationCard notif={notif} followingIds={followingIds} handleFollowBack={handleFollowBack} markAsRead={markAsRead} onDeleteRequest={(id) => setDeletingNotifId(id)} handleNotificationClick={handleNotificationClick} timeAgo={timeAgo}/>
           </motion.li>))}
-      </AnimatePresence>
+</AnimatePresence>
     </ul>);
     return (<div className="min-h-screen bg-[#0a0a0a] text-white">
       
       <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-8 md:px-12 pt-4 sm:pt-6 md:pt-10">
-        
-        <div className="grid grid-cols-3 items-center mb-6 md:mb-8 pb-2">
-          <div className="flex justify-start">
+                {/* Top Bar Header */}
+        <div className="flex items-center justify-between mb-6 md:mb-8 pb-2">
+          <div className="flex items-center gap-3">
             <button onClick={() => onNavigate('back')} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer" aria-label="Back">
               <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5}/>
             </button>
-          </div>
-          <div className="flex justify-center">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight whitespace-nowrap">
               Notifications
             </h1>
           </div>
-          <div className="flex justify-end">
+          <div className="flex items-center">
             <button onClick={handleMarkAllRead} disabled={unreadCount === 0} className={`text-xs sm:text-sm md:text-base font-bold transition-colors px-3 md:px-4 py-1.5 md:py-2 rounded-lg ${unreadCount > 0
             ? 'text-[#00BFFF] hover:text-[#0099e6] hover:bg-white/5 cursor-pointer'
             : 'text-gray-600 cursor-not-allowed'}`}>

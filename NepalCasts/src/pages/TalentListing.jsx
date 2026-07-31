@@ -268,7 +268,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     };
     return (
         <Desktop3ColumnLayout user={auth.currentUser} onNavigate={onNavigate} activeNav="talent" featuredTalents={talents}>
-            <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-32 md:pb-20 relative font-sans">
+            <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-6 relative font-sans">
                 <SEO title="Browse Professional Talent | NepalCasts" description="Premium directory of cinema professionals in Nepal." />
 
 

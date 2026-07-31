@@ -6,7 +6,6 @@ import CategorySkeleton from '../components/ui/CategorySkeleton';
 import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
 import { getAvatar } from '../utils/avatars';
-import { AdBanner } from '../components/ui/AdBanner';
 import { useTranslation } from 'react-i18next';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { subscribeToTalents, subscribeToCastingCalls } from '../services';
@@ -311,21 +310,6 @@ export default function Home({ onNavigate, user }) {
               </motion.div>
             </AnimatePresence>
           )}
-        </section>
-
-        {/* Ad Banner Section - mobile/tablet only */}
-        <section className="px-3 sm:px-6 py-3 lg:hidden">
-          <AdBanner
-            id="home-demo-ad"
-            variant="card"
-            badge="SPONSORED"
-            title="Kathmandu Acting & Directing Masterclass"
-            subtitle="Learn directly from National Award Directors in Lalitpur"
-            discount="20% OFF"
-            ctaText="Explore Now"
-            ctaUrl="/casting"
-            image="/assets/ads/masterclass_promo.png"
-          />
         </section>
 
         {/* Actor & Actress Section */}

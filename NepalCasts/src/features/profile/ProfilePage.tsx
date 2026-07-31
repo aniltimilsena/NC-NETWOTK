@@ -298,7 +298,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         }
     };
     if (loading || resolvingUid) {
-        return (<div className="min-h-screen bg-nc-dark pb-24 text-left">
+        return (<div className="min-h-screen bg-nc-dark pb-6 text-left">
         
         <div className="h-[160px] w-full bg-white/[0.02] relative">
           <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent"/>
@@ -356,7 +356,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
       </div>);
     }
     if (!profile) {
-        return (<div className="min-h-screen bg-nc-dark pb-24 flex flex-col items-center justify-center text-center p-6">
+        return (<div className="min-h-screen bg-nc-dark pb-6 flex flex-col items-center justify-center text-center p-6">
         <h2 className="text-xl font-bold text-white mb-2">Profile Not Found</h2>
         <p className="text-nc-muted text-sm max-w-xs mb-6">
           The profile you are looking for does not exist or has been deleted.
@@ -383,18 +383,20 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         experience: 'Experience',
         reviews: 'Reviews',
     };
-    return (<div className="min-h-screen bg-nc-dark pb-24">
-      <ProfileHeader profile={profile} isOwnProfile={isOwnProfile} isFollowing={isFollowing} followerCount={followerCount} followingCount={followingCount} savedCount={savedCount} onFollowToggle={handleFollowToggle} onNavigate={onNavigate} showAlert={showAlert} onFollowClick={handleFollowModalOpen}/>
+    return (
+      <div className="min-h-screen bg-nc-dark pb-6">
+        <ProfileHeader profile={profile} isOwnProfile={isOwnProfile} isFollowing={isFollowing} followerCount={followerCount} followingCount={followingCount} savedCount={savedCount} onFollowToggle={handleFollowToggle} onNavigate={onNavigate} showAlert={showAlert} onFollowClick={handleFollowModalOpen}/>
 
-      
-      <div className="max-w-4xl mx-auto px-4 mt-6">
-        <div className="flex border-b border-white/10 gap-8 mb-8 overflow-x-auto scrollbar-none justify-center sm:justify-start">
-          {tabs.map((tab) => (<button key={tab} onClick={() => setActiveTab(tab)} className={`pb-3 text-sm sm:text-base font-bold capitalize tracking-wide transition-colors relative whitespace-nowrap ${activeTab === tab ? 'text-[#00BFFF]' : 'text-gray-400 hover:text-white'}`}>
-              {tabLabelMap[tab] || tab}
-              {activeTab === tab && (<div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#00BFFF] rounded-full shadow-[0_0_8px_rgba(0,191,255,0.8)]"/>)}
-            </button>))}
-        </div>
-
+        {/* Profile Main Content Container */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+          <div className="flex border-b border-white/10 gap-8 mb-8 overflow-x-auto scrollbar-none justify-center sm:justify-start">
+            {tabs.map((tab) => (
+              <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-3 text-sm sm:text-base font-bold capitalize tracking-wide transition-colors relative whitespace-nowrap ${activeTab === tab ? 'text-[#00BFFF]' : 'text-gray-400 hover:text-white'}`}>
+                {tabLabelMap[tab] || tab}
+                {activeTab === tab && (<div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#00BFFF] rounded-full shadow-[0_0_8px_rgba(0,191,255,0.8)]"/>)}
+              </button>
+            ))}
+          </div>
         
         <div className="animate-fade-in">
           {activeTab === 'about' && (<ProfileAbout profile={profile} showContact={showContact}/>)}

@@ -14,19 +14,29 @@ import { AdminRoutes } from './admin.routes';
 import { NotificationsRoutes } from './notifications.routes';
 import { SavedRoutes } from './saved.routes';
 
+import { CallsRoutes } from './calls.routes';
+import { ApplicationsRoutes } from './applications.routes';
+
 const Home = lazy(() => import('../pages/Home'));
 const Premium = lazy(() => import('../pages/Premium'));
+const About = lazy(() => import('../pages/About'));
+const Contact = lazy(() => import('../pages/Contact'));
+const Help = lazy(() => import('../pages/Help'));
 const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('../pages/TermsOfService'));
 const TrustSafety = lazy(() => import('../pages/TrustSafety'));
 const SignIn = lazy(() => import('../features/auth/SignIn'));
 const SignUp = lazy(() => import('../features/auth/SignUp'));
-const CallPage = lazy(() => import('../features/call/CallPage'));
+const ForgotPassword = lazy(() => import('../features/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('../features/auth/ResetPassword'));
+const VerifyEmail = lazy(() => import('../features/auth/VerifyEmail'));
 const NotFound = lazy(() => import('../pages/NotFound'));
+const Forbidden = lazy(() => import('../pages/Forbidden'));
+const ServerError = lazy(() => import('../pages/ServerError'));
 
 const ProtectedRoute = ({ user, authReady, children }: any) => {
   if (!authReady) return <RouteLoader />;
-  return user ? (children || <Outlet />) : <Navigate to="/signin" replace />;
+  return user ? (children || <Outlet />) : <Navigate to="/login" replace />;
 };
 
 const AdminRoute = ({ user, isAdmin, authReady, children }: any) => {
@@ -66,15 +76,24 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
       {/* Public Routes with Shared Public Layout */}
       <Route element={<PublicLayout user={user} isAdmin={isAdmin} onLogout={onLogout} showAlert={showAlert} showToast={showToast} />}>
         <Route path="/" element={<Home onNavigate={onNavigate} user={user} />} />
-        {DiscoverRoutes({ onNavigate })}
+        {DiscoverRoutes({ onNavigate, user, isAdmin })}
         {ProfileRoutes({ onNavigate, user, isAdmin, showAlert })}
         {CastingRoutes({ onNavigate, user, isAdmin, showAlert })}
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/help" element={<Help />} />
         <Route path="/premium" element={<Premium />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/trust-safety" element={<TrustSafety />} />
+        
+        {/* Authentication Routes */}
+        <Route path="/login" element={<SignIn onNavigate={onNavigate} />} />
         <Route path="/signin" element={<SignIn onNavigate={onNavigate} />} />
         <Route path="/signup" element={<SignUp onNavigate={onNavigate} />} />
+        <Route path="/forgot-password" element={<ForgotPassword onNavigate={onNavigate} />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
       </Route>
 
       {/* Protected User Routes with User Layout */}
@@ -84,7 +103,8 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
           {SettingsRoutes({ onNavigate, user, showToast, showAlert })}
           {NotificationsRoutes({ onNavigate, user })}
           {SavedRoutes({ user, onNavigate, showToast })}
-          <Route path="/call" element={<CallPage />} />
+          {CallsRoutes()}
+          {ApplicationsRoutes({ onNavigate, user })}
         </Route>
       </Route>
 
@@ -94,6 +114,11 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
           {AdminRoutes()}
         </Route>
       </Route>
+
+      {/* Error Pages */}
+      <Route path="/403" element={<Forbidden />} />
+      <Route path="/404" element={<NotFound />} />
+      <Route path="/500" element={<ServerError />} />
 
       {/* Fallback 404 Route */}
       <Route path="*" element={<NotFound />} />

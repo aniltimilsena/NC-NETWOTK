@@ -1,6 +1,6 @@
 import SEO from '../components/SEO';
 export default function TrustSafety() {
-    return (<div className="min-h-screen bg-nc-dark pt-2 pb-24">
+    return (<div className="min-h-screen bg-nc-dark pt-2 pb-6">
       <SEO title="Trust & Safety | Scam Prevention on NepalCasts" description="Learn how NepalCasts protects actors from scams. Read our E-E-A-T verified trust and safety guidelines, how we verify casting directors, and tips for safe auditions."/>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 space-y-4">

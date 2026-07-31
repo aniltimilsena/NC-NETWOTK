@@ -15,13 +15,15 @@ interface MessagesPageProps {
     onNavigate: (page: string, param?: any) => void;
     user: any;
     initialUserId?: string | null;
+    initialConversationId?: string | null;
+    activeSubView?: string | null;
     showAlert: (message: string, type?: any, detail?: string) => void;
 }
 import { useTranslation } from 'react-i18next';
 
-export default function MessagesPage({ onNavigate, user, initialUserId, showAlert }: MessagesPageProps) {
+export default function MessagesPage({ onNavigate, user, initialUserId, initialConversationId, activeSubView, showAlert }: MessagesPageProps) {
     const { t } = useTranslation();
-    const { conversations, activeChatId, setActiveChatId, messages, loading, typingUsers, callHistory, loadingCalls, updateTyping, dispatchMessage } = useMessages(user, initialUserId ?? null);
+    const { conversations, activeChatId, setActiveChatId, messages, loading, typingUsers, callHistory, loadingCalls, updateTyping, dispatchMessage } = useMessages(user, initialConversationId || initialUserId || null);
     const { initiateCall } = useCall();
     const [replyingTo, setReplyingTo] = useState<Message | null>(null);
     const [showNewChatModal, setShowNewChatModal] = useState(false);

@@ -67,7 +67,7 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
             e.target.value = '';
         }
     };
-    return (<div className="min-h-screen bg-nc-dark pt-6 sm:pt-8 pb-24">
+    return (<div className="min-h-screen bg-nc-dark pt-6 sm:pt-8 pb-6">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-black text-white">Create Your Profile</h1>

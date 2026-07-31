@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { User, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, TrendingUp, BarChart3, ArrowRight, Eye, UserPlus, CheckCircle2, Lock, FileText } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import { getAvatar } from '../../utils/avatars';
-import { AdBanner } from '../ui/AdBanner';
 import { db, auth } from '../../lib/firebase';
 import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, getDoc, collection, query, where, or } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
@@ -546,18 +545,6 @@ export default function Desktop3ColumnLayout({
                 </div>
               </div>
             )}
-
-            {/* Ad Banner */}
-            <div className="px-2">
-              <AdBanner
-                variant="card"
-                badge="SPONSORED"
-                title="Promote Your Casting"
-                subtitle="Reach thousands of talented actors across Nepal."
-                ctaText="Get Started"
-                ctaUrl="/premium"
-              />
-            </div>
 
             {/* Featured Talent Widget */}
             {safeFeatured.length > 0 && (

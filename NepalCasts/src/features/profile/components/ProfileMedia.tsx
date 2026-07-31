@@ -77,7 +77,7 @@ export default function ProfileMedia({ profile, isOwnProfile, onUploadMedia, onD
               </button>)}
           </div>
 
-          {introVideo ? (<div className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 bg-black w-full max-w-4xl shadow-[0_0_30px_rgba(0,191,255,0.15)] group">
+          {introVideo ? (<div className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 bg-black w-full shadow-[0_0_30px_rgba(0,191,255,0.15)] group">
               <video key={introVideo} src={introVideo} controls playsInline preload="auto" className="w-full h-full object-contain bg-black"/>
               {isOwnProfile && onDeleteIntroVideo && (<button onClick={() => setDeleteVideoConfirmOpen(true)} className="absolute top-4 right-4 bg-black/70 hover:bg-red-600 p-2.5 rounded-full border border-white/15 transition-all text-white hover:scale-110 shadow-lg cursor-pointer z-10" title="Remove Video">
                   <Trash2 className="w-4 h-4"/>

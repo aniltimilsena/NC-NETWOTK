@@ -1,5 +1,5 @@
 import { auth, db } from "../../../lib/firebase";
-import { collection, doc, query, orderBy, where, onSnapshot, setDoc, serverTimestamp, } from "firebase/firestore";
+import { collection, doc, query, orderBy, where, onSnapshot, setDoc, serverTimestamp, addDoc, getDocs } from "firebase/firestore";
 import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
@@ -50,6 +50,56 @@ export const getCastingCallById = async (id: string) => {
         }
     }, 5 * 60 * 1000);
 };
+export const dispatchTargetedAuditionAlerts = async (callId: string, callData: any) => {
+    try {
+        const creatorId = auth.currentUser?.uid || callData.creatorId;
+        const usersRef = collection(db, COLLECTIONS.USERS);
+        const snap = await getDocs(usersRef);
+
+        const targetType = (callData.type || "").toLowerCase();
+        const targetLocation = (callData.location || "").toLowerCase();
+
+        const notificationPromises: Promise<any>[] = [];
+
+        snap.forEach((userDoc) => {
+            if (userDoc.id === creatorId) return;
+
+            const u = userDoc.data();
+            const userCategory = (u.category || u.role || u.talentType || "").toLowerCase();
+            const userLocation = (u.location || u.address || u.city || "").toLowerCase();
+
+            // Match if user's category matches the target talent type OR if user's location matches
+            const matchesCategory = Boolean(targetType && (userCategory.includes(targetType) || targetType.includes(userCategory)));
+            const matchesLocation = Boolean(targetLocation && (userLocation.includes(targetLocation) || targetLocation.includes(userLocation)));
+
+            if (matchesCategory || matchesLocation || !targetType) {
+                notificationPromises.push(
+                    addDoc(collection(db, COLLECTIONS.NOTIFICATIONS), {
+                        recipientId: userDoc.id,
+                        senderId: creatorId,
+                        title: `🎯 New Audition Alert: ${callData.title || "Casting Notice"}`,
+                        message: `A new ${callData.type || "Casting"} audition matching your profile was posted in ${callData.location || "Nepal"}.`,
+                        type: "casting",
+                        notificationType: "casting",
+                        link: `/casting/${callId}`,
+                        createdAt: new Date().toISOString(),
+                        read: false,
+                        priority: "high",
+                    })
+                );
+            }
+        });
+
+        if (notificationPromises.length > 0) {
+            await Promise.all(notificationPromises.slice(0, 50));
+            console.log(`Successfully sent ${Math.min(notificationPromises.length, 50)} targeted audition alerts for casting ${callId}`);
+        }
+    }
+    catch (err) {
+        console.warn("Failed to dispatch targeted audition alerts:", err);
+    }
+};
+
 export const createCastingCall = async (callData: any) => {
     try {
         const currentUserUid = auth.currentUser?.uid;
@@ -59,7 +109,11 @@ export const createCastingCall = async (callData: any) => {
         const response = await apiClient.post<{
             id: string;
         }>("/casting", callData, { timeout: 2000 });
-        return { id: response.data?.id || null, error: null };
+        const createdId = response.data?.id || callData.id;
+        if (createdId) {
+            dispatchTargetedAuditionAlerts(createdId, callData);
+        }
+        return { id: createdId || null, error: null };
     }
     catch (error: unknown) {
         const message = error instanceof Error ? error.message : "Failed to create casting call";
@@ -77,6 +131,7 @@ export const createCastingCall = async (callData: any) => {
                 createdBy: currentUserUid,
                 status: dataToSave.status || "Open",
             });
+            dispatchTargetedAuditionAlerts(finalId, callData);
             return { id: finalId, error: null };
         }
         catch (clientError: any) {

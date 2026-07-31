@@ -68,9 +68,20 @@ function LanguageSettings({ showAlert }: { showAlert: (msg: string, type?: any) 
     );
 }
 
-export default function SettingsPage({ onNavigate, user, showAlert }: SettingsPageProps) {
+export default function SettingsPage({ onNavigate, user, initialTab, showAlert }: SettingsPageProps) {
     const { profile, loading, sessions, blockedUsersList, updateProfileSettings, revokeSession, unblockUserAction } = useSettings(user);
-    const [activeTab, setActiveTab] = useState<'about' | 'skills' | 'experience' | 'password' | 'notifications' | 'language'>('about');
+    const resolveTab = (tabStr?: string): 'about' | 'skills' | 'experience' | 'password' | 'notifications' | 'language' => {
+        if (!tabStr) return 'about';
+        const clean = tabStr.toLowerCase();
+        if (clean === 'profile' || clean === 'account') return 'about';
+        if (clean === 'security' || clean === 'password' || clean === 'privacy') return 'password';
+        if (clean === 'notifications') return 'notifications';
+        if (clean === 'language') return 'language';
+        if (clean === 'skills') return 'skills';
+        if (clean === 'experience') return 'experience';
+        return 'about';
+    };
+    const [activeTab, setActiveTab] = useState<'about' | 'skills' | 'experience' | 'password' | 'notifications' | 'language'>(() => resolveTab(initialTab));
     const [currentMobileView, setCurrentMobileView] = useState<'menu' | 'content'>('menu');
     const tabsConfig = [
         { id: 'about', label: 'Edit Profile', icon: User },
@@ -81,12 +92,12 @@ export default function SettingsPage({ onNavigate, user, showAlert }: SettingsPa
         { id: 'language', label: 'Language Settings', icon: Globe },
     ] as const;
     if (loading) {
-        return (<div className="min-h-screen bg-nc-dark pb-24 flex items-center justify-center">
+        return (<div className="min-h-screen bg-nc-dark pb-6 flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-[#00BFFF] border-t-transparent rounded-full animate-spin"/>
       </div>);
     }
     if (!profile) {
-        return (<div className="min-h-screen bg-nc-dark pb-24 flex flex-col items-center justify-center text-center p-6">
+        return (<div className="min-h-screen bg-nc-dark pb-6 flex flex-col items-center justify-center text-center p-6">
         <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
         <p className="text-nc-muted text-sm max-w-xs mb-6">
           Please log in to manage your account settings.
@@ -105,7 +116,7 @@ export default function SettingsPage({ onNavigate, user, showAlert }: SettingsPa
             onNavigate('back');
         }
     };
-    return (<div className="min-h-screen bg-nc-dark pb-24">
+    return (<div className="min-h-screen bg-nc-dark pb-6">
       
       <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 pt-6 flex items-center gap-4">
         <button onClick={handleBack} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 cursor-pointer" aria-label="Back">

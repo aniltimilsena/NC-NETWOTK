@@ -144,7 +144,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-20 sm:-mt-24 relative z-20 flex flex-col items-center text-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 sm:-mt-24 relative z-20 flex flex-col items-center text-center">
         <div className="relative z-10 mb-3">
           <Avatar 
             user={profile}

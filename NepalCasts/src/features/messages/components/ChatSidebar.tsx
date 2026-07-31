@@ -89,14 +89,14 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
       <div className="p-4 border-b border-white/10 space-y-3">
         
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {onNavigate && (<button onClick={() => onNavigate('home')} className="p-1.5 rounded-lg hover:bg-white/10 text-nc-muted hover:text-white transition-colors cursor-pointer mr-1 md:hidden" title="Back to Home">
-                <ChevronLeft className="w-5 h-5"/>
+          <div className="flex items-center gap-3">
+            {onNavigate && (<button onClick={() => onNavigate('home')} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer" title="Back to Home" aria-label="Back to Home">
+                <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5}/>
               </button>)}
-            <h2 className="text-xl font-bold text-white tracking-tight">Messages</h2>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Messages</h2>
           </div>
-          <button onClick={onStartNewChat} className="w-8 h-8 rounded-full bg-[#00BFFF]/10 hover:bg-[#00BFFF]/20 text-[#00BFFF] flex items-center justify-center transition-all cursor-pointer active:scale-95" title="New Message">
-            <MessageSquare className="w-4 h-4"/>
+          <button onClick={onStartNewChat} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-[#00BFFF] flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer" title="New Message">
+            <MessageSquare className="w-5 h-5 text-[#00BFFF]" strokeWidth={2}/>
           </button>
         </div>
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bookmark,
-  MapPin, Plus, Search, AlertCircle, Clock, SlidersHorizontal, ChevronLeft
+  MapPin, Plus, Search, AlertCircle, Clock, SlidersHorizontal, ChevronLeft, Flame, DollarSign
 } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -10,6 +10,18 @@ import { subscribeToCastingCalls } from '../../services';
 import { useTranslation } from 'react-i18next';
 import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
+
+const getUrgentStatus = (deadlineStr) => {
+  if (!deadlineStr) return null;
+  const dDate = new Date(deadlineStr);
+  if (isNaN(dDate.getTime())) return null;
+  const diffMs = dDate.getTime() - new Date().getTime();
+  const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+  if (diffHours >= 0 && diffHours <= 48) {
+    return `${diffHours}h left`;
+  }
+  return null;
+};
 
 const getDeadlineStatus = (deadlineStr) => {
   if (!deadlineStr) return { color: 'text-gray-400 border-white/5 bg-white/5', label: 'No deadline' };
@@ -47,9 +59,9 @@ const getRolesSummary = (call) => {
   return `Looking for: ${summaries.join(' | ')}`;
 };
 
-export default function CastingCall({ onNavigate, user, isAdmin }) {
+export default function CastingCall({ onNavigate, user, isAdmin, filter }) {
   const { t } = useTranslation();
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [activeFilter, setActiveFilter] = useState(filter === 'my-calls' ? 'My Applications' : 'All');
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
   const searchTimerRef = useRef(null);
@@ -69,6 +81,16 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
   const [activeSort, setActiveSort] = useState('Latest');
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState('All');
+  const [selectedPayStatus, setSelectedPayStatus] = useState('All');
+
+  const LOCATIONS = ['All', 'Kathmandu', 'Pokhara', 'Lalitpur', 'Chitwan', 'Bhaktapur', 'International'];
+  const PAY_OPTIONS = [
+    { id: 'All', label: 'All Compensation' },
+    { id: 'Paid', label: 'Paid Roles Only' },
+    { id: 'Stipend', label: 'Stipend Offered' },
+    { id: 'Unpaid', label: 'Unpaid / Indie' }
+  ];
 
   const filterPills = [
     { id: 'All', label: 'All' },
@@ -146,6 +168,24 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
         call.type?.toLowerCase().includes(searchQuery.toLowerCase());
 
       if (!matchesSearch) return false;
+
+      // Location Filter
+      if (selectedLocation !== 'All') {
+        const locLower = (call.location || '').toLowerCase();
+        if (!locLower.includes(selectedLocation.toLowerCase())) return false;
+      }
+
+      // Pay Status Filter
+      if (selectedPayStatus !== 'All') {
+        const budgetStr = (call.budget || '').toLowerCase();
+        if (selectedPayStatus === 'Paid') {
+          if (budgetStr.includes('unpaid') || budgetStr.includes('volunteer')) return false;
+        } else if (selectedPayStatus === 'Stipend') {
+          if (!budgetStr.includes('stipend')) return false;
+        } else if (selectedPayStatus === 'Unpaid') {
+          if (budgetStr && !budgetStr.includes('unpaid') && !budgetStr.includes('volunteer')) return false;
+        }
+      }
 
 
       if (activeFilter === 'Open') {
@@ -334,9 +374,43 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
                         );
                       })}
 
+                      {/* Section 2: Location */}
+                      <div className="h-px bg-white/5 my-2" />
+                      <div className="px-4 py-1 text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Region / Location</div>
+                      <div className="px-2 space-y-1">
+                        <select
+                          value={selectedLocation}
+                          onChange={(e) => setSelectedLocation(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] text-white font-semibold outline-none cursor-pointer"
+                        >
+                          {LOCATIONS.map((loc) => (
+                            <option key={loc} value={loc} className="bg-[#111116] text-white">
+                              {loc === 'All' ? 'All Regions' : loc}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Section 3: Pay Status */}
+                      <div className="h-px bg-white/5 my-2" />
+                      <div className="px-4 py-1 text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Compensation</div>
+                      <div className="px-2 space-y-1">
+                        <select
+                          value={selectedPayStatus}
+                          onChange={(e) => setSelectedPayStatus(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] text-white font-semibold outline-none cursor-pointer"
+                        >
+                          {PAY_OPTIONS.map((opt) => (
+                            <option key={opt.id} value={opt.id} className="bg-[#111116] text-white">
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
                       <div className="h-px bg-white/5 my-2" />
 
-                      {/* Section 2: Sort */}
+                      {/* Section 4: Sort */}
                       <div className="px-4 py-1 text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Sort By</div>
                       {sortOptions.map(opt => {
                         const isActive = activeSort === opt.id;
@@ -385,18 +459,18 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
               ))}
             </>
           ) : filteredCalls.length === 0 ? (
-            <div className="text-center py-24 border-b border-white/5 px-6">
-              <AlertCircle size={40} className="text-gray-600 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">No Casting Calls Found</h3>
-              <p className="text-gray-500 text-sm max-w-sm mx-auto mb-8">
+            <div className="min-h-[65vh] flex flex-col items-center justify-center text-center py-12 px-6 border-b border-white/5 w-full">
+              <AlertCircle size={48} className="text-gray-600 mb-4" />
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">No Casting Calls Found</h3>
+              <p className="text-gray-400 text-sm max-w-sm mx-auto mb-8 leading-relaxed">
                 Try adjusting your filters, search term, or check back later for new auditions.
               </p>
               {canPostCall && (
                 <button
                   onClick={() => onNavigate('casting-create')}
-                  className="bg-gradient-to-br from-sky-400 to-sky-600 text-black px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-sky-500/10 hover:brightness-110 active:scale-[0.98] inline-flex items-center gap-1.5"
+                  className="bg-gradient-to-br from-sky-400 to-sky-600 text-black px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-sky-500/10 hover:brightness-110 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Plus size={15} strokeWidth={3} />
+                  <Plus size={16} strokeWidth={3} />
                   Post a Call
                 </button>
               )}
@@ -407,6 +481,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
               const isSaved = savedIds.includes(call.id);
               const isApplied = appliedCastingIds.includes(call.id);
               const deadlineInfo = getDeadlineStatus(call.deadline);
+              const urgentText = getUrgentStatus(call.deadline);
               const roleNeeded = getRolesSummary(call);
 
               return (
@@ -429,6 +504,12 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
                       {isApplied && (
                         <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-sky-400 text-black text-[9px] font-black uppercase tracking-wider">
                           Applied
+                        </div>
+                      )}
+                      {urgentText && (
+                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-red-600/90 border border-red-400 text-white text-[9px] font-black uppercase tracking-wider animate-pulse flex items-center gap-1 shadow-lg backdrop-blur-md">
+                          <Flame className="w-3 h-3 text-amber-300 fill-amber-300" />
+                          <span>URGENT • {urgentText}</span>
                         </div>
                       )}
                     </div>

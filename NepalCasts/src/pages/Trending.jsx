@@ -195,7 +195,7 @@ export default function Trending({ onNavigate }) {
             return '#CD7F32';
         return '#4B5563';
     };
-    return (<div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-32 md:pb-20 relative font-sans">
+    return (<div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-6 relative font-sans">
       <SEO title="Trending Cinema Talent | NepalCasts" description="Check out who's trending now on Nepal's premier casting and cinema professional network."/>
 
       <div className="max-w-[1600px] mx-auto px-1 sm:px-8 lg:px-12">

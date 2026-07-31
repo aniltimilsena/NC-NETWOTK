@@ -9,7 +9,12 @@ const formatTime = (seconds: number) => {
     const s = (seconds % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
 };
-export default function CallPage() {
+interface CallPageProps {
+  initialCallId?: string;
+  filter?: string;
+}
+
+export default function CallPage({ initialCallId, filter }: CallPageProps = {}) {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { callState, activeCall, isMuted, callDuration, initiateCall, hangUp, toggleMute } = useCall();

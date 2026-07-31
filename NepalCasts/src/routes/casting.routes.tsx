@@ -6,12 +6,24 @@ const CastingDetail = lazy(() => import('../features/casting/CastingCallDetail')
 const CastingCallCreate = lazy(() => import('../features/casting/CastingCallCreate'));
 
 const CastingDetailWrapper = ({ onNavigate, user, showAlert }: any) => {
-  const { id } = useParams();
-  return <CastingDetail onNavigate={onNavigate} castingId={id} user={user} showAlert={showAlert} />;
+  const params = useParams();
+  const castingId = params.castingId || params.id;
+  const activeSubView = params.sub || params.action;
+
+  return (
+    <CastingDetail
+      onNavigate={onNavigate}
+      castingId={castingId}
+      user={user}
+      showAlert={showAlert}
+      activeTab={activeSubView}
+    />
+  );
 };
 
 export const CastingRoutes = ({ onNavigate, user, isAdmin, showAlert }: any) => (
   <>
+    {/* Public Casting Routes */}
     <Route
       path="/casting"
       element={<CastingCall onNavigate={onNavigate} user={user} isAdmin={isAdmin} />}
@@ -26,6 +38,36 @@ export const CastingRoutes = ({ onNavigate, user, isAdmin, showAlert }: any) => 
     />
     <Route
       path="/casting/:id/:sub"
+      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
+    />
+
+    {/* Casting Management Routes (/my-casting/*) */}
+    <Route
+      path="/my-casting"
+      element={<CastingCall onNavigate={onNavigate} user={user} isAdmin={isAdmin} filter="my-calls" />}
+    />
+    <Route
+      path="/my-casting/create"
+      element={<CastingCallCreate onNavigate={onNavigate} user={user} showAlert={showAlert} />}
+    />
+    <Route
+      path="/my-casting/:castingId"
+      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
+    />
+    <Route
+      path="/my-casting/:castingId/edit"
+      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
+    />
+    <Route
+      path="/my-casting/:castingId/applicants"
+      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
+    />
+    <Route
+      path="/my-casting/:castingId/media"
+      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
+    />
+    <Route
+      path="/my-casting/:castingId/invitations"
       element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
     />
   </>
