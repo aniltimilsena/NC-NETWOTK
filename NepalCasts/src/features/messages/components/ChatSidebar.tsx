@@ -32,6 +32,27 @@ const formatLastMessage = (text?: string) => {
     }
     return text;
 };
+
+const formatChatTime = (timestamp?: any) => {
+    if (!timestamp) return '';
+    try {
+        const date = timestamp.toDate ? timestamp.toDate() : (timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp));
+        if (isNaN(date.getTime())) return '';
+        const now = new Date();
+        const isToday = date.toDateString() === now.toDateString();
+        if (isToday) {
+            return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+        }
+        const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays < 7) {
+            return date.toLocaleDateString([], { weekday: 'short' });
+        }
+        return date.toLocaleDateString([], { month: 'numeric', day: 'numeric' });
+    } catch {
+        return '';
+    }
+};
+
 export default function ChatSidebar({ conversations, activeChatId, onSelectChat, onDeleteChat, callHistory, loadingCalls, currentUser, onStartNewChat, onNavigate, onInitiateCall }: ChatSidebarProps) {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'chats' | 'calls'>('chats');
@@ -45,7 +66,9 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
             if (window.navigator && window.navigator.vibrate) {
                 window.navigator.vibrate(50);
             }
-            onDeleteChat(convoId);
+            if (window.confirm('Delete this conversation?')) {
+                onDeleteChat(convoId);
+            }
         }, 600);
     }, [onDeleteChat]);
     const endPress = useCallback(() => {
@@ -54,28 +77,33 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
             longPressTimer.current = null;
         }
     }, []);
-    const filteredConversations = conversations.filter((c) => (c.name || '').toLowerCase().includes(query.toLowerCase()));
-    return (<div className="flex flex-col h-full border-r border-white/5 bg-[#0E0E0E]">
+
+    const filteredConversations = conversations.filter((c) => {
+        const nameMatch = c.name?.toLowerCase().includes(query.toLowerCase());
+        const msgMatch = c.lastMessage?.toLowerCase().includes(query.toLowerCase());
+        return nameMatch || msgMatch;
+    });
+
+    return (<div className="w-full md:w-80 lg:w-96 h-full bg-[#070709] border-r border-white/10 flex flex-col shrink-0 select-none">
       
-      <div className="p-4 pt-6 md:p-4 space-y-3">
-        <div className="flex justify-between items-center">
-          <button onClick={() => onNavigate ? onNavigate('back') : navigate(-1)} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 no-min-h shadow-sm active:scale-95 cursor-pointer" title="Go Back">
-            <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5}/>
-          </button>
-
-          <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Inbox</h2>
-
-          <button onClick={onStartNewChat} className="w-10 h-10 rounded-xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] hover:bg-[#00BFFF]/20 transition-all flex items-center justify-center shrink-0 active:scale-95" title="New Chat">
-            <MessageSquare className="w-5 h-5"/>
+      <div className="p-4 border-b border-white/10 space-y-3">
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {onNavigate && (<button onClick={() => onNavigate('home')} className="p-1.5 rounded-lg hover:bg-white/10 text-nc-muted hover:text-white transition-colors cursor-pointer mr-1 md:hidden" title="Back to Home">
+                <ChevronLeft className="w-5 h-5"/>
+              </button>)}
+            <h2 className="text-xl font-bold text-white tracking-tight">Messages</h2>
+          </div>
+          <button onClick={onStartNewChat} className="w-8 h-8 rounded-full bg-[#00BFFF]/10 hover:bg-[#00BFFF]/20 text-[#00BFFF] flex items-center justify-center transition-all cursor-pointer active:scale-95" title="New Message">
+            <MessageSquare className="w-4 h-4"/>
           </button>
         </div>
 
         
         <div className="relative">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-nc-muted">
-            <Search className="w-4 h-4"/>
-          </span>
-          <input type="text" placeholder="Search conversation..." value={query} onChange={(e) => setQuery(e.target.value)} className="w-full bg-white/5 border border-white/5 rounded-2xl py-2.5 pl-10 pr-4 text-xs text-white placeholder-white/20 outline-none focus:border-[#00BFFF]/20 transition-colors"/>
+          <Search className="w-4 h-4 text-nc-muted absolute left-3 top-1/2 -translate-y-1/2"/>
+          <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search messages..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-nc-muted focus:outline-none focus:border-[#00BFFF] transition-colors"/>
         </div>
 
         
@@ -94,7 +122,8 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
         {activeTab === 'chats' ? (filteredConversations.length > 0 ? (<div className="flex flex-col">
               {filteredConversations.map((c) => {
                 const isSelected = c.id === activeChatId;
-                const unreadCount = c.unreadCounts?.[currentUser.uid] || 0;
+                const unreadCount = c.unreadCounts?.[currentUser?.uid] || 0;
+                const timeString = formatChatTime(c.lastMessageAt || c.updatedAt);
                 return (<div key={c.id} onTouchStart={() => startPress(c.id)} onTouchEnd={endPress} onTouchMove={endPress} onMouseDown={(e) => {
                         if (e.button !== 0)
                             return;
@@ -107,16 +136,21 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
                             return;
                         }
                         onSelectChat(c.id);
-                    }} className={`flex items-center gap-3 py-3.5 px-4 cursor-pointer transition-all ${isSelected ? 'bg-white/10' : 'bg-transparent hover:bg-white/5'}`}>
+                    }} className={`flex items-center gap-3 py-3 px-4 cursor-pointer transition-all ${isSelected ? 'bg-white/10' : 'bg-transparent hover:bg-white/5'}`}>
                     <Avatar src={c.avatar} name={c.name} size="md"/>
-                    <div className="flex-1 min-w-0 text-left">
-                      <div className="flex justify-between items-start gap-2">
-                        <span className="text-[15px] font-bold text-white block truncate">{c.name}</span>
-                        {unreadCount > 0 && (<span className="w-5 h-5 rounded-full bg-[#00BFFF] text-black font-black text-[10px] flex items-center justify-center shrink-0">
-                            {unreadCount}
-                          </span>)}
-                      </div>
-                      <p className="text-[13px] text-nc-muted truncate font-medium mt-0.5">{formatLastMessage(c.lastMessage)}</p>
+                    <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
+                      <span className="text-[15px] font-bold text-white block truncate leading-snug">{c.name}</span>
+                      <p className="text-[13px] text-nc-muted truncate font-medium mt-0.5 leading-snug">
+                        {formatLastMessage(c.lastMessage) || <span className="italic opacity-50 text-xs">No messages yet</span>}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end justify-center gap-1.5 shrink-0 ml-2 self-center">
+                      {timeString && (<span className={`text-[11px] font-medium leading-none ${unreadCount > 0 ? 'text-[#00BFFF] font-semibold' : 'text-nc-muted'}`}>
+                          {timeString}
+                        </span>)}
+                      {unreadCount > 0 && (<span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[#00BFFF] text-black font-extrabold text-[11px] flex items-center justify-center shadow-sm shadow-[#00BFFF]/30 leading-none">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>)}
                     </div>
                   </div>);
             })}
