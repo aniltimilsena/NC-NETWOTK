@@ -10,15 +10,21 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(async (config) => {
     const user = auth.currentUser;
     if (user) {
-        const token = await user.getIdToken();
-        if (!config.headers) {
-            config.headers = new AxiosHeaders();
-        }
-        if (config.headers instanceof AxiosHeaders) {
-            config.headers.set('Authorization', `Bearer ${token}`);
-        }
-        else {
-            (config.headers as any).Authorization = `Bearer ${token}`;
+        try {
+            const token = await user.getIdToken();
+            if (token) {
+                if (!config.headers) {
+                    config.headers = new AxiosHeaders();
+                }
+                if (config.headers instanceof AxiosHeaders) {
+                    config.headers.set('Authorization', `Bearer ${token}`);
+                }
+                else {
+                    (config.headers as any).Authorization = `Bearer ${token}`;
+                }
+            }
+        } catch (err) {
+            console.warn('Failed to retrieve Firebase ID token for API request:', err);
         }
     }
     return config;

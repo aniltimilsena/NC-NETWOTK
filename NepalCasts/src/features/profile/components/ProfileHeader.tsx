@@ -122,61 +122,26 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         }
     };
     return (<div className="relative font-sans select-none">
-      
-      <div className="block h-[180px] sm:h-[240px] relative w-full overflow-hidden bg-nc-dark-900">
-        <img src={coverImage} alt="Cover" className="w-full h-full object-cover object-center select-none"/>
-        
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/60 to-transparent"/>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none"/>
+      {/* Static Hero Cover Banner */}
+      <div className="block h-[220px] sm:h-[320px] relative w-full overflow-hidden bg-[#0A0A0F] select-none">
+        <img src="/hero-bg.png" alt="Hero Cover" className="w-full h-full object-cover object-center select-none pointer-events-none opacity-90"/>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/30 to-transparent"/>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent pointer-events-none"/>
 
-        
-        <button onClick={() => onNavigate('back')} className="absolute top-4 left-4 w-11 h-11 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/15 active:scale-95 z-20 shrink-0 cursor-pointer shadow-lg" aria-label="Back">
+        {/* Back Button */}
+        <button onClick={() => onNavigate('back')} className="absolute top-4 left-4 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/15 active:scale-95 z-20 shrink-0 cursor-pointer shadow-lg" aria-label="Back">
           <ChevronLeft className="w-6 h-6" strokeWidth={2.5}/>
         </button>
 
-
-
-        
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-2.5">
+        {/* Share Button */}
+        <div className="absolute top-4 right-4 z-20">
           <button onClick={handleShare} className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 hover:bg-black/80 text-white flex items-center justify-center shadow-lg active:scale-95 transition-all" title="Share Profile">
             <Share2 className="w-4 h-4 text-white"/>
           </button>
-
-          {canEditCover && (<div className="relative" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setShowCoverMenu(v => !v)} className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 hover:bg-black/80 text-white flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer" title="Edit Cover Photo">
-                <MoreHorizontal className="w-5 h-5 text-white"/>
-              </button>
-
-              {showCoverMenu && (<div className="absolute top-12 right-0 bg-[#121212]/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl min-w-[170px] z-30">
-                  <button type="button" className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors text-left" onClick={() => { setShowCoverMenu(false); coverFileInputRef.current?.click(); }}>
-                    <Camera className="w-4 h-4 text-[#00BFFF]"/>
-                    <span className="text-[13px] font-semibold text-white">Change Cover</span>
-                  </button>
-                  <div className="h-px bg-white/5 mx-3"/>
-                  <button type="button" onClick={() => { setShowCoverMenu(false); setConfirmDeleteCoverOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-950/30 active:bg-red-950/50 transition-colors cursor-pointer text-left">
-                    <Trash2 className="w-4 h-4 text-red-400"/>
-                    <span className="text-[13px] font-semibold text-red-400">Delete Cover</span>
-                  </button>
-                </div>)}
-            </div>)}
         </div>
-
-        {isUploadingCover && (<div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-30">
-            <div className="max-w-xs w-full px-6 space-y-2">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-[#00BFFF] font-black animate-pulse uppercase tracking-wider">Uploading Cover...</span>
-                <span className="text-white font-black">{coverUploadProgress}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden relative">
-                <div className="absolute inset-y-0 left-0 bg-[#00BFFF] transition-all duration-150 rounded-full" style={{ width: `${coverUploadProgress}%` }}/>
-              </div>
-            </div>
-          </div>)}
-
-        {canEditCover && (<input type="file" id="cover-file-input" ref={coverFileInputRef} onChange={handleCoverFileChange} accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.gif,.bmp" className="hidden"/>)}
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-24 sm:-mt-28 relative z-20 flex flex-col items-center text-center">
+      <div className="max-w-4xl mx-auto px-4 -mt-20 sm:-mt-24 relative z-20 flex flex-col items-center text-center">
         <div className="relative z-10 mb-3">
           <Avatar 
             user={profile}
@@ -194,22 +159,21 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
           />
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2 flex items-center justify-center gap-2.5 flex-wrap">
-          <span>{name}</span>
+        <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight flex items-center justify-center gap-2 flex-wrap mb-2">
+          <span>{profile.name}</span>
+          {profile.verified !== false && (
+            <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#00BFFF] inline-flex items-center justify-center text-[#060709] text-xs sm:text-sm font-black shrink-0 shadow-md shadow-[#00BFFF]/30" title="Verified Talent">
+              ✓
+            </span>
+          )}
           {isPremiumUser && (
-            <span className="px-3 py-0.5 rounded-md badge-premium-shimmer font-black text-[10px] sm:text-xs tracking-widest uppercase no-scale">
+            <span className="px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-extrabold text-[10px] sm:text-xs tracking-widest uppercase no-scale shadow-md shadow-amber-500/20">
               PREMIUM
             </span>
           )}
         </h1>
 
         <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
-          {profile.verified !== false && (
-            <span className="px-2.5 py-0.5 rounded-full badge-verified-seal text-[10px] font-extrabold tracking-wider uppercase flex items-center gap-1.5 no-scale">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#00BFFF] fill-[#00BFFF]"/>
-              <span>VERIFIED</span>
-            </span>
-          )}
           {profile.openToWork && (<span className="px-2.5 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[9px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/30 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse"/>
               OPEN TO WORK

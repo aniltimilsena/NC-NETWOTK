@@ -22,11 +22,14 @@ interface HistoryItem {
     role?: string;
     location?: string;
 }
+import { useTranslation } from "react-i18next";
+
 export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
     onActionSelect?: (profileId: string) => void;
     onPageNavigate?: (page: string) => void;
     onClose?: () => void;
 }) {
+    const { t } = useTranslation();
     const [query, setQuery] = useState("");
     const [profiles, setProfiles] = useState<ProfileSuggestion[]>([]);
     const [loading, setLoading] = useState(false);
@@ -219,7 +222,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
                         </svg>
                     </button>)}
                 <div className="relative flex-1 flex items-center bg-[#242526] rounded-full px-4 py-2 border-0">
-                    <input ref={inputRef} type="text" placeholder="Search NepalCasts" value={query} onChange={(e) => {
+                    <input ref={inputRef} type="text" placeholder={t('ui.searchPlaceholder')} value={query} onChange={(e) => {
             setQuery(e.target.value);
             triggerSearchAnimation();
         }} onKeyDown={(e) => {

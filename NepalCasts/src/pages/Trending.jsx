@@ -7,7 +7,10 @@ import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import { CATEGORIES, getCategoryColor, getCategoryConfig } from '../constants/categories';
 import { cacheManager } from '../utils/cacheManager';
+import { useTranslation } from 'react-i18next';
+
 export default function Trending({ onNavigate }) {
+    const { t } = useTranslation();
     const [profiles, setProfiles] = useState([]);
     const [followingIds, setFollowingIds] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -204,11 +207,11 @@ export default function Trending({ onNavigate }) {
             </button>
             <div className="min-w-0">
               <h1 className="text-xl sm:text-2xl font-black text-white flex items-center gap-1.5 leading-none truncate">
-                Trending Now
+                {t('trending_now')}
                 <TrendingUp className="w-5 h-5 text-yellow-400 shrink-0"/>
               </h1>
               <p className="text-[10px] sm:text-xs text-nc-muted mt-1 font-semibold truncate">
-                {selectedCategory === 'All' ? 'All Talent' : getCategoryConfig(selectedCategory).label} • {rankedProfiles.length} {rankedProfiles.length === 1 ? 'talent' : 'talents'}
+                {selectedCategory === 'All' ? (t('nav_talent_directory') || 'All Talent') : t(`categories.${selectedCategory}`, { defaultValue: getCategoryConfig(selectedCategory).label })} • {rankedProfiles.length} {rankedProfiles.length === 1 ? 'talent' : 'talents'}
               </p>
             </div>
           </div>
@@ -229,7 +232,7 @@ export default function Trending({ onNavigate }) {
             }} className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${selectedCategory === 'All'
                 ? 'text-sky-400 bg-sky-400/5'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-                      All Talent
+                      {t('nav_talent_directory')}
                     </button>
                     {CATEGORIES.map(cat => {
                 const isActive = selectedCategory === cat;
@@ -390,9 +393,9 @@ export default function Trending({ onNavigate }) {
                             New
                           </span>)}
 
-                        <button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`w-full py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-widest ${isFollowing
-                            ? 'bg-white/5 border border-white/10 hover:border-red-500/30 hover:bg-red-500/5 hover:text-red-400 text-gray-300'
-                            : 'bg-[#0099FF] text-black hover:opacity-95 shadow-md shadow-[#0099FF]/10 active:scale-[0.98]'}`}>
+                        <button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`w-full py-2 rounded-full text-xs font-bold transition-all border ${isFollowing
+                            ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
+                            : 'bg-[#18181b] border-white/15 text-white hover:bg-white/10 active:scale-[0.97]'}`}>
                           {!auth.currentUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
                         </button>
                       </div>
@@ -462,14 +465,9 @@ export default function Trending({ onNavigate }) {
                       </div>
 
                       <div className="flex items-center gap-4 sm:gap-6 shrink-0">
-                        <div className="text-center hidden sm:block">
-                          <p className="text-[9px] text-gray-500 uppercase tracking-widest font-black">Followers</p>
-                          <p className="text-sm font-extrabold text-white">{Math.max(0, prof.followers || 0)}</p>
-                        </div>
-
-                        {prof.id !== auth.currentUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs font-black transition-all uppercase tracking-wider ${isFollowing
-                            ? 'bg-transparent border border-white/10 hover:border-red-500/30 hover:bg-red-500/5 hover:text-red-400 text-gray-300'
-                            : 'bg-[#0099FF] text-black hover:opacity-95 shadow-md shadow-[#0099FF]/10 active:scale-[0.98]'}`}>
+                        {prof.id !== auth.currentUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`px-5 py-2 sm:px-6 sm:py-2 rounded-full text-xs font-bold transition-all border ${isFollowing
+                            ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
+                            : 'bg-[#18181b] border-white/15 text-white hover:bg-white/10 active:scale-[0.97]'}`}>
                             {!auth.currentUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
                           </button>)}
                       </div>

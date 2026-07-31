@@ -46,14 +46,18 @@ export default class ErrorBoundary extends Component<Props, State> {
         }
         this.logError(error, errorInfo);
         if (isChunkLoadFailed) {
-            const lastReloaded = sessionStorage.getItem("chunk_fail_reload_time");
-            const now = Date.now();
-            if (!lastReloaded || now - parseInt(lastReloaded, 10) > 15000) {
-                sessionStorage.setItem("chunk_fail_reload_time", now.toString());
-                console.warn("Dynamic import failure detected in ErrorBoundary. Auto-reloading page with cache-busting...");
-                const url = new URL(window.location.href);
-                url.searchParams.set('reload', Date.now().toString());
-                window.location.href = url.toString();
+            try {
+                const lastReloaded = sessionStorage.getItem("chunk_fail_reload_time");
+                const now = Date.now();
+                if (!lastReloaded || now - parseInt(lastReloaded, 10) > 15000) {
+                    sessionStorage.setItem("chunk_fail_reload_time", now.toString());
+                    console.warn("Dynamic import failure detected in ErrorBoundary. Auto-reloading page with cache-busting...");
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('reload', Date.now().toString());
+                    window.location.href = url.toString();
+                }
+            } catch (_err) {
+                // Storage blocked or unavailable
             }
         }
     }

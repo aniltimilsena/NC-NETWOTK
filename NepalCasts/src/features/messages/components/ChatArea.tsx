@@ -63,7 +63,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
     const isTyping = otherParticipantId ? typingUsers?.[otherParticipantId] === true : false;
     return (<div className="flex flex-col h-full bg-[#0b0b0c]">
       
-      <div className="px-6 py-4 pt-6 md:py-4 border-b border-white/5 flex items-center justify-between">
+      <div className="px-6 py-4 pt-6 md:py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="md:hidden w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 no-min-h shadow-sm active:scale-95 cursor-pointer" title="Back to Inbox">
             <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5}/>

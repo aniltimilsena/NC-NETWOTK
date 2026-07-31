@@ -1,0 +1,10 @@
+import RouteConfig from './routeConfig';
+export default RouteConfig;
+export * from './messages.routes';
+export * from './settings.routes';
+export * from './profile.routes';
+export * from './casting.routes';
+export * from './discover.routes';
+export * from './admin.routes';
+export * from './notifications.routes';
+export * from './saved.routes';

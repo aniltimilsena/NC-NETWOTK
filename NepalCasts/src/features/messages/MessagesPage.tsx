@@ -17,7 +17,10 @@ interface MessagesPageProps {
     initialUserId?: string | null;
     showAlert: (message: string, type?: any, detail?: string) => void;
 }
+import { useTranslation } from 'react-i18next';
+
 export default function MessagesPage({ onNavigate, user, initialUserId, showAlert }: MessagesPageProps) {
+    const { t } = useTranslation();
     const { conversations, activeChatId, setActiveChatId, messages, loading, typingUsers, callHistory, loadingCalls, updateTyping, dispatchMessage } = useMessages(user, initialUserId ?? null);
     const { initiateCall } = useCall();
     const [replyingTo, setReplyingTo] = useState<Message | null>(null);
@@ -194,7 +197,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, showAler
               <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto">
                 <span className="text-2xl">️</span>
               </div>
-              <p>Select a chat thread or start a new conversation to begin messaging.</p>
+              <p>{t('messages.empty')}</p>
             </div>)}
         </div>
 

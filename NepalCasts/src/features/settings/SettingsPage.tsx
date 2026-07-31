@@ -5,16 +5,72 @@ import SkillsSettings from './components/SkillsSettings';
 import ExperienceSettings from './components/ExperienceSettings';
 import SecuritySettings from './components/SecuritySettings';
 import NotificationSettings from './components/NotificationSettings';
-import { ChevronLeft, User, Briefcase, Lock, Bell, Shield } from 'lucide-react';
+import { ChevronLeft, User, Briefcase, Lock, Bell, Shield, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
 interface SettingsPageProps {
     onNavigate: (page: string, param?: any) => void;
     user: any;
     showAlert: (message: string, type?: any, detail?: string) => void;
     showToast?: (message: string, type?: any) => void;
 }
+
+function LanguageSettings({ showAlert }: { showAlert: (msg: string, type?: any) => void }) {
+    const { i18n } = useTranslation();
+    const currentLang = 'en';
+    const languages = [
+        { code: 'en', label: 'English', desc: 'Default system language', flag: '🇬🇧' },
+    ];
+
+    const handleSelect = (code: string) => {
+        i18n.changeLanguage(code);
+        showAlert?.('Language updated successfully!', 'success');
+    };
+
+    return (
+        <div className="bg-[#111] border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6">
+            <div>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Globe className="w-6 h-6 text-[#00BFFF]" />
+                    <span>Language & Regional Preference</span>
+                </h3>
+                <p className="text-gray-400 text-sm mt-1">
+                    Select your preferred language for the NepalCasts interface.
+                </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                {languages.map((lang) => {
+                    const isSelected = currentLang === lang.code;
+                    return (
+                        <button
+                            key={lang.code}
+                            onClick={() => handleSelect(lang.code)}
+                            className={`flex flex-col items-start p-5 rounded-2xl border text-left transition-all cursor-pointer ${
+                                isSelected
+                                    ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-white shadow-lg'
+                                    : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20'
+                            }`}
+                        >
+                            <span className="text-2xl mb-2">{lang.flag}</span>
+                            <span className="font-bold text-base text-white">{lang.label}</span>
+                            <span className="text-xs text-gray-400 mt-1">{lang.desc}</span>
+                            {isSelected && (
+                                <span className="mt-3 text-xs font-extrabold text-[#00BFFF] bg-[#00BFFF]/20 px-2.5 py-1 rounded-full">
+                                    ✓ Active
+                                </span>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 export default function SettingsPage({ onNavigate, user, showAlert }: SettingsPageProps) {
     const { profile, loading, sessions, blockedUsersList, updateProfileSettings, revokeSession, unblockUserAction } = useSettings(user);
-    const [activeTab, setActiveTab] = useState<'about' | 'skills' | 'experience' | 'password' | 'notifications'>('about');
+    const [activeTab, setActiveTab] = useState<'about' | 'skills' | 'experience' | 'password' | 'notifications' | 'language'>('about');
     const [currentMobileView, setCurrentMobileView] = useState<'menu' | 'content'>('menu');
     const tabsConfig = [
         { id: 'about', label: 'Edit Profile', icon: User },
@@ -22,6 +78,7 @@ export default function SettingsPage({ onNavigate, user, showAlert }: SettingsPa
         { id: 'experience', label: 'Work History', icon: Briefcase },
         { id: 'password', label: 'Password & Security', icon: Lock },
         { id: 'notifications', label: 'Notifications', icon: Bell },
+        { id: 'language', label: 'Language Settings', icon: Globe },
     ] as const;
     if (loading) {
         return (<div className="min-h-screen bg-nc-dark pb-24 flex items-center justify-center">
@@ -91,6 +148,8 @@ export default function SettingsPage({ onNavigate, user, showAlert }: SettingsPa
           {activeTab === 'password' && (<SecuritySettings sessions={sessions} blockedUsers={blockedUsersList} onRevokeSession={revokeSession} onUnblockUser={unblockUserAction} showAlert={showAlert}/>)}
 
           {activeTab === 'notifications' && (<NotificationSettings profile={profile} onUpdate={updateProfileSettings} showAlert={showAlert}/>)}
+
+          {activeTab === 'language' && (<LanguageSettings showAlert={showAlert}/>)}
 
 
         </div>

@@ -7,10 +7,12 @@ import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
 import { getAvatar } from '../utils/avatars';
 import { AdBanner } from '../components/ui/AdBanner';
+import { useTranslation } from 'react-i18next';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { subscribeToTalents, subscribeToCastingCalls } from '../services';
 
 export default function Home({ onNavigate, user }) {
+  const { t } = useTranslation();
   const isLoggedIn = !!user;
   const [isLoading, setIsLoading] = useState(true);
   const [talentsReceived, setTalentsReceived] = useState(false);
@@ -209,6 +211,14 @@ export default function Home({ onNavigate, user }) {
   const currentPremiumUser = trendingList[currentPremiumIdx] || (user ? { ...defaultTalent, ...user } : defaultTalent);
 
   useEffect(() => {
+    if (trendingList.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentPremiumIdx((prevIdx) => (prevIdx + 1) % trendingList.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [trendingList.length]);
+
+  useEffect(() => {
     setHeroImageError(false);
   }, [currentPremiumUser?.id]);
 
@@ -238,7 +248,7 @@ export default function Home({ onNavigate, user }) {
           {/* Cover Background Image */}
           <div className="absolute inset-0 z-0">
             <img
-              src={currentPremiumUser?.coverImage || currentPremiumUser?.heroBg || '/hero-bg.png'}
+              src="/hero-bg.png"
               alt="Hero Background"
               className="w-full h-full object-cover"
             />
@@ -248,44 +258,53 @@ export default function Home({ onNavigate, user }) {
             />
           </div>
 
-          {/* Overlaid Inset Profile Card (Matching Photo) */}
+          {/* Overlaid Inset Profile Card (Featured Talent Spotlight) */}
           {currentPremiumUser && (
-            <div className="relative z-20 flex items-end gap-3.5 mt-12 sm:mt-16">
-              {/* Rectangular Portrait Photo with Blue Accent Line */}
-              <div className="relative shrink-0 flex flex-col items-center overflow-hidden rounded-md shadow-2xl border border-white/10 bg-[#10151c]">
-                {hasHeroPhoto ? (
-                  <img
-                    src={heroPhotoURL}
-                    alt={currentPremiumUser?.name || 'Featured Talent'}
-                    onError={() => setHeroImageError(true)}
-                    className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] object-cover"
-                  />
-                ) : (
-                  <div className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] bg-gradient-to-b from-[#1a2634] to-[#0a1017] flex items-center justify-center">
-                    <Avatar user={currentPremiumUser} size="lg" name={currentPremiumUser?.name} />
-                  </div>
-                )}
-                {/* Blue Accent Bar Under Photo */}
-                <div className="w-full h-1.5 bg-[#00BFFF]" />
-              </div>
+            <AnimatePresence mode="popLayout">
+              <motion.div
+                key={currentPremiumUser?.id || currentPremiumIdx}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.35, ease: "easeInOut" }}
+                className="relative z-20 flex items-end gap-3.5 mt-12 sm:mt-16"
+              >
+                {/* Rectangular Portrait Photo with Blue Accent Line */}
+                <div className="relative shrink-0 flex flex-col items-center overflow-hidden rounded-md shadow-2xl border border-white/10 bg-[#10151c]">
+                  {hasHeroPhoto ? (
+                    <img
+                      src={heroPhotoURL}
+                      alt={currentPremiumUser?.name || 'Featured Talent'}
+                      onError={() => setHeroImageError(true)}
+                      className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] object-cover transition-all duration-300"
+                    />
+                  ) : (
+                    <div className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] bg-gradient-to-b from-[#1a2634] to-[#0a1017] flex items-center justify-center">
+                      <Avatar user={currentPremiumUser} size="lg" name={currentPremiumUser?.name} />
+                    </div>
+                  )}
+                  {/* Blue Accent Bar Under Photo */}
+                  <div className="w-full h-1.5 bg-[#00BFFF]" />
+                </div>
 
-              {/* Talent Meta beside photo */}
-              <div className="flex flex-col justify-end items-start gap-1 min-w-0 self-end h-[166px] sm:h-[196px] text-left">
-                <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight truncate drop-shadow-lg text-left w-full">
-                  {currentPremiumUser.name || 'Anil Timilsena'}
-                </h1>
-                <p className="text-sm sm:text-base text-gray-200 font-medium capitalize drop-shadow-md truncate text-left w-full">
-                  {currentPremiumUser.role || currentPremiumUser.category || 'Actor'}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('profile', currentPremiumUser.id)}
-                  className="text-[#00BFFF] hover:underline text-sm sm:text-base font-semibold text-left transition-colors cursor-pointer block"
-                >
-                  View profile
-                </button>
-              </div>
-            </div>
+                {/* Talent Meta beside photo */}
+                <div className="flex flex-col justify-end items-start gap-1 min-w-0 self-end h-[166px] sm:h-[196px] text-left">
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight truncate drop-shadow-lg text-left w-full">
+                    {currentPremiumUser.name || 'Anil Timilsena'}
+                  </h1>
+                  <p className="text-sm sm:text-base text-gray-200 font-medium capitalize drop-shadow-md truncate text-left w-full">
+                    {currentPremiumUser.role || currentPremiumUser.category || 'Actor'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('profile', currentPremiumUser.id)}
+                    className="text-[#00BFFF] hover:underline text-sm sm:text-base font-semibold text-left transition-colors cursor-pointer block"
+                  >
+                    {t('home.viewProfile')}
+                  </button>
+                </div>
+              </motion.div>
+            </AnimatePresence>
           )}
         </section>
 
@@ -310,14 +329,14 @@ export default function Home({ onNavigate, user }) {
             <div className="flex items-center">
               <div className="section-accent-bar" />
               <h2 className="text-xl sm:text-2xl font-bold text-white font-sans tracking-tight leading-none">
-                Actor & Actress
+                {t('home.actorSection')}
               </h2>
             </div>
             <button
               onClick={() => onNavigate('listing')}
               className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold flex items-center gap-1 transition-colors cursor-pointer"
             >
-              View all &gt;
+              {t('btn_view_all')} &gt;
             </button>
           </div>
 
@@ -327,7 +346,7 @@ export default function Home({ onNavigate, user }) {
             className="flex gap-3 sm:gap-4 overflow-x-auto pt-2 pb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
           >
             {(!talentsReceived) ? (
-              <div className="text-gray-400 text-sm py-4">Loading talents...</div>
+              <div className="text-gray-400 text-sm py-4">{t('home.loadingTalents')}</div>
             ) : actorTalentsList.length > 0 ? (
               actorTalentsList.map((talent) => (
                 <div
@@ -350,7 +369,7 @@ export default function Home({ onNavigate, user }) {
                 </div>
               ))
             ) : (
-              <div className="text-gray-400 text-sm py-4">No talents found</div>
+              <div className="text-gray-400 text-sm py-4">{t('home.noTalentsFound')}</div>
             )}
           </div>
         </section>
@@ -361,14 +380,14 @@ export default function Home({ onNavigate, user }) {
             <div className="flex items-center">
               <div className="section-accent-bar" />
               <h2 className="text-xl sm:text-2xl font-bold text-white font-sans tracking-tight leading-none">
-                Browse by Category
+                {t('home.browseCategories')}
               </h2>
             </div>
             <button
               onClick={() => onNavigate('listing')}
               className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold flex items-center gap-1 transition-colors cursor-pointer"
             >
-              View all &gt;
+              {t('btn_view_all')} &gt;
             </button>
           </div>
 
@@ -393,13 +412,13 @@ export default function Home({ onNavigate, user }) {
                       {CatIcon && <CatIcon className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14" strokeWidth={1.5} />}
                     </div>
                     <span className="text-lg sm:text-xl lg:text-2xl font-black text-white group-hover:text-[#00BFFF] transition-colors">
-                      {cat.name}
+                      {t(`categories.${cat.id}`, { defaultValue: cat.name })}
                     </span>
                     <span className="text-sm sm:text-base text-gray-400 font-semibold">
                       {cat.count === 0 ? (
-                        <span className="text-[#00BFFF] font-bold">Be the first →</span>
+                        <span className="text-[#00BFFF] font-bold">{t('home.beTheFirst')}</span>
                       ) : (
-                        `${cat.count} ${cat.count === 1 ? 'talent' : 'talents'}`
+                        `${cat.count} ${cat.count === 1 ? (t('follower') === 'पछ्याउने' ? 'कलाकार' : 'talent') : (t('follower') === 'पछ्याउने' ? 'कलाकारहरू' : 'talents')}`
                       )}
                     </span>
                   </button>
@@ -418,14 +437,14 @@ export default function Home({ onNavigate, user }) {
               <div className="flex items-center">
                 <div className="section-accent-bar" />
                 <h2 className="text-xl sm:text-2xl font-bold text-white font-sans tracking-tight leading-none">
-                  Casting Calls & Auditions
+                  {t('home.castingCalls')}
                 </h2>
               </div>
               <button
                 onClick={() => onNavigate('casting')}
                 className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold flex items-center gap-1 transition-colors cursor-pointer"
               >
-                View all &gt;
+                {t('btn_view_all')} &gt;
               </button>
             </div>
 
@@ -445,7 +464,7 @@ export default function Home({ onNavigate, user }) {
                   <div className="flex-1 min-w-0 pr-1">
                     <h4 className="text-white font-bold leading-snug truncate text-xs sm:text-sm group-hover:text-[#00BFFF] transition-colors">{item.title}</h4>
                     <p className="text-gray-400 text-[11px] mt-0.5 mb-1.5 line-clamp-2 leading-relaxed">{item.type || 'Casting Call'}</p>
-                    <span className="text-[#00BFFF] text-[11px] font-bold uppercase tracking-wider hover:underline">View details &gt;</span>
+                    <span className="text-[#00BFFF] text-[11px] font-bold uppercase tracking-wider hover:underline">{t('view_details')}</span>
                   </div>
                 </div>
               ))}
@@ -460,17 +479,17 @@ export default function Home({ onNavigate, user }) {
               <div className="flex items-center">
                 <div className="section-accent-bar" />
                 <h2 className="text-xl sm:text-2xl font-bold text-white font-sans tracking-tight leading-none">
-                  Trending Now
+                  {t('trending_now')}
                 </h2>
               </div>
               <button
                 onClick={() => onNavigate('trending')}
                 className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold transition-all cursor-pointer"
               >
-                View all &gt;
+                {t('btn_view_all')} &gt;
               </button>
             </div>
-            <div className="flex flex-col divide-y divide-white/5">
+            <div className="flex flex-col gap-3.5">
               {activeTalentsList
                 .slice()
                 .sort((a, b) => {
@@ -486,32 +505,34 @@ export default function Home({ onNavigate, user }) {
                   <div
                     key={talent.id}
                     onClick={() => onNavigate('profile', talent.id)}
-                    className="group flex items-center justify-between py-3 hover:bg-white/[0.02] transition-all duration-300 cursor-pointer gap-4 px-1"
+                    className="group flex items-center justify-between py-4 px-2 hover:bg-white/[0.03] transition-all duration-300 cursor-pointer gap-4 rounded-xl"
                   >
-                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
                       {/* Rank Number */}
-                      <span className="font-sans text-xl sm:text-2xl font-black text-white/20 group-hover:text-sky-400/50 transition-colors w-7 text-center shrink-0 select-none">
+                      <span className="font-sans text-2xl sm:text-3xl font-black text-white/20 group-hover:text-[#00BFFF]/60 transition-colors w-8 text-center shrink-0 select-none">
                         {idx + 1}
                       </span>
                       <Avatar
                         user={talent}
                         size="none"
                         name={talent.name}
-                        className="w-14 h-14 sm:w-18 sm:h-18 rounded-full object-cover border border-white/10"
+                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-white/10 group-hover:border-[#00BFFF]/40 transition-colors shadow-md"
                       />
 
                       {/* Basic Info */}
-                      <div className="space-y-0.5 min-w-0">
+                      <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-white text-sm sm:text-base leading-tight truncate">{talent.name}</h3>
+                          <h3 className="font-bold text-white text-base sm:text-lg leading-tight truncate group-hover:text-[#00BFFF] transition-colors">{talent.name}</h3>
                           {talent.verified && (
                             <span className="verified-badge shrink-0" title="Verified Talent">✓</span>
                           )}
                         </div>
-                        <div className="flex items-center gap-1.5 text-gray-400 text-xs truncate">
-                          <span className="text-sky-400 font-medium truncate shrink-0">@{(talent.username || talent.name.toLowerCase().replace(/\s+/g, '')).replace(/^@/, '')}</span>
+                        <div className="flex items-center gap-2 text-gray-400 text-xs sm:text-sm truncate">
+                          <span className="text-sky-400 font-semibold truncate shrink-0">@{(talent.username || talent.name.toLowerCase().replace(/\s+/g, '')).replace(/^@/, '')}</span>
                           <span className="shrink-0 text-gray-600">·</span>
-                          <span className="capitalize truncate font-semibold text-gray-300">{talent.role?.split(',')[0] || talent.category || 'Talent'}</span>
+                          <span className="capitalize truncate font-semibold text-gray-300">
+                            {t(`categories.${(talent.role?.split(',')[0] || talent.category || '').toLowerCase()}`, { defaultValue: talent.role?.split(',')[0] || talent.category || 'Talent' })}
+                          </span>
                           <span className="shrink-0 text-gray-600">·</span>
                           <span className="capitalize truncate">{talent.location || 'Nepal'}</span>
                         </div>
@@ -521,12 +542,12 @@ export default function Home({ onNavigate, user }) {
                     {/* Right Status */}
                     <div className="text-right flex flex-col items-end gap-1 px-1 shrink-0 justify-center">
                       <div className="mt-0.5">
-                        <p className="text-gray-400 text-xs font-medium">
-                          <span className="text-white font-bold">
+                        <p className="text-gray-400 text-xs sm:text-sm font-medium">
+                          <span className="text-white font-bold text-sm sm:text-base">
                             {(talent.followers || 0) >= 1000
                               ? `${((talent.followers || 0) / 1000).toFixed(1).replace(/\.0$/, '')}K`
                               : (talent.followers || 0)}
-                          </span> followers
+                          </span> {((talent.followers || 0) === 1) ? t('follower') : t('followers')}
                         </p>
                       </div>
                     </div>

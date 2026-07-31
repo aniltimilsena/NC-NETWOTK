@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, TrendingUp, BarChart3, ArrowRight, Eye, UserPlus, CheckCircle2 } from 'lucide-react';
+import { User, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, TrendingUp, BarChart3, ArrowRight, Eye, UserPlus, CheckCircle2, Lock, FileText } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import { getAvatar } from '../../utils/avatars';
 import { AdBanner } from '../ui/AdBanner';
 import { db, auth } from '../../lib/firebase';
 import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, getDoc, collection, query, where, or } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
 import { updateProfileData } from '../../services';
 
 // Inline follow button that mirrors ProfileHeader's style and uses Firestore
@@ -160,11 +161,6 @@ export default function Desktop3ColumnLayout({
     user?.photoURL ||
     user?.profileImage;
 
-  const coverBannerPhoto =
-    (profileData?.coverImage && profileData?.coverImage !== '/hero-bg.png' ? profileData.coverImage : null) ||
-    (profileData?.coverPhoto && profileData?.coverPhoto !== '/hero-bg.png' ? profileData.coverPhoto : null) ||
-    (user?.coverImage && user?.coverImage !== '/hero-bg.png' ? user.coverImage : null);
-
   const isVerified = profileData?.verified === true || user?.verified === true;
   const isPremium = profileData?.isPremium === true || user?.isPremium === true || user?.premium === true;
   const gender = profileData?.gender || user?.gender;
@@ -198,30 +194,46 @@ export default function Desktop3ColumnLayout({
   const safeFeatured = Array.isArray(featuredTalents) ? featuredTalents : [];
   const safeTrending = Array.isArray(trendingCalls) ? trendingCalls : [];
 
+  const [featuredOffset, setFeaturedOffset] = useState(0);
+
+  useEffect(() => {
+    if (safeFeatured.length <= 3) return;
+    const timer = setInterval(() => {
+      setFeaturedOffset((prev) => (prev + 1) % safeFeatured.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [safeFeatured.length]);
+
+  const visibleFeatured = safeFeatured.length > 3
+    ? Array.from({ length: 3 }, (_, i) => safeFeatured[(featuredOffset + i) % safeFeatured.length])
+    : safeFeatured;
+
+  const { t } = useTranslation();
+
   return (
     <div className="w-full">
-      <div className="max-w-[1600px] mx-auto px-0 sm:px-4 lg:px-6 pt-0 pb-0">
-        <div className="grid grid-cols-12 gap-8">
+      <div className="max-w-[1600px] mx-auto px-0 sm:px-1 lg:px-2 pt-0 pb-0">
+        <div className="grid grid-cols-12 gap-2 lg:gap-3">
 
           {/* LEFT SIDEBAR (Desktop: lg+) */}
-          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-24 pt-6 max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-hide">
-            <div className="overflow-hidden bg-[#060709] rounded-3xl">
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-20 pt-2 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide">
+            <div className="overflow-hidden bg-[#060709] rounded-2xl">
 
               {/* === PROFILE CARD === */}
               {user ? (
                 <>
-                  {/* Cover Banner */}
-                  <div className="relative h-32 bg-gradient-to-b from-[#092238] via-[#07192b] to-[#040e1a] overflow-hidden rounded-t-3xl">
+                  {/* Cover Banner (Static Hero BG - No User Upload) */}
+                  <div className="relative h-36 sm:h-40 bg-gradient-to-b from-[#092238] via-[#07192b] to-[#040e1a] overflow-hidden rounded-t-2xl select-none">
                     <img
-                      src={coverBannerPhoto || '/hero-bg.png'}
-                      alt="Cover"
-                      className="w-full h-full object-cover object-center opacity-85 select-none"
+                      src="/hero-bg.png"
+                      alt="Hero Cover"
+                      className="w-full h-full object-cover object-center opacity-90 pointer-events-none select-none"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#040e1a]" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#060709]" />
                   </div>
 
                   {/* Avatar + Info (Centered) */}
-                  <div className="px-4 -mt-14 relative z-10 text-center flex flex-col items-center">
+                  <div className="px-4 -mt-12 relative z-10 text-center flex flex-col items-center">
                     <div className="relative w-fit mx-auto">
                       <Avatar
                         user={user}
@@ -237,16 +249,15 @@ export default function Desktop3ColumnLayout({
                     </div>
 
                     <div className="mt-3 space-y-1 flex flex-col items-center">
-                      <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <div className="flex items-center justify-center gap-1.5 flex-wrap">
                         <h3 className="text-white font-black text-2xl leading-tight tracking-tight">{realName}</h3>
                         {isVerified && (
-                          <span className="px-2 py-0.5 rounded-full badge-verified-seal text-[9px] font-extrabold tracking-wider uppercase flex items-center gap-1 no-scale">
-                            <CheckCircle2 className="w-3 h-3 text-[#00BFFF] fill-[#00BFFF] flex-shrink-0" />
-                            <span>VERIFIED</span>
+                          <span className="w-5 h-5 rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] text-[10px] font-black shrink-0 shadow-md shadow-[#00BFFF]/30" title="Verified Talent">
+                            ✓
                           </span>
                         )}
                         {isPremium && (
-                          <span className="px-2.5 py-0.5 rounded badge-premium-shimmer font-black text-[9px] tracking-widest uppercase no-scale">
+                          <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-extrabold text-[10px] tracking-wider uppercase shadow-md shadow-amber-500/20">
                             PREMIUM
                           </span>
                         )}
@@ -268,40 +279,40 @@ export default function Desktop3ColumnLayout({
                   </div>
 
                   {/* Stats Row (Centered with Vertical Dividers, No Outer Border Box) */}
-                  <div className="grid grid-cols-3 divide-x divide-white/10 text-center py-2 my-5">
+                  <div className="grid grid-cols-3 divide-x divide-white/10 text-center py-1.5 my-3">
                     <div className="flex flex-col items-center justify-center px-1">
                       <span className="text-white text-2xl font-black">{followersCount}</span>
-                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-1">Followers</span>
+                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-0.5">{t('followers')}</span>
                     </div>
                     <div className="flex flex-col items-center justify-center px-1">
                       <span className="text-white text-2xl font-black">{followingCount}</span>
-                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-bold mt-1">Following</span>
+                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-bold mt-0.5">{t('btn_following')}</span>
                     </div>
                     <div className="flex flex-col items-center justify-center px-1">
                       <span className="text-white text-2xl font-black">{reviewsCount}</span>
-                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-1">Reviews</span>
+                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-0.5">{t('profile.reviews')}</span>
                     </div>
                   </div>
 
                   {/* View My Profile Button */}
-                  <div className="px-4 mb-6">
+                  <div className="px-3 mb-4">
                     <button
                       type="button"
                       onClick={() => onNavigate?.('profile', user?.uid)}
-                      className="w-full py-3.5 rounded-2xl text-sm font-extrabold flex items-center justify-center transition-all cursor-pointer active:scale-[0.98] bg-[#161619] hover:bg-[#202026] text-white shadow-sm"
+                      className="w-full py-3 rounded-xl text-sm font-extrabold flex items-center justify-center transition-all cursor-pointer active:scale-[0.98] bg-[#161619] hover:bg-[#202026] text-white shadow-sm"
                     >
-                      <span>View My Profile</span>
+                      <span>{t('profile.viewProfile')}</span>
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="p-4 text-center space-y-4">
+                <div className="p-3 text-center space-y-3">
                   <h3 className="text-white font-extrabold text-base">Join NepalCasts</h3>
                   <p className="text-gray-400 text-xs leading-relaxed">Connect with top directors and casting opportunities in Nepal.</p>
                   <button
                     type="button"
                     onClick={() => onNavigate?.('signin')}
-                    className="w-full py-3 bg-[#00BFFF] hover:opacity-90 text-black font-extrabold rounded-xl text-sm transition-all cursor-pointer shadow-lg shadow-[#00BFFF]/25 active:scale-[0.98]"
+                    className="w-full py-2.5 bg-[#00BFFF] hover:opacity-90 text-black font-extrabold rounded-xl text-sm transition-all cursor-pointer shadow-lg shadow-[#00BFFF]/25 active:scale-[0.98]"
                   >
                     Sign In / Register
                   </button>
@@ -309,13 +320,13 @@ export default function Desktop3ColumnLayout({
               )}
 
               {/* === MAIN NAVIGATION (No divider line) === */}
-              <div className="py-2">
-                <span className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500 px-5 mb-2 block">MAIN</span>
+              <div className="py-1">
+                <span className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500 px-4 mb-1.5 block">MAIN</span>
 
                 <button
                   type="button"
                   onClick={() => onNavigate?.('home')}
-                  className={`w-full px-5 py-3 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'discover'
+                  className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'discover'
                       ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                       : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                     }`}
@@ -323,14 +334,14 @@ export default function Desktop3ColumnLayout({
                   {activeNav === 'discover' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
                   <div className="flex items-center gap-3">
                     <Compass className="w-5 h-5" />
-                    <span>Discover Feed</span>
+                    <span>{t('nav.discover')}</span>
                   </div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => onNavigate?.('talent')}
-                  className={`w-full px-5 py-3 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'talent'
+                  className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'talent'
                       ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                       : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                     }`}
@@ -338,14 +349,14 @@ export default function Desktop3ColumnLayout({
                   {activeNav === 'talent' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
                   <div className="flex items-center gap-3">
                     <Users className="w-5 h-5" />
-                    <span>Talent Directory</span>
+                    <span>{t('nav.talents')}</span>
                   </div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => onNavigate?.('casting')}
-                  className={`w-full px-5 py-3 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'casting'
+                  className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'casting'
                       ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                       : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                     }`}
@@ -353,7 +364,7 @@ export default function Desktop3ColumnLayout({
                   {activeNav === 'casting' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
                   <div className="flex items-center gap-3">
                     <Film className="w-5 h-5" />
-                    <span>Casting Calls</span>
+                    <span>{t('nav.casting')}</span>
                   </div>
                 </button>
               </div>
@@ -381,7 +392,7 @@ export default function Desktop3ColumnLayout({
                   <button
                     type="button"
                     onClick={() => onNavigate?.('saved-castings')}
-                    className={`w-full px-5 py-3 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'saved-castings' || activeNav === 'saved-casting'
+                    className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'saved-castings' || activeNav === 'saved-casting'
                         ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                         : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                       }`}
@@ -390,6 +401,51 @@ export default function Desktop3ColumnLayout({
                     <div className="flex items-center gap-3">
                       <Bookmark className="w-5 h-5" />
                       <span>Saved Calls</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.('/trust-safety')}
+                    className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'trust-safety' || activeNav === 'trust'
+                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                        : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                      }`}
+                  >
+                    {(activeNav === 'trust-safety' || activeNav === 'trust') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
+                    <div className="flex items-center gap-3">
+                      <ShieldCheck className="w-5 h-5 text-[#00BFFF]" />
+                      <span>Trust & Safety</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.('/privacy')}
+                    className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'privacy'
+                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                        : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                      }`}
+                  >
+                    {activeNav === 'privacy' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
+                    <div className="flex items-center gap-3">
+                      <Lock className="w-5 h-5 text-gray-400 group-hover:text-white" />
+                      <span>Privacy Policy</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.('/terms')}
+                    className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'terms'
+                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                        : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                      }`}
+                  >
+                    {activeNav === 'terms' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-gray-400 group-hover:text-white" />
+                      <span>Terms of Service</span>
                     </div>
                   </button>
                 </div>
@@ -444,16 +500,11 @@ export default function Desktop3ColumnLayout({
                 </div>
               )}
 
-              {/* Footer Links */}
-              <div className="px-3 py-4 mt-2">
-                <p className="text-[10px] text-[#555] flex flex-wrap items-center gap-x-1 gap-y-0.5">
-                  <Link to="/trust-safety" className="hover:underline hover:text-gray-300">Trust</Link>
-                  <span className="opacity-40">·</span>
-                  <Link to="/privacy" className="hover:underline hover:text-gray-300">Privacy</Link>
-                  <span className="opacity-40">·</span>
-                  <Link to="/terms" className="hover:underline hover:text-gray-300">Terms</Link>
-                  <span className="opacity-40">·</span>
+              {/* Sidebar Bottom Copyright */}
+              <div className="px-4 py-2 mt-1 border-t border-white/5">
+                <p className="text-xs text-gray-500 font-semibold tracking-wide flex items-center justify-between">
                   <span>&copy; {new Date().getFullYear()} NepalCasts</span>
+                  <span className="text-[10px] text-gray-600 font-medium">All rights reserved</span>
                 </p>
               </div>
             </div>
@@ -465,7 +516,7 @@ export default function Desktop3ColumnLayout({
           </main>
 
           {/* RIGHT SIDEBAR (Desktop Only: xl+) */}
-          <aside className="hidden xl:block xl:col-span-3 sticky top-24 space-y-6 h-fit pt-6">
+          <aside className="hidden xl:block xl:col-span-3 sticky top-20 space-y-4 h-fit pt-2">
 
             {/* Go Verified CTA */}
             {!isVerified && (
@@ -509,23 +560,23 @@ export default function Desktop3ColumnLayout({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-white font-black text-base">
                     <Users className="w-5 h-5 text-[#00BFFF]" />
-                    <span>Featured Talent</span>
+                    <span>{t('sidebar.featuredTalent')}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => onNavigate?.('talent')}
                     className="text-xs font-bold text-[#00BFFF] hover:underline cursor-pointer"
                   >
-                    View All
+                    {t('sidebar.viewAll')}
                   </button>
                 </div>
 
-                <div className="space-y-3">
-                  {safeFeatured.slice(0, 3).map((item) => (
+                <div className="space-y-1">
+                  {visibleFeatured.map((item) => (
                     <div
                       key={item.id}
                       onClick={() => onNavigate?.('profile', item.id)}
-                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all cursor-pointer group"
+                      className="flex items-center gap-3 py-2 px-2.5 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer group"
                     >
                       <Avatar
                         src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
@@ -545,27 +596,27 @@ export default function Desktop3ColumnLayout({
 
             {/* Trending Casting Calls Widget */}
             {safeTrending.length > 0 && (
-              <div className="space-y-4 px-2">
+              <div className="space-y-3 px-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-white font-black text-base">
                     <TrendingUp className="w-5 h-5 text-[#00BFFF]" />
-                    <span>Active Casting Calls</span>
+                    <span>{t('sidebar.activeCastingCalls')}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => onNavigate?.('casting')}
                     className="text-xs font-bold text-[#00BFFF] hover:underline cursor-pointer"
                   >
-                    View All
+                    {t('sidebar.viewAll')}
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-1">
                   {safeTrending.slice(0, 3).map((call) => (
                     <div
                       key={call.id}
                       onClick={() => onNavigate?.('casting-detail', call.id)}
-                      className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all cursor-pointer group space-y-1.5"
+                      className="py-2.5 px-3 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer group space-y-1"
                     >
                       <h5 className="text-white text-sm font-bold group-hover:text-[#00BFFF] transition-colors line-clamp-1">
                         {call.title}

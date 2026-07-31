@@ -1,0 +1,177 @@
+{
+  "nav_home": "Home",
+  "nav_talents": "Talents",
+  "nav_casting": "Casting",
+  "nav_profile": "Profile",
+  "nav_discover": "Discover",
+  "nav_projects": "Projects",
+  "nav_talent_directory": "Talent Directory",
+  "nav_trending_now": "Trending Now",
+  "nav_upcoming_movies": "Upcoming Movies",
+  "nav_casting_calls": "Casting Calls Board",
+  "nav_post_project": "Post a Project",
+  "nav_messages": "Messages",
+  "nav_notifications": "Notifications",
+  "nav_settings": "Settings",
+  "nav_go_pro": "Go PRO",
+  "nav_logout": "Log Out",
+  "nav_admin": "Admin Dashboard",
+  "nav_signup": "Join Now",
+  "nav_signin": "Sign In",
+
+  "btn_follow": "Follow",
+  "btn_following": "Following",
+  "btn_message": "Message",
+  "btn_video_call": "Video Call",
+  "btn_audio_call": "Audio Call",
+  "btn_post_review": "Post Review",
+  "btn_share_profile": "Share Profile",
+  "btn_copy_link": "Copy Link",
+  "btn_share_whatsapp": "Share on WhatsApp",
+  "btn_share_instagram": "Share on Instagram",
+  "btn_share_facebook": "Share on Facebook",
+  "btn_download_card": "Download Profile Card",
+  "btn_save_changes": "Save Changes",
+  "btn_apply_now": "Apply Now",
+  "btn_submitting": "Submitting...",
+  "btn_applied": "Applied",
+  "btn_cancel": "Cancel",
+  "btn_confirm": "Confirm",
+  "btn_delete": "Delete",
+  "btn_edit": "Edit",
+  "btn_view_all": "View All",
+  "btn_back": "Back",
+  "btn_next": "Next",
+  "btn_previous": "Previous",
+  "btn_send": "Send",
+
+  "trending_now": "Trending Now",
+  "followers": "followers",
+  "follower": "follower",
+  "view_details": "View details >",
+
+  "categories": {
+    "actor": "Actor",
+    "model": "Model",
+    "director": "Director",
+    "dancer": "Dancer",
+    "musician": "Musician",
+    "voiceover": "Voice Over",
+    "vfx": "VFX",
+    "writer": "Writer"
+  },
+
+  "nav": {
+    "home": "Home",
+    "talents": "Talent Directory",
+    "casting": "Casting Board",
+    "discover": "Discover",
+    "projects": "Projects",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "admin": "Admin Page",
+    "logout": "Log Out",
+    "signIn": "Sign In",
+    "signUp": "Join Now",
+    "goPro": "Upgrade PRO"
+  },
+
+  "sidebar": {
+    "featuredTalent": "Featured Talent",
+    "activeCastingCalls": "Active Casting Calls",
+    "viewAll": "View All",
+    "openToWork": "Open to Work",
+    "upgradeProfile": "Upgrade Profile",
+    "promoteCasting": "Promote Your Casting",
+    "promoteSubtitle": "Reach thousands of talented actors across Nepal."
+  },
+
+  "home": {
+    "heroTitle": "Featured Talent Spotlight",
+    "viewProfile": "View profile",
+    "actorSection": "Actor & Actress",
+    "browseCategories": "Browse by Category",
+    "castingCalls": "Casting Calls & Auditions",
+    "loadingTalents": "Loading talents...",
+    "noTalentsFound": "No talents found",
+    "beTheFirst": "Be the first →",
+    "viewDetails": "View details >"
+  },
+
+  "profile": {
+    "about": "About",
+    "media": "Media & Gallery",
+    "experience": "Experience",
+    "reviews": "Reviews",
+    "bio": "Biography",
+    "skills": "Skills & Expertise",
+    "languages": "Languages",
+    "editProfile": "Edit Profile",
+    "shareProfile": "Share Profile",
+    "viewProfile": "View Profile"
+  },
+
+  "casting": {
+    "title": "Casting Calls & Auditions",
+    "subtitle": "Explore active film, TV, commercial, and theater opportunities across Nepal.",
+    "postNew": "Post New Audition",
+    "deadline": "Application Deadline",
+    "budget": "Pay / Budget",
+    "location": "Location",
+    "targetType": "Target Type",
+    "applyNow": "Apply Now",
+    "applied": "Applied (Pending)",
+    "closed": "Audition Closed",
+    "deleteCall": "Delete Call"
+  },
+
+  "messages": {
+    "title": "Messages",
+    "search": "Search conversations...",
+    "typeMessage": "Type a message...",
+    "empty": "No messages yet. Start a conversation!",
+    "online": "Online",
+    "offline": "Offline"
+  },
+
+  "settings": {
+    "title": "Account Settings",
+    "editProfile": "Edit Profile",
+    "skillsShowcase": "Skills Showcase",
+    "workHistory": "Work History",
+    "security": "Password & Security",
+    "notifications": "Notifications",
+    "language": "Language Settings"
+  },
+
+  "auth": {
+    "welcomeBack": "Welcome Back to NepalCasts",
+    "signInSubtitle": "Sign in to connect with Nepal's top casting directors & creators.",
+    "createAccount": "Create Your NepalCasts Account",
+    "signUpSubtitle": "Join thousands of actors, models, directors, and creators in Nepal.",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
+    "alreadyRegistered": "Already have an account?",
+    "noAccount": "Don't have an account?"
+  },
+
+  "admin": {
+    "title": "NepalCasts Admin Console",
+    "totalUsers": "Total Registered Talents",
+    "activeCalls": "Active Casting Calls",
+    "pendingVerifications": "Pending Verifications"
+  },
+
+  "ui": {
+    "searchPlaceholder": "Search talent, roles or casting...",
+    "loading": "Loading...",
+    "error": "Something went wrong.",
+    "notFound": "404 - Page Not Found",
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "back": "Back"
+  }
+}

@@ -7,6 +7,7 @@ import {
 import { db } from '../../lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { subscribeToCastingCalls } from '../../services';
+import { useTranslation } from 'react-i18next';
 import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 
@@ -47,6 +48,7 @@ const getRolesSummary = (call) => {
 };
 
 export default function CastingCall({ onNavigate, user, isAdmin }) {
+  const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
@@ -241,10 +243,10 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
             </button>
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase leading-none">
-                Opportunities
+                {t('casting.title')}
               </h2>
               <p className="text-[10px] sm:text-xs text-gray-400 mt-1 font-medium">
-                Open casting calls from verified productions
+                {t('casting.subtitle')}
               </p>
             </div>
           </div>
@@ -257,7 +259,7 @@ export default function CastingCall({ onNavigate, user, isAdmin }) {
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search projects..."
+                placeholder={t('ui.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);

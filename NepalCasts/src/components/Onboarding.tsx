@@ -80,12 +80,13 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
     useEffect(() => {
         if (profile) {
             if (profile.role) {
-                const matchingCategory = CATEGORIES.find((cat) => getCategoryConfig(cat).label.toLowerCase() === profile.role.toLowerCase());
+                const roleStr = typeof profile.role === 'string' ? profile.role : (Array.isArray(profile.role) ? profile.role.join(' ') : String(profile.role));
+                const matchingCategory = CATEGORIES.find((cat) => getCategoryConfig(cat).label.toLowerCase() === roleStr.toLowerCase());
                 if (matchingCategory) {
                     setSelectedRole('Talent');
                     setSelectedCategories([matchingCategory]);
                 }
-                else if (profile.role === 'Casting Director') {
+                else if (roleStr === 'Casting Director') {
                     setSelectedRole('Casting');
                 }
                 else {

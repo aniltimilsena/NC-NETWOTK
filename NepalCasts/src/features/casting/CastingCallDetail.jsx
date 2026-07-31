@@ -582,7 +582,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 uppercase tracking-wider text-[10px]">Pay / Budget</span>
                   <span className="text-white font-bold flex items-center gap-1">
-                    {call.budget && !call.budget.toLowerCase().includes('competitive') && !call.budget.toLowerCase().includes('rs') && (<span className="text-gray-500 text-xs font-black">Rs.</span>)}
+                    {call.budget && !String(call.budget).toLowerCase().includes('competitive') && !String(call.budget).toLowerCase().includes('rs') && (<span className="text-gray-500 text-xs font-black">Rs.</span>)}
                     {call.budget || 'Competitive'}
                   </span>
                 </div>

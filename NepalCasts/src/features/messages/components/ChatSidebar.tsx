@@ -57,7 +57,7 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
     const filteredConversations = conversations.filter((c) => (c.name || '').toLowerCase().includes(query.toLowerCase()));
     return (<div className="flex flex-col h-full border-r border-white/5 bg-[#0E0E0E]">
       
-      <div className="p-4 pt-6 md:p-4 border-b border-white/5 space-y-3">
+      <div className="p-4 pt-6 md:p-4 space-y-3">
         <div className="flex justify-between items-center">
           <button onClick={() => onNavigate ? onNavigate('back') : navigate(-1)} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 no-min-h shadow-sm active:scale-95 cursor-pointer" title="Go Back">
             <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5}/>
@@ -107,7 +107,7 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
                             return;
                         }
                         onSelectChat(c.id);
-                    }} className={`flex items-center gap-3 py-3.5 px-4 border-b border-white/5 cursor-pointer transition-all ${isSelected ? 'bg-white/10' : 'bg-transparent hover:bg-white/5'}`}>
+                    }} className={`flex items-center gap-3 py-3.5 px-4 cursor-pointer transition-all ${isSelected ? 'bg-white/10' : 'bg-transparent hover:bg-white/5'}`}>
                     <Avatar src={c.avatar} name={c.name} size="md"/>
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex justify-between items-start gap-2">
@@ -132,7 +132,7 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
                         onInitiateCall(callType, targetUserId, call.otherUser?.name || 'User', call.otherUser?.image || '');
                     }
                 };
-                return (<div key={call.id} onClick={handleCallClick} className="flex justify-between items-center py-3.5 px-4 border-b border-white/5 bg-transparent hover:bg-white/5 transition-all cursor-pointer group">
+                return (<div key={call.id} onClick={handleCallClick} className="flex justify-between items-center py-3.5 px-4 bg-transparent hover:bg-white/5 transition-all cursor-pointer group">
                       <div className="flex items-center gap-3">
                         <Avatar src={call.otherUser?.image} name={call.otherUser?.name} size="md"/>
                         <div className="text-left">
