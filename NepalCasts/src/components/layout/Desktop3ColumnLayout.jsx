@@ -224,11 +224,16 @@ export default function Desktop3ColumnLayout({
                 <>
                   {/* Cover Banner (Static Hero BG - No User Upload) */}
                   <div className="relative h-36 sm:h-40 bg-gradient-to-b from-[#092238] via-[#07192b] to-[#040e1a] overflow-hidden rounded-t-2xl select-none">
-                    <img
-                      src="/hero-bg.png"
-                      alt="Hero Cover"
-                      className="w-full h-full object-cover object-center opacity-90 pointer-events-none select-none"
-                    />
+                    <picture className="w-full h-full">
+                      <source srcSet="/hero-bg.webp" type="image/webp" />
+                      <img
+                        src="/hero-bg.png"
+                        alt="Hero Cover"
+                        fetchPriority="high"
+                        decoding="async"
+                        className="w-full h-full object-cover object-center opacity-90 pointer-events-none select-none"
+                      />
+                    </picture>
                     <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#060709]" />
                   </div>
 

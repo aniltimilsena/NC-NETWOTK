@@ -41,8 +41,8 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
     }, [showCoverMenu]);
     const avatarUrl = (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isOwnProfile ? auth.currentUser?.photoURL : null);
     const activeCover = localCover || profile.coverImage || (profile as any)?.coverPhoto;
-    const validCover = activeCover && activeCover !== '/hero-bg.png' ? activeCover : null;
-    const coverImage = validCover || '/hero-bg.png';
+    const validCover = activeCover && activeCover !== '/hero-bg.png' && activeCover !== '/hero-bg.webp' ? activeCover : null;
+    const coverImage = validCover || '/hero-bg.webp';
     const canEditCover = isOwnProfile || Boolean(auth.currentUser?.uid && profile?.uid && (auth.currentUser.uid === profile.uid || auth.currentUser.uid === (profile as any).id));
     const isPremiumUser = Boolean(
         profile?.isPremium || 
@@ -124,7 +124,10 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
     return (<div className="relative font-sans select-none">
       {/* Static Hero Cover Banner */}
       <div className="block h-[220px] sm:h-[320px] relative w-full overflow-hidden bg-[#0A0A0F] select-none">
-        <img src="/hero-bg.png" alt="Hero Cover" className="w-full h-full object-cover object-center select-none pointer-events-none opacity-90"/>
+        <picture className="w-full h-full">
+          <source srcSet="/hero-bg.webp" type="image/webp" />
+          <img src="/hero-bg.png" alt="Hero Cover" fetchPriority="high" decoding="async" className="w-full h-full object-cover object-center select-none pointer-events-none opacity-90"/>
+        </picture>
         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/30 to-transparent"/>
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent pointer-events-none"/>
 

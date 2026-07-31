@@ -244,14 +244,19 @@ export default function Home({ onNavigate, user }) {
     >
       <div className="min-h-screen bg-[#070709] text-white">
         {/* Hero Section */}
-        <section className="relative flex flex-col justify-end overflow-hidden min-h-[210px] sm:min-h-[360px] px-3 sm:px-6 pb-4">
+        <section className="relative flex flex-col justify-end overflow-hidden min-h-[210px] sm:min-h-[360px] px-3 sm:px-6 pb-4 bg-[#091b29]">
           {/* Cover Background Image */}
-          <div className="absolute inset-0 z-0">
-            <img
-              src="/hero-bg.png"
-              alt="Hero Background"
-              className="w-full h-full object-cover"
-            />
+          <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#092238] to-[#070709]">
+            <picture className="absolute inset-0 w-full h-full">
+              <source srcSet="/hero-bg.webp" type="image/webp" />
+              <img
+                src="/hero-bg.png"
+                alt="Hero Background"
+                fetchPriority="high"
+                decoding="async"
+                className="w-full h-full object-cover"
+              />
+            </picture>
             <div
               className="absolute inset-0"
               style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(7,7,9,0.95) 100%)' }}
