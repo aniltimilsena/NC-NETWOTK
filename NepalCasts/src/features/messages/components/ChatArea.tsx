@@ -29,12 +29,24 @@ const formatMessageTime = (timestamp?: any) => {
         return '';
     }
 };
+const getMsgMs = (timestamp?: any) => {
+    if (!timestamp)
+        return 0;
+    try {
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return isNaN(date.getTime()) ? 0 : date.getTime();
+    }
+    catch (e) {
+        return 0;
+    }
+};
 export default function ChatArea({ chat, messages, currentUser, typingUsers, onBack, onInitiateCall, onReplyTo, onDeleteMessage, onPinMessage, onTogglePinnedDrawer, isPinnedDrawerOpen }: ChatAreaProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
     const [activeActionMessage, setActiveActionMessage] = useState<Message | null>(null);
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isLongPressActive = useRef(false);
+    const isInitialMount = useRef(true);
     const startMessagePress = (msg: Message) => {
         isLongPressActive.current = false;
         longPressTimer.current = setTimeout(() => {
@@ -56,9 +68,17 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
     };
     useEffect(() => {
         if (containerRef.current) {
-            containerRef.current.scrollTop = containerRef.current.scrollHeight;
+            const behavior = isInitialMount.current ? 'auto' : 'smooth';
+            containerRef.current.scrollTo({
+                top: containerRef.current.scrollHeight,
+                behavior
+            });
+            isInitialMount.current = false;
         }
-    }, [messages, typingUsers]);
+    }, [messages.length, typingUsers, chat?.id]);
+    useEffect(() => {
+        isInitialMount.current = true;
+    }, [chat?.id]);
     const otherParticipantId = chat?.participants?.find((p: string) => p !== currentUser?.uid);
     const isTyping = otherParticipantId ? typingUsers?.[otherParticipantId] === true : false;
     return (<div className="flex flex-col h-full bg-[#0b0b0c]">
@@ -91,10 +111,11 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
       </div>
 
       
-      <div ref={containerRef} className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar bg-black/10">
-        {messages.length > 0 ? (messages.map((msg) => {
+      <div ref={containerRef} className="flex-1 overflow-y-auto p-6 space-y-1 no-scrollbar bg-black/10">
+        {messages.length > 0 ? (messages.map((msg, index) => {
             const isMe = msg.senderId === currentUser?.uid;
-            return ((msg.senderId === 'system' || msg.isSystem || (typeof msg.text === 'string' && (msg.text.includes('call •') || msg.text.includes('Call •')))) ? ((() => {
+            const isSystemMsg = msg.senderId === 'system' || msg.isSystem || (typeof msg.text === 'string' && (msg.text.includes('call •') || msg.text.includes('Call •')));
+            if (isSystemMsg) {
                 const text = msg.text || '';
                 const isVideo = text.toLowerCase().includes('video');
                 const isMissed = text.includes('Missed') || text.includes('Cancelled') || text.includes('Declined') || text.includes('Busy') || text.includes('Failed') || text.includes('Offline') || text.includes('Error');
@@ -110,14 +131,48 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                         <span className={`text-xs sm:text-sm font-semibold ${color}`}>{text}</span>
                       </div>
                     </div>);
-            })()) : (<div key={msg.id} className={`group flex items-end gap-2.5 max-w-[85%] sm:max-w-[75%] my-2 ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`} onTouchStart={() => startMessagePress(msg)} onTouchEnd={endMessagePress} onTouchMove={endMessagePress} onMouseDown={(e) => {
+            }
+            const prevMsg = index > 0 ? messages[index - 1] : null;
+            const nextMsg = index < messages.length - 1 ? messages[index + 1] : null;
+            const isSameSenderPrev = prevMsg && !prevMsg.isSystem && prevMsg.senderId === msg.senderId;
+            const isSameSenderNext = nextMsg && !nextMsg.isSystem && nextMsg.senderId === msg.senderId;
+            const timePrevDiff = isSameSenderPrev ? Math.abs(getMsgMs(msg.createdAt) - getMsgMs(prevMsg?.createdAt)) : Infinity;
+            const timeNextDiff = isSameSenderNext ? Math.abs(getMsgMs(nextMsg?.createdAt) - getMsgMs(msg.createdAt)) : Infinity;
+            const isGroupedWithPrev = Boolean(isSameSenderPrev && timePrevDiff <= 120000);
+            const isGroupedWithNext = Boolean(isSameSenderNext && timeNextDiff <= 120000);
+            let cornerRadius = 'rounded-2xl';
+            if (isMe) {
+                if (isGroupedWithPrev && isGroupedWithNext) {
+                    cornerRadius = 'rounded-2xl rounded-tr-sm rounded-br-sm';
+                } else if (isGroupedWithNext) {
+                    cornerRadius = 'rounded-2xl rounded-tr-sm';
+                } else {
+                    cornerRadius = 'rounded-2xl rounded-br-none';
+                }
+            } else {
+                if (isGroupedWithPrev && isGroupedWithNext) {
+                    cornerRadius = 'rounded-2xl rounded-tl-sm rounded-bl-sm';
+                } else if (isGroupedWithNext) {
+                    cornerRadius = 'rounded-2xl rounded-tl-sm';
+                } else {
+                    cornerRadius = 'rounded-2xl rounded-bl-none';
+                }
+            }
+            const marginClass = (isGroupedWithPrev || isGroupedWithNext) ? 'my-0.5' : 'my-2.5';
+            const showAvatar = !isMe && !isGroupedWithNext;
+            const showTimestamp = !isGroupedWithNext || msg.isPinned || msg.hasPendingWrites;
+            return (<div key={msg.id} className={`group flex items-end gap-2.5 max-w-[85%] sm:max-w-[75%] ${marginClass} ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`} onTouchStart={() => startMessagePress(msg)} onTouchEnd={endMessagePress} onTouchMove={endMessagePress} onMouseDown={(e) => {
                     if (e.button !== 0)
                         return;
                     startMessagePress(msg);
                 }} onMouseUp={endMessagePress} onMouseLeave={endMessagePress}>
                 
-                {!isMe && (<div className="shrink-0 mb-1.5">
-                    <Avatar src={chat.avatar} name={chat.name} size="sm"/>
+                {!isMe && (<div className="shrink-0 mb-0.5">
+                    {showAvatar ? (
+                        <Avatar src={chat.avatar} name={chat.name} size="sm"/>
+                    ) : (
+                        <div className="w-8 h-8 shrink-0"/>
+                    )}
                   </div>)}
 
                 
@@ -127,9 +182,9 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                       {msg.replyTo.text}
                     </div>)}
 
-                  <div className={`px-4 py-3 text-sm text-left ${isMe
-                    ? 'bg-gradient-to-br from-sky-400 to-sky-500 text-black font-semibold shadow-[0_4px_12px_rgba(56,189,248,0.15)] rounded-2xl rounded-br-none'
-                    : 'bg-[#18181b] text-gray-200 border border-white/[0.03] shadow-sm rounded-2xl rounded-bl-none'}`}>
+                  <div className={`px-4 py-2.5 text-sm text-left ${isMe
+                    ? `bg-gradient-to-br from-sky-400 to-sky-500 text-black font-semibold shadow-[0_4px_12px_rgba(56,189,248,0.15)] ${cornerRadius}`
+                    : `bg-[#18181b] text-gray-200 border border-white/[0.03] shadow-sm ${cornerRadius}`}`}>
                     {msg.type === 'image' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/image/upload/') || msg.text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i))) ? (<div className="space-y-1.5">
                         <img src={msg.text} alt="Sent a photo" className="max-w-full sm:max-w-[280px] max-h-[200px] rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity border border-black/20" onClick={(e) => {
                         if (isLongPressActive.current) {
@@ -157,11 +212,11 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                   </div>
 
                   
-                  <div className={`flex items-center gap-1.5 mt-1 text-[9px] text-nc-muted ${isMe ? 'justify-end' : 'justify-start'}`}>
+                  {showTimestamp && (<div className={`flex items-center gap-1.5 mt-1 text-[9px] text-nc-muted ${isMe ? 'justify-end' : 'justify-start'}`}>
                     {msg.isPinned && <Pin className="w-2.5 h-2.5 text-[#00BFFF] shrink-0"/>}
                     <span>{msg.hasPendingWrites ? 'Sending...' : formatMessageTime(msg.createdAt)}</span>
                     {isMe && (msg.hasPendingWrites ? (<Clock className="w-3 h-3 text-nc-muted animate-pulse"/>) : (<Check className="w-3 h-3 text-[#00BFFF]"/>))}
-                  </div>
+                  </div>)}
                 </div>
 
                 
