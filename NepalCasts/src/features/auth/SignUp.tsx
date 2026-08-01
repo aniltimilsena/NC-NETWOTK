@@ -82,18 +82,7 @@ export default function SignUp({ onNavigate }: SignUpProps) {
                     
                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#00BFFF] to-transparent opacity-90" />
 
-                    <button 
-                        onClick={handleBack} 
-                        type="button" 
-                        className="self-start flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-white transition-colors mb-4 cursor-pointer group"
-                    >
-                        <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all">
-                            <ArrowLeft className="w-4 h-4" />
-                        </div>
-                        <span>Back</span>
-                    </button>
-
-                    <div className="flex flex-col items-center text-center mb-6">
+                    <div className="flex flex-col items-center text-center mb-6 pt-2">
                         <Logo size="lg" className="mb-4" />
                         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Create Account</h1>
                         <p className="text-xs text-gray-400 font-medium mt-1">Join Nepal's talent & casting network</p>
