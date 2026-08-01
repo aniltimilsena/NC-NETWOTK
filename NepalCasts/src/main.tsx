@@ -10,7 +10,8 @@ import './index.css';
 import { LanguageProvider } from './i18n/LanguageProvider';
 import './config/i18n';
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '';
+const DEFAULT_CLERK_KEY = 'pk_test_cmVsaWV2ZWQtbWFtbWFsLTQ4LmNsZXJrLmFjY291bnRzLmRldiQ';
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || DEFAULT_CLERK_KEY;
 
 const isValidClerkKey = (key: string) => {
     if (!key) return false;
