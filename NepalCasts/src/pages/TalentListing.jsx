@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MoreVertical, Share2, ChevronLeft, SlidersHorizontal } from 'lucide-react';
-import { db, auth } from '../lib/firebase';
+import { useUser } from '@clerk/clerk-react';
+import { db } from '../lib/firebase';
 import { collection, onSnapshot, query, orderBy, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
@@ -14,6 +15,7 @@ import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 import { cacheManager } from '../utils/cacheManager';
 export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
     const navigate = useNavigate();
+    const { user: clerkUser } = useUser();
     const [talents, setTalents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [profilesReady, setProfilesReady] = useState(false);
@@ -79,27 +81,24 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         });
     }, []);
     useEffect(() => {
-        const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
-            if (currentUser) {
-                return cacheManager.subscribePooled(`user_follows_${currentUser.uid}`, (pooledCb) => {
-                    const q = query(collection(db, "follows"), where("followerId", "==", currentUser.uid));
-                    return onSnapshot(q, (snapshot) => {
-                        const ids = snapshot.docs.map(doc => doc.data().followingId);
-                        pooledCb(ids, null);
-                    }, (err) => {
-                        console.warn("Follows listener error:", err);
-                        pooledCb([], err);
-                    });
-                }, (ids) => {
-                    setFollowingIds(ids);
+        const userId = clerkUser?.id;
+        if (userId) {
+            return cacheManager.subscribePooled(`user_follows_${userId}`, (pooledCb) => {
+                const q = query(collection(db, "follows"), where("followerId", "==", userId));
+                return onSnapshot(q, (snapshot) => {
+                    const ids = snapshot.docs.map(doc => doc.data().followingId);
+                    pooledCb(ids, null);
+                }, (err) => {
+                    console.warn("Follows listener error:", err);
+                    pooledCb([], err);
                 });
-            }
-            else {
-                setFollowingIds([]);
-            }
-        });
-        return () => unsubscribeAuth();
-    }, []);
+            }, (ids) => {
+                setFollowingIds(ids);
+            });
+        } else {
+            setFollowingIds([]);
+        }
+    }, [clerkUser]);
     useEffect(() => {
         if (!loading) {
             const t = setTimeout(() => setProfilesReady(true), 80);

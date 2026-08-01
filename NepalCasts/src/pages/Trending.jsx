@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, MapPin, Search, TrendingUp, ChevronLeft, SlidersHorizontal } from 'lucide-react';
-import { db, auth } from '../lib/firebase';
+import { useUser } from '@clerk/clerk-react';
 import { collection, onSnapshot, query, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function Trending({ onNavigate }) {
     const { t } = useTranslation();
+    const { user: clerkUser } = useUser();
     const [profiles, setProfiles] = useState([]);
     const [followingIds, setFollowingIds] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -35,27 +36,25 @@ export default function Trending({ onNavigate }) {
         });
     }, []);
     useEffect(() => {
-        const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
-            if (currentUser) {
-                return cacheManager.subscribePooled(`user_follows_${currentUser.uid}`, (pooledCb) => {
-                    const q = query(collection(db, "follows"), where("followerId", "==", currentUser.uid));
-                    return onSnapshot(q, (snapshot) => {
-                        const ids = snapshot.docs.map(doc => doc.data().followingId);
-                        pooledCb(ids, null);
-                    }, (err) => {
-                        console.warn("Follows listener error in Trending:", err);
-                        pooledCb([], err);
-                    });
-                }, (ids) => {
-                    setFollowingIds(ids);
+        const userId = clerkUser?.id;
+        if (userId) {
+            return cacheManager.subscribePooled(`user_follows_${userId}`, (pooledCb) => {
+                const q = query(collection(db, "follows"), where("followerId", "==", userId));
+                return onSnapshot(q, (snapshot) => {
+                    const ids = snapshot.docs.map(doc => doc.data().followingId);
+                    pooledCb(ids, null);
+                }, (err) => {
+                    console.warn("Follows listener error:", err);
+                    pooledCb([], err);
                 });
-            }
-            else {
-                setFollowingIds([]);
-            }
-        });
-        return () => unsubscribeAuth();
-    }, []);
+            }, (ids) => {
+                setFollowingIds(ids);
+            });
+        } else {
+            setFollowingIds([]);
+        }
+    }, [clerkUser]);
+
     const isProfileNew = (profile) => {
         const createdDate = profile.createdAt?.toDate?.() || (profile.createdAt ? new Date(profile.createdAt) : null);
         if (!createdDate)

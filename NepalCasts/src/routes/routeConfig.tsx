@@ -1,5 +1,6 @@
 import React, { lazy } from 'react';
 import { Route, Routes, Navigate, useNavigate, Outlet } from 'react-router-dom';
+import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
 import PublicLayout from '../layouts/PublicLayout';
 import UserLayout from '../layouts/UserLayout';
 import AdminLayout from '../layouts/AdminLayout';
@@ -88,9 +89,12 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
         <Route path="/trust-safety" element={<TrustSafety />} />
         
         {/* Authentication Routes */}
-        <Route path="/login" element={<SignIn onNavigate={onNavigate} />} />
-        <Route path="/signin" element={<SignIn onNavigate={onNavigate} />} />
-        <Route path="/signup" element={<SignUp onNavigate={onNavigate} />} />
+        <Route path="/login" element={<Navigate to="/signin" replace />} />
+        <Route path="/signin/*" element={<SignIn onNavigate={onNavigate} />} />
+        <Route path="/signup/*" element={<SignUp onNavigate={onNavigate} />} />
+        <Route path="/sign-in/*" element={<SignIn onNavigate={onNavigate} />} />
+        <Route path="/sign-up/*" element={<SignUp onNavigate={onNavigate} />} />
+        <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback signInForceRedirectUrl="/discover" signUpForceRedirectUrl="/discover" />} />
         <Route path="/forgot-password" element={<ForgotPassword onNavigate={onNavigate} />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
