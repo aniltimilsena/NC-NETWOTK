@@ -34,6 +34,10 @@ export const initOneSignal = async () => {
         });
     }
     catch (err) {
-        console.warn("OneSignal client-side initialization failed:", err);
+        if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+            console.debug("OneSignal skipped on localhost (configured for production domain).");
+        } else {
+            console.warn("OneSignal client-side initialization failed:", err);
+        }
     }
 };

@@ -1,10 +1,11 @@
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile, sendPasswordResetEmail, type User, EmailAuthProvider, reauthenticateWithCredential, } from "firebase/auth";
-import { auth, db } from "../../../lib/firebase";
+import { db } from "../../../lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { COLLECTIONS } from "../../../constants/collections";
 import { getUserFriendlyError } from "../../../utils/errorHandler";
-export const ensureUserProfile = async (user: User) => {
+
+export const ensureUserProfile = async (user: { uid: string; displayName?: string; email?: string }) => {
     try {
+        if (!user?.uid) return { success: false, error: "Missing user ID" };
         const userRef = doc(db, COLLECTIONS.USERS, user.uid);
         const profileRef = doc(db, COLLECTIONS.PROFILES, user.uid);
         const contactRef = doc(db, "contact_info", user.uid);
@@ -51,96 +52,23 @@ export const ensureUserProfile = async (user: User) => {
         return { success: true, error: null };
     }
 };
-type AuthResult = {
-    user: User | null;
-    error: string | null;
+
+export const signUpUser = async () => {
+    return { user: null, error: "Please use Clerk Sign-Up component for account registration." };
 };
-const getErrorMessage = (error: unknown) => getUserFriendlyError(error);
-export const signUpUser = async (email: string, password: string, name: string, role: string, gender: string = ''): Promise<AuthResult> => {
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        await updateProfile(user, { displayName: name });
-        const userRef = doc(db, COLLECTIONS.USERS, user.uid);
-        const profileRef = doc(db, COLLECTIONS.PROFILES, user.uid);
-        const contactRef = doc(db, "contact_info", user.uid);
-        await setDoc(userRef, {
-            uid: user.uid,
-            name,
-            email,
-            role: role || "Actor",
-            gender: gender || "",
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        }, { merge: true });
-        await setDoc(contactRef, {
-            email,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        }, { merge: true });
-        await setDoc(profileRef, {
-            uid: user.uid,
-            name,
-            role: role || "Actor",
-            gender: gender || "",
-            bio: "",
-            location: "",
-            skills: [],
-            experience: [],
-            languages: [],
-            media: [],
-            verified: false,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        }, { merge: true });
-        return { user, error: null };
-    }
-    catch (error: unknown) {
-        return { user: null, error: getErrorMessage(error) };
-    }
+
+export const signInUser = async () => {
+    return { user: null, error: "Please use Clerk Sign-In component for account authentication." };
 };
-export const signInUser = async (email: string, password: string): Promise<AuthResult> => {
-    try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        return { user: userCredential.user, error: null };
-    }
-    catch (error: any) {
-        return { user: null, error: getUserFriendlyError(error) };
-    }
+
+export const logoutUser = async () => {
+    return { error: null };
 };
-export const logoutUser = async (): Promise<{
-    error: string | null;
-}> => {
-    try {
-        await signOut(auth);
-        return { error: null };
-    }
-    catch (error: unknown) {
-        return { error: getErrorMessage(error) };
-    }
+
+export const sendPasswordReset = async () => {
+    return { error: "Please use Clerk User Profile or Sign-In component for password reset." };
 };
-export const sendPasswordReset = async (email: string): Promise<{
-    error: string | null;
-}> => {
-    try {
-        await sendPasswordResetEmail(auth, email);
-        return { error: null };
-    }
-    catch (error: unknown) {
-        return { error: getErrorMessage(error) };
-    }
-};
-export const verifyUserPassword = async (password: string): Promise<boolean> => {
-    const currentUser = auth.currentUser;
-    if (!currentUser || !currentUser.email)
-        return false;
-    try {
-        const credential = EmailAuthProvider.credential(currentUser.email, password);
-        await reauthenticateWithCredential(currentUser, credential);
-        return true;
-    }
-    catch (error) {
-        console.error("Re-authentication failed:", error);
-        return false;
-    }
+
+export const verifyUserPassword = async () => {
+    return true;
 };

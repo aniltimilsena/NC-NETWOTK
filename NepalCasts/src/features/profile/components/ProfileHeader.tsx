@@ -51,7 +51,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         (isOwnProfile && (auth.currentUser as any)?.premium) || 
         (isOwnProfile && (auth.currentUser as any)?.isPremium)
     );
-    const name = profile.name || 'Discovery Talent';
+    const name = profile?.name || (profile as any)?.displayName || (profile as any)?.fullName || ((profile as any)?.email ? (profile as any).email.split('@')[0] : 'Discovery Talent');
     const handleShare = async () => {
         if (navigator.share) {
             try {
@@ -126,7 +126,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
       <div className="block h-[220px] sm:h-[320px] relative w-full overflow-hidden bg-[#0A0A0F] select-none">
         <picture className="w-full h-full">
           <source srcSet="/hero-bg.webp" type="image/webp" />
-          <img src="/hero-bg.png" alt="Hero Cover" fetchPriority="high" decoding="async" className="w-full h-full object-cover object-center select-none pointer-events-none opacity-90"/>
+          <img src="/hero-bg.png" alt="Hero Cover" fetchpriority="high" decoding="async" className="w-full h-full object-cover object-center select-none pointer-events-none opacity-90"/>
         </picture>
         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/30 to-transparent"/>
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent pointer-events-none"/>
@@ -163,8 +163,9 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         </div>
 
         <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight flex items-center justify-center gap-2 flex-wrap mb-2">
-          <span>{profile.name}</span>
+          <span>{name}</span>
           {profile.verified !== false && (
+
             <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#00BFFF] inline-flex items-center justify-center text-[#060709] text-xs sm:text-sm font-black shrink-0 shadow-md shadow-[#00BFFF]/30" title="Verified Talent">
               ✓
             </span>

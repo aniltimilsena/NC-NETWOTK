@@ -228,7 +228,7 @@ export default function Desktop3ColumnLayout({
                       <img
                         src="/hero-bg.png"
                         alt="Hero Cover"
-                        fetchPriority="high"
+                        fetchpriority="high"
                         decoding="async"
                         className="w-full h-full object-cover object-center opacity-90 pointer-events-none select-none"
                       />

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { auth, db } from '../../lib/firebase';
-import { updateProfile } from 'firebase/auth';
+import { db } from '../../lib/firebase';
 import { doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { uploadProfileMedia } from '../../services';
+
 import ConfirmDialog from './ConfirmDialog';
 import CropModal from './CropModal';
 interface AvatarProps {
@@ -22,8 +22,7 @@ interface AvatarProps {
 }
 export default function Avatar(props: AvatarProps) {
     const { src: propSrc, size = 'md', editable = false, name, className = '', verified = false, user: propUser, userId, showStatus = false, status = 'online' } = props;
-    const isExplicit = 'user' in props || 'src' in props || 'name' in props;
-    const user = propUser || ((isExplicit && !editable) ? null : auth.currentUser);
+    const user = propUser || null;
     const [imageError, setImageError] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -33,8 +32,9 @@ export default function Avatar(props: AvatarProps) {
     const [cropSrc, setCropSrc] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const targetId = userId || user?.id || user?.uid;
-    const isSelf = editable || Boolean(targetId && auth.currentUser?.uid && targetId === auth.currentUser.uid);
-    const resolvedSrc = propSrc || user?.photoURL || user?.profileImage || user?.image || user?.avatar || user?.picture || user?.photo || (isSelf ? auth.currentUser?.photoURL : null);
+    const isSelf = editable || Boolean(targetId && user?.uid && targetId === user.uid);
+    const resolvedSrc = propSrc || user?.photoURL || user?.profileImage || user?.image || user?.avatar || user?.picture || user?.photo || null;
+
     const isDefaultImage = (url?: string | null) => {
         if (!url)
             return true;
@@ -88,7 +88,7 @@ export default function Avatar(props: AvatarProps) {
     };
     const handleCropConfirm = async (croppedFile: File) => {
         setCropSrc(null);
-        const activeUserId = auth.currentUser?.uid || userId || user?.uid;
+        const activeUserId = userId || user?.uid || user?.id;
         if (!activeUserId)
             return;
         const reader = new FileReader();
@@ -106,17 +106,9 @@ export default function Avatar(props: AvatarProps) {
             if (downloadUrl) {
                 setPreviewSrc(downloadUrl);
                 setImageError(false);
-                if (auth.currentUser) {
-                    try {
-                        await updateProfile(auth.currentUser, { photoURL: downloadUrl });
-                    }
-                    catch {
-                    }
-                }
                 if (props.onUploadSuccess) {
                     await props.onUploadSuccess(downloadUrl);
-                }
-                else if (auth.currentUser && activeUserId === auth.currentUser.uid) {
+                } else if (activeUserId) {
                     try {
                         await setDoc(doc(db, 'profiles', activeUserId), {
                             image: downloadUrl,
@@ -128,6 +120,7 @@ export default function Avatar(props: AvatarProps) {
                         console.warn("Avatar doc update warning:", e);
                     }
                 }
+
                 triggerToast("Profile picture updated successfully!", "success");
             }
             else {
@@ -146,19 +139,12 @@ export default function Avatar(props: AvatarProps) {
     const handleConfirmDelete = async () => {
         setConfirmDeleteOpen(false);
         setUploading(true);
-        const activeUserId = userId || user?.uid || auth.currentUser?.uid;
+        const activeUserId = userId || user?.uid || user?.id;
         try {
-            if (auth.currentUser) {
-                try {
-                    await updateProfile(auth.currentUser, { photoURL: "" });
-                }
-                catch {
-                }
-            }
             if (props.onUploadSuccess) {
                 await props.onUploadSuccess("");
             }
-            else if (auth.currentUser && activeUserId === auth.currentUser.uid) {
+            else if (activeUserId) {
                 try {
                     await setDoc(doc(db, 'profiles', activeUserId), {
                         image: null,
@@ -167,14 +153,15 @@ export default function Avatar(props: AvatarProps) {
                     }, { merge: true });
                 }
                 catch (e) {
-                    console.warn("Avatar delete warning:", e);
+                    console.warn("Avatar delete doc update warning:", e);
                 }
             }
-            triggerToast("Profile picture removed.", "success");
+            setPreviewSrc(null);
+            triggerToast("Profile picture removed", "info");
         }
         catch (err) {
             console.error(err);
-            triggerToast("Error removing profile picture.", "error");
+            triggerToast("Delete failed", "error");
         }
         finally {
             setUploading(false);

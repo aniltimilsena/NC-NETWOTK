@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { onAuthStateChanged, updateProfile, type User } from 'firebase/auth';
+import { useUser, useClerk } from '@clerk/clerk-react';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { PermissionProvider } from '../context/PermissionContext';
 import { CallProvider } from '../context/CallContext';
 import { initOneSignal, oneSignalInitialized } from '../utils/oneSignal';
@@ -12,6 +12,7 @@ import { AlertBanner } from '../components/ui/AlertBanner';
 import CallingOverlay from '../features/call/components/CallingOverlay';
 import IncomingCallPopup from '../features/call/components/IncomingCallPopup';
 import { AnimatePresence } from 'framer-motion';
+
 export interface AppContextType {
     user: any;
     isAdmin: boolean;
@@ -40,7 +41,9 @@ interface AlertPayload {
 export default function AppProviders({ children }: {
     children: React.ReactNode;
 }) {
-    const [user, setUser] = useState<User | null>(null);
+    const { isLoaded, isSignedIn, user: clerkUser } = useUser();
+    const { signOut } = useClerk();
+    const [user, setUser] = useState<any>(null);
     const [userProfile, setUserProfile] = useState<any>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [authReady, setAuthReady] = useState(false);
@@ -91,39 +94,78 @@ export default function AppProviders({ children }: {
         return () => clearTimeout(timer);
     }, []);
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                setUser(firebaseUser);
+        if (isLoaded && isSignedIn && clerkUser) {
+            const uid = clerkUser.id;
+            const email = clerkUser.primaryEmailAddress?.emailAddress || '';
+            const clerkName = clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || (email ? email.split('@')[0] : 'Talent User');
+            const photoURL = clerkUser.imageUrl || '';
+
+            setUser({
+                uid,
+                email,
+                displayName: clerkName,
+                photoURL,
+            });
+
+            (async () => {
                 try {
                     if (oneSignalInitialized) {
-                        await OneSignal.login(firebaseUser.uid);
+                        await OneSignal.login(uid);
                     }
                 }
                 catch (e) {
                     console.warn("OneSignal login failed:", e);
                 }
                 try {
-                    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-                    setIsAdmin(userDoc.exists() && userDoc.data()?.isAdmin === true);
+                    const userDocRef = doc(db, 'users', uid);
+                    const userDoc = await getDoc(userDocRef);
+                    if (!userDoc.exists()) {
+                        await setDoc(userDocRef, {
+                            email,
+                            displayName: clerkName,
+                            createdAt: serverTimestamp(),
+                            isAdmin: false,
+                        }, { merge: true });
+                        setIsAdmin(false);
+                    } else {
+                        setIsAdmin(userDoc.data()?.isAdmin === true);
+                    }
+
+                    const profileDocRef = doc(db, 'profiles', uid);
+                    const profileDoc = await getDoc(profileDocRef);
+                    if (!profileDoc.exists()) {
+                        await setDoc(profileDocRef, {
+                            name: clerkName,
+                            email,
+                            image: photoURL,
+                            photoURL,
+                            createdAt: serverTimestamp(),
+                            onboarded: true,
+                        }, { merge: true });
+                    } else if (!profileDoc.data()?.name && clerkName) {
+                        await setDoc(profileDocRef, {
+                            name: clerkName,
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
+                    }
                 }
                 catch (err) {
-                    setIsAdmin(false);
+                    console.warn("Error syncing Clerk profile to Firestore:", err);
                 }
+            })();
+        } else if (isLoaded && !isSignedIn) {
+            setUser(null);
+            setUserProfile(null);
+            setIsAdmin(false);
+            try {
+                if (oneSignalInitialized)
+                    OneSignal.logout();
             }
-            else {
-                setUser(null);
-                setUserProfile(null);
-                setIsAdmin(false);
-                try {
-                    if (oneSignalInitialized)
-                        await OneSignal.logout();
-                }
-                catch (e) { }
-            }
-            setAuthReady(true);
-        });
-        return () => unsubscribe();
-    }, []);
+            catch (e) { }
+        }
+        setAuthReady(isLoaded);
+    }, [isLoaded, isSignedIn, clerkUser]);
+
     useEffect(() => {
         if (!user?.uid) {
             setUserProfile(null);
@@ -147,30 +189,31 @@ export default function AppProviders({ children }: {
         });
         return () => unsub();
     }, [user?.uid, showAlert]);
+
     const updateAvatar = async (newUrl: string | null) => {
-        if (!auth.currentUser)
+        if (!user?.uid)
             return;
-        const uid = auth.currentUser.uid;
-        await updateProfile(auth.currentUser, { photoURL: newUrl || '' });
+        const uid = user.uid;
         await updateDoc(doc(db, 'profiles', uid), {
             image: newUrl || null,
             photoURL: newUrl || null,
             updatedAt: serverTimestamp()
         });
-        setUser({ ...auth.currentUser } as any);
+        setUser((prev: any) => prev ? { ...prev, photoURL: newUrl || '' } : null);
     };
+
     const deleteAvatar = async () => {
-        if (!auth.currentUser)
+        if (!user?.uid)
             return;
-        const uid = auth.currentUser.uid;
-        await updateProfile(auth.currentUser, { photoURL: '' });
+        const uid = user.uid;
         await updateDoc(doc(db, 'profiles', uid), {
             image: null,
             photoURL: null,
             updatedAt: serverTimestamp()
         });
-        setUser({ ...auth.currentUser } as any);
+        setUser((prev: any) => prev ? { ...prev, photoURL: '' } : null);
     };
+
     const handleCancelDeletion = async () => {
         if (!user?.uid)
             return;
@@ -189,19 +232,24 @@ export default function AppProviders({ children }: {
         }
         catch (err) { }
     };
+
     const handleLogout = async () => {
-        await auth.signOut();
+        await signOut();
     };
+
+    const clerkComputedName = clerkUser ? (clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || (user?.email ? user.email.split('@')[0] : '')) : '';
+
     const enrichedUser = user ? {
         uid: user.uid,
         email: user.email,
-        displayName: userProfile?.name || user.displayName || '',
-        photoURL: userProfile?.photoURL || userProfile?.image || user.photoURL || '',
+        displayName: userProfile?.name || user.displayName || clerkComputedName || (user.email ? user.email.split('@')[0] : 'Talent User'),
+        photoURL: userProfile?.photoURL || userProfile?.image || user.photoURL || clerkUser?.imageUrl || '',
         gender: userProfile?.gender || '',
-        profileImage: userProfile?.image || user.photoURL || '',
+        profileImage: userProfile?.image || user.photoURL || clerkUser?.imageUrl || '',
         premium: userProfile?.premium || isAdmin || false,
         role: userProfile?.category || userProfile?.role || '',
     } : null;
+
     const showOnboarding = authReady && !!user && !!userProfile && userProfile.onboarded !== true;
     return (<PermissionProvider>
       <CallProvider user={enrichedUser}>
@@ -229,9 +277,10 @@ export default function AppProviders({ children }: {
               </div>
             </div>)}
           <AnimatePresence>
-            {!(authReady && minSplashTimeElapsed) && <SplashScreen />}
+            {!minSplashTimeElapsed && !authReady && <SplashScreen />}
             {showOnboarding && (<Onboarding user={enrichedUser} profile={userProfile} onNavigate={() => { }}/>)}
           </AnimatePresence>
+
           <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
             {children}
             <AlertBanner alerts={alerts} onDismiss={dismissAlert}/>

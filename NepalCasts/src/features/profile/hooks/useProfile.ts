@@ -274,15 +274,36 @@ export function useProfile(profileId: string | null, currentUser: any) {
         });
         return () => unsub();
     }, [targetUid, currentUser]);
+
     const computedRating = reviewsList.length > 0
         ? parseFloat((reviewsList.reduce((acc, r) => acc + (Number(r.rating) || 0), 0) / reviewsList.length).toFixed(1))
         : (profile?.rating || (profile?.totalRating && profile?.reviewCount ? parseFloat((profile.totalRating / profile.reviewCount).toFixed(1)) : 0));
+
+    const resolvedName = (profile?.name && profile.name !== 'Discovery Talent' ? profile.name : null) ||
+
+        (profile as any)?.displayName ||
+        (profile as any)?.fullName ||
+        (isOwnProfile && currentUser?.displayName ? currentUser.displayName : null) ||
+        profile?.name ||
+        (isOwnProfile && currentUser?.email ? currentUser.email.split('@')[0] : 'Discovery Talent');
+
     const effectiveProfile = profile ? {
         ...profile,
-        email: contactInfo?.email || profile.email,
+        name: resolvedName,
+        email: contactInfo?.email || profile.email || (isOwnProfile ? currentUser?.email : ''),
         phone: contactInfo?.phone || profile.phone,
         rating: computedRating
-    } : null;
+    } : (isOwnProfile && currentUser?.uid ? {
+        uid: currentUser.uid,
+        id: currentUser.uid,
+        name: currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Discovery Talent'),
+        email: currentUser.email || '',
+        photoURL: currentUser.photoURL || '',
+        role: currentUser.role || 'Actor',
+        rating: 0,
+        reviews: 0
+    } as unknown as UserProfile : null);
+
     return {
         profile: effectiveProfile,
         setProfile,

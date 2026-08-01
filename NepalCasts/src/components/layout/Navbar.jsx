@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { UserButton } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { ActionSearchBar } from "@/components/ui/ActionSearchBar";
 import Logo from '../ui/Logo';
@@ -211,25 +212,46 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                     {unreadMessagesCount > 0 && (<span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#00BFFF] rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#00BFFF]"/>)}
                   </Link>
 
-                  <div className="relative group">
-                    <Link to={user ? `/profile/${user.uid}` : '/signin'} className="w-10 h-10 rounded-full overflow-hidden hover:border-nc-accent transition-all flex items-center justify-center p-0 block">
-                      <Avatar user={user} size="sm" name={user.displayName} className="w-full h-full"/>
-                    </Link>
-  
-                    <div className="absolute top-full right-0 mt-2 w-48 rounded-3xl bg-[#0A0A0A] border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
-                      <div className="px-4 py-2 border-b border-white/5 mb-1">
-                        <p className="text-white text-xs font-bold truncate">{user.displayName || 'Discovery Talent'}</p>
-                        <p className="text-nc-muted text-[10px] truncate">{user.email}</p>
-                      </div>
-                      <Link to={user ? `/profile/${user.uid}` : '/signin'} className="w-full text-left block px-4 py-2 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_profile')}</Link>
-                      <Link to="/settings?tab=about" className="w-full text-left block px-4 py-2 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
-                      <div className="mx-2 my-1 border-t border-white/5"></div>
-                      <button onClick={onLogout} className="w-full text-left block px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">{t('nav_logout')}</button>
-                    </div>
+                  <div className="relative flex items-center">
+                    <UserButton
+                      appearance={{
+                        elements: {
+                          avatarBox: 'w-9 h-9 rounded-full border border-white/15 hover:border-[#00BFFF] transition-all shadow-md',
+                          userButtonPopoverCard: 'bg-[#111116] border border-white/10 text-white shadow-2xl rounded-2xl p-2 w-64',
+                          userButtonPopoverMain: 'space-y-0.5 p-0 bg-transparent',
+                          userPreview: 'p-3 border-b border-white/10 mb-1',
+                          userPreviewMainIdentifier: 'text-white font-bold text-sm',
+                          userPreviewSecondaryIdentifier: 'text-gray-400 text-xs font-medium',
+                          userButtonPopoverActions: 'space-y-0.5 p-0',
+                          userButtonPopoverActionButton: 'w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-transparent hover:bg-white/10 text-white font-medium transition-all text-sm cursor-pointer border-0 shadow-none',
+                          userButtonPopoverActionButtonText: 'text-gray-200 hover:text-white font-semibold text-sm',
+                          userButtonPopoverActionButtonIcon: 'text-gray-400',
+                          userButtonPopoverFooter: 'hidden',
+                        }
+                      }}
+                    >
+                      <UserButton.MenuItems>
+                        <UserButton.Link
+                          label="View Profile"
+                          labelIcon={
+                            <svg className="w-4 h-4 text-[#00BFFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          }
+                          href={`/profile/${user?.uid}`}
+                        />
+                        <UserButton.Action label="manageAccount" />
+                        <UserButton.Action label="signOut" />
+                      </UserButton.MenuItems>
+                    </UserButton>
+
+
                   </div>
+
                 </>) : (<Link to="/signup" className="bg-nc-accent text-nc-darker text-xs sm:text-sm px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full font-extrabold hover:bg-sky-400 transition-all ml-1 shadow-lg shadow-nc-accent/20">
                   Join Now
                 </Link>)}
+
               <button className="md:hidden text-nc-secondary hover:text-white p-1.5 -mr-1 flex items-center justify-center h-10 w-10" onClick={() => setMenuOpen(!menuOpen)} title="Toggle Menu" aria-label="Toggle Menu">
                 <MenuCloseIcon active={menuOpen} size={28} color="currentColor"/>
               </button>

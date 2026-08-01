@@ -12,18 +12,50 @@ export function useSettings(currentUser: any) {
     const [loadingBlocks, setLoadingBlocks] = useState(true);
     useEffect(() => {
         if (!currentUser?.uid) {
+            setProfile(null);
             setLoading(false);
             return;
         }
         const fetchProfile = async () => {
-            const res = await getProfile(currentUser.uid);
-            if (res.data) {
-                setProfile(res.data as unknown as UserProfile);
+            try {
+                const res = await getProfile(currentUser.uid);
+                if (res.data) {
+                    setProfile(res.data as unknown as UserProfile);
+                } else {
+                    setProfile({
+                        uid: currentUser.uid,
+                        name: currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Talent User'),
+                        email: currentUser.email || '',
+                        photoURL: currentUser.photoURL || '',
+                        role: currentUser.role || 'Actor',
+                        bio: '',
+                        location: '',
+                        skills: [],
+                        experience: [],
+                        languages: [],
+                        media: [],
+                    } as unknown as UserProfile);
+                }
+            } catch (err) {
+                setProfile({
+                    uid: currentUser.uid,
+                    name: currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Talent User'),
+                    email: currentUser.email || '',
+                    photoURL: currentUser.photoURL || '',
+                    role: currentUser.role || 'Actor',
+                    bio: '',
+                    location: '',
+                    skills: [],
+                    experience: [],
+                    languages: [],
+                    media: [],
+                } as unknown as UserProfile);
             }
             setLoading(false);
         };
         fetchProfile();
-    }, [currentUser?.uid]);
+    }, [currentUser]);
+
     useEffect(() => {
         if (!currentUser?.uid) {
             setLoadingSessions(false);
