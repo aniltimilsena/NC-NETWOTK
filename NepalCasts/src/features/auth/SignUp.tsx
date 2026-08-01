@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SignUp as ClerkSignUp } from '@clerk/clerk-react';
-import { ArrowLeft, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
 import Logo from '../../components/ui/Logo';
 import SEO from '../../components/SEO';
 
@@ -82,6 +82,17 @@ export default function SignUp({ onNavigate }: SignUpProps) {
                     
                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#00BFFF] to-transparent opacity-90" />
 
+                    {/* Standard Circle Chevron Back Button */}
+                    <button 
+                        onClick={handleBack} 
+                        type="button" 
+                        className="absolute top-6 left-6 w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white transition-all shadow-md z-20 cursor-pointer shrink-0" 
+                        aria-label="Back" 
+                        title="Go Back"
+                    >
+                        <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                    </button>
+
                     <div className="flex flex-col items-center text-center mb-6 pt-2">
                         <Logo size="lg" className="mb-4" />
                         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Create Account</h1>
@@ -95,6 +106,9 @@ export default function SignUp({ onNavigate }: SignUpProps) {
                                     rootBox: 'w-full flex justify-center',
                                     cardBox: 'w-full shadow-none border-0 bg-transparent p-0',
                                     card: 'bg-transparent shadow-none border-0 p-0 w-full',
+                                    header: 'hidden',
+                                    headerTitle: 'hidden',
+                                    headerSubtitle: 'hidden',
                                     socialButtonsBlockButton: 'w-full bg-white/[0.07] hover:bg-white/12 border border-white/15 text-white rounded-xl py-3.5 px-4 font-semibold text-sm transition-all duration-200 shadow-md flex items-center justify-center gap-3 cursor-pointer mb-2 hover:border-[#00BFFF]/40',
                                     socialButtonsBlockButtonText: 'text-white font-bold text-sm',
                                     dividerRow: 'my-4',
@@ -111,6 +125,14 @@ export default function SignUp({ onNavigate }: SignUpProps) {
                             signInUrl="/signin"
                             forceRedirectUrl="/"
                         />
+                    </div>
+
+                    {/* Footer Nav Link */}
+                    <div className="w-full border-t border-white/10 pt-4 mt-6 text-center text-xs text-gray-400">
+                        Already have an account?{' '}
+                        <button onClick={() => navigate('/signin')} type="button" className="text-[#00BFFF] hover:text-sky-300 font-bold ml-1 transition-colors cursor-pointer hover:underline">
+                            Sign In
+                        </button>
                     </div>
                 </div>
             </div>

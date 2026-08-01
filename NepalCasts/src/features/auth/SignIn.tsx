@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SignIn as ClerkSignIn } from '@clerk/clerk-react';
-import { ArrowLeft, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
 import Logo from '../../components/ui/Logo';
 import SEO from '../../components/SEO';
 
@@ -79,28 +79,42 @@ export default function SignIn({ onNavigate }: SignInProps) {
                     
                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#00BFFF] to-transparent opacity-90" />
 
+                    {/* Standard Circle Chevron Back Button */}
+                    <button 
+                        onClick={handleBack} 
+                        type="button" 
+                        className="absolute top-6 left-6 w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white transition-all shadow-md z-20 cursor-pointer shrink-0" 
+                        aria-label="Back" 
+                        title="Go Back"
+                    >
+                        <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                    </button>
+
                     <div className="flex flex-col items-center text-center mb-6 pt-2">
                         <Logo size="lg" className="mb-4" />
                         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Welcome Back</h1>
                         <p className="text-xs text-gray-400 font-medium mt-1">Sign in to your NepalCasts account</p>
                     </div>
 
-                    <div className="w-full flex justify-center">
+                    <div className="w-full flex flex-col justify-center relative">
                         <ClerkSignIn
                             appearance={{
                                 elements: {
                                     rootBox: 'w-full flex justify-center',
                                     cardBox: 'w-full shadow-none border-0 bg-transparent p-0',
                                     card: 'bg-transparent shadow-none border-0 p-0 w-full',
+                                    header: 'hidden',
+                                    headerTitle: 'hidden',
+                                    headerSubtitle: 'hidden',
                                     socialButtonsBlockButton: 'w-full bg-white/[0.07] hover:bg-white/12 border border-white/15 text-white rounded-xl py-3.5 px-4 font-semibold text-sm transition-all duration-200 shadow-md flex items-center justify-center gap-3 cursor-pointer mb-2 hover:border-[#00BFFF]/40',
                                     socialButtonsBlockButtonText: 'text-white font-bold text-sm',
                                     dividerRow: 'my-4',
                                     dividerLine: 'bg-white/10',
                                     dividerText: 'text-gray-400 text-xs uppercase tracking-wider font-semibold px-3 bg-[#101017]',
-                                    form: 'w-full space-y-4',
-                                    formFieldRow: 'flex flex-row items-start gap-3 w-full mb-3.5',
+                                    form: 'w-full space-y-4 flex flex-col',
+                                    formFieldRow: 'flex flex-row items-start gap-3 w-full mb-1',
                                     formFieldInput: 'w-full px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/20 text-white placeholder-gray-400 focus:border-[#00BFFF] focus:ring-1 focus:ring-[#00BFFF] transition-all text-sm font-medium',
-                                    formButtonPrimary: 'w-full py-3.5 rounded-xl bg-gradient-to-r from-[#00BFFF] via-[#0099FF] to-[#0066FF] text-black font-extrabold text-sm uppercase tracking-wider hover:brightness-110 active:scale-[0.99] transition-all shadow-[0_4px_30px_rgba(0,191,255,0.4)] mt-2 cursor-pointer',
+                                    formButtonPrimary: 'w-full py-3.5 rounded-xl bg-gradient-to-r from-[#00BFFF] via-[#0099FF] to-[#0066FF] text-black font-extrabold text-sm uppercase tracking-wider hover:brightness-110 active:scale-[0.99] transition-all shadow-[0_4px_30px_rgba(0,191,255,0.4)] mt-10 cursor-pointer',
                                     footerActionText: 'text-gray-400 text-xs font-medium',
                                     footerActionLink: 'text-[#00BFFF] hover:text-sky-300 font-bold text-xs ml-1 transition-colors',
                                 }
@@ -108,6 +122,25 @@ export default function SignIn({ onNavigate }: SignInProps) {
                             signUpUrl="/signup"
                             forceRedirectUrl="/"
                         />
+
+                        {/* Forgot Password Link - Positioned Higher Above Continue Button */}
+                        <div className="w-full text-right -mt-[105px] mb-12 relative z-20 pointer-events-auto">
+                            <button 
+                                onClick={() => navigate('/forgot-password')} 
+                                type="button" 
+                                className="text-xs text-[#00BFFF] hover:text-sky-300 font-semibold transition-colors cursor-pointer hover:underline"
+                            >
+                                Forgot password?
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Footer Nav Link */}
+                    <div className="w-full border-t border-white/10 pt-4 mt-4 text-center text-xs text-gray-400">
+                        Don't have an account?{' '}
+                        <button onClick={() => navigate('/signup')} type="button" className="text-[#00BFFF] hover:text-sky-300 font-bold ml-1 transition-colors cursor-pointer hover:underline">
+                            Sign Up
+                        </button>
                     </div>
                 </div>
             </div>
