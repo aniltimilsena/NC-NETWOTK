@@ -47,7 +47,7 @@ function FollowBtn({ targetUid }) {
     }
   };
 
-  if (!currentUser?.uid || currentUser.uid === targetUid) return null;
+  if (!currentUserId || currentUserId === targetUid) return null;
 
   return (
     <button
