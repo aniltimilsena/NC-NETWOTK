@@ -187,7 +187,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
     };
     const handleToggleFollow = async (e, talentId) => {
         e.stopPropagation();
-        const currentUser = auth.currentUser;
+        const currentUser = activeUser;
         if (!currentUser) {
             onNavigate('/signin');
             return;
@@ -455,10 +455,10 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                         </div>
 
                                         <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                                            {talent.id !== auth.currentUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, talent.id)} className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 border active:scale-[0.98] ${isFollowing
+                                            {talent.id !== activeUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, talent.id)} className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 border active:scale-[0.98] ${isFollowing
                                                 ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
                                                 : 'bg-white/[0.06] border-white/10 hover:bg-white/10 text-white'}`}>
-                                                {!auth.currentUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
+                                                {!activeUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
                                             </button>)}
 
                                             <button type="button" onClick={() => setActiveMenuId(activeMenuId === talent.id ? null : talent.id)} className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-white relative bg-transparent hover:bg-white/5 transition-colors">
