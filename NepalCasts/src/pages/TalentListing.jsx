@@ -13,9 +13,14 @@ import ShareSheet from '../components/ui/ShareSheet';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 import { cacheManager } from '../utils/cacheManager';
-export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
+export default function TalentListing({ onNavigate, user, initialCategory = 'All' }) {
     const navigate = useNavigate();
     const { user: clerkUser } = useUser();
+    const activeUser = user || (clerkUser ? {
+        uid: clerkUser.id,
+        displayName: clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || "Someone",
+        photoURL: clerkUser.imageUrl || "",
+    } : null);
     const [talents, setTalents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [profilesReady, setProfilesReady] = useState(false);
@@ -266,7 +271,7 @@ export default function TalentListing({ onNavigate, initialCategory = 'All' }) {
         setSearchQuery('');
     };
     return (
-        <Desktop3ColumnLayout user={auth.currentUser} onNavigate={onNavigate} activeNav="talent" featuredTalents={talents}>
+        <Desktop3ColumnLayout user={activeUser} onNavigate={onNavigate} activeNav="talent" featuredTalents={talents}>
             <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-6 relative font-sans">
                 <SEO title="Browse Professional Talent | NepalCasts" description="Premium directory of cinema professionals in Nepal." />
 

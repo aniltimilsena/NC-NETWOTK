@@ -8,10 +8,16 @@ import SEO from '../components/SEO';
 import { CATEGORIES, getCategoryColor, getCategoryConfig } from '../constants/categories';
 import { cacheManager } from '../utils/cacheManager';
 import { useTranslation } from 'react-i18next';
+import { db } from '../lib/firebase';
 
-export default function Trending({ onNavigate }) {
+export default function Trending({ onNavigate, user }) {
     const { t } = useTranslation();
     const { user: clerkUser } = useUser();
+    const activeUser = user || (clerkUser ? {
+        uid: clerkUser.id,
+        displayName: clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || "Someone",
+        photoURL: clerkUser.imageUrl || "",
+    } : null);
     const [profiles, setProfiles] = useState([]);
     const [followingIds, setFollowingIds] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -101,7 +107,7 @@ export default function Trending({ onNavigate }) {
     };
     const handleToggleFollow = async (e, talentId) => {
         e.stopPropagation();
-        const currentUser = auth.currentUser;
+        const currentUser = activeUser;
         if (!currentUser) {
             onNavigate('/signin');
             return;
@@ -395,7 +401,7 @@ export default function Trending({ onNavigate }) {
                         <button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`w-full py-2 rounded-full text-xs font-bold transition-all border ${isFollowing
                             ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
                             : 'bg-[#18181b] border-white/15 text-white hover:bg-white/10 active:scale-[0.97]'}`}>
-                          {!auth.currentUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
+                          {!activeUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
                         </button>
                       </div>
                     </motion.div>);
@@ -464,10 +470,10 @@ export default function Trending({ onNavigate }) {
                       </div>
 
                       <div className="flex items-center gap-4 sm:gap-6 shrink-0">
-                        {prof.id !== auth.currentUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`px-5 py-2 sm:px-6 sm:py-2 rounded-full text-xs font-bold transition-all border ${isFollowing
+                        {prof.id !== activeUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`px-5 py-2 sm:px-6 sm:py-2 rounded-full text-xs font-bold transition-all border ${isFollowing
                             ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
                             : 'bg-[#18181b] border-white/15 text-white hover:bg-white/10 active:scale-[0.97]'}`}>
-                            {!auth.currentUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
+                            {!activeUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
                           </button>)}
                       </div>
 
