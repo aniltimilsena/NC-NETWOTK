@@ -2,8 +2,8 @@ import { auth } from "../lib/firebase";
 import { uploadMedia, type CloudinaryUploadResult } from "../utils/uploadMedia";
 import { mediaOptimizer } from "./MediaOptimizer";
 import { logger } from "../utils/logger";
-export const uploadFile = async (file: File, path: string, onProgress?: (p: number) => void): Promise<string> => {
-    const uid = auth.currentUser?.uid;
+export const uploadFile = async (file: File, path: string, onProgress?: (p: number) => void, currentUserId?: string): Promise<string> => {
+    const uid = currentUserId || auth.currentUser?.uid;
     if (!uid) {
         throw new Error("Authentication is required for uploads");
     }

@@ -134,7 +134,7 @@ export const uploadProfileMedia = async (uid: string, file: File, onProgress?: (
         const targetPath = customPath
             ? customPath.replace(uid, targetUid)
             : defaultPath;
-        const url = await uploadFile(file, targetPath, onProgress);
+        const url = await uploadFile(file, targetPath, onProgress, targetUid);
         return url;
     }
     catch (error) {
