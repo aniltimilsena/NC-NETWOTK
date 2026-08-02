@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { signOut as firebaseSignOut } from 'firebase/auth';
+import { db, auth } from '../lib/firebase';
 import { PermissionProvider } from '../context/PermissionContext';
 import { CallProvider } from '../context/CallContext';
 import { initOneSignal, oneSignalInitialized } from '../utils/oneSignal';
@@ -66,6 +67,11 @@ export default function AppProviders({ children }: {
             }
         }, 2000);
         return () => clearTimeout(timer);
+    }, []);
+    useEffect(() => {
+        firebaseSignOut(auth).catch((err) => {
+            console.warn("Failed to clear stale Firebase Auth session:", err);
+        });
     }, []);
     const showAlert = useCallback((message: string, type: AlertType = 'info', detail?: string, onAction?: () => void) => {
         const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -249,6 +255,7 @@ export default function AppProviders({ children }: {
 
     const handleLogout = async () => {
         await signOut();
+        await firebaseSignOut(auth).catch(console.warn);
     };
 
     const clerkComputedName = clerkUser ? (clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || (user?.email ? user.email.split('@')[0] : '')) : '';
