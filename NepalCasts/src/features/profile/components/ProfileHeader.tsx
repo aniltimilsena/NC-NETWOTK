@@ -164,7 +164,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
 
         <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight flex items-center justify-center gap-2 flex-wrap mb-2">
           <span>{name}</span>
-          {profile.verified !== false && (
+          {profile.verified === true && (
 
             <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#00BFFF] inline-flex items-center justify-center text-[#060709] text-xs sm:text-sm font-black shrink-0 shadow-md shadow-[#00BFFF]/30" title="Verified Talent">
               ✓
