@@ -153,12 +153,13 @@ export default function AppProviders({ children }: {
                             updateData.name = clerkName;
                         }
                         const currentImg = profileData?.image || profileData?.photoURL;
+                        const hasExplicitDelete = profileData && ('image' in profileData || 'photoURL' in profileData) && (profileData.image === "" || profileData.image === null || profileData.photoURL === "" || profileData.photoURL === null);
                         const isDefault = !currentImg || 
                                           currentImg.includes('default-avatar.png') || 
                                           currentImg.includes('default-male.png') || 
                                           currentImg.includes('default-female.png') || 
                                           currentImg.startsWith('data:image/svg+xml');
-                        if (photoURL && (isDefault || currentImg !== photoURL)) {
+                        if (photoURL && isDefault && !hasExplicitDelete) {
                             updateData.image = photoURL;
                             updateData.photoURL = photoURL;
                         }
