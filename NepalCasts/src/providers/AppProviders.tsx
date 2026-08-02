@@ -138,7 +138,6 @@ export default function AppProviders({ children }: {
 
                     if (!profileDoc.exists()) {
                         updateData.name = clerkName;
-                        updateData.email = email;
                         updateData.image = photoURL;
                         updateData.photoURL = photoURL;
                         updateData.createdAt = serverTimestamp();

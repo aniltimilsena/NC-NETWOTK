@@ -78,9 +78,7 @@ service cloud.firestore {
         !('password' in request.resource.data) &&
         !('passwordHash' in request.resource.data) &&
         !('passwordReset' in request.resource.data) &&
-        // isAdmin changes are ONLY allowed via Admin SDK (server-side).
-        // Client writes must preserve the existing value or omit the field.
-        (!('isAdmin' in request.resource.data) || (resource != null && 'isAdmin' in resource.data && request.resource.data.isAdmin == resource.data.isAdmin)) &&
+        (!('isAdmin' in request.resource.data) || request.resource.data.isAdmin == false || (resource != null && 'isAdmin' in resource.data && request.resource.data.isAdmin == resource.data.isAdmin)) &&
         
         (isOwner(userId) || !('blockedUsers' in request.resource.data) || (resource != null && 'blockedUsers' in resource.data && request.resource.data.blockedUsers == resource.data.blockedUsers)) &&
         
