@@ -133,20 +133,35 @@ export default function AppProviders({ children }: {
 
                     const profileDocRef = doc(db, 'profiles', uid);
                     const profileDoc = await getDoc(profileDocRef);
+                    const profileData = profileDoc.exists() ? profileDoc.data() : null;
+                    const updateData: any = {};
+
                     if (!profileDoc.exists()) {
-                        await setDoc(profileDocRef, {
-                            name: clerkName,
-                            email,
-                            image: photoURL,
-                            photoURL,
-                            createdAt: serverTimestamp(),
-                            onboarded: true,
-                        }, { merge: true });
-                    } else if (!profileDoc.data()?.name && clerkName) {
-                        await setDoc(profileDocRef, {
-                            name: clerkName,
-                            updatedAt: serverTimestamp()
-                        }, { merge: true });
+                        updateData.name = clerkName;
+                        updateData.email = email;
+                        updateData.image = photoURL;
+                        updateData.photoURL = photoURL;
+                        updateData.createdAt = serverTimestamp();
+                        updateData.onboarded = true;
+                    } else {
+                        if (!profileData?.name && clerkName) {
+                            updateData.name = clerkName;
+                        }
+                        const currentImg = profileData?.image || profileData?.photoURL;
+                        const isDefault = !currentImg || 
+                                          currentImg.includes('default-avatar.png') || 
+                                          currentImg.includes('default-male.png') || 
+                                          currentImg.includes('default-female.png') || 
+                                          currentImg.startsWith('data:image/svg+xml');
+                        if (photoURL && (isDefault || currentImg !== photoURL)) {
+                            updateData.image = photoURL;
+                            updateData.photoURL = photoURL;
+                        }
+                    }
+
+                    if (Object.keys(updateData).length > 0) {
+                        updateData.updatedAt = serverTimestamp();
+                        await setDoc(profileDocRef, updateData, { merge: true });
                     }
                 }
                 catch (err) {
