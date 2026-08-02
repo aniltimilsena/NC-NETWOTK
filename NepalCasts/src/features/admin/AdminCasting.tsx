@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, Eye, Users, Plus, Search, Trash2, Activity, X, CheckCircle, XCircle, Calendar, FolderOpen } from 'lucide-react';
-import { db, auth } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
+import { CurrentUser } from '../../utils/CurrentUser';
 import { collection, onSnapshot, doc, updateDoc, query, where, getDocs } from 'firebase/firestore';
 import { deleteCastingCallAdmin, setCastingPriorityAdmin, logAdminAction } from '../../services';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -33,7 +34,7 @@ export default function AdminCasting() {
     const [selectedCall, setSelectedCall] = useState<CastingCall | null>(null);
     const [applicants, setApplicants] = useState<Applicant[]>([]);
     const [loadingApplicants, setLoadingApplicants] = useState(false);
-    const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
     const [confirmConfig, setConfirmConfig] = useState({
         isOpen: false,
         title: '',

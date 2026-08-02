@@ -1,5 +1,5 @@
 import axios, { AxiosHeaders } from 'axios';
-import { auth } from '../lib/firebase';
+import { AuthService } from '../services/AuthService';
 const getBaseURL = () => {
     return import.meta.env.VITE_API_URL || '/api';
 };
@@ -8,10 +8,9 @@ const apiClient = axios.create({
     timeout: 10000,
 });
 apiClient.interceptors.request.use(async (config) => {
-    const user = auth.currentUser;
-    if (user) {
+    if (AuthService.isSignedIn()) {
         try {
-            const token = await user.getIdToken();
+            const token = await AuthService.getIdToken();
             if (token) {
                 if (!config.headers) {
                     config.headers = new AxiosHeaders();
@@ -24,7 +23,7 @@ apiClient.interceptors.request.use(async (config) => {
                 }
             }
         } catch (err) {
-            console.warn('Failed to retrieve Firebase ID token for API request:', err);
+            console.warn('Failed to retrieve ID token for API request:', err);
         }
     }
     return config;

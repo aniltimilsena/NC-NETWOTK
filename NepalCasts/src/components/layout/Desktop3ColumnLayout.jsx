@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { User, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, TrendingUp, BarChart3, ArrowRight, Eye, UserPlus, CheckCircle2, Lock, FileText } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import { getAvatar } from '../../utils/avatars';
-import { db, auth } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
+import { CurrentUser } from '../../utils/CurrentUser';
 import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, getDoc, collection, query, where, or } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { updateProfileData } from '../../services';
@@ -12,29 +13,29 @@ import { updateProfileData } from '../../services';
 function FollowBtn({ targetUid }) {
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const currentUser = auth.currentUser;
+  const currentUserId = CurrentUser.id;
 
   useEffect(() => {
-    if (!currentUser?.uid || !targetUid || currentUser.uid === targetUid) return;
-    const followId = `${currentUser.uid}_${targetUid}`;
+    if (!currentUserId || !targetUid || currentUserId === targetUid) return;
+    const followId = `${currentUserId}_${targetUid}`;
     const unsub = onSnapshot(doc(db, 'follows', followId), (snap) => {
       setFollowing(snap.exists());
     });
     return () => unsub();
-  }, [currentUser?.uid, targetUid]);
+  }, [currentUserId, targetUid]);
 
   const handleToggle = async (e) => {
     e.stopPropagation();
-    if (!currentUser?.uid || !targetUid || currentUser.uid === targetUid) return;
+    if (!currentUserId || !targetUid || currentUserId === targetUid) return;
     setLoading(true);
-    const followId = `${currentUser.uid}_${targetUid}`;
+    const followId = `${currentUserId}_${targetUid}`;
     const followDocRef = doc(db, 'follows', followId);
     try {
       if (following) {
         await deleteDoc(followDocRef);
       } else {
         await setDoc(followDocRef, {
-          followerId: currentUser.uid,
+          followerId: currentUserId,
           followingId: targetUid,
           createdAt: serverTimestamp(),
         });

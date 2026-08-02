@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, ShieldCheck, UserMinus, Trash2, ExternalLink, Activity, X, UserCheck, ShieldAlert, ShieldX, Award, Mail } from 'lucide-react';
-import { db, auth } from "../../lib/firebase";
+import { db } from "../../lib/firebase";
+import { CurrentUser } from '../../utils/CurrentUser';
 import { collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 import { logAdminAction } from '../../services';
@@ -31,7 +32,7 @@ export default function AdminUsers() {
     const [showFiltersDropdown, setShowFiltersDropdown] = useState(false);
     const pageSize = 10;
     const navigate = useNavigate();
-    const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
     const [confirmConfig, setConfirmConfig] = useState({
         isOpen: false,
         title: '',

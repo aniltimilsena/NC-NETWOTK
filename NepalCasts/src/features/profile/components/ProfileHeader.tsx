@@ -3,7 +3,7 @@ import { Camera, Trash2, ChevronLeft, MapPin, MessageSquare, Star, Share2, MoreH
 import { Avatar } from '../../../components/ui';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { uploadProfileMedia, updateProfileData } from '../../../services';
-import { auth } from '../../../lib/firebase';
+import { CurrentUser } from '../../../utils/CurrentUser';
 import type { UserProfile } from '../../../types';
 interface ProfileHeaderProps {
     profile: UserProfile;
@@ -39,17 +39,16 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         document.addEventListener('click', close, { once: true });
         return () => document.removeEventListener('click', close);
     }, [showCoverMenu]);
-    const avatarUrl = (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isOwnProfile ? auth.currentUser?.photoURL : null);
+    const avatarUrl = (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isOwnProfile ? CurrentUser.imageUrl : null);
     const activeCover = localCover || profile.coverImage || (profile as any)?.coverPhoto;
     const validCover = activeCover && activeCover !== '/hero-bg.png' && activeCover !== '/hero-bg.webp' ? activeCover : null;
     const coverImage = validCover || '/hero-bg.webp';
-    const canEditCover = isOwnProfile || Boolean(auth.currentUser?.uid && profile?.uid && (auth.currentUser.uid === profile.uid || auth.currentUser.uid === (profile as any).id));
+    const canEditCover = isOwnProfile || Boolean(CurrentUser.id && profile?.uid && (CurrentUser.id === profile.uid || CurrentUser.id === (profile as any).id));
     const isPremiumUser = Boolean(
         profile?.isPremium || 
         profile?.premium || 
         (profile as any)?.isPro || 
-        (isOwnProfile && (auth.currentUser as any)?.premium) || 
-        (isOwnProfile && (auth.currentUser as any)?.isPremium)
+        (isOwnProfile && CurrentUser.premium)
     );
     const name = profile?.name || (profile as any)?.displayName || (profile as any)?.fullName || ((profile as any)?.email ? (profile as any).email.split('@')[0] : 'Discovery Talent');
     const handleShare = async () => {
@@ -71,7 +70,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
     };
     const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        const targetUid = profile?.uid || (profile as any)?.id || auth.currentUser?.uid;
+        const targetUid = profile?.uid || (profile as any)?.id || CurrentUser.id;
         if (!file || !targetUid)
             return;
         if (file.size > 10 * 1024 * 1024) {
@@ -104,7 +103,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         }
     };
     const handleDeleteCover = async () => {
-        const targetUid = profile?.uid || (profile as any)?.id || auth.currentUser?.uid;
+        const targetUid = profile?.uid || (profile as any)?.id || CurrentUser.id;
         if (!targetUid)
             return;
         setIsDeletingCover(true);
@@ -148,7 +147,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         <div className="relative z-10 mb-3">
           <Avatar 
             user={profile}
-            src={(profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isOwnProfile ? auth.currentUser?.photoURL : null)} 
+            src={(profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isOwnProfile ? CurrentUser.imageUrl : null)} 
             gender={profile.gender || ''} 
             name={name} 
             size="none" 
@@ -156,7 +155,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             userId={profile.uid} 
             showStatus={profile.isOnline === true} 
             status={profile.isOnline === true ? 'online' : 'offline'} 
-            onUploadSuccess={(url: string) => updateProfileData(auth.currentUser?.uid || profile.uid, { image: url, photoURL: url, profileImage: url })} 
+            onUploadSuccess={(url: string) => updateProfileData(CurrentUser.id || profile.uid, { image: url, photoURL: url, profileImage: url })} 
             showAlert={showAlert} 
             className="w-44 h-44 sm:w-56 sm:h-56 rounded-full border-4 border-[#0A0A0F] shadow-2xl ring-2 ring-white/15"
           />

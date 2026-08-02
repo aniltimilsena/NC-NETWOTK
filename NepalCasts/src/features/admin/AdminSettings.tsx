@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Sliders, Database, Globe, Lock, Trash2, Plus, ShieldCheck, Clock, ShieldAlert } from 'lucide-react';
 import { Switch } from '../../components/ui';
 import { subscribeToGlobalSettings, updateGlobalSettings, subscribeToAdminLogs, GlobalSettings, AdminLog, logAdminAction } from '../../services';
-import { auth, db } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
+import { CurrentUser } from '../../utils/CurrentUser';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { CATEGORIES, getCategoryConfig } from '../../constants/categories';
 import { collection, getDocs, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -32,7 +33,7 @@ export default function AdminSettings() {
         isLoading: false,
         onConfirm: () => { },
     });
-    const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
     const handleSendAnnouncement = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!announcement.title.trim() || !announcement.body.trim()) {

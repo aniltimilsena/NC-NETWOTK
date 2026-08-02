@@ -1,4 +1,6 @@
-import { db, auth } from "../../../lib/firebase";
+import { db } from "../../../lib/firebase";
+import { AuthService } from "../../../services/AuthService";
+import { CurrentUser } from "../../../utils/CurrentUser";
 import { logger } from "../../../utils/logger";
 import { collection, doc, query, where, orderBy, onSnapshot, getDoc, getDocs, updateDoc, addDoc, deleteDoc, serverTimestamp, arrayUnion, arrayRemove, runTransaction, } from "firebase/firestore";
 import apiClient from "../../../api/client";
@@ -28,7 +30,7 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
         if (apiError.response?.status === 403 || apiError.response?.status === 401) {
             return { success: false, error: apiError.response.data?.error || "Action forbidden" };
         }
-        const currentUserUid = senderId || auth.currentUser?.uid;
+        const currentUserUid = senderId || AuthService.getUserId();
         if (!currentUserUid) {
             return { success: false, error: "Authentication required" };
         }
@@ -105,8 +107,8 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
             await updateDoc(convoRef, convoUpdate);
             const otherParticipants = participants.filter((p: string) => p !== currentUserUid);
             if (otherParticipants.length > 0) {
-                let senderName = auth.currentUser?.displayName || "Someone";
-                let senderAvatar = auth.currentUser?.photoURL || "";
+                let senderName = CurrentUser.fullName || "Someone";
+                let senderAvatar = CurrentUser.imageUrl || "";
                 try {
                     const profileSnap = await getDoc(doc(db, "profiles", currentUserUid));
                     if (profileSnap.exists()) {
@@ -148,7 +150,7 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
                     });
                 }
                 try {
-                    const idToken = await auth.currentUser?.getIdToken();
+                    const idToken = await AuthService.getIdToken();
                     if (idToken) {
                         let previewText = body;
                         if (type === "image") {
@@ -449,7 +451,7 @@ export const createConversation = async (participants: string[], initialMessage?
         if (apiError.response?.status === 403 || apiError.response?.status === 401) {
             return { id: null, error: apiError.response.data?.error || "Action forbidden" };
         }
-        const currentUserUid = currentUserId || auth.currentUser?.uid || (participants && participants[0]);
+        const currentUserUid = currentUserId || AuthService.getUserId() || (participants && participants[0]);
         if (!currentUserUid) {
             return { id: null, error: "Authentication required" };
         }
@@ -501,8 +503,8 @@ export const createConversation = async (participants: string[], initialMessage?
             });
             const otherParticipantId = sorted.find((p) => p !== currentUserUid);
             if (otherParticipantId) {
-                let senderName = auth.currentUser?.displayName || "Someone";
-                let senderAvatar = auth.currentUser?.photoURL || "";
+                let senderName = CurrentUser.fullName || "Someone";
+                let senderAvatar = CurrentUser.imageUrl || "";
                 try {
                     const profileSnap = await getDoc(doc(db, COLLECTIONS.PROFILES, currentUserUid));
                     if (profileSnap.exists()) {
@@ -532,7 +534,7 @@ export const createConversation = async (participants: string[], initialMessage?
                     profileUrl: `/messages/${currentUserUid}`
                 });
                 try {
-                    const idToken = await auth.currentUser?.getIdToken();
+                    const idToken = await AuthService.getIdToken();
                     if (idToken) {
                         fetch("/api/notifications/send", {
                             method: "POST",
@@ -576,7 +578,7 @@ export const createConversation = async (participants: string[], initialMessage?
 };
 export const markConversationAsRead = async (convoId: string, currentUserId?: string) => {
     try {
-        const uid = currentUserId || auth.currentUser?.uid;
+        const uid = currentUserId || AuthService.getUserId();
         if (uid && convoId) {
             const convoRef = doc(db, COLLECTIONS.CONVERSATIONS, convoId);
             const snap = await getDoc(convoRef);

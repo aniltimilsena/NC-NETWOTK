@@ -1,4 +1,5 @@
-import { auth, db } from "../../../lib/firebase";
+import { db } from "../../../lib/firebase";
+import { AuthService } from "../../../services/AuthService";
 import { collection, doc, query, orderBy, where, onSnapshot, setDoc, serverTimestamp, addDoc, getDocs } from "firebase/firestore";
 import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import apiClient from "../../../api/client";
@@ -52,7 +53,7 @@ export const getCastingCallById = async (id: string) => {
 };
 export const dispatchTargetedAuditionAlerts = async (callId: string, callData: any) => {
     try {
-        const creatorId = auth.currentUser?.uid || callData.creatorId;
+        const creatorId = AuthService.getUserId() || callData.creatorId;
         const usersRef = collection(db, COLLECTIONS.USERS);
         const snap = await getDocs(usersRef);
 
@@ -102,7 +103,7 @@ export const dispatchTargetedAuditionAlerts = async (callId: string, callData: a
 
 export const createCastingCall = async (callData: any) => {
     try {
-        const currentUserUid = auth.currentUser?.uid;
+        const currentUserUid = AuthService.getUserId();
         if (!currentUserUid) {
             return { id: null, error: "Authentication required" };
         }
@@ -119,7 +120,7 @@ export const createCastingCall = async (callData: any) => {
         const message = error instanceof Error ? error.message : "Failed to create casting call";
         console.warn("Backend createCastingCall failed, attempting client-side fallback write:", message);
         try {
-            const currentUserUid = auth.currentUser?.uid;
+            const currentUserUid = AuthService.getUserId();
             if (!currentUserUid) {
                 return { id: null, error: "Authentication required" };
             }

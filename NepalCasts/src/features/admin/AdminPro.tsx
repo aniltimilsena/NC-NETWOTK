@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, ArrowUpRight, Zap, Search, Award, CheckCircle, XCircle, X, ExternalLink, Mail } from 'lucide-react';
-import { db, auth } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
+import { CurrentUser } from '../../utils/CurrentUser';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { logAdminAction } from '../../services';
 type AdminSubscriber = {
@@ -20,7 +21,7 @@ export default function AdminPro() {
     const [searchTerm, setSearchTerm] = useState('');
     const [tierFilter, setTierFilter] = useState<'All' | 'PRO' | 'Free'>('All');
     const [selectedSub, setSelectedSub] = useState<AdminSubscriber | null>(null);
-    const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
     useEffect(() => {
         const unsub = onSnapshot(collection(db, "users"), (snap) => {
             const data = snap.docs.map(doc => {

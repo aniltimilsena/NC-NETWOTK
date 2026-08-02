@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, Trash2, Star, ExternalLink, Search, Image as ImageIcon, Video, MapPin, X, XCircle } from 'lucide-react';
-import { db, auth } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
+import { CurrentUser } from '../../utils/CurrentUser';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { logAdminAction } from '../../services';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -24,7 +25,7 @@ export default function AdminContent() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState<'All' | 'Pending' | 'Verified' | 'Featured'>('All');
     const [selectedProfile, setSelectedProfile] = useState<TalentProfile | null>(null);
-    const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
     const [confirmConfig, setConfirmConfig] = useState({
         isOpen: false,
         title: '',

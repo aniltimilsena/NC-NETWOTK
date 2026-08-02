@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
-import { db, auth } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
+import { AuthService } from "@/services/AuthService";
 import Avatar from "./Avatar";
 import { collection, getDocs, query as firestoreQuery } from "firebase/firestore";
 interface ProfileSuggestion {
@@ -103,7 +104,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
             try {
                 const q = firestoreQuery(collection(db, "profiles"));
                 const snap = await getDocs(q);
-                const currentUid = auth.currentUser?.uid;
+                const currentUid = AuthService.getUserId();
                 const loaded = snap.docs
                     .filter((doc) => !currentUid || doc.id !== currentUid)
                     .map((doc) => ({
@@ -132,7 +133,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
             const wasCleared = localStorage.getItem("nc_search_history_cleared") === "true";
             if (wasCleared)
                 return;
-            const currentUid = auth.currentUser?.uid;
+            const currentUid = AuthService.getUserId();
             const initialHistory: HistoryItem[] = allProfiles
                 .filter(p => !currentUid || p.uid !== currentUid)
                 .slice(0, 5)
@@ -159,7 +160,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
         const historyProfileUids = history
             .filter(h => h.type === 'profile')
             .map(h => h.value);
-        const currentUid = auth.currentUser?.uid;
+        const currentUid = AuthService.getUserId();
         const isExcluded = (uid: string) => {
             return (currentUid && uid === currentUid) || dismissedSuggestionIds.includes(uid) || historyProfileUids.includes(uid);
         };

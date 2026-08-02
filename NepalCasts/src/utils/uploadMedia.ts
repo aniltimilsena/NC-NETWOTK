@@ -1,4 +1,4 @@
-import { auth } from '../lib/firebase';
+import { AuthService } from '../services/AuthService';
 export interface CloudinaryUploadResult {
     url: string;
     publicId: string;
@@ -13,7 +13,7 @@ export const uploadMedia = async (file: File, folder: string, onProgress?: (prog
     if (!file) {
         throw new Error('No file selected');
     }
-    const token = await auth.currentUser?.getIdToken();
+    const token = await AuthService.getIdToken();
     if (!token) {
         throw new Error('Authentication required for upload');
     }

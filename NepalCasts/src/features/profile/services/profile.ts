@@ -1,4 +1,5 @@
-import { auth, db } from "../../../lib/firebase";
+import { db } from "../../../lib/firebase";
+import { AuthService } from "../../../services/AuthService";
 import { doc, onSnapshot, setDoc, serverTimestamp, } from "firebase/firestore";
 import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import { uploadFile } from "../../../services/storage";
@@ -32,7 +33,7 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
     error: string | null;
 }> => {
     try {
-        const currentUserUid = auth.currentUser?.uid;
+        const currentUserUid = AuthService.getUserId();
         if (!currentUserUid || currentUserUid !== uid) {
             return { success: false, error: "Unauthorized profile update" };
         }
@@ -125,7 +126,7 @@ export const subscribeToProfile = (uid: string, callback: (data: ProfileData | n
 };
 export const uploadProfileMedia = async (uid: string, file: File, onProgress?: (progress: number) => void, customPath?: string): Promise<string | null> => {
     try {
-        const targetUid = auth.currentUser?.uid || uid;
+        const targetUid = AuthService.getUserId() || uid;
         if (!targetUid) {
             console.error("Unauthorized media upload attempt");
             return null;

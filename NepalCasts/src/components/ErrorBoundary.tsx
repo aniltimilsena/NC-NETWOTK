@@ -63,8 +63,8 @@ export default class ErrorBoundary extends Component<Props, State> {
     }
     private async logError(error: Error, errorInfo: ErrorInfo): Promise<void> {
         try {
-            const { auth } = await import("../lib/firebase");
-            const token = await auth.currentUser?.getIdToken().catch(() => null);
+            const { AuthService } = await import("../services/AuthService");
+            const token = await AuthService.getIdToken().catch(() => null);
             await fetch('/api/errors/log', {
                 method: 'POST',
                 headers: {
@@ -79,7 +79,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                     url: window.location.href,
                     userAgent: navigator.userAgent,
                     timestamp: new Date().toISOString(),
-                    userId: auth.currentUser?.uid || 'anonymous',
+                    userId: AuthService.getUserId() || 'anonymous',
                 }),
             });
         }

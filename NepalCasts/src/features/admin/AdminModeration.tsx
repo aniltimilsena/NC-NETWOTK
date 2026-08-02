@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, User, AlertTriangle, CheckCircle, Trash2, ShieldX, X, Eye, AlertCircle } from 'lucide-react';
-import { db, auth } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
+import { CurrentUser } from '../../utils/CurrentUser';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { logAdminAction } from '../../services';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -24,7 +25,7 @@ export default function AdminModeration() {
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<'Pending' | 'Resolved' | 'Dismissed' | 'All'>('Pending');
     const [selectedReport, setSelectedReport] = useState<SafetyReport | null>(null);
-    const adminEmail = auth.currentUser?.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
     const [confirmConfig, setConfirmConfig] = useState({
         isOpen: false,
         title: '',

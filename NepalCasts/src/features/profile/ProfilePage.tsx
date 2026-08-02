@@ -8,7 +8,8 @@ import ProfileReviews from './components/ProfileReviews';
 import FollowModal from './components/FollowModal';
 import ReviewModal from './components/ReviewModal';
 import { doc, getDoc, setDoc, query, collection, where, getDocs, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
-import { db, auth } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
+import { CurrentUser } from '../../utils/CurrentUser';
 import { updateProfileData, uploadProfileMedia } from '../../services';
 interface ProfilePageProps {
     onNavigate: (page: string, param?: any) => void;
@@ -198,7 +199,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         }
     };
     const handleUploadMedia = async (files: FileList) => {
-        const activeUid = auth.currentUser?.uid || user?.uid || profile?.uid;
+        const activeUid = CurrentUser.id || user?.uid || profile?.uid;
         if (!activeUid)
             return;
         let newUrls: string[] = [];
@@ -231,7 +232,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         }
     };
     const handleDeleteMedia = async (src: string) => {
-        const activeUid = auth.currentUser?.uid || user?.uid || profile?.uid;
+        const activeUid = CurrentUser.id || user?.uid || profile?.uid;
         if (!activeUid || !profile)
             return;
         try {
@@ -245,7 +246,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         }
     };
     const handleUploadIntroVideo = async (file: File) => {
-        const activeUid = auth.currentUser?.uid || user?.uid || profile?.uid;
+        const activeUid = CurrentUser.id || user?.uid || profile?.uid;
         if (!activeUid)
             return;
         try {
@@ -275,7 +276,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         }
     };
     const handleDeleteIntroVideo = async () => {
-        const activeUid = auth.currentUser?.uid || user?.uid || profile?.uid;
+        const activeUid = CurrentUser.id || user?.uid || profile?.uid;
         if (!activeUid)
             return;
         try {

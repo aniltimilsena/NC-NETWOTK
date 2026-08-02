@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useUser, useClerk } from '@clerk/clerk-react';
+import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 import { db, auth } from '../lib/firebase';
+import { AuthService } from '../services/AuthService';
+import { CurrentUser } from '../utils/CurrentUser';
 import { PermissionProvider } from '../context/PermissionContext';
 import { CallProvider } from '../context/CallContext';
 import { initOneSignal, oneSignalInitialized } from '../utils/oneSignal';
@@ -44,10 +46,46 @@ export default function AppProviders({ children }: {
 }) {
     const { isLoaded, isSignedIn, user: clerkUser } = useUser();
     const { signOut } = useClerk();
+    const { getToken } = useAuth();
     const [user, setUser] = useState<any>(null);
     const [userProfile, setUserProfile] = useState<any>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [authReady, setAuthReady] = useState(false);
+
+    useEffect(() => {
+        if (isLoaded) {
+            if (isSignedIn && clerkUser) {
+                AuthService.setSession({
+                    id: clerkUser.id,
+                    email: clerkUser.primaryEmailAddress?.emailAddress || null,
+                    fullName: clerkUser.fullName || null,
+                    username: clerkUser.username || null,
+                    imageUrl: clerkUser.imageUrl || null,
+                    getToken: () => getToken(),
+                });
+            } else {
+                AuthService.setSession({
+                    id: null,
+                    email: null,
+                    fullName: null,
+                    username: null,
+                    imageUrl: null,
+                    getToken: async () => null,
+                });
+            }
+        }
+    }, [isLoaded, isSignedIn, clerkUser, getToken]);
+
+    useEffect(() => {
+        if (userProfile) {
+            CurrentUser.setProfileInfo(
+                userProfile.role || 'user',
+                userProfile.premium === true || userProfile.isPremium === true
+            );
+        } else {
+            CurrentUser.setProfileInfo('user', false);
+        }
+    }, [userProfile]);
     const [minSplashTimeElapsed, setMinSplashTimeElapsed] = useState(() => {
         if (typeof window !== 'undefined' && sessionStorage.getItem('nc_splash_shown') === 'true') {
             return true;
