@@ -28,7 +28,7 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
         if (apiError.response?.status === 403 || apiError.response?.status === 401) {
             return { success: false, error: apiError.response.data?.error || "Action forbidden" };
         }
-        const currentUserUid = auth.currentUser?.uid;
+        const currentUserUid = senderId || auth.currentUser?.uid;
         if (!currentUserUid) {
             return { success: false, error: "Authentication required" };
         }
@@ -434,7 +434,7 @@ export const unblockUser = async (uid: string, targetId: string) => {
         }
     }
 };
-export const createConversation = async (participants: string[], initialMessage?: string) => {
+export const createConversation = async (participants: string[], initialMessage?: string, currentUserId?: string) => {
     try {
         const response = await apiClient.post<{
             id: string;
@@ -449,7 +449,7 @@ export const createConversation = async (participants: string[], initialMessage?
         if (apiError.response?.status === 403 || apiError.response?.status === 401) {
             return { id: null, error: apiError.response.data?.error || "Action forbidden" };
         }
-        const currentUserUid = auth.currentUser?.uid;
+        const currentUserUid = currentUserId || auth.currentUser?.uid || (participants && participants[0]);
         if (!currentUserUid) {
             return { id: null, error: "Authentication required" };
         }
@@ -574,9 +574,9 @@ export const createConversation = async (participants: string[], initialMessage?
         }
     }
 };
-export const markConversationAsRead = async (convoId: string) => {
+export const markConversationAsRead = async (convoId: string, currentUserId?: string) => {
     try {
-        const uid = auth.currentUser?.uid;
+        const uid = currentUserId || auth.currentUser?.uid;
         if (uid && convoId) {
             const convoRef = doc(db, COLLECTIONS.CONVERSATIONS, convoId);
             const snap = await getDoc(convoRef);

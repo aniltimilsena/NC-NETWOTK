@@ -31,7 +31,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         }
         const unsubMessages = subscribeToMessages(activeChatId, (list) => {
             setMessages(list as Message[]);
-            markConversationAsRead(activeChatId).catch(console.warn);
+            markConversationAsRead(activeChatId, currentUser.uid).catch(console.warn);
         });
         const convoRef = doc(db, 'conversations', activeChatId);
         const unsubTyping = onSnapshot(convoRef, (snap) => {
@@ -40,7 +40,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
                 setTypingUsers(data.typing || {});
             }
         });
-        markConversationAsRead(activeChatId).catch(console.warn);
+        markConversationAsRead(activeChatId, currentUser.uid).catch(console.warn);
         return () => {
             unsubMessages();
             unsubTyping();
@@ -51,7 +51,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             return;
         const resolveConvo = async () => {
             try {
-                const res = await createConversation([currentUser.uid, initialUserId]);
+                const res = await createConversation([currentUser.uid, initialUserId], undefined, currentUser.uid);
                 if (res?.id) {
                     setActiveChatId(res.id);
                 }
