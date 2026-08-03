@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ActionSearchBar } from "@/components/ui/ActionSearchBar";
 import Logo from '../ui/Logo';
 import { NotificationIcon, MenuCloseIcon, SendIcon } from "@/components/ui/AnimatedStateIcons";
-import Avatar from '../ui/Avatar';
 import { db } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';

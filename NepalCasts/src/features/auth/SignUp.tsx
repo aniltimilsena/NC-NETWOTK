@@ -26,7 +26,7 @@ export default function SignUp({ onNavigate }: SignUpProps) {
 
     return (
         <div className="min-h-screen bg-[#060609] text-white flex flex-col md:flex-row relative overflow-hidden font-sans">
-            <SEO title="Create Account | NepalCasts" description="Join NepalCasts with Clerk security." schema={undefined} />
+            <SEO title="Create Account | NepalCasts" description="Join NepalCasts and discover casting calls, auditions, and premium talent in Nepal." noindex />
 
             {/* Ambient Background Lights */}
             <div className="absolute top-[-150px] right-[-150px] w-[600px] h-[600px] bg-[#00BFFF]/12 rounded-full blur-[160px] pointer-events-none z-0" />

@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bookmark,
-  MapPin, Plus, Search, AlertCircle, Clock, SlidersHorizontal, ChevronLeft, Flame, DollarSign
+  MapPin, Plus, Search, AlertCircle, Clock, SlidersHorizontal, ChevronLeft, Flame
 } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -59,7 +59,97 @@ const getRolesSummary = (call) => {
   return `Looking for: ${summaries.join(' | ')}`;
 };
 
-export default function CastingCall({ onNavigate, user, isAdmin, filter }) {
+const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave }) => {
+  const bannerImage = call.thumbnail || '/movie-banner.png';
+  const deadlineInfo = getDeadlineStatus(call.deadline);
+  const urgentText = getUrgentStatus(call.deadline);
+  const roleNeeded = getRolesSummary(call);
+
+  return (
+    <div
+      onClick={() => onNavigate('casting-detail', call.id)}
+      className="group flex flex-col sm:flex-row items-start sm:items-center justify-between py-8 border-b border-white/10 hover:border-sky-400/50 transition-all duration-300 cursor-pointer gap-6"
+    >
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-1 w-full min-w-0">
+        {/* Widescreen image thumbnail */}
+        <div className="w-full sm:w-48 h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/5">
+          <img
+            src={bannerImage}
+            alt={call.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={(e) => {
+              e.currentTarget.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=640&auto=format&fit=crop';
+            }}
+          />
+          {isApplied && (
+            <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-sky-400 text-black text-[9px] font-black uppercase tracking-wider">
+              Applied
+            </div>
+          )}
+          {urgentText && (
+            <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-red-600/90 border border-red-400 text-white text-[9px] font-black uppercase tracking-wider animate-pulse flex items-center gap-1 shadow-lg backdrop-blur-md">
+              <Flame className="w-3 h-3 text-amber-300 fill-amber-300" />
+              <span>URGENT • {urgentText}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Text content details */}
+        <div className="space-y-2 flex-1 min-w-0">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-black uppercase tracking-wider text-sky-400">
+              {call.category || call.type || 'Nepali Project'}
+            </span>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-black text-white group-hover:text-sky-400 transition-colors leading-tight truncate">
+            {call.title}
+          </h2>
+
+          <p className="text-sm text-gray-400 font-medium line-clamp-1 leading-relaxed">
+            {roleNeeded}
+          </p>
+
+          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 pt-1">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-gray-600 shrink-0" />
+              {call.location || 'Nepal'}
+            </span>
+            {call.budget && (
+              <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                <span className="text-gray-600 text-[10px] font-black">Rs.</span>
+                {call.budget}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Deadline & Action */}
+      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
+        <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${deadlineInfo.color}`}>
+          <Clock className="w-3 h-3 shrink-0" />
+          {deadlineInfo.label}
+        </span>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={(e) => toggleSave(e, call.id)}
+            className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-gray-400 hover:text-white"
+          >
+            <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-sky-400' : ''} />
+          </button>
+          <span className="text-xs font-bold text-sky-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 whitespace-nowrap">
+            View Role &gt;
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+});
+CastingCallItem.displayName = 'CastingCallItem';
+
+export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' }) {
   const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState(filter === 'my-calls' ? 'My Applications' : 'All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -226,7 +316,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter }) {
       return timeB - timeA;
     });
 
-  const toggleSave = async (e, callId) => {
+  const toggleSave = useCallback(async (e, callId) => {
     e.stopPropagation();
     if (!user) {
       onNavigate('signin');
@@ -256,7 +346,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter }) {
     } catch (err) {
       console.error("Error toggling save:", err);
     }
-  };
+  }, [user, savedIds, onNavigate]);
 
   return (
     <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting" trendingCalls={calls}>
@@ -476,97 +566,16 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter }) {
               )}
             </div>
           ) : (
-            filteredCalls.map(call => {
-              const bannerImage = call.thumbnail || '/movie-banner.png';
-              const isSaved = savedIds.includes(call.id);
-              const isApplied = appliedCastingIds.includes(call.id);
-              const deadlineInfo = getDeadlineStatus(call.deadline);
-              const urgentText = getUrgentStatus(call.deadline);
-              const roleNeeded = getRolesSummary(call);
-
-              return (
-                <div
-                  key={call.id}
-                  onClick={() => onNavigate('casting-detail', call.id)}
-                  className="group flex flex-col sm:flex-row items-start sm:items-center justify-between py-8 border-b border-white/10 hover:border-sky-400/50 transition-all duration-300 cursor-pointer gap-6"
-                >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-1 w-full min-w-0">
-                    {/* Widescreen image thumbnail */}
-                    <div className="w-full sm:w-48 h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/5">
-                      <img
-                        src={bannerImage}
-                        alt={call.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=640&auto=format&fit=crop';
-                        }}
-                      />
-                      {isApplied && (
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-sky-400 text-black text-[9px] font-black uppercase tracking-wider">
-                          Applied
-                        </div>
-                      )}
-                      {urgentText && (
-                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-red-600/90 border border-red-400 text-white text-[9px] font-black uppercase tracking-wider animate-pulse flex items-center gap-1 shadow-lg backdrop-blur-md">
-                          <Flame className="w-3 h-3 text-amber-300 fill-amber-300" />
-                          <span>URGENT • {urgentText}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Text content details */}
-                    <div className="space-y-2 flex-1 min-w-0">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-sky-400">
-                          {call.category || call.type || 'Nepali Project'}
-                        </span>
-                      </div>
-
-                      <h2 className="text-2xl sm:text-3xl font-black text-white group-hover:text-sky-400 transition-colors leading-tight truncate">
-                        {call.title}
-                      </h2>
-
-                      <p className="text-sm text-gray-400 font-medium line-clamp-1 leading-relaxed">
-                        {roleNeeded}
-                      </p>
-
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 pt-1">
-                        <span className="flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-gray-600 shrink-0" />
-                          {call.location || 'Nepal'}
-                        </span>
-                        {call.budget && (
-                          <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                            <span className="text-gray-600 text-[10px] font-black">Rs.</span>
-                            {call.budget}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right: Deadline & Action */}
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
-                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${deadlineInfo.color}`}>
-                      <Clock className="w-3 h-3 shrink-0" />
-                      {deadlineInfo.label}
-                    </span>
-
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={(e) => toggleSave(e, call.id)}
-                        className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-gray-400 hover:text-white"
-                      >
-                        <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-sky-400' : ''} />
-                      </button>
-                      <span className="text-xs font-bold text-sky-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 whitespace-nowrap">
-                        View Role &gt;
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
+            filteredCalls.map(call => (
+              <CastingCallItem
+                key={call.id}
+                call={call}
+                isSaved={savedIds.includes(call.id)}
+                isApplied={appliedCastingIds.includes(call.id)}
+                onNavigate={onNavigate}
+                toggleSave={toggleSave}
+              />
+            ))
           )}
         </div>
 

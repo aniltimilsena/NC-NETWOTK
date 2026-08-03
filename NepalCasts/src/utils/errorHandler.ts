@@ -18,14 +18,15 @@ const ERROR_MAP: Record<string, string> = {
     'unavailable': 'Service is temporarily unavailable. Please check your connection.',
     'default': 'Something went wrong. Please try again.'
 };
-export const getUserFriendlyError = (error: any): string => {
+export const getUserFriendlyError = (error: unknown): string => {
     logger.error(error);
     if (!error) {
         return ERROR_MAP['default'];
     }
     if (typeof error === 'string') {
-        return ERROR_MAP[error] || error;
+        return Object.prototype.hasOwnProperty.call(ERROR_MAP, error) ? ERROR_MAP[error] : error;
     }
-    const code = error?.code || error?.message || 'default';
-    return ERROR_MAP[code] || ERROR_MAP['default'];
+    const errObj = error as { code?: string; message?: string };
+    const code = errObj?.code || errObj?.message || 'default';
+    return Object.prototype.hasOwnProperty.call(ERROR_MAP, code) ? ERROR_MAP[code] : ERROR_MAP['default'];
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import SEO from '../components/SEO';
-import { HelpCircle, Search, ShieldCheck, UserCheck, FileText, ChevronDown, MessageSquare } from 'lucide-react';
+import { HelpCircle, ShieldCheck, UserCheck, FileText, ChevronDown } from 'lucide-react';
 
 export default function Help() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);

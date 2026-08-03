@@ -15,6 +15,10 @@ import { initBloomFilters } from './services/cacheService';
 import { db } from './config';
 configureCloudinary();
 const allowedOrigins = getAllowedOrigins();
+// Trust the first proxy hop (Cloudflare / Nginx / Vercel) so req.ip
+// correctly resolves to the real client IP rather than the proxy IP.
+// Without this, X-Forwarded-For is unverified and rate-limit keys can be spoofed.
+app.set('trust proxy', 1);
 app.use(requestIdMiddleware);
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -31,7 +35,7 @@ app.use(helmet({
             scriptSrcElem: ["'self'", "'unsafe-inline'", "https://challenges.cloudflare.com", "https://cdn.onesignal.com", "https://api.onesignal.com", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com", "https://www.gstatic.com", "https://*.firebaseapp.com", "https://www.google-analytics.com", "https://apis.google.com"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-            imgSrc: ["'self'", "data:", "blob:", "https:", "http:", "https://res.cloudinary.com", "https://images.unsplash.com"],
+            imgSrc: ["'self'", "data:", "blob:", "https:", "https://res.cloudinary.com", "https://images.unsplash.com"],
             mediaSrc: ["'self'", "blob:", "https://res.cloudinary.com", "https://*.cloudinary.com"],
             connectSrc: [
                 "'self'", "https://*.cloudinary.com", "https://api.cloudinary.com", "https://res.cloudinary.com",

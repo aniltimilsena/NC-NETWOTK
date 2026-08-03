@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from './logger';
 
 export interface DraftEntry<T> {
   data: T;
@@ -16,7 +17,7 @@ export function saveDraft<T>(key: string, data: T): void {
     };
     localStorage.setItem(`${DRAFT_PREFIX}${key}`, JSON.stringify(entry));
   } catch (err) {
-    console.warn('Failed to save draft to local storage:', err);
+    logger.warn('Failed to save draft to local storage:', err);
   }
 }
 
@@ -32,7 +33,7 @@ export function loadDraft<T>(key: string, ttlMs: number = 7 * 24 * 60 * 60 * 100
     }
     return entry.data;
   } catch (err) {
-    console.warn('Failed to load draft from local storage:', err);
+    logger.warn('Failed to load draft from local storage:', err);
     return null;
   }
 }
@@ -42,7 +43,7 @@ export function clearDraft(key: string): void {
   try {
     localStorage.removeItem(`${DRAFT_PREFIX}${key}`);
   } catch (err) {
-    console.warn('Failed to clear draft from local storage:', err);
+    logger.warn('Failed to clear draft from local storage:', err);
   }
 }
 
@@ -59,7 +60,7 @@ export function useDraftState<T>(key: string, initialValue: T, debounceMs: numbe
     return () => clearTimeout(timer);
   }, [key, state, debounceMs]);
 
-  const clear = () => {
+  const clear = (): void => {
     clearDraft(key);
     setState(initialValue);
   };

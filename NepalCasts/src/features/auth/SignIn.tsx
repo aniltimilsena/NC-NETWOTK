@@ -23,7 +23,7 @@ export default function SignIn({ onNavigate }: SignInProps) {
 
     return (
         <div className="min-h-screen bg-[#060609] text-white flex flex-col md:flex-row relative overflow-hidden font-sans">
-            <SEO title="Sign In | NepalCasts" description="Access your NepalCasts account using Clerk authentication." schema={undefined} />
+            <SEO title="Sign In | NepalCasts" description="Access your NepalCasts account using Clerk authentication." noindex />
 
             {/* Ambient Background Lights */}
             <div className="absolute top-[-150px] right-[-150px] w-[600px] h-[600px] bg-[#00BFFF]/12 rounded-full blur-[160px] pointer-events-none z-0" />

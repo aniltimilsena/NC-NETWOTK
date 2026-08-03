@@ -1,7 +1,6 @@
 import { db } from "../../../lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { COLLECTIONS } from "../../../constants/collections";
-import { getUserFriendlyError } from "../../../utils/errorHandler";
 
 export const ensureUserProfile = async (user: { uid: string; displayName?: string; email?: string }) => {
     try {

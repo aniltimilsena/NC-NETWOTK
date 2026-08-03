@@ -96,9 +96,41 @@ router.delete('/upload/:publicId', verifyToken, async (req: AuthedRequest<{
     publicId: string;
 }>, res: Response): Promise<any> => {
     try {
+        const userId = req.user?.uid;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
         const publicId = decodeURIComponent(req.params.publicId);
         const resourceType = (req.body as any)?.resourceType || 'image';
         const isVideo = resourceType === 'video';
+
+        // Ownership check: verify the asset belongs to the requesting user
+        const ownerSnap = await db
+            .collection('users').doc(userId)
+            .collection('media')
+            .where('publicId', '==', publicId)
+            .limit(1)
+            .get();
+
+        if (ownerSnap.empty) {
+            // Also allow the user who uploaded their own avatar/banner
+            // (those are stored directly on the user doc, not in the media subcollection)
+            const userDoc = await db.collection('users').doc(userId).get();
+            const profileDoc = await db.collection('profiles').doc(userId).get();
+            const userPhotoId = userDoc.data()?.photoURL;
+            const profilePhotoId = profileDoc.data()?.photoURL;
+            const isOwnAvatar =
+                (userPhotoId && userPhotoId.includes(publicId)) ||
+                (profilePhotoId && profilePhotoId.includes(publicId));
+
+            if (!isOwnAvatar) {
+                return res.status(403).json({
+                    error: 'Forbidden: You do not own this media asset',
+                    errorCode: 'FORBIDDEN_ASSET'
+                });
+            }
+        }
+
         await deleteGeneralMedia(publicId, isVideo);
         return res.json({ success: true });
     }

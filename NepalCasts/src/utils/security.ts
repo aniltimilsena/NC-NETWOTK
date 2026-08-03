@@ -1,6 +1,8 @@
 import { collection, addDoc, query, where, getDocs, limit, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { COLLECTIONS } from '../constants/collections';
+import { logger } from './logger';
+
 export interface PasswordRules {
     length: boolean;
     uppercase: boolean;
@@ -27,7 +29,7 @@ export function evaluatePasswordStrength(password: string): {
     }
     return { strength, rules };
 }
-export function getSessionInfo() {
+export function getSessionInfo(): { os: string; browser: string } {
     const ua = navigator.userAgent;
     let os = "Unknown OS";
     let browser = "Unknown Browser";
@@ -59,7 +61,7 @@ export function getSessionInfo() {
         browser = "Edge";
     return { os, browser };
 }
-export async function fetchLocation() {
+export async function fetchLocation(): Promise<string> {
     try {
         const res = await fetch("https://freeipapi.com/api/json");
         if (res.ok) {
@@ -70,17 +72,17 @@ export async function fetchLocation() {
         }
     }
     catch (err) {
-        console.warn("Failed to fetch location from IP:", err);
+        logger.warn("Failed to fetch location from IP:", err);
     }
     return "Unknown Location";
 }
-export async function logLoginAttempt(email: string, status: 'success' | 'failed') {
+export async function logLoginAttempt(email: string, status: 'success' | 'failed'): Promise<{ suspicious: boolean }> {
     try {
         const usersRef = collection(db, COLLECTIONS.USERS);
         const q = query(usersRef, where('email', '==', email.trim().toLowerCase()));
         const snap = await getDocs(q);
         if (snap.empty) {
-            console.warn(`Could not resolve user UID for email: ${email}`);
+            logger.warn(`Could not resolve user UID for email: ${email}`);
             return { suspicious: false };
         }
         const uid = snap.docs[0].id;
@@ -111,7 +113,7 @@ export async function logLoginAttempt(email: string, status: 'success' | 'failed
         return { suspicious };
     }
     catch (err) {
-        console.error("Failed to log login attempt:", err);
+        logger.error("Failed to log login attempt:", err);
         return { suspicious: false };
     }
 }

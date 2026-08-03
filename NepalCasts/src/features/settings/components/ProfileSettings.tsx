@@ -62,7 +62,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
             return;
         }
         const clean = val.replace(/\s*ft\.?$/i, '').trim();
-        if (/[\d'"\.]_?$/.test(clean)) {
+        if (/[\d'".]_?$/.test(clean)) {
             setHeight(`${clean} ft`);
         }
         else {
@@ -73,7 +73,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
         if (!height)
             return;
         const clean = height.replace(/\s*ft\.?$/i, '').trim();
-        if (/[\d'"\.]_?$/.test(clean)) {
+        if (/[\d'".]_?$/.test(clean)) {
             setHeight(`${clean} ft`);
         }
     };
@@ -84,7 +84,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
             return;
         }
         const clean = val.replace(/\s*kgs?$/i, '').trim();
-        if (/[\d\.]_?$/.test(clean)) {
+        if (/[\d.]_?$/.test(clean)) {
             setWeight(`${clean} kg`);
         }
         else {
@@ -95,7 +95,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
         if (!weight)
             return;
         const clean = weight.replace(/\s*kgs?$/i, '').trim();
-        if (/[\d\.]_?$/.test(clean)) {
+        if (/[\d.]_?$/.test(clean)) {
             setWeight(`${clean} kg`);
         }
     };

@@ -34,6 +34,7 @@ if (!admin.apps.length) {
             initialized = true;
         }
         catch (_adcError) {
+            // ADC initialization failed; fallback to manual/dummy config next
         }
         if (!initialized) {
             console.warn("Firebase Admin credentials are not fully configured in environment variables.");

@@ -79,7 +79,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       doc(db, 'casting_calls', castingId),
       (snap) => {
         if (snap.exists()) {
-          const data = { id: snap.id, ...snap.data() };
+          const data: any = { id: snap.id, ...snap.data() };
           setCall(data);
           if (data.roles && data.roles.length > 0 && !selectedRole) {
             setSelectedRole(data.roles[0].name || 'General Performer Role');
@@ -351,7 +351,44 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white pt-4 pb-20 px-4 sm:px-8 font-sans">
-      <SEO title={`${call.title} | NepalCasts Casting Call`} description={call.description} />
+      <SEO
+        title={`${call.title} | NepalCasts Casting Call`}
+        description={call.description}
+        image={call.thumbnailUrl || call.mediaUrl || undefined}
+        url={`${typeof window !== 'undefined' ? window.location.origin : 'https://nepalcasts.com'}/casting/${castingId}`}
+        schema={{
+          '@context': 'https://schema.org',
+          '@type': 'JobPosting',
+          title: call.title,
+          description: call.description,
+          datePosted: call.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          validThrough: call.deadline ? new Date(call.deadline).toISOString() : undefined,
+          hiringOrganization: {
+            '@type': 'Organization',
+            name: directorProfile?.name || call.directorName || 'NepalCasts',
+          },
+          jobLocation: {
+            '@type': 'Place',
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: call.location || 'Nepal',
+              addressCountry: 'NP',
+            },
+          },
+          baseSalary: call.budget ? {
+            '@type': 'MonetaryAmount',
+            currency: 'NPR',
+            value: {
+              '@type': 'QuantitativeValue',
+              value: call.budget,
+              unitText: 'PROJECT'
+            }
+          } : undefined,
+          employmentType: 'CONTRACTOR',
+          industry: 'Entertainment',
+          url: `${typeof window !== 'undefined' ? window.location.origin : 'https://nepalcasts.com'}/casting/${castingId}`,
+        }}
+      />
 
       <ConfirmDialog
         isOpen={confirmConfig.isOpen}

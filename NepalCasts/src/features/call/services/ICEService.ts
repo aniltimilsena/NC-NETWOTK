@@ -1,7 +1,6 @@
 import { db } from "../../../lib/firebase";
 import { collection, addDoc, onSnapshot, } from "firebase/firestore";
 import { COLLECTIONS } from "../../../constants/collections";
-import { logger } from "../../../utils/logger";
 export const getIceServers = (): RTCConfiguration => {
     const customTurnUrl = import.meta.env.VITE_TURN_SERVER;
     const customTurnUsername = import.meta.env.VITE_TURN_USERNAME;

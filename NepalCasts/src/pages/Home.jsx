@@ -1,11 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 import { motion, AnimatePresence } from 'framer-motion';
-import GlassCard from '../components/ui/GlassCard';
 import CategorySkeleton from '../components/ui/CategorySkeleton';
-import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
-import { getAvatar } from '../utils/avatars';
 import { useTranslation } from 'react-i18next';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { subscribeToTalents, subscribeToCastingCalls } from '../services';
@@ -251,7 +248,7 @@ export default function Home({ onNavigate, user }) {
               <img
                 src="/hero-bg.png"
                 alt="Hero Background"
-                fetchpriority="high"
+                fetchPriority="high"
                 decoding="async"
                 className="w-full h-full object-cover"
               />

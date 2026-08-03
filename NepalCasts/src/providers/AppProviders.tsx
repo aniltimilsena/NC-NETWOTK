@@ -220,7 +220,9 @@ export default function AppProviders({ children }: {
                 if (oneSignalInitialized)
                     OneSignal.logout();
             }
-            catch (e) { }
+            catch (e) {
+                // Ignore OneSignal logout error on auth check
+            }
         }
         setAuthReady(isLoaded);
     }, [isLoaded, isSignedIn, clerkUser]);
@@ -242,7 +244,9 @@ export default function AppProviders({ children }: {
                         }, { merge: true });
                         showAlert('Welcome Back!', 'success', 'Your deactivated profile has been automatically reactivated.');
                     }
-                    catch (err) { }
+                    catch (err) {
+                        // Ignore automatic profile reactivation errors
+                    }
                 }
             }
         });
@@ -289,7 +293,9 @@ export default function AppProviders({ children }: {
             });
             showAlert("Account restored successfully!", "success");
         }
-        catch (err) { }
+        catch (err) {
+            // Ignore cancel account deletion errors
+        }
     };
 
     const handleLogout = async () => {

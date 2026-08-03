@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProfile } from './hooks/useProfile';
+import SEO from '../../components/SEO';
 import ProfileHeader from './components/ProfileHeader';
 import ProfileAbout from './components/ProfileAbout';
 import ProfileMedia from './components/ProfileMedia';
@@ -202,7 +203,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         const activeUid = CurrentUser.id || user?.uid || profile?.uid;
         if (!activeUid)
             return;
-        let newUrls: string[] = [];
+        const newUrls: string[] = [];
         let failedCount = 0;
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
@@ -386,6 +387,12 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
     };
     return (
       <div className="min-h-screen bg-nc-dark pb-6">
+        <SEO
+          title={`${profile.name || 'Talent'} | NepalCasts Profile`}
+          description={profile.bio || `View ${profile.name || 'this talent'}'s portfolio, auditions, and experience on NepalCasts.`}
+          image={profile.image || undefined}
+          noindex={(profile as any).isPrivate === true}
+        />
         <ProfileHeader profile={profile} isOwnProfile={isOwnProfile} isFollowing={isFollowing} followerCount={followerCount} followingCount={followingCount} savedCount={savedCount} onFollowToggle={handleFollowToggle} onNavigate={onNavigate} showAlert={showAlert} onFollowClick={handleFollowModalOpen}/>
 
         {/* Profile Main Content Container */}

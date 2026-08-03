@@ -140,7 +140,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
             const timeNextDiff = isSameSenderNext ? Math.abs(getMsgMs(nextMsg?.createdAt) - getMsgMs(msg.createdAt)) : Infinity;
             const isGroupedWithPrev = Boolean(isSameSenderPrev && timePrevDiff <= 120000);
             const isGroupedWithNext = Boolean(isSameSenderNext && timeNextDiff <= 120000);
-            let cornerRadius = 'rounded-2xl';
+            let cornerRadius: string;
             if (isMe) {
                 if (isGroupedWithPrev && isGroupedWithNext) {
                     cornerRadius = 'rounded-2xl rounded-tr-sm rounded-br-sm';

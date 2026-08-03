@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { messaging } from '../lib/firebase';
+import { messaging, firebaseConfig } from '../lib/firebase';
 import { getToken, onMessage } from 'firebase/messaging';
 import { playNotificationSound } from '../utils/notification-sound';
 import { callSecureFunction } from '../api/functionsClient';
@@ -70,16 +70,7 @@ export const useNotifications = (user: any, showAlert: (msg: string, type?: any,
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                const config = {
-                    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-                    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-                    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-                    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-                    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-                    appId: import.meta.env.VITE_FIREBASE_APP_ID,
-                    databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || `https://${import.meta.env.VITE_FIREBASE_PROJECT_ID}-default-rtdb.asia-southeast1.firebasedatabase.app/`,
-                };
-                const configStr = encodeURIComponent(JSON.stringify(config));
+                const configStr = encodeURIComponent(JSON.stringify(firebaseConfig));
                 const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?config=${configStr}`);
                 const token = await getToken(messaging, {
                     vapidKey: VAPID_KEY,

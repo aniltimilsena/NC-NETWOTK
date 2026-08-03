@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import SEO from '../components/SEO';
-import { Mail, Phone, MapPin, Send, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, CheckCircle2 } from 'lucide-react';
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);

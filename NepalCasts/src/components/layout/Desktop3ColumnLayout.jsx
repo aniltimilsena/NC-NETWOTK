@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { User, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, TrendingUp, BarChart3, ArrowRight, Eye, UserPlus, CheckCircle2, Lock, FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, TrendingUp, Lock, FileText } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import { getAvatar } from '../../utils/avatars';
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
-import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, getDoc, collection, query, where, or } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, collection, query, where, or } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
-import { updateProfileData } from '../../services';
 
 // Inline follow button that mirrors ProfileHeader's style and uses Firestore
 function FollowBtn({ targetUid }) {
@@ -229,7 +227,7 @@ export default function Desktop3ColumnLayout({
                       <img
                         src="/hero-bg.png"
                         alt="Hero Cover"
-                        fetchpriority="high"
+                        fetchPriority="high"
                         decoding="async"
                         className="w-full h-full object-cover object-center opacity-90 pointer-events-none select-none"
                       />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Clock, Info, Plus, X, Upload, ChevronLeft } from 'lucide-react';
+import { Plus, X, Upload, ChevronLeft } from 'lucide-react';
 import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
 import { createCastingCall, uploadProfileMedia } from '../../services';
@@ -72,17 +72,18 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
     try {
       let thumbnailUrl = form.thumbnail;
       if (thumbnailFile) {
-        thumbnailUrl = await uploadProfileMedia(
+        const uploadedUrl = await uploadProfileMedia(
           user.uid,
           thumbnailFile,
           undefined,
           `castings/${castingId}/banner.jpg`
         );
-        if (!thumbnailUrl) {
+        if (!uploadedUrl) {
           throw new Error(
             'Failed to upload thumbnail image. Please check your connection or try another image.'
           );
         }
+        thumbnailUrl = uploadedUrl;
       }
       const requirementList: string[] = [];
       if (form.requirements.headshot) requirementList.push('Professional Headshots Required');
@@ -379,7 +380,9 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                       onClick={(e) => {
                         try {
                           (e.target as any).showPicker?.();
-                        } catch (_) {}
+                        } catch (_) {
+                          // Ignore if showPicker is not supported by the browser
+                        }
                       }}
                       style={{ colorScheme: 'dark' }}
                       className="w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-2.5 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium cursor-pointer"

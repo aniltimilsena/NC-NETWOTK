@@ -1,4 +1,4 @@
-export const initErrorTracking = () => {
+export const initErrorTracking = (): void => {
     if (typeof window === 'undefined')
         return;
     window.onerror = (message, source, line, col, error) => {
@@ -46,7 +46,7 @@ export const initErrorTracking = () => {
         }
     };
 };
-const logError = async (errorData: any) => {
+const logError = async (errorData: Record<string, unknown>): Promise<void> => {
     if (!import.meta.env.PROD) {
         console.error('Error tracked (dev):', errorData);
         return;
@@ -69,6 +69,7 @@ const logError = async (errorData: any) => {
             }),
         });
     }
-    catch {
+    catch (_err) {
+        // Ignore fallback endpoint logging failure
     }
 };

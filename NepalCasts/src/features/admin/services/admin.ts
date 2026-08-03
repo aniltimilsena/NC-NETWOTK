@@ -72,6 +72,7 @@ export const updateGlobalSettings = async (settings: Partial<GlobalSettings>) =>
             await apiClient.post("/admin/settings", settings);
         }
         catch (apiErr) {
+            // Ignore API backend broadcast failures if firestore write succeeded
         }
         return { success: true, error: null };
     }

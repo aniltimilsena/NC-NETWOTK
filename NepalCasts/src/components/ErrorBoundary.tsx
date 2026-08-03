@@ -31,7 +31,8 @@ export default class ErrorBoundary extends Component<Props, State> {
         try {
             localVersion = __BUILD_VERSION__;
         }
-        catch {
+        catch (_e) {
+            // Build version unavailable
         }
         if (import.meta.env.DEV) {
             console.error("NepalCasts ErrorBoundary caught an uncaught error:", {
@@ -83,7 +84,8 @@ export default class ErrorBoundary extends Component<Props, State> {
                 }),
             });
         }
-        catch {
+        catch (_e) {
+            // Ignore error logging failure
         }
     }
     public componentDidUpdate(prevProps: Props) {
@@ -115,7 +117,8 @@ export default class ErrorBoundary extends Component<Props, State> {
             try {
                 localVersion = __BUILD_VERSION__;
             }
-            catch {
+            catch (_e) {
+                // Build version unavailable
             }
             return (<div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-6 text-center relative overflow-hidden">
           
@@ -160,7 +163,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             </div>
 
             
-            {true && (<div className="pt-4 border-t border-white/5">
+            {(<div className="pt-4 border-t border-white/5">
                 <button type="button" onClick={this.toggleDetails} className="text-xs text-nc-secondary hover:text-white transition-colors flex items-center gap-1 mx-auto font-medium focus:outline-none">
                   <span>{this.state.showDetails ? "Hide" : "Show"} diagnostics</span>
                   <svg className={`w-3.5 h-3.5 transform transition-transform ${this.state.showDetails ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">

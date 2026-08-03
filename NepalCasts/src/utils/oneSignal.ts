@@ -1,32 +1,37 @@
 import OneSignal from 'react-onesignal';
+import { logger } from './logger';
 export let oneSignalInitialized = false;
-export const initOneSignal = async () => {
+export const initOneSignal = async (): Promise<void> => {
     try {
-        const appId = import.meta.env.VITE_ONESIGNAL_APP_ID || "a9962176-972c-4874-8161-ec84428e9036";
+        const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
+        if (!appId) {
+            logger.warn('OneSignal initialization skipped: VITE_ONESIGNAL_APP_ID is not set.');
+            return;
+        }
         await OneSignal.init({
             appId,
             allowLocalhostAsSecureOrigin: true,
         });
         oneSignalInitialized = true;
-        console.log("OneSignal client-side initialized successfully.");
+        logger.log("OneSignal client-side initialized successfully.");
         OneSignal.Notifications.addEventListener('click', (event: any) => {
-            console.log("OneSignal Notification Clicked:", event);
+            logger.log("OneSignal Notification Clicked:", event);
             const actionId = event.result?.actionId;
             const url = event.notification?.launchURL;
             if (actionId === 'reply_chat') {
-                console.log("User clicked 'Reply' action. Redirecting to chat thread...");
+                logger.log("User clicked 'Reply' action. Redirecting to chat thread...");
                 if (url && typeof window !== 'undefined') {
                     window.location.href = url;
                 }
             }
             else if (actionId === 'view_chat') {
-                console.log("User clicked 'Open Chat' action. Redirecting...");
+                logger.log("User clicked 'Open Chat' action. Redirecting...");
                 if (url && typeof window !== 'undefined') {
                     window.location.href = url;
                 }
             }
             else if (actionId === 'call_back') {
-                console.log("User clicked 'Call Back' action. Redirecting to calls...");
+                logger.log("User clicked 'Call Back' action. Redirecting to calls...");
                 if (typeof window !== 'undefined') {
                     window.location.href = '/messages';
                 }
@@ -35,9 +40,9 @@ export const initOneSignal = async () => {
     }
     catch (err) {
         if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-            console.debug("OneSignal skipped on localhost (configured for production domain).");
+            logger.debug("OneSignal skipped on localhost (configured for production domain).");
         } else {
-            console.warn("OneSignal client-side initialization failed:", err);
+            logger.warn("OneSignal client-side initialization failed:", err);
         }
     }
 };

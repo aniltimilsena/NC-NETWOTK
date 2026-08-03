@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Crown, MapPin, Search, TrendingUp, ChevronLeft, SlidersHorizontal } from 'lucide-react';
+import { Crown, Search, TrendingUp, ChevronLeft, SlidersHorizontal } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { collection, onSnapshot, query, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import Avatar from '../components/ui/Avatar';

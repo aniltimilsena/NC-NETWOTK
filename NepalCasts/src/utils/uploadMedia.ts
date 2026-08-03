@@ -33,8 +33,8 @@ export const uploadMedia = async (file: File, folder: string, onProgress?: (prog
                 if (config.uploadPreset)
                     uploadPreset = config.uploadPreset;
             }
-        }
-        catch {
+        } catch (_err) {
+            // Ignore optional config fetch errors and fallback to defaults
         }
     }
     const isVideo = file.type.startsWith('video/') || Boolean(file.name.match(/\.(mp4|mov|webm|mkv|avi|m4v|3gp)$/i));
@@ -63,8 +63,8 @@ export const uploadMedia = async (file: File, folder: string, onProgress?: (prog
                     if (res.error && res.error.message) {
                         errMsg = res.error.message;
                     }
-                }
-                catch {
+                } catch (_err) {
+                    // Ignore JSON parse failure on non-200 response
                 }
                 reject(new Error(errMsg));
                 return;

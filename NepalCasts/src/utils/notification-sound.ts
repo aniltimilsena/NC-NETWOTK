@@ -1,11 +1,13 @@
-export const playNotificationSound = () => {
+import { logger } from './logger';
+
+export const playNotificationSound = (): void => {
     try {
         const audio = new Audio('/notification.mp3');
         audio.play().catch(err => {
-            console.warn('Audio playback failed (likely browser policy):', err);
+            logger.warn('Audio playback failed (likely browser policy):', err);
         });
     }
     catch (error) {
-        console.error('Failed to initialize audio:', error);
+        logger.error('Failed to initialize audio:', error);
     }
 };

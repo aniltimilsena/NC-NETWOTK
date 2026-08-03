@@ -1,12 +1,32 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SignIn from '../features/auth/SignIn';
-import { signInUser } from '../features/auth/services/auth';
+
+const mockNavigate = vi.fn();
+
 vi.mock('react-router-dom', () => ({
-    useNavigate: () => vi.fn(),
+    useNavigate: () => mockNavigate,
     Link: ({ children, to }: any) => <a href={to}>{children}</a>,
 }));
+
+vi.mock('@clerk/clerk-react', () => ({
+    SignIn: ({ signUpUrl }: any) => (
+        <div data-testid="clerk-sign-in-mock">
+            <span>Clerk SignIn Component</span>
+            <a href={signUpUrl}>Clerk Sign Up</a>
+        </div>
+    ),
+    ClerkProvider: ({ children }: any) => <div>{children}</div>,
+    useClerk: () => ({
+        signOut: vi.fn(),
+    }),
+    useUser: () => ({
+        isSignedIn: false,
+        user: null,
+    }),
+}));
+
 vi.mock('framer-motion', () => {
     const motionProxy = new Proxy({}, {
         get: (target, prop) => {
@@ -22,80 +42,40 @@ vi.mock('framer-motion', () => {
         AnimatePresence: ({ children }: any) => <>{children}</>,
     };
 });
-vi.mock('firebase/auth', () => ({
-    getAuth: vi.fn(),
-    getRedirectResult: vi.fn(() => Promise.resolve(null)),
-    signInWithEmailAndPassword: vi.fn(),
-    signInWithPopup: vi.fn(),
-    signInWithRedirect: vi.fn(),
-    signInWithCustomToken: vi.fn(),
-}));
-vi.mock('../lib/firebase', () => ({
-    auth: {},
-    googleProvider: {},
-    db: {},
-}));
-vi.mock('../features/auth/services/auth', () => ({
-    signInUser: vi.fn(),
-    ensureUserProfile: vi.fn(),
-    logoutUser: vi.fn(),
-    sendPasswordReset: vi.fn(),
-}));
-vi.mock('../utils/security', () => ({
-    logLoginAttempt: vi.fn(() => Promise.resolve({ suspicious: false })),
-}));
-describe('Authentication', () => {
+
+describe('Authentication - SignIn Page', () => {
     const onNavigateMock = vi.fn();
     const showAlertMock = vi.fn();
+
     beforeEach(() => {
         vi.clearAllMocks();
         localStorage.clear();
     });
-    it('shows error for wrong credentials', async () => {
-        vi.mocked(signInUser).mockResolvedValue({
-            user: null,
-            error: 'Invalid credentials. Please check your email and password.',
-        });
-        render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock}/>);
-        fireEvent.change(screen.getByPlaceholderText('you@example.com'), {
-            target: { value: 'wrong@email.com' }
-        });
-        fireEvent.change(screen.getByPlaceholderText('••••••••'), {
-            target: { value: 'wrongpassword' }
-        });
-        fireEvent.click(screen.getByRole('button', { name: /^Sign In$/ }));
-        await waitFor(() => {
-            expect(screen.getByText(/Invalid credentials\. Please check your email and password\./i)).toBeInTheDocument();
-        });
-        expect(signInUser).toHaveBeenCalledWith('wrong@email.com', 'wrongpassword');
+
+    it('renders the sign in heading and Clerk SignIn component', () => {
+        render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
+
+        expect(screen.getByText('Welcome Back')).toBeInTheDocument();
+        expect(screen.getByText('Sign in to your NepalCasts account')).toBeInTheDocument();
+        expect(screen.getByTestId('clerk-sign-in-mock')).toBeInTheDocument();
     });
-    it('never shows which field is wrong', async () => {
-        vi.mocked(signInUser).mockResolvedValue({
-            user: null,
-            error: 'Invalid credentials. Please check your email and password.',
-        });
-        const { unmount } = render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock}/>);
-        fireEvent.change(screen.getByPlaceholderText('you@example.com'), {
-            target: { value: 'wrong-email@email.com' }
-        });
-        fireEvent.change(screen.getByPlaceholderText('••••••••'), {
-            target: { value: 'somepassword123' }
-        });
-        fireEvent.click(screen.getByRole('button', { name: /^Sign In$/ }));
-        await waitFor(() => {
-            expect(screen.getByText(/Invalid credentials\. Please check your email and password\./i)).toBeInTheDocument();
-        });
-        unmount();
-        render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock}/>);
-        fireEvent.change(screen.getByPlaceholderText('you@example.com'), {
-            target: { value: 'correct-email@email.com' }
-        });
-        fireEvent.change(screen.getByPlaceholderText('••••••••'), {
-            target: { value: 'wrongpassword' }
-        });
-        fireEvent.click(screen.getByRole('button', { name: /^Sign In$/ }));
-        await waitFor(() => {
-            expect(screen.getByText(/Invalid credentials\. Please check your email and password\./i)).toBeInTheDocument();
-        });
+
+    it('navigates to forgot password page when clicking Forgot Password', () => {
+        render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
+
+        const forgotBtn = screen.getByRole('button', { name: /forgot password\?/i });
+        fireEvent.click(forgotBtn);
+
+        expect(mockNavigate).toHaveBeenCalledWith('/forgot-password');
+    });
+
+    it('navigates to signup page when clicking Sign Up', () => {
+        render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
+
+        const signUpBtn = screen.getByRole('button', { name: /^sign up$/i });
+        fireEvent.click(signUpBtn);
+
+        expect(mockNavigate).toHaveBeenCalledWith('/signup');
     });
 });
+

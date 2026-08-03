@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../../lib/firebase';
-import { doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { uploadProfileMedia } from '../../services';
 
 import ConfirmDialog from './ConfirmDialog';

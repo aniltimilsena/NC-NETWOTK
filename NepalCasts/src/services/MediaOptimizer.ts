@@ -118,7 +118,9 @@ export class MediaOptimizer {
                     const ctx = canvas.getContext("2d");
                     if (ctx) {
                         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        thumbnailBlob = await new Promise<Blob | null>((resBlob) => canvas.toBlob(resBlob, "image/webp", 0.85));
+                        thumbnailBlob = await new Promise<Blob | null>((resBlob) => {
+                            canvas.toBlob(resBlob, "image/webp", 0.85);
+                        });
                     }
                 }
                 catch (cErr) {

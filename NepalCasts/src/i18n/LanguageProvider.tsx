@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import i18n, { changeLanguage as setLang, detectLanguage } from './index';
+import i18n, { changeLanguage as setLang } from './index';
 
 interface LanguageContextType {
   language: 'en' | 'ne';

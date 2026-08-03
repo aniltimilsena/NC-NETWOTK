@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, Trash2, ChevronLeft, MapPin, MessageSquare, Star, Share2, MoreHorizontal, UserPlus, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, MessageSquare, Star, Share2, UserPlus } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { uploadProfileMedia, updateProfileData } from '../../../services';
@@ -60,7 +60,8 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
                     url: window.location.href,
                 });
             }
-            catch {
+            catch (_err) {
+                // Share cancelled or failed, ignore
             }
         }
         else {
@@ -125,7 +126,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
       <div className="block h-[220px] sm:h-[320px] relative w-full overflow-hidden bg-[#0A0A0F] select-none">
         <picture className="w-full h-full">
           <source srcSet="/hero-bg.webp" type="image/webp" />
-          <img src="/hero-bg.png" alt="Hero Cover" fetchpriority="high" decoding="async" className="w-full h-full object-cover object-center select-none pointer-events-none opacity-90"/>
+          <img src="/hero-bg.png" alt="Hero Cover" fetchPriority="high" decoding="async" className="w-full h-full object-cover object-center select-none pointer-events-none opacity-90"/>
         </picture>
         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/30 to-transparent"/>
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent pointer-events-none"/>

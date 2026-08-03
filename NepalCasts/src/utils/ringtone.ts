@@ -1,10 +1,13 @@
+import { logger } from './logger';
+
 let audioContext: AudioContext | null = null;
 let ringInterval: ReturnType<typeof setInterval> | null = null;
-export const playRingtone = () => {
+
+export const playRingtone = (): void => {
     stopRingtone();
     try {
         audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const playRingBurst = () => {
+        const playRingBurst = (): void => {
             if (!audioContext)
                 return;
             const osc1 = audioContext.createOscillator();
@@ -34,20 +37,22 @@ export const playRingtone = () => {
         ringInterval = setInterval(playRingBurst, 2000);
     }
     catch (err) {
-        console.error("[Ringtone] Failed to play:", err);
+        logger.error("[Ringtone] Failed to play:", err);
     }
 };
-export const stopRingtone = () => {
+
+export const stopRingtone = (): void => {
     if (ringInterval) {
         clearInterval(ringInterval);
         ringInterval = null;
     }
     if (audioContext) {
-        audioContext.close().catch(() => { });
+        audioContext.close().catch((_err) => { /* ignore close error */ });
         audioContext = null;
     }
 };
-export const playEndCallSound = () => {
+
+export const playEndCallSound = (): void => {
     try {
         const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
         const osc = ctx.createOscillator();
@@ -64,6 +69,6 @@ export const playEndCallSound = () => {
         setTimeout(() => ctx.close(), 500);
     }
     catch (err) {
-        console.warn("[Ringtone] End call sound failed:", err);
+        logger.warn("[Ringtone] End call sound failed:", err);
     }
 };

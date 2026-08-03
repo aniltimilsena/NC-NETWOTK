@@ -37,7 +37,8 @@ const resolveUserName = async (userId: string, defaultName: string) => {
                 resolvedName = profileData.name || resolvedName;
             }
         }
-        catch {
+        catch (_err) {
+            // Profile fetch optional, fallback to default display name
         }
     }
     return resolvedName;

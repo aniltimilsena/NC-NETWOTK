@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { doc, getDoc, collection, query, where, or, updateDoc, getDocs, onSnapshot, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import { subscribeToProfile } from '../../../services';
 import type { UserProfile, ServiceResult } from '../../../types';
 export function useProfile(profileId: string | null, currentUser: any) {
     const [profile, setProfile] = useState<UserProfile | null>(null);

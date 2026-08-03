@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Briefcase, Calendar, Building2, Plus, Trash2, Sparkles } from 'lucide-react';
+import { Briefcase, Calendar, Building2, Plus, Trash2 } from 'lucide-react';
 import { updateProfileData } from '../../../services';
 import type { UserProfile } from '../../../types';
 interface ProfileExperienceProps {

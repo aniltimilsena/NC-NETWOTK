@@ -1,6 +1,6 @@
 import React from 'react';
 import SEO from '../components/SEO';
-import { Film, Users, Award, ShieldCheck, Sparkles, ArrowRight } from 'lucide-react';
+import { Film, Award, ShieldCheck, Sparkles, ArrowRight } from 'lucide-react';
 
 export default function About() {
   return (

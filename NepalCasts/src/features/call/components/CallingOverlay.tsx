@@ -150,7 +150,7 @@ export default function CallingOverlay() {
         return null;
     return (<AnimatePresence>
       <motion.div key="calling-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9999] flex flex-col justify-between p-6 sm:p-10 bg-[#0A0A0F] overflow-hidden select-none">
-        <audio ref={audioRef} autoPlay playsInline className="hidden"/>
+        <audio ref={audioRef} autoPlay className="hidden"/>
 
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-nc-accent/10 rounded-full blur-[150px]"/>

@@ -28,5 +28,4 @@ export interface CallDoc {
         nanoseconds: number;
     };
 }
-export interface CallDocument extends CallDoc {
-}
+export type CallDocument = CallDoc;

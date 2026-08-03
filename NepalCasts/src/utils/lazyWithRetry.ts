@@ -1,7 +1,9 @@
-import { ComponentType, lazy } from 'react';
-export function lazyWithRetry(componentImport: () => Promise<{
-    default: ComponentType<any>;
-}>) {
+import { ComponentType, LazyExoticComponent, lazy } from 'react';
+import { logger } from './logger';
+
+export function lazyWithRetry<T extends ComponentType<any>>(
+    componentImport: () => Promise<{ default: T }>
+): LazyExoticComponent<T> {
     return lazy(async () => {
         const importKey = componentImport.toString().replace(/[^a-zA-Z0-9]/g, '_');
         const hasRetriedKey = `nc_retry_${importKey}`;
@@ -11,7 +13,7 @@ export function lazyWithRetry(componentImport: () => Promise<{
             return result;
         }
         catch (error: any) {
-            console.error("Failed to load dynamically imported module chunk:", error);
+            logger.error("Failed to load dynamically imported module chunk:", error);
             const errorMsg = error?.message || "";
             const isChunkLoadFailed = errorMsg.includes("Failed to fetch dynamically imported module") ||
                 errorMsg.includes("Importing a module script failed") ||
@@ -20,14 +22,12 @@ export function lazyWithRetry(componentImport: () => Promise<{
                 const hasRetried = sessionStorage.getItem(hasRetriedKey);
                 if (!hasRetried) {
                     sessionStorage.setItem(hasRetriedKey, 'true');
-                    console.warn("Retrying chunk import by reloading page with cache-busting...");
+                    logger.warn("Retrying chunk import by reloading page with cache-busting...");
                     sessionStorage.removeItem("vite_reload_time");
                     const url = new URL(window.location.href);
                     url.searchParams.set('reload', Date.now().toString());
                     window.location.href = url.toString();
-                    return new Promise<{
-                        default: ComponentType<any>;
-                    }>(() => { });
+                    return new Promise<{ default: T }>(() => { });
                 }
             }
             sessionStorage.removeItem(hasRetriedKey);

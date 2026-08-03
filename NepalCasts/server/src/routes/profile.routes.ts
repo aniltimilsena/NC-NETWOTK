@@ -15,7 +15,14 @@ const getPublicProfilesHandler = async (_req: any, res: Response): Promise<any> 
         const snapshot = await db.collection('profiles').limit(50).get();
         const talents = snapshot.docs.map(doc => {
             const data = doc.data() || {};
-            const { fcmToken, fcmTokens, loginAttempts, password, passwordHash, ...rest } = data;
+            const {
+                fcmToken: _fcmToken,
+                fcmTokens: _fcmTokens,
+                loginAttempts: _loginAttempts,
+                password: _password,
+                passwordHash: _passwordHash,
+                ...rest
+            } = data;
             return {
                 id: doc.id,
                 ...rest
@@ -31,7 +38,7 @@ const getPublicProfilesHandler = async (_req: any, res: Response): Promise<any> 
 
 router.get('/public', optionalAuth, getPublicProfilesHandler);
 router.get('/profile/public', optionalAuth, getPublicProfilesHandler);
-router.get('/search', verifyToken, scrapingPreventerMiddleware, async (req: AuthedRequest<any, any, any>, res: Response): Promise<any> => {
+router.get('/search', verifyToken, scrapingPreventerMiddleware, async (req: AuthedRequest<Record<string, string>, unknown, { q?: string; category?: string }>, res: Response): Promise<Response> => {
     try {
         const { q, category } = req.query;
         let queryRef: firestore.Query = db.collection('profiles');
@@ -41,7 +48,15 @@ router.get('/search', verifyToken, scrapingPreventerMiddleware, async (req: Auth
         const results = await queryRef.limit(100).get();
         let talents: any[] = results.docs.map(doc => {
             const data = doc.data() || {};
-            const { fcmToken, fcmTokens, loginAttempts, email, phone, showContactInfo, ...rest } = data;
+            const {
+                fcmToken: _fcmToken,
+                fcmTokens: _fcmTokens,
+                loginAttempts: _loginAttempts,
+                email,
+                phone,
+                showContactInfo,
+                ...rest
+            } = data;
             const isOwner = req.user?.uid === doc.id;
             const isAdminUser = req.user?.admin === true;
             const talent: any = {
@@ -76,7 +91,12 @@ router.get('/profiles/:userId', verifyToken, scrapingPreventerMiddleware, async 
         if (!data) {
             return res.status(404).json({ error: 'Profile not found' });
         }
-        const { fcmToken, fcmTokens, loginAttempts, ...safeProfile } = data;
+        const {
+            fcmToken: _fcmToken,
+            fcmTokens: _fcmTokens,
+            loginAttempts: _loginAttempts,
+            ...safeProfile
+        } = data;
         const isOwner = req.user?.uid === req.params.userId;
         const isAdminUser = req.user?.admin === true;
         if (!isOwner && !isAdminUser && !safeProfile.showContactInfo) {
