@@ -37,17 +37,14 @@ export default function SignIn({ onNavigate }: SignInProps) {
     };
 
     return (
-        <div className="min-h-screen bg-[#2b2b2b] text-white flex items-center justify-center relative overflow-hidden font-sans">
+        <div className="min-h-screen bg-[#1E1E1E] text-white flex items-center justify-center relative overflow-hidden font-sans">
             <SEO title="Sign In | NepalCasts" description="Access your NepalCasts account using Clerk authentication." noindex />
 
-            {/* Subtle ambient glow */}
-            <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-white/[0.03] rounded-full blur-[200px] pointer-events-none z-0" />
-
-            {/* Back button */}
+            {/* Back button — sharp rectangle */}
             <button
                 onClick={handleBack}
                 type="button"
-                className="absolute top-6 left-6 w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all z-20 cursor-pointer"
+                className="absolute top-6 left-6 w-10 h-10 bg-transparent border border-[#2A2A2A] rounded-full flex items-center justify-center text-[#9CA3AF] hover:text-white hover:border-[#444] transition-colors z-20 cursor-pointer"
                 aria-label="Back"
                 title="Go Back"
             >
@@ -55,12 +52,11 @@ export default function SignIn({ onNavigate }: SignInProps) {
             </button>
 
             {/* Main centered card */}
-            <div className="w-full max-w-[420px] flex flex-col items-center px-6 py-10 z-10 relative">
+            <div className="w-full max-w-[420px] flex flex-col items-center px-6 py-8 z-10 relative">
 
-                {/* Logo Circle */}
-                <div className="w-[120px] h-[120px] rounded-full bg-[#6b6b6b] flex items-center justify-center mb-10 shadow-[0_8px_40px_rgba(0,0,0,0.5)] relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
-                    <LogoIcon className="w-20 h-20 relative z-10" />
+                {/* Logo — circular container */}
+                <div className="w-[100px] h-[100px] bg-[#000000] border border-[#2A2A2A] rounded-full flex items-center justify-center mb-6">
+                    <LogoIcon className="w-16 h-16" />
                 </div>
 
                 {/* Clerk Sign In Form */}
@@ -74,30 +70,30 @@ export default function SignIn({ onNavigate }: SignInProps) {
                                 header: 'hidden',
                                 headerTitle: 'hidden',
                                 headerSubtitle: 'hidden',
-                                socialButtonsBlockButton: 'w-full !bg-black hover:!bg-[#0a0a0a] border !border-[#333] text-white !rounded-none py-4 px-6 font-medium text-base transition-all duration-200 shadow-lg flex items-center justify-center gap-3 cursor-pointer mb-4 hover:!border-[#444]',
-                                socialButtonsBlockButtonText: 'text-white font-medium text-base',
+                                socialButtonsBlockButton: 'w-full !bg-[#000000] hover:!bg-[#0a0a0a] border !border-[#2A2A2A] text-white !rounded-none py-4 px-6 font-semibold text-sm tracking-wide transition-colors duration-150 flex items-center justify-center gap-3 cursor-pointer mb-4 hover:!border-[#444] !shadow-none uppercase',
+                                socialButtonsBlockButtonText: 'text-white font-semibold text-sm uppercase tracking-wider',
                                 socialButtonsBlockButtonArrow: 'hidden',
                                 dividerRow: 'my-6',
-                                dividerLine: 'bg-[#333]',
-                                dividerText: 'text-gray-500 text-xs uppercase tracking-wider font-semibold px-4 bg-[#2b2b2b]',
-                                form: 'w-full space-y-6 flex flex-col',
+                                dividerLine: 'bg-[#2A2A2A]',
+                                dividerText: 'text-[#9CA3AF] text-[10px] uppercase tracking-[0.2em] font-semibold px-4 bg-[#1E1E1E]',
+                                form: 'w-full space-y-5 flex flex-col',
                                 formFieldRow: 'flex flex-row items-start gap-3 w-full',
                                 formFieldLabel: 'hidden',
-                                formFieldInput: 'w-full px-6 py-4 !rounded-none !bg-black border !border-[#333] text-white text-center text-base placeholder-gray-500 focus:!border-[#555] focus:ring-0 focus:outline-none transition-all font-medium',
-                                formFieldInputShowPasswordButton: 'text-gray-400 hover:text-gray-200',
-                                formButtonPrimary: 'w-full py-4 !rounded-none !bg-black hover:!bg-[#0a0a0a] text-white font-bold text-lg tracking-wide transition-all shadow-lg mt-5 cursor-pointer border !border-[#333] hover:!border-[#444]',
+                                formFieldInput: 'w-full px-6 py-4 !rounded-none !bg-[#000000] border !border-[#2A2A2A] text-white text-center text-sm placeholder-[#9CA3AF] focus:!border-[#444] focus:ring-0 focus:outline-none transition-colors font-medium tracking-wide !shadow-none',
+                                formFieldInputShowPasswordButton: 'text-white hover:text-[#9CA3AF]',
+                                formButtonPrimary: 'w-full py-4 !rounded-none !bg-[#000000] hover:!bg-[#0a0a0a] text-white font-bold text-sm uppercase tracking-[0.15em] transition-colors mt-2 cursor-pointer border !border-[#2A2A2A] hover:!border-[#444] !shadow-none',
                                 footerAction: 'hidden',
                                 footerActionText: 'hidden',
                                 footerActionLink: 'hidden',
                                 footer: 'hidden',
-                                identityPreview: '!bg-black border !border-[#333] !rounded-none py-3 px-5',
-                                identityPreviewEditButton: 'text-gray-400 hover:text-white',
-                                identityPreviewText: 'text-white text-base',
-                                formResendCodeLink: 'text-gray-400 hover:text-white text-xs',
-                                otpCodeFieldInput: '!bg-black border !border-[#333] text-white text-center !rounded-none',
-                                alternativeMethodsBlockButton: 'text-gray-400 hover:text-white !bg-black border !border-[#333] !rounded-none',
-                                badge: 'bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 text-[10px] font-bold px-2 py-0.5 rounded-full',
-                                tagPillIcon: 'text-[#00BFFF]',
+                                identityPreview: '!bg-[#000000] border !border-[#2A2A2A] !rounded-none py-3 px-5',
+                                identityPreviewEditButton: 'text-[#9CA3AF] hover:text-white',
+                                identityPreviewText: 'text-white text-sm',
+                                formResendCodeLink: 'text-[#9CA3AF] hover:text-white text-xs',
+                                otpCodeFieldInput: '!bg-[#000000] border !border-[#2A2A2A] text-white text-center !rounded-none',
+                                alternativeMethodsBlockButton: 'text-[#9CA3AF] hover:text-white !bg-[#000000] border !border-[#2A2A2A] !rounded-none',
+                                badge: 'bg-white/5 text-[#9CA3AF] border border-[#2A2A2A] text-[10px] font-bold px-2 py-0.5',
+                                tagPillIcon: 'text-white',
                             }
                         }}
                         signUpUrl="/signup"
@@ -106,47 +102,47 @@ export default function SignIn({ onNavigate }: SignInProps) {
                 </div>
 
                 {/* Remember me & Forgot Password — outside Clerk wrapper */}
-                <div className="w-full flex items-center justify-between mt-5 relative z-30">
+                <div className="w-full flex items-center justify-between mt-6 relative z-30">
                     <button
                         type="button"
                         onClick={toggleRememberMe}
-                        className="flex items-center gap-2 cursor-pointer select-none group"
+                        className="flex items-center gap-2.5 cursor-pointer select-none group"
                         aria-pressed={rememberMe}
                     >
-                        <div className={`w-4 h-4 rounded-sm flex items-center justify-center transition-all duration-150 border ${rememberMe
-                            ? 'bg-[#00BFFF] border-[#00BFFF]'
-                            : 'bg-transparent border-gray-500 group-hover:border-gray-300'
+                        <div className={`w-4 h-4 flex items-center justify-center transition-colors duration-150 border ${rememberMe
+                            ? 'bg-white border-white'
+                            : 'bg-transparent border-[#2A2A2A] group-hover:border-[#444]'
                             }`}>
-                            {rememberMe && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                            {rememberMe && <Check className="w-3 h-3 text-black" strokeWidth={3} />}
                         </div>
-                        <span className="text-xs text-gray-300 font-medium group-hover:text-white transition-colors">Remember me</span>
+                        <span className="text-xs text-[#9CA3AF] font-medium group-hover:text-white transition-colors tracking-wide">Remember me</span>
                     </button>
                     <button
                         onClick={() => navigate('/forgot-password')}
                         type="button"
-                        className="text-xs text-gray-300 hover:text-white font-medium transition-colors cursor-pointer underline underline-offset-2 decoration-gray-500 hover:decoration-white"
+                        className="text-xs text-[#9CA3AF] hover:text-white font-medium transition-colors cursor-pointer tracking-wide"
                     >
                         Forgot password?
                     </button>
                 </div>
 
                 {/* Divider */}
-                <div className="w-full h-px bg-white/8 my-8" />
+                <div className="w-full h-px bg-[#2A2A2A] my-6" />
 
                 {/* Not a member / Create account */}
-                <div className="flex flex-col items-center gap-2">
-                    <span className="text-sm text-gray-500 font-medium">Not a member?</span>
+                <div className="flex flex-col items-center gap-3">
+                    <span className="text-xs text-[#9CA3AF] font-medium tracking-wide uppercase">Not a member?</span>
                     <button
                         onClick={() => navigate('/signup')}
                         type="button"
-                        className="px-8 py-2.5 rounded-full border border-gray-500 text-gray-400 hover:text-white hover:border-white/40 text-sm font-semibold transition-all cursor-pointer"
+                        className="px-10 py-3 bg-transparent border border-[#2A2A2A] rounded-full text-[#9CA3AF] hover:text-white hover:border-[#444] text-xs font-bold uppercase tracking-[0.15em] transition-colors cursor-pointer"
                     >
                         Create account
                     </button>
                 </div>
 
                 {/* Security badge */}
-                <div className="mt-8 flex items-center gap-1.5 text-gray-600 text-[10px] font-medium">
+                <div className="mt-10 flex items-center gap-2 text-[#9CA3AF]/50 text-[10px] font-medium tracking-wider uppercase">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Secured by Clerk</span>
                 </div>

@@ -203,7 +203,7 @@ export default function Home({ onNavigate, user }) {
     coverImage: user?.coverImage || '/hero-bg.png'
   };
 
-  const trendingList = activeTalentsList.length > 0 ? activeTalentsList : talents;
+  const trendingList = activeTalentsList.filter(t => t.featured === true || t.premium === true || t.isPremium === true);
   const currentPremiumUser = trendingList[currentPremiumIdx] || (user ? { ...defaultTalent, ...user } : defaultTalent);
 
   useEffect(() => {
@@ -246,7 +246,7 @@ export default function Home({ onNavigate, user }) {
       user={user}
       onNavigate={onNavigate}
       activeNav="discover"
-      featuredTalents={talents}
+      featuredTalents={activeTalentsList.filter(t => t.featured === true || t.premium === true || t.isPremium === true)}
       trendingCalls={castingCalls}
     >
       <div className="min-h-screen bg-[#070709] text-white">

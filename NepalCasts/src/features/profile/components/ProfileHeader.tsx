@@ -5,6 +5,7 @@ import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { uploadProfileMedia, updateProfileData } from '../../../services';
 import { CurrentUser } from '../../../utils/CurrentUser';
 import type { UserProfile } from '../../../types';
+
 interface ProfileHeaderProps {
     profile: UserProfile;
     isOwnProfile: boolean;
@@ -17,6 +18,7 @@ interface ProfileHeaderProps {
     showAlert: (message: string, type?: any, detail?: string, action?: any) => void;
     onFollowClick?: (type: 'followers' | 'following') => void;
 }
+
 export default function ProfileHeader({ profile, isOwnProfile, isFollowing, followerCount, followingCount, savedCount, onFollowToggle, onNavigate, showAlert, onFollowClick }: ProfileHeaderProps) {
     const coverFileInputRef = useRef<HTMLInputElement>(null);
     const [isUploadingCover, setIsUploadingCover] = useState(false);
@@ -39,18 +41,23 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         document.addEventListener('click', close, { once: true });
         return () => document.removeEventListener('click', close);
     }, [showCoverMenu]);
-    const avatarUrl = (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isOwnProfile ? CurrentUser.imageUrl : null);
+
+    const isRealOwn = isOwnProfile || Boolean(CurrentUser.id && (profile?.uid === CurrentUser.id || (profile as any)?.id === CurrentUser.id));
+    const avatarUrl = (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isRealOwn ? CurrentUser.imageUrl : null);
     const activeCover = localCover || profile.coverImage || (profile as any)?.coverPhoto;
     const validCover = activeCover && activeCover !== '/hero-bg.png' && activeCover !== '/hero-bg.webp' ? activeCover : null;
     const coverImage = validCover || '/hero-bg.webp';
-    const canEditCover = isOwnProfile || Boolean(CurrentUser.id && profile?.uid && (CurrentUser.id === profile.uid || CurrentUser.id === (profile as any).id));
+    const canEditCover = isRealOwn;
     const isPremiumUser = Boolean(
         profile?.isPremium || 
         profile?.premium || 
         (profile as any)?.isPro || 
-        (isOwnProfile && CurrentUser.premium)
+        (isRealOwn && CurrentUser.premium)
     );
     const name = profile?.name || (profile as any)?.displayName || (profile as any)?.fullName || ((profile as any)?.email ? (profile as any).email.split('@')[0] : 'Discovery Talent');
+    const rawRole = profile?.role || (profile as any)?.category || (isRealOwn ? CurrentUser.role : null);
+    const userRole = rawRole && rawRole !== 'user' ? rawRole : 'Talent';
+
     const handleShare = async () => {
         if (navigator.share) {
             try {
@@ -69,6 +76,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             showAlert('Link Copied', 'info', 'Profile link copied to clipboard.');
         }
     };
+
     const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         const targetUid = profile?.uid || (profile as any)?.id || CurrentUser.id;
@@ -103,6 +111,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
                 e.target.value = '';
         }
     };
+
     const handleDeleteCover = async () => {
         const targetUid = profile?.uid || (profile as any)?.id || CurrentUser.id;
         if (!targetUid)
@@ -121,6 +130,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             setConfirmDeleteCoverOpen(false);
         }
     };
+
     return (<div className="relative font-sans select-none">
       {/* Static Hero Cover Banner */}
       <div className="block h-[220px] sm:h-[320px] relative w-full overflow-hidden bg-[#0A0A0F] select-none">
@@ -148,11 +158,11 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         <div className="relative z-10 mb-3">
           <Avatar 
             user={profile}
-            src={(profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isOwnProfile ? CurrentUser.imageUrl : null)} 
+            src={(profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isRealOwn ? CurrentUser.imageUrl : null)} 
             gender={profile.gender || ''} 
             name={name} 
             size="none" 
-            editable={isOwnProfile} 
+            editable={isRealOwn} 
             userId={profile.uid} 
             showStatus={profile.isOnline === true} 
             status={profile.isOnline === true ? 'online' : 'offline'} 
@@ -165,7 +175,6 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight flex items-center justify-center gap-2 flex-wrap mb-2">
           <span>{name}</span>
           {profile.verified === true && (
-
             <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#00BFFF] inline-flex items-center justify-center text-[#060709] text-xs sm:text-sm font-black shrink-0 shadow-md shadow-[#00BFFF]/30" title="Verified Talent">
               ✓
             </span>
@@ -177,6 +186,12 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
           )}
         </h1>
 
+        {userRole && (
+          <p className="text-[#00BFFF] font-black text-xs uppercase tracking-widest mb-3">
+            {userRole}
+          </p>
+        )}
+
         <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
           {profile.openToWork && (<span className="px-2.5 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[9px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/30 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse"/>
@@ -184,8 +199,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             </span>)}
         </div>
 
-        
-        {!isOwnProfile && (<div className="w-full max-w-sm flex items-center gap-3 mb-6">
+        {!isRealOwn && (<div className="w-full max-w-sm flex items-center gap-3 mb-6">
             <button onClick={onFollowToggle} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border text-sm font-bold transition-all active:scale-95 ${isFollowing
                 ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
                 : 'bg-white/[0.06] border-white/10 hover:bg-white/10 text-white'}`}>
@@ -199,9 +213,8 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             </button>
           </div>)}
 
-        
-        <div className={`grid grid-cols-3 divide-x divide-white/10 w-full max-w-md mx-auto py-2 my-2 ${isOwnProfile ? 'mt-4' : ''}`}>
-          <div onClick={() => isOwnProfile && onFollowClick?.('followers')} className={`group/followers flex flex-col items-center justify-center text-center py-1 transition-all ${isOwnProfile ? 'cursor-pointer' : ''}`}>
+        <div className={`grid grid-cols-3 divide-x divide-white/10 w-full max-w-md mx-auto py-2 my-2 ${isRealOwn ? 'mt-4' : ''}`}>
+          <div onClick={() => isRealOwn && onFollowClick?.('followers')} className={`group/followers flex flex-col items-center justify-center text-center py-1 transition-all ${isRealOwn ? 'cursor-pointer' : ''}`}>
             <span className="text-white group-hover/followers:text-[#00BFFF] text-xl sm:text-2xl font-black transition-colors">
               {followerCount !== undefined ? followerCount : 0}
             </span>
@@ -210,7 +223,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             </span>
           </div>
 
-          <div onClick={() => isOwnProfile && onFollowClick?.('following')} className={`group/following flex flex-col items-center justify-center text-center py-1 transition-all ${isOwnProfile ? 'cursor-pointer' : ''}`}>
+          <div onClick={() => isRealOwn && onFollowClick?.('following')} className={`group/following flex flex-col items-center justify-center text-center py-1 transition-all ${isRealOwn ? 'cursor-pointer' : ''}`}>
             <span className="text-white group-hover/following:text-[#00BFFF] text-xl sm:text-2xl font-black transition-colors">
               {followingCount !== undefined ? followingCount : 0}
             </span>
@@ -231,7 +244,6 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         </div>
       </div>
 
-      
       <ConfirmDialog isOpen={confirmDeleteCoverOpen} title="Remove Cover Image?" description="Are you sure you want to remove your profile banner background?" confirmText="Remove Cover" cancelText="Cancel" type="danger" isLoading={isDeletingCover} onClose={() => setConfirmDeleteCoverOpen(false)} onConfirm={handleDeleteCover}/>
     </div>);
 }

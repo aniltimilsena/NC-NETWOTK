@@ -1,42 +1,60 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, ArrowLeft } from 'lucide-react';
+import { Mail, ChevronLeft, ShieldCheck } from 'lucide-react';
 import SEO from '../../components/SEO';
-import Logo from '../../components/ui/Logo';
+import { LogoIcon } from '../../components/ui/Logo';
 
 export default function VerifyEmail() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-4 relative font-sans">
+    <div className="min-h-screen bg-[#1E1E1E] text-white flex items-center justify-center relative overflow-hidden font-sans">
       <SEO title="Verify Email | NepalCasts Account Security" description="Verify your email address for NepalCasts." />
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center space-y-2">
-          <div className="flex justify-center mb-4">
-            <Logo size="lg" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">Email Verification</h1>
-          <p className="text-xs sm:text-sm text-gray-400">
-            Email verification is managed natively through Clerk authentication.
-          </p>
+
+      {/* Back button — sharp rectangle */}
+      <button
+        onClick={() => navigate('/signin')}
+        type="button"
+        className="absolute top-6 left-6 w-10 h-10 bg-transparent border border-[#2A2A2A] rounded-full flex items-center justify-center text-[#9CA3AF] hover:text-white hover:border-[#444] transition-colors z-20 cursor-pointer"
+        aria-label="Back"
+        title="Go Back"
+      >
+        <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+      </button>
+
+      <div className="w-full max-w-[420px] flex flex-col items-center px-6 py-8 z-10 relative">
+
+        {/* Logo — circular container */}
+        <div className="w-[100px] h-[100px] bg-[#000000] border border-[#2A2A2A] rounded-full flex items-center justify-center mb-6">
+          <LogoIcon className="w-16 h-16" />
         </div>
 
-        <div className="p-6 sm:p-8 rounded-3xl bg-white/[0.03] border border-white/10 space-y-6 backdrop-blur-xl text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] flex items-center justify-center mx-auto">
-            <Mail className="w-6 h-6" />
+        {/* Title */}
+        <h1 className="text-xl font-bold text-white tracking-[0.1em] uppercase mb-1">Email Verification</h1>
+        <p className="text-[10px] text-[#9CA3AF] font-medium tracking-[0.2em] uppercase mb-6">Managed by Clerk authentication</p>
+
+        {/* Info card — flat rectangle */}
+        <div className="w-full bg-[#000000] border border-[#2A2A2A] p-8 flex flex-col items-center gap-6">
+          <div className="w-14 h-14 bg-[#1E1E1E] border border-[#2A2A2A] flex items-center justify-center">
+            <Mail className="w-7 h-7 text-white" />
           </div>
 
-          <p className="text-xs text-gray-300 leading-relaxed">
+          <p className="text-xs text-[#9CA3AF] leading-relaxed text-center max-w-xs font-medium">
             Your email verification code or link is managed directly during sign-up or inside your account settings.
           </p>
 
           <button
             onClick={() => navigate('/signin')}
-            className="w-full py-3 rounded-full bg-[#00BFFF] text-black font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-4 bg-[#000000] border border-[#2A2A2A] hover:border-[#444] text-white font-bold text-sm uppercase tracking-[0.15em] transition-colors flex items-center justify-center gap-2 cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Return to Sign In</span>
+            Return to Sign In
           </button>
+        </div>
+
+        {/* Security badge */}
+        <div className="mt-10 flex items-center gap-2 text-[#9CA3AF]/50 text-[10px] font-medium tracking-wider uppercase">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Secured by Clerk</span>
         </div>
       </div>
     </div>

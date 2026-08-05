@@ -271,7 +271,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         setSearchQuery('');
     };
     return (
-        <Desktop3ColumnLayout user={activeUser} onNavigate={onNavigate} activeNav="talent" featuredTalents={talents}>
+        <Desktop3ColumnLayout user={activeUser} onNavigate={onNavigate} activeNav="talent" featuredTalents={talents.filter(t => !t.deactivated && (t.featured === true || t.premium === true || t.isPremium === true))}>
             <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-6 relative font-sans">
                 <SEO title="Browse Professional Talent | NepalCasts" description="Premium directory of cinema professionals in Nepal." />
 

@@ -52,7 +52,7 @@ function FollowBtn({ targetUid }) {
       type="button"
       onClick={handleToggle}
       disabled={loading}
-      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-[0.96] flex items-center gap-1 ${following
+      className={`flex-shrink-0 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold border transition-all cursor-pointer active:scale-[0.96] flex items-center gap-1 ${following
         ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
         : 'bg-white/[0.06] border-white/10 hover:bg-white/10 text-white'
         } ${loading ? 'opacity-50 pointer-events-none' : ''}`}

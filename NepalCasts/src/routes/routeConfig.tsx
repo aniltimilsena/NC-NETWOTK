@@ -17,6 +17,7 @@ import { SavedRoutes } from './saved.routes';
 
 import { CallsRoutes } from './calls.routes';
 import { ApplicationsRoutes } from './applications.routes';
+import { CurrentUser } from '../utils/CurrentUser';
 
 const Home = lazy(() => import('../pages/Home'));
 const Premium = lazy(() => import('../pages/Premium'));
@@ -67,7 +68,17 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
     if (targetPage === 'profile-create') path = '/profile/create';
     if (targetPage === 'casting-create') path = '/casting/create';
 
-    if (param) path = `/${targetPage}/${param}`;
+    if (targetPage === 'profile') {
+      const cleanParam = typeof param === 'string' ? param.replace(/^@/, '') : '';
+      const isOwn = !param || param === user?.uid || (CurrentUser.id && param === CurrentUser.id) || (CurrentUser.username && cleanParam === CurrentUser.username);
+      if (isOwn) {
+        path = '/profile';
+      } else {
+        path = `/profile/${param}`;
+      }
+    } else if (param) {
+      path = `/${targetPage}/${param}`;
+    }
     path = path.replace(/\/+/g, '/');
     navigate(path);
   };

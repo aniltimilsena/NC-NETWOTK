@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
-import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 import { db, auth } from '../lib/firebase';
 import { AuthService } from '../services/AuthService';
@@ -182,12 +182,61 @@ export default function AppProviders({ children }: {
                     const profileData = profileDoc.exists() ? profileDoc.data() : null;
                     const updateData: any = {};
 
+                    // Auto-sync real data from old profile matching the user's email
+                    if ((!profileDoc.exists() || !profileData?.role || profileData?.role === 'user') && email) {
+                        try {
+                            const oldUsersQuery = query(
+                                collection(db, 'users'), 
+                                where('email', '==', email)
+                            );
+                            const oldUsersSnap = await getDocs(oldUsersQuery);
+                            const oldUserDoc = oldUsersSnap.docs.find(d => d.id !== uid);
+                            if (oldUserDoc) {
+                                const oldUid = oldUserDoc.id;
+                                const oldProfileSnap = await getDoc(doc(db, 'profiles', oldUid));
+                                if (oldProfileSnap.exists()) {
+                                    const oldProfileData = oldProfileSnap.data();
+                                    if (oldProfileData.role && oldProfileData.role !== 'user') {
+                                        console.log("Auto-merging profile data from old account:", oldUid);
+                                        Object.assign(updateData, {
+                                            role: oldProfileData.role,
+                                            category: oldProfileData.category || oldProfileData.role,
+                                            bio: oldProfileData.bio || '',
+                                            location: oldProfileData.location || '',
+                                            gender: oldProfileData.gender || '',
+                                            skills: oldProfileData.skills || [],
+                                            experience: oldProfileData.experience || [],
+                                            education: oldProfileData.education || [],
+                                            languages: oldProfileData.languages || [],
+                                            username: oldProfileData.username || '',
+                                            verified: oldProfileData.verified || false,
+                                            premium: oldProfileData.premium || false,
+                                            isPremium: oldProfileData.isPremium || false,
+                                            featured: oldProfileData.featured || false,
+                                            rating: oldProfileData.rating || 0,
+                                            reviews: oldProfileData.reviews || 0,
+                                            coverImage: oldProfileData.coverImage || '',
+                                            photoURL: oldProfileData.photoURL || oldProfileData.image || '',
+                                            image: oldProfileData.image || oldProfileData.photoURL || '',
+                                            onboarded: oldProfileData.onboarded !== undefined ? oldProfileData.onboarded : true
+                                        });
+                                        if (oldProfileData.twoFactorEnabled !== undefined) {
+                                            updateData.twoFactorEnabled = oldProfileData.twoFactorEnabled;
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (mergeErr) {
+                            console.warn("Failed to merge old profile data:", mergeErr);
+                        }
+                    }
+
                     if (!profileDoc.exists()) {
-                        updateData.name = clerkName;
-                        updateData.image = photoURL;
-                        updateData.photoURL = photoURL;
+                        if (!updateData.name) updateData.name = clerkName;
+                        if (!updateData.image) updateData.image = photoURL;
+                        if (!updateData.photoURL) updateData.photoURL = photoURL;
                         updateData.createdAt = serverTimestamp();
-                        updateData.onboarded = true;
+                        if (updateData.onboarded === undefined) updateData.onboarded = true;
                     } else {
                         if (!profileData?.name && clerkName) {
                             updateData.name = clerkName;
@@ -200,7 +249,7 @@ export default function AppProviders({ children }: {
                                           currentImg.includes('default-female.png') || 
                                           currentImg.startsWith('data:image/svg+xml') ||
                                           currentImg.includes('img.clerk.com');
-                        if (photoURL && isDefault && !hasExplicitDelete) {
+                        if (photoURL && isDefault && !hasExplicitDelete && !updateData.image) {
                             updateData.image = photoURL;
                             updateData.photoURL = photoURL;
                         }
@@ -312,9 +361,9 @@ export default function AppProviders({ children }: {
         uid: user.uid,
         email: user.email,
         displayName: userProfile?.name || user.displayName || clerkComputedName || (user.email ? user.email.split('@')[0] : 'Talent User'),
-        photoURL: userProfile?.photoURL || userProfile?.image || (user.photoURL && !user.photoURL.includes('img.clerk.com') ? user.photoURL : '') || '',
+        photoURL: userProfile?.photoURL || userProfile?.image || userProfile?.profileImage || (user.photoURL && !user.photoURL.includes('img.clerk.com') ? user.photoURL : '') || '',
         gender: userProfile?.gender || '',
-        profileImage: userProfile?.image || (user.photoURL && !user.photoURL.includes('img.clerk.com') ? user.photoURL : '') || '',
+        profileImage: userProfile?.profileImage || userProfile?.image || userProfile?.photoURL || (user.photoURL && !user.photoURL.includes('img.clerk.com') ? user.photoURL : '') || '',
         premium: userProfile?.premium || isAdmin || false,
         role: userProfile?.category || userProfile?.role || '',
     } : null;

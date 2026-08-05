@@ -124,6 +124,10 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
     const handleReviewSubmit = async (ratingInput: number, reviewText: string, workedAsInput: string) => {
         if (!user || !targetUid)
             return;
+        if (user.uid === targetUid) {
+            showAlert("You cannot review your own profile.", "error");
+            return;
+        }
         try {
             const reviewId = `${user.uid}_${targetUid}`;
             const reviewDocRef = doc(db, "reviews", reviewId);
@@ -410,9 +414,12 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
           {activeTab === 'about' && (<ProfileAbout profile={profile} showContact={showContact}/>)}
           {(isOwnProfile || hasMediaContent) && activeTab === 'media' && (<ProfileMedia profile={profile} isOwnProfile={isOwnProfile} onUploadMedia={handleUploadMedia} onDeleteMedia={handleDeleteMedia} onUploadIntroVideo={handleUploadIntroVideo} onDeleteIntroVideo={handleDeleteIntroVideo}/>)}
           {(isOwnProfile || hasExperience) && activeTab === 'experience' && (<ProfileExperience profile={profile} isOwnProfile={isOwnProfile} showAlert={showAlert}/>)}
-          {activeTab === 'reviews' && (<ProfileReviews reviews={reviewsList} loading={loadingReviews} isOwnProfile={isOwnProfile} hasWorkedTogether={hasWorkedTogether} onWriteReviewClick={() => {
+          {activeTab === 'reviews' && (<ProfileReviews reviews={reviewsList} loading={loadingReviews} isOwnProfile={isOwnProfile || (!!user && targetUid === user.uid)} hasWorkedTogether={hasWorkedTogether} onWriteReviewClick={() => {
                 if (!user) {
                     onNavigate('signin');
+                }
+                else if (targetUid === user.uid) {
+                    showAlert("You cannot review your own profile.", "error");
                 }
                 else {
                     setShowReviewModal(true);
