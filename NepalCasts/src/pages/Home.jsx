@@ -219,15 +219,26 @@ export default function Home({ onNavigate, user }) {
   }, [currentPremiumUser?.id]);
 
   const isDefaultImage = (url) => {
-    if (!url) return true;
+    if (!url || typeof url !== 'string' || url.trim() === '') return true;
     return url.includes('default-avatar.png') ||
       url.includes('default-male.png') ||
       url.includes('default-female.png') ||
       url.includes('achyut.png') ||
-      url.startsWith('data:image/svg+xml');
+      url.startsWith('data:image/svg+xml') ||
+      url.includes('img.clerk.com');
   };
 
-  const heroPhotoURL = currentPremiumUser?.photoURL || currentPremiumUser?.profileImage || currentPremiumUser?.image || (user?.uid === currentPremiumUser?.id ? (user?.photoURL || user?.profileImage || user?.image) : null);
+  // Resolve hero photo from all possible Firestore fields, then fall back to the logged-in user's photo when the hero is showing themselves
+  const heroPhotoURL =
+    currentPremiumUser?.image ||
+    currentPremiumUser?.photoURL ||
+    currentPremiumUser?.profileImage ||
+    currentPremiumUser?.avatar ||
+    currentPremiumUser?.picture ||
+    currentPremiumUser?.photo ||
+    (user?.uid === currentPremiumUser?.id
+      ? (user?.photoURL || user?.profileImage || user?.image)
+      : null);
   const hasHeroPhoto = heroPhotoURL && !isDefaultImage(heroPhotoURL) && !heroImageError;
 
   return (

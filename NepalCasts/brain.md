@@ -1,12 +1,12 @@
 # NC-Network Project Brain & Workflows
 
-Welcome to the **NC-Network** project documentation brain. This file contains the complete architectural blueprints, workflows, database models, and security postures of the application. Use this document as the single source of truth for repository structure and runtime execution logic.
+This document is the single source of truth for NC-Network architecture, workflows, data models, and operational notes. It is intended for maintainers and contributors who need a concise reference for development, security posture, and deployments.
 
 ---
 
 ## 1. System Overview & High-Level Concept
 
-**NC-Network** is Nepal's premier casting and professional talent network. It acts as a professional matchmaking, communication, and auditioning portal for the Nepalese entertainment industry, connecting multiple professional roles:
+NC-Network is a casting and professional talent platform that connects multiple industry roles:
 *   **Talents**: Actors, Models, Dancers, Musicians, Voice Over Artists, VFX Artists, Writers.
 *   **Creators/Recruiters**: Directors, Producers, Casting Directors, Agency Owners.
 

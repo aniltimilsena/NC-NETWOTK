@@ -4,6 +4,7 @@ import { UserButton } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { ActionSearchBar } from "@/components/ui/ActionSearchBar";
 import Logo from '../ui/Logo';
+import Avatar from '../ui/Avatar';
 import { NotificationIcon, MenuCloseIcon, SendIcon } from "@/components/ui/AnimatedStateIcons";
 import { db } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
@@ -212,39 +213,50 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                   </Link>
 
                   <div className="relative flex items-center">
-                    <UserButton
-                      appearance={{
-                        elements: {
-                          avatarBox: 'w-9 h-9 rounded-full border border-white/15 hover:border-[#00BFFF] transition-all shadow-md',
-                          userButtonPopoverCard: 'bg-[#111116] border border-white/10 text-white shadow-2xl rounded-2xl p-2 w-64',
-                          userButtonPopoverMain: 'space-y-0.5 p-0 bg-transparent',
-                          userPreview: 'p-3 border-b border-white/10 mb-1',
-                          userPreviewMainIdentifier: 'text-white font-bold text-sm',
-                          userPreviewSecondaryIdentifier: 'text-gray-400 text-xs font-medium',
-                          userButtonPopoverActions: 'space-y-0.5 p-0',
-                          userButtonPopoverActionButton: 'w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-transparent hover:bg-white/10 text-white font-medium transition-all text-sm cursor-pointer border-0 shadow-none',
-                          userButtonPopoverActionButtonText: 'text-gray-200 hover:text-white font-semibold text-sm',
-                          userButtonPopoverActionButtonIcon: 'text-gray-400',
-                          userButtonPopoverFooter: 'hidden',
-                        }
-                      }}
-                    >
-                      <UserButton.MenuItems>
-                        <UserButton.Link
-                          label="View Profile"
-                          labelIcon={
-                            <svg className="w-4 h-4 text-[#00BFFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
+                    {/* Clerk UserButton hidden visually but functional for popover */}
+                    <div className="opacity-0 absolute inset-0 z-10">
+                      <UserButton
+                        appearance={{
+                          elements: {
+                            avatarBox: 'w-9 h-9 rounded-full',
+                            userButtonPopoverCard: 'bg-[#111116] border border-white/10 text-white shadow-2xl rounded-2xl p-2 w-64',
+                            userButtonPopoverMain: 'space-y-0.5 p-0 bg-transparent',
+                            userPreview: 'p-3 border-b border-white/10 mb-1',
+                            userPreviewMainIdentifier: 'text-white font-bold text-sm',
+                            userPreviewSecondaryIdentifier: 'text-gray-400 text-xs font-medium',
+                            userButtonPopoverActions: 'space-y-0.5 p-0',
+                            userButtonPopoverActionButton: 'w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-transparent hover:bg-white/10 text-white font-medium transition-all text-sm cursor-pointer border-0 shadow-none',
+                            userButtonPopoverActionButtonText: 'text-gray-200 hover:text-white font-semibold text-sm',
+                            userButtonPopoverActionButtonIcon: 'text-gray-400',
+                            userButtonPopoverFooter: 'hidden',
                           }
-                          href={`/profile/${user?.uid}`}
-                        />
-                        <UserButton.Action label="manageAccount" />
-                        <UserButton.Action label="signOut" />
-                      </UserButton.MenuItems>
-                    </UserButton>
-
-
+                        }}
+                      >
+                        <UserButton.MenuItems>
+                          <UserButton.Link
+                            label="View Profile"
+                            labelIcon={
+                              <svg className="w-4 h-4 text-[#00BFFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            }
+                            href={`/profile/${user?.uid}`}
+                          />
+                          <UserButton.Action label="manageAccount" />
+                          <UserButton.Action label="signOut" />
+                        </UserButton.MenuItems>
+                      </UserButton>
+                    </div>
+                    {/* Our custom Avatar as the visible element */}
+                    <div className="pointer-events-none">
+                      <Avatar
+                        user={user}
+                        src={user?.photoURL || user?.profileImage || user?.image}
+                        name={user?.displayName}
+                        size="sm"
+                        className="w-9 h-9 border border-white/15 hover:border-[#00BFFF] transition-all shadow-md"
+                      />
+                    </div>
                   </div>
 
                 </>) : (<Link to="/signup" className="bg-nc-accent text-nc-darker text-xs sm:text-sm px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full font-extrabold hover:bg-sky-400 transition-all ml-1 shadow-lg shadow-nc-accent/20">

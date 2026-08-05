@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../../lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { uploadProfileMedia } from '../../services';
+import { useUser } from '@clerk/clerk-react';
 
 import ConfirmDialog from './ConfirmDialog';
 import CropModal from './CropModal';
@@ -22,6 +23,7 @@ interface AvatarProps {
 }
 export default function Avatar(props: AvatarProps) {
     const { src: propSrc, size = 'md', editable = false, name, className = '', verified = false, user: propUser, userId, showStatus = false, status = 'online' } = props;
+    const { user: clerkUser } = useUser();
     const user = propUser || null;
     const [imageError, setImageError] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -42,7 +44,8 @@ export default function Avatar(props: AvatarProps) {
             url.includes('default-male.png') ||
             url.includes('default-female.png') ||
             url.includes('achyut.png') ||
-            url.startsWith('data:image/svg+xml');
+            url.startsWith('data:image/svg+xml') ||
+            url.includes('img.clerk.com');
     };
     const hasPhoto = resolvedSrc && !isDefaultImage(resolvedSrc) && !imageError;
     const currentSrc = previewSrc || (hasPhoto ? resolvedSrc : null);
@@ -121,6 +124,18 @@ export default function Avatar(props: AvatarProps) {
                     }
                 }
 
+                // Sync avatar to Clerk so the Navbar UserButton reflects the new photo
+                if (clerkUser) {
+                    try {
+                        const response = await fetch(downloadUrl);
+                        const blob = await response.blob();
+                        const file = new File([blob], 'avatar.webp', { type: blob.type || 'image/webp' });
+                        await clerkUser.setProfileImage({ file });
+                    } catch (clerkErr) {
+                        console.warn('Could not sync avatar to Clerk:', clerkErr);
+                    }
+                }
+
                 triggerToast("Profile picture updated successfully!", "success");
             }
             else {
@@ -154,6 +169,14 @@ export default function Avatar(props: AvatarProps) {
                 }
                 catch (e) {
                     console.warn("Avatar delete doc update warning:", e);
+                }
+            }
+            // Sync removal to Clerk
+            if (clerkUser) {
+                try {
+                    await clerkUser.setProfileImage({ file: null });
+                } catch (clerkErr) {
+                    console.warn('Could not remove avatar from Clerk:', clerkErr);
                 }
             }
             setPreviewSrc(null);

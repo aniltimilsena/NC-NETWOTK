@@ -142,7 +142,9 @@ export default function AppProviders({ children }: {
             const uid = clerkUser.id;
             const email = clerkUser.primaryEmailAddress?.emailAddress || '';
             const clerkName = clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || (email ? email.split('@')[0] : 'Talent User');
-            const photoURL = clerkUser.imageUrl || '';
+            const rawClerkPhoto = clerkUser.imageUrl || '';
+            // Only use Clerk's photo if it's NOT their default avatar (hosted on img.clerk.com)
+            const photoURL = rawClerkPhoto.includes('img.clerk.com') ? '' : rawClerkPhoto;
 
             setUser({
                 uid,
@@ -196,7 +198,8 @@ export default function AppProviders({ children }: {
                                           currentImg.includes('default-avatar.png') || 
                                           currentImg.includes('default-male.png') || 
                                           currentImg.includes('default-female.png') || 
-                                          currentImg.startsWith('data:image/svg+xml');
+                                          currentImg.startsWith('data:image/svg+xml') ||
+                                          currentImg.includes('img.clerk.com');
                         if (photoURL && isDefault && !hasExplicitDelete) {
                             updateData.image = photoURL;
                             updateData.photoURL = photoURL;
@@ -309,9 +312,9 @@ export default function AppProviders({ children }: {
         uid: user.uid,
         email: user.email,
         displayName: userProfile?.name || user.displayName || clerkComputedName || (user.email ? user.email.split('@')[0] : 'Talent User'),
-        photoURL: userProfile?.photoURL || userProfile?.image || user.photoURL || clerkUser?.imageUrl || '',
+        photoURL: userProfile?.photoURL || userProfile?.image || (user.photoURL && !user.photoURL.includes('img.clerk.com') ? user.photoURL : '') || '',
         gender: userProfile?.gender || '',
-        profileImage: userProfile?.image || user.photoURL || clerkUser?.imageUrl || '',
+        profileImage: userProfile?.image || (user.photoURL && !user.photoURL.includes('img.clerk.com') ? user.photoURL : '') || '',
         premium: userProfile?.premium || isAdmin || false,
         role: userProfile?.category || userProfile?.role || '',
     } : null;

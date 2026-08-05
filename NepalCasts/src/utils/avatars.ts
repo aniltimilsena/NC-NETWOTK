@@ -9,7 +9,8 @@ const isDefaultImage = (url?: string | null) => {
     return url.includes('default-avatar.png') ||
         url.includes('default-male.png') ||
         url.includes('default-female.png') ||
-        url.includes('achyut.png');
+        url.includes('achyut.png') ||
+        url.includes('img.clerk.com');
 };
 export const getAvatar = (image?: string | null, gender?: string | null) => {
     if (image && typeof image === 'string' && image.trim() !== "" && !isDefaultImage(image)) {
