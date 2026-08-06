@@ -13,6 +13,7 @@ import ShareSheet from '../components/ui/ShareSheet';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 import { cacheManager } from '../utils/cacheManager';
+import { subscribeToTalents } from '../features/profile/services/users';
 export default function TalentListing({ onNavigate, user, initialCategory = 'All' }) {
     const navigate = useNavigate();
     const { user: clerkUser } = useUser();
@@ -71,16 +72,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         }
     }, [initialCategory]);
     useEffect(() => {
-        return cacheManager.subscribePooled("talent_listing_profiles", (pooledCb) => {
-            const q = query(collection(db, "profiles"), orderBy("updatedAt", "desc"));
-            return onSnapshot(q, (snapshot) => {
-                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                pooledCb(data, null);
-            }, (err) => {
-                console.warn("Talents snapshot listener failed or permission denied:", err);
-                pooledCb([], err);
-            });
-        }, (data) => {
+        return subscribeToTalents((data) => {
             setTalents(data);
             setLoading(false);
         });
@@ -458,7 +450,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                             {talent.id !== activeUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, talent.id)} className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 border active:scale-[0.98] ${isFollowing
                                                 ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
                                                 : 'bg-white/[0.06] border-white/10 hover:bg-white/10 text-white'}`}>
-                                                {!activeUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
+                                                {isFollowing ? 'Following' : 'Follow'}
                                             </button>)}
 
                                             <button type="button" onClick={() => setActiveMenuId(activeMenuId === talent.id ? null : talent.id)} className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-white relative bg-transparent hover:bg-white/5 transition-colors">

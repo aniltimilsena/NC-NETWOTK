@@ -4,7 +4,8 @@ import { Search, X } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { AuthService } from "@/services/AuthService";
 import Avatar from "./Avatar";
-import { collection, getDocs, query as firestoreQuery } from "firebase/firestore";
+import { collection, onSnapshot, query as firestoreQuery } from "firebase/firestore";
+import { subscribeToTalents } from "@/features/profile/services/users";
 interface ProfileSuggestion {
     uid: string;
     name: string;
@@ -62,8 +63,11 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
     }, []);
     const addToHistory = (item: HistoryItem) => {
         setHistory((prev) => {
-            const filtered = prev.filter((h) => h.value !== item.value);
-            const updated = [item, ...filtered].slice(0, 8);
+            const cleanItem: HistoryItem = item.type === 'profile'
+                ? { type: 'profile', value: item.value }
+                : { type: 'text', value: item.value, name: item.name };
+            const filtered = prev.filter((h) => h.value !== cleanItem.value);
+            const updated = [cleanItem, ...filtered].slice(0, 8);
             try {
                 localStorage.setItem("nc_search_history_v3", JSON.stringify(updated));
                 localStorage.removeItem("nc_search_history_cleared");
@@ -97,37 +101,26 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
         }
     };
     useEffect(() => {
-        if (hasLoaded)
-            return;
-        const loadAllProfiles = async () => {
-            setLoading(true);
-            try {
-                const q = firestoreQuery(collection(db, "profiles"));
-                const snap = await getDocs(q);
-                const currentUid = AuthService.getUserId();
-                const loaded = snap.docs
-                    .filter((doc) => !currentUid || doc.id !== currentUid)
-                    .map((doc) => ({
-                    uid: doc.id,
-                    name: (doc.data().name as string) || "Unknown User",
-                    role: (doc.data().role as string) || "Talent",
-                    location: doc.data().location as string | undefined,
-                    image: (doc.data().image || doc.data().photoURL) as string | undefined,
-                    gender: doc.data().gender as string | undefined,
-                    verified: !!doc.data().verified,
-                }));
-                setAllProfiles(loaded);
-                setHasLoaded(true);
-            }
-            catch (err) {
-                console.error("Error loading profiles for search:", err);
-            }
-            finally {
-                setLoading(false);
-            }
-        };
-        loadAllProfiles();
-    }, [hasLoaded]);
+        setLoading(true);
+        const unsubscribe = subscribeToTalents((data) => {
+            const currentUid = AuthService.getUserId();
+            const loaded = data
+                .filter((p) => !currentUid || p.id !== currentUid)
+                .map((p) => ({
+                uid: p.id,
+                name: (p.name as string) || "Unknown User",
+                role: (p.role as string) || "Talent",
+                location: p.location as string | undefined,
+                image: (p.image || p.photoURL) as string | undefined,
+                gender: p.gender as string | undefined,
+                verified: !!p.verified,
+            }));
+            setAllProfiles(loaded);
+            setLoading(false);
+            setHasLoaded(true);
+        });
+        return () => unsubscribe();
+    }, []);
     useEffect(() => {
         if (hasLoaded && allProfiles.length > 0 && history.length === 0) {
             const wasCleared = localStorage.getItem("nc_search_history_cleared") === "true";
@@ -139,12 +132,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
                 .slice(0, 5)
                 .map(p => ({
                 type: 'profile',
-                value: p.uid,
-                name: p.name,
-                image: p.image,
-                verified: p.verified,
-                role: p.role,
-                location: p.location
+                value: p.uid
             }));
             setHistory(initialHistory);
             try {
@@ -188,12 +176,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
     const handleProfileSelect = (profile: ProfileSuggestion) => {
         addToHistory({
             type: 'profile',
-            value: profile.uid,
-            name: profile.name,
-            image: profile.image,
-            verified: profile.verified,
-            role: profile.role,
-            location: profile.location
+            value: profile.uid
         });
         onActionSelect?.(profile.uid);
     };
@@ -259,48 +242,90 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
                                 </span>
                             </div>
                             <ul className="space-y-1">
-                                {history.map((item, idx) => (<li key={`${item.value}-${idx}`} className="flex items-center justify-between py-2.5 px-1 hover:bg-white/[0.04] transition-colors rounded-xl cursor-pointer">
-                                        <div onClick={() => {
-                    if (item.type === 'text') {
-                        setQuery(item.value);
-                    }
-                    else {
-                        onActionSelect?.(item.value);
-                    }
-                    addToHistory(item);
-                }} className="flex items-center gap-3.5 min-w-0 flex-1 text-left">
-                                            {item.type === 'text' ? (<div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                                                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                                                    </svg>
-                                                </div>) : (<div className="w-10 h-10 md:w-11 md:h-11 shrink-0">
-                                                    <Avatar user={{
-                        image: item.image || (item as any).photoURL,
-                        photoURL: (item as any).photoURL || item.image,
-                        displayName: item.name
-                    }} size="sm" name={item.name} verified={item.verified}/>
-                                                </div>)}
-                                            
-                                            <div className="min-w-0">
-                                                <span className="text-[15px] font-bold text-white truncate flex items-center gap-1.5">
-                                                    {item.name}
-                                                    {item.type === 'profile' && item.verified && (<span className="w-3.5 h-3.5 rounded-full bg-[#1877F2] flex items-center justify-center text-white text-[8px] font-black shrink-0" title="Verified">
-                                                            ✓
-                                                        </span>)}
-                                                </span>
-                                                {item.type === 'profile' && (<div className="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-[#1877F2] shrink-0"/>
-                                                        <span className="truncate">{item.role || 'Talent'} {item.location ? `• ${item.location}` : ""}</span>
-                                                    </div>)}
+                                {history.map((item, idx) => {
+                                    const profileData = item.type === 'profile' 
+                                        ? allProfiles.find(p => p.uid === item.value) 
+                                        : null;
+                                        
+                                    // If it's a profile search but the user profile was deleted or is not loaded yet
+                                    if (item.type === 'profile' && !profileData && hasLoaded) {
+                                        return null;
+                                    }
+
+                                    const displayName = item.type === 'text' 
+                                        ? item.name 
+                                        : (profileData?.name || item.name || "Loading...");
+                                        
+                                    const displayImage = item.type === 'profile' 
+                                        ? (profileData?.image || item.image) 
+                                        : undefined;
+                                        
+                                    const displayRole = item.type === 'profile' 
+                                        ? (profileData?.role || item.role) 
+                                        : undefined;
+                                        
+                                    const displayLocation = item.type === 'profile' 
+                                        ? (profileData?.location || item.location) 
+                                        : undefined;
+                                        
+                                    const displayVerified = item.type === 'profile' 
+                                        ? (profileData?.verified ?? item.verified) 
+                                        : false;
+
+                                    return (
+                                        <li key={`${item.value}-${idx}`} className="flex items-center justify-between py-2.5 px-1 hover:bg-white/[0.04] transition-colors rounded-xl cursor-pointer">
+                                            <div onClick={() => {
+                                                if (item.type === 'text') {
+                                                    setQuery(item.value);
+                                                } else {
+                                                    onActionSelect?.(item.value);
+                                                }
+                                                addToHistory(item);
+                                            }} className="flex items-center gap-3.5 min-w-0 flex-1 text-left">
+                                                {item.type === 'text' ? (
+                                                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
+                                                        <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                                        </svg>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-10 h-10 md:w-11 md:h-11 shrink-0">
+                                                        <Avatar user={{
+                                                            image: displayImage,
+                                                            photoURL: displayImage,
+                                                            displayName: displayName
+                                                        }} size="sm" name={displayName} verified={displayVerified}/>
+                                                    </div>
+                                                )}
+                                                
+                                                <div className="min-w-0">
+                                                    <span className="text-[15px] font-bold text-white truncate flex items-center gap-1.5">
+                                                        {displayName}
+                                                        {item.type === 'profile' && displayVerified && (
+                                                            <span className="w-3.5 h-3.5 rounded-full bg-[#1877F2] flex items-center justify-center text-white text-[8px] font-black shrink-0" title="Verified">
+                                                                ✓
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                    {item.type === 'profile' && (
+                                                        <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-[#1877F2] shrink-0"/>
+                                                            <span className="truncate">{displayRole || 'Talent'} {displayLocation ? `• ${displayLocation}` : ""}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center gap-3 shrink-0" onClick={e => e.stopPropagation()}>
-                                            {item.type === 'profile' && item.image && (<img src={item.image} alt="" className="w-7 h-7 object-cover rounded-[6px] border border-white/5 opacity-80"/>)}
-                                            <button onClick={() => removeFromHistory(item.value)} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-colors shrink-0" title="Remove">
-                                                <X size={15}/>
-                                            </button>
-                                        </div>
-                                    </li>))}
+                                            <div className="flex items-center gap-3 shrink-0" onClick={e => e.stopPropagation()}>
+                                                {item.type === 'profile' && displayImage && (
+                                                    <img src={displayImage} alt="" className="w-7 h-7 object-cover rounded-[6px] border border-white/5 opacity-80"/>
+                                                )}
+                                                <button onClick={() => removeFromHistory(item.value)} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-colors shrink-0" title="Remove">
+                                                    <X size={15}/>
+                                                </button>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         </div>)}
 

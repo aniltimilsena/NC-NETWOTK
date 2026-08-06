@@ -363,6 +363,7 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
                 id: d.id,
                 ...data,
                 ...participantInfo,
+                otherParticipantId,
                 isUnreadForMe,
             };
         }))).filter((c): c is any => c !== null);

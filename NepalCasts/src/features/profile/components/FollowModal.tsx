@@ -63,7 +63,7 @@ export default function FollowModal({ type, isOpen, onClose, list, loading, onNa
                         onNavigate('profile', item.id);
                     }}>
                     <div className="flex items-center gap-3">
-                      <Avatar src={item.image} name={item.name} size="sm"/>
+                      <Avatar userId={item.id} src={item.image} name={item.name} size="sm"/>
                       <div>
                         <span className="text-sm font-bold text-gray-100 block">{item.name}</span>
                         <span className="text-[10px] text-nc-muted font-semibold uppercase tracking-wider">{item.role}</span>

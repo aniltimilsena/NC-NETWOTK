@@ -575,6 +575,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
                             <Avatar
+                              userId={app.userId}
                               src={app.userPhoto}
                               size={44}
                               name={app.userName}

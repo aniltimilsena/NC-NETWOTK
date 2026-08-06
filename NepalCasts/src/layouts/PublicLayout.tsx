@@ -2,7 +2,6 @@ import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import Breadcrumbs from '../components/Breadcrumbs';
 interface PublicLayoutProps {
     user: any;
     isAdmin: boolean;
@@ -71,7 +70,6 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
     return (<div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
       {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate}/>)}
       <main className="flex-1 px-0 pb-0">
-        {!isAuthPage && <Breadcrumbs />}
         <Outlet context={{ user, isAdmin, showAlert, showToast }}/>
       </main>
       {!isAuthPage && location.pathname === '/' && <Footer user={user}/>}

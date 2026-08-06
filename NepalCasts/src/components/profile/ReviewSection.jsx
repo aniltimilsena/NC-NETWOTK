@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc, increment, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import Avatar from '../ui/Avatar';
 const ReviewSection = ({ targetUserId, targetUserName, user: propUser, showToast: propShowToast }) => {
     const context = useOutletContext();
     const currentUser = propUser || context?.user;
@@ -268,14 +269,7 @@ const ReviewCard = ({ review, isOwn }) => (<div style={{
         marginBottom: 8,
     }}>
       
-      <img src={review.reviewerPhoto || '/default-avatar.png'} alt={review.reviewerName} style={{
-        width: 40,
-        height: 40,
-        borderRadius: '50%',
-        objectFit: 'cover',
-    }} onError={(e) => {
-        e.target.src = '/default-avatar.png';
-    }}/>
+      <Avatar userId={review.reviewerId} src={review.reviewerPhoto} name={review.reviewerName} size={40} />
       <div>
         <p style={{
         color: '#fff',

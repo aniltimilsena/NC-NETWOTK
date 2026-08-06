@@ -137,7 +137,7 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
                         }
                         onSelectChat(c.id);
                     }} className={`flex items-center gap-3 py-3 px-4 cursor-pointer transition-all ${isSelected ? 'bg-white/10' : 'bg-transparent hover:bg-white/5'}`}>
-                    <Avatar src={c.avatar} name={c.name} size="md"/>
+                    <Avatar userId={c.otherParticipantId} src={c.avatar} name={c.name} size="md"/>
                     <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
                       <span className="text-[15px] font-bold text-white block truncate leading-snug">{c.name}</span>
                       <p className="text-[13px] text-nc-muted truncate font-medium mt-0.5 leading-snug">
@@ -168,7 +168,7 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
                 };
                 return (<div key={call.id} onClick={handleCallClick} className="flex justify-between items-center py-3.5 px-4 bg-transparent hover:bg-white/5 transition-all cursor-pointer group">
                       <div className="flex items-center gap-3">
-                        <Avatar src={call.otherUser?.image} name={call.otherUser?.name} size="md"/>
+                        <Avatar userId={targetUserId} src={call.otherUser?.image} name={call.otherUser?.name} size="md"/>
                         <div className="text-left">
                           <span className="text-[15px] font-bold text-white block">{call.otherUser?.name}</span>
                           <div className="flex items-center gap-1.5 mt-0.5">

@@ -175,7 +175,7 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
     return (<div className="relative w-full">
       <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={endPress} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={handleMouseLeave} onClick={handleCardClick} className={`relative z-10 py-4 md:py-5 px-2 sm:px-4 md:px-6 cursor-pointer transition-colors duration-200 flex items-center gap-4 md:gap-6 select-none ${cardBgClass} w-full`}>
         
-        {showAvatar && (notif.senderAvatar || notif.senderName) ? (<Avatar src={notif.senderAvatar} name={notif.senderName} size="sm" className="!w-10 !h-10 md:!w-14 md:!h-14 !rounded-full border-none shrink-0"/>) : (renderIconCircle(details.iconName))}
+        {showAvatar && (notif.senderAvatar || notif.senderName) ? (<Avatar userId={notif.senderId} src={notif.senderAvatar} name={notif.senderName} size="sm" className="!w-10 !h-10 md:!w-14 md:!h-14 !rounded-full border-none shrink-0"/>) : (renderIconCircle(details.iconName))}
 
         
         <div className="flex-1 min-w-0 pr-2">

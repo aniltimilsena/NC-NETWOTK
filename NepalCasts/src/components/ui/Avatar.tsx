@@ -3,6 +3,8 @@ import { db } from '../../lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { uploadProfileMedia } from '../../services';
 import { useUser } from '@clerk/clerk-react';
+import { subscribeToProfile } from '../../features/profile/services/profile';
+import { cacheManager } from '../../utils/cacheManager';
 
 import ConfirmDialog from './ConfirmDialog';
 import CropModal from './CropModal';
@@ -35,7 +37,36 @@ export default function Avatar(props: AvatarProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const targetId = userId || user?.id || user?.uid;
     const isSelf = editable || Boolean(targetId && user?.uid && targetId === user.uid);
-    const resolvedSrc = propSrc || user?.photoURL || user?.profileImage || user?.image || user?.avatar || user?.picture || user?.photo || null;
+
+    const [liveSrc, setLiveSrc] = useState<string | null>(null);
+    const [liveName, setLiveName] = useState<string | undefined>(undefined);
+    const [liveGender, setLiveGender] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        if (!targetId) {
+            setLiveSrc(null);
+            setLiveName(undefined);
+            setLiveGender(undefined);
+            return;
+        }
+        const unsub = subscribeToProfile(targetId, (profileData) => {
+            if (profileData) {
+                const latestSrc = (profileData.image || profileData.photoURL || profileData.avatar || null) as string | null;
+                setLiveSrc(latestSrc || ""); // empty string represents explicitly loaded but null
+                setLiveName(profileData.name as string | undefined);
+                setLiveGender(profileData.gender as string | undefined);
+            } else {
+                setLiveSrc("");
+                setLiveName(undefined);
+                setLiveGender(undefined);
+            }
+        });
+        return () => unsub();
+    }, [targetId]);
+
+    const resolvedSrc = (liveSrc !== null)
+        ? (liveSrc || null)
+        : (propSrc || user?.photoURL || user?.profileImage || user?.image || user?.avatar || user?.picture || user?.photo || null);
 
     const isDefaultImage = (url?: string | null) => {
         if (!url)
@@ -123,6 +154,9 @@ export default function Avatar(props: AvatarProps) {
                         console.warn("Avatar doc update warning:", e);
                     }
                 }
+                if (activeUserId) {
+                    cacheManager.invalidateCache(`profile_${activeUserId}`);
+                }
 
                 // Sync avatar to Clerk so the Navbar UserButton reflects the new photo
                 if (clerkUser) {
@@ -170,6 +204,9 @@ export default function Avatar(props: AvatarProps) {
                 catch (e) {
                     console.warn("Avatar delete doc update warning:", e);
                 }
+            }
+            if (activeUserId) {
+                cacheManager.invalidateCache(`profile_${activeUserId}`);
             }
             // Sync removal to Clerk
             if (clerkUser) {

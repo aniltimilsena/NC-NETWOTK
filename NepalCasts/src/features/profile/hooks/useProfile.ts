@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { doc, getDoc, collection, query, where, or, updateDoc, getDocs, onSnapshot, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import type { UserProfile, ServiceResult } from '../../../types';
+import { CurrentUser } from '../../../utils/CurrentUser';
 export function useProfile(profileId: string | null, currentUser: any) {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [resolvedUid, setResolvedUid] = useState<string | null>(null);
@@ -52,8 +53,12 @@ export function useProfile(profileId: string | null, currentUser: any) {
         };
         resolve();
     }, [profileId, currentUser?.uid]);
-    const targetUid = resolvedUid || profileId || currentUser?.uid;
-    const isOwnProfile = !!currentUser && (targetUid === currentUser?.uid);
+    const targetUid = resolvedUid || profileId || currentUser?.uid || CurrentUser.id;
+    const isOwnProfile = Boolean(
+        (currentUser && (targetUid === currentUser.uid || targetUid === currentUser.id)) ||
+        (CurrentUser.id && (targetUid === CurrentUser.id || targetUid === CurrentUser.username)) ||
+        (profileId && CurrentUser.username && profileId.replace(/^@/, '') === CurrentUser.username)
+    );
     useEffect(() => {
         if (!targetUid) {
             setLoading(false);

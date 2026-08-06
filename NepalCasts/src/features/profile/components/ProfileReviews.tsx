@@ -69,7 +69,7 @@ export default function ProfileReviews({ reviews, loading, isOwnProfile, hasWork
                 return (<div key={review.id} className={`pt-5 ${idx === 0 ? 'pt-0' : ''} space-y-3`}>
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex gap-3 items-center">
-                      <Avatar src={review.reviewerPhoto} name={review.reviewerName} size="sm"/>
+                      <Avatar userId={review.reviewerId} src={review.reviewerPhoto} name={review.reviewerName} size="sm"/>
                       <div>
                         <span className="text-sm font-bold text-gray-100 block">{review.reviewerName}</span>
                         <span className="text-[10px] text-nc-muted font-semibold block uppercase tracking-wider">

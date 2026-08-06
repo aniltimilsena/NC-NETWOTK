@@ -1091,3 +1091,66 @@ button.cl-formFieldInputShowPasswordButton:hover,
   box-shadow: none !important;
   outline: none !important;
 }
+
+/* Ensure email and username inputs have adequate left/right padding to prevent text from overlapping autofill or badge icons */
+input[id="identifier-field"],
+input[id="emailAddress-field"],
+input[id="username-field"],
+input[type="email"],
+input[name="identifier"] {
+  padding-left: 48px !important;
+  padding-right: 48px !important;
+}
+
+/* Fix browser autofill and overlap issues for the "Last used" badge in Clerk form fields */
+.cl-formField .cl-badge,
+.cl-formField [class*="cl-badge"] {
+  position: absolute !important;
+  right: 16px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 10 !important;
+  pointer-events: none !important;
+  transition: opacity 0.15s ease, visibility 0.15s ease !important;
+}
+
+/* Hide the badge when the input is focused, autofilled, or contains text to prevent overlapping */
+.cl-formField:focus-within .cl-badge,
+.cl-formField:focus-within [class*="cl-badge"],
+.cl-formField:has(input:focus) .cl-badge,
+.cl-formField:has(input:focus) [class*="cl-badge"],
+.cl-formField:has(input:-webkit-autofill) .cl-badge,
+.cl-formField:has(input:-webkit-autofill) [class*="cl-badge"],
+.cl-formField:has(input:not(:placeholder-shown)) .cl-badge,
+.cl-formField:has(input:not(:placeholder-shown)) [class*="cl-badge"],
+.cl-formFieldInput:focus ~ .cl-badge,
+.cl-formFieldInput:focus ~ [class*="cl-badge"],
+.cl-formFieldInput:-webkit-autofill ~ .cl-badge,
+.cl-formFieldInput:-webkit-autofill ~ [class*="cl-badge"],
+.cl-formFieldInput:not(:placeholder-shown) ~ .cl-badge,
+.cl-formFieldInput:not(:placeholder-shown) ~ [class*="cl-badge"],
+input:focus ~ .cl-badge,
+input:focus ~ [class*="cl-badge"],
+input:-webkit-autofill ~ .cl-badge,
+input:-webkit-autofill ~ [class*="cl-badge"],
+input:not(:placeholder-shown) ~ .cl-badge,
+input:not(:placeholder-shown) ~ [class*="cl-badge"] {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Fix "Last used" badge clipping on Social Sign-In buttons */
+.cl-socialButtonsBlockButton {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+.cl-socialButtonsBlockButton .cl-badge,
+.cl-socialButtonsBlockButton [class*="cl-badge"] {
+  position: absolute !important;
+  top: -8px !important;
+  right: -8px !important;
+  transform: none !important;
+  z-index: 10 !important;
+}

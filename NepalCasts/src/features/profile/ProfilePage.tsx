@@ -124,7 +124,8 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
     const handleReviewSubmit = async (ratingInput: number, reviewText: string, workedAsInput: string) => {
         if (!user || !targetUid)
             return;
-        if (user.uid === targetUid) {
+        const isOwn = isOwnProfile || user.uid === targetUid || (CurrentUser.id && targetUid === CurrentUser.id);
+        if (isOwn) {
             showAlert("You cannot review your own profile.", "error");
             return;
         }
@@ -382,7 +383,9 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
     if (isOwnProfile || hasExperience) {
         tabs.push('experience');
     }
-    tabs.push('reviews');
+    if (!isOwnProfile) {
+        tabs.push('reviews');
+    }
     const tabLabelMap: Record<string, string> = {
         about: 'About',
         media: 'Media',

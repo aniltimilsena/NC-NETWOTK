@@ -195,7 +195,7 @@ export default function Home({ onNavigate, user }) {
   });
 
   const defaultTalent = {
-    id: user?.uid || 'anil-timilsena',
+    id: user?.uid || 'user_3HLKDqOhgyPdFXpVDEKoryrLXDG',
     name: user?.displayName || user?.name || 'Anil Timilsena',
     role: user?.role || 'Model',
     category: user?.role || 'Model',

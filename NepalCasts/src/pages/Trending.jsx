@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Search, TrendingUp, ChevronLeft, SlidersHorizontal } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { collection, onSnapshot, query, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';
+import { subscribeToTalents } from '../features/profile/services/users';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import { CATEGORIES, getCategoryColor, getCategoryConfig } from '../constants/categories';
@@ -27,16 +28,7 @@ export default function Trending({ onNavigate, user }) {
     const [visibleCount, setVisibleCount] = useState(10);
     useEffect(() => {
         setLoading(true);
-        return cacheManager.subscribePooled("trending_profiles_all", (pooledCb) => {
-            const q = query(collection(db, "profiles"));
-            return onSnapshot(q, (snapshot) => {
-                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                pooledCb(data, null);
-            }, (err) => {
-                console.warn("Profiles fetch failed or permission denied:", err);
-                pooledCb([], err);
-            });
-        }, (data) => {
+        return subscribeToTalents((data) => {
             setProfiles(data);
             setLoading(false);
         });
@@ -401,7 +393,7 @@ export default function Trending({ onNavigate, user }) {
                         <button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`w-full py-2 rounded-full text-xs font-bold transition-all border ${isFollowing
                             ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
                             : 'bg-[#18181b] border-white/15 text-white hover:bg-white/10 active:scale-[0.97]'}`}>
-                          {!activeUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
+                          {isFollowing ? 'Following' : 'Follow'}
                         </button>
                       </div>
                     </motion.div>);
@@ -473,7 +465,7 @@ export default function Trending({ onNavigate, user }) {
                         {prof.id !== activeUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`px-5 py-2 sm:px-6 sm:py-2 rounded-full text-xs font-bold transition-all border ${isFollowing
                             ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
                             : 'bg-[#18181b] border-white/15 text-white hover:bg-white/10 active:scale-[0.97]'}`}>
-                            {!activeUser ? 'Sign in' : isFollowing ? 'Following' : 'Follow'}
+                            {isFollowing ? 'Following' : 'Follow'}
                           </button>)}
                       </div>
 

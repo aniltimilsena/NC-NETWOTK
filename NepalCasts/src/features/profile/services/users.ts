@@ -18,7 +18,21 @@ const getSavedRealTalents = (): Talent[] => {
         if (stored) {
             const parsed = JSON.parse(stored);
             if (Array.isArray(parsed) && parsed.length > 0) {
-                return parsed;
+                const seen = new Set<string>();
+                const unique: Talent[] = [];
+                for (const t of parsed) {
+                    const uid = (t.uid || t.id || '') as string;
+                    const username = (t.username || '') as string;
+                    if (!uid || seen.has(uid) || (username && seen.has(`usr_${username}`))) {
+                        continue;
+                    }
+                    seen.add(uid);
+                    if (username) {
+                        seen.add(`usr_${username}`);
+                    }
+                    unique.push(t);
+                }
+                return unique;
             }
         }
     } catch (_e) {
@@ -49,9 +63,23 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
             try {
                 const res = await apiClient.get('/profile/public');
                 if (res.data?.success && Array.isArray(res.data.talents) && res.data.talents.length > 0) {
-                    const talents = res.data.talents.sort((a: any, b: any) => ((a.name || '').localeCompare(b.name || '')));
-                    saveRealTalents(talents);
-                    pooledCb(talents, null);
+                    const seen = new Set<string>();
+                    const unique: Talent[] = [];
+                    for (const t of res.data.talents) {
+                        const uid = (t.uid || t.id || '') as string;
+                        const username = (t.username || '') as string;
+                        if (!uid || seen.has(uid) || (username && seen.has(`usr_${username}`))) {
+                            continue;
+                        }
+                        seen.add(uid);
+                        if (username) {
+                            seen.add(`usr_${username}`);
+                        }
+                        unique.push(t);
+                    }
+                    unique.sort((a: any, b: any) => ((a.name || '').localeCompare(b.name || '')));
+                    saveRealTalents(unique);
+                    pooledCb(unique, null);
                     return true;
                 }
             } catch (_apiErr) {
@@ -60,12 +88,33 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
             return false;
         };
 
+        const processSnapshotDocs = (docs: any[]) => {
+            const seen = new Set<string>();
+            const unique: Talent[] = [];
+            const mapped = docs.map((doc) => ({
+                id: doc.id,
+                uid: doc.id,
+                ...doc.data(),
+            }));
+            for (const t of mapped) {
+                const uid = (t.uid || t.id || '') as string;
+                const username = (t.username || '') as string;
+                if (!uid || seen.has(uid) || (username && seen.has(`usr_${username}`))) {
+                    continue;
+                }
+                seen.add(uid);
+                if (username) {
+                    seen.add(`usr_${username}`);
+                }
+                unique.push(t);
+            }
+            unique.sort((a: any, b: any) => ((a.name || '').localeCompare(b.name || '')));
+            return unique;
+        };
+
         const q = query(collection(db, COLLECTIONS.PROFILES));
         const unsub = onSnapshot(q, (snapshot) => {
-            const talents: Talent[] = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })).sort((a: any, b: any) => ((a.name || '').localeCompare(b.name || '')));
+            const talents = processSnapshotDocs(snapshot.docs);
             if (talents.length > 0) {
                 saveRealTalents(talents);
                 pooledCb(talents, null);
@@ -76,10 +125,7 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
             }
         }, (_error) => {
             getDocs(q).then((snapshot) => {
-                const talents: Talent[] = snapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                })).sort((a: any, b: any) => ((a.name || '').localeCompare(b.name || '')));
+                const talents = processSnapshotDocs(snapshot.docs);
                 if (talents.length > 0) {
                     saveRealTalents(talents);
                     pooledCb(talents, null);

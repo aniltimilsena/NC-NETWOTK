@@ -88,7 +88,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
           <button onClick={onBack} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 shadow-sm active:scale-95 cursor-pointer" title="Back to Inbox" aria-label="Back to Inbox">
             <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5}/>
           </button>
-          <Avatar src={chat?.avatar} name={chat?.name} size="md" className="w-11 h-11 sm:w-12 sm:h-12 shrink-0"/>
+          <Avatar userId={otherParticipantId} src={chat?.avatar} name={chat?.name} size="md" className="w-11 h-11 sm:w-12 sm:h-12 shrink-0"/>
           <div className="text-left">
             <span className="text-base sm:text-lg font-extrabold text-white block leading-tight">{chat?.name}</span>
             <span className="text-xs text-nc-muted block uppercase tracking-wider font-semibold mt-0.5">
@@ -169,7 +169,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                 
                 {!isMe && (<div className="shrink-0 mb-0.5">
                     {showAvatar ? (
-                        <Avatar src={chat.avatar} name={chat.name} size="sm"/>
+                        <Avatar userId={otherParticipantId} src={chat.avatar} name={chat.name} size="sm"/>
                     ) : (
                         <div className="w-8 h-8 shrink-0"/>
                     )}

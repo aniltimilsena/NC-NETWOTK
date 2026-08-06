@@ -52,11 +52,11 @@ describe('Authentication - SignIn Page', () => {
         localStorage.clear();
     });
 
-    it('renders the sign in heading and Clerk SignIn component', () => {
+    it('renders the Clerk SignIn component and layout elements', () => {
         render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
 
-        expect(screen.getByText('Welcome Back')).toBeInTheDocument();
-        expect(screen.getByText('Sign in to your NepalCasts account')).toBeInTheDocument();
+        expect(screen.getByText('Remember me')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /forgot password\?/i })).toBeInTheDocument();
         expect(screen.getByTestId('clerk-sign-in-mock')).toBeInTheDocument();
     });
 
@@ -69,11 +69,11 @@ describe('Authentication - SignIn Page', () => {
         expect(mockNavigate).toHaveBeenCalledWith('/forgot-password');
     });
 
-    it('navigates to signup page when clicking Sign Up', () => {
+    it('navigates to signup page when clicking Create account', () => {
         render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
 
-        const signUpBtn = screen.getByRole('button', { name: /^sign up$/i });
-        fireEvent.click(signUpBtn);
+        const createAccountBtn = screen.getByRole('button', { name: /create account/i });
+        fireEvent.click(createAccountBtn);
 
         expect(mockNavigate).toHaveBeenCalledWith('/signup');
     });

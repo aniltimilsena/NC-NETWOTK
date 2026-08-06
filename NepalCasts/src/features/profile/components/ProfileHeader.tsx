@@ -213,7 +213,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             </button>
           </div>)}
 
-        <div className={`grid grid-cols-3 divide-x divide-white/10 w-full max-w-md mx-auto py-2 my-2 ${isRealOwn ? 'mt-4' : ''}`}>
+        <div className={`grid ${isRealOwn ? 'grid-cols-2 max-w-xs' : 'grid-cols-3 max-w-md'} divide-x divide-white/10 w-full mx-auto py-2 my-2 ${isRealOwn ? 'mt-4' : ''}`}>
           <div onClick={() => isRealOwn && onFollowClick?.('followers')} className={`group/followers flex flex-col items-center justify-center text-center py-1 transition-all ${isRealOwn ? 'cursor-pointer' : ''}`}>
             <span className="text-white group-hover/followers:text-[#00BFFF] text-xl sm:text-2xl font-black transition-colors">
               {followerCount !== undefined ? followerCount : 0}
@@ -232,15 +232,17 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             </span>
           </div>
 
-          <div className="flex flex-col items-center justify-center text-center py-1">
-            <span className="text-amber-400 text-xl sm:text-2xl font-black flex items-center justify-center gap-1.5">
-              <Star className="w-5 h-5 fill-amber-400 text-amber-400"/>
-              {profile.rating ? (typeof profile.rating === 'number' ? profile.rating.toFixed(1) : profile.rating) : '0.0'}
-            </span>
-            <span className="text-gray-400 text-[10px] uppercase tracking-widest font-semibold mt-1">
-              Rating
-            </span>
-          </div>
+          {!isRealOwn && (
+            <div className="flex flex-col items-center justify-center text-center py-1">
+              <span className="text-amber-400 text-xl sm:text-2xl font-black flex items-center justify-center gap-1.5">
+                <Star className="w-5 h-5 fill-amber-400 text-amber-400"/>
+                {profile.rating ? (typeof profile.rating === 'number' ? profile.rating.toFixed(1) : profile.rating) : '0.0'}
+              </span>
+              <span className="text-gray-400 text-[10px] uppercase tracking-widest font-semibold mt-1">
+                Rating
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
