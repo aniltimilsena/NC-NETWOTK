@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useDialog } from './DialogProvider';
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import { signOut as firebaseSignOut } from 'firebase/auth';
@@ -10,10 +11,10 @@ import { CallProvider } from '../context/CallContext';
 import { initOneSignal, oneSignalInitialized } from '../utils/oneSignal';
 import OneSignal from 'react-onesignal';
 import SplashScreen from '../components/SplashScreen';
-import Onboarding from '../components/Onboarding';
+const Onboarding = lazy(() => import('../components/Onboarding'));
 import { AlertBanner } from '../components/ui/AlertBanner';
-import CallingOverlay from '../features/call/components/CallingOverlay';
-import IncomingCallPopup from '../features/call/components/IncomingCallPopup';
+const CallingOverlay = lazy(() => import('../features/call/components/CallingOverlay'));
+const IncomingCallPopup = lazy(() => import('../features/call/components/IncomingCallPopup'));
 import { AnimatePresence } from 'framer-motion';
 
 export interface AppContextType {
@@ -44,6 +45,7 @@ interface AlertPayload {
 export default function AppProviders({ children }: {
     children: React.ReactNode;
 }) {
+    const { showSuccessDialog, showErrorDialog, showConfirmDialog, showWarningDialog } = useDialog();
     const { isLoaded, isSignedIn, user: clerkUser } = useUser();
     const { signOut } = useClerk();
     const { getToken } = useAuth();
@@ -92,7 +94,6 @@ export default function AppProviders({ children }: {
         }
         return false;
     });
-    const [alerts, setAlerts] = useState<AlertPayload[]>([]);
     useEffect(() => {
         if (typeof window !== 'undefined' && sessionStorage.getItem('nc_splash_shown') === 'true') {
             setMinSplashTimeElapsed(true);
@@ -112,18 +113,24 @@ export default function AppProviders({ children }: {
         });
     }, []);
     const showAlert = useCallback((message: string, type: AlertType = 'info', detail?: string, onAction?: () => void) => {
-        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-        setAlerts(prev => {
-            if (prev.some(a => a.message === message && a.type === type))
-                return prev;
-            const queue = prev.length >= 4 ? prev.slice(1) : prev;
-            return [...queue, { id, message, type, detail, onAction }];
-        });
-    }, []);
-    const dismissAlert = useCallback((id: string) => {
-        setAlerts(prev => prev.filter(a => a.id !== id));
-    }, []);
-    const showToast = useCallback((message: string, type: 'success' | 'logout' | 'info' | 'error' = 'info') => showAlert(message, type), [showAlert]);
+        if (type === 'success') {
+            showSuccessDialog("Success", message, onAction);
+        } else if (type === 'error') {
+            showErrorDialog("Error", message);
+        } else if (type === 'logout') {
+            showWarningDialog("Signed Out", message, () => {
+                if (onAction) onAction();
+            });
+        } else {
+            showConfirmDialog("Notice", message, () => {
+                if (onAction) onAction();
+            });
+        }
+    }, [showSuccessDialog, showErrorDialog, showConfirmDialog, showWarningDialog]);
+
+    const showToast = useCallback((message: string, type: 'success' | 'logout' | 'info' | 'error' = 'info') => {
+        showAlert(message, type);
+    }, [showAlert]);
     useEffect(() => {
         const handleCustomAlert = (e: Event) => {
             const { message, type, detail, onAction } = (e as CustomEvent).detail || {};
@@ -396,14 +403,15 @@ export default function AppProviders({ children }: {
             </div>)}
           <AnimatePresence>
             {!minSplashTimeElapsed && !authReady && <SplashScreen />}
-            {showOnboarding && (<Onboarding user={enrichedUser} profile={userProfile} onNavigate={() => { }}/>)}
+            {showOnboarding && (<Suspense fallback={null}><Onboarding user={enrichedUser} profile={userProfile} onNavigate={() => { }}/></Suspense>)}
           </AnimatePresence>
 
           <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
             {children}
-            <AlertBanner alerts={alerts} onDismiss={dismissAlert}/>
-            <CallingOverlay />
-            <IncomingCallPopup />
+            <Suspense fallback={null}>
+              <CallingOverlay />
+              <IncomingCallPopup />
+            </Suspense>
           </div>
         </AppContext.Provider>
       </CallProvider>

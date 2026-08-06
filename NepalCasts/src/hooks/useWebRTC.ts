@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { logger } from "../utils/logger";
-import { ICE_SERVERS, createCallPending, setCallOffer, setCallAnswer, addIceCandidate, updateCallStatus, subscribeToCall, subscribeToIceCandidates, cleanupCall, type CallDoc, } from "../services";
+import { ICE_SERVERS, createCallPending, setCallOffer, setCallAnswer, addIceCandidate, updateCallStatus, subscribeToCall, subscribeToIceCandidates, cleanupCall, type CallDoc, } from "../features/call/services/call";
 export type CallState = "idle" | "requesting-media" | "creating-offer" | "calling" | "ringing" | "connecting" | "connected" | "ended" | "error";
 interface UseWebRTCReturn {
     callState: CallState;

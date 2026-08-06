@@ -2,7 +2,7 @@ import { db } from "../../../lib/firebase";
 import { AuthService } from "../../../services/AuthService";
 import { CurrentUser } from "../../../utils/CurrentUser";
 import { logger } from "../../../utils/logger";
-import { collection, doc, query, where, orderBy, onSnapshot, getDoc, getDocs, updateDoc, addDoc, deleteDoc, serverTimestamp, arrayUnion, arrayRemove, runTransaction, } from "firebase/firestore";
+import { collection, doc, query, where, orderBy, onSnapshot, getDoc, getDocs, updateDoc, addDoc, deleteDoc, serverTimestamp, arrayUnion, arrayRemove, runTransaction, documentId, } from "firebase/firestore";
 import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
 export const sendMessage = async (convoId: string, senderId: string, text: string, isSystem: boolean = false, replyTo?: any, type: "text" | "image" | "video" = "text", clientMsgId?: string) => {
@@ -41,21 +41,22 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
             if (convoSnap.exists()) {
                 participants = convoSnap.data().participants || [];
             }
-            for (const participantId of participants) {
-                if (participantId !== currentUserUid) {
-                    const participantSnap = await getDoc(doc(db, COLLECTIONS.USERS, participantId));
-                    if (participantSnap.exists()) {
-                        const blockedUsers: string[] = participantSnap.data().blockedUsers || [];
-                        if (blockedUsers.includes(currentUserUid)) {
-                            return { success: false, error: "You cannot message this user" };
-                        }
+            const otherParticipantId = participants.find(p => p !== currentUserUid);
+            if (otherParticipantId) {
+                const [participantSnap, currentUserSnap] = await Promise.all([
+                    getDoc(doc(db, COLLECTIONS.USERS, otherParticipantId)),
+                    getDoc(doc(db, COLLECTIONS.USERS, currentUserUid))
+                ]);
+                if (participantSnap.exists()) {
+                    const blockedUsers: string[] = participantSnap.data().blockedUsers || [];
+                    if (blockedUsers.includes(currentUserUid)) {
+                        return { success: false, error: "You cannot message this user" };
                     }
-                    const currentUserSnap = await getDoc(doc(db, COLLECTIONS.USERS, currentUserUid));
-                    if (currentUserSnap.exists()) {
-                        const userBlocked: string[] = currentUserSnap.data().blockedUsers || [];
-                        if (userBlocked.includes(participantId)) {
-                            return { success: false, error: "You have blocked this user" };
-                        }
+                }
+                if (currentUserSnap.exists()) {
+                    const userBlocked: string[] = currentUserSnap.data().blockedUsers || [];
+                    if (userBlocked.includes(otherParticipantId)) {
+                        return { success: false, error: "You have blocked this user" };
                     }
                 }
             }
@@ -303,14 +304,44 @@ export const subscribeToMessages = (conversationId: string, callback: (msgs: any
 };
 export const subscribeToConversations = (uid: string, callback: (convos: any[]) => void) => {
     const q = query(collection(db, COLLECTIONS.CONVERSATIONS), where("participants", "array-contains", uid));
-    return onSnapshot(q, async (snapshot) => {
-        const convos = (await Promise.all(snapshot.docs.map(async (d) => {
-            const data = d.data();
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+        const docsData = snapshot.docs.map(d => ({ id: d.id, data: d.data() }));
+        const otherParticipantIds = docsData.map(item => {
+            const participants = Array.isArray(item.data.participants) ? item.data.participants : [];
+            return participants.find((p: string) => p !== uid);
+        }).filter((pId): pId is string => typeof pId === 'string' && pId !== '');
+        
+        const uniqueParticipantIds = Array.from(new Set(otherParticipantIds));
+        const profilesMap = new Map<string, any>();
+        
+        const chunks = [];
+        for (let i = 0; i < uniqueParticipantIds.length; i += 30) {
+            chunks.push(uniqueParticipantIds.slice(i, i + 30));
+        }
+        
+        await Promise.all(chunks.map(async (chunk) => {
+            try {
+                const chunkQuery = query(collection(db, "profiles"), where(documentId(), "in", chunk));
+                const chunkSnap = await getDocs(chunkQuery);
+                chunkSnap.docs.forEach(docSnap => {
+                    profilesMap.set(docSnap.id, docSnap.data());
+                });
+            } catch (err) {
+                console.warn("Failed to batch fetch profiles for conversations chunk:", err);
+            }
+        }));
+
+        const uniqueConvosMap = new Map<string, any>();
+        
+        docsData.forEach((item) => {
+            const data = item.data;
             if (data.deletedFor && data.deletedFor[uid] === true) {
-                return null;
+                return;
             }
             const participants = Array.isArray(data.participants) ? data.participants : [];
             const otherParticipantId = participants.find((p: string) => p !== uid);
+            if (!otherParticipantId) return;
+
             let participantInfo: any = {
                 name: "User",
                 avatar: "",
@@ -319,28 +350,18 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
                 lastActive: null,
                 lastSeen: null,
             };
-            if (otherParticipantId) {
-                const profileSnap = await getDoc(doc(db, "profiles", otherParticipantId));
-                if (profileSnap.exists()) {
-                    const pData = profileSnap.data();
-                    participantInfo = {
-                        name: pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || pData.displayName || "User",
-                        avatar: pData.image || pData.photoURL || pData.avatar || "",
-                        gender: pData.gender || "unknown",
-                        online: pData.online || false,
-                        lastActive: pData.lastActive || null,
-                        lastSeen: pData.lastSeen || null,
-                    };
-                }
+            const pData = profilesMap.get(otherParticipantId);
+            if (pData) {
+                participantInfo = {
+                    name: pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || pData.displayName || "User",
+                    avatar: pData.image || pData.photoURL || pData.avatar || "",
+                    gender: pData.gender || "unknown",
+                    online: pData.online || false,
+                    lastActive: pData.lastActive || null,
+                    lastSeen: pData.lastSeen || null,
+                };
             }
-            if (import.meta.env.DEV) {
-                console.debug('[messaging] convo', d.id, '| raw fields:', {
-                    unread: data.unread,
-                    readBy: data.readBy,
-                    unreadCounts: data.unreadCounts,
-                    lastSenderId: data.lastSenderId,
-                });
-            }
+
             let isUnreadForMe = false;
             const lastSender = data.lastSenderId;
             if (lastSender && lastSender !== uid) {
@@ -359,14 +380,28 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
             }
             if (lastSender === uid)
                 isUnreadForMe = false;
-            return {
-                id: d.id,
+
+            const convoObj = {
+                id: item.id,
                 ...data,
                 ...participantInfo,
                 otherParticipantId,
                 isUnreadForMe,
             };
-        }))).filter((c): c is any => c !== null);
+
+            const existingConvo = uniqueConvosMap.get(otherParticipantId);
+            if (!existingConvo) {
+                uniqueConvosMap.set(otherParticipantId, convoObj);
+            } else {
+                const timeExisting = existingConvo.lastMessageAt?.toMillis?.() || (existingConvo.lastMessageAt?.seconds * 1000) || 0;
+                const timeNew = convoObj.lastMessageAt?.toMillis?.() || (convoObj.lastMessageAt?.seconds * 1000) || 0;
+                if (timeNew > timeExisting) {
+                    uniqueConvosMap.set(otherParticipantId, convoObj);
+                }
+            }
+        });
+
+        const convos = Array.from(uniqueConvosMap.values());
         convos.sort((a: any, b: any) => {
             const timeA = a.lastMessageAt?.toMillis?.() || a.lastMessageAt?.seconds * 1000 || 0;
             const timeB = b.lastMessageAt?.toMillis?.() || b.lastMessageAt?.seconds * 1000 || 0;
@@ -377,6 +412,7 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
         console.error("Conversations subscription error:", error);
         callback([]);
     });
+    return unsubscribe;
 };
 export const deleteConversation = async (convoId: string) => {
     try {
@@ -464,20 +500,22 @@ export const createConversation = async (participants: string[], initialMessage?
             return { id: null, error: "Conversation requires at least two participants" };
         }
         const otherParticipants = uniqueParticipants.filter(p => p !== currentUserUid);
-        for (const participantId of otherParticipants) {
-            const participantSnap = await getDoc(doc(db, COLLECTIONS.USERS, participantId));
+        const [currentUserSnap, ...participantSnaps] = await Promise.all([
+            getDoc(doc(db, COLLECTIONS.USERS, currentUserUid)),
+            ...otherParticipants.map(pId => getDoc(doc(db, COLLECTIONS.USERS, pId)))
+        ]);
+        const currentUserBlocked = currentUserSnap.exists() ? (currentUserSnap.data().blockedUsers || []) : [];
+        for (let i = 0; i < otherParticipants.length; i++) {
+            const participantId = otherParticipants[i];
+            const participantSnap = participantSnaps[i];
             if (participantSnap.exists()) {
                 const blockedUsers: string[] = participantSnap.data().blockedUsers || [];
                 if (blockedUsers.includes(currentUserUid)) {
                     return { id: null, error: "You cannot message this user" };
                 }
             }
-            const currentUserSnap = await getDoc(doc(db, COLLECTIONS.USERS, currentUserUid));
-            if (currentUserSnap.exists()) {
-                const userBlocked: string[] = currentUserSnap.data().blockedUsers || [];
-                if (userBlocked.includes(participantId)) {
-                    return { id: null, error: "You have blocked this user" };
-                }
+            if (currentUserBlocked.includes(participantId)) {
+                return { id: null, error: "You have blocked this user" };
             }
         }
         const sorted = uniqueParticipants.slice().sort();

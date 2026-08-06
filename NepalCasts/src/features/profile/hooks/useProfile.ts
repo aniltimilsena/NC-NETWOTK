@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { doc, getDoc, collection, query, where, or, updateDoc, getDocs, onSnapshot, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, or, updateDoc, getDocs, onSnapshot, setDoc, deleteDoc, serverTimestamp, documentId } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import type { UserProfile, ServiceResult } from '../../../types';
 import { CurrentUser } from '../../../utils/CurrentUser';
@@ -207,23 +207,36 @@ export function useProfile(profileId: string | null, currentUser: any) {
             return;
         const q = query(collection(db, 'saved_calls'), where('userId', '==', currentUser.uid));
         const unsubscribe = onSnapshot(q, async (snap) => {
-            let activeCount = 0;
-            const checks = snap.docs.map(async (savedDoc) => {
-                const data = savedDoc.data();
+            const docsData = snap.docs.map(d => ({ id: d.id, castingId: d.data().castingId }));
+            const castingIds = docsData.map(item => item.castingId).filter(Boolean);
+            const uniqueCastingIds = Array.from(new Set(castingIds));
+            
+            const existingIds = new Set<string>();
+            const chunks = [];
+            for (let i = 0; i < uniqueCastingIds.length; i += 30) {
+                chunks.push(uniqueCastingIds.slice(i, i + 30));
+            }
+            
+            await Promise.all(chunks.map(async (chunk) => {
                 try {
-                    const castingDoc = await getDoc(doc(db, 'casting_calls', data.castingId));
-                    if (castingDoc.exists()) {
-                        activeCount++;
-                    }
-                    else {
-                        await deleteDoc(doc(db, 'saved_calls', savedDoc.id));
-                    }
+                    const chunkQuery = query(collection(db, 'casting_calls'), where(documentId(), 'in', chunk));
+                    const chunkSnap = await getDocs(chunkQuery);
+                    chunkSnap.docs.forEach(docSnap => {
+                        existingIds.add(docSnap.id);
+                    });
+                } catch (err) {
+                    console.warn("Failed to check casting call existence batch:", err);
                 }
-                catch (err) {
-                    console.warn("Failed to check casting call existence:", err);
+            }));
+            
+            let activeCount = 0;
+            for (const item of docsData) {
+                if (existingIds.has(item.castingId)) {
+                    activeCount++;
+                } else if (item.castingId) {
+                    deleteDoc(doc(db, 'saved_calls', item.id)).catch(err => console.warn(err));
                 }
-            });
-            await Promise.all(checks);
+            }
             setSavedCount(activeCount);
         }, (err) => {
             console.warn("Failed to subscribe to saved calls count:", err);

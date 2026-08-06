@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, ShieldCheck, UserMinus, Trash2, ExternalLink, Activity, X, UserCheck, ShieldAlert, ShieldX, Award, Mail } from 'lucide-react';
 import { db } from "../../lib/firebase";
 import { CurrentUser } from '../../utils/CurrentUser';
-import { collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp, getDocs, query, orderBy, limit, startAfter, endBefore, limitToLast, getCountFromServer } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 import { logAdminAction } from '../../services';
 import apiClient from '../../api/client';
 import { CATEGORIES, getCategoryConfig } from '../../constants/categories';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { AdminRowSkeleton } from '../../components/ui/Skeleton';
 type AdminUser = {
     id: string;
     name?: string;
@@ -30,6 +31,11 @@ export default function AdminUsers() {
     const [roleFilter, setRoleFilter] = useState('All');
     const [statusFilter, setStatusFilter] = useState('All');
     const [showFiltersDropdown, setShowFiltersDropdown] = useState(false);
+    const [lastVisible, setLastVisible] = useState<any>(null);
+    const [firstVisible, setFirstVisible] = useState<any>(null);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [pageChangeDirection, setPageChangeDirection] = useState<'next' | 'prev' | null>(null);
     const pageSize = 10;
     const navigate = useNavigate();
     const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
@@ -48,6 +54,7 @@ export default function AdminUsers() {
             const targetVerified = !currentVerified;
             await updateDoc(doc(db, "users", userId), { verified: targetVerified });
             await updateDoc(doc(db, "profiles", userId), { verified: targetVerified });
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, verified: targetVerified } : u));
             const actionLabel = targetVerified ? "Verify User" : "Unverify User";
             await logAdminAction(adminEmail, actionLabel, userId, `Set verified to ${targetVerified}`);
             try {
@@ -88,6 +95,7 @@ export default function AdminUsers() {
         try {
             await updateDoc(doc(db, "users", userId), { status: nextStatus });
             await updateDoc(doc(db, "profiles", userId), { status: nextStatus });
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: nextStatus } : u));
             await logAdminAction(adminEmail, `Update User Status`, userId, `Set status to ${nextStatus}`);
             try {
                 await addDoc(collection(db, "notifications"), {
@@ -125,6 +133,7 @@ export default function AdminUsers() {
         try {
             const response = await apiClient.post(`/admin/users/${userId}/role`, { makeAdmin });
             const nextRole = response.data?.role || (makeAdmin ? 'Admin' : 'Talent');
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: nextRole, isAdmin: makeAdmin } : u));
             if (selectedUser?.id === userId) {
                 setSelectedUser(prev => prev ? { ...prev, role: nextRole, isAdmin: makeAdmin } : null);
             }
@@ -141,6 +150,7 @@ export default function AdminUsers() {
             const targetPremium = !currentPremium;
             await updateDoc(doc(db, "users", userId), { premium: targetPremium, isPremium: targetPremium });
             await updateDoc(doc(db, "profiles", userId), { premium: targetPremium, isPremium: targetPremium });
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, premium: targetPremium } : u));
             await logAdminAction(adminEmail, `Update Subscription`, userId, targetPremium ? `Granted PRO Membership` : `Revoked PRO Membership`);
             try {
                 await addDoc(collection(db, "notifications"), {
@@ -181,6 +191,7 @@ export default function AdminUsers() {
             const targetVerified = !currentVerified;
             await updateDoc(doc(db, "users", userId), { verified: targetVerified });
             await updateDoc(doc(db, "profiles", userId), { verified: targetVerified });
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, verified: targetVerified } : u));
             await logAdminAction(adminEmail, `Update Verification`, userId, targetVerified ? `Granted Verified Blue Badge` : `Revoked Verified Blue Badge`);
             try {
                 await addDoc(collection(db, "notifications"), {
@@ -229,6 +240,7 @@ export default function AdminUsers() {
                 setConfirmConfig(prev => ({ ...prev, isLoading: true }));
                 try {
                     await apiClient.post(`/admin/users/${userId}/delete`);
+                    setUsers(prev => prev.filter(u => u.id !== userId));
                     if (selectedUser?.id === userId) {
                         setSelectedUser(null);
                     }
@@ -358,42 +370,114 @@ export default function AdminUsers() {
             alert("Failed to create user doc.");
         }
     };
-    useEffect(() => {
-        const q = collection(db, "users");
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map((doc) => {
-                const u = doc.data();
-                let joinedDate = 'N/A';
-                if (u.createdAt) {
-                    const date = u.createdAt.toDate ? u.createdAt.toDate() : new Date(u.createdAt);
-                    joinedDate = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const hasFilters = search !== '' || roleFilter !== 'All' || statusFilter !== 'All';
+            if (hasFilters) {
+                const q = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(100));
+                const snap = await getDocs(q);
+                const data = snap.docs.map((docSnap) => {
+                    const u = docSnap.data();
+                    let joinedDate = 'N/A';
+                    if (u.createdAt) {
+                        const date = u.createdAt.toDate ? u.createdAt.toDate() : new Date(u.createdAt);
+                        joinedDate = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                    }
+                    return {
+                        id: docSnap.id,
+                        name: u.name || 'Unknown User',
+                        email: u.email || 'No email',
+                        role: u.isAdmin ? 'Admin' : u.role || 'Talent',
+                        status: u.status || 'Active',
+                        activity: u.role === 'Agent' || u.role === 'Director' ? 'High' : 'Moderate',
+                        joined: joinedDate,
+                        avatar: (u.name || '?').charAt(0).toUpperCase(),
+                        verified: !!u.verified,
+                        premium: !!u.premium,
+                        isAdmin: !!u.isAdmin
+                    };
+                });
+                setUsers(data);
+                setFirstVisible(null);
+                setLastVisible(null);
+                setTotalCount(data.length);
+            } else {
+                const countSnap = await getCountFromServer(collection(db, "users"));
+                const total = countSnap.data().count;
+                setTotalCount(total);
+                setTotalPages(Math.ceil(total / pageSize));
+                let q;
+                if (pageChangeDirection === 'next' && lastVisible) {
+                    q = query(collection(db, "users"), orderBy("createdAt", "desc"), startAfter(lastVisible), limit(pageSize));
+                } else if (pageChangeDirection === 'prev' && firstVisible) {
+                    q = query(collection(db, "users"), orderBy("createdAt", "desc"), endBefore(firstVisible), limitToLast(pageSize));
+                } else {
+                    q = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(pageSize));
                 }
-                return {
-                    id: doc.id,
-                    name: u.name || 'Unknown User',
-                    email: u.email || 'No email',
-                    role: u.isAdmin ? 'Admin' : u.role || 'Talent',
-                    status: u.status || 'Active',
-                    activity: u.role === 'Agent' || u.role === 'Director' ? 'High' : 'Moderate',
-                    joined: joinedDate,
-                    avatar: (u.name || '?').charAt(0).toUpperCase(),
-                    verified: !!u.verified,
-                    premium: !!u.premium,
-                    isAdmin: !!u.isAdmin
-                };
-            }) as AdminUser[];
-            setUsers(data);
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    setFirstVisible(snap.docs[0]);
+                    setLastVisible(snap.docs[snap.docs.length - 1]);
+                    const data = snap.docs.map((docSnap) => {
+                        const u = docSnap.data();
+                        let joinedDate = 'N/A';
+                        if (u.createdAt) {
+                            const date = u.createdAt.toDate ? u.createdAt.toDate() : new Date(u.createdAt);
+                            joinedDate = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                        }
+                        return {
+                            id: docSnap.id,
+                            name: u.name || 'Unknown User',
+                            email: u.email || 'No email',
+                            role: u.isAdmin ? 'Admin' : u.role || 'Talent',
+                            status: u.status || 'Active',
+                            activity: u.role === 'Agent' || u.role === 'Director' ? 'High' : 'Moderate',
+                            joined: joinedDate,
+                            avatar: (u.name || '?').charAt(0).toUpperCase(),
+                            verified: !!u.verified,
+                            premium: !!u.premium,
+                            isAdmin: !!u.isAdmin
+                        };
+                    });
+                    setUsers(data);
+                } else {
+                    setUsers([]);
+                }
+            }
+        } catch (err) {
+            console.error("Failed to fetch users:", err);
+        } finally {
             setLoading(false);
-        }, (error) => {
-            console.error("Failed to sync users", error);
-            setLoading(false);
-        });
-        return () => unsubscribe();
-    }, []);
+            setPageChangeDirection(null);
+        }
+    };
     useEffect(() => {
         setCurrentPage(1);
+        setFirstVisible(null);
+        setLastVisible(null);
+        setPageChangeDirection(null);
+        fetchData();
     }, [search, roleFilter, statusFilter]);
-    const filteredUsers = users.filter((u) => {
+    useEffect(() => {
+        if (pageChangeDirection !== null) {
+            fetchData();
+        }
+    }, [pageChangeDirection]);
+    const handleNextPage = () => {
+        if (currentPage < totalPages) {
+            setPageChangeDirection('next');
+            setCurrentPage(prev => prev + 1);
+        }
+    };
+    const handlePrevPage = () => {
+        if (currentPage > 1) {
+            setPageChangeDirection('prev');
+            setCurrentPage(prev => prev - 1);
+        }
+    };
+    const hasFilters = search !== '' || roleFilter !== 'All' || statusFilter !== 'All';
+    const filteredUsers = hasFilters ? users.filter((u) => {
         const matchesSearch = (u.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
             (u.email ?? '').toLowerCase().includes(search.toLowerCase()) ||
             u.id.toLowerCase().includes(search.toLowerCase());
@@ -403,9 +487,9 @@ export default function AdminUsers() {
         const matchesStatus = statusFilter === 'All' ||
             u.status?.toLowerCase() === statusFilter.toLowerCase();
         return matchesSearch && matchesRole && matchesStatus;
-    });
-    const totalPages = Math.ceil(filteredUsers.length / pageSize);
-    const paginatedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    }) : users;
+    const displayedPages = hasFilters ? Math.ceil(filteredUsers.length / pageSize) : totalPages;
+    const paginatedUsers = hasFilters ? filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize) : users;
     return (<div className="p-8 space-y-6 animate-in slide-in-from-bottom duration-500">
       <ConfirmDialog {...confirmConfig} onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}/>
       <div className="flex flex-col md:flex-row justify-between items-end gap-4">
@@ -474,7 +558,9 @@ export default function AdminUsers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-admin-border/50">
-              {paginatedUsers.map((user) => (<tr key={user.id} className="group hover:bg-admin-surface-light/30 transition-colors">
+              {loading ? (
+                [1, 2, 3, 4, 5].map((i) => (<AdminRowSkeleton key={i} cols={5} />))
+              ) : paginatedUsers.map((user) => (<tr key={user.id} className="group hover:bg-admin-surface-light/30 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-admin-surface-light border border-admin-border flex items-center justify-center font-bold text-admin-primary text-sm">
@@ -541,7 +627,7 @@ export default function AdminUsers() {
                     </div>
                   </td>
                 </tr>))}
-              {paginatedUsers.length === 0 && (<tr>
+              {!loading && paginatedUsers.length === 0 && (<tr>
                   <td colSpan={5} className="text-center py-8 text-nc-muted text-xs">
                     No users found matching current filters.
                   </td>
@@ -552,11 +638,11 @@ export default function AdminUsers() {
         <div className="p-4 bg-admin-surface-light/20 flex items-center justify-between border-t border-admin-border">
           <p className="text-xs text-nc-muted">Showing <span className="text-white font-bold">{paginatedUsers.length}</span> of <span className="text-white font-bold">{filteredUsers.length}</span> entities</p>
           <div className="flex gap-2 items-center">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="px-3 py-1.5 rounded-lg border border-admin-border text-[10px] font-bold text-nc-muted hover:text-white transition-colors disabled:opacity-30 disabled:hover:text-nc-muted">
+            <button disabled={currentPage === 1} onClick={handlePrevPage} className="px-3 py-1.5 rounded-lg border border-admin-border text-[10px] font-bold text-nc-muted hover:text-white transition-colors disabled:opacity-30 disabled:hover:text-nc-muted">
               Prev
             </button>
-            <span className="text-xs text-nc-muted px-2">Page {currentPage} of {totalPages || 1}</span>
-            <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="px-3 py-1.5 rounded-lg border border-admin-border text-[10px] font-bold text-nc-muted hover:text-white transition-colors disabled:opacity-30 disabled:hover:text-nc-muted">
+            <span className="text-xs text-nc-muted px-2">Page {currentPage} of {displayedPages || 1}</span>
+            <button disabled={currentPage >= displayedPages} onClick={handleNextPage} className="px-3 py-1.5 rounded-lg border border-admin-border text-[10px] font-bold text-nc-muted hover:text-white transition-colors disabled:opacity-30 disabled:hover:text-nc-muted">
               Next
             </button>
           </div>

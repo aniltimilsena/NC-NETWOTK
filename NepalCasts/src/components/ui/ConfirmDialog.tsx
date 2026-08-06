@@ -143,3 +143,19 @@ export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, descr
         </div>)}
     </AnimatePresence>);
 }
+
+export function SuccessDialog(props: Omit<ConfirmDialogProps, 'type'>) {
+    return <ConfirmDialog {...props} type="success" confirmText={props.confirmText || "OK"} cancelText={props.cancelText || "Dismiss"} />;
+}
+
+export function ErrorDialog(props: Omit<ConfirmDialogProps, 'type'>) {
+    return <ConfirmDialog {...props} type="danger" confirmText={props.confirmText || "OK"} cancelText={props.cancelText || "Close"} />;
+}
+
+export function DeleteDialog(props: Omit<ConfirmDialogProps, 'type'>) {
+    return <ConfirmDialog {...props} type="danger" confirmText={props.confirmText || "Delete"} cancelText={props.cancelText || "Cancel"} />;
+}
+
+export function AppDialog(props: ConfirmDialogProps) {
+    return <ConfirmDialog {...props} />;
+}

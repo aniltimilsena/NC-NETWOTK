@@ -5,6 +5,7 @@ import { CurrentUser } from '../../utils/CurrentUser';
 import { collection, onSnapshot, doc, updateDoc, query, where, getDocs } from 'firebase/firestore';
 import { deleteCastingCallAdmin, setCastingPriorityAdmin, logAdminAction } from '../../services';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { AdminCardSkeleton } from '../../components/ui/Skeleton';
 type CastingCall = {
     id: string;
     title?: string;
@@ -192,7 +193,9 @@ export default function AdminCasting() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (<p className="text-nc-muted">Loading projects...</p>) : filtered.length === 0 ? (<div className="col-span-full py-20 text-center bg-admin-surface rounded-2xl border border-dashed border-admin-border">
+        {loading ? (
+          [1, 2, 3].map((i) => (<AdminCardSkeleton key={i} />))
+        ) : filtered.length === 0 ? (<div className="col-span-full py-20 text-center bg-admin-surface rounded-2xl border border-dashed border-admin-border">
             <p className="text-nc-muted text-sm">No casting calls found matching your criteria.</p>
           </div>) : (filtered.map((call) => {
             const currentStatus = call.status || 'Open';

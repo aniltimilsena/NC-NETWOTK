@@ -69,7 +69,22 @@ export default function AdminMessages() {
             </div>
           </div>
           <div className="divide-y divide-admin-border">
-            {loading ? (<p className="p-6 text-xs text-nc-muted">Synchronizing active feeds...</p>) : conversations.length === 0 ? (<div className="p-10 text-center text-xs text-nc-muted">
+            {loading ? (
+              <div className="divide-y divide-admin-border animate-pulse" aria-hidden="true">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-5 flex items-center gap-6">
+                    <div className="flex -space-x-3 shrink-0">
+                      <div className="w-10 h-10 rounded-full skeleton border-2 border-admin-surface" />
+                      <div className="w-10 h-10 rounded-full skeleton border-2 border-admin-surface" />
+                    </div>
+                    <div className="flex-1 space-y-2 text-left">
+                      <div className="h-4 skeleton rounded w-1/3" />
+                      <div className="h-3 skeleton rounded w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : conversations.length === 0 ? (<div className="p-10 text-center text-xs text-nc-muted">
                 No active conversations detected in the ecosystem.
               </div>) : (conversations.map(chat => {
             const names = (chat.participants || []).map((pId: string) => userMap[pId] || 'NC Member');

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Star, UserCheck, Video, MessageSquare, Check, Film, Heart, Camera, Loader2, ChevronRight, ArrowRight } from 'lucide-react';
-import { uploadProfileMedia } from '../services';
+import { uploadProfileMedia } from '../features/profile/services/profile';
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 interface OnboardingProps {
     user: any;

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode, } from "react";
 import { useWebRTC, type CallState } from "../hooks/useWebRTC";
-import { subscribeToIncomingCalls, updateCallStatus, logCallOutcomeToFirestore, type CallDoc, getProfile, } from "../services";
+import { subscribeToIncomingCalls, updateCallStatus, logCallOutcomeToFirestore, type CallDoc, } from "../features/call/services/call";
+import { getProfile } from "../features/profile/services/profile";
 import { playRingtone, stopRingtone, playEndCallSound } from "../utils/ringtone";
 import { db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";

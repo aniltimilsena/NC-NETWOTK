@@ -3,7 +3,7 @@ export { default as Avatar } from './Avatar';
 export { default as Button } from './Button';
 export { default as CategoryIcon } from './CategoryIcon';
 export { default as CategorySkeleton } from './CategorySkeleton';
-export { default as ConfirmDialog } from './ConfirmDialog';
+export { default as ConfirmDialog, SuccessDialog, ErrorDialog, DeleteDialog, AppDialog } from './ConfirmDialog';
 export { default as CropModal } from './CropModal';
 export { default as GlassCard } from './GlassCard';
 export { default as Logo } from './Logo';

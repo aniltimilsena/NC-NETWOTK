@@ -115,17 +115,7 @@ export default function ProfileMedia({ profile, isOwnProfile, onUploadMedia, onD
           </div>
 
           {media.length > 0 ? (<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {media.map((url, index) => (<div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group bg-black cursor-pointer shadow-md" onClick={() => onSelectImage?.(url)}>
-                  <img src={url} alt={`Portfolio ${index + 1}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy"/>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"/>
-
-                  {isOwnProfile && onDeleteMedia && (<button onClick={(e) => {
-                            e.stopPropagation();
-                            setDeletePhotoTarget(url);
-                        }} className="absolute top-2.5 right-2.5 bg-black/70 hover:bg-red-600 p-2 rounded-full border border-white/15 opacity-0 group-hover:opacity-100 transition-all text-white hover:scale-110 shadow-lg cursor-pointer" title="Delete Photo">
-                      <Trash2 className="w-3.5 h-3.5"/>
-                    </button>)}
-                </div>))}
+              {media.map((url, index) => (<GalleryImage key={url} url={url} index={index} onSelectImage={onSelectImage} isOwnProfile={isOwnProfile} onDeletePhotoClick={(target) => setDeletePhotoTarget(target)} />))}
             </div>) : (<div onClick={() => isOwnProfile && !isUploadingPhotos && document.getElementById('portfolio-upload')?.click()} className={`bg-[#181824]/60 border-2 border-dashed border-white/10 rounded-2xl p-8 text-center flex flex-col items-center justify-center transition-all ${isOwnProfile && !isUploadingPhotos ? 'cursor-pointer hover:border-[#00BFFF]/50 hover:bg-[#00BFFF]/5 group' : ''}`}>
               <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 group-hover:text-[#00BFFF] group-hover:border-[#00BFFF]/30 transition-all mb-3">
                 {isUploadingPhotos ? (<Loader2 className="w-6 h-6 animate-spin text-[#00BFFF]"/>) : (<ImageIcon className="w-6 h-6"/>)}
@@ -165,4 +155,27 @@ export default function ProfileMedia({ profile, isOwnProfile, onUploadMedia, onD
             }
         }}/>
     </div>);
+}
+
+interface GalleryImageProps {
+    url: string;
+    index: number;
+    onSelectImage?: (url: string) => void;
+    isOwnProfile: boolean;
+    onDeletePhotoClick: (url: string) => void;
+}
+
+function GalleryImage({ url, index, onSelectImage, isOwnProfile, onDeletePhotoClick }: GalleryImageProps) {
+    const [loaded, setLoaded] = useState(false);
+    return (<div className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group bg-black cursor-pointer shadow-md" onClick={() => onSelectImage?.(url)}>
+        {!loaded && <div className="absolute inset-0 skeleton"/>}
+        <img src={url} alt={`Portfolio ${index + 1}`} onLoad={() => setLoaded(true)} className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} loading="lazy"/>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"/>
+        {isOwnProfile && (<button onClick={(e) => {
+                e.stopPropagation();
+                onDeletePhotoClick(url);
+            }} className="absolute top-2.5 right-2.5 bg-black/70 hover:bg-red-600 p-2 rounded-full border border-white/15 opacity-0 group-hover:opacity-100 transition-all text-white hover:scale-110 shadow-lg cursor-pointer" title="Delete Photo">
+            <Trash2 className="w-3.5 h-3.5"/>
+          </button>)}
+      </div>);
 }

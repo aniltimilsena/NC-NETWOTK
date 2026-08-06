@@ -21,6 +21,7 @@ interface ProfileHeaderProps {
 
 export default function ProfileHeader({ profile, isOwnProfile, isFollowing, followerCount, followingCount, savedCount, onFollowToggle, onNavigate, showAlert, onFollowClick }: ProfileHeaderProps) {
     const coverFileInputRef = useRef<HTMLInputElement>(null);
+    const coverImgRef = useRef<HTMLImageElement>(null);
     const [isUploadingCover, setIsUploadingCover] = useState(false);
     const [coverUploadProgress, setCoverUploadProgress] = useState(0);
     const [showCoverMenu, setShowCoverMenu] = useState(false);
@@ -48,6 +49,13 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
     const validCover = activeCover && activeCover !== '/hero-bg.png' && activeCover !== '/hero-bg.webp' ? activeCover : null;
     const coverImage = validCover || '/hero-bg.webp';
     const canEditCover = isRealOwn;
+    const [coverLoaded, setCoverLoaded] = useState(false);
+    useEffect(() => {
+        setCoverLoaded(false);
+        if (coverImgRef.current && coverImgRef.current.complete) {
+            setCoverLoaded(true);
+        }
+    }, [coverImage]);
     const isPremiumUser = Boolean(
         profile?.isPremium || 
         profile?.premium || 
@@ -134,10 +142,16 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
     return (<div className="relative font-sans select-none">
       {/* Static Hero Cover Banner */}
       <div className="block h-[220px] sm:h-[320px] relative w-full overflow-hidden bg-[#0A0A0F] select-none">
-        <picture className="w-full h-full">
-          <source srcSet="/hero-bg.webp" type="image/webp" />
-          <img src="/hero-bg.png" alt="Hero Cover" fetchPriority="high" decoding="async" className="w-full h-full object-cover object-center select-none pointer-events-none opacity-90"/>
-        </picture>
+        {!coverLoaded && <div className="absolute inset-0 skeleton" />}
+        <img
+          ref={coverImgRef}
+          src={coverImage}
+          alt="Hero Cover"
+          fetchPriority="high"
+          decoding="async"
+          onLoad={() => setCoverLoaded(true)}
+          className={`w-full h-full object-cover object-center select-none pointer-events-none transition-opacity duration-300 ${coverLoaded ? 'opacity-90' : 'opacity-0'}`}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/30 to-transparent"/>
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent pointer-events-none"/>
 

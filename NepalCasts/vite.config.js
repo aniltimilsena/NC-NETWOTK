@@ -61,6 +61,11 @@ export default defineConfig({
       compress: {
         pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
         drop_debugger: true,
+        passes: 2,
+      },
+      mangle: true,
+      format: {
+        comments: false,
       },
     },
     rollupOptions: {
@@ -72,8 +77,32 @@ export default defineConfig({
           if (id.includes('node_modules/lucide-react/')) {
             return 'vendor-lucide';
           }
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router')) {
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router') || id.includes('node_modules/react-helmet-async/')) {
             return 'vendor-react';
+          }
+          if (id.includes('node_modules/@clerk/')) {
+            return 'vendor-clerk';
+          }
+          if (id.includes('node_modules/framer-motion/')) {
+            return 'vendor-framer';
+          }
+          if (id.includes('node_modules/react-onesignal/') || id.includes('node_modules/onesignal/')) {
+            return 'vendor-onesignal';
+          }
+          if (id.includes('node_modules/i18next/') || id.includes('node_modules/react-i18next/')) {
+            return 'vendor-i18n';
+          }
+          if (id.includes('node_modules/axios/')) {
+            return 'vendor-axios';
+          }
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'vendor-radix';
+          }
+          if (id.includes('node_modules/tailwind-merge/') || id.includes('node_modules/clsx/') || id.includes('node_modules/class-variance-authority/')) {
+            return 'vendor-utils';
+          }
+          if (id.includes('node_modules/browser-image-compression/')) {
+            return 'vendor-compression';
           }
         }
       }

@@ -335,9 +335,40 @@ export default function AdminSettings() {
         return date.toLocaleString();
     };
     if (loading || !settings) {
-        return (<div className="p-8 text-nc-muted text-xs">
-        Synchronizing global platform telemetry settings...
-      </div>);
+        return (<div className="p-8 space-y-8 animate-pulse text-left max-w-6xl">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-3xl font-bold text-white tracking-tight">Platform Configuration</h2>
+              <div className="h-4 bg-white/5 rounded w-72 mt-2" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-admin-surface border border-admin-border rounded-2xl p-6 space-y-6">
+              <div className="h-6 bg-white/5 rounded w-32" />
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex justify-between items-center">
+                  <div className="space-y-2">
+                    <div className="h-4 bg-white/5 rounded w-36" />
+                    <div className="h-3 bg-white/5 rounded w-48" />
+                  </div>
+                  <div className="w-10 h-6 bg-white/5 rounded-full" />
+                </div>
+              ))}
+            </div>
+            <div className="bg-admin-surface border border-admin-border rounded-2xl p-6 space-y-6">
+              <div className="h-6 bg-white/5 rounded w-48" />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="w-8 h-8 bg-white/5 rounded-lg" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 bg-white/5 rounded w-1/3" />
+                    <div className="h-3 bg-white/5 rounded w-2/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>);
     }
     return (<div className="p-8 space-y-8 animate-in fade-in duration-500 max-w-6xl">
       <ConfirmDialog {...confirmConfig} onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}/>

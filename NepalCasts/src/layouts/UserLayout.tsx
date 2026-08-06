@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
-import { subscribeToGlobalSettings } from '../services';
+import { subscribeToGlobalSettings } from '../features/admin/services/admin';
 interface UserLayoutProps {
     user: any;
     isAdmin: boolean;

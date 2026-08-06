@@ -5,6 +5,7 @@ import { CurrentUser } from '../../utils/CurrentUser';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { logAdminAction } from '../../services';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { AdminCardSkeleton } from '../../components/ui/Skeleton';
 type TalentProfile = {
     id: string;
     name?: string;
@@ -173,7 +174,9 @@ export default function AdminContent() {
 
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (<p className="text-xs text-nc-muted p-6 col-span-full">Synchronizing media assets...</p>) : filteredProfiles.length === 0 ? (<div className="col-span-full py-20 text-center bg-admin-surface rounded-2xl border border-dashed border-admin-border w-full">
+        {loading ? (
+          [1, 2, 3].map((i) => (<AdminCardSkeleton key={i} />))
+        ) : filteredProfiles.length === 0 ? (<div className="col-span-full py-20 text-center bg-admin-surface rounded-2xl border border-dashed border-admin-border w-full">
             <p className="text-nc-muted text-sm font-medium">No talent profiles detected matching your filters.</p>
           </div>) : (filteredProfiles.map((profile) => (<div key={profile.id} className="bg-admin-surface border border-admin-border rounded-2xl p-6 hover:bg-admin-surface-light/30 transition-all flex flex-col justify-between relative group">
               <div>

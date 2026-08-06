@@ -327,9 +327,43 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-4">
-        <div className="w-8 h-8 border-2 border-[#00BFFF]/30 border-t-[#00BFFF] rounded-full animate-spin mb-4" />
-        <p className="text-gray-500 text-xs font-mono uppercase tracking-widest">Loading Audition Details...</p>
+      <div className="min-h-screen bg-[#0A0A0A] text-white pt-12 pb-20 px-4 sm:px-8 font-sans">
+        <div className="max-w-6xl mx-auto space-y-8 animate-pulse text-left">
+          <div className="h-4 skeleton rounded-md w-28" />
+          <div className="rounded-[2.5rem] border border-white/10 bg-[#111] overflow-hidden space-y-4">
+            <div className="h-64 sm:h-80 w-full skeleton" />
+            <div className="p-6 sm:p-10 space-y-4">
+              <div className="flex gap-2">
+                <div className="h-6 skeleton rounded-full w-20" />
+                <div className="h-6 skeleton rounded-full w-32" />
+              </div>
+              <div className="h-10 skeleton rounded-xl w-3/4" />
+              <div className="flex gap-4">
+                <div className="h-4 skeleton rounded w-24" />
+                <div className="h-4 skeleton rounded w-32" />
+                <div className="h-4 skeleton rounded w-20" />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              <div className="bg-[#111] border border-white/5 rounded-3xl p-6 sm:p-8 space-y-4">
+                <div className="h-6 skeleton rounded-md w-40 mb-3" />
+                <div className="space-y-2">
+                  <div className="h-4 skeleton rounded w-full" />
+                  <div className="h-4 skeleton rounded w-11/12" />
+                  <div className="h-4 skeleton rounded w-4/5" />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-8">
+              <div className="bg-[#111] border border-white/5 rounded-3xl p-6 space-y-4">
+                <div className="h-6 skeleton rounded-md w-28 mb-3" />
+                <div className="h-12 skeleton rounded-2xl w-full" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../../lib/firebase';
-import { collection, query, where, limit, doc, updateDoc, deleteDoc, onSnapshot, setDoc, increment, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, limit, doc, updateDoc, deleteDoc, onSnapshot, setDoc, increment, serverTimestamp, orderBy } from 'firebase/firestore';
 import Avatar from '../../components/ui/Avatar';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { NotificationSkeleton } from '../../components/ui/Skeleton';
 import { ChevronLeft, MessageSquare, PhoneMissed, PhoneOff, UserPlus, Star, Settings, Check } from 'lucide-react';
 const getNotificationDetails = (notif) => {
     const type = (notif.type || notif.notificationType || '').toLowerCase();
@@ -248,7 +249,7 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             return;
         }
         setLoading(true);
-        const q = query(collection(db, 'notifications'), where('userId', '==', user.uid), limit(visibleLimit + 1));
+        const q = query(collection(db, 'notifications'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'), limit(visibleLimit + 1));
         const unsub = onSnapshot(q, (snapshot) => {
             const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
             items.sort((a, b) => {
@@ -494,17 +495,9 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
 
       
       <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-8 md:px-12 pb-24">
-        {loading ? (<div className="space-y-3 mt-4">
-            {[1, 2, 3, 4].map(i => (<div key={i} className="bg-white/5 rounded-2xl p-5 animate-pulse">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-white/10"/>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-white/10 rounded w-1/3"/>
-                    <div className="h-3 bg-white/5 rounded w-2/3"/>
-                  </div>
-                </div>
-              </div>))}
-          </div>) : filtered.length === 0 ? (<div className="text-center py-16">
+        {loading ? (
+          <NotificationSkeleton count={4} />
+        ) : filtered.length === 0 ? (<div className="text-center py-16">
             <div className="w-16 h-16 rounded-2xl bg-[#111111] flex items-center justify-center mx-auto mb-4 text-[#555] border border-white/5">
               <Settings className="w-8 h-8"/>
             </div>

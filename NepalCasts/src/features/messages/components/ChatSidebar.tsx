@@ -183,9 +183,22 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
                       </button>
                     </div>);
             })}
-              </div>) : (<p className="text-xs text-nc-muted text-center py-8">No call history found.</p>)) : (<div className="p-8 text-center">
-              <div className="w-6 h-6 border-2 border-[#00BFFF] border-t-transparent rounded-full animate-spin mx-auto"/>
-            </div>))}
+                      </div>) : (<p className="text-xs text-nc-muted text-center py-8">No call history found.</p>)) : (
+            <div className="flex flex-col">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex justify-between items-center py-3.5 px-4 bg-transparent animate-pulse gap-3" aria-hidden="true">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full skeleton shrink-0" />
+                    <div className="space-y-2 text-left">
+                      <div className="h-4 skeleton rounded w-24" />
+                      <div className="h-3 skeleton rounded w-16" />
+                    </div>
+                  </div>
+                  <div className="w-8 h-8 rounded-xl skeleton shrink-0" />
+                </div>
+              ))}
+            </div>
+          ))}
       </div>
     </div>);
 }

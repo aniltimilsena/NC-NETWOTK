@@ -35,6 +35,7 @@ export default function Avatar(props: AvatarProps) {
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
     const [cropSrc, setCropSrc] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const imgRef = useRef<HTMLImageElement>(null);
     const targetId = userId || user?.id || user?.uid;
     const isSelf = editable || Boolean(targetId && user?.uid && targetId === user.uid);
 
@@ -80,6 +81,13 @@ export default function Avatar(props: AvatarProps) {
     };
     const hasPhoto = resolvedSrc && !isDefaultImage(resolvedSrc) && !imageError;
     const currentSrc = previewSrc || (hasPhoto ? resolvedSrc : null);
+    const [imageLoaded, setImageLoaded] = useState(false);
+    useEffect(() => {
+        setImageLoaded(false);
+        if (imgRef.current && imgRef.current.complete) {
+            setImageLoaded(true);
+        }
+    }, [currentSrc]);
     useEffect(() => {
         setImageError(false);
         setPreviewSrc(null);
@@ -239,11 +247,27 @@ export default function Avatar(props: AvatarProps) {
     };
     return (<>
       <div onClick={handleAvatarClick} style={sizeStyle} className={`relative flex-shrink-0 rounded-full border-2 border-nc-accent/20 transition-all duration-300 select-none bg-gradient-to-b from-[#1E1E26] to-[#111116] ${sizeClass} ${className} ${editable ? 'cursor-pointer hover:border-nc-accent group/avatar' : ''}`}>
-        <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
-          {currentSrc ? (<img src={currentSrc} alt={name || 'User avatar'} loading="lazy" decoding="async" onError={() => setImageError(true)} className="w-full h-full object-cover transition-opacity duration-300 ease-in-out opacity-100"/>) : (<svg viewBox="0 0 100 100" fill="#5A5A75" className="w-2/3 h-2/3">
+        <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative">
+          {currentSrc ? (
+            <>
+              {!imageLoaded && <div className="absolute inset-0 skeleton rounded-full" />}
+              <img
+                ref={imgRef}
+                src={currentSrc}
+                alt={name || 'User avatar'}
+                loading="lazy"
+                decoding="async"
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageError(true)}
+                className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              />
+            </>
+          ) : (
+            <svg viewBox="0 0 100 100" fill="#5A5A75" className="w-2/3 h-2/3">
               <circle cx="50" cy="35" r="20"/>
               <ellipse cx="50" cy="85" rx="35" ry="25"/>
-            </svg>)}
+            </svg>
+          )}
 
           
           {uploading && (<div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex items-center justify-center rounded-full z-10 animate-fade-in">

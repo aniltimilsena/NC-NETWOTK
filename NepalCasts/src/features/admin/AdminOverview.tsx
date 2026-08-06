@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, Users, UserCheck, Briefcase, Zap, AlertCircle, ArrowUpRight, ArrowDownRight, CheckCircle2 } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
+import { AdminStatSkeleton, AdminChartSkeleton } from '../../components/ui/Skeleton';
 export default function AdminOverview() {
     const [counts, setCounts] = useState({
         users: 0,
@@ -124,6 +125,23 @@ export default function AdminOverview() {
         { label: 'PRO Members', value: counts.proMembers.toLocaleString(), change: '+8.2%', trend: 'up', icon: TrendingUp },
         { label: 'Network Integrity', value: 'Secure', change: '99.9%', trend: 'up', icon: UserCheck },
     ];
+    if (loading) {
+        return (<div className="p-8 space-y-8 animate-pulse text-left">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (<AdminStatSkeleton key={i} />))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-4 space-y-4">
+            <div className="h-6 skeleton w-32 rounded-lg" />
+            <div className="bg-admin-surface border border-admin-border rounded-2xl p-6 h-36 w-full" />
+          </div>
+          <div className="lg:col-span-8 bg-admin-surface border border-admin-border rounded-2xl p-8 space-y-6">
+            <div className="h-6 skeleton w-48 rounded-lg" />
+            <AdminChartSkeleton />
+          </div>
+        </div>
+      </div>);
+    }
     return (<div className="p-8 space-y-8 animate-in fade-in duration-500">
       
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">

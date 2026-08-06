@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { collection, query, where, onSnapshot, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, deleteDoc, documentId, getDocs, limit } from 'firebase/firestore';
 import { FileText, ChevronLeft, Clock, CheckCircle2, XCircle, AlertCircle, Trash2, ArrowRight } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
+import { ApplicationSkeleton } from '../../components/ui/Skeleton';
 
 interface ApplicationsPageProps {
   user?: any;
@@ -21,6 +22,8 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [visibleLimit, setVisibleLimit] = useState(20);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     if (initialFilter) {
@@ -35,35 +38,52 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
     }
     const q = query(
       collection(db, 'applications'),
-      where('userId', '==', currentUser.uid)
+      where('userId', '==', currentUser.uid),
+      limit(visibleLimit + 1)
     );
-
+ 
     const unsub = onSnapshot(q, async (snap) => {
-      const appData = await Promise.all(
-        snap.docs.map(async (appDoc) => {
-          const data = appDoc.data();
-          try {
-            const castingDoc = await getDoc(doc(db, 'casting_calls', data.castingId));
-            return {
-              appId: appDoc.id,
-              ...data,
-              castingCall: castingDoc.exists() ? castingDoc.data() : null
-            };
-          } catch {
-            return {
-              appId: appDoc.id,
-              ...data,
-              castingCall: null
-            };
-          }
-        })
-      );
+      const docsData = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+      const hasMoreData = docsData.length > visibleLimit;
+      const slicedDocs = hasMoreData ? docsData.slice(0, visibleLimit) : docsData;
+      setHasMore(hasMoreData);
+      
+      const castingIds = slicedDocs.map(item => item.data.castingId).filter(Boolean);
+      const uniqueCastingIds = Array.from(new Set(castingIds));
+      
+      const castingCallsMap = new Map();
+      const chunks = [];
+      for (let i = 0; i < uniqueCastingIds.length; i += 30) {
+        chunks.push(uniqueCastingIds.slice(i, i + 30));
+      }
+      
+      await Promise.all(chunks.map(async (chunk) => {
+        try {
+          const chunkQuery = query(collection(db, 'casting_calls'), where(documentId(), 'in', chunk));
+          const chunkSnap = await getDocs(chunkQuery);
+          chunkSnap.docs.forEach(docSnap => {
+            castingCallsMap.set(docSnap.id, docSnap.data());
+          });
+        } catch (err) {
+          console.warn("Failed to batch fetch casting calls for applications:", err);
+        }
+      }));
+      
+      const appData = slicedDocs.map((item) => {
+        const castingData = castingCallsMap.get(item.data.castingId);
+        return {
+          appId: item.id,
+          ...item.data,
+          castingCall: castingData || null
+        };
+      });
+      
       setApplications(appData);
       setLoading(false);
     });
 
     return () => unsub();
-  }, [currentUser?.uid]);
+  }, [currentUser?.uid, visibleLimit]);
 
   const handleCancel = async (appId: string) => {
     try {
@@ -175,11 +195,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
 
           {/* List Content */}
           {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-28 rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse" />
-              ))}
-            </div>
+            <ApplicationSkeleton count={3} />
           ) : filteredApps.length === 0 ? (
             <div className="py-16 text-center space-y-4 bg-white/[0.02] border border-white/5 rounded-3xl p-6">
               <AlertCircle className="w-10 h-10 text-gray-600 mx-auto" />
@@ -260,6 +276,16 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                   </div>
                 );
               })}
+              {hasMore && (
+                <div className="flex justify-center mt-6 py-2">
+                  <button
+                    onClick={() => setVisibleLimit(prev => prev + 20)}
+                    className="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer"
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

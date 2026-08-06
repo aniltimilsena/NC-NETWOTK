@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
+import { FollowItemSkeleton } from '../../../components/ui/Skeleton';
 interface FollowItem {
     id: string;
     name: string;
@@ -42,9 +43,9 @@ export default function FollowModal({ type, isOpen, onClose, list, loading, onNa
 
         
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {loading ? (<div className="space-y-4">
-              {[1, 2, 3].map((i) => (<div key={i} className="h-12 skeleton rounded-2xl w-full"/>))}
-            </div>) : list.length > 0 ? (<div className="space-y-3.5">
+          {loading ? (
+            <FollowItemSkeleton count={3} type={type} />
+          ) : list.length > 0 ? (<div className="space-y-3.5">
               {list.map((item: any) => {
                 if (type === 'projects') {
                     return (<div key={item.id} className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all cursor-pointer" onClick={() => {

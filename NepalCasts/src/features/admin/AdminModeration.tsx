@@ -226,7 +226,26 @@ export default function AdminModeration() {
           </div>
 
           <div className="space-y-4">
-            {loading ? (<p className="text-xs text-nc-muted p-6">Loading safety queue...</p>) : filteredReports.length === 0 ? (<div className="py-20 text-center bg-admin-surface rounded-2xl border border-dashed border-admin-border">
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-admin-surface border border-admin-border rounded-2xl p-6 animate-pulse flex flex-col lg:flex-row lg:items-center gap-6" aria-hidden="true">
+                    <div className="lg:w-1/4 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg skeleton" />
+                        <div className="h-4 skeleton rounded w-24" />
+                      </div>
+                      <div className="h-3.5 skeleton rounded w-32" />
+                    </div>
+                    <div className="lg:w-1/2 flex-1 space-y-2 text-left">
+                      <div className="h-4 skeleton rounded w-full" />
+                      <div className="h-3 skeleton rounded w-2/3" />
+                    </div>
+                    <div className="lg:w-1/4 h-8 skeleton rounded-xl w-24 ml-auto" />
+                  </div>
+                ))}
+              </div>
+            ) : filteredReports.length === 0 ? (<div className="py-20 text-center bg-admin-surface rounded-2xl border border-dashed border-admin-border">
                 <p className="text-nc-muted text-sm font-medium">No safety or content reports found matching your selection.</p>
               </div>) : (filteredReports.map((report) => {
             const isPending = report.status === 'Pending';

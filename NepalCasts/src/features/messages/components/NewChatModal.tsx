@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Search } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
+import { FollowItemSkeleton } from '../../../components/ui/Skeleton';
 import { db } from '../../../lib/firebase';
 import { collection, getDocs, query, limit } from 'firebase/firestore';
 interface NewChatModalProps {
@@ -59,7 +60,9 @@ export default function NewChatModal({ isOpen, onClose, onSelectUser }: NewChatM
 
         
         <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-2">
-          {loading ? (<div className="w-6 h-6 border-2 border-[#00BFFF] border-t-transparent rounded-full animate-spin mx-auto my-8"/>) : filtered.length > 0 ? (filtered.map((p) => (<div key={p.uid} onClick={() => {
+          {loading ? (
+            <FollowItemSkeleton count={4} type="follow" />
+          ) : filtered.length > 0 ? (filtered.map((p) => (<div key={p.uid} onClick={() => {
                 onSelectUser(p.uid);
                 onClose();
             }} className="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-white/5 transition-all">

@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import AppProviders, { useApp } from './providers/AppProviders';
+import { DialogProvider } from './providers/DialogProvider';
 import RouteConfig from './routes/routeConfig';
 import RouteLoader from './components/RouteLoader';
 const AgentationWidget = import.meta.env.DEV
@@ -12,10 +13,12 @@ function MainApp() {
     </Suspense>);
 }
 export default function App() {
-    return (<AppProviders>
-      <MainApp />
-      {import.meta.env.DEV && AgentationWidget && (<Suspense fallback={null}>
-          <AgentationWidget />
-        </Suspense>)}
-    </AppProviders>);
+    return (<DialogProvider>
+      <AppProviders>
+        <MainApp />
+        {import.meta.env.DEV && AgentationWidget && (<Suspense fallback={null}>
+            <AgentationWidget />
+          </Suspense>)}
+      </AppProviders>
+    </DialogProvider>);
 }

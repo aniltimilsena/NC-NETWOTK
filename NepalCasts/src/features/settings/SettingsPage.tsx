@@ -111,8 +111,39 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
 
     if (loading && !activeProfile) {
         return (
-            <div className="min-h-screen bg-nc-dark pb-6 flex items-center justify-center">
-                <div className="w-10 h-10 border-4 border-[#00BFFF] border-t-transparent rounded-full animate-spin" />
+            <div className="min-h-screen bg-nc-dark pb-6 animate-pulse">
+                <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 pt-6 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 shrink-0" />
+                    <div className="h-6 bg-white/10 rounded-md w-48" />
+                </div>
+
+                <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 mt-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div className="md:col-span-1 space-y-2 flex flex-col items-stretch text-left">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                            <div key={i} className="h-14 bg-white/5 border border-white/5 rounded-2xl w-full" />
+                        ))}
+                    </div>
+
+                    <div className="md:col-span-3 space-y-6">
+                        <div className="bg-[#0E0E0E] border border-white/5 rounded-[2.2rem] p-6 space-y-6">
+                            <div className="h-6 bg-white/10 rounded-md w-32 mb-4" />
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="h-3 bg-white/5 rounded w-16" />
+                                    <div className="h-12 bg-white/5 border border-white/5 rounded-2xl w-full" />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="h-3 bg-white/5 rounded w-20" />
+                                    <div className="h-12 bg-white/5 border border-white/5 rounded-2xl w-full" />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="h-3 bg-white/5 rounded w-24" />
+                                    <div className="h-28 bg-white/5 border border-white/5 rounded-2xl w-full" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }

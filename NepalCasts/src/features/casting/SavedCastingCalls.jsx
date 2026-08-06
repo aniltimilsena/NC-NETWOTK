@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { collection, query, where, orderBy, onSnapshot, doc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, deleteDoc, getDoc, documentId, getDocs, limit } from 'firebase/firestore';
 import { Bookmark, ChevronLeft, Trash2, MapPin, ArrowRight, BookmarkX } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
+import { SavedCallSkeleton } from '../../components/ui/Skeleton';
 
 const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToast, activeTab }) => {
   const navigate = useNavigate();
@@ -16,37 +17,61 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
   const [savedCalls, setSavedCalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState(null);
+  const [visibleLimit, setVisibleLimit] = useState(20);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     if (!currentUser?.uid) {
       setLoading(false);
       return;
     }
-    const q = query(collection(db, 'saved_calls'), where('userId', '==', currentUser.uid), orderBy('savedAt', 'desc'));
+    const q = query(collection(db, 'saved_calls'), where('userId', '==', currentUser.uid), orderBy('savedAt', 'desc'), limit(visibleLimit + 1));
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const savedData = await Promise.all(snapshot.docs.map(async (savedDoc) => {
-        const saveData = savedDoc.data();
+      const docsData = snapshot.docs.map(d => ({ id: d.id, data: d.data() }));
+      const hasMoreData = docsData.length > visibleLimit;
+      const slicedDocs = hasMoreData ? docsData.slice(0, visibleLimit) : docsData;
+      setHasMore(hasMoreData);
+      
+      const castingIds = slicedDocs.map(item => item.data.castingId).filter(Boolean);
+      const uniqueCastingIds = Array.from(new Set(castingIds));
+      
+      const castingCallsMap = new Map();
+      const chunks = [];
+      for (let i = 0; i < uniqueCastingIds.length; i += 30) {
+        chunks.push(uniqueCastingIds.slice(i, i + 30));
+      }
+      
+      await Promise.all(chunks.map(async (chunk) => {
         try {
-          const castingDoc = await getDoc(doc(db, 'casting_calls', saveData.castingId));
-          if (castingDoc.exists()) {
-            return {
-              saveId: savedDoc.id,
-              savedAt: saveData.savedAt,
-              castingId: saveData.castingId,
-              ...castingDoc.data(),
-            };
-          }
-          deleteDoc(doc(db, 'saved_calls', savedDoc.id)).catch(err => console.warn(err));
-          return null;
-        } catch {
-          return null;
+          const chunkQuery = query(collection(db, 'casting_calls'), where(documentId(), 'in', chunk));
+          const chunkSnap = await getDocs(chunkQuery);
+          chunkSnap.docs.forEach(docSnap => {
+            castingCallsMap.set(docSnap.id, docSnap.data());
+          });
+        } catch (err) {
+          console.warn("Failed to batch fetch casting calls chunk:", err);
         }
       }));
-      setSavedCalls(savedData.filter(Boolean));
+      
+      const savedData = [];
+      for (const item of slicedDocs) {
+        const castingData = castingCallsMap.get(item.data.castingId);
+        if (castingData) {
+          savedData.push({
+            saveId: item.id,
+            savedAt: item.data.savedAt,
+            castingId: item.data.castingId,
+            ...castingData,
+          });
+        } else {
+          deleteDoc(doc(db, 'saved_calls', item.id)).catch(err => console.warn(err));
+        }
+      }
+      setSavedCalls(savedData);
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [currentUser?.uid]);
+  }, [currentUser?.uid, visibleLimit]);
 
   const handleUnsave = async (saveId, castingTitle) => {
     try {
@@ -141,15 +166,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
 
           {/* Loading Skeletons */}
           {loading && (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="p-6 rounded-3xl bg-white/[0.03] border border-white/10 space-y-3 animate-pulse">
-                  <div className="h-6 bg-white/10 rounded-xl w-2/3" />
-                  <div className="h-4 bg-white/5 rounded-lg w-1/3" />
-                  <div className="h-10 bg-white/5 rounded-2xl w-full pt-2" />
-                </div>
-              ))}
-            </div>
+            <SavedCallSkeleton count={3} />
           )}
 
           {/* Empty State */}
@@ -230,6 +247,16 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                   </div>
                 </GlassCard>
               ))}
+              {hasMore && (
+                <div className="flex justify-center mt-6 py-2">
+                  <button
+                    onClick={() => setVisibleLimit(prev => prev + 20)}
+                    className="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer"
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

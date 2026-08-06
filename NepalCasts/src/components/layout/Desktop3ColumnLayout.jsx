@@ -6,6 +6,7 @@ import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
 import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, collection, query, where, or } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
+import { FollowItemSkeleton, SidebarWidgetSkeleton } from '../ui/Skeleton';
 
 // Inline follow button that mirrors ProfileHeader's style and uses Firestore
 function FollowBtn({ targetUid }) {
@@ -68,7 +69,8 @@ export default function Desktop3ColumnLayout({
   onNavigate,
   activeNav = 'discover',
   featuredTalents = [],
-  trendingCalls = []
+  trendingCalls = [],
+  loading = false
 }) {
   const [profileData, setProfileData] = useState(null);
 
@@ -457,7 +459,7 @@ export default function Desktop3ColumnLayout({
 
 
               {/* === PEOPLE TO FOLLOW === */}
-              {safeFeatured.length > 0 && (
+              {(loading || safeFeatured.length > 0) && (
                 <div className="mt-6">
                   <div className="flex items-center justify-between px-1 mb-3">
                     <h4 className="text-white font-extrabold text-sm">People to follow</h4>
@@ -470,35 +472,39 @@ export default function Desktop3ColumnLayout({
                     </button>
                   </div>
                   <div className="px-1 space-y-3">
-                    {safeFeatured.slice(0, 3).map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-3 group"
-                      >
+                    {loading ? (
+                      <FollowItemSkeleton count={3} />
+                    ) : (
+                      safeFeatured.slice(0, 3).map((item) => (
                         <div
-                          onClick={() => onNavigate?.('profile', item.id)}
-                          className="cursor-pointer flex-shrink-0"
+                          key={item.id}
+                          className="flex items-center gap-3 group"
                         >
-                          <Avatar
-                            src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
-                            size="md"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h5
+                          <div
                             onClick={() => onNavigate?.('profile', item.id)}
-                            className="text-white text-[13px] font-bold truncate cursor-pointer group-hover:text-[#00BFFF] transition-colors"
+                            className="cursor-pointer flex-shrink-0"
                           >
-                            {item.name || 'Talent'}
-                          </h5>
-                          <p className="text-gray-500 text-[11px] truncate mt-0.5">
-                            {item.role || item.category || 'Talent'}
-                            {item.location && <span> · {item.location}</span>}
-                          </p>
+                            <Avatar
+                              src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
+                              size="md"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h5
+                              onClick={() => onNavigate?.('profile', item.id)}
+                              className="text-white text-[13px] font-bold truncate cursor-pointer group-hover:text-[#00BFFF] transition-colors"
+                            >
+                              {item.name || 'Talent'}
+                            </h5>
+                            <p className="text-gray-500 text-[11px] truncate mt-0.5">
+                              {item.role || item.category || 'Talent'}
+                              {item.location && <span> · {item.location}</span>}
+                            </p>
+                          </div>
+                          <FollowBtn targetUid={item.id} />
                         </div>
-                        <FollowBtn targetUid={item.id} />
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -546,7 +552,7 @@ export default function Desktop3ColumnLayout({
             )}
 
             {/* Featured Talent Widget */}
-            {safeFeatured.length > 0 && (
+            {(loading || safeFeatured.length > 0) && (
               <div className="space-y-4 px-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-white font-black text-base">
@@ -563,30 +569,34 @@ export default function Desktop3ColumnLayout({
                 </div>
 
                 <div className="space-y-1">
-                  {visibleFeatured.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => onNavigate?.('profile', item.id)}
-                      className="flex items-center gap-3 py-2 px-2.5 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer group"
-                    >
-                      <Avatar
-                        src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
-                        size="md"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <h5 className="text-white text-sm font-bold truncate group-hover:text-[#00BFFF] transition-colors">
-                          {item.name || 'Talent'}
-                        </h5>
-                        <p className="text-gray-400 text-xs truncate mt-0.5">{item.role || item.category || 'Talent'}</p>
+                  {loading ? (
+                    <SidebarWidgetSkeleton count={3} type="talent" />
+                  ) : (
+                    visibleFeatured.map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => onNavigate?.('profile', item.id)}
+                        className="flex items-center gap-3 py-2 px-2.5 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer group"
+                      >
+                        <Avatar
+                          src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
+                          size="md"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <h5 className="text-white text-sm font-bold truncate group-hover:text-[#00BFFF] transition-colors">
+                            {item.name || 'Talent'}
+                          </h5>
+                          <p className="text-gray-400 text-xs truncate mt-0.5">{item.role || item.category || 'Talent'}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             )}
 
             {/* Trending Casting Calls Widget */}
-            {safeTrending.length > 0 && (
+            {(loading || safeTrending.length > 0) && (
               <div className="space-y-3 px-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-white font-black text-base">
@@ -603,21 +613,25 @@ export default function Desktop3ColumnLayout({
                 </div>
 
                 <div className="space-y-1">
-                  {safeTrending.slice(0, 3).map((call) => (
-                    <div
-                      key={call.id}
-                      onClick={() => onNavigate?.('casting-detail', call.id)}
-                      className="py-2.5 px-3 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer group space-y-1"
-                    >
-                      <h5 className="text-white text-sm font-bold group-hover:text-[#00BFFF] transition-colors line-clamp-1">
-                        {call.title}
-                      </h5>
-                      <div className="flex items-center justify-between text-xs text-gray-400">
-                        <span>{call.type || 'General'}</span>
-                        <span className="text-[#00BFFF] font-bold">{call.location || 'Nepal'}</span>
+                  {loading ? (
+                    <SidebarWidgetSkeleton count={3} type="casting" />
+                  ) : (
+                    safeTrending.slice(0, 3).map((call) => (
+                      <div
+                        key={call.id}
+                        onClick={() => onNavigate?.('casting-detail', call.id)}
+                        className="py-2.5 px-3 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer group space-y-1"
+                      >
+                        <h5 className="text-white text-sm font-bold group-hover:text-[#00BFFF] transition-colors line-clamp-1">
+                          {call.title}
+                        </h5>
+                        <div className="flex items-center justify-between text-xs text-gray-400">
+                          <span>{call.type || 'General'}</span>
+                          <span className="text-[#00BFFF] font-bold">{call.location || 'Nepal'}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             )}

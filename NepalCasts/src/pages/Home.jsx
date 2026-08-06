@@ -6,6 +6,7 @@ import Avatar from '../components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { subscribeToTalents, subscribeToCastingCalls } from '../services';
+import { SpotlightHeroSkeleton, AvatarScrollSkeleton, TrendingListSkeleton } from '../components/ui/Skeleton';
 
 export default function Home({ onNavigate, user }) {
   const { t } = useTranslation();
@@ -248,6 +249,7 @@ export default function Home({ onNavigate, user }) {
       activeNav="discover"
       featuredTalents={activeTalentsList.filter(t => t.featured === true || t.premium === true || t.isPremium === true)}
       trendingCalls={castingCalls}
+      loading={!talentsReceived}
     >
       <div className="min-h-screen bg-[#070709] text-white">
         {/* Hero Section */}
@@ -271,7 +273,9 @@ export default function Home({ onNavigate, user }) {
           </div>
 
           {/* Overlaid Inset Profile Card (Featured Talent Spotlight) */}
-          {currentPremiumUser && (
+          {(!talentsReceived) ? (
+            <SpotlightHeroSkeleton />
+          ) : currentPremiumUser && (
             <AnimatePresence mode="popLayout">
               <motion.div
                 key={currentPremiumUser?.id || currentPremiumIdx}
@@ -343,7 +347,7 @@ export default function Home({ onNavigate, user }) {
             className="flex gap-3 sm:gap-4 overflow-x-auto pt-2 pb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
           >
             {(!talentsReceived) ? (
-              <div className="text-gray-400 text-sm py-4">{t('home.loadingTalents')}</div>
+              <AvatarScrollSkeleton count={5} />
             ) : actorTalentsList.length > 0 ? (
               actorTalentsList.map((talent) => (
                 <div
@@ -470,24 +474,28 @@ export default function Home({ onNavigate, user }) {
         )}
 
         {/* Trending Now Section */}
-        {activeTalentsList.length > 0 && (
-          <section className="px-3 sm:px-6 py-4 pb-10">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center">
-                <div className="section-accent-bar" />
-                <h2 className="text-xl sm:text-2xl font-bold text-white font-sans tracking-tight leading-none">
-                  {t('trending_now')}
-                </h2>
-              </div>
+        <section className="px-3 sm:px-6 py-4 pb-10">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center">
+              <div className="section-accent-bar" />
+              <h2 className="text-xl sm:text-2xl font-bold text-white font-sans tracking-tight leading-none">
+                {t('trending_now')}
+              </h2>
+            </div>
+            {talentsReceived && activeTalentsList.length > 0 && (
               <button
                 onClick={() => onNavigate('trending')}
                 className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold transition-all cursor-pointer"
               >
                 {t('btn_view_all')} &gt;
               </button>
-            </div>
-            <div className="flex flex-col gap-3.5">
-              {activeTalentsList
+            )}
+          </div>
+          <div className="flex flex-col gap-3.5">
+            {(!talentsReceived) ? (
+              <TrendingListSkeleton count={3} />
+            ) : activeTalentsList.length > 0 ? (
+              activeTalentsList
                 .slice()
                 .sort((a, b) => {
                   const followersA = a.followers || 0;
@@ -549,10 +557,12 @@ export default function Home({ onNavigate, user }) {
                       </div>
                     </div>
                   </div>
-                ))}
-            </div>
-          </section>
-        )}
+                ))
+            ) : (
+              <div className="text-gray-400 text-sm py-4">{t('home.noTalentsFound')}</div>
+            )}
+          </div>
+        </section>
       </div>
     </Desktop3ColumnLayout>
   );

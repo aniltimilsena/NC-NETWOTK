@@ -10,6 +10,7 @@ import { subscribeToCastingCalls } from '../../services';
 import { useTranslation } from 'react-i18next';
 import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
+import { CastingCallSkeleton } from '../../components/ui/Skeleton';
 
 const getUrgentStatus = (deadlineStr) => {
   if (!deadlineStr) return null;
@@ -173,6 +174,8 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('All');
   const [selectedPayStatus, setSelectedPayStatus] = useState('All');
+  const [visibleLimit, setVisibleLimit] = useState(20);
+  const [hasMore, setHasMore] = useState(true);
 
   const LOCATIONS = ['All', 'Kathmandu', 'Pokhara', 'Lalitpur', 'Chitwan', 'Bhaktapur', 'International'];
   const PAY_OPTIONS = [
@@ -201,9 +204,10 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
     const unsubscribe = subscribeToCastingCalls('All', (data) => {
       setCalls(data);
       setIsLoading(false);
-    });
+      setHasMore(data.length >= visibleLimit);
+    }, undefined, visibleLimit);
     return () => unsubscribe();
-  }, []);
+  }, [visibleLimit]);
 
 
   useEffect(() => {
@@ -533,21 +537,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
         {/* LISTINGS */}
         <div className="flex flex-col">
           {isLoading || isSearching ? (
-            <>
-              {[1, 2, 3].map(i => (
-                <div key={i} className="animate-pulse flex flex-col sm:flex-row items-start sm:items-center justify-between py-8 border-b border-white/5 gap-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-1 w-full">
-                    <div className="w-full sm:w-48 h-28 rounded-xl bg-white/5 shrink-0" />
-                    <div className="space-y-3 flex-1">
-                      <div className="h-3 bg-white/5 rounded w-1/4" />
-                      <div className="h-6 bg-white/5 rounded w-1/2" />
-                      <div className="h-4 bg-white/5 rounded w-3/4" />
-                    </div>
-                  </div>
-                  <div className="h-10 bg-white/5 rounded w-28 shrink-0" />
-                </div>
-              ))}
-            </>
+            <CastingCallSkeleton count={3} />
           ) : filteredCalls.length === 0 ? (
             <div className="min-h-[65vh] flex flex-col items-center justify-center text-center py-12 px-6 border-b border-white/5 w-full">
               <AlertCircle size={48} className="text-gray-600 mb-4" />
@@ -566,16 +556,28 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
               )}
             </div>
           ) : (
-            filteredCalls.map(call => (
-              <CastingCallItem
-                key={call.id}
-                call={call}
-                isSaved={savedIds.includes(call.id)}
-                isApplied={appliedCastingIds.includes(call.id)}
-                onNavigate={onNavigate}
-                toggleSave={toggleSave}
-              />
-            ))
+            <>
+              {filteredCalls.map(call => (
+                <CastingCallItem
+                  key={call.id}
+                  call={call}
+                  isSaved={savedIds.includes(call.id)}
+                  isApplied={appliedCastingIds.includes(call.id)}
+                  onNavigate={onNavigate}
+                  toggleSave={toggleSave}
+                />
+              ))}
+              {hasMore && (
+                <div className="flex justify-center mt-6 py-4">
+                  <button
+                    onClick={() => setVisibleLimit(prev => prev + 20)}
+                    className="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer"
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 

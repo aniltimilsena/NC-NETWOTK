@@ -1,6 +1,7 @@
 import React from 'react';
 import { Star, MessageSquare, ThumbsUp } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
+import { ReviewSkeleton } from '../../../components/ui/Skeleton';
 interface Review {
     id: string;
     reviewerId: string;
@@ -61,9 +62,9 @@ export default function ProfileReviews({ reviews, loading, isOwnProfile, hasWork
 
       
       <div className="space-y-6">
-        {loading ? (<div className="space-y-4">
-            {[1, 2].map((i) => (<div key={i} className="h-24 skeleton rounded-2xl w-full animate-pulse"/>))}
-          </div>) : reviews.length > 0 ? (<div className="space-y-5">
+        {loading ? (
+          <ReviewSkeleton count={2} />
+        ) : reviews.length > 0 ? (<div className="space-y-5">
             {reviews.map((review, idx) => {
                 const hasLiked = currentUserId && review.helpfulUsers?.includes(currentUserId);
                 return (<div key={review.id} className={`pt-5 ${idx === 0 ? 'pt-0' : ''} space-y-3`}>

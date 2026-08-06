@@ -4,6 +4,7 @@ import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { logAdminAction } from '../../services';
+import { AdminStatSkeleton } from '../../components/ui/Skeleton';
 type AdminSubscriber = {
     id: string;
     name?: string;
@@ -94,6 +95,41 @@ export default function AdminPro() {
             return matchesSearch && !u.premium;
         return matchesSearch;
     });
+    if (loading) {
+        return (<div className="p-8 space-y-8 animate-pulse text-left">
+          <div className="flex justify-between items-end">
+            <div>
+              <h2 className="text-3xl font-bold text-white tracking-tight">Revenue Operations</h2>
+              <div className="h-4 bg-white/5 rounded w-72 mt-2" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (<AdminStatSkeleton key={i} />))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8 bg-admin-surface border border-admin-border rounded-2xl p-8 space-y-6">
+              <div className="h-6 bg-white/5 rounded w-48" />
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 bg-white/5 rounded w-24" />
+                    <div className="h-2 w-full bg-white/5 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="lg:col-span-4 bg-admin-surface border border-admin-border rounded-2xl p-6 space-y-4">
+              <div className="h-5 bg-white/5 rounded w-32" />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex justify-between">
+                  <div className="h-4 bg-white/5 rounded w-24" />
+                  <div className="h-4 bg-white/5 rounded w-12" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>);
+    }
     return (<div className="p-8 space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-end">
         <div>

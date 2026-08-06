@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { doc, getDoc, collection, query, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, onSnapshot, deleteDoc, updateDoc, documentId, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { getProfile, updateProfileData } from '../../../services';
 import type { UserProfile, ServiceResult } from '../../../types';
@@ -90,26 +90,41 @@ export function useSettings(currentUser: any) {
                 return;
             }
             try {
-                const fetched = [];
-                for (const bid of blockedIds) {
-                    const profileDoc = await getDoc(doc(db, 'profiles', bid));
-                    if (profileDoc.exists()) {
-                        fetched.push({
-                            uid: bid,
-                            name: profileDoc.data().name || 'Blocked User',
-                            image: profileDoc.data().image || '',
-                            role: profileDoc.data().role || 'Talent'
+                const chunks = [];
+                for (let i = 0; i < blockedIds.length; i += 30) {
+                    chunks.push(blockedIds.slice(i, i + 30));
+                }
+                const profileMap = new Map<string, any>();
+                await Promise.all(chunks.map(async (chunk) => {
+                    try {
+                        const q = query(collection(db, 'profiles'), where(documentId(), 'in', chunk));
+                        const snap = await getDocs(q);
+                        snap.docs.forEach(d => {
+                            profileMap.set(d.id, d.data());
                         });
+                    } catch (err) {
+                        console.warn("Failed to batch fetch blocked profiles chunk:", err);
                     }
-                    else {
-                        fetched.push({
+                }));
+
+                const fetched = blockedIds.map(bid => {
+                    const data = profileMap.get(bid);
+                    if (data) {
+                        return {
+                            uid: bid,
+                            name: data.name || 'Blocked User',
+                            image: data.image || '',
+                            role: data.role || 'Talent'
+                        };
+                    } else {
+                        return {
                             uid: bid,
                             name: 'Blocked User',
                             image: '',
                             role: 'Talent'
-                        });
+                        };
                     }
-                }
+                });
                 setBlockedUsersList(fetched);
             }
             catch (err) {

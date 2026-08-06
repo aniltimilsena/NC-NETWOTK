@@ -1,11 +1,11 @@
 import { db } from "../../../lib/firebase";
 import { AuthService } from "../../../services/AuthService";
-import { collection, doc, query, orderBy, where, onSnapshot, setDoc, serverTimestamp, addDoc, getDocs } from "firebase/firestore";
+import { collection, doc, query, orderBy, where, onSnapshot, setDoc, serverTimestamp, addDoc, getDocs, limit } from "firebase/firestore";
 import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
 import { cacheManager } from "../../../utils/cacheManager";
-export const subscribeToCastingCalls = (filter?: string | ((data: any, error?: any) => void), callback?: (data: any, error?: any) => void) => {
+export const subscribeToCastingCalls = (filter?: string | ((data: any, error?: any) => void), callback?: (data: any, error?: any) => void, limitCount: number = 20) => {
     let actualFilter: string = "all";
     let actualCallback: ((data: any, error?: any) => void) | undefined = callback;
     if (typeof filter === "function") {
@@ -15,14 +15,14 @@ export const subscribeToCastingCalls = (filter?: string | ((data: any, error?: a
     else if (typeof filter === "string") {
         actualFilter = filter;
     }
-    const poolKey = `casting_calls_${actualFilter.toLowerCase()}`;
+    const poolKey = `casting_calls_${actualFilter.toLowerCase()}_limit_${limitCount}`;
     return cacheManager.subscribePooled(poolKey, (pooledCb) => {
         let q;
         if (actualFilter && typeof actualFilter === "string" && actualFilter.toLowerCase() !== "all") {
-            q = query(collection(db, COLLECTIONS.CASTING_CALLS), where("type", "==", actualFilter), orderBy("createdAt", "desc"));
+            q = query(collection(db, COLLECTIONS.CASTING_CALLS), where("type", "==", actualFilter), orderBy("createdAt", "desc"), limit(limitCount));
         }
         else {
-            q = query(collection(db, COLLECTIONS.CASTING_CALLS), orderBy("createdAt", "desc"));
+            q = query(collection(db, COLLECTIONS.CASTING_CALLS), orderBy("createdAt", "desc"), limit(limitCount));
         }
         return onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));

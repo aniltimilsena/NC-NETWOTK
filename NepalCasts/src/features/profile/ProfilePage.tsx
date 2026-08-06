@@ -8,7 +8,7 @@ import ProfileExperience from './components/ProfileExperience';
 import ProfileReviews from './components/ProfileReviews';
 import FollowModal from './components/FollowModal';
 import ReviewModal from './components/ReviewModal';
-import { doc, getDoc, setDoc, query, collection, where, getDocs, serverTimestamp, increment, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, query, collection, where, getDocs, serverTimestamp, increment, updateDoc, documentId } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
 import { updateProfileData, uploadProfileMedia } from '../../services';
@@ -62,11 +62,27 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
                     setFollowList([]);
                     return;
                 }
-                const fetchedProfiles = [];
-                for (const uid of userIds) {
-                    const profileSnap = await getDoc(doc(db, "profiles", uid));
-                    if (profileSnap.exists()) {
-                        const pData = profileSnap.data();
+                const fetchedProfiles: any[] = [];
+                const chunks = [];
+                for (let i = 0; i < userIds.length; i += 30) {
+                    chunks.push(userIds.slice(i, i + 30));
+                }
+                const profileMap = new Map<string, any>();
+                await Promise.all(chunks.map(async (chunk) => {
+                    try {
+                        const q = query(collection(db, "profiles"), where(documentId(), "in", chunk));
+                        const snap = await getDocs(q);
+                        snap.docs.forEach(docSnap => {
+                            profileMap.set(docSnap.id, docSnap.data());
+                        });
+                    } catch (err) {
+                        console.warn("Failed to batch fetch follow profiles chunk:", err);
+                    }
+                }));
+                
+                userIds.forEach(uid => {
+                    const pData = profileMap.get(uid);
+                    if (pData) {
                         fetchedProfiles.push({
                             id: uid,
                             name: pData.name || 'Discovery User',
@@ -74,7 +90,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
                             role: pData.role || 'Talent'
                         });
                     }
-                }
+                });
                 setFollowList(fetchedProfiles);
             }
         }
@@ -305,57 +321,45 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         }
     };
     if (loading || resolvingUid) {
-        return (<div className="min-h-screen bg-nc-dark pb-6 text-left">
+        return (<div className="min-h-screen bg-nc-dark pb-6 text-left animate-pulse">
         
-        <div className="h-[160px] w-full bg-white/[0.02] relative">
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent"/>
+        <div className="block h-[220px] sm:h-[320px] relative w-full overflow-hidden bg-[#0A0A0F] select-none">
+          <div className="absolute inset-0 skeleton" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/30 to-transparent"/>
         </div>
 
         
-        <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 relative -mt-16 sm:-mt-24 z-10">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-white/5">
-            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 text-center sm:text-left">
-              
-              <div className="w-32 h-32 rounded-full border-4 border-nc-dark skeleton shrink-0"/>
-              
-              <div className="space-y-2 pb-2">
-                
-                <div className="h-6 skeleton w-48 mx-auto sm:mx-0"/>
-                
-                <div className="h-4 skeleton w-24 mx-auto sm:mx-0"/>
-                
-                <div className="h-3.5 skeleton w-32 mx-auto sm:mx-0"/>
-              </div>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 sm:-mt-24 relative z-20 flex flex-col items-center text-center">
+          <div className="relative z-10 mb-3 shrink-0">
+            <div className="w-44 h-44 sm:w-56 sm:h-56 rounded-full border-4 border-[#0A0A0F] bg-[#0A0A0F] skeleton ring-2 ring-white/15"/>
+          </div>
 
-            
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="h-10 skeleton w-28 rounded-xl flex-grow sm:flex-initial"/>
-              <div className="h-10 skeleton w-28 rounded-xl flex-grow sm:flex-initial"/>
-            </div>
+          <div className="space-y-3 pb-6 border-b border-white/5 w-full flex flex-col items-center">
+            <div className="h-7 skeleton w-56 rounded-xl"/>
+            <div className="h-4 skeleton w-24 rounded-lg"/>
+            <div className="h-3.5 skeleton w-44 rounded-md"/>
           </div>
 
           
-          <div className="grid grid-cols-3 gap-2 mt-6 pt-4 border-t border-white/5 w-full">
+          <div className="grid grid-cols-3 gap-2 mt-6 pt-4 border-t border-white/5 w-full max-w-md mx-auto">
             {[1, 2, 3].map(i => (<div key={i} className="flex flex-col items-center justify-center py-1 space-y-1.5">
-                <div className="h-5 skeleton w-12"/>
-                <div className="h-3 skeleton w-16"/>
+                <div className="h-5 skeleton w-12 rounded"/>
+                <div className="h-3.5 skeleton w-16 rounded"/>
               </div>))}
           </div>
 
           
-          <div className="flex border-b border-white/5 gap-6 mt-8 pb-4">
-            {[1, 2, 3].map(i => (<div key={i} className="h-5 skeleton w-20"/>))}
-          </div>
+          <div className="w-full mt-8">
+            <div className="flex border-b border-white/10 gap-8 mb-8 justify-center sm:justify-start">
+              {[1, 2, 3].map(i => (<div key={i} className="h-8 skeleton w-20 rounded pb-3"/>))}
+            </div>
 
-          
-          <div className="mt-8 space-y-6">
-            <div className="bg-[#111]/80 border border-white/5 rounded-[2rem] p-4 sm:p-8 space-y-6">
-              <div className="h-5 skeleton w-32"/>
+            <div className="bg-[#111]/80 border border-white/5 rounded-[2rem] p-6 sm:p-8 space-y-6">
+              <div className="h-5 skeleton w-32 rounded"/>
               <div className="space-y-3">
-                <div className="h-3.5 skeleton w-full"/>
-                <div className="h-3.5 skeleton w-11/12"/>
-                <div className="h-3.5 skeleton w-4/5"/>
+                <div className="h-3.5 skeleton w-full rounded"/>
+                <div className="h-3.5 skeleton w-11/12 rounded"/>
+                <div className="h-3.5 skeleton w-4/5 rounded"/>
               </div>
             </div>
           </div>
@@ -383,9 +387,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
     if (isOwnProfile || hasExperience) {
         tabs.push('experience');
     }
-    if (!isOwnProfile) {
-        tabs.push('reviews');
-    }
+    tabs.push('reviews');
     const tabLabelMap: Record<string, string> = {
         about: 'About',
         media: 'Media',
