@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, TrendingUp, Lock, FileText } from 'lucide-react';
+import { Search, X, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, TrendingUp, Lock, FileText } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ActionSearchBar } from '@/components/ui/ActionSearchBar';
+import { subscribeToTalents, subscribeToCastingCalls } from '../../services';
 import Avatar from '../ui/Avatar';
 import { getAvatar } from '../../utils/avatars';
 import { db } from '../../lib/firebase';
@@ -73,6 +76,59 @@ export default function Desktop3ColumnLayout({
   loading = false
 }) {
   const [profileData, setProfileData] = useState(null);
+
+  const [internalFeatured, setInternalFeatured] = useState([]);
+  const [internalTrending, setInternalTrending] = useState([]);
+  const [talentsLoading, setTalentsLoading] = useState(false);
+  const [callsLoading, setCallsLoading] = useState(false);
+  const [showSearchOverlay, setShowSearchOverlay] = useState(false);
+
+  useEffect(() => {
+    const hasPropsFeatured = featuredTalents && featuredTalents.length > 0;
+    const hasPropsTrending = trendingCalls && trendingCalls.length > 0;
+
+    let unsubTalents = () => {};
+    let unsubCalls = () => {};
+
+    if (!hasPropsFeatured) {
+      setTalentsLoading(true);
+      unsubTalents = subscribeToTalents((data) => {
+        if (Array.isArray(data)) {
+          const allActive = data
+            .filter(t => !t.deactivated && t.name)
+            .reduce((acc, current) => {
+              const isDuplicate = acc.some(item =>
+                item.id === current.id ||
+                (item.name && item.name.trim().toLowerCase() === current.name?.trim().toLowerCase())
+              );
+              if (!isDuplicate) {
+                acc.push(current);
+              }
+              return acc;
+            }, []);
+          const featuredOnly = allActive.filter(t => t.featured === true || t.premium === true || t.isPremium === true);
+          const finalTalents = featuredOnly.length > 0 ? featuredOnly : allActive;
+          setInternalFeatured(finalTalents);
+        }
+        setTalentsLoading(false);
+      });
+    }
+
+    if (!hasPropsTrending) {
+      setCallsLoading(true);
+      unsubCalls = subscribeToCastingCalls('All', (data) => {
+        if (Array.isArray(data)) {
+          setInternalTrending(data);
+        }
+        setCallsLoading(false);
+      });
+    }
+
+    return () => {
+      unsubTalents();
+      unsubCalls();
+    };
+  }, [featuredTalents, trendingCalls]);
 
   const [realFollowers, setRealFollowers] = useState(0);
   const [realFollowing, setRealFollowing] = useState(0);
@@ -191,8 +247,36 @@ export default function Desktop3ColumnLayout({
   const openToWork = profileData?.openToWork;
 
 
-  const safeFeatured = Array.isArray(featuredTalents) ? featuredTalents : [];
-  const safeTrending = Array.isArray(trendingCalls) ? trendingCalls : [];
+  const safeFeaturedRaw = (Array.isArray(featuredTalents) && featuredTalents.length > 0) ? featuredTalents : internalFeatured;
+  const safeFeatured = safeFeaturedRaw.length > 0 ? safeFeaturedRaw : [
+    {
+      id: 'mock_talent_1',
+      name: 'Achyut Devkota',
+      role: 'Actor / Model',
+      category: 'Actor',
+      gender: 'male',
+      location: 'Kathmandu',
+    },
+    {
+      id: 'mock_talent_2',
+      name: 'Sushma Karki',
+      role: 'Actress / Model',
+      category: 'Actress',
+      gender: 'female',
+      location: 'Lalitpur',
+    },
+    {
+      id: 'mock_talent_3',
+      name: 'Dayahang Rai',
+      role: 'Actor',
+      category: 'Actor',
+      gender: 'male',
+      location: 'Kathmandu',
+    }
+  ];
+  const safeTrending = (Array.isArray(trendingCalls) && trendingCalls.length > 0) ? trendingCalls : internalTrending;
+  const isTalentsLoading = loading || talentsLoading;
+  const isCallsLoading = loading || callsLoading;
 
   const [featuredOffset, setFeaturedOffset] = useState(0);
 
@@ -374,7 +458,7 @@ export default function Desktop3ColumnLayout({
                 </button>
               </div>
 
-              {/* === PERSONAL NAVIGATION (No divider line) === */}
+              {/* === PERSONAL NAVIGATION === */}
               {user && (
                 <div className="py-2">
                   <span className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500 px-5 mb-2 block">PERSONAL</span>
@@ -408,61 +492,155 @@ export default function Desktop3ColumnLayout({
                       <span>Saved Calls</span>
                     </div>
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('/trust-safety')}
-                    className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'trust-safety' || activeNav === 'trust'
-                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
-                        : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
-                      }`}
-                  >
-                    {(activeNav === 'trust-safety' || activeNav === 'trust') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
-                    <div className="flex items-center gap-3">
-                      <ShieldCheck className="w-5 h-5 text-[#00BFFF]" />
-                      <span>Trust & Safety</span>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('/privacy')}
-                    className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'privacy'
-                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
-                        : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
-                      }`}
-                  >
-                    {activeNav === 'privacy' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
-                    <div className="flex items-center gap-3">
-                      <Lock className="w-5 h-5 text-gray-400 group-hover:text-white" />
-                      <span>Privacy Policy</span>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('/terms')}
-                    className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'terms'
-                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
-                        : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
-                      }`}
-                  >
-                    {activeNav === 'terms' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-gray-400 group-hover:text-white" />
-                      <span>Terms of Service</span>
-                    </div>
-                  </button>
                 </div>
               )}
 
+              {/* === LEGAL & SAFETY === */}
+              <div className="py-2">
+                <span className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500 px-5 mb-2 block">LEGAL & SAFETY</span>
 
+                <button
+                  type="button"
+                  onClick={() => onNavigate?.('/trust-safety')}
+                  className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'trust-safety' || activeNav === 'trust'
+                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    }`}
+                >
+                  {(activeNav === 'trust-safety' || activeNav === 'trust') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className="w-5 h-5 text-[#00BFFF]" />
+                    <span>Trust & Safety</span>
+                  </div>
+                </button>
 
-              {/* === PEOPLE TO FOLLOW === */}
-              {(loading || safeFeatured.length > 0) && (
-                <div className="mt-6">
-                  <div className="flex items-center justify-between px-1 mb-3">
-                    <h4 className="text-white font-extrabold text-sm">People to follow</h4>
+                <button
+                  type="button"
+                  onClick={() => onNavigate?.('/privacy')}
+                  className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'privacy'
+                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    }`}
+                >
+                  {activeNav === 'privacy' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
+                  <div className="flex items-center gap-3">
+                    <Lock className="w-5 h-5 text-gray-400 group-hover:text-white" />
+                    <span>Privacy Policy</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate?.('/terms')}
+                  className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'terms'
+                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    }`}
+                >
+                  {activeNav === 'terms' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-5 h-5 text-gray-400 group-hover:text-white" />
+                    <span>Terms of Service</span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Sidebar Bottom Copyright */}
+              <div className="px-4 py-2 mt-1 border-t border-white/5">
+                <p className="text-xs text-gray-500 font-semibold tracking-wide flex items-center justify-between">
+                  <span>&copy; {new Date().getFullYear()} NepalCasts</span>
+                  <span className="text-[10px] text-gray-600 font-medium">All rights reserved</span>
+                </p>
+              </div>
+            </div>
+          </aside>
+
+          {/* CENTER MAIN CONTENT */}
+          <main className="col-span-12 xl:col-span-6 min-w-0">
+            {children}
+          </main>
+
+          {/* RIGHT SIDEBAR (Desktop Only: xl+) */}
+          <aside className="hidden xl:block xl:col-span-3 sticky top-20 space-y-4 h-fit pt-2">
+
+            {/* Go Pro CTA */}
+            {!isVerified && (
+              <div className="px-2">
+                <div className="bg-[#1C1C1C] rounded-2xl p-3.5 border border-[#2A2A2A] relative overflow-hidden space-y-2">
+                  <div className="flex items-center gap-1.5 relative z-10">
+                    <span className="text-white font-bold text-[14px]">Go Pro</span>
+                    <span className="text-[#00BFFF] text-sm">✓</span>
+                  </div>
+                  <p className="text-[#888] text-[11px] leading-snug relative z-10">
+                    Get a verified badge and appear first in search results.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.('premium')}
+                    className="w-full text-center block text-black rounded-lg py-1.5 font-bold text-[12px] hover:opacity-90 transition-all relative z-10 shadow-lg cursor-pointer active:scale-[0.98]"
+                    style={{ backgroundColor: '#FACC15' }}
+                  >
+                    Upgrade Profile
+                  </button>
+                  <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#FACC15] blur-3xl opacity-10 rounded-full" />
+                </div>
+              </div>
+            )}
+
+            {/* Why NepalCasts? Card */}
+            <div className="px-2">
+              <div className="bg-[#121215] rounded-2xl p-4 border border-white/5 relative overflow-hidden space-y-4 shadow-xl">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500 text-left">Why NepalCasts?</h4>
+                
+                <div className="space-y-3.5 text-left">
+                  {/* Point 1 */}
+                  <div className="flex gap-3 items-start">
+                    <div className="w-8 h-8 rounded-lg bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg className="w-4.5 h-4.5 text-[#00BFFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h5 className="text-white text-xs font-bold font-sans">Remote Live Auditions</h5>
+                      <p className="text-[#888] text-[11px] leading-relaxed mt-0.5">Audition from anywhere in Nepal via nepalcasts</p>
+                    </div>
+                  </div>
+
+                  {/* Point 2 */}
+                  <div className="flex gap-3 items-start">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg className="w-4.5 h-4.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h5 className="text-white text-xs font-bold font-sans">Direct Connections</h5>
+                      <p className="text-[#888] text-[11px] leading-relaxed mt-0.5">Message top directors and production teams directly without middle agents.</p>
+                    </div>
+                  </div>
+
+                  {/* Point 3 */}
+                  <div className="flex gap-3 items-start">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg className="w-4.5 h-4.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h5 className="text-white text-xs font-bold font-sans">Verified PRO Casting</h5>
+                      <p className="text-[#888] text-[11px] leading-relaxed mt-0.5">Get verified to rank first in search results and stand out to casting teams.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* === PEOPLE TO FOLLOW === */}
+            {(isTalentsLoading || safeFeatured.length > 0) && (
+              <div className="px-2">
+                <div className="bg-[#121215] rounded-2xl p-4 border border-white/5 relative overflow-hidden space-y-4 shadow-xl">
+                  <div className="flex items-center justify-between px-1">
+                    <h4 className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500">People to follow</h4>
                     <button
                       type="button"
                       onClick={() => onNavigate?.('talent')}
@@ -472,7 +650,7 @@ export default function Desktop3ColumnLayout({
                     </button>
                   </div>
                   <div className="px-1 space-y-3">
-                    {loading ? (
+                    {isTalentsLoading ? (
                       <FollowItemSkeleton count={3} />
                     ) : (
                       safeFeatured.slice(0, 3).map((item) => (
@@ -507,102 +685,16 @@ export default function Desktop3ColumnLayout({
                     )}
                   </div>
                 </div>
-              )}
-
-              {/* Sidebar Bottom Copyright */}
-              <div className="px-4 py-2 mt-1 border-t border-white/5">
-                <p className="text-xs text-gray-500 font-semibold tracking-wide flex items-center justify-between">
-                  <span>&copy; {new Date().getFullYear()} NepalCasts</span>
-                  <span className="text-[10px] text-gray-600 font-medium">All rights reserved</span>
-                </p>
-              </div>
-            </div>
-          </aside>
-
-          {/* CENTER MAIN CONTENT */}
-          <main className="col-span-12 xl:col-span-6 min-w-0">
-            {children}
-          </main>
-
-          {/* RIGHT SIDEBAR (Desktop Only: xl+) */}
-          <aside className="hidden xl:block xl:col-span-3 sticky top-20 space-y-4 h-fit pt-2">
-
-            {/* Go Verified CTA */}
-            {!isVerified && (
-              <div className="px-2">
-                <div className="bg-[#1C1C1C] rounded-2xl p-3.5 border border-[#2A2A2A] relative overflow-hidden space-y-2">
-                  <div className="flex items-center gap-1.5 relative z-10">
-                    <span className="text-white font-bold text-[14px]">Go Verified</span>
-                    <span className="text-[#00BFFF] text-sm">✓</span>
-                  </div>
-                  <p className="text-[#888] text-[11px] leading-snug relative z-10">
-                    Get a verified badge and appear first in search results.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('premium')}
-                    className="w-full text-center block text-black rounded-lg py-1.5 font-bold text-[12px] hover:opacity-90 transition-all relative z-10 shadow-lg cursor-pointer active:scale-[0.98]"
-                    style={{ backgroundColor: '#FACC15' }}
-                  >
-                    Upgrade Profile
-                  </button>
-                  <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#FACC15] blur-3xl opacity-10 rounded-full" />
-                </div>
               </div>
             )}
 
-            {/* Featured Talent Widget */}
-            {(loading || safeFeatured.length > 0) && (
-              <div className="space-y-4 px-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-white font-black text-base">
-                    <Users className="w-5 h-5 text-[#00BFFF]" />
-                    <span>{t('sidebar.featuredTalent')}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('talent')}
-                    className="text-xs font-bold text-[#00BFFF] hover:underline cursor-pointer"
-                  >
-                    {t('sidebar.viewAll')}
-                  </button>
-                </div>
-
-                <div className="space-y-1">
-                  {loading ? (
-                    <SidebarWidgetSkeleton count={3} type="talent" />
-                  ) : (
-                    visibleFeatured.map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => onNavigate?.('profile', item.id)}
-                        className="flex items-center gap-3 py-2 px-2.5 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer group"
-                      >
-                        <Avatar
-                          src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
-                          size="md"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <h5 className="text-white text-sm font-bold truncate group-hover:text-[#00BFFF] transition-colors">
-                            {item.name || 'Talent'}
-                          </h5>
-                          <p className="text-gray-400 text-xs truncate mt-0.5">{item.role || item.category || 'Talent'}</p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Trending Casting Calls Widget */}
-            {(loading || safeTrending.length > 0) && (
+            {/* Trending Casting Calls Widget (No TrendingUp Icon) */}
+            {(isCallsLoading || safeTrending.length > 0) && (
               <div className="space-y-3 px-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-white font-black text-base">
-                    <TrendingUp className="w-5 h-5 text-[#00BFFF]" />
-                    <span>{t('sidebar.activeCastingCalls')}</span>
-                  </div>
+                  <h4 className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500">
+                    {t('sidebar.activeCastingCalls')}
+                  </h4>
                   <button
                     type="button"
                     onClick={() => onNavigate?.('casting')}
@@ -612,22 +704,39 @@ export default function Desktop3ColumnLayout({
                   </button>
                 </div>
 
-                <div className="space-y-1">
-                  {loading ? (
+                <div className="space-y-3">
+                  {isCallsLoading ? (
                     <SidebarWidgetSkeleton count={3} type="casting" />
                   ) : (
                     safeTrending.slice(0, 3).map((call) => (
                       <div
                         key={call.id}
                         onClick={() => onNavigate?.('casting-detail', call.id)}
-                        className="py-2.5 px-3 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer group space-y-1"
+                        className="relative h-32 rounded-2xl overflow-hidden hover:scale-[1.02] hover:border-white/20 transition-all cursor-pointer group shadow-xl border border-white/5 flex flex-col justify-end p-4"
                       >
-                        <h5 className="text-white text-sm font-bold group-hover:text-[#00BFFF] transition-colors line-clamp-1">
-                          {call.title}
-                        </h5>
-                        <div className="flex items-center justify-between text-xs text-gray-400">
-                          <span>{call.type || 'General'}</span>
-                          <span className="text-[#00BFFF] font-bold">{call.location || 'Nepal'}</span>
+                        {/* Background Image */}
+                        <div className="absolute inset-0 select-none pointer-events-none">
+                          <img
+                            src={call.thumbnail || call.thumbnailUrl || call.mediaUrl || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=300&auto=format&fit=crop'}
+                            alt={call.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=300&auto=format&fit=crop';
+                            }}
+                          />
+                          {/* Dark Glassy Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/40" />
+                        </div>
+
+                        {/* Text info */}
+                        <div className="relative z-10 space-y-1">
+                          <h5 className="text-white text-base font-black group-hover:text-[#00BFFF] transition-colors truncate uppercase tracking-wider">
+                            {call.title}
+                          </h5>
+                          <div className="flex items-center justify-between text-xs text-gray-300 font-bold">
+                            <span className="bg-white/10 px-2 py-0.5 rounded text-[10px] tracking-wide uppercase">{call.type || 'General'}</span>
+                            <span className="text-[#00BFFF] font-black capitalize tracking-wide">{call.location || 'Nepal'}</span>
+                          </div>
                         </div>
                       </div>
                     ))

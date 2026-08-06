@@ -3,10 +3,13 @@ import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 import CategorySkeleton from '../components/ui/CategorySkeleton';
 import Avatar from '../components/ui/Avatar';
+import { getAvatar } from '../utils/avatars';
 import { useTranslation } from 'react-i18next';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { subscribeToTalents, subscribeToCastingCalls } from '../services';
 import { SpotlightHeroSkeleton, AvatarScrollSkeleton, TrendingListSkeleton } from '../components/ui/Skeleton';
+import { db } from '../lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export default function Home({ onNavigate, user }) {
   const { t } = useTranslation();
@@ -19,6 +22,7 @@ export default function Home({ onNavigate, user }) {
   const scrollRef = useRef(null);
   const [categoriesReady, setCategoriesReady] = useState(false);
   const [heroImageError, setHeroImageError] = useState(false);
+  const [spotlightProfile, setSpotlightProfile] = useState(null);
 
   const [showRightArrow, setShowRightArrow] = useState(false);
   const actorsScrollRef = useRef(null);
@@ -219,6 +223,28 @@ export default function Home({ onNavigate, user }) {
     setHeroImageError(false);
   }, [currentPremiumUser?.id]);
 
+  const spotlightUserId = currentPremiumUser?.id || currentPremiumUser?.uid;
+
+  useEffect(() => {
+    if (!spotlightUserId) {
+      setSpotlightProfile(null);
+      return;
+    }
+    const unsub = onSnapshot(doc(db, 'profiles', spotlightUserId), (snap) => {
+      if (snap.exists()) {
+        setSpotlightProfile(snap.data());
+      } else {
+        const unsubUser = onSnapshot(doc(db, 'users', spotlightUserId), (uSnap) => {
+          if (uSnap.exists()) {
+            setSpotlightProfile(uSnap.data());
+          }
+        });
+        return () => unsubUser();
+      }
+    }, (err) => console.warn("Spotlight profile fetch warning:", err));
+    return () => unsub();
+  }, [spotlightUserId]);
+
   const isDefaultImage = (url) => {
     if (!url || typeof url !== 'string' || url.trim() === '') return true;
     return url.includes('default-avatar.png') ||
@@ -229,8 +255,11 @@ export default function Home({ onNavigate, user }) {
       url.includes('img.clerk.com');
   };
 
-  // Resolve hero photo from all possible Firestore fields, then fall back to the logged-in user's photo when the hero is showing themselves
+  // Resolve hero photo from the live spotlightProfile, then fall back to the premium user's fields, then Clerk image
   const heroPhotoURL =
+    spotlightProfile?.image ||
+    spotlightProfile?.photoURL ||
+    spotlightProfile?.profileImage ||
     currentPremiumUser?.image ||
     currentPremiumUser?.photoURL ||
     currentPremiumUser?.profileImage ||
@@ -241,6 +270,20 @@ export default function Home({ onNavigate, user }) {
       ? (user?.photoURL || user?.profileImage || user?.image)
       : null);
   const hasHeroPhoto = heroPhotoURL && !isDefaultImage(heroPhotoURL) && !heroImageError;
+
+  const spotlightName =
+    spotlightProfile?.name ||
+    spotlightProfile?.fullName ||
+    [spotlightProfile?.firstName, spotlightProfile?.lastName].filter(Boolean).join(' ') ||
+    currentPremiumUser?.name ||
+    'Talent Member';
+
+  const spotlightRole =
+    spotlightProfile?.role ||
+    spotlightProfile?.category ||
+    currentPremiumUser?.role ||
+    currentPremiumUser?.category ||
+    'Actor';
 
   return (
     <Desktop3ColumnLayout
@@ -291,14 +334,29 @@ export default function Home({ onNavigate, user }) {
                     <img
                       src={heroPhotoURL}
                       alt={currentPremiumUser?.name || 'Featured Talent'}
-                      onError={() => setHeroImageError(true)}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        const parent = e.target.parentElement;
+                        if (parent) {
+                          const placeholder = parent.querySelector('.placeholder-svg-container');
+                          if (placeholder) placeholder.style.display = 'flex';
+                        }
+                      }}
                       className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] object-cover transition-all duration-300"
                     />
-                  ) : (
-                    <div className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] bg-gradient-to-b from-[#1a2634] to-[#0a1017] flex items-center justify-center">
-                      <Avatar user={currentPremiumUser} size="lg" name={currentPremiumUser?.name} />
-                    </div>
-                  )}
+                  ) : null}
+
+                  {/* Fallback Placeholder (shown when hasHeroPhoto is false or image fails to load) */}
+                  <div
+                    className="placeholder-svg-container w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] bg-gradient-to-b from-[#1a2634] to-[#0a1017] flex items-center justify-center"
+                    style={{ display: hasHeroPhoto ? 'none' : 'flex' }}
+                  >
+                    <svg viewBox="0 0 100 100" fill="#5A5A75" className="w-12 h-12">
+                      <circle cx="50" cy="35" r="20"/>
+                      <ellipse cx="50" cy="85" rx="35" ry="25"/>
+                    </svg>
+                  </div>
+
                   {/* Blue Accent Bar Under Photo */}
                   <div className="w-full h-1.5 bg-[#00BFFF]" />
                 </div>
@@ -306,10 +364,10 @@ export default function Home({ onNavigate, user }) {
                 {/* Talent Meta beside photo */}
                 <div className="flex flex-col justify-end items-start gap-1 min-w-0 self-end h-[166px] sm:h-[196px] text-left">
                   <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight truncate drop-shadow-lg text-left w-full">
-                    {currentPremiumUser.name || 'Anil Timilsena'}
+                    {spotlightName}
                   </h1>
                   <p className="text-sm sm:text-base text-gray-200 font-medium capitalize drop-shadow-md truncate text-left w-full">
-                    {currentPremiumUser.role || currentPremiumUser.category || 'Actor'}
+                    {spotlightRole}
                   </p>
                   <button
                     type="button"

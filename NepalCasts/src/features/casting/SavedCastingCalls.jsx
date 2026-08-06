@@ -25,9 +25,29 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
       setLoading(false);
       return;
     }
-    const q = query(collection(db, 'saved_calls'), where('userId', '==', currentUser.uid), orderBy('savedAt', 'desc'), limit(visibleLimit + 1));
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+    }, 2500);
+
+    const q = query(collection(db, 'saved_calls'), where('userId', '==', currentUser.uid), limit(visibleLimit + 1));
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const docsData = snapshot.docs.map(d => ({ id: d.id, data: d.data() }));
+      clearTimeout(timeoutId);
+      const getTimestampMs = (val) => {
+        if (!val) return 0;
+        if (typeof val.toMillis === 'function') return val.toMillis();
+        if (typeof val.seconds === 'number') return val.seconds * 1000;
+        if (val instanceof Date) return val.getTime();
+        const parsed = new Date(val).getTime();
+        return isNaN(parsed) ? 0 : parsed;
+      };
+
+      const sortedDocs = [...snapshot.docs].sort((a, b) => {
+        const timeA = getTimestampMs(a.data().savedAt);
+        const timeB = getTimestampMs(b.data().savedAt);
+        return timeB - timeA;
+      });
+
+      const docsData = sortedDocs.map(d => ({ id: d.id, data: d.data() }));
       const hasMoreData = docsData.length > visibleLimit;
       const slicedDocs = hasMoreData ? docsData.slice(0, visibleLimit) : docsData;
       setHasMore(hasMoreData);
@@ -36,20 +56,15 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
       const uniqueCastingIds = Array.from(new Set(castingIds));
       
       const castingCallsMap = new Map();
-      const chunks = [];
-      for (let i = 0; i < uniqueCastingIds.length; i += 30) {
-        chunks.push(uniqueCastingIds.slice(i, i + 30));
-      }
       
-      await Promise.all(chunks.map(async (chunk) => {
+      await Promise.all(uniqueCastingIds.map(async (id) => {
         try {
-          const chunkQuery = query(collection(db, 'casting_calls'), where(documentId(), 'in', chunk));
-          const chunkSnap = await getDocs(chunkQuery);
-          chunkSnap.docs.forEach(docSnap => {
+          const docSnap = await getDoc(doc(db, 'casting_calls', id));
+          if (docSnap.exists()) {
             castingCallsMap.set(docSnap.id, docSnap.data());
-          });
+          }
         } catch (err) {
-          console.warn("Failed to batch fetch casting calls chunk:", err);
+          console.warn(`Failed to fetch casting call ${id}:`, err);
         }
       }));
       
@@ -69,8 +84,15 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
       }
       setSavedCalls(savedData);
       setLoading(false);
+    }, (error) => {
+      clearTimeout(timeoutId);
+      console.error("Saved casting calls subscription error:", error);
+      setLoading(false);
     });
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(timeoutId);
+      unsubscribe();
+    };
   }, [currentUser?.uid, visibleLimit]);
 
   const handleUnsave = async (saveId, castingTitle) => {
@@ -140,29 +162,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
             </span>
           </div>
 
-          {/* Sub Navigation Tabs */}
-          <div className="flex gap-2 border-b border-white/10 pb-3 overflow-x-auto scrollbar-none">
-            {[
-              { id: 'casting', label: 'Casting Calls', path: '/saved/casting' },
-              { id: 'talent', label: 'Saved Talent', path: '/saved/talent' },
-              { id: 'posts', label: 'Saved Posts', path: '/saved/posts' },
-              { id: 'searches', label: 'Saved Searches', path: '/saved/searches' }
-            ].map(tab => {
-              const isActive = (activeTab || 'casting') === tab.id || (tab.id === 'casting' && !activeTab);
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => navigate(tab.path)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${isActive
-                    ? 'bg-[#00BFFF]/10 border border-[#00BFFF]/30 text-[#00BFFF]'
-                    : 'bg-white/[0.02] border border-white/5 text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+
 
           {/* Loading Skeletons */}
           {loading && (
@@ -208,7 +208,12 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                       >
                         {call.title}
                       </h3>
-                      <p className="text-xs text-gray-400 line-clamp-1 font-medium">{call.roles || call.description || 'Audition Opportunity'}</p>
+                      <p className="text-xs text-gray-400 line-clamp-1 font-medium">
+                        {Array.isArray(call.roles)
+                          ? call.roles.map(r => typeof r === 'string' ? r : (r.name || 'Role')).join(' | ')
+                          : (call.roles || call.description || 'Audition Opportunity')
+                        }
+                      </p>
                     </div>
 
                     <button

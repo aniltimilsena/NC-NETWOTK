@@ -193,7 +193,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
 
               
-              <button onClick={() => setShowSearchOverlay(true)} className="text-nc-secondary hover:text-white p-1.5 transition-colors" aria-label="Search">
+              <button onClick={() => setShowSearchOverlay(true)} className="lg:hidden text-nc-secondary hover:text-white p-1.5 transition-colors" aria-label="Search">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
@@ -294,6 +294,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 { name: "Create", path: "/casting/create", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/> },
                 ...(isLoggedIn ? [
                     { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/> },
+                    { name: "Saved Calls", path: "/saved-castings", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/> },
                     { name: "Profile", path: `/profile/${user?.uid}`, icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/> }
                 ] : [])
             ].map((item, i) => {
@@ -355,7 +356,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 <div className="bg-[#1C1C1C] rounded-2xl p-3.5 border border-[#2A2A2A] relative overflow-hidden">
                   <h4 className="text-white font-bold text-[14px] mb-0.5 relative z-10">Go PRO</h4>
                   <p className="text-[#888] text-[11px] leading-snug mb-2.5 max-w-[200px] relative z-10">
-                    Unlock exclusive casting calls and AI talent matching.
+                    Get a verified badge and appear first in search results.
                   </p>
                   <Link to="/premium" onClick={() => setMenuOpen(false)} className="w-full text-center block bg-nc-pro text-black rounded-lg py-1.5 font-bold text-[12px] hover:bg-nc-pro/90 transition-colors relative z-10 shadow-lg shadow-nc-pro/20 animate-none" style={{ backgroundColor: '#FACC15' }}>
                     Go PRO

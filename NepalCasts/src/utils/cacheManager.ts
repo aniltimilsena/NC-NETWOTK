@@ -58,6 +58,15 @@ class CacheManager {
         if (!entry) {
             const subscribers = new Set<(data: any, error?: any) => void>();
             subscribers.add(callback);
+            
+            let currentUnsubscribe = () => {};
+            entry = {
+                unsubscribe: () => currentUnsubscribe(),
+                refCount: 1,
+                subscribers,
+            };
+            this.listenerPool.set(key, entry);
+
             const pooledCallback = (data: any, error?: any) => {
                 const poolEntry = this.listenerPool.get(key);
                 if (poolEntry) {
@@ -65,13 +74,10 @@ class CacheManager {
                     poolEntry.subscribers.forEach(sub => sub(data, error));
                 }
             };
+            
             const unsubscribe = listenerCreator(pooledCallback);
-            entry = {
-                unsubscribe,
-                refCount: 1,
-                subscribers,
-            };
-            this.listenerPool.set(key, entry);
+            currentUnsubscribe = unsubscribe;
+            
             this.metrics.activeListeners = this.listenerPool.size;
             console.debug(`[Listener] Created new pooled listener for key: ${key}. Active pool count: ${this.listenerPool.size}`);
         }

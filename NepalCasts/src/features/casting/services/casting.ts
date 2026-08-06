@@ -5,6 +5,24 @@ import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
 import { cacheManager } from "../../../utils/cacheManager";
+const saveCastingCallsCache = (filter: string, limitCount: number, data: any[]) => {
+    try {
+        localStorage.setItem(`nc_calls_cache_${filter.toLowerCase()}_${limitCount}`, JSON.stringify(data.slice(0, 50)));
+    } catch (e) {
+        // ignore quota error
+    }
+};
+
+const getCastingCallsCache = (filter: string, limitCount: number): any[] => {
+    try {
+        const v = localStorage.getItem(`nc_calls_cache_${filter.toLowerCase()}_${limitCount}`);
+        if (v) return JSON.parse(v);
+    } catch (e) {
+        // ignore error
+    }
+    return [];
+};
+
 export const subscribeToCastingCalls = (filter?: string | ((data: any, error?: any) => void), callback?: (data: any, error?: any) => void, limitCount: number = 20) => {
     let actualFilter: string = "all";
     let actualCallback: ((data: any, error?: any) => void) | undefined = callback;
@@ -17,6 +35,11 @@ export const subscribeToCastingCalls = (filter?: string | ((data: any, error?: a
     }
     const poolKey = `casting_calls_${actualFilter.toLowerCase()}_limit_${limitCount}`;
     return cacheManager.subscribePooled(poolKey, (pooledCb) => {
+        const saved = getCastingCallsCache(actualFilter, limitCount);
+        if (saved.length > 0) {
+            pooledCb(saved, null);
+        }
+
         let q;
         if (actualFilter && typeof actualFilter === "string" && actualFilter.toLowerCase() !== "all") {
             q = query(collection(db, COLLECTIONS.CASTING_CALLS), where("type", "==", actualFilter), orderBy("createdAt", "desc"), limit(limitCount));
@@ -26,6 +49,7 @@ export const subscribeToCastingCalls = (filter?: string | ((data: any, error?: a
         }
         return onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+            saveCastingCallsCache(actualFilter, limitCount, data);
             pooledCb(data, null);
         }, (error) => {
             console.error("Casting calls subscription error:", error);

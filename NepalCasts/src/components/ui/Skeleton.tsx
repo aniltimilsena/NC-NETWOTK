@@ -192,8 +192,8 @@ export const SidebarWidgetSkeleton = ({ count = 3, type = 'talent' }) => (
           </>
         ) : (
           <>
-            <div className="w-8 h-10 rounded-xl skeleton shrink-0" />
-            <div className="min-w-0 flex-1 space-y-1.5 text-left">
+            <div className="w-12 h-12 rounded-xl skeleton shrink-0" />
+            <div className="min-w-0 flex-1 space-y-2 text-left">
               <div className="h-3.5 skeleton w-24" />
               <div className="h-3 skeleton w-16" />
             </div>
