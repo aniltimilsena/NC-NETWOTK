@@ -211,7 +211,10 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                       <p className="text-xs text-gray-400 line-clamp-1 font-medium">
                         {Array.isArray(call.roles)
                           ? call.roles.map(r => typeof r === 'string' ? r : (r.name || 'Role')).join(' | ')
-                          : (call.roles || call.description || 'Audition Opportunity')
+                          : (typeof call.roles === 'object' && call.roles !== null
+                              ? (call.roles.name || 'Role')
+                              : (call.roles || call.description || 'Audition Opportunity')
+                            )
                         }
                       </p>
                     </div>

@@ -75,8 +75,13 @@ class CacheManager {
                 }
             };
             
-            const unsubscribe = listenerCreator(pooledCallback);
-            currentUnsubscribe = unsubscribe;
+            try {
+                const unsubscribe = listenerCreator(pooledCallback);
+                currentUnsubscribe = unsubscribe;
+            } catch (err) {
+                this.listenerPool.delete(key);
+                throw err;
+            }
             
             this.metrics.activeListeners = this.listenerPool.size;
             console.debug(`[Listener] Created new pooled listener for key: ${key}. Active pool count: ${this.listenerPool.size}`);
