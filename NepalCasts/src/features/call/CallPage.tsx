@@ -17,17 +17,18 @@ interface CallPageProps {
 export default function CallPage({ initialCallId, filter }: CallPageProps = {}) {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { callState, activeCall, isMuted, callDuration, initiateCall, hangUp, toggleMute } = useCall();
+    const { callState, activeCall, isMuted, callDuration, initiateCall, hangUp, toggleMute, currentUser } = useCall();
     const hasInitiated = useRef(false);
     const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
-    const calleeNameParam = searchParams.get('calleeName') || 'User';
-    const calleePhotoParam = searchParams.get('calleePhoto') || '';
+    const initiate = searchParams.get('initiate');
+    const type = searchParams.get('type') as 'audio' | 'video';
+    const calleeId = searchParams.get('calleeId');
+    const calleeName = searchParams.get('calleeName');
+    const calleePhoto = searchParams.get('calleePhoto');
+
+    const calleeNameParam = calleeName || 'User';
+    const calleePhotoParam = calleePhoto || '';
     useEffect(() => {
-        const initiate = searchParams.get('initiate');
-        const type = searchParams.get('type') as 'audio' | 'video';
-        const calleeId = searchParams.get('calleeId');
-        const calleeName = searchParams.get('calleeName');
-        const calleePhoto = searchParams.get('calleePhoto');
         if (initiate === 'true' && type && calleeId && !hasInitiated.current) {
             hasInitiated.current = true;
             initiateCall({
@@ -37,7 +38,11 @@ export default function CallPage({ initialCallId, filter }: CallPageProps = {}) 
                 callType: type,
             });
         }
-    }, [searchParams, initiateCall]);
+    }, [initiate, type, calleeId, calleeName, calleePhoto, initiateCall]);
+    const isCaller = currentUser?.uid === activeCall?.callerId;
+    const targetId = isCaller
+        ? (activeCall?.calleeId || activeCall?.receiverId || calleeId || undefined)
+        : (activeCall?.callerId || calleeId || undefined);
     const targetName = activeCall?.calleeName || calleeNameParam;
     const targetPhoto = activeCall?.calleePhoto || calleePhotoParam;
     const isCallConnected = callState === 'connected';
@@ -77,7 +82,7 @@ export default function CallPage({ initialCallId, filter }: CallPageProps = {}) 
             <div className="absolute -inset-2 rounded-full bg-[#00BFFF]/10 blur-md"/>
 
             <div className="relative z-10 p-1.5 rounded-full bg-gradient-to-b from-[#00BFFF]/40 to-white/10 shadow-2xl">
-              {targetPhoto ? (<Avatar src={targetPhoto} name={targetName} size="none" className="w-28 h-28 sm:w-32 sm:h-32 text-3xl rounded-full border-4 border-[#0A0A0F] shadow-inner"/>) : (<div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-[#0A0A0F] flex items-center justify-center border-4 border-[#0A0A0F]">
+              {targetPhoto ? (<Avatar userId={targetId} src={targetPhoto} name={targetName} size="none" className="w-28 h-28 sm:w-32 sm:h-32 text-3xl rounded-full border-4 border-[#0A0A0F] shadow-inner"/>) : (<div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-[#0A0A0F] flex items-center justify-center border-4 border-[#0A0A0F]">
                   <div className="w-16 h-16 rounded-2xl bg-[#00BFFF]/10 border border-[#00BFFF]/30 flex items-center justify-center shadow-[0_0_20px_rgba(0,191,255,0.25)]">
                     <Users className="w-8 h-8 text-[#00BFFF]"/>
                   </div>

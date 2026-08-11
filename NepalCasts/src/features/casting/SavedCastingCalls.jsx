@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { collection, query, where, orderBy, onSnapshot, doc, deleteDoc, getDoc, documentId, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, deleteDoc, limit } from 'firebase/firestore';
 import { Bookmark, ChevronLeft, Trash2, MapPin, ArrowRight, BookmarkX } from 'lucide-react';
+import { getCastingCallById } from './services/casting';
 import { db } from '../../lib/firebase';
 import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
@@ -59,9 +60,9 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
       
       await Promise.all(uniqueCastingIds.map(async (id) => {
         try {
-          const docSnap = await getDoc(doc(db, 'casting_calls', id));
-          if (docSnap.exists()) {
-            castingCallsMap.set(docSnap.id, docSnap.data());
+          const data = await getCastingCallById(id);
+          if (data) {
+            castingCallsMap.set(id, data);
           }
         } catch (err) {
           console.warn(`Failed to fetch casting call ${id}:`, err);
@@ -111,7 +112,11 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
     if (onNavigate) {
       onNavigate('back');
     } else {
-      navigate(-1);
+      if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
+        navigate(-1);
+      } else {
+        navigate('/');
+      }
     }
   };
 

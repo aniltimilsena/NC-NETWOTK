@@ -119,16 +119,26 @@ export const DialogProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [showDialog]);
 
+  const contextValue = React.useMemo(() => ({
+    showDialog,
+    showConfirmDialog,
+    showSuccessDialog,
+    showErrorDialog,
+    showWarningDialog,
+    showDeleteDialog,
+    closeActiveDialog
+  }), [
+    showDialog,
+    showConfirmDialog,
+    showSuccessDialog,
+    showErrorDialog,
+    showWarningDialog,
+    showDeleteDialog,
+    closeActiveDialog
+  ]);
+
   return (
-    <DialogContext.Provider value={{
-      showDialog,
-      showConfirmDialog,
-      showSuccessDialog,
-      showErrorDialog,
-      showWarningDialog,
-      showDeleteDialog,
-      closeActiveDialog
-    }}>
+    <DialogContext.Provider value={contextValue}>
       {children}
       {options && (
         <ConfirmDialog

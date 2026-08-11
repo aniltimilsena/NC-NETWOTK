@@ -1,5 +1,5 @@
 import React, { lazy } from 'react';
-import { Route, useParams } from 'react-router-dom';
+import { Route, useParams, Navigate } from 'react-router-dom';
 
 const SavedCastingCalls = lazy(() => import('../features/casting/SavedCastingCalls'));
 
@@ -16,6 +16,6 @@ export const SavedRoutes = ({ user, onNavigate, showToast }: any) => (
     <Route path="/saved/posts" element={<SavedWrapper user={user} onNavigate={onNavigate} showToast={showToast} />} />
     <Route path="/saved/searches" element={<SavedWrapper user={user} onNavigate={onNavigate} showToast={showToast} />} />
     <Route path="/saved/:type" element={<SavedWrapper user={user} onNavigate={onNavigate} showToast={showToast} />} />
-    <Route path="/saved-castings" element={<SavedWrapper user={user} onNavigate={onNavigate} showToast={showToast} />} />
+    <Route path="/saved-castings" element={<Navigate to="/saved" replace />} />
   </>
 );

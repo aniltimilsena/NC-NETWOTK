@@ -55,19 +55,7 @@ export const CastingRoutes = ({ onNavigate, user, isAdmin, showAlert }: any) => 
       element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
     />
     <Route
-      path="/my-casting/:castingId/edit"
-      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
-    />
-    <Route
-      path="/my-casting/:castingId/applicants"
-      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
-    />
-    <Route
-      path="/my-casting/:castingId/media"
-      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
-    />
-    <Route
-      path="/my-casting/:castingId/invitations"
+      path="/my-casting/:castingId/:sub"
       element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
     />
   </>

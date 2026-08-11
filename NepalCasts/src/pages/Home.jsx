@@ -3,7 +3,6 @@ import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 import CategorySkeleton from '../components/ui/CategorySkeleton';
 import Avatar from '../components/ui/Avatar';
-import { getAvatar } from '../utils/avatars';
 import { useTranslation } from 'react-i18next';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { subscribeToTalents, subscribeToCastingCalls } from '../services';
@@ -200,7 +199,7 @@ export default function Home({ onNavigate, user }) {
   });
 
   const defaultTalent = {
-    id: user?.uid || 'user_3HLKDqOhgyPdFXpVDEKoryrLXDG',
+    id: user?.uid || 'user_default_id_nepalcasts',
     name: user?.displayName || user?.name || 'Anil Timilsena',
     role: user?.role || 'Model',
     category: user?.role || 'Model',
@@ -209,7 +208,7 @@ export default function Home({ onNavigate, user }) {
   };
 
   const trendingList = activeTalentsList.filter(t => t.featured === true || t.premium === true || t.isPremium === true);
-  const currentPremiumUser = trendingList[currentPremiumIdx] || (user ? { ...defaultTalent, ...user } : defaultTalent);
+  const currentPremiumUser = trendingList[currentPremiumIdx] || activeTalentsList[0] || (user ? { ...defaultTalent, ...user } : defaultTalent);
 
   useEffect(() => {
     if (trendingList.length <= 1) return;
@@ -230,19 +229,28 @@ export default function Home({ onNavigate, user }) {
       setSpotlightProfile(null);
       return;
     }
-    const unsub = onSnapshot(doc(db, 'profiles', spotlightUserId), (snap) => {
+    let unsubUser = null;
+    const unsubProfile = onSnapshot(doc(db, 'profiles', spotlightUserId), (snap) => {
       if (snap.exists()) {
+        if (unsubUser) {
+          unsubUser();
+          unsubUser = null;
+        }
         setSpotlightProfile(snap.data());
       } else {
-        const unsubUser = onSnapshot(doc(db, 'users', spotlightUserId), (uSnap) => {
-          if (uSnap.exists()) {
-            setSpotlightProfile(uSnap.data());
-          }
-        });
-        return () => unsubUser();
+        if (!unsubUser) {
+          unsubUser = onSnapshot(doc(db, 'users', spotlightUserId), (uSnap) => {
+            if (uSnap.exists()) {
+              setSpotlightProfile(uSnap.data());
+            }
+          });
+        }
       }
     }, (err) => console.warn("Spotlight profile fetch warning:", err));
-    return () => unsub();
+    return () => {
+      unsubProfile();
+      if (unsubUser) unsubUser();
+    };
   }, [spotlightUserId]);
 
   const isDefaultImage = (url) => {

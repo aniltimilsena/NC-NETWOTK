@@ -23,10 +23,6 @@ export const MessagesRoutes = ({ onNavigate, user, showAlert }: any) => (
   <>
     <Route path="/messages" element={<MessagesWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
     <Route path="/messages/:conversationId" element={<MessagesWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
-    <Route path="/messages/:conversationId/media" element={<MessagesWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
-    <Route path="/messages/:conversationId/files" element={<MessagesWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
-    <Route path="/messages/:conversationId/links" element={<MessagesWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
-    <Route path="/messages/:conversationId/info" element={<MessagesWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
-    <Route path="/messages/:conversationId/search" element={<MessagesWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
+    <Route path="/messages/:conversationId/:sub" element={<MessagesWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />} />
   </>
 );

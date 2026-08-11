@@ -5,8 +5,9 @@ import SEO from '../../components/SEO';
 import { InlineAlert } from '../../components/ui/AlertBanner';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { db } from '../../lib/firebase';
-import { doc, onSnapshot, collection, addDoc, serverTimestamp, deleteDoc, updateDoc, query, where } from 'firebase/firestore';
+import { doc, onSnapshot, collection, addDoc, serverTimestamp, deleteDoc, updateDoc, query, where, getDocs, limit } from 'firebase/firestore';
 import Avatar from '../../components/ui/Avatar';
+import { getProfile } from '../profile/services/profile';
 
 export default function CastingCallDetail({ onNavigate, castingId, user, showAlert }: any) {
   const [call, setCall] = useState<any>(null);
@@ -97,25 +98,27 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   useEffect(() => {
     if (!call?.creatorId) return;
-    const unsub = onSnapshot(doc(db, 'profiles', call.creatorId), (snap) => {
-      if (snap.exists()) {
-        setDirectorProfile({ id: snap.id, ...snap.data() });
+    getProfile(call.creatorId).then((res) => {
+      if (res.data) {
+        setDirectorProfile(res.data);
       }
-    });
-    return () => unsub();
+    }).catch((err) => console.warn(err));
   }, [call?.creatorId]);
 
   useEffect(() => {
     if (!call?.type) return;
-    const q = query(collection(db, 'casting_calls'), where('type', '==', call.type));
-    const unsub = onSnapshot(q, (snap) => {
+    const q = query(
+      collection(db, 'casting_calls'),
+      where('type', '==', call.type),
+      limit(10)
+    );
+    getDocs(q).then((snap) => {
       const data = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .filter((c: any) => c.id !== call.id)
         .slice(0, 3);
       setRelatedCalls(data);
-    });
-    return () => unsub();
+    }).catch((err) => console.warn(err));
   }, [call?.id, call?.type]);
 
   useEffect(() => {

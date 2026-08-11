@@ -225,7 +225,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
                 const senderAvatar = isMsgMe ? (user.photoURL || '') : (activeChat.avatar || '');
                 return (<div key={msg.id} className="bg-white/5 border border-white/5 rounded-2xl p-3.5 space-y-2 relative group hover:border-[#00BFFF]/20 transition-all text-left">
                         <div className="flex items-center gap-2">
-                          <Avatar src={senderAvatar} name={senderName} size="xs" className="w-6 h-6"/>
+                          <Avatar userId={msg.senderId} src={senderAvatar} name={senderName} size="xs" className="w-6 h-6"/>
                           <div className="flex-1 min-w-0">
                             <span className="text-xs font-bold text-white block truncate">{senderName}</span>
                           </div>

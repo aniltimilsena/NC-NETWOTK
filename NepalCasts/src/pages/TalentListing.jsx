@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MoreVertical, Share2, ChevronLeft, SlidersHorizontal } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { db } from '../lib/firebase';
-import { collection, onSnapshot, query, orderBy, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import Tag from '../components/ui/Tag';
@@ -66,7 +66,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
             setSelectedFilters(prev => ({ ...prev, category: resolved }));
             setViewMode('talents');
         }
-        else if (initialCategory === 'All') {
+        else {
             setSelectedFilters(prev => ({ ...prev, category: 'All' }));
             setViewMode('categories');
         }
@@ -285,7 +285,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
 
                     {viewMode === 'categories' && (<div className="animate-fade-in space-y-10 text-left">
                         <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                            <button onClick={() => onNavigate('back')} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all shadow-md shrink-0 cursor-pointer" aria-label="Back" title="Go Back">
+                            <button onClick={() => onNavigate('home')} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all shadow-md shrink-0 cursor-pointer" aria-label="Back" title="Go Back">
                                 <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
                             </button>
                             <div>
@@ -303,6 +303,11 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                     setSelectedFilters(prev => ({ ...prev, category: cat }));
                                     setViewMode('talents');
                                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    if (typeof onNavigate === 'function') {
+                                        onNavigate('talents', cat);
+                                    } else {
+                                        navigate(`/talents/${cat}`);
+                                    }
                                 }} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }} className="category-card p-7 sm:p-9 lg:p-11 flex flex-col items-center justify-center gap-4 sm:gap-5 group cursor-pointer rounded-3xl">
 
                                     <div className="relative z-10 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1" style={{
@@ -334,10 +339,11 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                 <button onClick={() => {
                                     setSelectedFilters(prev => ({ ...prev, category: 'All' }));
                                     setViewMode('categories');
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
                                     if (typeof onNavigate === 'function') {
                                         onNavigate('listing');
                                     } else {
-                                        navigate('/talents', { replace: true });
+                                        navigate('/talents');
                                     }
                                 }} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all shadow-md cursor-pointer shrink-0" aria-label="Back to Categories" title="Back to Categories">
                                     <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />

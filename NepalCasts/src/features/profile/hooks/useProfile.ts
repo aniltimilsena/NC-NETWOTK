@@ -64,48 +64,54 @@ export function useProfile(profileId: string | null, currentUser: any) {
             setLoading(false);
             return;
         }
-        const unsubProfile = onSnapshot(doc(db, "profiles", targetUid), (pSnap) => {
-            const pData = pSnap.exists() ? pSnap.data() : {};
-            const unsubUser = onSnapshot(doc(db, "users", targetUid), (uSnap) => {
-                const uData = uSnap.exists() ? uSnap.data() : {};
-                const isPrem = Boolean(
-                    pData.isPremium || 
-                    pData.premium || 
-                    uData.isPremium || 
-                    uData.premium || 
-                    (currentUser?.uid === targetUid && (currentUser?.isPremium || currentUser?.premium))
-                );
-                const merged = {
-                    uid: targetUid,
-                    id: targetUid,
-                    ...uData,
-                    ...pData,
-                    isPremium: isPrem,
-                    premium: isPrem,
-                };
-                setProfile(merged as unknown as UserProfile);
-                setLoading(false);
-            }, () => {
-                const isPrem = Boolean(
-                    pData.isPremium || 
-                    pData.premium || 
-                    (currentUser?.uid === targetUid && (currentUser?.isPremium || currentUser?.premium))
-                );
-                const merged = {
-                    uid: targetUid,
-                    id: targetUid,
-                    ...pData,
-                    isPremium: isPrem,
-                    premium: isPrem,
-                };
-                setProfile(merged as unknown as UserProfile);
-                setLoading(false);
-            });
-            return () => unsubUser();
-        }, () => {
+
+        let pData: any = null;
+        let uData: any = null;
+        let pLoaded = false;
+        let uLoaded = false;
+
+        const handleMerge = () => {
+            const isPrem = Boolean(
+                pData?.isPremium || 
+                pData?.premium || 
+                uData?.isPremium || 
+                uData?.premium || 
+                (currentUser?.uid === targetUid && (currentUser?.isPremium || currentUser?.premium))
+            );
+            const merged = {
+                uid: targetUid,
+                id: targetUid,
+                ...uData,
+                ...pData,
+                isPremium: isPrem,
+                premium: isPrem,
+            };
+            setProfile(merged as unknown as UserProfile);
             setLoading(false);
+        };
+
+        const unsubProfile = onSnapshot(doc(db, "profiles", targetUid), (pSnap) => {
+            pData = pSnap.exists() ? pSnap.data() : {};
+            pLoaded = true;
+            handleMerge();
+        }, () => {
+            pLoaded = true;
+            handleMerge();
         });
-        return () => unsubProfile();
+
+        const unsubUser = onSnapshot(doc(db, "users", targetUid), (uSnap) => {
+            uData = uSnap.exists() ? uSnap.data() : {};
+            uLoaded = true;
+            handleMerge();
+        }, () => {
+            uLoaded = true;
+            handleMerge();
+        });
+
+        return () => {
+            unsubProfile();
+            unsubUser();
+        };
     }, [targetUid, currentUser?.uid]);
     useEffect(() => {
         if (!targetUid)

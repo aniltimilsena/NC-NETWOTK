@@ -89,7 +89,7 @@ export default function SignUp({ onNavigate }: SignUpProps) {
                             }
                         }}
                         signInUrl="/signin"
-                        forceRedirectUrl="/"
+                        fallbackRedirectUrl="/"
                     />
                 </div>
 

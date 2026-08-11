@@ -47,21 +47,32 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         };
     }, [activeChatId, currentUser?.uid]);
     useEffect(() => {
-        if (!initialUserId || !currentUser?.uid)
+        if (!currentUser?.uid) return;
+        if (!initialUserId) {
+            setActiveChatId(null);
             return;
+        }
+        const existingConvo = conversations.find((c) => c.id === initialUserId || c.otherParticipantId === initialUserId);
+        if (existingConvo) {
+            setActiveChatId(existingConvo.id);
+            return;
+        }
         const resolveConvo = async () => {
             try {
                 const res = await createConversation([currentUser.uid, initialUserId], undefined, currentUser.uid);
                 if (res?.id) {
                     setActiveChatId(res.id);
+                } else {
+                    setActiveChatId(initialUserId);
                 }
             }
             catch (err) {
                 console.warn("Failed to resolve initial chat:", err);
+                setActiveChatId(initialUserId);
             }
         };
         resolveConvo();
-    }, [initialUserId, currentUser?.uid]);
+    }, [initialUserId, currentUser?.uid, conversations]);
     useEffect(() => {
         if (!currentUser?.uid) {
             setLoadingCalls(false);

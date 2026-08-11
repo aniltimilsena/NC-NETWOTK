@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { doc, getDoc, collection, query, onSnapshot, deleteDoc, updateDoc, documentId, where, getDocs } from 'firebase/firestore';
+import { doc, collection, query, onSnapshot, deleteDoc, updateDoc, documentId, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { getProfile, updateProfileData } from '../../../services';
 import type { UserProfile, ServiceResult } from '../../../types';

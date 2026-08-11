@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import { subscribeToGlobalSettings } from '../features/admin/services/admin';
@@ -20,11 +20,24 @@ export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToa
         return () => unsub();
     }, []);
     const handleLegacyNavigate = (page: string, param: any = null) => {
+        if (!page) {
+            navigate('/');
+            return;
+        }
+        if (page.startsWith('/')) {
+            navigate(page);
+            return;
+        }
         switch (page) {
             case 'home':
                 navigate('/');
                 break;
+            case 'discover':
+                navigate('/discover');
+                break;
             case 'listing':
+            case 'talent':
+            case 'talents':
                 navigate('/talents');
                 break;
             case 'profile':
@@ -34,7 +47,7 @@ export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToa
                 navigate('/casting');
                 break;
             case 'casting-detail':
-                navigate(`/casting/${param}`);
+                navigate(param ? `/casting/${param}` : '/casting');
                 break;
             case 'signin':
                 navigate('/signin');
@@ -52,13 +65,18 @@ export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToa
                 navigate('/premium');
                 break;
             case 'messages':
-                navigate('/messages');
+                navigate(param ? `/messages/${param}` : '/messages');
                 break;
             case 'notifications':
                 navigate('/notifications');
                 break;
             case 'settings':
                 navigate('/settings');
+                break;
+            case 'saved':
+            case 'saved-casting':
+            case 'saved-castings':
+                navigate('/saved');
                 break;
             case 'privacy':
                 navigate('/privacy');
@@ -67,9 +85,13 @@ export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToa
                 navigate('/terms');
                 break;
             case 'trust':
+            case 'trust-safety':
                 navigate('/trust-safety');
                 break;
-            default: navigate('/');
+            case 'trending':
+                navigate('/trending');
+                break;
+            default: navigate('/' + page);
         }
     };
     const showNavbar = !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications') && !location.pathname.startsWith('/call');
@@ -97,7 +119,9 @@ export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToa
     return (<div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
       {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate}/>)}
       <main className="flex-1 px-0 pb-8">
-        <Outlet context={{ user, isAdmin, showAlert, showToast }}/>
+        <Suspense fallback={<div className="min-h-screen bg-[#070709]" />}>
+          <Outlet context={{ user, isAdmin, showAlert, showToast }}/>
+        </Suspense>
       </main>
     </div>);
 }

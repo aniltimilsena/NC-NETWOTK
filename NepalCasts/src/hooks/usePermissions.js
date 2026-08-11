@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { logger } from '../utils/logger';
 const getBrowserPermissionState = async (type) => {
     if (!navigator.permissions || !navigator.permissions.query) {
@@ -97,11 +97,11 @@ export const usePermissions = () => {
         const baseType = permissionType.startsWith('media') ? 'media' : permissionType;
         localStorage.setItem(`nc_perm_${baseType}`, 'skipped');
     }, [permissionType]);
-    return {
+    return useMemo(() => ({
         showPermissionModal: showModal,
         permissionType,
         requestPermission: checkAndRequest,
         handlePermissionGrant: handleGrant,
         handlePermissionClose: handleClose
-    };
+    }), [showModal, permissionType, checkAndRequest, handleGrant, handleClose]);
 };

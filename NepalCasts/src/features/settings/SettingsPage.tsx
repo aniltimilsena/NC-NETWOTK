@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSettings } from './hooks/useSettings';
 import ProfileSettings from './components/ProfileSettings';
 import SkillsSettings from './components/SkillsSettings';
@@ -85,6 +85,10 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
 
     const [activeTab, setActiveTab] = useState<'about' | 'skills' | 'experience' | 'password' | 'notifications' | 'language'>(() => resolveTab(initialTab));
     const [currentMobileView, setCurrentMobileView] = useState<'menu' | 'content'>('menu');
+
+    useEffect(() => {
+        setActiveTab(resolveTab(initialTab));
+    }, [initialTab]);
 
     const tabsConfig = [
         { id: 'about', label: 'Edit Profile', icon: User },
@@ -194,6 +198,8 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
                                 onClick={() => {
                                     setActiveTab(tab.id);
                                     setCurrentMobileView('content');
+                                    const pathSuffix = tab.id === 'about' ? 'profile' : tab.id === 'password' ? 'security' : tab.id;
+                                    onNavigate(`/settings/${pathSuffix}`);
                                 }}
                                 className={`w-fit md:w-full flex items-center justify-start text-left gap-4 px-4 py-3.5 rounded-2xl text-lg font-bold transition-all border ${
                                     isSelected

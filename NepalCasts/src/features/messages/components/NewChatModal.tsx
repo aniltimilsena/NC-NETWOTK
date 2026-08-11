@@ -66,7 +66,7 @@ export default function NewChatModal({ isOpen, onClose, onSelectUser }: NewChatM
                 onSelectUser(p.uid);
                 onClose();
             }} className="flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-white/5 transition-all">
-                <Avatar src={p.image} name={p.name} size="sm"/>
+                <Avatar userId={p.uid} src={p.image} name={p.name} size="sm"/>
                 <div className="text-left">
                   <span className="text-sm font-bold text-white block">{p.name}</span>
                   <span className="text-[10px] text-nc-muted font-semibold uppercase tracking-wider">{p.role || 'Talent'}</span>

@@ -1,10 +1,8 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Search, X } from "lucide-react";
-import { db } from "@/lib/firebase";
 import { AuthService } from "@/services/AuthService";
 import Avatar from "./Avatar";
-import { collection, onSnapshot, query as firestoreQuery } from "firebase/firestore";
 import { subscribeToTalents } from "@/features/profile/services/users";
 interface ProfileSuggestion {
     uid: string;
@@ -33,7 +31,22 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
 }) {
     const { t } = useTranslation();
     const [query, setQuery] = useState("");
-    const [profiles, setProfiles] = useState<ProfileSuggestion[]>([]);
+
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isFocused, setIsFocused] = useState(false);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsFocused(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     const [loading, setLoading] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -143,8 +156,8 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
             }
         }
     }, [hasLoaded, allProfiles, history.length]);
-    useEffect(() => {
-        const normalized = query.trim().toLowerCase();
+    const normalized = query.trim().toLowerCase();
+    const profiles = useMemo(() => {
         const historyProfileUids = history
             .filter(h => h.type === 'profile')
             .map(h => h.value);
@@ -153,17 +166,15 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
             return (currentUid && uid === currentUid) || dismissedSuggestionIds.includes(uid) || historyProfileUids.includes(uid);
         };
         if (!normalized) {
-            setProfiles(allProfiles.filter(p => !isExcluded(p.uid)).slice(0, 6));
-            return;
+            return allProfiles.filter(p => !isExcluded(p.uid)).slice(0, 6);
         }
-        const filtered = allProfiles.filter((p) => {
+        return allProfiles.filter((p) => {
             return (!isExcluded(p.uid) && (p.name?.toLowerCase().includes(normalized) ||
                 p.role?.toLowerCase().includes(normalized) ||
                 p.location?.toLowerCase().includes(normalized) ||
                 p.uid?.toLowerCase() === normalized));
-        });
-        setProfiles(filtered.slice(0, 6));
-    }, [query, allProfiles, dismissedSuggestionIds, history]);
+        }).slice(0, 6);
+    }, [normalized, allProfiles, dismissedSuggestionIds, history]);
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter" && query.trim()) {
             addToHistory({
@@ -197,7 +208,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
             name: term
         });
     };
-    return (<div className="w-full relative space-y-5 max-w-3xl mx-auto">
+    return (<div ref={containerRef} className="w-full relative space-y-5 max-w-3xl mx-auto">
             
             <div className="flex items-center gap-3">
                 {onClose && (<button onClick={onClose} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shrink-0 cursor-pointer" title="Go Back" aria-label="Go Back">
@@ -206,7 +217,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
                         </svg>
                     </button>)}
                 <div className="relative flex-1 flex items-center bg-[#242526] rounded-full px-4 py-2 border-0">
-                    <input ref={inputRef} type="text" placeholder={t('ui.searchPlaceholder')} value={query} onChange={(e) => {
+                    <input ref={inputRef} type="text" placeholder={t('ui.searchPlaceholder')} value={query} onFocus={() => setIsFocused(true)} onChange={(e) => {
             setQuery(e.target.value);
             triggerSearchAnimation();
         }} onKeyDown={(e) => {
@@ -231,7 +242,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
                 </div>
             </div>
 
-            
+            {isFocused && (
             <div className="relative w-full bg-transparent z-50 text-left pt-2">
                 <div className="space-y-6">
                     
@@ -290,11 +301,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
                                                     </div>
                                                 ) : (
                                                     <div className="w-10 h-10 md:w-11 md:h-11 shrink-0">
-                                                        <Avatar user={{
-                                                            image: displayImage,
-                                                            photoURL: displayImage,
-                                                            displayName: displayName
-                                                        }} size="sm" name={displayName} verified={displayVerified}/>
+                                                        <Avatar userId={item.value} size="sm" name={displayName} verified={displayVerified}/>
                                                     </div>
                                                 )}
                                                 
@@ -346,12 +353,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
                                     {profiles.map((profile) => (<li key={profile.uid} onClick={() => handleProfileSelect(profile)} className="flex items-center justify-between py-2 px-1 hover:bg-white/[0.04] transition-colors rounded-xl cursor-pointer">
                                             <div className="flex items-start gap-3.5 min-w-0 text-left">
                                                 <div className="w-10 h-10 md:w-11 md:h-11 shrink-0">
-                                                    <Avatar user={{
-                        image: profile.image || (profile as any).photoURL,
-                        photoURL: (profile as any).photoURL || profile.image,
-                        gender: profile.gender,
-                        displayName: profile.name
-                    }} size="sm" name={profile.name} verified={profile.verified}/>
+                                                    <Avatar userId={profile.uid} size="sm" name={profile.name} verified={profile.verified}/>
                                                 </div>
 
                                                 <div className="min-w-0">
@@ -382,5 +384,6 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
                         </div>)}
                 </div>
             </div>
+            )}
         </div>);
 }

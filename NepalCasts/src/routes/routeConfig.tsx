@@ -1,10 +1,10 @@
 import React, { lazy } from 'react';
-import { Route, Routes, Navigate, useNavigate, Outlet } from 'react-router-dom';
+import { Route, Routes, Navigate, useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
 import PublicLayout from '../layouts/PublicLayout';
 import UserLayout from '../layouts/UserLayout';
 import AdminLayout from '../layouts/AdminLayout';
-import RouteLoader from '../components/RouteLoader';
+// RouteLoader removed to prevent generic skeleton flash
 
 import { MessagesRoutes } from './messages.routes';
 import { SettingsRoutes } from './settings.routes';
@@ -19,6 +19,12 @@ import { CallsRoutes } from './calls.routes';
 import { ApplicationsRoutes } from './applications.routes';
 import { CurrentUser } from '../utils/CurrentUser';
 
+import SignIn from '../features/auth/SignIn';
+import SignUp from '../features/auth/SignUp';
+import ForgotPassword from '../features/auth/ForgotPassword';
+import ResetPassword from '../features/auth/ResetPassword';
+import VerifyEmail from '../features/auth/VerifyEmail';
+
 const Home = lazy(() => import('../pages/Home'));
 const Premium = lazy(() => import('../pages/Premium'));
 const About = lazy(() => import('../pages/About'));
@@ -27,22 +33,18 @@ const Help = lazy(() => import('../pages/Help'));
 const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('../pages/TermsOfService'));
 const TrustSafety = lazy(() => import('../pages/TrustSafety'));
-const SignIn = lazy(() => import('../features/auth/SignIn'));
-const SignUp = lazy(() => import('../features/auth/SignUp'));
-const ForgotPassword = lazy(() => import('../features/auth/ForgotPassword'));
-const ResetPassword = lazy(() => import('../features/auth/ResetPassword'));
-const VerifyEmail = lazy(() => import('../features/auth/VerifyEmail'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 const Forbidden = lazy(() => import('../pages/Forbidden'));
 const ServerError = lazy(() => import('../pages/ServerError'));
 
 const ProtectedRoute = ({ user, authReady, children }: any) => {
-  if (!authReady) return <RouteLoader />;
-  return user ? (children || <Outlet />) : <Navigate to="/login" replace />;
+  const location = useLocation();
+  if (!authReady) return <div className="min-h-screen bg-[#070709]" />;
+  return user ? (children || <Outlet />) : <Navigate to={`/signin?redirect_url=${encodeURIComponent(location.pathname + location.search)}`} replace />;
 };
 
 const AdminRoute = ({ user, isAdmin, authReady, children }: any) => {
-  if (!authReady) return <RouteLoader />;
+  if (!authReady) return <div className="min-h-screen bg-[#070709]" />;
   return user && isAdmin ? (children || <Outlet />) : <Navigate to="/" replace />;
 };
 
@@ -51,7 +53,11 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
 
   const onNavigate = (page: string, param?: any) => {
     if (page === 'back') {
-      navigate(-1);
+      if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
+        navigate(-1);
+      } else {
+        navigate('/');
+      }
       return;
     }
     if (page && page.startsWith('/')) {
@@ -89,7 +95,7 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
       <Route element={<PublicLayout user={user} isAdmin={isAdmin} onLogout={onLogout} showAlert={showAlert} showToast={showToast} />}>
         <Route path="/" element={<Home onNavigate={onNavigate} user={user} />} />
         {DiscoverRoutes({ onNavigate, user, isAdmin })}
-        {ProfileRoutes({ onNavigate, user, isAdmin, showAlert })}
+        {ProfileRoutes({ onNavigate, user, isAdmin, showAlert, authReady })}
         {CastingRoutes({ onNavigate, user, isAdmin, showAlert })}
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />

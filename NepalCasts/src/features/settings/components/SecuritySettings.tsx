@@ -55,7 +55,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                         {blockedUsers.map((u) => (
                             <div key={u.uid} className="flex justify-between items-center bg-white/5 border border-white/5 p-3 rounded-2xl">
                                 <div className="flex items-center gap-3">
-                                    <Avatar src={u.image} name={u.name} size="sm" />
+                                    <Avatar userId={u.uid} src={u.image} name={u.name} size="sm" />
                                     <div className="text-left">
                                         <span className="text-sm font-bold text-white block">{u.name}</span>
                                         <span className="text-[9px] text-nc-muted uppercase tracking-wider font-bold">{u.role}</span>

@@ -12,7 +12,6 @@ import { initOneSignal, oneSignalInitialized } from '../utils/oneSignal';
 import OneSignal from 'react-onesignal';
 import SplashScreen from '../components/SplashScreen';
 const Onboarding = lazy(() => import('../components/Onboarding'));
-import { AlertBanner } from '../components/ui/AlertBanner';
 const CallingOverlay = lazy(() => import('../features/call/components/CallingOverlay'));
 const IncomingCallPopup = lazy(() => import('../features/call/components/IncomingCallPopup'));
 import { AnimatePresence } from 'framer-motion';
@@ -312,7 +311,7 @@ export default function AppProviders({ children }: {
         return () => unsub();
     }, [user?.uid, showAlert]);
 
-    const updateAvatar = async (newUrl: string | null) => {
+    const updateAvatar = useCallback(async (newUrl: string | null) => {
         if (!user?.uid)
             return;
         const uid = user.uid;
@@ -322,9 +321,9 @@ export default function AppProviders({ children }: {
             updatedAt: serverTimestamp()
         });
         setUser((prev: any) => prev ? { ...prev, photoURL: newUrl || '' } : null);
-    };
+    }, [user?.uid]);
 
-    const deleteAvatar = async () => {
+    const deleteAvatar = useCallback(async () => {
         if (!user?.uid)
             return;
         const uid = user.uid;
@@ -334,7 +333,7 @@ export default function AppProviders({ children }: {
             updatedAt: serverTimestamp()
         });
         setUser((prev: any) => prev ? { ...prev, photoURL: '' } : null);
-    };
+    }, [user?.uid]);
 
     const handleCancelDeletion = async () => {
         if (!user?.uid)
@@ -357,14 +356,14 @@ export default function AppProviders({ children }: {
         }
     };
 
-    const handleLogout = async () => {
+    const handleLogout = useCallback(async () => {
         await signOut();
         await firebaseSignOut(auth).catch(console.warn);
-    };
+    }, [signOut]);
 
     const clerkComputedName = clerkUser ? (clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || (user?.email ? user.email.split('@')[0] : '')) : '';
 
-    const enrichedUser = user ? {
+    const enrichedUser = React.useMemo(() => user ? {
         uid: user.uid,
         email: user.email,
         displayName: userProfile?.name || user.displayName || clerkComputedName || (user.email ? user.email.split('@')[0] : 'Talent User'),
@@ -373,21 +372,23 @@ export default function AppProviders({ children }: {
         profileImage: userProfile?.profileImage || userProfile?.image || userProfile?.photoURL || (user.photoURL && !user.photoURL.includes('img.clerk.com') ? user.photoURL : '') || '',
         premium: userProfile?.premium || isAdmin || false,
         role: userProfile?.category || userProfile?.role || '',
-    } : null;
+    } : null, [user, userProfile, clerkComputedName, isAdmin]);
+
+    const appContextValue = React.useMemo(() => ({
+        user: enrichedUser,
+        isAdmin,
+        authReady,
+        showAlert,
+        showToast,
+        handleLogout,
+        updateAvatar,
+        deleteAvatar
+    }), [enrichedUser, isAdmin, authReady, showAlert, showToast, handleLogout, updateAvatar, deleteAvatar]);
 
     const showOnboarding = authReady && !!user && !!userProfile && userProfile.onboarded !== true;
     return (<PermissionProvider>
       <CallProvider user={enrichedUser}>
-        <AppContext.Provider value={{
-            user: enrichedUser,
-            isAdmin,
-            authReady,
-            showAlert,
-            showToast,
-            handleLogout,
-            updateAvatar,
-            deleteAvatar
-        }}>
+        <AppContext.Provider value={appContextValue}>
           {user && userProfile?.deletionScheduled === true && (<div className="fixed inset-0 z-[99999] bg-[#0A0A0A]/95 backdrop-blur-md flex items-center justify-center p-6">
               <div className="max-w-md w-full bg-[#111] border border-white/5 rounded-3xl p-8 text-center space-y-6">
                 <div className="space-y-2">

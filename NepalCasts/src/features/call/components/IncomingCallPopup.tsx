@@ -34,7 +34,7 @@ export default function IncomingCallPopup() {
           <div className="flex items-center gap-3.5">
             <div className="relative shrink-0">
               <div className="absolute -inset-1 rounded-full bg-nc-accent/30 animate-ping opacity-75" style={{ animationDuration: '2s' }}/>
-              <Avatar src={callerPhoto} name={callerName} gender={callerProfile?.gender} size="md" className="w-12 h-12 sm:w-14 sm:h-14 border-2 border-nc-accent/40 relative z-10"/>
+              <Avatar userId={incomingCall.callerId} src={callerPhoto} name={callerName} gender={callerProfile?.gender} size="md" className="w-12 h-12 sm:w-14 sm:h-14 border-2 border-nc-accent/40 relative z-10"/>
             </div>
             
             <div className="flex-1 min-w-0">

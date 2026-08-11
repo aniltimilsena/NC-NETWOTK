@@ -106,7 +106,7 @@ export default function AdminAnalytics() {
             <div className="space-y-3">
               {topTalents.length > 0 ? topTalents.map(u => (<div key={u.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors">
                   <div className="flex items-center gap-2">
-                    <Avatar user={u} size="sm" name={u.name}/>
+                    <Avatar userId={u.uid || u.id} user={u} size="sm" name={u.name}/>
                     <span className="text-xs font-semibold text-white">{u.name}</span>
                   </div>
 

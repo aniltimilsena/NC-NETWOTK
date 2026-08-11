@@ -80,7 +80,7 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                             }
                         }}
                         signUpUrl="/signup"
-                        forceRedirectUrl="/"
+                        fallbackRedirectUrl="/"
                     />
                 </div>
 

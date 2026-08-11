@@ -4,6 +4,7 @@ import { db } from '../../lib/firebase';
 import { collection, query, where, limit, doc, updateDoc, deleteDoc, onSnapshot, setDoc, increment, serverTimestamp, orderBy } from 'firebase/firestore';
 import Avatar from '../../components/ui/Avatar';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { cacheManager } from '../../utils/cacheManager';
 import { NotificationSkeleton } from '../../components/ui/Skeleton';
 import { ChevronLeft, MessageSquare, PhoneMissed, PhoneOff, UserPlus, Star, Settings, Check } from 'lucide-react';
 const getNotificationDetails = (notif) => {
@@ -227,20 +228,30 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
         { id: 'system', label: 'System' },
     ];
     useEffect(() => {
+        if (initialFilter) {
+            setFilter(initialFilter);
+        }
+    }, [initialFilter]);
+
+    useEffect(() => {
         if (!user?.uid) {
             setFollowingIds(new Set());
             return;
         }
-        const q = query(collection(db, 'follows'), where('followerId', '==', user.uid));
-        const unsub = onSnapshot(q, (snapshot) => {
-            const ids = new Set(snapshot.docs.map(docSnap => docSnap.data().followingId));
-            setFollowingIds(ids);
-        }, (err) => {
-            if (err.code !== 'permission-denied') {
-                console.error("Follows subscription failed:", err);
-            }
+        return cacheManager.subscribePooled(`user_follows_${user.uid}`, (pooledCb) => {
+            const q = query(collection(db, 'follows'), where('followerId', '==', user.uid));
+            return onSnapshot(q, (snapshot) => {
+                const ids = snapshot.docs.map(docSnap => docSnap.data().followingId);
+                pooledCb(ids, null);
+            }, (err) => {
+                if (err.code !== 'permission-denied') {
+                    console.error("Follows subscription failed in Notifications:", err);
+                }
+                pooledCb([], err);
+            });
+        }, (ids) => {
+            setFollowingIds(new Set(ids));
         });
-        return () => unsub();
     }, [user?.uid]);
     useEffect(() => {
         if (!user?.uid) {

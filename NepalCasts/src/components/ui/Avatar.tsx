@@ -157,6 +157,11 @@ export default function Avatar(props: AvatarProps) {
                             photoURL: downloadUrl,
                             updatedAt: serverTimestamp()
                         }, { merge: true });
+                        await setDoc(doc(db, 'users', activeUserId), {
+                            image: downloadUrl,
+                            photoURL: downloadUrl,
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
                     }
                     catch (e) {
                         console.warn("Avatar doc update warning:", e);
@@ -204,6 +209,11 @@ export default function Avatar(props: AvatarProps) {
             else if (activeUserId) {
                 try {
                     await setDoc(doc(db, 'profiles', activeUserId), {
+                        image: null,
+                        photoURL: null,
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                    await setDoc(doc(db, 'users', activeUserId), {
                         image: null,
                         photoURL: null,
                         updatedAt: serverTimestamp()

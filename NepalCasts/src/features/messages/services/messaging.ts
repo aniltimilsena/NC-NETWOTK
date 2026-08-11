@@ -2,9 +2,10 @@ import { db } from "../../../lib/firebase";
 import { AuthService } from "../../../services/AuthService";
 import { CurrentUser } from "../../../utils/CurrentUser";
 import { logger } from "../../../utils/logger";
-import { collection, doc, query, where, orderBy, onSnapshot, getDoc, getDocs, updateDoc, addDoc, deleteDoc, serverTimestamp, arrayUnion, arrayRemove, runTransaction, documentId, } from "firebase/firestore";
+import { collection, doc, query, where, orderBy, onSnapshot, getDoc, getDocs, updateDoc, addDoc, deleteDoc, serverTimestamp, arrayUnion, arrayRemove, runTransaction, } from "firebase/firestore";
 import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
+import { getProfile } from "../../profile/services/profile";
 export const sendMessage = async (convoId: string, senderId: string, text: string, isSystem: boolean = false, replyTo?: any, type: "text" | "image" | "video" = "text", clientMsgId?: string) => {
     if (text && typeof text === 'string' && text.length > 2000) {
         return { success: false, error: "Message exceeds maximum length of 2000 characters" };
@@ -111,9 +112,9 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
                 let senderName = CurrentUser.fullName || "Someone";
                 let senderAvatar = CurrentUser.imageUrl || "";
                 try {
-                    const profileSnap = await getDoc(doc(db, "profiles", currentUserUid));
-                    if (profileSnap.exists()) {
-                        const pData = profileSnap.data();
+                    const res = await getProfile(currentUserUid);
+                    if (res.data) {
+                        const pData = res.data;
                         senderName = pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || senderName;
                         senderAvatar = pData.image || pData.photoURL || pData.avatar || senderAvatar;
                     }
@@ -314,20 +315,14 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
         const uniqueParticipantIds = Array.from(new Set(otherParticipantIds));
         const profilesMap = new Map<string, any>();
         
-        const chunks = [];
-        for (let i = 0; i < uniqueParticipantIds.length; i += 30) {
-            chunks.push(uniqueParticipantIds.slice(i, i + 30));
-        }
-        
-        await Promise.all(chunks.map(async (chunk) => {
+        await Promise.all(uniqueParticipantIds.map(async (id) => {
             try {
-                const chunkQuery = query(collection(db, "profiles"), where(documentId(), "in", chunk));
-                const chunkSnap = await getDocs(chunkQuery);
-                chunkSnap.docs.forEach(docSnap => {
-                    profilesMap.set(docSnap.id, docSnap.data());
-                });
+                const res = await getProfile(id);
+                if (res.data) {
+                    profilesMap.set(id, res.data);
+                }
             } catch (err) {
-                console.warn("Failed to batch fetch profiles for conversations chunk:", err);
+                console.warn(`Failed to fetch profile ${id}:`, err);
             }
         }));
 

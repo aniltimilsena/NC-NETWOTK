@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { collection, query, where, onSnapshot, doc, getDoc, deleteDoc, documentId, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, deleteDoc, limit } from 'firebase/firestore';
 import { FileText, ChevronLeft, Clock, CheckCircle2, XCircle, AlertCircle, Trash2, ArrowRight } from 'lucide-react';
+import { getCastingCallById } from './services/casting';
 import { db } from '../../lib/firebase';
 import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
@@ -52,20 +53,15 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
       const uniqueCastingIds = Array.from(new Set(castingIds));
       
       const castingCallsMap = new Map();
-      const chunks = [];
-      for (let i = 0; i < uniqueCastingIds.length; i += 30) {
-        chunks.push(uniqueCastingIds.slice(i, i + 30));
-      }
       
-      await Promise.all(chunks.map(async (chunk) => {
+      await Promise.all(uniqueCastingIds.map(async (id) => {
         try {
-          const chunkQuery = query(collection(db, 'casting_calls'), where(documentId(), 'in', chunk));
-          const chunkSnap = await getDocs(chunkQuery);
-          chunkSnap.docs.forEach(docSnap => {
-            castingCallsMap.set(docSnap.id, docSnap.data());
-          });
+          const data = await getCastingCallById(id);
+          if (data) {
+            castingCallsMap.set(id, data);
+          }
         } catch (err) {
-          console.warn("Failed to batch fetch casting calls for applications:", err);
+          console.warn(`Failed to fetch casting call ${id}:`, err);
         }
       }));
       
@@ -132,7 +128,13 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
 
   const handleBack = () => {
     if (onNavigate) onNavigate('back');
-    else navigate(-1);
+    else {
+      if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
+        navigate(-1);
+      } else {
+        navigate('/');
+      }
+    }
   };
 
   return (

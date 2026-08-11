@@ -69,9 +69,9 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
   return (
     <div
       onClick={() => onNavigate('casting-detail', call.id)}
-      className="group flex flex-col sm:flex-row items-start sm:items-center justify-between py-8 border-b border-white/10 hover:border-sky-400/50 transition-all duration-300 cursor-pointer gap-6"
+      className="group flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 sm:py-8 border-b border-white/10 hover:border-sky-400/50 transition-all duration-300 cursor-pointer gap-4 sm:gap-6"
     >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-1 w-full min-w-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 flex-1 w-full min-w-0">
         {/* Widescreen image thumbnail */}
         <div className="w-full sm:w-48 h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/5">
           <img
@@ -209,6 +209,9 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
     return () => unsubscribe();
   }, [visibleLimit]);
 
+  useEffect(() => {
+    setActiveFilter(filter === 'my-calls' ? 'My Applications' : 'All');
+  }, [filter]);
 
   useEffect(() => {
     if (!user) {
@@ -333,13 +336,12 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
         where("userId", "==", user.uid),
         where("castingId", "==", callId)
       );
-      const { deleteDoc, addDoc } = await import('firebase/firestore');
+      const { deleteDoc, addDoc, getDocs } = await import('firebase/firestore');
       if (isSaved) {
-        onSnapshot(q, (snap) => {
-          snap.docs.forEach(async (d) => {
-            await deleteDoc(d.ref);
-          });
-        });
+        const snap = await getDocs(q);
+        for (const d of snap.docs) {
+          await deleteDoc(d.ref);
+        }
       } else {
         await addDoc(collection(db, "saved_calls"), {
           userId: user.uid,
@@ -379,9 +381,6 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase leading-none">
                 {t('casting.title')}
               </h2>
-              <p className="text-[10px] sm:text-xs text-gray-400 mt-1 font-medium">
-                {t('casting.subtitle')}
-              </p>
             </div>
           </div>
 

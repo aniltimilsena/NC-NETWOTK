@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
@@ -13,11 +13,24 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
     const location = useLocation();
     const navigate = useNavigate();
     const handleLegacyNavigate = (page: string, param: any = null) => {
+        if (!page) {
+            navigate('/');
+            return;
+        }
+        if (page.startsWith('/')) {
+            navigate(page);
+            return;
+        }
         switch (page) {
             case 'home':
                 navigate('/');
                 break;
+            case 'discover':
+                navigate('/discover');
+                break;
             case 'listing':
+            case 'talent':
+            case 'talents':
                 navigate('/talents');
                 break;
             case 'profile':
@@ -27,7 +40,7 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
                 navigate('/casting');
                 break;
             case 'casting-detail':
-                navigate(`/casting/${param}`);
+                navigate(param ? `/casting/${param}` : '/casting');
                 break;
             case 'signin':
                 navigate('/signin');
@@ -45,13 +58,18 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
                 navigate('/premium');
                 break;
             case 'messages':
-                navigate('/messages');
+                navigate(param ? `/messages/${param}` : '/messages');
                 break;
             case 'notifications':
                 navigate('/notifications');
                 break;
             case 'settings':
                 navigate('/settings');
+                break;
+            case 'saved':
+            case 'saved-casting':
+            case 'saved-castings':
+                navigate('/saved');
                 break;
             case 'privacy':
                 navigate('/privacy');
@@ -60,9 +78,13 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
                 navigate('/terms');
                 break;
             case 'trust':
+            case 'trust-safety':
                 navigate('/trust-safety');
                 break;
-            default: navigate('/');
+            case 'trending':
+                navigate('/trending');
+                break;
+            default: navigate('/' + page);
         }
     };
     const isAuthPage = location.pathname === '/signin' || location.pathname === '/signup';
@@ -70,8 +92,11 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
     return (<div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
       {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate}/>)}
       <main className="flex-1 px-0 pb-0">
-        <Outlet context={{ user, isAdmin, showAlert, showToast }}/>
+        <Suspense fallback={<div className="min-h-screen bg-[#070709]" />}>
+          <Outlet context={{ user, isAdmin, showAlert, showToast }}/>
+        </Suspense>
       </main>
       {!isAuthPage && location.pathname === '/' && <Footer user={user}/>}
     </div>);
 }
+

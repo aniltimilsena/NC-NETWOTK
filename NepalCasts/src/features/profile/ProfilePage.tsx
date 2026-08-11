@@ -8,7 +8,7 @@ import ProfileExperience from './components/ProfileExperience';
 import ProfileReviews from './components/ProfileReviews';
 import FollowModal from './components/FollowModal';
 import ReviewModal from './components/ReviewModal';
-import { doc, getDoc, setDoc, query, collection, where, getDocs, serverTimestamp, increment, updateDoc, documentId } from 'firebase/firestore';
+import { doc, setDoc, query, collection, where, getDocs, serverTimestamp, increment, updateDoc, documentId } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
 import { updateProfileData, uploadProfileMedia } from '../../services';
@@ -18,13 +18,18 @@ interface ProfilePageProps {
     profileId: string | null;
     isAdmin: boolean;
     showAlert: (message: string, type?: any, detail?: string, action?: any) => void;
+    initialTab?: string;
 }
-export default function ProfilePage({ onNavigate, user, profileId, isAdmin, showAlert }: ProfilePageProps) {
+export default function ProfilePage({ onNavigate, user, profileId, isAdmin, showAlert, initialTab }: ProfilePageProps) {
     const { profile, setProfile, resolvedUid, resolvingUid, loading, isOwnProfile, targetUid, isFollowing, followerCount, followingCount, reviewsList, loadingReviews, savedCount, hasWorkedTogether, toggleFollow } = useProfile(profileId, user);
-    const [activeTab, setActiveTab] = useState('about');
+    const [activeTab, setActiveTab] = useState(initialTab || 'about');
     useEffect(() => {
-        setActiveTab('about');
-    }, [resolvedUid]);
+        if (initialTab) {
+            setActiveTab(initialTab);
+        } else {
+            setActiveTab('about');
+        }
+    }, [resolvedUid, initialTab]);
     const [showFollowModal, setShowFollowModal] = useState<'followers' | 'following' | 'projects' | null>(null);
     const [followList, setFollowList] = useState<any[]>([]);
     const [loadingFollowList, setLoadingFollowList] = useState(false);
@@ -408,7 +413,15 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
           <div className="flex border-b border-white/10 gap-8 mb-8 overflow-x-auto scrollbar-none justify-center sm:justify-start">
             {tabs.map((tab) => (
-              <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-3 text-sm sm:text-base font-bold capitalize tracking-wide transition-colors relative whitespace-nowrap ${activeTab === tab ? 'text-[#00BFFF]' : 'text-gray-400 hover:text-white'}`}>
+              <button key={tab} onClick={() => {
+                setActiveTab(tab);
+                const base = isOwnProfile && !profileId ? '/profile' : `/profile/${resolvedUid || profileId}`;
+                if (tab === 'about') {
+                    onNavigate(base);
+                } else {
+                    onNavigate(`${base}/${tab}`);
+                }
+              }} className={`pb-3 text-sm sm:text-base font-bold capitalize tracking-wide transition-colors relative whitespace-nowrap ${activeTab === tab ? 'text-[#00BFFF]' : 'text-gray-400 hover:text-white'}`}>
                 {tabLabelMap[tab] || tab}
                 {activeTab === tab && (<div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#00BFFF] rounded-full shadow-[0_0_8px_rgba(0,191,255,0.8)]"/>)}
               </button>

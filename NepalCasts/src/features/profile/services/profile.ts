@@ -111,17 +111,36 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
 };
 export const subscribeToProfile = (uid: string, callback: (data: ProfileData | null) => void) => {
     return cacheManager.subscribePooled(`profile_sub_${uid}`, (pooledCb) => {
-        return onSnapshot(doc(db, COLLECTIONS.PROFILES, uid), (snap) => {
+        let unsubUser: (() => void) | null = null;
+        const unsubProfile = onSnapshot(doc(db, COLLECTIONS.PROFILES, uid), (snap) => {
             if (snap.exists()) {
+                if (unsubUser) {
+                    unsubUser();
+                    unsubUser = null;
+                }
                 pooledCb({ uid, ...snap.data() } as ProfileData, null);
             }
             else {
-                pooledCb(null, null);
+                if (!unsubUser) {
+                    unsubUser = onSnapshot(doc(db, COLLECTIONS.USERS, uid), (userSnap) => {
+                        if (userSnap.exists()) {
+                            pooledCb({ uid, ...userSnap.data() } as ProfileData, null);
+                        } else {
+                            pooledCb(null, null);
+                        }
+                    }, (uErr) => {
+                        pooledCb(null, uErr);
+                    });
+                }
             }
         }, (error) => {
             console.error("Profile subscription error:", error);
             pooledCb(null, error);
         });
+        return () => {
+            unsubProfile();
+            if (unsubUser) unsubUser();
+        };
     }, (data) => callback(data));
 };
 export const uploadProfileMedia = async (uid: string, file: File, onProgress?: (progress: number) => void, customPath?: string): Promise<string | null> => {

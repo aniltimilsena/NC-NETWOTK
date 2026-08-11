@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, useNavigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App';
@@ -57,32 +57,41 @@ window.addEventListener('vite:preloadError', () => {
     }
 });
 
+const ClerkProviderWithNavigate = ({ children }: { children: React.ReactNode }) => {
+    const navigate = useNavigate();
+    return (
+        <ClerkProvider
+            publishableKey={PUBLISHABLE_KEY}
+            navigate={(to) => navigate(to)}
+            appearance={{
+                variables: {
+                    colorBackground: '#141414',
+                    colorInputBackground: '#1a1a1a',
+                    colorText: '#ffffff',
+                    colorTextSecondary: '#9ca3af',
+                    colorPrimary: '#facc15',
+                    colorNeutral: '#ffffff',
+                },
+            }}
+        >
+            {children}
+        </ClerkProvider>
+    );
+};
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <ErrorBoundary>
             {isValidClerkKey(PUBLISHABLE_KEY) ? (
-                <ClerkProvider
-                    publishableKey={PUBLISHABLE_KEY}
-                    appearance={{
-                        variables: {
-                            colorBackground: '#141414',
-                            colorInputBackground: '#1a1a1a',
-                            colorText: '#ffffff',
-                            colorTextSecondary: '#9ca3af',
-                            colorPrimary: '#facc15',
-                            colorNeutral: '#ffffff',
-                        },
-                    }}
-                >
-                    <HelmetProvider>
-                        <BrowserRouter>
-
+                <BrowserRouter useTransitions={false}>
+                    <ClerkProviderWithNavigate>
+                        <HelmetProvider>
                             <LanguageProvider>
                                 <App />
                             </LanguageProvider>
-                        </BrowserRouter>
-                    </HelmetProvider>
-                </ClerkProvider>
+                        </HelmetProvider>
+                    </ClerkProviderWithNavigate>
+                </BrowserRouter>
             ) : (
                 <MissingClerkKeyScreen />
             )}

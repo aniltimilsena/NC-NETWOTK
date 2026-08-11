@@ -225,7 +225,7 @@ export function CallProvider({ children, user }: CallProviderProps) {
         webrtc.endCall();
         setActiveCall(null);
     }, [webrtc]);
-    const value: CallContextValue = {
+    const value = React.useMemo(() => ({
         callState: webrtc.callState,
         activeCall,
         incomingCall,
@@ -241,7 +241,23 @@ export function CallProvider({ children, user }: CallProviderProps) {
         hangUp,
         toggleMute: webrtc.toggleMute,
         dismissError,
-    };
+    }), [
+        webrtc.callState,
+        activeCall,
+        incomingCall,
+        webrtc.localStream,
+        webrtc.remoteStream,
+        webrtc.isMuted,
+        webrtc.callDuration,
+        webrtc.errorMessage,
+        user,
+        initiateCall,
+        acceptCall,
+        rejectCall,
+        hangUp,
+        webrtc.toggleMute,
+        dismissError
+    ]);
     return <CallContext.Provider value={value}>{children}</CallContext.Provider>;
 }
 export function useCall(): CallContextValue {

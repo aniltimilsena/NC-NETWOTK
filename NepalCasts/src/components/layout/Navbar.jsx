@@ -93,7 +93,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
         }, (notifs) => {
             setUnreadCount(notifs.filter(n => !n.read).length);
         });
-    }, [user]);
+    }, [user?.uid]);
     useEffect(() => {
         if (!user?.uid) {
             setUnreadMessagesCount(0);
@@ -136,7 +136,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
         }, (count) => {
             setUnreadMessagesCount(count);
         });
-    }, [user]);
+    }, [user?.uid]);
     return (<>
       <header className="sticky top-0 left-0 right-0 z-50">
         <nav className="relative z-30 bg-nc-dark/80 backdrop-blur-md border-b border-white/5">
@@ -160,13 +160,13 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7"/>
                     </svg>
                   </button>
-                  <div className="absolute top-full left-0 mt-1 w-48 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
-                    <Link to="/talents" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_talent_directory')}</Link>
-                    <Link to="/trending" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_trending_now')}</Link>
-                    <Link to="/settings" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
+                  <div className="absolute top-full left-0 mt-1 w-44 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-1.5">
+                    <Link to="/talents" className="w-full text-left block px-4 py-2 text-xs text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_talent_directory')}</Link>
+                    <Link to="/trending" className="w-full text-left block px-4 py-2 text-xs text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_trending_now')}</Link>
+                    <Link to="/settings" className="w-full text-left block px-4 py-2 text-xs text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
                     {isAdmin && (<>
                         <div className="mx-2 my-1 border-t border-white/5"></div>
-                        <Link to="/admin" className="w-full text-left block px-4 py-2.5 text-[10px] uppercase tracking-widest font-black text-admin-primary hover:text-white hover:bg-admin-primary/20 transition-all flex items-center justify-between group/admin">
+                        <Link to="/admin" className="w-full text-left block px-4 py-2 text-[9px] uppercase tracking-widest font-black text-admin-primary hover:text-white hover:bg-admin-primary/20 transition-all flex items-center justify-between group/admin">
                           <span>{t('nav_admin')}</span>
                           <span className="w-1.5 h-1.5 rounded-full bg-admin-primary shadow-[0_0_8px_#38bdf8] group-hover/admin:scale-125 transition-transform"></span>
                         </Link>
@@ -181,9 +181,9 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7"/>
                     </svg>
                   </button>
-                  <div className="absolute top-full left-0 mt-1 w-52 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
-                    <Link to="/casting" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_casting_calls')}</Link>
-                    <Link to="/casting/create" className="w-full text-left block px-4 py-2.5 text-sm text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_post_project')}</Link>
+                  <div className="absolute top-full left-0 mt-1 w-44 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-1.5">
+                    <Link to="/casting" className="w-full text-left block px-4 py-2 text-xs text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_casting_calls')}</Link>
+                    <Link to="/casting/create" className="w-full text-left block px-4 py-2 text-xs text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_post_project')}</Link>
                   </div>
                 </div>
               </div>
@@ -250,6 +250,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                     {/* Our custom Avatar as the visible element */}
                     <div className="pointer-events-none">
                       <Avatar
+                        userId={user?.uid}
                         user={user}
                         src={user?.photoURL || user?.profileImage || user?.image}
                         name={user?.displayName}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, X, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, TrendingUp, Lock, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ActionSearchBar } from '@/components/ui/ActionSearchBar';
@@ -300,65 +301,76 @@ export default function Desktop3ColumnLayout({
         <div className="grid grid-cols-12 gap-2 lg:gap-3">
 
           {/* LEFT SIDEBAR (Desktop: lg+) */}
-          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-20 pt-2 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide">
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-20 pt-2 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-4">
+            
+            {/* Inline Desktop Search Bar (Redirects dynamically on click) */}
+            <div className="px-1">
+              <div 
+                onClick={() => {
+                  const currentPath = window.location.pathname;
+                  if (currentPath.startsWith('/talents') || currentPath.startsWith('/discover')) {
+                    onNavigate?.('/search');
+                  } else {
+                    onNavigate?.('/talents');
+                  }
+                }}
+                className="relative flex items-center bg-[#242526] rounded-full px-4 py-2 border border-white/5 hover:border-white/10 transition-all cursor-pointer"
+              >
+                <input 
+                  type="text" 
+                  readOnly
+                  placeholder={t('ui.searchPlaceholder')} 
+                  className="w-full bg-transparent outline-none text-white text-[15px] placeholder:text-white/40 pr-10 cursor-pointer border-0"
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                  <Search className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+
             <div className="overflow-hidden bg-[#060709] rounded-2xl">
 
               {/* === PROFILE CARD === */}
               {user ? (
                 <>
-                  {/* Cover Banner (Static Hero BG - No User Upload) */}
-                  <div className="relative h-36 sm:h-40 bg-gradient-to-b from-[#092238] via-[#07192b] to-[#040e1a] overflow-hidden rounded-t-2xl select-none">
-                    <picture className="w-full h-full">
-                      <source srcSet="/hero-bg.webp" type="image/webp" />
-                      <img
-                        src="/hero-bg.png"
-                        alt="Hero Cover"
-                        fetchPriority="high"
-                        decoding="async"
-                        className="w-full h-full object-cover object-center opacity-90 pointer-events-none select-none"
-                      />
-                    </picture>
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#060709]" />
-                  </div>
-
-                  {/* Avatar + Info (Centered) */}
-                  <div className="px-4 -mt-12 relative z-10 text-center flex flex-col items-center">
-                    <div className="relative w-fit mx-auto">
+                  {/* Avatar + Info (Horizontal Row) */}
+                  <div className="px-4 py-5 relative z-10 flex items-center gap-4 bg-[#0A0A0E]/50 rounded-2xl">
+                    <div className="relative shrink-0">
                       <Avatar
                         user={user}
                         userId={user?.uid}
                         src={realImage}
                         gender={gender}
                         name={realName}
-                        size={80}
-                        className="ring-4 ring-[#060709] shadow-2xl"
+                        size={64}
+                        className="ring-2 ring-white/10 shadow-xl"
                       />
                       {/* Online dot */}
-                      <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 ring-2 ring-[#060709] shadow-[0_0_10px_rgba(52,211,153,0.8)] pointer-events-none" />
+                      <span className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-[#060709] shadow-[0_0_8px_rgba(52,211,153,0.8)] pointer-events-none" />
                     </div>
 
-                    <div className="mt-3 space-y-1 flex flex-col items-center">
-                      <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                        <h3 className="text-white font-black text-2xl leading-tight tracking-tight">{realName}</h3>
+                    <div className="flex-1 min-w-0 text-left flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="text-white font-extrabold text-lg leading-snug tracking-tight truncate">{realName}</h3>
                         {isVerified && (
-                          <span className="w-5 h-5 rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] text-[10px] font-black shrink-0 shadow-md shadow-[#00BFFF]/30" title="Verified Talent">
+                          <span className="w-4.5 h-4.5 rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] text-[9px] font-black shrink-0 shadow-sm" title="Verified Talent">
                             ✓
                           </span>
                         )}
                         {isPremium && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-extrabold text-[10px] tracking-wider uppercase shadow-md shadow-amber-500/20">
+                          <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-extrabold text-[8px] tracking-wider uppercase shrink-0">
                             PREMIUM
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center justify-center gap-2 flex-wrap">
-                        <span className="text-gray-400 text-sm font-semibold capitalize">{realRole}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400 text-xs font-semibold capitalize truncate">{realRole}</span>
                       </div>
 
                       {openToWork && (
                         <div className="mt-1">
-                          <span className="px-3 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[10px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/30 flex items-center justify-center gap-1.5 w-fit">
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[8px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/20 flex items-center justify-center gap-1 w-fit">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse" />
                             OPEN TO WORK
                           </span>
@@ -367,30 +379,16 @@ export default function Desktop3ColumnLayout({
                     </div>
                   </div>
 
-                  {/* Stats Row (Centered with Vertical Dividers, No Outer Border Box) */}
-                  <div className="grid grid-cols-3 divide-x divide-white/10 text-center py-1.5 my-3">
-                    <div className="flex flex-col items-center justify-center px-1">
-                      <span className="text-white text-2xl font-black">{followersCount}</span>
-                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-0.5">{t('followers')}</span>
-                    </div>
-                    <div className="flex flex-col items-center justify-center px-1">
-                      <span className="text-white text-2xl font-black">{followingCount}</span>
-                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-bold mt-0.5">{t('btn_following')}</span>
-                    </div>
-                    <div className="flex flex-col items-center justify-center px-1">
-                      <span className="text-white text-2xl font-black">{reviewsCount}</span>
-                      <span className="text-gray-400 text-[10px] uppercase tracking-widest font-extrabold mt-0.5">{t('profile.reviews')}</span>
-                    </div>
-                  </div>
 
-                  {/* View My Profile Button */}
-                  <div className="px-3 mb-4">
+                  {/* View My Profile Link */}
+                  <div className="px-4 pb-4 mt-2 text-left">
                     <button
                       type="button"
                       onClick={() => onNavigate?.('profile', user?.uid)}
-                      className="w-full py-3 rounded-xl text-sm font-extrabold flex items-center justify-center transition-all cursor-pointer active:scale-[0.98] bg-[#161619] hover:bg-[#202026] text-white shadow-sm"
+                      className="text-[11px] font-bold text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
                     >
                       <span>{t('profile.viewProfile')}</span>
+                      <ChevronRight className="w-3 h-3" />
                     </button>
                   </div>
                 </>
@@ -398,13 +396,12 @@ export default function Desktop3ColumnLayout({
                 <div className="p-3 text-center space-y-3">
                   <h3 className="text-white font-extrabold text-base">Join NepalCasts</h3>
                   <p className="text-gray-400 text-xs leading-relaxed">Connect with top directors and casting opportunities in Nepal.</p>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('signin')}
-                    className="w-full py-2.5 bg-[#00BFFF] hover:opacity-90 text-black font-extrabold rounded-xl text-sm transition-all cursor-pointer shadow-lg shadow-[#00BFFF]/25 active:scale-[0.98]"
+                  <Link
+                    to="/signin"
+                    className="w-full py-2.5 bg-[#00BFFF] hover:opacity-90 text-black font-extrabold rounded-xl text-sm transition-all cursor-pointer shadow-lg shadow-[#00BFFF]/25 active:scale-[0.98] text-center block"
                   >
                     Sign In / Register
-                  </button>
+                  </Link>
                 </div>
               )}
 
@@ -412,39 +409,36 @@ export default function Desktop3ColumnLayout({
               <div className="py-1">
                 <span className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500 px-4 mb-1.5 block">MAIN</span>
 
-                <button
-                  type="button"
-                  onClick={() => onNavigate?.('home')}
-                  className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'discover'
+                <Link
+                  to="/discover"
+                  className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'discover' || activeNav === 'home'
                       ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                       : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                     }`}
                 >
-                  {activeNav === 'discover' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
+                  {(activeNav === 'discover' || activeNav === 'home') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
                   <div className="flex items-center gap-3">
                     <Compass className="w-5 h-5" />
                     <span>{t('nav.discover')}</span>
                   </div>
-                </button>
+                </Link>
 
-                <button
-                  type="button"
-                  onClick={() => onNavigate?.('talent')}
-                  className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'talent'
+                <Link
+                  to="/talents"
+                  className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'talent' || activeNav === 'talents'
                       ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                       : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                     }`}
                 >
-                  {activeNav === 'talent' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
+                  {(activeNav === 'talent' || activeNav === 'talents') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
                   <div className="flex items-center gap-3">
                     <Users className="w-5 h-5" />
                     <span>{t('nav.talents')}</span>
                   </div>
-                </button>
+                </Link>
 
-                <button
-                  type="button"
-                  onClick={() => onNavigate?.('casting')}
+                <Link
+                  to="/casting"
                   className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'casting'
                       ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                       : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
@@ -455,7 +449,7 @@ export default function Desktop3ColumnLayout({
                     <Film className="w-5 h-5" />
                     <span>{t('nav.casting')}</span>
                   </div>
-                </button>
+                </Link>
               </div>
 
               {/* === PERSONAL NAVIGATION === */}
@@ -463,9 +457,8 @@ export default function Desktop3ColumnLayout({
                 <div className="py-2">
                   <span className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500 px-5 mb-2 block">PERSONAL</span>
 
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('messages')}
+                  <Link
+                    to="/messages"
                     className={`w-full px-5 py-3 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'messages'
                         ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                         : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
@@ -476,22 +469,21 @@ export default function Desktop3ColumnLayout({
                       <MessageSquare className="w-5 h-5" />
                       <span>Messages</span>
                     </div>
-                  </button>
+                  </Link>
 
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('saved-castings')}
-                    className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'saved-castings' || activeNav === 'saved-casting'
+                  <Link
+                    to="/saved"
+                    className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'saved-castings' || activeNav === 'saved-casting' || activeNav === 'saved'
                         ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                         : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                       }`}
                   >
-                    {(activeNav === 'saved-castings' || activeNav === 'saved-casting') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
+                    {(activeNav === 'saved-castings' || activeNav === 'saved-casting' || activeNav === 'saved') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
                     <div className="flex items-center gap-3">
                       <Bookmark className="w-5 h-5" />
                       <span>Saved Calls</span>
                     </div>
-                  </button>
+                  </Link>
                 </div>
               )}
 
@@ -499,9 +491,8 @@ export default function Desktop3ColumnLayout({
               <div className="py-2">
                 <span className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500 px-5 mb-2 block">LEGAL & SAFETY</span>
 
-                <button
-                  type="button"
-                  onClick={() => onNavigate?.('/trust-safety')}
+                <Link
+                  to="/trust-safety"
                   className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'trust-safety' || activeNav === 'trust'
                       ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                       : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
@@ -512,11 +503,10 @@ export default function Desktop3ColumnLayout({
                     <ShieldCheck className="w-5 h-5 text-[#00BFFF]" />
                     <span>Trust & Safety</span>
                   </div>
-                </button>
+                </Link>
 
-                <button
-                  type="button"
-                  onClick={() => onNavigate?.('/privacy')}
+                <Link
+                  to="/privacy"
                   className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'privacy'
                       ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                       : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
@@ -527,11 +517,10 @@ export default function Desktop3ColumnLayout({
                     <Lock className="w-5 h-5 text-gray-400 group-hover:text-white" />
                     <span>Privacy Policy</span>
                   </div>
-                </button>
+                </Link>
 
-                <button
-                  type="button"
-                  onClick={() => onNavigate?.('/terms')}
+                <Link
+                  to="/terms"
                   className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'terms'
                       ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
                       : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
@@ -542,7 +531,7 @@ export default function Desktop3ColumnLayout({
                     <FileText className="w-5 h-5 text-gray-400 group-hover:text-white" />
                     <span>Terms of Service</span>
                   </div>
-                </button>
+                </Link>
               </div>
 
               {/* Sidebar Bottom Copyright */}
