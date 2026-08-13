@@ -96,8 +96,20 @@ export default function Desktop3ColumnLayout({
     setTalentsLoading(true);
     const unsubTalents = subscribeToTalents((data) => {
       if (Array.isArray(data)) {
+        const myUid = user?.uid || user?.id || CurrentUser.id;
+        const myEmail = (user?.email || CurrentUser.email || '').toLowerCase().trim();
+        const myName = (user?.displayName || user?.fullName || CurrentUser.name || '').toLowerCase().trim();
+
         const allActive = data
-          .filter(t => !t.deactivated && t.name)
+          .filter(t => {
+            if (t.deactivated || !t.name) return false;
+            const isSelf = Boolean(
+              (myUid && (t.id === myUid || t.uid === myUid)) ||
+              (myEmail && t.email && t.email.toLowerCase().trim() === myEmail) ||
+              (myName && t.name && t.name.toLowerCase().trim() === myName)
+            );
+            return !isSelf;
+          })
           .reduce((acc, current) => {
             const isDuplicate = acc.some(item =>
               item.id === current.id ||

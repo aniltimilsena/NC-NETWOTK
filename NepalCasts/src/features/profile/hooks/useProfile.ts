@@ -39,15 +39,40 @@ export function useProfile(profileId: string | null, currentUser: any) {
                 return;
             }
             try {
-                const myEmail = currentUser?.email?.toLowerCase().trim();
-                const myUid = currentUser?.uid || currentUser?.id || CurrentUser.id || CurrentUser.uid;
+                const myEmail = (currentUser?.email || CurrentUser.email || '').toLowerCase().trim();
+                const myName = (currentUser?.displayName || currentUser?.fullName || CurrentUser.name || '').toLowerCase().trim();
+                const myUsername = (currentUser?.username || CurrentUser.username || '').toLowerCase().trim();
+                const myUid = currentUser?.uid || currentUser?.id || CurrentUser.id;
+
+                if (profileId) {
+                    const cleanPId = profileId.replace(/^@/, '').toLowerCase().trim();
+                    if ((myUid && profileId === myUid) || (myUsername && cleanPId === myUsername) || (myEmail && cleanPId === myEmail.split('@')[0])) {
+                        if (isMounted) {
+                            setResolvedUid(myUid);
+                            setResolvingUid(false);
+                        }
+                        return;
+                    }
+                }
 
                 // 1. Direct doc check in profiles
                 const docRef = doc(db, "profiles", profileId);
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
                     const data = snap.data();
-                    const realUid = data.uid || data.userId || (myEmail && data.email?.toLowerCase().trim() === myEmail ? myUid : profileId);
+                    const docEmail = (data.email || '').toLowerCase().trim();
+                    const docName = (data.name || data.displayName || '').toLowerCase().trim();
+                    const docUsername = (data.username || '').toLowerCase().trim();
+                    const docUid = data.uid || data.userId || snap.id;
+
+                    const isMatch = Boolean(
+                        (myUid && (docUid === myUid || snap.id === myUid)) ||
+                        (myEmail && docEmail && docEmail === myEmail) ||
+                        (myName && docName && docName === myName) ||
+                        (myUsername && docUsername && docUsername === myUsername)
+                    );
+
+                    const realUid = isMatch ? myUid : (data.uid || data.userId || profileId);
                     if (isMounted) {
                         setResolvedUid(realUid);
                         setResolvingUid(false);
@@ -60,7 +85,19 @@ export function useProfile(profileId: string | null, currentUser: any) {
                 const userSnap = await getDoc(userDocRef);
                 if (userSnap.exists()) {
                     const data = userSnap.data();
-                    const realUid = data.uid || data.userId || (myEmail && data.email?.toLowerCase().trim() === myEmail ? myUid : profileId);
+                    const docEmail = (data.email || '').toLowerCase().trim();
+                    const docName = (data.name || data.displayName || '').toLowerCase().trim();
+                    const docUsername = (data.username || '').toLowerCase().trim();
+                    const docUid = data.uid || data.userId || userSnap.id;
+
+                    const isMatch = Boolean(
+                        (myUid && (docUid === myUid || userSnap.id === myUid)) ||
+                        (myEmail && docEmail && docEmail === myEmail) ||
+                        (myName && docName && docName === myName) ||
+                        (myUsername && docUsername && docUsername === myUsername)
+                    );
+
+                    const realUid = isMatch ? myUid : (data.uid || data.userId || profileId);
                     if (isMounted) {
                         setResolvedUid(realUid);
                         setResolvingUid(false);
@@ -75,7 +112,19 @@ export function useProfile(profileId: string | null, currentUser: any) {
                 const qSnap = await getDocs(qProfiles);
                 if (!qSnap.empty) {
                     const docData = qSnap.docs[0].data();
-                    const realUid = docData.uid || docData.userId || qSnap.docs[0].id;
+                    const docEmail = (docData.email || '').toLowerCase().trim();
+                    const docName = (docData.name || docData.displayName || '').toLowerCase().trim();
+                    const docUsername = (docData.username || '').toLowerCase().trim();
+                    const docUid = docData.uid || docData.userId || qSnap.docs[0].id;
+
+                    const isMatch = Boolean(
+                        (myUid && docUid === myUid) ||
+                        (myEmail && docEmail && docEmail === myEmail) ||
+                        (myName && docName && docName === myName) ||
+                        (myUsername && docUsername && docUsername === myUsername)
+                    );
+
+                    const realUid = isMatch ? myUid : (docData.uid || docData.userId || qSnap.docs[0].id);
                     if (isMounted) {
                         setResolvedUid(realUid);
                         setResolvingUid(false);
@@ -87,7 +136,19 @@ export function useProfile(profileId: string | null, currentUser: any) {
                 const qUsersSnap = await getDocs(qUsers);
                 if (!qUsersSnap.empty) {
                     const docData = qUsersSnap.docs[0].data();
-                    const realUid = docData.uid || docData.userId || qUsersSnap.docs[0].id;
+                    const docEmail = (docData.email || '').toLowerCase().trim();
+                    const docName = (docData.name || docData.displayName || '').toLowerCase().trim();
+                    const docUsername = (docData.username || '').toLowerCase().trim();
+                    const docUid = docData.uid || docData.userId || qUsersSnap.docs[0].id;
+
+                    const isMatch = Boolean(
+                        (myUid && docUid === myUid) ||
+                        (myEmail && docEmail && docEmail === myEmail) ||
+                        (myName && docName && docName === myName) ||
+                        (myUsername && docUsername && docUsername === myUsername)
+                    );
+
+                    const realUid = isMatch ? myUid : (docData.uid || docData.userId || qUsersSnap.docs[0].id);
                     if (isMounted) {
                         setResolvedUid(realUid);
                         setResolvingUid(false);
@@ -107,8 +168,14 @@ export function useProfile(profileId: string | null, currentUser: any) {
                                 return tUid === profileId || (cleanUser && tUser === cleanUser);
                             });
                             if (match && (match.uid || match.id)) {
+                                const matchedUid = match.uid || match.id;
+                                const isMatch = Boolean(
+                                    (myUid && matchedUid === myUid) ||
+                                    (myEmail && match.email && match.email.toLowerCase().trim() === myEmail) ||
+                                    (myName && match.name && match.name.toLowerCase().trim() === myName)
+                                );
                                 if (isMounted) {
-                                    setResolvedUid(match.uid || match.id);
+                                    setResolvedUid(isMatch ? myUid : matchedUid);
                                     setResolvingUid(false);
                                 }
                                 return;
@@ -140,15 +207,17 @@ export function useProfile(profileId: string | null, currentUser: any) {
     }, [profileId, currentUser?.uid, currentUser?.id]);
 
     const initialTargetUid = resolvedUid || profileId || currentUser?.uid || currentUser?.id || CurrentUser.id;
+    const myName = (currentUser?.displayName || currentUser?.fullName || CurrentUser.name || '').trim().toLowerCase();
     const isOwnProfile = Boolean(
         (currentUser && (initialTargetUid === currentUser.uid || initialTargetUid === currentUser.id)) ||
         (CurrentUser.id && (initialTargetUid === CurrentUser.id || initialTargetUid === CurrentUser.username)) ||
         (profileId && CurrentUser.username && profileId.replace(/^@/, '').toLowerCase() === CurrentUser.username.toLowerCase()) ||
         (profileId && currentUser?.email && profileId.replace(/^@/, '').toLowerCase() === currentUser?.email.split('@')[0].toLowerCase()) ||
         (profile?.email && currentUser?.email && profile.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+        (profile?.name && myName && profile.name.trim().toLowerCase() === myName) ||
         (profile?.uid && currentUser?.uid && profile.uid === currentUser.uid)
     );
-    const targetUid = isOwnProfile && currentUser?.uid ? currentUser.uid : initialTargetUid;
+    const targetUid = isOwnProfile && (currentUser?.uid || currentUser?.id) ? (currentUser.uid || currentUser.id) : initialTargetUid;
 
     useEffect(() => {
         if (!targetUid) {
