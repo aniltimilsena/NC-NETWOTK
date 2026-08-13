@@ -313,27 +313,29 @@ export function useProfile(profileId: string | null, currentUser: any) {
 
     useEffect(() => {
         if (candidateIds.length === 0) return;
-        const targetIds = candidateIds.slice(0, 10);
-        const q = query(collection(db, "follows"), where("followingId", "in", targetIds));
+        const targetSet = new Set(candidateIds);
+        const q = query(collection(db, "follows"));
         const unsub = onSnapshot(q, (snap) => {
-            setFollowerCount(snap.size);
+            let fCount = 0;
+            let ingCount = 0;
+            snap.docs.forEach((docSnap) => {
+                const d = docSnap.data();
+                if (d.followingId && targetSet.has(d.followingId)) {
+                    fCount++;
+                }
+                if (d.followerId && targetSet.has(d.followerId)) {
+                    ingCount++;
+                }
+            });
+            const canonicalFollowers = Math.max(fCount, profile?.followers || 0, (profile as any)?.followersCount || 0);
+            const canonicalFollowing = Math.max(ingCount, profile?.following || 0, (profile as any)?.followingCount || 0);
+            setFollowerCount(canonicalFollowers);
+            setFollowingCount(canonicalFollowing);
         }, (err) => {
-            console.warn("Followers count subscription failed:", err);
+            console.warn("Follows snapshot listener warning:", err);
         });
         return () => unsub();
-    }, [candidateIds.join(',')]);
-
-    useEffect(() => {
-        if (candidateIds.length === 0) return;
-        const targetIds = candidateIds.slice(0, 10);
-        const q = query(collection(db, "follows"), where("followerId", "in", targetIds));
-        const unsub = onSnapshot(q, (snap) => {
-            setFollowingCount(snap.size);
-        }, (err) => {
-            console.warn("Following count subscription failed:", err);
-        });
-        return () => unsub();
-    }, [candidateIds.join(',')]);
+    }, [candidateIds.join(','), profile?.followers, profile?.following]);
     useEffect(() => {
         if (!currentUser || !targetUid || targetUid === currentUser.uid) {
             setIsFollowing(false);
