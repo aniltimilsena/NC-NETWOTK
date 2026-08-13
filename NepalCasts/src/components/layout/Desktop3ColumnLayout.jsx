@@ -208,7 +208,8 @@ export default function Desktop3ColumnLayout({
 
     return () => {
       unsubProfile();
-      unsubFollows();
+      unsubFollowers();
+      unsubFollowing();
       unsubReviews();
     };
   }, [uid, profileData?.uid, profileData?.id, profileData?.username]);
@@ -242,8 +243,8 @@ export default function Desktop3ColumnLayout({
   const gender = profileData?.gender || user?.gender;
 
   // Real-time stats from Firestore collections
-  const followersCount = realFollowers || profileData?.followers || profileData?.followersCount || 0;
-  const followingCount = realFollowing || profileData?.following || profileData?.followingCount || 0;
+  const followersCount = realFollowers;
+  const followingCount = realFollowing;
   const reviewsCount = realReviews || profileData?.reviewsCount || (Array.isArray(profileData?.reviews) ? profileData.reviews.length : 0) || user?.reviewsCount || 0;
 
   // Profile strength calculation
