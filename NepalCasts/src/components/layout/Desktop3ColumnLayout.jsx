@@ -179,17 +179,33 @@ export default function Desktop3ColumnLayout({
       }
     });
 
-    // Real-time Followers count
-    const qFollowers = query(collection(db, 'follows'), where('followingId', '==', uid));
-    const unsubFollowers = onSnapshot(qFollowers, (snap) => {
-      setRealFollowers(snap.size);
-    }, (err) => console.warn('Followers listener warning:', err));
+    const candidateSet = new Set([
+      uid,
+      user?.id,
+      profileData?.uid,
+      profileData?.id,
+      profileData?.username,
+      user?.email?.split('@')[0]
+    ].filter(Boolean));
 
-    // Real-time Following count
-    const qFollowing = query(collection(db, 'follows'), where('followerId', '==', uid));
-    const unsubFollowing = onSnapshot(qFollowing, (snap) => {
-      setRealFollowing(snap.size);
-    }, (err) => console.warn('Following listener warning:', err));
+    // Real-time Followers & Following count matching all candidate IDs
+    const unsubFollows = onSnapshot(collection(db, 'follows'), (snap) => {
+      let fCount = 0;
+      let ingCount = 0;
+      snap.docs.forEach((docSnap) => {
+        const d = docSnap.data();
+        if (d.followingId && candidateSet.has(d.followingId)) {
+          fCount++;
+        }
+        if (d.followerId && candidateSet.has(d.followerId)) {
+          ingCount++;
+        }
+      });
+      const finalF = Math.max(fCount, profileData?.followers || 0, profileData?.followersCount || 0);
+      const finalIng = Math.max(ingCount, profileData?.following || 0, profileData?.followingCount || 0);
+      setRealFollowers(finalF);
+      setRealFollowing(finalIng);
+    }, (err) => console.warn('Follows listener warning:', err));
 
     // Real-time Reviews count
     let unsubReviews = () => {};
@@ -208,11 +224,10 @@ export default function Desktop3ColumnLayout({
 
     return () => {
       unsubProfile();
-      unsubFollowers();
-      unsubFollowing();
+      unsubFollows();
       unsubReviews();
     };
-  }, [uid]);
+  }, [uid, profileData?.uid, profileData?.id, profileData?.username]);
 
   const realName =
     profileData?.name ||
