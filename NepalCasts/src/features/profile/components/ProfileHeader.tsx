@@ -231,7 +231,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         <div className={`grid ${isRealOwn ? 'grid-cols-2 max-w-xs' : 'grid-cols-3 max-w-md'} divide-x divide-white/10 w-full mx-auto py-2 my-2 ${isRealOwn ? 'mt-4' : ''}`}>
           <div onClick={() => isRealOwn && onFollowClick?.('followers')} className={`group/followers flex flex-col items-center justify-center text-center py-1 transition-all ${isRealOwn ? 'cursor-pointer' : ''}`}>
             <span className="text-white group-hover/followers:text-[#00BFFF] text-xl sm:text-2xl font-black transition-colors">
-              {followerCount || profile?.followers || profile?.followersCount || 0}
+              {followerCount ?? 0}
             </span>
             <span className="text-gray-400 group-hover/followers:text-white text-[10px] uppercase tracking-widest font-semibold mt-1 transition-colors">
               Followers
@@ -240,7 +240,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
 
           <div onClick={() => isRealOwn && onFollowClick?.('following')} className={`group/following flex flex-col items-center justify-center text-center py-1 transition-all ${isRealOwn ? 'cursor-pointer' : ''}`}>
             <span className="text-white group-hover/following:text-[#00BFFF] text-xl sm:text-2xl font-black transition-colors">
-              {followingCount || profile?.following || profile?.followingCount || 0}
+              {followingCount ?? 0}
             </span>
             <span className="text-gray-400 group-hover/following:text-white text-[10px] uppercase tracking-widest font-semibold mt-1 transition-colors">
               Following

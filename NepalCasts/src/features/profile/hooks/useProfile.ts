@@ -312,30 +312,22 @@ export function useProfile(profileId: string | null, currentUser: any) {
     ].filter(Boolean))) as string[];
 
     useEffect(() => {
-        if (candidateIds.length === 0) return;
-        const targetSet = new Set(candidateIds);
-        const q = query(collection(db, "follows"));
-        const unsub = onSnapshot(q, (snap) => {
-            let fCount = 0;
-            let ingCount = 0;
-            snap.docs.forEach((docSnap) => {
-                const d = docSnap.data();
-                if (d.followingId && targetSet.has(d.followingId)) {
-                    fCount++;
-                }
-                if (d.followerId && targetSet.has(d.followerId)) {
-                    ingCount++;
-                }
-            });
-            const canonicalFollowers = Math.max(fCount, profile?.followers || 0, (profile as any)?.followersCount || 0);
-            const canonicalFollowing = Math.max(ingCount, profile?.following || 0, (profile as any)?.followingCount || 0);
-            setFollowerCount(canonicalFollowers);
-            setFollowingCount(canonicalFollowing);
-        }, (err) => {
-            console.warn("Follows snapshot listener warning:", err);
-        });
-        return () => unsub();
-    }, [candidateIds.join(','), profile?.followers, profile?.following]);
+        if (!targetUid) return;
+        const qFollowers = query(collection(db, "follows"), where("followingId", "==", targetUid));
+        const unsubFollowers = onSnapshot(qFollowers, (snap) => {
+            setFollowerCount(snap.size);
+        }, () => setFollowerCount(0));
+
+        const qFollowing = query(collection(db, "follows"), where("followerId", "==", targetUid));
+        const unsubFollowing = onSnapshot(qFollowing, (snap) => {
+            setFollowingCount(snap.size);
+        }, () => setFollowingCount(0));
+
+        return () => {
+            unsubFollowers();
+            unsubFollowing();
+        };
+    }, [targetUid]);
     useEffect(() => {
         if (!currentUser || !targetUid || targetUid === currentUser.uid) {
             setIsFollowing(false);

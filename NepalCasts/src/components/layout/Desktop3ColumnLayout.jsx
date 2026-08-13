@@ -179,33 +179,17 @@ export default function Desktop3ColumnLayout({
       }
     });
 
-    const candidateSet = new Set([
-      uid,
-      user?.id,
-      profileData?.uid,
-      profileData?.id,
-      profileData?.username,
-      user?.email?.split('@')[0]
-    ].filter(Boolean));
+    // Real-time Followers count for logged-in user
+    const qFollowers = query(collection(db, 'follows'), where('followingId', '==', uid));
+    const unsubFollowers = onSnapshot(qFollowers, (snap) => {
+      setRealFollowers(snap.size);
+    }, () => setRealFollowers(0));
 
-    // Real-time Followers & Following count matching all candidate IDs
-    const unsubFollows = onSnapshot(collection(db, 'follows'), (snap) => {
-      let fCount = 0;
-      let ingCount = 0;
-      snap.docs.forEach((docSnap) => {
-        const d = docSnap.data();
-        if (d.followingId && candidateSet.has(d.followingId)) {
-          fCount++;
-        }
-        if (d.followerId && candidateSet.has(d.followerId)) {
-          ingCount++;
-        }
-      });
-      const finalF = Math.max(fCount, profileData?.followers || 0, profileData?.followersCount || 0);
-      const finalIng = Math.max(ingCount, profileData?.following || 0, profileData?.followingCount || 0);
-      setRealFollowers(finalF);
-      setRealFollowing(finalIng);
-    }, (err) => console.warn('Follows listener warning:', err));
+    // Real-time Following count for logged-in user
+    const qFollowing = query(collection(db, 'follows'), where('followerId', '==', uid));
+    const unsubFollowing = onSnapshot(qFollowing, (snap) => {
+      setRealFollowing(snap.size);
+    }, () => setRealFollowing(0));
 
     // Real-time Reviews count
     let unsubReviews = () => {};

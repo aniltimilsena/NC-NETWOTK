@@ -158,12 +158,12 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
                 for (const t of unique) {
                     const u = t as any;
                     const uid = (u.uid || u.id || '') as string;
-                    const liveFollowers = followsCountsMap[uid] !== undefined 
-                        ? followsCountsMap[uid] 
-                        : (u.followers !== undefined ? Number(u.followers) : (u.followersCount !== undefined ? Number(u.followersCount) : 0));
-                    const liveFollowing = followingCountsMap[uid] !== undefined 
-                        ? followingCountsMap[uid] 
-                        : (u.following !== undefined ? Number(u.following) : (u.followingCount !== undefined ? Number(u.followingCount) : 0));
+                    const uName = (u.username || '').toLowerCase().trim();
+                    const uEmail = (u.email || '').toLowerCase().trim();
+
+                    const liveFollowers = followsCountsMap[uid] || (uName && followsCountsMap[uName]) || (uEmail && followsCountsMap[uEmail]) || 0;
+                    const liveFollowing = followingCountsMap[uid] || (uName && followingCountsMap[uName]) || (uEmail && followingCountsMap[uEmail]) || 0;
+
                     u.followers = liveFollowers;
                     u.followersCount = liveFollowers;
                     u.following = liveFollowing;
