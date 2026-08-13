@@ -263,15 +263,38 @@ service cloud.firestore {
     match /follows/{followId} {
       allow read: if true;
       allow create: if isSignedIn() && !isBanned() && 
-        (request.auth == null || (
-          request.resource.data.followerId == request.auth.uid &&
-          request.resource.data.followingId != request.auth.uid
-        )) &&
+        request.resource.data.followerId == request.auth.uid &&
+        request.resource.data.followingId != request.auth.uid &&
         request.resource.data.followerId != null &&
         request.resource.data.followingId != request.resource.data.followerId;
-      allow update: if false; 
+      allow update: if isSignedIn() && !isBanned() &&
+        request.resource.data.followerId == request.auth.uid &&
+        request.resource.data.followingId != request.auth.uid;
       allow delete: if isSignedIn() && !isBanned() && 
-        (request.auth == null || resource.data.followerId == request.auth.uid);
+        resource.data.followerId == request.auth.uid;
+    }
+
+    // NOTIFICATIONS — Users can create notifications for others (e.g. follow notifications).
+    // Recipients can read and update (mark as read) their own notifications.
+    match /notifications/{notifId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.recipientId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid ||
+        resource.data.senderId == request.auth.uid
+      );
+      allow create: if isSignedIn() && !isBanned() &&
+        request.resource.data.senderId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.recipientId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.recipientId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid
+      );
     }
 
     // PUBLIC COLLECTION — Reviews are publicly visible.
