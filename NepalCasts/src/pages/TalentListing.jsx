@@ -193,8 +193,6 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         try {
             if (isFollowing) {
                 await deleteDoc(followDocRef);
-                await setDoc(doc(db, "profiles", talentId), { followers: increment(-1), followersCount: increment(-1) }, { merge: true }).catch(() => {});
-                await setDoc(doc(db, "profiles", currentUser.uid), { following: increment(-1), followingCount: increment(-1) }, { merge: true }).catch(() => {});
             }
             else {
                 await setDoc(followDocRef, {
@@ -202,8 +200,6 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                     followingId: talentId,
                     createdAt: serverTimestamp()
                 });
-                await setDoc(doc(db, "profiles", talentId), { followers: increment(1), followersCount: increment(1) }, { merge: true }).catch(() => {});
-                await setDoc(doc(db, "profiles", currentUser.uid), { following: increment(1), followingCount: increment(1) }, { merge: true }).catch(() => {});
                 await addDoc(collection(db, "notifications"), {
                     userId: talentId,
                     recipientId: talentId,

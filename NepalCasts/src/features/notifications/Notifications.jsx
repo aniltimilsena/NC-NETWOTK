@@ -366,15 +366,6 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
                 senderName: user.displayName || 'Someone',
                 senderAvatar: user.photoURL || ''
             }, { merge: true });
-            await updateDoc(doc(db, "profiles", senderId), { followers: increment(1) });
-            await updateDoc(doc(db, "profiles", user.uid), { following: increment(1) });
-            try {
-                await updateDoc(doc(db, "users", senderId), { followers: increment(1) });
-                await updateDoc(doc(db, "users", user.uid), { following: increment(1) });
-            }
-            catch (err) {
-                console.warn("Could not sync follows stats to user doc:", err);
-            }
         }
         catch (err) {
             console.error("Error following back:", err);
