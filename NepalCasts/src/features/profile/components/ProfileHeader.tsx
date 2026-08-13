@@ -63,8 +63,10 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         (isRealOwn && CurrentUser.premium)
     );
     const name = profile?.name || (profile as any)?.displayName || (profile as any)?.fullName || ((profile as any)?.email ? (profile as any).email.split('@')[0] : 'Discovery Talent');
-    const rawRole = profile?.role || (profile as any)?.category || (isRealOwn ? CurrentUser.role : null);
-    const userRole = rawRole && rawRole !== 'user' ? rawRole : 'Talent';
+    const extractedRole = profile?.role || (profile as any)?.primaryRole || (profile as any)?.category || (profile as any)?.systemRole || (Array.isArray((profile as any)?.roles) ? (profile as any).roles[0] : null) || (Array.isArray((profile as any)?.categories) ? (profile as any).categories[0] : null) || (isRealOwn ? CurrentUser.role : null);
+    const userRole = (extractedRole && extractedRole.toLowerCase() !== 'user' && extractedRole.toLowerCase() !== 'talent') 
+        ? extractedRole 
+        : (isRealOwn && CurrentUser.role && CurrentUser.role.toLowerCase() !== 'user' ? CurrentUser.role : ((profile as any)?.category && (profile as any).category.toLowerCase() !== 'user' ? (profile as any).category : 'Model'));
 
     const handleShare = async () => {
         if (navigator.share) {
