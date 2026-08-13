@@ -109,12 +109,31 @@ class CacheManager {
             }
         };
     }
-    invalidateCache(keyOrPrefix: string) {
+    invalidateCache(keyOrPrefix: string, newData?: any) {
         for (const key of this.cache.keys()) {
             if (key === keyOrPrefix || key.startsWith(keyOrPrefix)) {
                 this.cache.delete(key);
                 console.debug(`[Cache] Invalidated key: ${key}`);
             }
+        }
+        for (const [key, entry] of this.listenerPool.entries()) {
+            if (key === keyOrPrefix || key.startsWith(keyOrPrefix)) {
+                if (newData !== undefined) {
+                    entry.lastData = newData;
+                    entry.subscribers.forEach(sub => sub(newData, null));
+                } else {
+                    delete entry.lastData;
+                }
+                console.debug(`[Listener] Updated pooled listener key: ${key}`);
+            }
+        }
+    }
+    reemit(key: string, data: any) {
+        const entry = this.listenerPool.get(key);
+        if (entry) {
+            entry.lastData = data;
+            entry.subscribers.forEach(sub => sub(data, null));
+            console.debug(`[Listener] Re-emitted pooled listener key: ${key}`);
         }
     }
     clearAll() {

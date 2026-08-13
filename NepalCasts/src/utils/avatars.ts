@@ -26,7 +26,7 @@ export const getAvatar = (image?: string | null, gender?: string | null) => {
 export const getProfileImage = (user: any) => {
     if (!user)
         return DEFAULT_AVATAR;
-    const image = user.photoURL || user.profileImage || user.image;
+    const image = user.image || user.photoURL || user.profileImage || user.avatar || user.picture || user.photo || null;
     const gender = user.gender;
     return getAvatar(image, gender);
 };

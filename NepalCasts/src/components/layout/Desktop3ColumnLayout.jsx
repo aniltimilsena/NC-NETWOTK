@@ -84,52 +84,60 @@ export default function Desktop3ColumnLayout({
   const [callsLoading, setCallsLoading] = useState(false);
   const [showSearchOverlay, setShowSearchOverlay] = useState(false);
 
+  const hasPropsFeatured = Boolean(featuredTalents && featuredTalents.length > 0);
+  const hasPropsTrending = Boolean(trendingCalls && trendingCalls.length > 0);
+
   useEffect(() => {
-    const hasPropsFeatured = featuredTalents && featuredTalents.length > 0;
-    const hasPropsTrending = trendingCalls && trendingCalls.length > 0;
-
-    let unsubTalents = () => {};
-    let unsubCalls = () => {};
-
-    if (!hasPropsFeatured) {
-      setTalentsLoading(true);
-      unsubTalents = subscribeToTalents((data) => {
-        if (Array.isArray(data)) {
-          const allActive = data
-            .filter(t => !t.deactivated && t.name)
-            .reduce((acc, current) => {
-              const isDuplicate = acc.some(item =>
-                item.id === current.id ||
-                (item.name && item.name.trim().toLowerCase() === current.name?.trim().toLowerCase())
-              );
-              if (!isDuplicate) {
-                acc.push(current);
-              }
-              return acc;
-            }, []);
-          const featuredOnly = allActive.filter(t => t.featured === true || t.premium === true || t.isPremium === true);
-          const finalTalents = featuredOnly.length > 0 ? featuredOnly : allActive;
-          setInternalFeatured(finalTalents);
-        }
-        setTalentsLoading(false);
-      });
+    if (hasPropsFeatured) {
+      setTalentsLoading(false);
+      return;
     }
 
-    if (!hasPropsTrending) {
-      setCallsLoading(true);
-      unsubCalls = subscribeToCastingCalls('All', (data) => {
-        if (Array.isArray(data)) {
-          setInternalTrending(data);
-        }
-        setCallsLoading(false);
-      });
-    }
+    setTalentsLoading(true);
+    const unsubTalents = subscribeToTalents((data) => {
+      if (Array.isArray(data)) {
+        const allActive = data
+          .filter(t => !t.deactivated && t.name)
+          .reduce((acc, current) => {
+            const isDuplicate = acc.some(item =>
+              item.id === current.id ||
+              (item.name && item.name.trim().toLowerCase() === current.name?.trim().toLowerCase())
+            );
+            if (!isDuplicate) {
+              acc.push(current);
+            }
+            return acc;
+          }, []);
+        const featuredOnly = allActive.filter(t => t.featured === true || t.premium === true || t.isPremium === true);
+        const finalTalents = featuredOnly.length > 0 ? featuredOnly : allActive;
+        setInternalFeatured(finalTalents);
+      }
+      setTalentsLoading(false);
+    });
 
     return () => {
       unsubTalents();
+    };
+  }, [hasPropsFeatured]);
+
+  useEffect(() => {
+    if (hasPropsTrending) {
+      setCallsLoading(false);
+      return;
+    }
+
+    setCallsLoading(true);
+    const unsubCalls = subscribeToCastingCalls('All', (data) => {
+      if (Array.isArray(data)) {
+        setInternalTrending(data);
+      }
+      setCallsLoading(false);
+    });
+
+    return () => {
       unsubCalls();
     };
-  }, [featuredTalents, trendingCalls]);
+  }, [hasPropsTrending]);
 
   const [realFollowers, setRealFollowers] = useState(0);
   const [realFollowing, setRealFollowing] = useState(0);
@@ -219,12 +227,12 @@ export default function Desktop3ColumnLayout({
     user?.profileImage;
 
   const isVerified = profileData?.verified === true || user?.verified === true;
-  const isPremium = profileData?.isPremium === true || user?.isPremium === true || user?.premium === true;
+  const isPremium = profileData?.isPremium === true || profileData?.premium === true || user?.isPremium === true || user?.premium === true;
   const gender = profileData?.gender || user?.gender;
 
   // Real-time stats from Firestore collections
-  const followersCount = realFollowers || profileData?.followersCount || 0;
-  const followingCount = realFollowing || profileData?.followingCount || 0;
+  const followersCount = realFollowers || profileData?.followers || profileData?.followersCount || 0;
+  const followingCount = realFollowing || profileData?.following || profileData?.followingCount || 0;
   const reviewsCount = realReviews || profileData?.reviewsCount || (Array.isArray(profileData?.reviews) ? profileData.reviews.length : 0) || user?.reviewsCount || 0;
 
   // Profile strength calculation
@@ -303,17 +311,10 @@ export default function Desktop3ColumnLayout({
           {/* LEFT SIDEBAR (Desktop: lg+) */}
           <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-20 pt-2 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-4">
             
-            {/* Inline Desktop Search Bar (Redirects dynamically on click) */}
+            {/* Inline Desktop Search Bar */}
             <div className="px-1">
               <div 
-                onClick={() => {
-                  const currentPath = window.location.pathname;
-                  if (currentPath.startsWith('/talents') || currentPath.startsWith('/discover')) {
-                    onNavigate?.('/search');
-                  } else {
-                    onNavigate?.('/talents');
-                  }
-                }}
+                onClick={() => setShowSearchOverlay(true)}
                 className="relative flex items-center bg-[#242526] rounded-full px-4 py-2 border border-white/5 hover:border-white/10 transition-all cursor-pointer"
               >
                 <input 
@@ -553,7 +554,7 @@ export default function Desktop3ColumnLayout({
           <aside className="hidden xl:block xl:col-span-3 sticky top-20 space-y-4 h-fit pt-2">
 
             {/* Go Pro CTA */}
-            {!isVerified && (
+            {!isPremium && !isVerified && (
               <div className="px-2">
                 <div className="bg-[#1C1C1C] rounded-2xl p-3.5 border border-[#2A2A2A] relative overflow-hidden space-y-2">
                   <div className="flex items-center gap-1.5 relative z-10">
@@ -652,6 +653,7 @@ export default function Desktop3ColumnLayout({
                             className="cursor-pointer flex-shrink-0"
                           >
                             <Avatar
+                              userId={item.id || item.uid}
                               src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
                               size="md"
                             />
@@ -737,6 +739,24 @@ export default function Desktop3ColumnLayout({
 
         </div>
       </div>
+
+      {showSearchOverlay && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-start justify-center pt-20 px-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-3xl relative">
+            <ActionSearchBar
+              onClose={() => setShowSearchOverlay(false)}
+              onActionSelect={(profileId) => {
+                setShowSearchOverlay(false);
+                onNavigate?.('profile', profileId);
+              }}
+              onPageNavigate={(page) => {
+                setShowSearchOverlay(false);
+                onNavigate?.(page);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

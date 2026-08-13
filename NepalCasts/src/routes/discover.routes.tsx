@@ -25,7 +25,7 @@ export const DiscoverRoutes = ({ onNavigate, user, isAdmin }: any) => (
     <Route path="/talents" element={<TalentListingWrapper onNavigate={onNavigate} user={user} />} />
     <Route path="/talents/:category" element={<TalentListingWrapper onNavigate={onNavigate} user={user} />} />
     <Route path="/trending" element={<Trending onNavigate={onNavigate} user={user} />} />
-    
+
     {/* Search Routes */}
     <Route path="/search" element={<SearchWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} />} />
     <Route path="/search/:type" element={<SearchWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} />} />

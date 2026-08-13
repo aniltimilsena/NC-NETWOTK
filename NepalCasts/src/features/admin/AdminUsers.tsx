@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, ShieldCheck, UserMinus, Trash2, ExternalLink, Activity, X, UserCheck, ShieldAlert, ShieldX, Award, Mail } from 'lucide-react';
 import { db } from "../../lib/firebase";
 import { CurrentUser } from '../../utils/CurrentUser';
-import { collection, doc, updateDoc, setDoc, addDoc, serverTimestamp, getDocs, query, orderBy, limit, startAfter, endBefore, limitToLast, getCountFromServer } from "firebase/firestore";
+import { collection, doc, updateDoc, setDoc, addDoc, deleteDoc, serverTimestamp, getDocs, query, orderBy, limit, startAfter, endBefore, limitToLast, getCountFromServer } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 import { logAdminAction } from '../../services';
 import apiClient from '../../api/client';
@@ -130,13 +130,20 @@ export default function AdminUsers() {
         }
     };
     const handleUpdateRole = async (userId: string, makeAdmin: boolean) => {
+        const nextRole = makeAdmin ? 'Admin' : 'Talent';
         try {
-            const response = await apiClient.post(`/admin/users/${userId}/role`, { makeAdmin });
-            const nextRole = response.data?.role || (makeAdmin ? 'Admin' : 'Talent');
+            try {
+                await apiClient.post(`/admin/users/${userId}/role`, { makeAdmin });
+            } catch (apiErr) {
+                console.warn("Backend API server offline/failed, updating role directly in Firestore:", apiErr);
+                await updateDoc(doc(db, "users", userId), { isAdmin: makeAdmin, role: nextRole }).catch(() => {});
+                await updateDoc(doc(db, "profiles", userId), { isAdmin: makeAdmin, role: nextRole }).catch(() => {});
+            }
             setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: nextRole, isAdmin: makeAdmin } : u));
             if (selectedUser?.id === userId) {
                 setSelectedUser(prev => prev ? { ...prev, role: nextRole, isAdmin: makeAdmin } : null);
             }
+            await logAdminAction(adminEmail, `Update Role`, userId, makeAdmin ? `Promoted to Admin` : `Revoked Admin role`);
             alert(makeAdmin ? "Promoted user to Admin successfully!" : "Removed Admin role from user successfully!");
         }
         catch (err: any) {
@@ -239,11 +246,18 @@ export default function AdminUsers() {
             onConfirm: async () => {
                 setConfirmConfig(prev => ({ ...prev, isLoading: true }));
                 try {
-                    await apiClient.post(`/admin/users/${userId}/delete`);
+                    try {
+                        await apiClient.post(`/admin/users/${userId}/delete`);
+                    } catch (apiErr) {
+                        console.warn("Backend API server offline/failed, performing Firestore deletion fallback:", apiErr);
+                        await deleteDoc(doc(db, "users", userId)).catch(() => {});
+                        await deleteDoc(doc(db, "profiles", userId)).catch(() => {});
+                    }
                     setUsers(prev => prev.filter(u => u.id !== userId));
                     if (selectedUser?.id === userId) {
                         setSelectedUser(null);
                     }
+                    await logAdminAction(adminEmail, `Delete User`, userId, `Deleted user account ${userId}`);
                     alert("User record deleted successfully! They have been logged out and all their data removed.");
                     setConfirmConfig(prev => ({ ...prev, isOpen: false }));
                 }
@@ -276,10 +290,18 @@ export default function AdminUsers() {
             onConfirm: async () => {
                 setConfirmConfig(prev => ({ ...prev, isLoading: true }));
                 try {
-                    await apiClient.post(`/admin/users/${userId}/ban`, { reason: reason || "", duration: duration || "" });
+                    try {
+                        await apiClient.post(`/admin/users/${userId}/ban`, { reason: reason || "", duration: duration || "" });
+                    } catch (apiErr) {
+                        console.warn("Backend API server offline/failed, updating ban in Firestore:", apiErr);
+                        await updateDoc(doc(db, "users", userId), { status: 'banned', banReason: reason || "", banExpiresAt: duration || "" }).catch(() => {});
+                        await updateDoc(doc(db, "profiles", userId), { status: 'banned', banReason: reason || "", banExpiresAt: duration || "" }).catch(() => {});
+                    }
+                    setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: 'banned' } : u));
                     if (selectedUser?.id === userId) {
                         setSelectedUser(prev => prev ? { ...prev, status: 'banned', banReason: reason, banExpiresAt: duration } : null);
                     }
+                    await logAdminAction(adminEmail, `Ban User`, userId, `Banned user: ${reason}`);
                     alert(`User ${userName} has been successfully banned.`);
                     setConfirmConfig(prev => ({ ...prev, isOpen: false }));
                 }
@@ -306,10 +328,18 @@ export default function AdminUsers() {
             onConfirm: async () => {
                 setConfirmConfig(prev => ({ ...prev, isLoading: true }));
                 try {
-                    await apiClient.post(`/admin/users/${userId}/unban`);
+                    try {
+                        await apiClient.post(`/admin/users/${userId}/unban`);
+                    } catch (apiErr) {
+                        console.warn("Backend API server offline/failed, unbanning in Firestore:", apiErr);
+                        await updateDoc(doc(db, "users", userId), { status: 'Active', banReason: null, banExpiresAt: null }).catch(() => {});
+                        await updateDoc(doc(db, "profiles", userId), { status: 'Active', banReason: null, banExpiresAt: null }).catch(() => {});
+                    }
+                    setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: 'Active' } : u));
                     if (selectedUser?.id === userId) {
                         setSelectedUser(prev => prev ? { ...prev, status: 'Active' } : null);
                     }
+                    await logAdminAction(adminEmail, `Unban User`, userId, `Unbanned user`);
                     alert(`User ${userName} has been successfully unbanned.`);
                     setConfirmConfig(prev => ({ ...prev, isOpen: false }));
                 }

@@ -44,7 +44,36 @@ export const updateProfileByUid = async (uid: string, validatedData: any): Promi
 };
 export const getAllProfiles = async (): Promise<any[]> => {
     const snapshot = await db.collection('profiles').get();
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const raw = snapshot.docs.map((doc) => ({ id: doc.id, uid: doc.id, ...doc.data() as any }));
+    
+    // Sort so records with valid name come first
+    raw.sort((a, b) => {
+        const aName = Boolean(a.name && a.name.trim());
+        const bName = Boolean(b.name && b.name.trim());
+        if (aName && !bName) return -1;
+        if (!aName && bName) return 1;
+        return 0;
+    });
+
+    const seen = new Set<string>();
+    const result: any[] = [];
+
+    for (const p of raw) {
+        const uid = p.uid || p.id;
+        const email = (p.email || '').toLowerCase().trim();
+        const username = (p.username || '').toLowerCase().trim();
+        const key = username ? `usr_${username}` : (email ? `em_${email}` : `uid_${uid}`);
+
+        if (!seen.has(key) && !seen.has(`uid_${uid}`)) {
+            if (p.name && p.name.trim() !== '') {
+                seen.add(key);
+                seen.add(`uid_${uid}`);
+                result.push(p);
+            }
+        }
+    }
+
+    return result;
 };
 export const updateUserRole = async (userId: string, makeAdmin: boolean, adminUid: string): Promise<string> => {
     const nextRole = makeAdmin ? 'Admin' : 'Talent';

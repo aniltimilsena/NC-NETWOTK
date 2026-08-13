@@ -252,7 +252,6 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
             const updatedMedia = [...currentMedia, ...newUrls];
             setProfile((prev: any) => prev ? { ...prev, media: updatedMedia } : prev);
             await updateProfileData(activeUid, { media: updatedMedia });
-            showAlert(`${newUrls.length} portfolio photo(s) added!`, 'success');
         }
         else if (failedCount > 0) {
             showAlert('Upload Failed', 'error', 'Failed to upload photo(s). Please check your file size or network connection.');

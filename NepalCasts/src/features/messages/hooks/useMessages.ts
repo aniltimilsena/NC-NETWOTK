@@ -23,6 +23,12 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         });
         return () => unsub();
     }, [currentUser?.uid]);
+
+    useEffect(() => {
+        if (!activeChatId && !initialUserId && conversations.length > 0) {
+            setActiveChatId(conversations[0].id);
+        }
+    }, [conversations, activeChatId, initialUserId]);
     useEffect(() => {
         if (!activeChatId || !currentUser?.uid) {
             setMessages([]);
@@ -47,11 +53,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         };
     }, [activeChatId, currentUser?.uid]);
     useEffect(() => {
-        if (!currentUser?.uid) return;
-        if (!initialUserId) {
-            setActiveChatId(null);
-            return;
-        }
+        if (!currentUser?.uid || !initialUserId) return;
         const existingConvo = conversations.find((c) => c.id === initialUserId || c.otherParticipantId === initialUserId);
         if (existingConvo) {
             setActiveChatId(existingConvo.id);

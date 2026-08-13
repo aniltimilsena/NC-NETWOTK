@@ -1,4 +1,3 @@
-import { fileTypeFromBuffer } from 'file-type';
 import { randomUUID } from 'crypto';
 import path from 'path';
 import sharp from 'sharp';
@@ -44,6 +43,7 @@ export const processSingleFileBuffer = async (file: Express.Multer.File): Promis
     if (DANGEROUS_EXTENSIONS.has(originalExt)) {
         throw new Error('File type extension not allowed');
     }
+    const { fileTypeFromBuffer } = await (eval('import("file-type")') as Promise<typeof import('file-type')>);
     const detected = await fileTypeFromBuffer(file.buffer);
     if (!detected) {
         throw new Error('Could not verify file binary signature magic numbers');

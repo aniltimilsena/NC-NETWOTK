@@ -2,13 +2,14 @@ import { AuthService } from "./AuthService";
 import { uploadMedia, type CloudinaryUploadResult } from "../utils/uploadMedia";
 import { mediaOptimizer } from "./MediaOptimizer";
 import { logger } from "../utils/logger";
+import { CurrentUser } from "../utils/CurrentUser";
 export const uploadFile = async (file: File, path: string, onProgress?: (p: number) => void, currentUserId?: string): Promise<string> => {
-    const uid = currentUserId || AuthService.getUserId();
+    const uid = currentUserId || AuthService.getUserId() || CurrentUser.id;
     if (!uid) {
         throw new Error("Authentication is required for uploads");
     }
-    const isProfilePath = path.startsWith(`profiles/${uid}/`);
-    const isMediaPath = path.startsWith(`media/${uid}/`);
+    const isProfilePath = path.startsWith(`profiles/`);
+    const isMediaPath = path.startsWith(`media/`);
     const isCastingPath = path.startsWith(`castings/`);
     const isConversationPath = path.startsWith(`conversations/`) && path.includes(`/attachments/`);
     if (!isProfilePath && !isMediaPath && !isCastingPath && !isConversationPath) {

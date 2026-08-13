@@ -4,6 +4,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { uploadProfileMedia } from '../../services';
 import { useUser } from '@clerk/clerk-react';
 import { subscribeToProfile } from '../../features/profile/services/profile';
+import { notifyProfileUpdated } from '../../features/profile/services/users';
 import { cacheManager } from '../../utils/cacheManager';
 
 import ConfirmDialog from './ConfirmDialog';
@@ -52,7 +53,7 @@ export default function Avatar(props: AvatarProps) {
         }
         const unsub = subscribeToProfile(targetId, (profileData) => {
             if (profileData) {
-                const latestSrc = (profileData.image || profileData.photoURL || profileData.avatar || null) as string | null;
+                const latestSrc = (profileData.image || profileData.photoURL || profileData.profileImage || profileData.avatar || profileData.photo || null) as string | null;
                 setLiveSrc(latestSrc || ""); // empty string represents explicitly loaded but null
                 setLiveName(profileData.name as string | undefined);
                 setLiveGender(profileData.gender as string | undefined);
@@ -65,21 +66,22 @@ export default function Avatar(props: AvatarProps) {
         return () => unsub();
     }, [targetId]);
 
-    const resolvedSrc = (liveSrc !== null)
-        ? (liveSrc || null)
-        : (propSrc || user?.photoURL || user?.profileImage || user?.image || user?.avatar || user?.picture || user?.photo || null);
-
     const isDefaultImage = (url?: string | null) => {
-        if (!url)
+        if (!url || typeof url !== 'string' || url.trim() === '')
             return true;
         return url.includes('default-avatar.png') ||
             url.includes('default-male.png') ||
             url.includes('default-female.png') ||
-            url.includes('achyut.png') ||
-            url.startsWith('data:image/svg+xml') ||
-            url.includes('img.clerk.com');
+            url.startsWith('data:image/svg+xml');
     };
-    const hasPhoto = resolvedSrc && !isDefaultImage(resolvedSrc) && !imageError;
+
+    const fallbackSrc = propSrc || user?.image || user?.photoURL || user?.profileImage || user?.avatar || user?.picture || user?.photo || (clerkUser && (clerkUser.id === targetId || clerkUser.id === user?.uid) ? clerkUser.imageUrl : null) || null;
+
+    const resolvedSrc = (liveSrc && !isDefaultImage(liveSrc))
+        ? liveSrc
+        : fallbackSrc;
+
+    const hasPhoto = Boolean(resolvedSrc && !isDefaultImage(resolvedSrc) && !imageError);
     const currentSrc = previewSrc || (hasPhoto ? resolvedSrc : null);
     const [imageLoaded, setImageLoaded] = useState(false);
     useEffect(() => {
@@ -141,25 +143,29 @@ export default function Avatar(props: AvatarProps) {
         setUploading(true);
         setProgress(0);
         try {
-            const avatarPath = `profiles/${activeUserId}/avatar.webp`;
-            const downloadUrl = await uploadProfileMedia(activeUserId, croppedFile, (percent: number) => {
+            const avatarPath = `profiles/${activeUserId}/avatar_${Date.now()}.webp`;
+            const rawUrl = await uploadProfileMedia(activeUserId, croppedFile, (percent: number) => {
                 setProgress(Math.round(percent));
             }, avatarPath);
-            if (downloadUrl) {
+            if (rawUrl) {
+                const downloadUrl = rawUrl.includes('?') ? `${rawUrl}&v=${Date.now()}` : `${rawUrl}?v=${Date.now()}`;
                 setPreviewSrc(downloadUrl);
                 setImageError(false);
                 if (props.onUploadSuccess) {
                     await props.onUploadSuccess(downloadUrl);
-                } else if (activeUserId) {
+                }
+                if (activeUserId) {
                     try {
                         await setDoc(doc(db, 'profiles', activeUserId), {
                             image: downloadUrl,
                             photoURL: downloadUrl,
+                            profileImage: downloadUrl,
                             updatedAt: serverTimestamp()
                         }, { merge: true });
                         await setDoc(doc(db, 'users', activeUserId), {
                             image: downloadUrl,
                             photoURL: downloadUrl,
+                            profileImage: downloadUrl,
                             updatedAt: serverTimestamp()
                         }, { merge: true });
                     }
@@ -168,7 +174,7 @@ export default function Avatar(props: AvatarProps) {
                     }
                 }
                 if (activeUserId) {
-                    cacheManager.invalidateCache(`profile_${activeUserId}`);
+                    notifyProfileUpdated(activeUserId, downloadUrl);
                 }
 
                 // Sync avatar to Clerk so the Navbar UserButton reflects the new photo
@@ -182,8 +188,6 @@ export default function Avatar(props: AvatarProps) {
                         console.warn('Could not sync avatar to Clerk:', clerkErr);
                     }
                 }
-
-                triggerToast("Profile picture updated successfully!", "success");
             }
             else {
                 throw new Error("Secure upload failed to return URL");

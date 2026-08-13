@@ -20,55 +20,145 @@ export function useProfile(profileId: string | null, currentUser: any) {
         phone?: string;
     } | null>(null);
     useEffect(() => {
+        let isMounted = true;
+        const timer = setTimeout(() => {
+            if (isMounted) {
+                setResolvingUid(false);
+                setLoading(false);
+            }
+        }, 2500);
+
         const resolve = async () => {
             setResolvingUid(true);
+            const myUid = currentUser?.uid || currentUser?.id || CurrentUser.id || CurrentUser.uid;
             if (!profileId) {
-                setResolvedUid(currentUser?.uid || null);
-                setResolvingUid(false);
+                if (isMounted) {
+                    setResolvedUid(myUid || null);
+                    setResolvingUid(false);
+                }
                 return;
             }
             try {
+                const myEmail = currentUser?.email?.toLowerCase().trim();
+                const myUid = currentUser?.uid || currentUser?.id || CurrentUser.id || CurrentUser.uid;
+
+                // 1. Direct doc check in profiles
                 const docRef = doc(db, "profiles", profileId);
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
-                    setResolvedUid(profileId);
+                    const data = snap.data();
+                    const realUid = data.uid || data.userId || (myEmail && data.email?.toLowerCase().trim() === myEmail ? myUid : profileId);
+                    if (isMounted) {
+                        setResolvedUid(realUid);
+                        setResolvingUid(false);
+                    }
+                    return;
                 }
-                else {
-                    const cleanUser = profileId.replace(/^@/, '');
-                    const q = query(collection(db, "profiles"), where("username", "==", cleanUser));
-                    const qSnap = await getDocs(q);
-                    if (!qSnap.empty) {
-                        setResolvedUid(qSnap.docs[0].id);
+
+                // 2. Direct doc check in users
+                const userDocRef = doc(db, "users", profileId);
+                const userSnap = await getDoc(userDocRef);
+                if (userSnap.exists()) {
+                    const data = userSnap.data();
+                    const realUid = data.uid || data.userId || (myEmail && data.email?.toLowerCase().trim() === myEmail ? myUid : profileId);
+                    if (isMounted) {
+                        setResolvedUid(realUid);
+                        setResolvingUid(false);
                     }
-                    else {
-                        setResolvedUid(profileId);
+                    return;
+                }
+
+                // 3. Username queries in profiles and users
+                const cleanUser = profileId.replace(/^@/, '').toLowerCase().trim();
+
+                const qProfiles = query(collection(db, "profiles"), where("username", "==", cleanUser));
+                const qSnap = await getDocs(qProfiles);
+                if (!qSnap.empty) {
+                    const docData = qSnap.docs[0].data();
+                    const realUid = docData.uid || docData.userId || qSnap.docs[0].id;
+                    if (isMounted) {
+                        setResolvedUid(realUid);
+                        setResolvingUid(false);
                     }
+                    return;
+                }
+
+                const qUsers = query(collection(db, "users"), where("username", "==", cleanUser));
+                const qUsersSnap = await getDocs(qUsers);
+                if (!qUsersSnap.empty) {
+                    const docData = qUsersSnap.docs[0].data();
+                    const realUid = docData.uid || docData.userId || qUsersSnap.docs[0].id;
+                    if (isMounted) {
+                        setResolvedUid(realUid);
+                        setResolvingUid(false);
+                    }
+                    return;
+                }
+
+                // 4. Local cache check
+                try {
+                    const savedStr = typeof window !== 'undefined' ? localStorage.getItem("nc_cached_talents_real") : null;
+                    if (savedStr) {
+                        const saved = JSON.parse(savedStr);
+                        if (Array.isArray(saved)) {
+                            const match = saved.find((t: any) => {
+                                const tUid = t.uid || t.id;
+                                const tUser = (t.username || '').toLowerCase().trim();
+                                return tUid === profileId || (cleanUser && tUser === cleanUser);
+                            });
+                            if (match && (match.uid || match.id)) {
+                                if (isMounted) {
+                                    setResolvedUid(match.uid || match.id);
+                                    setResolvingUid(false);
+                                }
+                                return;
+                            }
+                        }
+                    }
+                } catch (_cacheErr) {}
+
+                if (isMounted) {
+                    setResolvedUid(profileId);
                 }
             }
             catch (err) {
                 console.error("Error resolving UID:", err);
-                setResolvedUid(profileId);
+                if (isMounted) {
+                    setResolvedUid(profileId);
+                }
             }
-            setResolvingUid(false);
+            if (isMounted) {
+                setResolvingUid(false);
+            }
         };
         resolve();
-    }, [profileId, currentUser?.uid]);
-    const targetUid = resolvedUid || profileId || currentUser?.uid || CurrentUser.id;
+
+        return () => {
+            isMounted = false;
+            clearTimeout(timer);
+        };
+    }, [profileId, currentUser?.uid, currentUser?.id]);
+
+    const initialTargetUid = resolvedUid || profileId || currentUser?.uid || currentUser?.id || CurrentUser.id;
     const isOwnProfile = Boolean(
-        (currentUser && (targetUid === currentUser.uid || targetUid === currentUser.id)) ||
-        (CurrentUser.id && (targetUid === CurrentUser.id || targetUid === CurrentUser.username)) ||
-        (profileId && CurrentUser.username && profileId.replace(/^@/, '') === CurrentUser.username)
+        (currentUser && (initialTargetUid === currentUser.uid || initialTargetUid === currentUser.id)) ||
+        (CurrentUser.id && (initialTargetUid === CurrentUser.id || initialTargetUid === CurrentUser.username)) ||
+        (profileId && CurrentUser.username && profileId.replace(/^@/, '').toLowerCase() === CurrentUser.username.toLowerCase()) ||
+        (profileId && currentUser?.email && profileId.replace(/^@/, '').toLowerCase() === currentUser?.email.split('@')[0].toLowerCase()) ||
+        (profile?.email && currentUser?.email && profile.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+        (profile?.uid && currentUser?.uid && profile.uid === currentUser.uid)
     );
+    const targetUid = isOwnProfile && currentUser?.uid ? currentUser.uid : initialTargetUid;
+
     useEffect(() => {
         if (!targetUid) {
             setLoading(false);
+            setResolvingUid(false);
             return;
         }
 
         let pData: any = null;
         let uData: any = null;
-        let pLoaded = false;
-        let uLoaded = false;
 
         const handleMerge = () => {
             const isPrem = Boolean(
@@ -76,65 +166,105 @@ export function useProfile(profileId: string | null, currentUser: any) {
                 pData?.premium || 
                 uData?.isPremium || 
                 uData?.premium || 
-                (currentUser?.uid === targetUid && (currentUser?.isPremium || currentUser?.premium))
+                ((currentUser?.uid === targetUid || currentUser?.id === targetUid) && (currentUser?.isPremium || currentUser?.premium))
             );
+            
+            // Check local persistent storage for fallback data if Firestore docs were sparse
+            let cachedTalent: any = null;
+            if (!pData?.name && !uData?.name) {
+                try {
+                    const savedStr = typeof window !== 'undefined' ? localStorage.getItem("nc_cached_talents_real") : null;
+                    if (savedStr) {
+                        const saved = JSON.parse(savedStr);
+                        if (Array.isArray(saved)) {
+                            cachedTalent = saved.find((t: any) => {
+                                const tUid = t.uid || t.id;
+                                return tUid === targetUid || tUid === profileId;
+                            });
+                        }
+                    }
+                } catch (_e) {}
+            }
+
+            const userPhoto = currentUser?.photoURL || currentUser?.imageUrl || CurrentUser.photoURL || CurrentUser.image;
+            const finalPhoto = pData?.image || pData?.photoURL || uData?.image || uData?.photoURL || cachedTalent?.image || cachedTalent?.photoURL || (isOwnProfile || (currentUser?.email && pData?.email?.toLowerCase() === currentUser.email.toLowerCase()) ? userPhoto : null);
+
             const merged = {
                 uid: targetUid,
                 id: targetUid,
+                ...cachedTalent,
                 ...uData,
                 ...pData,
                 isPremium: isPrem,
                 premium: isPrem,
+                image: finalPhoto,
+                photoURL: finalPhoto,
+                profileImage: finalPhoto
             };
             setProfile(merged as unknown as UserProfile);
             setLoading(false);
+            setResolvingUid(false);
         };
 
         const unsubProfile = onSnapshot(doc(db, "profiles", targetUid), (pSnap) => {
             pData = pSnap.exists() ? pSnap.data() : {};
-            pLoaded = true;
             handleMerge();
         }, () => {
-            pLoaded = true;
             handleMerge();
         });
 
         const unsubUser = onSnapshot(doc(db, "users", targetUid), (uSnap) => {
             uData = uSnap.exists() ? uSnap.data() : {};
-            uLoaded = true;
             handleMerge();
         }, () => {
-            uLoaded = true;
             handleMerge();
         });
 
+        const safetyTimer = setTimeout(() => {
+            handleMerge();
+        }, 2000);
+
         return () => {
+            clearTimeout(safetyTimer);
             unsubProfile();
             unsubUser();
         };
-    }, [targetUid, currentUser?.uid]);
+    }, [targetUid, currentUser?.uid, currentUser?.id]);
+
+    const candidateIds = Array.from(new Set([
+        profile?.uid,
+        (profile as any)?.id,
+        resolvedUid,
+        profileId,
+        profileId?.replace(/^@/, ''),
+        currentUser?.uid,
+        currentUser?.id,
+        targetUid
+    ].filter(Boolean))) as string[];
+
     useEffect(() => {
-        if (!targetUid)
-            return;
-        const q = query(collection(db, "follows"), where("followingId", "==", targetUid));
+        if (candidateIds.length === 0) return;
+        const targetIds = candidateIds.slice(0, 10);
+        const q = query(collection(db, "follows"), where("followingId", "in", targetIds));
         const unsub = onSnapshot(q, (snap) => {
             setFollowerCount(snap.size);
         }, (err) => {
             console.warn("Followers count subscription failed:", err);
         });
         return () => unsub();
-    }, [targetUid]);
+    }, [candidateIds.join(',')]);
+
     useEffect(() => {
-        if (!targetUid)
-            return;
-        const q = query(collection(db, "follows"), where("followerId", "==", targetUid));
+        if (candidateIds.length === 0) return;
+        const targetIds = candidateIds.slice(0, 10);
+        const q = query(collection(db, "follows"), where("followerId", "in", targetIds));
         const unsub = onSnapshot(q, (snap) => {
             setFollowingCount(snap.size);
         }, (err) => {
             console.warn("Following count subscription failed:", err);
         });
         return () => unsub();
-    }, [targetUid]);
+    }, [candidateIds.join(',')]);
     useEffect(() => {
         if (!currentUser || !targetUid || targetUid === currentUser.uid) {
             setIsFollowing(false);

@@ -51,7 +51,6 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
             });
             if (url) {
                 setForm(prev => ({ ...prev, photoURL: url }));
-                showAlert("Profile photo uploaded successfully!", "success");
             }
             else {
                 showAlert("Failed to upload photo.", "error");

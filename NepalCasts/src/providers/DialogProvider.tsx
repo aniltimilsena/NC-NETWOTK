@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import { UploadProgressModal } from '../components/ui/UploadProgressModal';
 
 export interface DialogOptions {
   title: string;
@@ -153,6 +154,7 @@ export const DialogProvider = ({ children }: { children: ReactNode }) => {
           isLoading={isLoading}
         />
       )}
+      <UploadProgressModal />
     </DialogContext.Provider>
   );
 };

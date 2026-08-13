@@ -12,9 +12,9 @@ const ProfileWrapper = ({ onNavigate, user, isAdmin, showAlert, authReady, defau
     return <div className="min-h-screen bg-[#070709]" />;
   }
 
-  const targetId = id || user?.uid;
+  const targetId = id || user?.uid || user?.id || CurrentUser.id || CurrentUser.uid;
   
-  if (!targetId && !user) {
+  if (!targetId && !user && !CurrentUser.id) {
     return <Navigate to="/signin" replace />;
   }
 

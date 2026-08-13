@@ -149,8 +149,8 @@ router.post('/upload/avatar', verifyToken, uploadLimiter, avatarUpload.single('a
         const userRef = db.collection('users').doc(userId);
         const profileRef = db.collection('profiles').doc(userId);
         await db.runTransaction(async (transaction) => {
-            transaction.update(userRef, { photoURL: avatarUrl, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
-            transaction.update(profileRef, { image: avatarUrl, photoURL: avatarUrl, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+            transaction.set(userRef, { photoURL: avatarUrl, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            transaction.set(profileRef, { image: avatarUrl, photoURL: avatarUrl, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
         });
         return res.json({
             success: true,

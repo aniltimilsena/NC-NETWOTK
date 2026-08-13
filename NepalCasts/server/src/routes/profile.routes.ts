@@ -13,21 +13,23 @@ const router = Router();
 const getPublicProfilesHandler = async (_req: any, res: Response): Promise<any> => {
     try {
         const snapshot = await db.collection('profiles').limit(50).get();
-        const talents = snapshot.docs.map(doc => {
-            const data = doc.data() || {};
-            const {
-                fcmToken: _fcmToken,
-                fcmTokens: _fcmTokens,
-                loginAttempts: _loginAttempts,
-                password: _password,
-                passwordHash: _passwordHash,
-                ...rest
-            } = data;
-            return {
-                id: doc.id,
-                ...rest
-            };
-        });
+        const talents = snapshot.docs
+            .map(doc => {
+                const data = doc.data() || {};
+                const {
+                    fcmToken: _fcmToken,
+                    fcmTokens: _fcmTokens,
+                    loginAttempts: _loginAttempts,
+                    password: _password,
+                    passwordHash: _passwordHash,
+                    ...rest
+                } = data;
+                return {
+                    id: doc.id,
+                    ...rest
+                };
+            })
+            .filter((t: any) => t.name && t.name.trim() !== '');
         return res.json({ success: true, talents });
     } catch (error: any) {
         console.error('[PublicProfiles] Firestore query error:', error?.message || error);

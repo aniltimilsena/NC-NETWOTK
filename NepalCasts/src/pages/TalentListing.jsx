@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MoreVertical, Share2, ChevronLeft, SlidersHorizontal } from 'lucide-react';
@@ -13,7 +13,7 @@ import ShareSheet from '../components/ui/ShareSheet';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { CATEGORIES, getCategoryConfig } from '../constants/categories';
 import { cacheManager } from '../utils/cacheManager';
-import { subscribeToTalents } from '../features/profile/services/users';
+import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
 export default function TalentListing({ onNavigate, user, initialCategory = 'All' }) {
     const navigate = useNavigate();
     const { user: clerkUser } = useUser();
@@ -193,8 +193,8 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         try {
             if (isFollowing) {
                 await deleteDoc(followDocRef);
-                await updateDoc(doc(db, "profiles", talentId), { followers: increment(-1) });
-                await updateDoc(doc(db, "profiles", currentUser.uid), { following: increment(-1) });
+                await setDoc(doc(db, "profiles", talentId), { followers: increment(-1), followersCount: increment(-1) }, { merge: true }).catch(() => {});
+                await setDoc(doc(db, "profiles", currentUser.uid), { following: increment(-1), followingCount: increment(-1) }, { merge: true }).catch(() => {});
             }
             else {
                 await setDoc(followDocRef, {
@@ -202,8 +202,8 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                     followingId: talentId,
                     createdAt: serverTimestamp()
                 });
-                await updateDoc(doc(db, "profiles", talentId), { followers: increment(1) });
-                await updateDoc(doc(db, "profiles", currentUser.uid), { following: increment(1) });
+                await setDoc(doc(db, "profiles", talentId), { followers: increment(1), followersCount: increment(1) }, { merge: true }).catch(() => {});
+                await setDoc(doc(db, "profiles", currentUser.uid), { following: increment(1), followingCount: increment(1) }, { merge: true }).catch(() => {});
                 await addDoc(collection(db, "notifications"), {
                     userId: talentId,
                     recipientId: talentId,
@@ -221,6 +221,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                     targetUrl: `/profile/${currentUser.uid}`
                 });
             }
+            notifyFollowUpdated(talentId);
         }
         catch (err) {
             console.error("Error toggling follow:", err);
@@ -228,7 +229,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
     };
     const filteredTalents = talents
         .filter(t => {
-            if (t.deactivated === true)
+            if (t.deactivated === true || !t.name || t.name.trim() === '')
                 return false;
             const matchesSearch = !searchQuery ||
                 t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -262,8 +263,12 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         });
         setSearchQuery('');
     };
+    const featuredTalents = useMemo(() => {
+        return talents.filter(t => !t.deactivated && (t.featured === true || t.premium === true || t.isPremium === true));
+    }, [talents]);
+
     return (
-        <Desktop3ColumnLayout user={activeUser} onNavigate={onNavigate} activeNav="talent" featuredTalents={talents.filter(t => !t.deactivated && (t.featured === true || t.premium === true || t.isPremium === true))}>
+        <Desktop3ColumnLayout user={activeUser} onNavigate={onNavigate} activeNav="talent" featuredTalents={featuredTalents}>
             <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-6 relative font-sans">
                 <SEO title="Browse Professional Talent | NepalCasts" description="Premium directory of cinema professionals in Nepal." />
 
@@ -425,7 +430,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                     else if (talent.joinedYear) {
                                         createdDate = new Date(`${talent.joinedYear}-01-01`);
                                     }
-                                    if (!createdDate) {
+                                    if (!createdDate || isNaN(createdDate.getTime())) {
                                         createdDate = new Date('2026-07-01');
                                     }
                                     const now = new Date();
@@ -434,9 +439,10 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                     const isNew = diffDays <= 2;
                                     const joinYear = createdDate.getFullYear();
                                     const expLevel = getExperienceLevel(talent);
+                                    const talentPhoto = talent.image || talent.photoURL || talent.profileImage || talent.avatar || talent.photo;
                                     return (<div key={talent.id} onMouseEnter={() => setHoveredTalent(talent)} onMouseLeave={() => setHoveredTalent(null)} onClick={() => onNavigate('profile', talent.id)} className="flex items-center justify-between py-4 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group">
                                         <div className="flex items-center gap-4 min-w-0">
-                                            <Avatar user={talent} size="lg" name={talent.name} className="w-12 h-12 md:w-14 md:h-14 transition-transform group-hover:scale-105 duration-300" />
+                                            <Avatar userId={talent.id || talent.uid} user={talent} src={talentPhoto} size="lg" name={talent.name} className="w-12 h-12 md:w-14 md:h-14 transition-transform group-hover:scale-105 duration-300" />
                                             <div className="min-w-0 text-left">
                                                 <h3 className="font-bold text-white text-base md:text-lg tracking-tight truncate flex items-center gap-1.5 group-hover:text-sky-400 transition-colors duration-300">
                                                     {talent.name}

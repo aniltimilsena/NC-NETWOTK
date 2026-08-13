@@ -258,12 +258,10 @@ export default function Home({ onNavigate, user }) {
     return url.includes('default-avatar.png') ||
       url.includes('default-male.png') ||
       url.includes('default-female.png') ||
-      url.includes('achyut.png') ||
-      url.startsWith('data:image/svg+xml') ||
-      url.includes('img.clerk.com');
+      url.startsWith('data:image/svg+xml');
   };
 
-  // Resolve hero photo from the live spotlightProfile, then fall back to the premium user's fields, then Clerk image
+  // Resolve hero photo from the live spotlightProfile, then fall back to the premium user's fields, then user image
   const heroPhotoURL =
     spotlightProfile?.image ||
     spotlightProfile?.photoURL ||
@@ -274,9 +272,10 @@ export default function Home({ onNavigate, user }) {
     currentPremiumUser?.avatar ||
     currentPremiumUser?.picture ||
     currentPremiumUser?.photo ||
-    (user?.uid === currentPremiumUser?.id
-      ? (user?.photoURL || user?.profileImage || user?.image)
-      : null);
+    user?.photoURL ||
+    user?.profileImage ||
+    user?.image ||
+    null;
   const hasHeroPhoto = heroPhotoURL && !isDefaultImage(heroPhotoURL) && !heroImageError;
 
   const spotlightName =
@@ -312,7 +311,7 @@ export default function Home({ onNavigate, user }) {
               <img
                 src="/hero-bg.png"
                 alt="Hero Background"
-                fetchPriority="high"
+                fetchpriority="high"
                 decoding="async"
                 className="w-full h-full object-cover"
               />
@@ -422,6 +421,7 @@ export default function Home({ onNavigate, user }) {
                   className="flex flex-col items-center shrink-0 w-[140px] sm:w-[170px] cursor-pointer group transition-transform duration-300 hover:scale-105"
                 >
                   <Avatar
+                    userId={talent.id || talent.uid}
                     user={talent}
                     size="none"
                     name={talent.name}

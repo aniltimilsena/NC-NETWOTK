@@ -72,6 +72,9 @@ const ClerkProviderWithNavigate = ({ children }: { children: React.ReactNode }) 
                     colorPrimary: '#facc15',
                     colorNeutral: '#ffffff',
                 },
+                elements: {
+                    badge: 'hidden !important',
+                },
             }}
         >
             {children}

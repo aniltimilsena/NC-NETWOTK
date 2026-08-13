@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Search, TrendingUp, ChevronLeft, SlidersHorizontal } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { collection, onSnapshot, query, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';
-import { subscribeToTalents } from '../features/profile/services/users';
+import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import { CATEGORIES, getCategoryColor, getCategoryConfig } from '../constants/categories';
@@ -124,8 +124,8 @@ export default function Trending({ onNavigate, user }) {
         try {
             if (isFollowing) {
                 await deleteDoc(followDocRef);
-                await updateDoc(doc(db, "profiles", talentId), { followers: increment(-1) });
-                await updateDoc(doc(db, "profiles", currentUser.uid), { following: increment(-1) });
+                await setDoc(doc(db, "profiles", talentId), { followers: increment(-1), followersCount: increment(-1) }, { merge: true }).catch(() => {});
+                await setDoc(doc(db, "profiles", currentUser.uid), { following: increment(-1), followingCount: increment(-1) }, { merge: true }).catch(() => {});
             }
             else {
                 await setDoc(followDocRef, {
@@ -133,8 +133,8 @@ export default function Trending({ onNavigate, user }) {
                     followingId: talentId,
                     createdAt: serverTimestamp()
                 });
-                await updateDoc(doc(db, "profiles", talentId), { followers: increment(1) });
-                await updateDoc(doc(db, "profiles", currentUser.uid), { following: increment(1) });
+                await setDoc(doc(db, "profiles", talentId), { followers: increment(1), followersCount: increment(1) }, { merge: true }).catch(() => {});
+                await setDoc(doc(db, "profiles", currentUser.uid), { following: increment(1), followingCount: increment(1) }, { merge: true }).catch(() => {});
                 await addDoc(collection(db, "notifications"), {
                     userId: talentId,
                     recipientId: talentId,
@@ -152,6 +152,7 @@ export default function Trending({ onNavigate, user }) {
                     targetUrl: `/profile/${currentUser.uid}`
                 });
             }
+            notifyFollowUpdated(talentId);
         }
         catch (err) {
             console.error("Error toggling follow:", err);
@@ -161,6 +162,7 @@ export default function Trending({ onNavigate, user }) {
     };
     const rankedProfiles = profiles
         .filter(p => {
+        if (!p.name || p.name.trim() === '') return false;
         if (selectedCategory !== 'All') {
             const catClean = selectedCategory.trim().toLowerCase();
             const roleClean = (p.role || '').trim().toLowerCase();
@@ -351,7 +353,7 @@ export default function Trending({ onNavigate, user }) {
                           </div>)}
                         
                         <div className={`p-1.5 rounded-full border-2 bg-black/40 ${item.pos === 0 ? 'border-yellow-400' : item.pos === 1 ? 'border-slate-300' : 'border-amber-700'} relative`}>
-                          <Avatar user={prof} size={item.pos === 0 ? 'xl' : 'lg'} name={prof.name} className="group-hover:scale-105 transition-transform duration-500"/>
+                          <Avatar userId={prof.id || prof.uid} user={prof} size={item.pos === 0 ? 'xl' : 'lg'} name={prof.name} className="group-hover:scale-105 transition-transform duration-500"/>
                           
                           
                           {prof.openToWork && (<span className="absolute bottom-1.5 right-1.5 flex h-4.5 w-4.5">

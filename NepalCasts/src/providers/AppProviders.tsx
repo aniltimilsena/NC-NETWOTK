@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, laz
 import { useDialog } from './DialogProvider';
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc, query, collection, where, getDocs } from 'firebase/firestore';
-import { signOut as firebaseSignOut } from 'firebase/auth';
+import { signOut as firebaseSignOut, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
 import { db, auth } from '../lib/firebase';
 import { AuthService } from '../services/AuthService';
 import { CurrentUser } from '../utils/CurrentUser';
@@ -83,8 +83,14 @@ export default function AppProviders({ children }: {
                 userProfile.role || 'user',
                 userProfile.premium === true || userProfile.isPremium === true
             );
+            // Sync canonical profile image and name so CurrentUser returns the
+            // Firestore values instead of stale Clerk defaults.
+            CurrentUser.setImageUrl(userProfile.image || null);
+            CurrentUser.setName(userProfile.name || null);
         } else {
             CurrentUser.setProfileInfo('user', false);
+            CurrentUser.setImageUrl(null);
+            CurrentUser.setName(null);
         }
     }, [userProfile]);
     const [minSplashTimeElapsed, setMinSplashTimeElapsed] = useState(() => {
@@ -149,38 +155,38 @@ export default function AppProviders({ children }: {
             const email = clerkUser.primaryEmailAddress?.emailAddress || '';
             const clerkName = clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || (email ? email.split('@')[0] : 'Talent User');
             const rawClerkPhoto = clerkUser.imageUrl || '';
-            // Only use Clerk's photo if it's NOT their default avatar (hosted on img.clerk.com)
             const photoURL = rawClerkPhoto.includes('img.clerk.com') ? '' : rawClerkPhoto;
 
-            setUser({
-                uid,
-                email,
-                displayName: clerkName,
-                photoURL,
-            });
+            const isSuperAdminEmail = Boolean(email && email.toLowerCase() === 'aniltimilsena53@gmail.com');
+            setIsAdmin(isSuperAdminEmail);
+
+            setUser({ uid, email, displayName: clerkName, photoURL, });
 
             (async () => {
                 try {
-                    if (oneSignalInitialized) {
-                        await OneSignal.login(uid);
-                    }
-                }
-                catch (e) {
-                    console.warn("OneSignal login failed:", e);
-                }
+                    if (oneSignalInitialized) { await OneSignal.login(uid); }
+                } catch (e) { console.warn("OneSignal login failed:", e); }
                 try {
+                    if (!auth.currentUser) {
+                        try {
+                            const token = await getToken({ template: 'integration_firebase' }).catch(() => null);
+                            if (token) {
+                                await signInWithCustomToken(auth, token).catch(() => {});
+                            }
+                        } catch (_aErr) {}
+                    }
                     const userDocRef = doc(db, 'users', uid);
                     const userDoc = await getDoc(userDocRef);
+                    const isSuperAdminEmail = email && email.toLowerCase() === 'aniltimilsena53@gmail.com';
+                    const hasAdminFlag = userDoc.exists() && userDoc.data()?.isAdmin === true;
+                    const shouldBeAdmin = Boolean(isSuperAdminEmail || hasAdminFlag);
+
                     if (!userDoc.exists()) {
-                        await setDoc(userDocRef, {
-                            email,
-                            displayName: clerkName,
-                            createdAt: serverTimestamp(),
-                            isAdmin: false,
-                        }, { merge: true });
-                        setIsAdmin(false);
+                        await setDoc(userDocRef, { email, displayName: clerkName, createdAt: serverTimestamp(), isAdmin: shouldBeAdmin, }, { merge: true });
+                        setIsAdmin(shouldBeAdmin);
                     } else {
-                        setIsAdmin(userDoc.data()?.isAdmin === true);
+                        if (isSuperAdminEmail && !hasAdminFlag) { await setDoc(userDocRef, { isAdmin: true }, { merge: true }); }
+                        setIsAdmin(shouldBeAdmin);
                     }
 
                     const profileDocRef = doc(db, 'profiles', uid);
@@ -188,54 +194,46 @@ export default function AppProviders({ children }: {
                     const profileData = profileDoc.exists() ? profileDoc.data() : null;
                     const updateData: any = {};
 
-                    // Auto-sync real data from old profile matching the user's email
-                    if ((!profileDoc.exists() || !profileData?.role || profileData?.role === 'user') && email) {
-                        try {
-                            const oldUsersQuery = query(
-                                collection(db, 'users'), 
-                                where('email', '==', email)
-                            );
-                            const oldUsersSnap = await getDocs(oldUsersQuery);
-                            const oldUserDoc = oldUsersSnap.docs.find(d => d.id !== uid);
-                            if (oldUserDoc) {
-                                const oldUid = oldUserDoc.id;
-                                const oldProfileSnap = await getDoc(doc(db, 'profiles', oldUid));
-                                if (oldProfileSnap.exists()) {
-                                    const oldProfileData = oldProfileSnap.data();
-                                    if (oldProfileData.role && oldProfileData.role !== 'user') {
-                                        console.log("Auto-merging profile data from old account:", oldUid);
-                                        Object.assign(updateData, {
-                                            role: oldProfileData.role,
-                                            category: oldProfileData.category || oldProfileData.role,
-                                            bio: oldProfileData.bio || '',
-                                            location: oldProfileData.location || '',
-                                            gender: oldProfileData.gender || '',
-                                            skills: oldProfileData.skills || [],
-                                            experience: oldProfileData.experience || [],
-                                            education: oldProfileData.education || [],
-                                            languages: oldProfileData.languages || [],
-                                            username: oldProfileData.username || '',
-                                            verified: oldProfileData.verified || false,
-                                            premium: oldProfileData.premium || false,
-                                            isPremium: oldProfileData.isPremium || false,
-                                            featured: oldProfileData.featured || false,
-                                            rating: oldProfileData.rating || 0,
-                                            reviews: oldProfileData.reviews || 0,
-                                            coverImage: oldProfileData.coverImage || '',
-                                            photoURL: oldProfileData.photoURL || oldProfileData.image || '',
-                                            image: oldProfileData.image || oldProfileData.photoURL || '',
-                                            onboarded: oldProfileData.onboarded !== undefined ? oldProfileData.onboarded : true
-                                        });
-                                        if (oldProfileData.twoFactorEnabled !== undefined) {
-                                            updateData.twoFactorEnabled = oldProfileData.twoFactorEnabled;
-                                        }
-                                    }
-                                }
+                    try {
+                        const legacySnapshots = await Promise.all([
+                            email ? getDocs(query(collection(db, 'profiles'), where('email', '==', email))).catch(() => null) : null,
+                            clerkName ? getDocs(query(collection(db, 'profiles'), where('name', '==', clerkName))).catch(() => null) : null,
+                        ]);
+                        for (const snap of legacySnapshots) {
+                            if (!snap) continue;
+                            for (const docSnap of snap.docs) {
+                                if (docSnap.id === uid) continue;
+                                const legacyData = docSnap.data();
+                                Object.assign(updateData, {
+                                    name: profileData?.name || legacyData.name || clerkName,
+                                    role: profileData?.role || legacyData.role || 'Model',
+                                    category: profileData?.category || legacyData.category || legacyData.role || 'Model',
+                                    bio: profileData?.bio || legacyData.bio || '',
+                                    location: profileData?.location || legacyData.location || '',
+                                    gender: profileData?.gender || legacyData.gender || '',
+                                    skills: profileData?.skills || legacyData.skills || [],
+                                    experience: profileData?.experience || legacyData.experience || [],
+                                    education: profileData?.education || legacyData.education || [],
+                                    languages: profileData?.languages || legacyData.languages || [],
+                                    username: profileData?.username || legacyData.username || '',
+                                    verified: profileData?.verified ?? legacyData.verified ?? false,
+                                    premium: profileData?.premium ?? legacyData.premium ?? false,
+                                    isPremium: profileData?.isPremium ?? legacyData.isPremium ?? false,
+                                    featured: profileData?.featured ?? legacyData.featured ?? false,
+                                    rating: profileData?.rating || legacyData.rating || 0,
+                                    reviews: profileData?.reviews || legacyData.reviews || 0,
+                                    coverImage: profileData?.coverImage || legacyData.coverImage || '',
+                                    photoURL: profileData?.photoURL || profileData?.image || legacyData.photoURL || legacyData.image || '',
+                                    image: profileData?.image || profileData?.photoURL || legacyData.image || legacyData.photoURL || '',
+                                    onboarded: profileData?.onboarded !== undefined ? profileData.onboarded : (legacyData.onboarded !== undefined ? legacyData.onboarded : true)
+                                });
+                                try {
+                                    await deleteDoc(doc(db, 'profiles', docSnap.id)).catch(() => {});
+                                    await deleteDoc(doc(db, 'users', docSnap.id)).catch(() => {});
+                                } catch (_delErr) {}
                             }
-                        } catch (mergeErr) {
-                            console.warn("Failed to merge old profile data:", mergeErr);
                         }
-                    }
+                    } catch (_mergeErr) {}
 
                     if (!profileDoc.exists()) {
                         if (!updateData.name) updateData.name = clerkName;
@@ -244,31 +242,25 @@ export default function AppProviders({ children }: {
                         updateData.createdAt = serverTimestamp();
                         if (updateData.onboarded === undefined) updateData.onboarded = true;
                     } else {
-                        if (!profileData?.name && clerkName) {
-                            updateData.name = clerkName;
-                        }
+                        if (!profileData?.name && clerkName) updateData.name = clerkName;
                         const currentImg = profileData?.image || profileData?.photoURL;
-                        const hasExplicitDelete = profileData && ('image' in profileData || 'photoURL' in profileData) && (profileData.image === "" || profileData.image === null || profileData.photoURL === "" || profileData.photoURL === null);
-                        const isDefault = !currentImg || 
-                                          currentImg.includes('default-avatar.png') || 
-                                          currentImg.includes('default-male.png') || 
-                                          currentImg.includes('default-female.png') || 
-                                          currentImg.startsWith('data:image/svg+xml') ||
-                                          currentImg.includes('img.clerk.com');
-                        if (photoURL && isDefault && !hasExplicitDelete && !updateData.image) {
+                        const isDefault = !currentImg || currentImg.includes('img.clerk.com');
+                        if (photoURL && isDefault && !updateData.image) {
                             updateData.image = photoURL;
                             updateData.photoURL = photoURL;
                         }
                     }
-
                     if (Object.keys(updateData).length > 0) {
                         updateData.updatedAt = serverTimestamp();
                         await setDoc(profileDocRef, updateData, { merge: true });
+                        await setDoc(userDocRef, { 
+                            email,
+                            ...(updateData.name ? { name: updateData.name, displayName: updateData.name } : {}), 
+                            ...(updateData.image ? { image: updateData.image, photoURL: updateData.image } : {}), 
+                            updatedAt: serverTimestamp() 
+                        }, { merge: true });
                     }
-                }
-                catch (err) {
-                    console.warn("Error syncing Clerk profile to Firestore:", err);
-                }
+                } catch (err) { console.warn("Error syncing Clerk profile to Firestore:", err); }
             })();
         } else if (isLoaded && !isSignedIn) {
             setUser(null);
@@ -367,9 +359,9 @@ export default function AppProviders({ children }: {
         uid: user.uid,
         email: user.email,
         displayName: userProfile?.name || user.displayName || clerkComputedName || (user.email ? user.email.split('@')[0] : 'Talent User'),
-        photoURL: userProfile?.photoURL || userProfile?.image || userProfile?.profileImage || (user.photoURL && !user.photoURL.includes('img.clerk.com') ? user.photoURL : '') || '',
+        photoURL: userProfile?.image || '',
         gender: userProfile?.gender || '',
-        profileImage: userProfile?.profileImage || userProfile?.image || userProfile?.photoURL || (user.photoURL && !user.photoURL.includes('img.clerk.com') ? user.photoURL : '') || '',
+        profileImage: userProfile?.image || '',
         premium: userProfile?.premium || isAdmin || false,
         role: userProfile?.category || userProfile?.role || '',
     } : null, [user, userProfile, clerkComputedName, isAdmin]);

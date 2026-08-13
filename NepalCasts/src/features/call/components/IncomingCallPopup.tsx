@@ -25,7 +25,7 @@ export default function IncomingCallPopup() {
     if (!incomingCall)
         return null;
     const callerName = callerProfile?.name || incomingCall.callerName || 'Unknown Caller';
-    const callerPhoto = callerProfile?.image || callerProfile?.avatar || callerProfile?.photoURL || incomingCall.callerPhoto || incomingCall.callerAvatar || '';
+    const callerPhoto = callerProfile?.image || incomingCall.callerPhoto || '';
     const callerProfession = callerProfile?.role || 'Talent';
     return (<AnimatePresence>
       <motion.div key="incoming-call-popup" initial={{ y: -100, opacity: 0, scale: 0.95 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: -100, opacity: 0, scale: 0.95 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }} className="fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 z-[9999] p-4 sm:p-5 rounded-3xl bg-[#12121A]/95 border border-white/15 shadow-2xl backdrop-blur-xl select-none">

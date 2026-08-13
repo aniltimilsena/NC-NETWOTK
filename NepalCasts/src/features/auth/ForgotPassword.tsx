@@ -77,6 +77,7 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                                 formResendCodeLink: 'text-[#9CA3AF] hover:text-white text-xs',
                                 otpCodeFieldInput: '!bg-[#000000] border !border-[#2A2A2A] text-white text-center !rounded-none',
                                 alternativeMethodsBlockButton: 'text-[#9CA3AF] hover:text-white !bg-[#000000] border !border-[#2A2A2A] !rounded-none',
+                                badge: 'hidden !important',
                             }
                         }}
                         signUpUrl="/signup"

@@ -84,7 +84,7 @@ export default function SignUp({ onNavigate }: SignUpProps) {
                                 formResendCodeLink: 'text-[#9CA3AF] hover:text-white text-xs',
                                 otpCodeFieldInput: '!bg-[#000000] border !border-[#2A2A2A] text-white text-center !rounded-none',
                                 alternativeMethodsBlockButton: 'text-[#9CA3AF] hover:text-white !bg-[#000000] border !border-[#2A2A2A] !rounded-none',
-                                badge: 'bg-white/5 text-[#9CA3AF] border border-[#2A2A2A] text-[10px] font-bold px-2 py-0.5',
+                                badge: 'hidden !important',
                                 tagPillIcon: 'text-white',
                             }
                         }}

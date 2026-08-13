@@ -129,7 +129,7 @@ export default function CallingOverlay() {
         ? (activeCall?.calleePhoto || activeCall?.receiverAvatar || '')
         : (activeCall?.callerPhoto || activeCall?.callerAvatar || '');
     const remoteName = remoteProfile?.name || docRemoteName;
-    const remotePhoto = remoteProfile?.image || remoteProfile?.avatar || remoteProfile?.photoURL || docRemotePhoto;
+    const remotePhoto = remoteProfile?.image || docRemotePhoto;
     const remoteProfession = remoteProfile?.role || 'Talent';
     const statusText = useMemo(() => {
         if (callState === 'requesting-media')

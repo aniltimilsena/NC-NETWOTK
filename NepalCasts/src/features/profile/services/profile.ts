@@ -1,5 +1,7 @@
 import { db } from "../../../lib/firebase";
 import { AuthService } from "../../../services/AuthService";
+import { CurrentUser } from "../../../utils/CurrentUser";
+import { notifyProfileUpdated } from "./users";
 import { doc, onSnapshot, setDoc, serverTimestamp, } from "firebase/firestore";
 import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import { uploadFile } from "../../../services/storage";
@@ -82,6 +84,10 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
             console.warn("User collection pre-sync warning:", uErr);
         }
         const profileRef = doc(db, COLLECTIONS.PROFILES, uid);
+        const nameToUse = cleanData.name || CurrentUser.fullName || AuthService.getFullName();
+        if (nameToUse && !profileDataOnly.name) {
+            profileDataOnly.name = nameToUse;
+        }
         await setDoc(profileRef, {
             ...profileDataOnly,
             updatedAt: serverTimestamp()
@@ -100,7 +106,16 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
                 console.warn("contact_info sync warning:", cErr);
             }
         }
-        cacheManager.invalidateCache(`profile_${uid}`);
+
+        const newImage = (cleanData.image || cleanData.photoURL || cleanData.profileImage) as string | undefined;
+        if (newImage && typeof newImage === 'string') {
+            CurrentUser.setImageUrl(newImage);
+            notifyProfileUpdated(uid, newImage);
+        } else {
+            cacheManager.invalidateCache(`profile_${uid}`);
+            cacheManager.invalidateCache(`profile_sub_${uid}`);
+            cacheManager.invalidateCache(`talents_list_all`);
+        }
         return { success: true, error: null };
     }
     catch (error: unknown) {
@@ -145,14 +160,14 @@ export const subscribeToProfile = (uid: string, callback: (data: ProfileData | n
 };
 export const uploadProfileMedia = async (uid: string, file: File, onProgress?: (progress: number) => void, customPath?: string): Promise<string | null> => {
     try {
-        const targetUid = AuthService.getUserId() || uid;
+        const targetUid = uid || AuthService.getUserId() || CurrentUser.id;
         if (!targetUid) {
             console.error("Unauthorized media upload attempt");
             return null;
         }
         const defaultPath = `media/${targetUid}/${Date.now()}_${file.name}`;
         const targetPath = customPath
-            ? customPath.replace(uid, targetUid)
+            ? customPath
             : defaultPath;
         const url = await uploadFile(file, targetPath, onProgress, targetUid);
         return url;

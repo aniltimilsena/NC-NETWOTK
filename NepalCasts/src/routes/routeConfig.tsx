@@ -76,7 +76,7 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
 
     if (targetPage === 'profile') {
       const cleanParam = typeof param === 'string' ? param.replace(/^@/, '') : '';
-      const isOwn = !param || param === user?.uid || (CurrentUser.id && param === CurrentUser.id) || (CurrentUser.username && cleanParam === CurrentUser.username);
+      const isOwn = !param || param === user?.uid || param === user?.id || (CurrentUser.id && param === CurrentUser.id) || (CurrentUser.username && cleanParam === CurrentUser.username);
       if (isOwn) {
         path = '/profile';
       } else {

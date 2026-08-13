@@ -116,7 +116,7 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
                     if (res.data) {
                         const pData = res.data;
                         senderName = pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || senderName;
-                        senderAvatar = pData.image || pData.photoURL || pData.avatar || senderAvatar;
+                        senderAvatar = pData.image || senderAvatar;
                     }
                 }
                 catch (e) {
@@ -349,7 +349,7 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
             if (pData) {
                 participantInfo = {
                     name: pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || pData.displayName || "User",
-                    avatar: pData.image || pData.photoURL || pData.avatar || "",
+                    avatar: pData.image || "",
                     gender: pData.gender || "unknown",
                     online: pData.online || false,
                     lastActive: pData.lastActive || null,
@@ -544,7 +544,7 @@ export const createConversation = async (participants: string[], initialMessage?
                     if (profileSnap.exists()) {
                         const pData = profileSnap.data();
                         senderName = pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || senderName;
-                        senderAvatar = pData.image || pData.photoURL || pData.avatar || senderAvatar;
+                        senderAvatar = pData.image || senderAvatar;
                     }
                 }
                 catch (e) {

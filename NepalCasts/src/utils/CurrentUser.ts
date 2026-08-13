@@ -3,10 +3,28 @@ import { AuthService } from '../services/AuthService';
 export class CurrentUser {
     private static userRole: string = 'user';
     private static isPremiumUser: boolean = false;
+    private static canonicalImageUrl: string | null = null;
+    private static canonicalName: string | null = null;
 
     static setProfileInfo(role: string, premium: boolean) {
         this.userRole = role;
         this.isPremiumUser = premium;
+    }
+
+    /**
+     * Sync the canonical Firestore profile image URL.
+     * This overrides the stale Clerk imageUrl so all consumers
+     * (messaging service, notifications, etc.) use the correct photo.
+     */
+    static setImageUrl(url: string | null) {
+        this.canonicalImageUrl = url;
+    }
+
+    /**
+     * Sync the canonical Firestore profile display name.
+     */
+    static setName(name: string | null) {
+        this.canonicalName = name;
     }
 
     static get id(): string | null {
@@ -18,7 +36,7 @@ export class CurrentUser {
     }
 
     static get fullName(): string | null {
-        return AuthService.getFullName();
+        return this.canonicalName ?? AuthService.getFullName();
     }
 
     static get username(): string | null {
@@ -26,7 +44,8 @@ export class CurrentUser {
     }
 
     static get imageUrl(): string | null {
-        return AuthService.getImageUrl();
+        // Prefer canonical Firestore image over stale Clerk imageUrl
+        return this.canonicalImageUrl ?? AuthService.getImageUrl();
     }
 
     static get role(): string {

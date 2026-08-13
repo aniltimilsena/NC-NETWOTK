@@ -44,7 +44,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
     }, [showCoverMenu]);
 
     const isRealOwn = isOwnProfile || Boolean(CurrentUser.id && (profile?.uid === CurrentUser.id || (profile as any)?.id === CurrentUser.id));
-    const avatarUrl = (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || (profile as any)?.photo || (isRealOwn ? CurrentUser.imageUrl : null);
+    const avatarUrl = profile?.image || null;
     const activeCover = localCover || profile.coverImage || (profile as any)?.coverPhoto;
     const validCover = activeCover && activeCover !== '/hero-bg.png' && activeCover !== '/hero-bg.webp' ? activeCover : null;
     const coverImage = validCover || '/hero-bg.webp';
@@ -103,7 +103,6 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             if (url) {
                 setLocalCover(url);
                 await updateProfileData(targetUid, { coverImage: url });
-                showAlert('Cover Image Updated', 'success');
             }
             else {
                 throw new Error("Failed to upload cover banner.");
@@ -147,7 +146,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
           ref={coverImgRef}
           src={coverImage}
           alt="Hero Cover"
-          fetchPriority="high"
+          fetchpriority="high"
           decoding="async"
           onLoad={() => setCoverLoaded(true)}
           className={`w-full h-full object-cover object-center select-none pointer-events-none transition-opacity duration-300 ${coverLoaded ? 'opacity-90' : 'opacity-0'}`}
@@ -230,7 +229,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         <div className={`grid ${isRealOwn ? 'grid-cols-2 max-w-xs' : 'grid-cols-3 max-w-md'} divide-x divide-white/10 w-full mx-auto py-2 my-2 ${isRealOwn ? 'mt-4' : ''}`}>
           <div onClick={() => isRealOwn && onFollowClick?.('followers')} className={`group/followers flex flex-col items-center justify-center text-center py-1 transition-all ${isRealOwn ? 'cursor-pointer' : ''}`}>
             <span className="text-white group-hover/followers:text-[#00BFFF] text-xl sm:text-2xl font-black transition-colors">
-              {followerCount !== undefined ? followerCount : 0}
+              {followerCount || profile?.followers || profile?.followersCount || 0}
             </span>
             <span className="text-gray-400 group-hover/followers:text-white text-[10px] uppercase tracking-widest font-semibold mt-1 transition-colors">
               Followers
@@ -239,7 +238,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
 
           <div onClick={() => isRealOwn && onFollowClick?.('following')} className={`group/following flex flex-col items-center justify-center text-center py-1 transition-all ${isRealOwn ? 'cursor-pointer' : ''}`}>
             <span className="text-white group-hover/following:text-[#00BFFF] text-xl sm:text-2xl font-black transition-colors">
-              {followingCount !== undefined ? followingCount : 0}
+              {followingCount || profile?.following || profile?.followingCount || 0}
             </span>
             <span className="text-gray-400 group-hover/following:text-white text-[10px] uppercase tracking-widest font-semibold mt-1 transition-colors">
               Following

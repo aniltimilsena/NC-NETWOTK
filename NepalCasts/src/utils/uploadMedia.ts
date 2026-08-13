@@ -1,4 +1,5 @@
 import { AuthService } from '../services/AuthService';
+
 export interface CloudinaryUploadResult {
     url: string;
     publicId: string;
@@ -9,17 +10,31 @@ export interface CloudinaryUploadResult {
     format?: string;
     bytes?: number;
 }
+
 export const uploadMedia = async (file: File, folder: string, onProgress?: (progress: number) => void): Promise<CloudinaryUploadResult> => {
     if (!file) {
         throw new Error('No file selected');
     }
-    const token = await AuthService.getIdToken();
-    if (!token) {
-        throw new Error('Authentication required for upload');
+    const token = await AuthService.getIdToken().catch(() => null);
+
+    const isVideo = file.type.startsWith('video/') || Boolean(file.name.match(/\.(mp4|mov|webm|mkv|avi|m4v|3gp)$/i));
+    const resourceType = isVideo ? 'video' : 'image';
+    const isChat = folder === 'chat';
+
+    if (!isChat && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('nc-upload-start', {
+            detail: {
+                fileName: file.name,
+                fileType: resourceType,
+                fileSize: file.size,
+                folder
+            }
+        }));
     }
+
     let cloudName = 'du7zu8mca';
     let uploadPreset = 'stored_media';
-    if (!import.meta.env.DEV) {
+    if (!import.meta.env.DEV && token) {
         try {
             const configRes = await fetch('/api/config/cloudinary', {
                 headers: {
@@ -37,8 +52,7 @@ export const uploadMedia = async (file: File, folder: string, onProgress?: (prog
             // Ignore optional config fetch errors and fallback to defaults
         }
     }
-    const isVideo = file.type.startsWith('video/') || Boolean(file.name.match(/\.(mp4|mov|webm|mkv|avi|m4v|3gp)$/i));
-    const resourceType = isVideo ? 'video' : 'image';
+
     const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
     return new Promise((resolve, reject) => {
         const formData = new FormData();
@@ -52,6 +66,15 @@ export const uploadMedia = async (file: File, folder: string, onProgress?: (prog
                 if (e.lengthComputable) {
                     const percent = Math.round((e.loaded / e.total) * 100);
                     onProgress?.(percent);
+                    if (!isChat && typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('nc-upload-progress', {
+                            detail: {
+                                fileName: file.name,
+                                progress: percent,
+                                folder
+                            }
+                        }));
+                    }
                 }
             });
         }
@@ -66,12 +89,22 @@ export const uploadMedia = async (file: File, folder: string, onProgress?: (prog
                 } catch (_err) {
                     // Ignore JSON parse failure on non-200 response
                 }
+                if (!isChat && typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('nc-upload-error', {
+                        detail: { fileName: file.name, error: errMsg, folder }
+                    }));
+                }
                 reject(new Error(errMsg));
                 return;
             }
             try {
                 const res = JSON.parse(xhr.responseText);
                 if (res.secure_url) {
+                    if (!isChat && typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('nc-upload-complete', {
+                            detail: { fileName: file.name, folder }
+                        }));
+                    }
                     resolve({
                         url: res.secure_url,
                         publicId: res.public_id,
@@ -84,16 +117,44 @@ export const uploadMedia = async (file: File, folder: string, onProgress?: (prog
                     });
                 }
                 else {
-                    reject(new Error(res.error?.message || 'Upload failed'));
+                    const errMsg = res.error?.message || 'Upload failed';
+                    if (!isChat && typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('nc-upload-error', {
+                            detail: { fileName: file.name, error: errMsg, folder }
+                        }));
+                    }
+                    reject(new Error(errMsg));
                 }
             }
             catch {
-                reject(new Error('Failed to parse upload response'));
+                const errMsg = 'Failed to parse upload response';
+                if (!isChat && typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('nc-upload-error', {
+                        detail: { fileName: file.name, error: errMsg, folder }
+                    }));
+                }
+                reject(new Error(errMsg));
             }
         });
-        xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+        xhr.addEventListener('error', () => {
+            const errMsg = 'Network error during upload';
+            if (!isChat && typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('nc-upload-error', {
+                    detail: { fileName: file.name, error: errMsg, folder }
+                }));
+            }
+            reject(new Error(errMsg));
+        });
         xhr.timeout = 300000;
-        xhr.addEventListener('timeout', () => reject(new Error('Upload timed out. Try a smaller file.')));
+        xhr.addEventListener('timeout', () => {
+            const errMsg = 'Upload timed out. Try a smaller file.';
+            if (!isChat && typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('nc-upload-error', {
+                    detail: { fileName: file.name, error: errMsg, folder }
+                }));
+            }
+            reject(new Error(errMsg));
+        });
         xhr.send(formData);
     });
 };

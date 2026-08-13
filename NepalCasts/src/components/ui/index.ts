@@ -22,3 +22,4 @@ export * from './ShadcnCard';
 export * from './ShadcnSeparator';
 export * from './ShadcnSwitch';
 export * from './AdBanner';
+export * from './UploadProgressModal';
