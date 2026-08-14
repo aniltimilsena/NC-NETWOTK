@@ -115,8 +115,8 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
       
       <div className="px-6 py-4 pt-6 md:py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 shadow-sm active:scale-95 cursor-pointer" title="Back to Inbox" aria-label="Back to Inbox">
-            <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5}/>
+          <button onClick={onBack} className="md:hidden w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 shadow-sm active:scale-95 cursor-pointer" title="Back to Inbox" aria-label="Back to Inbox">
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2.5}/>
           </button>
           <Avatar userId={otherParticipantId} src={chat?.avatar} name={chat?.name} size="md" className="w-11 h-11 sm:w-12 sm:h-12 shrink-0" showStatus={true} status={isOnline ? 'online' : 'offline'}/>
           <div className="text-left">
