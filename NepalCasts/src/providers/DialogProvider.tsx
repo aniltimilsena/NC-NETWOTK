@@ -7,6 +7,7 @@ export interface DialogOptions {
   description: string;
   confirmText?: string;
   cancelText?: string;
+  hideCancel?: boolean;
   type?: 'default' | 'danger' | 'warning' | 'success' | 'info';
   onConfirm?: () => void | Promise<void>;
   onCancel?: () => void;
@@ -80,8 +81,9 @@ export const DialogProvider = ({ children }: { children: ReactNode }) => {
     showDialog({
       title,
       description,
-      confirmText: 'OK',
-      cancelText: 'Dismiss',
+      confirmText: 'Okay',
+      hideCancel: true,
+      cancelText: '',
       type: 'success',
       onConfirm
     });
@@ -91,8 +93,9 @@ export const DialogProvider = ({ children }: { children: ReactNode }) => {
     showDialog({
       title,
       description,
-      confirmText: 'OK',
-      cancelText: 'Close',
+      confirmText: 'Okay',
+      hideCancel: true,
+      cancelText: '',
       type: 'danger'
     });
   }, [showDialog]);
@@ -150,6 +153,7 @@ export const DialogProvider = ({ children }: { children: ReactNode }) => {
           description={options.description}
           confirmText={options.confirmText}
           cancelText={options.cancelText}
+          hideCancel={options.hideCancel}
           type={options.type}
           isLoading={isLoading}
         />

@@ -141,7 +141,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
       </div>
 
       
-      <div ref={containerRef} className="flex-1 overflow-y-auto p-6 space-y-1 no-scrollbar bg-black/10">
+      <div ref={containerRef} className="flex-1 overflow-y-auto p-6 space-y-1 no-scrollbar bg-black/10 flex flex-col">
         {messages.length > 0 ? (messages.map((msg, index) => {
             const isMe = msg.senderId === currentUser?.uid;
             const isSystemMsg = msg.senderId === 'system' || msg.isSystem || (typeof msg.text === 'string' && (msg.text.includes('call •') || msg.text.includes('Call •')));
@@ -249,7 +249,6 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                   </div>)}
                 </div>
 
-                
                 <div className="self-center opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0">
                   {onPinMessage && (<button onClick={() => onPinMessage(msg.id)} className={`p-1.5 hover:bg-white/5 rounded-lg transition-colors ${msg.isPinned ? 'text-[#00BFFF]' : 'text-nc-muted hover:text-[#00BFFF]'}`} title={msg.isPinned ? 'Unpin Message' : 'Pin Message'}>
                       {msg.isPinned
@@ -261,8 +260,11 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                     </button>)}
                 </div>
               </div>);
-        })) : (<div className="h-full flex items-center justify-center text-center p-6 text-nc-muted text-xs">
-            Start the conversation by sending a message below.
+        })) : (<div className="flex-1 w-full h-full flex flex-col items-center justify-center text-center p-6 my-auto text-nc-muted text-xs space-y-2.5">
+            <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-1 border border-white/5">
+              <span className="text-2xl">💬</span>
+            </div>
+            <p className="font-medium text-gray-300">No messages yet. Start a conversation!</p>
           </div>)}
 
         {isTyping && (<div className="mr-auto text-left max-w-[70%] bg-white/5 border border-white/5 px-4 py-2.5 rounded-3xl rounded-tl-none text-xs text-nc-muted flex items-center gap-1.5 animate-pulse">
@@ -272,7 +274,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
           </div>)}
       </div>
 
-      
+      {/* Lightbox Modal */}
       <AnimatePresence>
         {lightboxUrl && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setLightboxUrl(null)} className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out animate-in fade-in duration-200">
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="relative max-w-full max-h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>

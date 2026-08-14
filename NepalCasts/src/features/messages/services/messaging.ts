@@ -348,9 +348,6 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
             if (data.deletedFor && (data.deletedFor[uid] === true || (Array.isArray(data.deletedFor) && data.deletedFor.includes(uid)))) {
                 return;
             }
-            if ((!data.lastMessage || data.lastMessage === '') && !data.lastMessageAt && !data.createdAt) {
-                return;
-            }
             const participants = Array.isArray(data.participants) ? data.participants : [];
             const otherParticipantId = participants.find((p: string) => p !== uid);
             if (!otherParticipantId) return;

@@ -23,13 +23,13 @@ import { useTranslation } from 'react-i18next';
 
 export default function MessagesPage({ onNavigate, user, initialUserId, initialConversationId, activeSubView, showAlert }: MessagesPageProps) {
     const { t } = useTranslation();
-    const { conversations, activeChatId, setActiveChatId, messages, loading, typingUsers, callHistory, loadingCalls, updateTyping, dispatchMessage } = useMessages(user, initialConversationId || initialUserId || null);
+    const { conversations, activeChatId, activeChat: hookActiveChat, setActiveChatId, messages, loading, typingUsers, callHistory, loadingCalls, updateTyping, dispatchMessage } = useMessages(user, initialConversationId || initialUserId || null);
     const { initiateCall } = useCall();
     const [replyingTo, setReplyingTo] = useState<Message | null>(null);
     const [showNewChatModal, setShowNewChatModal] = useState(false);
     const [deletingConvoId, setDeletingConvoId] = useState<string | null>(null);
     const [showPinnedDrawer, setShowPinnedDrawer] = useState(false);
-    const activeChat = conversations.find((c) => c.id === activeChatId);
+    const activeChat = conversations.find((c) => c.id === activeChatId || c.otherParticipantId === activeChatId) || hookActiveChat;
     const handleDeleteConversation = async (convoId: string) => {
         try {
             const targetConvo = conversations.find(c => c.id === convoId);
@@ -195,11 +195,11 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
                 <ChatArea chat={activeChat} messages={messages} currentUser={user} typingUsers={typingUsers} onBack={() => setActiveChatId(null)} onInitiateCall={handleInitiateCall} onReplyTo={setReplyingTo} onDeleteMessage={handleDeleteMessage} onPinMessage={handlePinMessage} onTogglePinnedDrawer={() => setShowPinnedDrawer(!showPinnedDrawer)} isPinnedDrawerOpen={showPinnedDrawer}/>
               </div>
               <MessageInput onSend={handleSendMessage} replyingTo={replyingTo} onCancelReply={() => setReplyingTo(null)} onTyping={updateTyping}/>
-            </>) : (<div className="space-y-3">
-              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto">
-                <span className="text-2xl">️</span>
+            </>) : (<div className="space-y-3 text-center flex flex-col items-center justify-center p-6 h-full my-auto">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto border border-white/5">
+                <span className="text-2xl">💬</span>
               </div>
-              <p>{t('messages.empty')}</p>
+              <p className="text-sm font-medium text-gray-300">{t('messages.empty')}</p>
             </div>)}
         </div>
 

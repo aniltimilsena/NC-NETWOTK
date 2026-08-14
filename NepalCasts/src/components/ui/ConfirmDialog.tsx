@@ -1,19 +1,34 @@
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
 interface ConfirmDialogProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: () => void | Promise<void>;
+    onConfirm?: () => void | Promise<void>;
     title: string;
     description: string;
     confirmText?: string;
     cancelText?: string;
+    hideCancel?: boolean;
     type?: 'default' | 'danger' | 'warning' | 'success' | 'info';
     isLoading?: boolean;
 }
-export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, description, confirmText = "Confirm", cancelText = "Cancel", type = "default", isLoading = false }: ConfirmDialogProps) {
+
+export default function ConfirmDialog({
+    isOpen,
+    onClose,
+    onConfirm,
+    title,
+    description,
+    confirmText = "Okay",
+    cancelText = "Cancel",
+    hideCancel = false,
+    type = "default",
+    isLoading = false
+}: ConfirmDialogProps) {
     const modalRef = useRef<HTMLDivElement>(null);
     const previousFocusRef = useRef<HTMLElement | null>(null);
+
     useEffect(() => {
         if (isOpen) {
             previousFocusRef.current = document.activeElement as HTMLElement;
@@ -63,6 +78,7 @@ export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, descr
             };
         }
     }, [isOpen, isLoading, onClose]);
+
     const getIcon = () => {
         switch (type) {
             case 'danger':
@@ -92,6 +108,7 @@ export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, descr
           </div>);
         }
     };
+
     const getConfirmButtonClasses = () => {
         switch (type) {
             case 'danger':
@@ -105,6 +122,17 @@ export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, descr
                 return 'bg-nc-accent hover:opacity-90 text-[#0A0A0F] shadow-nc-accent/20 focus:ring-nc-accent/50';
         }
     };
+
+    const showCancel = !hideCancel && Boolean(cancelText && cancelText.trim() !== '');
+
+    const handleConfirmClick = () => {
+        if (onConfirm) {
+            onConfirm();
+        } else {
+            onClose();
+        }
+    };
+
     return (<AnimatePresence>
       {isOpen && (<div className="fixed inset-0 z-[200] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-description">
           
@@ -124,19 +152,21 @@ export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, descr
             </p>
 
             
-            <div className="flex gap-3 justify-end">
-              <button disabled={isLoading} onClick={onClose} className="flex-1 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm font-semibold transition-all border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50 disabled:cursor-not-allowed">
-                {cancelText}
-              </button>
+            <div className="flex gap-3 justify-end w-full">
+              {showCancel && (
+                <button disabled={isLoading} onClick={onClose} className="flex-1 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm font-semibold transition-all border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {cancelText}
+                </button>
+              )}
               
-              <button disabled={isLoading} onClick={onConfirm} className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all transform active:scale-95 shadow-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed ${getConfirmButtonClasses()}`}>
+              <button disabled={isLoading} onClick={handleConfirmClick} className={`${showCancel ? 'flex-1' : 'w-full'} py-2.5 px-4 rounded-xl text-sm font-bold transition-all transform active:scale-95 shadow-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed ${getConfirmButtonClasses()}`}>
                 {isLoading ? (<>
                     <svg className="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
                     </svg>
                     <span>Processing...</span>
-                  </>) : (<span>{confirmText}</span>)}
+                  </>) : (<span>{confirmText || "Okay"}</span>)}
               </button>
             </div>
           </motion.div>
@@ -145,11 +175,11 @@ export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, descr
 }
 
 export function SuccessDialog(props: Omit<ConfirmDialogProps, 'type'>) {
-    return <ConfirmDialog {...props} type="success" confirmText={props.confirmText || "OK"} cancelText={props.cancelText || "Dismiss"} />;
+    return <ConfirmDialog {...props} type="success" confirmText={props.confirmText || "Okay"} hideCancel={true} cancelText="" />;
 }
 
 export function ErrorDialog(props: Omit<ConfirmDialogProps, 'type'>) {
-    return <ConfirmDialog {...props} type="danger" confirmText={props.confirmText || "OK"} cancelText={props.cancelText || "Close"} />;
+    return <ConfirmDialog {...props} type="danger" confirmText={props.confirmText || "Okay"} hideCancel={true} cancelText="" />;
 }
 
 export function DeleteDialog(props: Omit<ConfirmDialogProps, 'type'>) {

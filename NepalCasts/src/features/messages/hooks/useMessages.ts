@@ -2,17 +2,21 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { subscribeToConversations, subscribeToMessages, sendMessage, createConversation, markConversationAsRead } from '../services/messaging';
+import { getProfile } from '../../profile/services/profile';
 import type { Message, ServiceResult } from '../../../types';
 import { subscribeToCallHistory } from '../../../services';
+
 export function useMessages(currentUser: any, initialUserId: string | null) {
     const [conversations, setConversations] = useState<any[]>([]);
     const [activeChatId, setActiveChatId] = useState<string | null>(null);
+    const [syntheticChat, setSyntheticChat] = useState<any | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
     const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
     const [callHistory, setCallHistory] = useState<any[]>([]);
     const [loadingCalls, setLoadingCalls] = useState(true);
     const resolvedInitialUserRef = useRef<string | null>(null);
+
     useEffect(() => {
         if (!currentUser?.uid) {
             setLoading(false);
@@ -30,6 +34,35 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             setActiveChatId(conversations[0].id);
         }
     }, [conversations, activeChatId, initialUserId]);
+
+    // Synthetic fallback chat object for newly initiated conversations
+    useEffect(() => {
+        const targetId = activeChatId || initialUserId;
+        if (!targetId || !currentUser?.uid) {
+            setSyntheticChat(null);
+            return;
+        }
+        const existing = conversations.find(c => c.id === targetId || c.otherParticipantId === targetId);
+        if (existing) {
+            setSyntheticChat(null);
+            return;
+        }
+        // Fetch target profile metadata for synthetic chat state
+        getProfile(targetId).then(res => {
+            if (res.data) {
+                const pData = res.data as any;
+                setSyntheticChat({
+                    id: targetId,
+                    otherParticipantId: targetId,
+                    participants: [currentUser.uid, targetId],
+                    name: pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || 'User',
+                    avatar: pData.image || '',
+                    online: pData.online || false
+                });
+            }
+        }).catch(console.warn);
+    }, [activeChatId, initialUserId, conversations, currentUser?.uid]);
+
     useEffect(() => {
         if (!activeChatId || !currentUser?.uid) {
             setMessages([]);
@@ -53,6 +86,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             unsubTyping();
         };
     }, [activeChatId, currentUser?.uid]);
+
     useEffect(() => {
         if (!currentUser?.uid || !initialUserId) return;
         if (resolvedInitialUserRef.current === initialUserId) return;
@@ -80,6 +114,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         };
         resolveConvo();
     }, [initialUserId, currentUser?.uid, conversations]);
+
     useEffect(() => {
         if (!currentUser?.uid) {
             setLoadingCalls(false);
@@ -101,6 +136,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         });
         return () => unsub();
     }, [currentUser?.uid]);
+
     const updateTyping = useCallback(async (isTyping: boolean) => {
         if (!activeChatId || !currentUser?.uid)
             return;
@@ -113,15 +149,28 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             console.warn("Failed to update typing state:", err);
         }
     }, [activeChatId, currentUser?.uid]);
+
     const dispatchMessage = useCallback(async (text: string, replyTo: any = null, type: 'text' | 'image' | 'video' = 'text'): Promise<ServiceResult> => {
-        if (!activeChatId || !currentUser?.uid) {
+        let targetConvoId = activeChatId;
+        if (!targetConvoId && initialUserId) {
+            const res = await createConversation([currentUser.uid, initialUserId], undefined, currentUser.uid);
+            if (res.id) {
+                targetConvoId = res.id;
+                setActiveChatId(res.id);
+            }
+        }
+        if (!targetConvoId || !currentUser?.uid) {
             return { success: false, error: 'No active chat thread' };
         }
-        return sendMessage(activeChatId, currentUser.uid, text, false, replyTo, type);
-    }, [activeChatId, currentUser?.uid]);
+        return sendMessage(targetConvoId, currentUser.uid, text, false, replyTo, type);
+    }, [activeChatId, initialUserId, currentUser?.uid]);
+
+    const activeChat = conversations.find(c => c.id === activeChatId || c.otherParticipantId === activeChatId) || syntheticChat;
+
     return {
         conversations,
         activeChatId,
+        activeChat,
         setActiveChatId,
         messages,
         loading,
