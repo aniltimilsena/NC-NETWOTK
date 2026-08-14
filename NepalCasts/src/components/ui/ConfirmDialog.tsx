@@ -110,16 +110,29 @@ export default function ConfirmDialog({
     };
 
     const getConfirmButtonClasses = () => {
+        if (hideCancel) {
+            switch (type) {
+                case 'danger':
+                    return 'bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/30 focus:ring-red-500/30';
+                case 'warning':
+                    return 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 focus:ring-amber-500/30';
+                case 'success':
+                    return 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 focus:ring-emerald-500/30';
+                case 'info':
+                default:
+                    return 'bg-white/10 hover:bg-white/15 text-white border border-white/10 focus:ring-white/20';
+            }
+        }
         switch (type) {
             case 'danger':
-                return 'bg-red-500 hover:bg-red-600 text-white shadow-red-500/20 focus:ring-red-500/50';
+                return 'bg-red-600/90 hover:bg-red-600 text-white border border-red-500/40 focus:ring-red-500/40';
             case 'warning':
-                return 'bg-amber-500 hover:bg-amber-600 text-black shadow-amber-500/20 focus:ring-amber-500/50';
+                return 'bg-amber-500/90 hover:bg-amber-500 text-black border border-amber-400/40 focus:ring-amber-500/40';
             case 'success':
-                return 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20 focus:ring-emerald-500/50';
+                return 'bg-emerald-600/90 hover:bg-emerald-600 text-white border border-emerald-500/40 focus:ring-emerald-500/40';
             case 'info':
             default:
-                return 'bg-nc-accent hover:opacity-90 text-[#0A0A0F] shadow-nc-accent/20 focus:ring-nc-accent/50';
+                return 'bg-nc-accent/90 hover:bg-nc-accent text-[#0A0A0F] focus:ring-nc-accent/40';
         }
     };
 
