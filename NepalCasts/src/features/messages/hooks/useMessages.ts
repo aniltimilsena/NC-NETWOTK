@@ -37,7 +37,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
 
     // Synthetic fallback chat object for newly initiated conversations
     useEffect(() => {
-        const targetId = activeChatId || initialUserId;
+        const targetId = activeChatId;
         if (!targetId || !currentUser?.uid) {
             setSyntheticChat(null);
             return;
@@ -61,7 +61,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
                 });
             }
         }).catch(console.warn);
-    }, [activeChatId, initialUserId, conversations, currentUser?.uid]);
+    }, [activeChatId, conversations, currentUser?.uid]);
 
     useEffect(() => {
         if (!activeChatId || !currentUser?.uid) {
@@ -165,7 +165,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         return sendMessage(targetConvoId, currentUser.uid, text, false, replyTo, type);
     }, [activeChatId, initialUserId, currentUser?.uid]);
 
-    const activeChat = conversations.find(c => c.id === activeChatId || c.otherParticipantId === activeChatId) || syntheticChat;
+    const activeChat = activeChatId ? (conversations.find(c => c.id === activeChatId || c.otherParticipantId === activeChatId) || syntheticChat) : null;
 
     return {
         conversations,

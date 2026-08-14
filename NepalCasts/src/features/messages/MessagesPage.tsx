@@ -29,7 +29,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
     const [showNewChatModal, setShowNewChatModal] = useState(false);
     const [deletingConvoId, setDeletingConvoId] = useState<string | null>(null);
     const [showPinnedDrawer, setShowPinnedDrawer] = useState(false);
-    const activeChat = conversations.find((c) => c.id === activeChatId || c.otherParticipantId === activeChatId) || hookActiveChat;
+    const activeChat = activeChatId ? (conversations.find((c) => c.id === activeChatId || c.otherParticipantId === activeChatId) || hookActiveChat) : null;
     const handleDeleteConversation = async (convoId: string) => {
         try {
             const targetConvo = conversations.find(c => c.id === convoId);
