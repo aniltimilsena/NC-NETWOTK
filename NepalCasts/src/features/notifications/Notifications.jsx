@@ -478,7 +478,7 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
         <div className="relative flex gap-2 md:gap-3 border-b border-white/5 pb-3 md:pb-4 overflow-x-auto scrollbar-hide">
           {filters.map(f => {
             const isActive = filter === f.id;
-            return (<button key={f.id} onClick={() => setFilter(f.id)} className={`relative px-4 py-2 md:px-6 md:py-2.5 rounded-xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${isActive
+            return (<button key={f.id} onClick={() => setFilter(f.id)} className={`relative px-3.5 py-1.5 md:px-5 md:py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 ${isActive
                     ? 'bg-[#00BFFF] text-white shadow-[0_0_12px_rgba(0,191,255,0.25)]'
                     : 'bg-[#111111] text-gray-400 hover:text-white hover:bg-white/[0.02] border border-white/5'}`}>
                 <span className="relative z-10 flex items-center gap-1.5">
