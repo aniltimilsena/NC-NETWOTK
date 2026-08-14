@@ -206,40 +206,51 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                   </div>)}
 
                 
-                <div className={`flex flex-col min-w-0 ${isMe ? 'items-end' : 'items-start'}`}>
-                  
+                <div className="flex flex-col min-w-0">
                   {msg.replyTo && (<div className="bg-white/5 border-l-2 border-[#00BFFF] p-2 rounded-xl text-[10px] text-nc-muted mb-1 max-w-[240px] truncate text-left">
                       {msg.replyTo.text}
                     </div>)}
 
-                  <div className={`px-4 py-2.5 text-sm text-left ${isMe
-                    ? `bg-gradient-to-br from-sky-400 to-sky-500 text-black font-semibold shadow-[0_4px_12px_rgba(56,189,248,0.15)] ${cornerRadius}`
-                    : `bg-[#18181b] text-gray-200 border border-white/[0.03] shadow-sm ${cornerRadius}`}`}>
-                    {msg.type === 'image' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/image/upload/') || msg.text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i))) ? (<div className="space-y-1.5">
-                        <img src={msg.text} alt="Sent a photo" className="max-w-full sm:max-w-[280px] max-h-[200px] rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity border border-black/20" onClick={(e) => {
-                        if (isLongPressActive.current) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            return;
-                        }
-                        setLightboxUrl(msg.text);
-                    }}/>
-                        <span className="text-[10px] opacity-60 block italic">Sent a photo</span>
-                      </div>) : msg.type === 'video' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/video/upload/') || msg.text.match(/\.(mp4|webm|ogg|mov)/i))) ? (<div className="space-y-1.5">
-                        <video src={msg.text} controls className="max-w-full sm:max-w-[280px] max-h-[200px] rounded-xl object-cover border border-black/20"/>
-                        <span className="text-[10px] opacity-60 block italic">Sent a video</span>
-                      </div>) : msg.type === 'file' || (msg.text && msg.text.startsWith('http') && msg.text.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|zip|rar)/i)) ? (<div className="flex items-center gap-2">
-                        <span></span>
-                        <a href={msg.text} target="_blank" rel="noopener noreferrer" className={`hover:underline font-bold break-all ${isMe ? 'text-black' : 'text-sky-400'}`} onClick={(e) => {
-                        if (isLongPressActive.current) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }
-                    }}>
-                          Document File
-                        </a>
-                      </div>) : (msg.text)}
-                  </div>
+                  {(() => {
+                    const isImage = msg.type === 'image' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/image/upload/') || msg.text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i)));
+                    const isVideo = msg.type === 'video' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/video/upload/') || msg.text.match(/\.(mp4|webm|ogg|mov)/i)));
+                    const isMediaMsg = Boolean(isImage || isVideo);
+
+                    return (
+                      <div className={`text-sm text-left ${isMediaMsg
+                        ? `p-1 bg-[#18181b] border border-white/10 shadow-md ${cornerRadius} overflow-hidden`
+                        : isMe
+                          ? `px-4 py-2.5 bg-gradient-to-br from-sky-400 to-sky-500 text-black font-semibold shadow-[0_4px_12px_rgba(56,189,248,0.15)] ${cornerRadius}`
+                          : `px-4 py-2.5 bg-[#18181b] text-gray-200 border border-white/[0.03] shadow-sm ${cornerRadius}`}`}>
+                        {isImage ? (
+                          <div className="overflow-hidden rounded-xl">
+                            <img src={msg.text} alt="Sent photo" className="max-w-full sm:max-w-[280px] max-h-[280px] rounded-xl object-cover cursor-pointer hover:opacity-95 transition-opacity" onClick={(e) => {
+                              if (isLongPressActive.current) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                return;
+                              }
+                              setLightboxUrl(msg.text);
+                            }}/>
+                          </div>
+                        ) : isVideo ? (
+                          <div className="overflow-hidden rounded-xl">
+                            <video src={msg.text} controls className="max-w-full sm:max-w-[280px] max-h-[280px] rounded-xl object-cover"/>
+                          </div>
+                        ) : msg.type === 'file' || (msg.text && msg.text.startsWith('http') && msg.text.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|zip|rar)/i)) ? (<div className="flex items-center gap-2">
+                            <span>📄</span>
+                            <a href={msg.text} target="_blank" rel="noopener noreferrer" className={`hover:underline font-bold break-all ${isMe ? 'text-black' : 'text-sky-400'}`} onClick={(e) => {
+                            if (isLongPressActive.current) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }
+                        }}>
+                              Document File
+                            </a>
+                          </div>) : (msg.text)}
+                      </div>
+                    );
+                  })()}
 
                   
                   {showTimestamp && (<div className={`flex items-center gap-1.5 mt-1 text-[9px] text-nc-muted ${isMe ? 'justify-end' : 'justify-start'}`}>
