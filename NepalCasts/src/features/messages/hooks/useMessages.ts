@@ -16,6 +16,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     const [callHistory, setCallHistory] = useState<any[]>([]);
     const [loadingCalls, setLoadingCalls] = useState(true);
     const userClosedChatRef = useRef(false);
+    const resolvedInitialUserRef = useRef<string | null>(null);
 
     const handleSetActiveChatId = useCallback((id: string | null) => {
         if (id === null) {
