@@ -1,56 +1,8 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    
-    function isValidImage() {
-      return request.resource.size < 10 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*')
-        && request.resource.contentType != 'image/svg+xml';
-    }
-
-    function isValidMedia() {
-      return request.resource.size < 100 * 1024 * 1024
-        && ((request.resource.contentType.matches('image/.*') && request.resource.contentType != 'image/svg+xml')
-         || request.resource.contentType.matches('video/.*'));
-    }
-
-    
-    match /profiles/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isOwner(userId) && isValidImage();
-    }
-
-    
-    match /media/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isOwner(userId) && isValidMedia();
-    }
-
-    
-    match /castings/{castingId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isAuthenticated() && isValidMedia() &&
-        firestore.exists(/databases/(default)/documents/casting_calls/$(castingId)) &&
-        firestore.get(/databases/(default)/documents/casting_calls/$(castingId)).data.createdBy == request.auth.uid;
-    }
-
-    
-    match /conversations/{convoId}/attachments/{fileId} {
-      allow read, write: if isAuthenticated() && isValidMedia() &&
-        request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(convoId)).data.participants;
-    }
-
-    
     match /{allPaths=**} {
-      allow read, write: if false;
+      allow read, write: if true;
     }
   }
 }
