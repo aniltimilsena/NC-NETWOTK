@@ -112,11 +112,6 @@ export default function AppProviders({ children }: {
         }, 2000);
         return () => clearTimeout(timer);
     }, []);
-    useEffect(() => {
-        firebaseSignOut(auth).catch((err) => {
-            console.warn("Failed to clear stale Firebase Auth session:", err);
-        });
-    }, []);
     const showAlert = useCallback((message: string, type: AlertType = 'info', detail?: string, onAction?: () => void) => {
         if (type === 'success') {
             showSuccessDialog("Success", message, onAction);
