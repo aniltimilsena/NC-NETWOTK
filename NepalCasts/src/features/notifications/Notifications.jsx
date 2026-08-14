@@ -260,12 +260,12 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             return;
         }
         setLoading(true);
-        const q = query(collection(db, 'notifications'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'), limit(visibleLimit + 1));
+        const q = query(collection(db, 'notifications'), where('userId', '==', user.uid), limit(100));
         const unsub = onSnapshot(q, (snapshot) => {
             const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
             items.sort((a, b) => {
-                const timeA = a.createdAt?.seconds || 0;
-                const timeB = b.createdAt?.seconds || 0;
+                const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+                const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
                 return timeB - timeA;
             });
             if (items.length > visibleLimit) {
