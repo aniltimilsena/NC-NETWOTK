@@ -56,6 +56,17 @@ vi.mock('firebase-admin', () => {
         }),
     };
 });
+vi.mock('ioredis', () => {
+    return {
+        default: vi.fn().mockImplementation(() => {
+            return {
+                on: vi.fn(),
+                disconnect: vi.fn(),
+                quit: vi.fn(),
+            };
+        }),
+    };
+});
 vi.mock('cloudinary', () => ({
     v2: {
         config: vi.fn(),

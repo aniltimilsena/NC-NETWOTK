@@ -43,7 +43,15 @@ export const processSingleFileBuffer = async (file: Express.Multer.File): Promis
     if (DANGEROUS_EXTENSIONS.has(originalExt)) {
         throw new Error('File type extension not allowed');
     }
-    const { fileTypeFromBuffer } = await (eval('import("file-type")') as Promise<typeof import('file-type')>);
+    let fileTypeFromBuffer: any;
+    try {
+        const ft = new Function('return import("file-type")')();
+        fileTypeFromBuffer = (await ft).fileTypeFromBuffer;
+    }
+    catch {
+        const ft = await import('file-type');
+        fileTypeFromBuffer = ft.fileTypeFromBuffer;
+    }
     const detected = await fileTypeFromBuffer(file.buffer);
     if (!detected) {
         throw new Error('Could not verify file binary signature magic numbers');

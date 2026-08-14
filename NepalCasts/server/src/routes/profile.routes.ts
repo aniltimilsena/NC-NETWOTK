@@ -74,9 +74,11 @@ router.get('/search', verifyToken, scrapingPreventerMiddleware, async (req: Auth
         });
         if (q) {
             const queryStr = (q as string).toLowerCase();
-            talents = talents.filter(talent => talent.name?.toLowerCase().includes(queryStr) ||
-                talent.displayName?.toLowerCase().includes(queryStr) ||
-                talent.bio?.toLowerCase().includes(queryStr));
+            talents = talents.filter(talent => 
+                (talent.name || '').toLowerCase().includes(queryStr) ||
+                (talent.displayName || '').toLowerCase().includes(queryStr) ||
+                (talent.bio || '').toLowerCase().includes(queryStr)
+            );
         }
         return res.json({ success: true, talents });
     }

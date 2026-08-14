@@ -2,6 +2,8 @@ import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MessageSquare, Phone, Video, PhoneIncoming, PhoneOutgoing, ChevronLeft } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
+import { useDialog } from '../../../providers/DialogProvider';
+
 interface ChatSidebarProps {
     conversations: any[];
     activeChatId: string | null;
@@ -66,9 +68,7 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
             if (window.navigator && window.navigator.vibrate) {
                 window.navigator.vibrate(50);
             }
-            if (window.confirm('Delete this conversation?')) {
-                onDeleteChat(convoId);
-            }
+            onDeleteChat(convoId);
         }, 600);
     }, [onDeleteChat]);
     const endPress = useCallback(() => {

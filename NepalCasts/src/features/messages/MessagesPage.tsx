@@ -32,12 +32,13 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
     const activeChat = conversations.find((c) => c.id === activeChatId);
     const handleDeleteConversation = async (convoId: string) => {
         try {
-            const res = await deleteConversation(convoId);
+            const targetConvo = conversations.find(c => c.id === convoId);
+            const res = await deleteConversation(convoId, user?.uid);
             if (res.success) {
-                showAlert('Conversation deleted.', 'info');
-                if (activeChatId === convoId) {
+                if (activeChatId === convoId || activeChatId === targetConvo?.otherParticipantId) {
                     setActiveChatId(null);
                 }
+                onNavigate('messages');
             }
             else {
                 showAlert(res.error || 'Failed to delete conversation.', 'error');
@@ -80,7 +81,6 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
             return;
         try {
             await deleteMessage(activeChatId, msgId);
-            showAlert('Message deleted.', 'info');
         }
         catch (err) {
             console.error(err);

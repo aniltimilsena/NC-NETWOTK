@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, X, Paperclip } from 'lucide-react';
 import { uploadMedia } from '../../../utils/uploadMedia';
 import type { Message } from '../../../types';
+import { useDialog } from '../../../providers/DialogProvider';
 
 interface MessageInputProps {
     onSend: (text: string, type?: 'text' | 'image' | 'video') => void;
@@ -11,6 +12,7 @@ interface MessageInputProps {
 }
 
 export default function MessageInput({ onSend, replyingTo, onCancelReply, onTyping }: MessageInputProps) {
+    const { showErrorDialog } = useDialog();
     const [text, setText] = useState('');
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -47,7 +49,7 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
             }
             catch (err: any) {
                 console.error('Failed to upload chat media:', err);
-                alert(err.message || 'Failed to upload file.');
+                showErrorDialog('Upload Failed', err.message || 'Failed to upload file.');
             }
             finally {
                 setUploading(false);
@@ -79,7 +81,7 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
         if (!file)
             return;
         if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-            alert('Only images and videos are supported.');
+            showErrorDialog('Invalid File', 'Only images and videos are supported.');
             return;
         }
         setSelectedFile(file);

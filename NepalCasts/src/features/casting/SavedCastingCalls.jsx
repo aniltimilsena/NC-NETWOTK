@@ -14,7 +14,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
   const navigate = useNavigate();
   const context = useOutletContext();
   const currentUser = propUser || context?.user;
-  const showToast = propShowToast || context?.showToast || ((msg) => alert(msg));
+  const showToast = propShowToast || context?.showToast || ((msg) => console.log(msg));
   const [savedCalls, setSavedCalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState(null);

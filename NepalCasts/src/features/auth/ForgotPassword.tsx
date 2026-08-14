@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SignIn as ClerkSignIn } from '@clerk/clerk-react';
-import { ChevronLeft, ShieldCheck } from 'lucide-react';
+import { useSignIn } from '@clerk/clerk-react';
+import { ChevronLeft, ShieldCheck, Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react';
 import { LogoIcon } from '../../components/ui/Logo';
 import SEO from '../../components/SEO';
 
@@ -11,98 +11,326 @@ interface ForgotPasswordProps {
 
 export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
     const navigate = useNavigate();
+    const { isLoaded, signIn, setActive } = useSignIn();
+
+    const [email, setEmail] = useState('');
+    const [code, setCode] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [successfulCreation, setSuccessfulCreation] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [infoMessage, setInfoMessage] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
     const handleBack = () => {
+        if (successfulCreation) {
+            setSuccessfulCreation(false);
+            setError(null);
+            setInfoMessage(null);
+            return;
+        }
         if (onNavigate) onNavigate('signin');
         else navigate('/signin');
     };
 
+    // Step 1: Request Password Reset Verification Code
+    const handleSendCode = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!isLoaded || !email) return;
+        setError(null);
+        setInfoMessage(null);
+        setLoading(true);
+
+        try {
+            await signIn.create({
+                strategy: 'reset_password_email_code',
+                identifier: email.trim(),
+            });
+            setSuccessfulCreation(true);
+            setInfoMessage(`We sent a 6-digit verification code to ${email}`);
+        } catch (err: any) {
+            console.error('Error initiating password reset:', err);
+            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Failed to send reset code. Please check your email.';
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Step 2: Submit Verification Code & Set New Password
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!isLoaded) return;
+
+        if (!code.trim()) {
+            setError('Please enter the verification code sent to your email.');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match.');
+            return;
+        }
+
+        if (password.length < 8) {
+            setError('Password must be at least 8 characters long.');
+            return;
+        }
+
+        setError(null);
+        setInfoMessage(null);
+        setLoading(true);
+
+        try {
+            const result = await signIn.attemptFirstFactor({
+                strategy: 'reset_password_email_code',
+                code: code.trim(),
+                password,
+            });
+
+            if (result.status === 'complete') {
+                if (result.createdSessionId) {
+                    await setActive({ session: result.createdSessionId });
+                }
+                navigate('/');
+            } else {
+                console.log('Reset attempt incomplete:', result);
+                setError('Verification incomplete. Please check your code.');
+            }
+        } catch (err: any) {
+            console.error('Error setting new password:', err);
+            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Invalid code or password requirements not met.';
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Resend Code Action
+    const handleResendCode = async () => {
+        if (!isLoaded || !email || loading) return;
+        setError(null);
+        setInfoMessage(null);
+        setLoading(true);
+
+        try {
+            await signIn.create({
+                strategy: 'reset_password_email_code',
+                identifier: email.trim(),
+            });
+            setInfoMessage('A new verification code has been sent to your email.');
+        } catch (err: any) {
+            console.error('Error resending reset code:', err);
+            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Failed to resend code. Please try again.';
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-[#1E1E1E] text-white flex items-center justify-center relative overflow-hidden font-sans">
+        <div className="min-h-screen bg-[#0F0F13] text-white flex items-center justify-center relative overflow-hidden font-sans py-8 px-6 sm:px-8 sm:py-12">
             <SEO title="Forgot Password | NepalCasts Account Recovery" description="Reset your NepalCasts account password safely." noindex />
 
-            {/* Back button — sharp rectangle */}
+            {/* Back button */}
             <button
                 onClick={handleBack}
                 type="button"
-                className="absolute top-6 left-6 w-10 h-10 bg-transparent border border-[#2A2A2A] rounded-full flex items-center justify-center text-[#9CA3AF] hover:text-white hover:border-[#444] transition-colors z-20 cursor-pointer"
+                className="absolute top-4 left-4 sm:top-6 sm:left-6 w-10 h-10 bg-[#1A1A22] border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:border-white/20 transition-all z-20 cursor-pointer shadow-sm active:scale-95"
                 aria-label="Back"
                 title="Go Back"
             >
                 <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
             </button>
 
-            {/* Main centered card */}
-            <div className="w-full max-w-[420px] flex flex-col items-center px-6 py-8 z-10 relative">
+            {/* Main centered container */}
+            <div className="w-full max-w-[370px] flex flex-col items-center z-10 relative">
 
-                {/* Logo — circular container */}
-                <div className="w-[100px] h-[100px] bg-[#000000] border border-[#2A2A2A] rounded-full flex items-center justify-center mb-6">
-                    <LogoIcon className="w-16 h-16" />
+                {/* Logo — Gold NC */}
+                <div className="mb-5 flex justify-center">
+                    <LogoIcon className="w-14 h-14 object-contain" />
                 </div>
 
-                {/* Title */}
-                <h1 className="text-xl font-bold text-white tracking-[0.1em] uppercase mb-1">Reset Password</h1>
-                <p className="text-[10px] text-[#9CA3AF] font-medium tracking-[0.2em] uppercase mb-6">Enter your email to receive a reset code</p>
+                {/* Title & Subtitle */}
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white text-center tracking-tight mb-2">
+                    {successfulCreation ? 'Enter Verification Code' : 'Reset your password'}
+                </h1>
+                <p className="text-sm text-gray-400 text-center font-normal mb-7">
+                    {successfulCreation
+                        ? `Enter the 6-digit code sent to ${email} and choose a new password.`
+                        : 'Enter your email address to receive a verification code.'
+                    }
+                </p>
 
-                {/* Clerk Form */}
-                <div className="w-full flex justify-center">
-                    <ClerkSignIn
-                        appearance={{
-                            elements: {
-                                rootBox: 'w-full flex justify-center',
-                                cardBox: 'w-full shadow-none border-0 bg-transparent p-0',
-                                card: 'bg-transparent shadow-none border-0 p-0 w-full',
-                                header: 'hidden',
-                                headerTitle: 'hidden',
-                                headerSubtitle: 'hidden',
-                                socialButtonsBlockButton: 'w-full !bg-[#000000] hover:!bg-[#0a0a0a] border !border-[#2A2A2A] text-white !rounded-none py-4 px-6 font-semibold text-sm tracking-wide transition-colors duration-150 flex items-center justify-center gap-3 cursor-pointer mb-4 hover:!border-[#444] !shadow-none uppercase',
-                                socialButtonsBlockButtonText: 'text-white font-semibold text-sm uppercase tracking-wider',
-                                socialButtonsBlockButtonArrow: 'hidden',
-                                dividerRow: 'my-6',
-                                dividerLine: 'bg-[#2A2A2A]',
-                                dividerText: 'text-[#9CA3AF] text-[10px] uppercase tracking-[0.2em] font-semibold px-4 bg-[#1E1E1E]',
-                                form: 'w-full space-y-5 flex flex-col',
-                                formFieldRow: 'flex flex-row items-start gap-3 w-full',
-                                formFieldLabel: 'hidden',
-                                formFieldInput: 'w-full px-6 py-4 !rounded-none !bg-[#000000] border !border-[#2A2A2A] text-white text-center text-sm placeholder-[#9CA3AF] focus:!border-[#444] focus:ring-0 focus:outline-none transition-colors font-medium tracking-wide !shadow-none',
-                                formFieldInputShowPasswordButton: 'text-white hover:text-[#9CA3AF]',
-                                formButtonPrimary: 'w-full py-4 !rounded-none !bg-[#000000] hover:!bg-[#0a0a0a] text-white font-bold text-sm uppercase tracking-[0.15em] transition-colors mt-5 cursor-pointer border !border-[#2A2A2A] hover:!border-[#444] !shadow-none',
-                                footerAction: 'hidden',
-                                footerActionText: 'hidden',
-                                footerActionLink: 'hidden',
-                                footer: 'hidden',
-                                identityPreview: '!bg-[#000000] border !border-[#2A2A2A] !rounded-none py-3 px-5',
-                                identityPreviewEditButton: 'text-[#9CA3AF] hover:text-white',
-                                identityPreviewText: 'text-white text-sm',
-                                formResendCodeLink: 'text-[#9CA3AF] hover:text-white text-xs',
-                                otpCodeFieldInput: '!bg-[#000000] border !border-[#2A2A2A] text-white text-center !rounded-none',
-                                alternativeMethodsBlockButton: 'text-[#9CA3AF] hover:text-white !bg-[#000000] border !border-[#2A2A2A] !rounded-none',
-                                badge: 'hidden !important',
-                            }
-                        }}
-                        signUpUrl="/signup"
-                        fallbackRedirectUrl="/"
-                    />
-                </div>
+                {/* Info message banner */}
+                {infoMessage && (
+                    <div className="w-full bg-[#162B21] border border-[#22C55E]/30 text-[#4ADE80] text-xs font-medium px-4 py-3 rounded-xl mb-4 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-[#4ADE80] shrink-0" />
+                        <span>{infoMessage}</span>
+                    </div>
+                )}
 
-                {/* Divider */}
-                <div className="w-full h-px bg-[#2A2A2A] my-10" />
+                {/* Error message text */}
+                {error && (
+                    <p className="w-full text-xs font-medium text-red-400 text-left mb-3">
+                        {error}
+                    </p>
+                )}
 
-                {/* Back to Sign In */}
-                <div className="flex flex-col items-center gap-3">
-                    <span className="text-xs text-[#9CA3AF] font-medium tracking-wide uppercase">Remembered your password?</span>
+                {/* Step 1: Email Form */}
+                {!successfulCreation ? (
+                    <form onSubmit={handleSendCode} className="w-full space-y-3.5">
+                        <div className="flex flex-col space-y-1.5 text-left">
+                            <label htmlFor="email" className="text-sm font-medium text-gray-300">
+                                Email address
+                            </label>
+                            <div className="relative w-full flex items-center bg-[#1C1C26] border border-white/[0.08] rounded-xl focus-within:border-[#6C5CE7] transition-all min-h-[44px]">
+                                <input
+                                    id="email"
+                                    type="email"
+                                    required
+                                    autoComplete="off"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Enter your email address"
+                                    style={{ paddingLeft: '20px', paddingRight: '20px', textIndent: '0px' }}
+                                    className="w-full auth-input-field h-full bg-transparent border-0 text-white text-sm placeholder-gray-500/80 focus:outline-none font-medium rounded-xl"
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading || !email}
+                            className="w-full py-3 rounded-xl bg-[#6C5CE7] hover:bg-[#5A4AD1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all mt-2 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[44px] flex items-center justify-center gap-2"
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span>Sending code...</span>
+                                </>
+                            ) : (
+                                <span>Continue</span>
+                            )}
+                        </button>
+                    </form>
+                ) : (
+                    /* Step 2: Verification Code & New Password Form */
+                    <form onSubmit={handleResetPassword} className="w-full space-y-3.5">
+                        {/* OTP Verification Code */}
+                        <div className="flex flex-col space-y-1.5 text-left">
+                            <label htmlFor="code" className="text-sm font-medium text-gray-300 flex items-center justify-between">
+                                <span>Verification Code</span>
+                                <button
+                                    type="button"
+                                    onClick={handleResendCode}
+                                    disabled={loading}
+                                    className="text-xs text-[#826BF1] hover:underline font-semibold cursor-pointer border-0 bg-transparent p-0"
+                                >
+                                    Resend code
+                                </button>
+                            </label>
+                            <div className="relative w-full flex items-center bg-[#1C1C26] border border-white/[0.08] rounded-xl focus-within:border-[#6C5CE7] transition-all min-h-[44px]">
+                                <input
+                                    id="code"
+                                    type="text"
+                                    required
+                                    value={code}
+                                    onChange={(e) => setCode(e.target.value)}
+                                    placeholder="Enter 6-digit code"
+                                    style={{ paddingLeft: '20px', paddingRight: '20px', textIndent: '0px' }}
+                                    className="w-full auth-input-field h-full bg-transparent border-0 text-white text-sm placeholder-gray-500/80 focus:outline-none font-medium rounded-xl tracking-wider"
+                                />
+                            </div>
+                        </div>
+
+                        {/* New Password */}
+                        <div className="flex flex-col space-y-1.5 text-left">
+                            <label htmlFor="password" className="text-sm font-medium text-gray-300">
+                                New password
+                            </label>
+                            <div className="relative w-full flex items-center bg-[#1C1C26] border border-white/[0.08] rounded-xl focus-within:border-[#6C5CE7] transition-all min-h-[44px]">
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Enter new password (min. 8 chars)"
+                                    style={{ paddingLeft: '20px', paddingRight: '48px', textIndent: '0px' }}
+                                    className="w-full auth-input-field-password h-full bg-transparent border-0 text-white text-sm placeholder-gray-500/80 focus:outline-none font-medium rounded-xl"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white bg-transparent p-2 cursor-pointer border-0 outline-none flex items-center justify-center z-10"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Confirm Password */}
+                        <div className="flex flex-col space-y-1.5 text-left">
+                            <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-300">
+                                Confirm new password
+                            </label>
+                            <div className="relative w-full flex items-center bg-[#1C1C26] border border-white/[0.08] rounded-xl focus-within:border-[#6C5CE7] transition-all min-h-[44px]">
+                                <input
+                                    id="confirmPassword"
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    required
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="Confirm new password"
+                                    style={{ paddingLeft: '20px', paddingRight: '48px', textIndent: '0px' }}
+                                    className="w-full auth-input-field-password h-full bg-transparent border-0 text-white text-sm placeholder-gray-500/80 focus:outline-none font-medium rounded-xl"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white bg-transparent p-2 cursor-pointer border-0 outline-none flex items-center justify-center z-10"
+                                >
+                                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading || !code || !password || !confirmPassword}
+                            className="w-full py-3 rounded-xl bg-[#6C5CE7] hover:bg-[#5A4AD1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all mt-2 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[44px] flex items-center justify-center gap-2"
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span>Resetting password...</span>
+                                </>
+                            ) : (
+                                <span>Reset password</span>
+                            )}
+                        </button>
+                    </form>
+                )}
+
+                {/* Footer link */}
+                <div className="mt-7 flex items-center justify-center gap-1.5 text-sm text-gray-400 font-medium">
+                    <span>Remembered your password?</span>
                     <button
                         onClick={() => navigate('/signin')}
                         type="button"
-                        className="px-10 py-3 bg-[#000000] border border-[#2A2A2A] text-[#9CA3AF] hover:text-white hover:border-[#444] text-xs font-bold uppercase tracking-[0.15em] transition-colors cursor-pointer"
+                        className="text-[#826BF1] hover:underline font-semibold cursor-pointer"
                     >
-                        Sign In
+                        Sign in
                     </button>
                 </div>
 
                 {/* Security badge */}
-                <div className="mt-10 flex items-center gap-2 text-[#9CA3AF]/50 text-[10px] font-medium tracking-wider uppercase">
-                    <ShieldCheck className="w-3.5 h-3.5" />
+                <div className="mt-8 flex items-center gap-2 text-gray-500 text-xs font-medium tracking-wider">
+                    <ShieldCheck className="w-4 h-4 text-gray-500" />
                     <span>Secured by Clerk</span>
                 </div>
             </div>

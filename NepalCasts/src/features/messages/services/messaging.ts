@@ -114,7 +114,7 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
                 try {
                     const res = await getProfile(currentUserUid);
                     if (res.data) {
-                        const pData = res.data;
+                        const pData = res.data as any;
                         senderName = pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || senderName;
                         senderAvatar = pData.image || senderAvatar;
                     }
@@ -231,6 +231,21 @@ export const deleteMessage = async (convoId: string, messageId: string) => {
         console.warn("Backend deleteMessage failed, attempting client-side fallback:", apiError);
         try {
             await deleteDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES, messageId));
+            const msgsSnap = await getDocs(query(collection(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES), orderBy("createdAt", "desc")));
+            if (msgsSnap.empty) {
+                const uid = AuthService.getUserId();
+                await updateDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId), {
+                    lastMessage: "",
+                    lastMessageAt: null,
+                    ...(uid ? { [`deletedFor.${uid}`]: true } : {})
+                }).catch(() => {});
+            } else {
+                const latest = msgsSnap.docs[0].data();
+                await updateDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId), {
+                    lastMessage: latest.text || "",
+                    lastMessageAt: latest.createdAt || null
+                }).catch(() => {});
+            }
             return { success: true, error: null };
         }
         catch (fallbackError: any) {
@@ -330,7 +345,10 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
         
         docsData.forEach((item) => {
             const data = item.data;
-            if (data.deletedFor && data.deletedFor[uid] === true) {
+            if (data.deletedFor && (data.deletedFor[uid] === true || (Array.isArray(data.deletedFor) && data.deletedFor.includes(uid)))) {
+                return;
+            }
+            if ((!data.lastMessage || data.lastMessage === '') && !data.lastMessageAt && !data.createdAt) {
                 return;
             }
             const participants = Array.isArray(data.participants) ? data.participants : [];
@@ -409,7 +427,7 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
     });
     return unsubscribe;
 };
-export const deleteConversation = async (convoId: string) => {
+export const deleteConversation = async (convoId: string, currentUserId?: string) => {
     try {
         await apiClient.delete(`/messaging/${convoId}`, { timeout: 1500 });
         return { success: true, error: null };
@@ -417,7 +435,23 @@ export const deleteConversation = async (convoId: string) => {
     catch (apiError: any) {
         console.warn("Backend deleteConversation failed, attempting client-side fallback:", apiError);
         try {
-            await deleteDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId));
+            const uid = currentUserId || AuthService.getUserId();
+            const convoRef = doc(db, COLLECTIONS.CONVERSATIONS, convoId);
+
+            if (uid) {
+                await updateDoc(convoRef, {
+                    [`deletedFor.${uid}`]: true,
+                    lastMessage: "",
+                    lastMessageAt: null
+                }).catch(() => {});
+            }
+
+            const msgsSnap = await getDocs(collection(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES)).catch(() => null);
+            if (msgsSnap && !msgsSnap.empty) {
+                await Promise.all(msgsSnap.docs.map(m => deleteDoc(m.ref))).catch(() => {});
+            }
+
+            await deleteDoc(convoRef).catch(() => {});
             return { success: true, error: null };
         }
         catch (fallbackError: any) {

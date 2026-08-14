@@ -1,5 +1,6 @@
 import React, { lazy } from 'react';
 import { Route, useParams, Navigate } from 'react-router-dom';
+import { CurrentUser } from '../utils/CurrentUser';
 // RouteLoader removed to prevent generic skeleton flash
 
 const Profile = lazy(() => import('../features/profile/ProfilePage'));
@@ -12,7 +13,7 @@ const ProfileWrapper = ({ onNavigate, user, isAdmin, showAlert, authReady, defau
     return <div className="min-h-screen bg-[#070709]" />;
   }
 
-  const targetId = id || user?.uid || user?.id || CurrentUser.id || CurrentUser.uid;
+  const targetId = id || user?.uid || user?.id || CurrentUser.id;
   
   if (!targetId && !user && !CurrentUser.id) {
     return <Navigate to="/signin" replace />;

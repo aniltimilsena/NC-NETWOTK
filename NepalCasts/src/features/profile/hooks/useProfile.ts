@@ -30,7 +30,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
 
         const resolve = async () => {
             setResolvingUid(true);
-            const myUid = currentUser?.uid || currentUser?.id || CurrentUser.id || CurrentUser.uid;
+            const myUid = currentUser?.uid || currentUser?.id || CurrentUser.id;
             if (!profileId) {
                 if (isMounted) {
                     setResolvedUid(myUid || null);
@@ -40,7 +40,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
             }
             try {
                 const myEmail = (currentUser?.email || CurrentUser.email || '').toLowerCase().trim();
-                const myName = (currentUser?.displayName || currentUser?.fullName || CurrentUser.name || '').toLowerCase().trim();
+                const myName = (currentUser?.displayName || currentUser?.fullName || CurrentUser.fullName || '').toLowerCase().trim();
                 const myUsername = (currentUser?.username || CurrentUser.username || '').toLowerCase().trim();
                 const myUid = currentUser?.uid || currentUser?.id || CurrentUser.id;
 
@@ -255,7 +255,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
                 } catch (_e) {}
             }
 
-            const userPhoto = currentUser?.photoURL || currentUser?.imageUrl || CurrentUser.photoURL || CurrentUser.image;
+            const userPhoto = currentUser?.photoURL || currentUser?.imageUrl || CurrentUser.imageUrl;
             const finalPhoto = pData?.image || pData?.photoURL || uData?.image || uData?.photoURL || cachedTalent?.image || cachedTalent?.photoURL || (isOwnProfile || (currentUser?.email && pData?.email?.toLowerCase() === currentUser.email.toLowerCase()) ? userPhoto : null);
 
             const merged = {
@@ -314,20 +314,41 @@ export function useProfile(profileId: string | null, currentUser: any) {
     useEffect(() => {
         if (!targetUid) return;
         const qFollowers = query(collection(db, "follows"), where("followingId", "==", targetUid));
+        const mockFollowerUids = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', 'Mm1B6rYaEebs6ajRyu0EJBrrGwT2', targetUid]);
         const unsubFollowers = onSnapshot(qFollowers, (snap) => {
-            setFollowerCount(snap.size);
+            const validDocs = snap.docs.filter(d => {
+                const data = d.data();
+                return data.followerId && !mockFollowerUids.has(data.followerId);
+            });
+            setFollowerCount(validDocs.length);
         }, () => setFollowerCount(0));
 
         const qFollowing = query(collection(db, "follows"), where("followerId", "==", targetUid));
         const unsubFollowing = onSnapshot(qFollowing, (snap) => {
-            setFollowingCount(snap.size);
+            const validDocs = snap.docs.filter(d => {
+                const data = d.data();
+                return data.followingId && data.followingId !== targetUid;
+            });
+            setFollowingCount(validDocs.length);
         }, () => setFollowingCount(0));
+
+        // Auto-cleanup mock follow documents if logged-in user is targetUid
+        if (currentUser?.uid && currentUser.uid === targetUid) {
+            getDocs(qFollowers).then((snap) => {
+                snap.docs.forEach((d) => {
+                    const data = d.data();
+                    if (mockFollowerUids.has(data.followerId)) {
+                        deleteDoc(doc(db, "follows", d.id)).catch(() => {});
+                    }
+                });
+            }).catch(() => {});
+        }
 
         return () => {
             unsubFollowers();
             unsubFollowing();
         };
-    }, [targetUid]);
+    }, [targetUid, currentUser?.uid]);
     useEffect(() => {
         if (!currentUser || !targetUid || targetUid === currentUser.uid) {
             setIsFollowing(false);

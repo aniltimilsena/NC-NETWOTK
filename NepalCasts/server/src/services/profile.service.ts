@@ -1,5 +1,6 @@
 import { db, admin } from '../config';
 import { deleteFromCacheByPattern } from './cacheService';
+import { deleteGeneralMedia } from './media.service';
 export const getProfileByUid = async (uid: string): Promise<any> => {
     const profileDoc = await db.collection('profiles').doc(uid).get();
     if (!profileDoc.exists)
@@ -124,6 +125,40 @@ export const deleteUserAccount = async (userId: string, adminUid: string, adminE
     }
     catch (sessionsErr) {
         console.warn(`Error deleting sessions for user ${userId}:`, sessionsErr);
+    }
+    // Delete user media from Firestore and Cloudinary
+    try {
+        const mediaSnap = await db.collection('users').doc(userId).collection('media').get();
+        if (!mediaSnap.empty) {
+            let batch = db.batch();
+            let count = 0;
+            for (const doc of mediaSnap.docs) {
+                const data = doc.data();
+                const publicId = data.publicId;
+                const isVideo = data.type === 'video';
+                if (publicId) {
+                    try {
+                        await deleteGeneralMedia(publicId, isVideo);
+                    }
+                    catch (cloudErr) {
+                        console.warn(`Could not delete Cloudinary asset ${publicId} on user deletion:`, cloudErr);
+                    }
+                }
+                batch.delete(doc.ref);
+                count++;
+                if (count === 400) {
+                    await batch.commit();
+                    batch = db.batch();
+                    count = 0;
+                }
+            }
+            if (count > 0) {
+                await batch.commit();
+            }
+        }
+    }
+    catch (mediaErr) {
+        console.warn(`Error cleaning up media subcollection for user ${userId}:`, mediaErr);
     }
     await db.collection('users').doc(userId).delete();
     await db.collection('profiles').doc(userId).delete();

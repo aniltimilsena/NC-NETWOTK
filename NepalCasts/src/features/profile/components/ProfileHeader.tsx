@@ -148,7 +148,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
           ref={coverImgRef}
           src={coverImage}
           alt="Hero Cover"
-          fetchpriority="high"
+          fetchPriority="high"
           decoding="async"
           onLoad={() => setCoverLoaded(true)}
           className={`w-full h-full object-cover object-center select-none pointer-events-none transition-opacity duration-300 ${coverLoaded ? 'opacity-90' : 'opacity-0'}`}

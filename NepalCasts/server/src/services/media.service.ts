@@ -4,8 +4,13 @@ import { getCloudinaryConfig } from '../config/cloudinary';
 export const uploadAvatar = async (userId: string, buffer: Buffer, mimeType: string): Promise<string> => {
     const b64 = Buffer.from(buffer).toString('base64');
     const dataURI = `data:${mimeType};base64,${b64}`;
-    const { cloudName } = getCloudinaryConfig();
-    cloudinary.config({ cloud_name: cloudName, secure: true });
+    const { cloudName, apiKey, apiSecret } = getCloudinaryConfig();
+    cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+        secure: true,
+    });
     const result = await cloudinary.uploader.upload(dataURI, {
         folder: `nc-network/avatars/${userId}`,
         public_id: 'profile',
@@ -20,8 +25,13 @@ export const uploadAvatar = async (userId: string, buffer: Buffer, mimeType: str
 export const uploadCastingBanner = async (castingId: string, buffer: Buffer, mimeType: string): Promise<string> => {
     const b64 = Buffer.from(buffer).toString('base64');
     const dataURI = `data:${mimeType};base64,${b64}`;
-    const { cloudName } = getCloudinaryConfig();
-    cloudinary.config({ cloud_name: cloudName, secure: true });
+    const { cloudName, apiKey, apiSecret } = getCloudinaryConfig();
+    cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+        secure: true,
+    });
     const result = await cloudinary.uploader.upload(dataURI, {
         folder: `nc-network/castings/${castingId}`,
         public_id: 'banner',
@@ -36,8 +46,13 @@ export const uploadCastingBanner = async (castingId: string, buffer: Buffer, mim
 export const uploadGeneralMedia = async (userId: string, buffer: Buffer, mimeType: string, isVideo: boolean): Promise<any> => {
     const b64 = Buffer.from(buffer).toString('base64');
     const dataURI = `data:${mimeType};base64,${b64}`;
-    const { cloudName } = getCloudinaryConfig();
-    cloudinary.config({ cloud_name: cloudName, secure: true });
+    const { cloudName, apiKey, apiSecret } = getCloudinaryConfig();
+    cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+        secure: true,
+    });
     const result = await cloudinary.uploader.upload(dataURI, {
         folder: `nc-network/media/${userId}`,
         resource_type: isVideo ? 'video' : 'image',

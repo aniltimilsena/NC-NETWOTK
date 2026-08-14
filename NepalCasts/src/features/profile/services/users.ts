@@ -30,6 +30,9 @@ const getSavedRealTalents = (): Talent[] => {
                     if (username) {
                         seen.add(`usr_${username}`);
                     }
+                    // Reset stale cached follower count until real live count is fetched
+                    t.followers = 0;
+                    t.followersCount = 0;
                     unique.push(t);
                 }
                 return unique;
@@ -179,13 +182,28 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
             const unsubFollows = onSnapshot(followsQuery, (followsSnap) => {
                 const fMap: Record<string, number> = {};
                 const ingMap: Record<string, number> = {};
+                const validProfileUids = new Set<string>();
+                if (lastDocs.length > 0) {
+                    lastDocs.forEach((d: any) => {
+                        const data = d.data();
+                        if (d.id) validProfileUids.add(d.id);
+                        if (data.uid) validProfileUids.add(data.uid);
+                        if (data.username) validProfileUids.add(data.username.toLowerCase().trim());
+                    });
+                }
+                const mockFollowerUids = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', 'Mm1B6rYaEebs6ajRyu0EJBrrGwT2']);
                 followsSnap.docs.forEach((d) => {
                     const data = d.data();
-                    if (data.followingId) {
-                        fMap[data.followingId] = (fMap[data.followingId] || 0) + 1;
-                    }
-                    if (data.followerId) {
-                        ingMap[data.followerId] = (ingMap[data.followerId] || 0) + 1;
+                    const followerId = data.followerId;
+                    const followingId = data.followingId;
+                    // Exclude self-follows and known mock follow records
+                    if (followerId && followingId && followerId !== followingId && !mockFollowerUids.has(followerId)) {
+                        if (validProfileUids.size > 0 ? validProfileUids.has(followerId) : true) {
+                            fMap[followingId] = (fMap[followingId] || 0) + 1;
+                        }
+                        if (validProfileUids.size > 0 ? validProfileUids.has(followingId) : true) {
+                            ingMap[followerId] = (ingMap[followerId] || 0) + 1;
+                        }
                     }
                 });
                 followsCountsMap = fMap;

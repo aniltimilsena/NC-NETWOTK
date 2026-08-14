@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useDialog } from './DialogProvider';
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
-import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc, query, collection, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc, query, collection, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { signOut as firebaseSignOut, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
 import { db, auth } from '../lib/firebase';
 import { AuthService } from '../services/AuthService';
@@ -260,6 +260,16 @@ export default function AppProviders({ children }: {
                             updatedAt: serverTimestamp() 
                         }, { merge: true });
                     }
+                    try {
+                        const mockFollowerIds = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', 'Mm1B6rYaEebs6ajRyu0EJBrrGwT2', uid]);
+                        const followsTargetSnap = await getDocs(query(collection(db, 'follows'), where('followingId', '==', uid)));
+                        for (const dSnap of followsTargetSnap.docs) {
+                            const dData = dSnap.data();
+                            if (mockFollowerIds.has(dData.followerId)) {
+                                await deleteDoc(doc(db, 'follows', dSnap.id)).catch(() => {});
+                            }
+                        }
+                    } catch (_mockErr) {}
                 } catch (err) { console.warn("Error syncing Clerk profile to Firestore:", err); }
             })();
         } else if (isLoaded && !isSignedIn) {

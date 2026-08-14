@@ -62,15 +62,17 @@ const ClerkProviderWithNavigate = ({ children }: { children: React.ReactNode }) 
     return (
         <ClerkProvider
             publishableKey={PUBLISHABLE_KEY}
-            navigate={(to) => navigate(to)}
+            routerPush={(to: string) => navigate(to)}
+            routerReplace={(to: string) => navigate(to, { replace: true })}
             appearance={{
                 variables: {
-                    colorBackground: '#141414',
-                    colorInputBackground: '#1a1a1a',
+                    colorBackground: '#0F0F13',
+                    colorInputBackground: '#1C1C26',
                     colorText: '#ffffff',
                     colorTextSecondary: '#9ca3af',
-                    colorPrimary: '#facc15',
+                    colorPrimary: '#6C5CE7',
                     colorNeutral: '#ffffff',
+                    borderRadius: '0.75rem',
                 },
                 elements: {
                     badge: 'hidden !important',

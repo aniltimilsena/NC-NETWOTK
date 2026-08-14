@@ -72,7 +72,7 @@ describe('Authentication - SignIn Page', () => {
     it('navigates to signup page when clicking Create account', () => {
         render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
 
-        const createAccountBtn = screen.getByRole('button', { name: /create account/i });
+        const createAccountBtn = screen.getByRole('button', { name: /sign up|create account/i });
         fireEvent.click(createAccountBtn);
 
         expect(mockNavigate).toHaveBeenCalledWith('/signup');

@@ -3,6 +3,7 @@ import { doc, collection, query, onSnapshot, deleteDoc, updateDoc, documentId, w
 import { db } from '../../../lib/firebase';
 import { getProfile, updateProfileData } from '../../../services';
 import type { UserProfile, ServiceResult } from '../../../types';
+import { CurrentUser } from '../../../utils/CurrentUser';
 export function useSettings(currentUser: any) {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -107,7 +108,7 @@ export function useSettings(currentUser: any) {
                     }
                 }));
 
-                const fetched = blockedIds.map(bid => {
+                const fetched = blockedIds.map((bid: string) => {
                     const data = profileMap.get(bid);
                     if (data) {
                         return {

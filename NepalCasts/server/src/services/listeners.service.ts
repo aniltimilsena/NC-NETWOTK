@@ -101,11 +101,14 @@ export function startFirestoreListeners(): void {
                     roleSnap.docs.forEach(doc => matchingDocsMap.set(doc.id, doc.data()));
                     skillSnap.docs.forEach(doc => matchingDocsMap.set(doc.id, doc.data()));
 
-                    const recipientIds = Array.from(matchingDocsMap.keys()).filter(id => id !== casting.createdBy);
+                                        const recipientIds = Array.from(matchingDocsMap.keys()).filter(id => id !== casting.createdBy);
                     console.log(`[Casting Alert] Found ${recipientIds.length} matching profiles for casting type "${castingType}"`);
 
+                    let batch = db.batch();
+                    let count = 0;
                     for (const recipientId of recipientIds) {
-                        await db.collection('notifications').add({
+                        const notifRef = db.collection('notifications').doc();
+                        batch.set(notifRef, {
                             userId: recipientId,
                             recipientId: recipientId,
                             receiverId: recipientId,
@@ -122,6 +125,15 @@ export function startFirestoreListeners(): void {
                             targetUrl: `/casting/${docId}`,
                             profileUrl: `/casting/${docId}`,
                         });
+                        count++;
+                        if (count === 400) {
+                            await batch.commit();
+                            batch = db.batch();
+                            count = 0;
+                        }
+                    }
+                    if (count > 0) {
+                        await batch.commit();
                     }
                 }
                 catch (err) {

@@ -87,7 +87,14 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
             default: navigate('/' + page);
         }
     };
-    const isAuthPage = location.pathname === '/signin' || location.pathname === '/signup';
+    const isAuthPage =
+        location.pathname.startsWith('/signin') ||
+        location.pathname.startsWith('/signup') ||
+        location.pathname.startsWith('/sign-in') ||
+        location.pathname.startsWith('/sign-up') ||
+        location.pathname.startsWith('/forgot-password') ||
+        location.pathname.startsWith('/reset-password') ||
+        location.pathname.startsWith('/sso-callback');
     const showNavbar = !isAuthPage && !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications');
     return (<div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
       {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate}/>)}

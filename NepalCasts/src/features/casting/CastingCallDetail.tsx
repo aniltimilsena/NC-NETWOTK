@@ -128,17 +128,22 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       where('castingId', '==', castingId),
       where('userId', '==', user.uid)
     );
-    const unsub = onSnapshot(q, (snap) => {
-      if (!snap.empty) {
-        setApplied(true);
-        setApplicationId(snap.docs[0].id);
-        setApplicationStatus(snap.docs[0].data().status || 'pending');
-      } else {
-        setApplied(false);
-        setApplicationId(null);
-        setApplicationStatus(null);
+    const unsub = onSnapshot(q, 
+      (snap) => {
+        if (!snap.empty) {
+          setApplied(true);
+          setApplicationId(snap.docs[0].id);
+          setApplicationStatus(snap.docs[0].data().status || 'pending');
+        } else {
+          setApplied(false);
+          setApplicationId(null);
+          setApplicationStatus(null);
+        }
+      },
+      (error) => {
+        console.error("Checking applied status failed:", error);
       }
-    });
+    );
     return () => unsub();
   }, [castingId, user]);
 
@@ -154,25 +159,31 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       where('castingId', '==', castingId),
       where('creatorId', '==', user.uid)
     );
-    const unsub = onSnapshot(q, (snap) => {
-      const docs = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
-      docs.sort((a: any, b: any) => {
-        const t1 = a.appliedAt?.toDate ? a.appliedAt.toDate().getTime() : 0;
-        const t2 = b.appliedAt?.toDate ? b.appliedAt.toDate().getTime() : 0;
-        return t2 - t1;
-      });
-      const formattedDocs = docs.map((d: any) => ({
-        ...d,
-        appliedAtFormatted: d.appliedAt?.toDate
-          ? d.appliedAt.toDate().toLocaleDateString()
-          : 'Just now',
-      }));
-      setApps(formattedDocs);
-      setLoadingApps(false);
-    });
+    const unsub = onSnapshot(q, 
+      (snap) => {
+        const docs = snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+        docs.sort((a: any, b: any) => {
+          const t1 = a.appliedAt?.toDate ? a.appliedAt.toDate().getTime() : 0;
+          const t2 = b.appliedAt?.toDate ? b.appliedAt.toDate().getTime() : 0;
+          return t2 - t1;
+        });
+        const formattedDocs = docs.map((d: any) => ({
+          ...d,
+          appliedAtFormatted: d.appliedAt?.toDate
+            ? d.appliedAt.toDate().toLocaleDateString()
+            : 'Just now',
+        }));
+        setApps(formattedDocs);
+        setLoadingApps(false);
+      },
+      (error) => {
+        console.error("Applications snapshot listener failed:", error);
+        setLoadingApps(false);
+      }
+    );
     return () => unsub();
   }, [castingId, isCreator, user?.uid]);
 

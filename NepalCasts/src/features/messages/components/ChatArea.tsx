@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../../../lib/firebase';
 import { PhoneOff, VideoOff, Phone, Video, Check, Trash2, ChevronLeft, X, Pin, PinOff, Clock, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar } from '../../../components/ui';
@@ -23,7 +25,7 @@ const formatMessageTime = (timestamp?: any) => {
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
         if (isNaN(date.getTime()))
             return '';
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
     }
     catch (e) {
         return '';
@@ -47,6 +49,36 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isLongPressActive = useRef(false);
     const isInitialMount = useRef(true);
+    const otherParticipantId = chat?.participants?.find((p: string) => p !== currentUser?.uid) || chat?.otherParticipantId;
+    const isTyping = otherParticipantId ? typingUsers?.[otherParticipantId] === true : false;
+    const [isOnline, setIsOnline] = useState<boolean>(chat?.online === true || chat?.isOnline === true);
+    useEffect(() => {
+        setIsOnline(chat?.online === true || chat?.isOnline === true);
+        if (!otherParticipantId)
+            return;
+        const unsubUser = onSnapshot(doc(db, 'users', otherParticipantId), (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                if (typeof data.isOnline === 'boolean')
+                    setIsOnline(data.isOnline);
+                else if (typeof data.online === 'boolean')
+                    setIsOnline(data.online);
+            }
+        }, () => { });
+        const unsubProfile = onSnapshot(doc(db, 'profiles', otherParticipantId), (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                if (typeof data.isOnline === 'boolean')
+                    setIsOnline(data.isOnline);
+                else if (typeof data.online === 'boolean')
+                    setIsOnline(data.online);
+            }
+        }, () => { });
+        return () => {
+            unsubUser();
+            unsubProfile();
+        };
+    }, [otherParticipantId, chat?.online, chat?.isOnline]);
     const startMessagePress = (msg: Message) => {
         isLongPressActive.current = false;
         longPressTimer.current = setTimeout(() => {
@@ -79,8 +111,6 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
     useEffect(() => {
         isInitialMount.current = true;
     }, [chat?.id]);
-    const otherParticipantId = chat?.participants?.find((p: string) => p !== currentUser?.uid);
-    const isTyping = otherParticipantId ? typingUsers?.[otherParticipantId] === true : false;
     return (<div className="flex flex-col h-full bg-[#0b0b0c]">
       
       <div className="px-6 py-4 pt-6 md:py-4 flex items-center justify-between">
@@ -88,11 +118,11 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
           <button onClick={onBack} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 shadow-sm active:scale-95 cursor-pointer" title="Back to Inbox" aria-label="Back to Inbox">
             <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5}/>
           </button>
-          <Avatar userId={otherParticipantId} src={chat?.avatar} name={chat?.name} size="md" className="w-11 h-11 sm:w-12 sm:h-12 shrink-0"/>
+          <Avatar userId={otherParticipantId} src={chat?.avatar} name={chat?.name} size="md" className="w-11 h-11 sm:w-12 sm:h-12 shrink-0" showStatus={true} status={isOnline ? 'online' : 'offline'}/>
           <div className="text-left">
             <span className="text-base sm:text-lg font-extrabold text-white block leading-tight">{chat?.name}</span>
-            <span className="text-xs text-nc-muted block uppercase tracking-wider font-semibold mt-0.5">
-              {isTyping ? <span className="text-[#00BFFF] animate-pulse">Typing...</span> : 'Online'}
+            <span className="text-xs block uppercase tracking-wider font-semibold mt-0.5">
+              {isTyping ? <span className="text-[#00BFFF] animate-pulse">Typing...</span> : isOnline ? <span className="text-emerald-400">Online</span> : <span className="text-nc-muted">Offline</span>}
             </span>
           </div>
         </div>

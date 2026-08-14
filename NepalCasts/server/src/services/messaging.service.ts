@@ -172,6 +172,29 @@ export const deleteConversationForUser = async (conversationId: string, uid: str
     const convo = await assertParticipant(conversationId, uid);
     const convoData = convo.data();
     if (convoData?.createdBy === uid) {
+        // Delete all messages in subcollection first to avoid orphaned records in Firestore
+        try {
+            const messagesSnap = await convo.ref.collection('messages').get();
+            if (!messagesSnap.empty) {
+                let batch = db.batch();
+                let count = 0;
+                for (const doc of messagesSnap.docs) {
+                    batch.delete(doc.ref);
+                    count++;
+                    if (count === 400) {
+                        await batch.commit();
+                        batch = db.batch();
+                        count = 0;
+                    }
+                }
+                if (count > 0) {
+                    await batch.commit();
+                }
+            }
+        }
+        catch (msgErr) {
+            console.warn(`Error deleting messages subcollection for conversation ${conversationId}:`, msgErr);
+        }
         await convo.ref.delete();
     }
     else {

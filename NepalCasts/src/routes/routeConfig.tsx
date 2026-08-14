@@ -22,8 +22,6 @@ import { CurrentUser } from '../utils/CurrentUser';
 import SignIn from '../features/auth/SignIn';
 import SignUp from '../features/auth/SignUp';
 import ForgotPassword from '../features/auth/ForgotPassword';
-import ResetPassword from '../features/auth/ResetPassword';
-import VerifyEmail from '../features/auth/VerifyEmail';
 
 const Home = lazy(() => import('../pages/Home'));
 const Premium = lazy(() => import('../pages/Premium'));
@@ -113,8 +111,7 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
         <Route path="/sign-up/*" element={<SignUp onNavigate={onNavigate} />} />
         <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback signInForceRedirectUrl="/discover" signUpForceRedirectUrl="/discover" />} />
         <Route path="/forgot-password" element={<ForgotPassword onNavigate={onNavigate} />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/reset-password" element={<ForgotPassword onNavigate={onNavigate} />} />
       </Route>
 
       {/* Protected User Routes with User Layout */}

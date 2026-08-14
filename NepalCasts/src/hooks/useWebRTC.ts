@@ -50,6 +50,7 @@ export function useWebRTC(): UseWebRTCReturn {
     const remoteCandidatesQueueRef = useRef<RTCIceCandidateInit[]>([]);
     const localStreamRef = useRef<MediaStream | null>(null);
     const remoteStreamRef = useRef<MediaStream | null>(null);
+    const remoteDescriptionSetRef = useRef<boolean>(false);
     const cleanup = useCallback(async () => {
         logger.log("[WebRTC Cleanup] Performing audio WebRTC cleanup");
         if (timerRef.current) {
@@ -78,6 +79,7 @@ export function useWebRTC(): UseWebRTCReturn {
             localStreamRef.current = null;
         }
         remoteStreamRef.current = null;
+        remoteDescriptionSetRef.current = false;
         setLocalStream(null);
         setRemoteStream(null);
         setCallId(null);
@@ -350,7 +352,8 @@ export function useWebRTC(): UseWebRTCReturn {
                             addIceCandidate(callDoc.id, "callee", cand);
                         }
                     };
-                    if (callDoc.offer) {
+                    if (callDoc.offer && !remoteDescriptionSetRef.current) {
+                        remoteDescriptionSetRef.current = true;
                         logger.log("[WebRTC Offer] Setting remote offer in callee...");
                         await pc.setRemoteDescription(new RTCSessionDescription(callDoc.offer));
                         await flushRemoteCandidates(pc);
@@ -389,8 +392,9 @@ export function useWebRTC(): UseWebRTCReturn {
                     return;
                 }
                 setActiveCallDoc(docData);
-                if (docData.offer && pcRef.current && pcRef.current.remoteDescription === null) {
+                if (docData.offer && pcRef.current && pcRef.current.remoteDescription === null && !remoteDescriptionSetRef.current) {
                     try {
+                        remoteDescriptionSetRef.current = true;
                         logger.log("[WebRTC Offer] Setting remote offer asynchronously in callee...");
                         await pcRef.current.setRemoteDescription(new RTCSessionDescription(docData.offer));
                         await flushRemoteCandidates(pcRef.current);

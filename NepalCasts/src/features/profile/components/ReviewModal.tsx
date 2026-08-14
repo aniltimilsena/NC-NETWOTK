@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { X, Star } from 'lucide-react';
 import { Button } from '../../../components/ui';
+import { useDialog } from '../../../providers/DialogProvider';
+
 interface ReviewModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (rating: number, text: string, workedAs: string) => Promise<void>;
 }
 export default function ReviewModal({ isOpen, onClose, onSubmit }: ReviewModalProps) {
+    const { showWarningDialog } = useDialog();
     const [rating, setRating] = useState(5);
     const [workedAs, setWorkedAs] = useState('');
     const [text, setText] = useState('');
@@ -16,11 +19,11 @@ export default function ReviewModal({ isOpen, onClose, onSubmit }: ReviewModalPr
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!workedAs.trim()) {
-            alert("Please specify the role you worked as (e.g. Actor, Director).");
+            showWarningDialog("Missing Role", "Please specify the role you worked as (e.g. Actor, Director).", () => {});
             return;
         }
         if (!text.trim()) {
-            alert("Please enter review details.");
+            showWarningDialog("Missing Details", "Please enter review details.", () => {});
             return;
         }
         setSubmitting(true);

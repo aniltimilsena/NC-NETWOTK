@@ -62,7 +62,9 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
                 const queryField = type === 'followers' ? 'followerId' : 'followingId';
                 const q = query(collection(db, "follows"), where(fieldName, "==", targetUid));
                 const snap = await getDocs(q);
-                const userIds = snap.docs.map(docSnap => docSnap.data()[queryField]);
+                const userIds = snap.docs
+                    .map((docSnap: any) => docSnap.data()[queryField])
+                    .filter((id: string) => id && id !== targetUid);
                 if (userIds.length === 0) {
                     setFollowList([]);
                     return;

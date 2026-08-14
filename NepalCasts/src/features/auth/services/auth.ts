@@ -51,23 +51,3 @@ export const ensureUserProfile = async (user: { uid: string; displayName?: strin
         return { success: true, error: null };
     }
 };
-
-export const signUpUser = async () => {
-    return { user: null, error: "Please use Clerk Sign-Up component for account registration." };
-};
-
-export const signInUser = async () => {
-    return { user: null, error: "Please use Clerk Sign-In component for account authentication." };
-};
-
-export const logoutUser = async () => {
-    return { error: null };
-};
-
-export const sendPasswordReset = async () => {
-    return { error: "Please use Clerk User Profile or Sign-In component for password reset." };
-};
-
-export const verifyUserPassword = async () => {
-    return true;
-};

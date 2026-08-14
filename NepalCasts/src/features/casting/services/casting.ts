@@ -78,41 +78,53 @@ export const getCastingCallById = async (id: string) => {
 export const dispatchTargetedAuditionAlerts = async (callId: string, callData: any) => {
     try {
         const creatorId = AuthService.getUserId() || callData.creatorId;
-        const usersRef = collection(db, COLLECTIONS.USERS);
-        const snap = await getDocs(usersRef);
+        const targetType = callData.type;
+        const targetLocation = callData.location;
 
-        const targetType = (callData.type || "").toLowerCase();
-        const targetLocation = (callData.location || "").toLowerCase();
+        const queries = [];
+        if (targetType) {
+            queries.push(query(collection(db, COLLECTIONS.USERS), where("role", "==", targetType)));
+            queries.push(query(collection(db, COLLECTIONS.USERS), where("category", "==", targetType)));
+        }
+        if (targetLocation) {
+            queries.push(query(collection(db, COLLECTIONS.USERS), where("location", "==", targetLocation)));
+        }
+
+        // Fallback limited fetch if target fields are empty to avoid scanning all users
+        if (queries.length === 0) {
+            queries.push(query(collection(db, COLLECTIONS.USERS), limit(20)));
+        }
+
+        const resolvedUsers = new Map<string, any>();
+        await Promise.all(queries.map(async (q) => {
+            try {
+                const querySnap = await getDocs(q);
+                querySnap.forEach((userDoc) => {
+                    if (userDoc.id !== creatorId) {
+                        resolvedUsers.set(userDoc.id, userDoc.data());
+                    }
+                });
+            } catch (qErr) {
+                console.warn("Targeted user query slice failed:", qErr);
+            }
+        }));
 
         const notificationPromises: Promise<any>[] = [];
-
-        snap.forEach((userDoc) => {
-            if (userDoc.id === creatorId) return;
-
-            const u = userDoc.data();
-            const userCategory = (u.category || u.role || u.talentType || "").toLowerCase();
-            const userLocation = (u.location || u.address || u.city || "").toLowerCase();
-
-            // Match if user's category matches the target talent type OR if user's location matches
-            const matchesCategory = Boolean(targetType && (userCategory.includes(targetType) || targetType.includes(userCategory)));
-            const matchesLocation = Boolean(targetLocation && (userLocation.includes(targetLocation) || targetLocation.includes(userLocation)));
-
-            if (matchesCategory || matchesLocation || !targetType) {
-                notificationPromises.push(
-                    addDoc(collection(db, COLLECTIONS.NOTIFICATIONS), {
-                        recipientId: userDoc.id,
-                        senderId: creatorId,
-                        title: `🎯 New Audition Alert: ${callData.title || "Casting Notice"}`,
-                        message: `A new ${callData.type || "Casting"} audition matching your profile was posted in ${callData.location || "Nepal"}.`,
-                        type: "casting",
-                        notificationType: "casting",
-                        link: `/casting/${callId}`,
-                        createdAt: new Date().toISOString(),
-                        read: false,
-                        priority: "high",
-                    })
-                );
-            }
+        resolvedUsers.forEach((_u, userId) => {
+            notificationPromises.push(
+                addDoc(collection(db, COLLECTIONS.NOTIFICATIONS), {
+                    recipientId: userId,
+                    senderId: creatorId,
+                    title: `🎯 New Audition Alert: ${callData.title || "Casting Notice"}`,
+                    message: `A new ${callData.type || "Casting"} audition matching your profile was posted in ${callData.location || "Nepal"}.`,
+                    type: "casting",
+                    notificationType: "casting",
+                    link: `/casting/${callId}`,
+                    createdAt: new Date().toISOString(),
+                    read: false,
+                    priority: "high",
+                })
+            );
         });
 
         if (notificationPromises.length > 0) {

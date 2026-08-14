@@ -166,48 +166,61 @@ export default function Desktop3ColumnLayout({
       return;
     }
 
+    let unsubUser = null;
+
     const unsubProfile = onSnapshot(doc(db, 'profiles', uid), (snap) => {
       if (snap.exists()) {
         setProfileData(snap.data());
+        if (unsubUser) {
+          unsubUser();
+          unsubUser = null;
+        }
       } else {
-        const unsubUser = onSnapshot(doc(db, 'users', uid), (userSnap) => {
-          if (userSnap.exists()) {
-            setProfileData(userSnap.data());
-          }
-        });
-        return () => unsubUser();
+        if (!unsubUser) {
+          unsubUser = onSnapshot(doc(db, 'users', uid), (userSnap) => {
+            if (userSnap.exists()) {
+              setProfileData(userSnap.data());
+            }
+          });
+        }
       }
     });
 
     // Real-time Followers count for logged-in user
     const qFollowers = query(collection(db, 'follows'), where('followingId', '==', uid));
     const unsubFollowers = onSnapshot(qFollowers, (snap) => {
-      setRealFollowers(snap.size);
+      const mockUids = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', 'Mm1B6rYaEebs6ajRyu0EJBrrGwT2', uid]);
+      const valid = snap.docs.filter(d => d.data().followerId && !mockUids.has(d.data().followerId));
+      setRealFollowers(valid.length);
     }, () => setRealFollowers(0));
 
     // Real-time Following count for logged-in user
     const qFollowing = query(collection(db, 'follows'), where('followerId', '==', uid));
     const unsubFollowing = onSnapshot(qFollowing, (snap) => {
-      setRealFollowing(snap.size);
+      const valid = snap.docs.filter(d => d.data().followingId && d.data().followingId !== uid);
+      setRealFollowing(valid.length);
     }, () => setRealFollowing(0));
 
     // Real-time Reviews count
-    let unsubReviews = () => {};
+    let unsubReviews = () => { };
     try {
       const qReviews = query(collection(db, 'reviews'), or(where('targetUid', '==', uid), where('targetUserId', '==', uid)));
       unsubReviews = onSnapshot(qReviews, (snap) => {
         setRealReviews(snap.size);
       }, () => {
         const qSingle = query(collection(db, 'reviews'), where('targetUid', '==', uid));
-        onSnapshot(qSingle, (sSnap) => setRealReviews(sSnap.size), () => {});
+        unsubReviews = onSnapshot(qSingle, (sSnap) => setRealReviews(sSnap.size), () => { });
       });
     } catch {
       const qSingle = query(collection(db, 'reviews'), where('targetUid', '==', uid));
-      unsubReviews = onSnapshot(qSingle, (sSnap) => setRealReviews(sSnap.size), () => {});
+      unsubReviews = onSnapshot(qSingle, (sSnap) => setRealReviews(sSnap.size), () => { });
     }
 
     return () => {
       unsubProfile();
+      if (unsubUser) {
+        unsubUser();
+      }
       unsubFollowers();
       unsubFollowing();
       unsubReviews();
@@ -322,17 +335,17 @@ export default function Desktop3ColumnLayout({
 
           {/* LEFT SIDEBAR (Desktop: lg+) */}
           <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-20 pt-2 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-4">
-            
+
             {/* Inline Desktop Search Bar */}
             <div className="px-1">
-              <div 
+              <div
                 onClick={() => setShowSearchOverlay(true)}
                 className="relative flex items-center bg-[#242526] rounded-full px-4 py-2 border border-white/5 hover:border-white/10 transition-all cursor-pointer"
               >
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   readOnly
-                  placeholder={t('ui.searchPlaceholder')} 
+                  placeholder={t('ui.searchPlaceholder')}
                   className="w-full bg-transparent outline-none text-white text-[15px] placeholder:text-white/40 pr-10 cursor-pointer border-0"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -425,8 +438,8 @@ export default function Desktop3ColumnLayout({
                 <Link
                   to="/discover"
                   className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'discover' || activeNav === 'home'
-                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
-                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                    : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                     }`}
                 >
                   {(activeNav === 'discover' || activeNav === 'home') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
@@ -439,8 +452,8 @@ export default function Desktop3ColumnLayout({
                 <Link
                   to="/talents"
                   className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'talent' || activeNav === 'talents'
-                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
-                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                    : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                     }`}
                 >
                   {(activeNav === 'talent' || activeNav === 'talents') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
@@ -453,8 +466,8 @@ export default function Desktop3ColumnLayout({
                 <Link
                   to="/casting"
                   className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'casting'
-                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
-                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                    : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                     }`}
                 >
                   {activeNav === 'casting' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
@@ -473,8 +486,8 @@ export default function Desktop3ColumnLayout({
                   <Link
                     to="/messages"
                     className={`w-full px-5 py-3 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'messages'
-                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
-                        : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                       }`}
                   >
                     {activeNav === 'messages' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
@@ -487,8 +500,8 @@ export default function Desktop3ColumnLayout({
                   <Link
                     to="/saved"
                     className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'saved-castings' || activeNav === 'saved-casting' || activeNav === 'saved'
-                        ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
-                        : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                       }`}
                   >
                     {(activeNav === 'saved-castings' || activeNav === 'saved-casting' || activeNav === 'saved') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
@@ -507,8 +520,8 @@ export default function Desktop3ColumnLayout({
                 <Link
                   to="/trust-safety"
                   className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'trust-safety' || activeNav === 'trust'
-                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
-                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                    : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                     }`}
                 >
                   {(activeNav === 'trust-safety' || activeNav === 'trust') && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
@@ -521,8 +534,8 @@ export default function Desktop3ColumnLayout({
                 <Link
                   to="/privacy"
                   className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'privacy'
-                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
-                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                    : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                     }`}
                 >
                   {activeNav === 'privacy' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
@@ -535,8 +548,8 @@ export default function Desktop3ColumnLayout({
                 <Link
                   to="/terms"
                   className={`w-full px-4 py-2.5 text-[14px] font-bold flex items-center transition-all cursor-pointer relative ${activeNav === 'terms'
-                      ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
-                      : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
+                    ? 'text-[#00BFFF] bg-[#00BFFF]/[0.10]'
+                    : 'text-gray-300 hover:bg-white/[0.04] hover:text-white'
                     }`}
                 >
                   {activeNav === 'terms' && <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#00BFFF]" />}
@@ -589,104 +602,100 @@ export default function Desktop3ColumnLayout({
               </div>
             )}
 
-            {/* Why NepalCasts? Card */}
-            <div className="px-2">
-              <div className="bg-[#121215] rounded-2xl p-4 border border-white/5 relative overflow-hidden space-y-4 shadow-xl">
-                <h4 className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500 text-left">Why NepalCasts?</h4>
-                
-                <div className="space-y-3.5 text-left">
-                  {/* Point 1 */}
-                  <div className="flex gap-3 items-start">
-                    <div className="w-8 h-8 rounded-lg bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <svg className="w-4.5 h-4.5 text-[#00BFFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h5 className="text-white text-xs font-bold font-sans">Remote Live Auditions</h5>
-                      <p className="text-[#888] text-[11px] leading-relaxed mt-0.5">Audition from anywhere in Nepal via nepalcasts</p>
-                    </div>
+            {/* Why NepalCasts? Section */}
+            <div className="px-2 space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400 text-left px-1">Why NepalCasts?</h4>
+              
+              <div className="space-y-4 text-left px-1">
+                {/* Point 1 */}
+                <div className="flex gap-3.5 items-start">
+                  <div className="w-9 h-9 rounded-full bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-[#00BFFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
                   </div>
-
-                  {/* Point 2 */}
-                  <div className="flex gap-3 items-start">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <svg className="w-4.5 h-4.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h5 className="text-white text-xs font-bold font-sans">Direct Connections</h5>
-                      <p className="text-[#888] text-[11px] leading-relaxed mt-0.5">Message top directors and production teams directly without middle agents.</p>
-                    </div>
+                  <div>
+                    <h5 className="text-white text-sm font-extrabold font-sans">Remote Live Auditions</h5>
+                    <p className="text-gray-300 text-xs sm:text-[13px] leading-relaxed font-medium mt-1">Audition from anywhere in Nepal via nepalcasts</p>
                   </div>
+                </div>
 
-                  {/* Point 3 */}
-                  <div className="flex gap-3 items-start">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <svg className="w-4.5 h-4.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h5 className="text-white text-xs font-bold font-sans">Verified PRO Casting</h5>
-                      <p className="text-[#888] text-[11px] leading-relaxed mt-0.5">Get verified to rank first in search results and stand out to casting teams.</p>
-                    </div>
+                {/* Point 2 */}
+                <div className="flex gap-3.5 items-start">
+                  <div className="w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="text-white text-sm font-extrabold font-sans">Direct Connections</h5>
+                    <p className="text-gray-300 text-xs sm:text-[13px] leading-relaxed font-medium mt-1">Message top directors and production teams directly without middle agents.</p>
+                  </div>
+                </div>
+
+                {/* Point 3 */}
+                <div className="flex gap-3.5 items-start">
+                  <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="text-white text-sm font-extrabold font-sans">Verified PRO Casting</h5>
+                    <p className="text-gray-300 text-xs sm:text-[13px] leading-relaxed font-medium mt-1">Get verified to rank first in search results and stand out to casting teams.</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* === PEOPLE TO FOLLOW === */}
+            {/* === PEOPLE TO FOLLOW === (Enlarged) */}
             {(isTalentsLoading || safeFeatured.length > 0) && (
-              <div className="px-2">
-                <div className="bg-[#121215] rounded-2xl p-4 border border-white/5 relative overflow-hidden space-y-4 shadow-xl">
-                  <div className="flex items-center justify-between px-1">
-                    <h4 className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500">People to follow</h4>
-                    <button
-                      type="button"
-                      onClick={() => onNavigate?.('talent')}
-                      className="text-[11px] font-bold text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
-                    >
-                      View all <ChevronRight className="w-3 h-3" />
-                    </button>
-                  </div>
-                  <div className="px-1 space-y-3">
-                    {isTalentsLoading ? (
-                      <FollowItemSkeleton count={3} />
-                    ) : (
-                      safeFeatured.slice(0, 3).map((item) => (
+              <div className="px-2 space-y-4">
+                <div className="flex items-center justify-between px-1">
+                  <h4 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400">People to follow</h4>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.('talent')}
+                    className="text-xs font-extrabold text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
+                  >
+                    View all <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="px-1 space-y-4">
+                  {isTalentsLoading ? (
+                    <FollowItemSkeleton count={3} />
+                  ) : (
+                    safeFeatured.slice(0, 3).map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-4 group"
+                      >
                         <div
-                          key={item.id}
-                          className="flex items-center gap-3 group"
+                          onClick={() => onNavigate?.('profile', item.id)}
+                          className="cursor-pointer flex-shrink-0"
                         >
-                          <div
-                            onClick={() => onNavigate?.('profile', item.id)}
-                            className="cursor-pointer flex-shrink-0"
-                          >
-                            <Avatar
-                              userId={item.id || item.uid}
-                              src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
-                              size="md"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h5
-                              onClick={() => onNavigate?.('profile', item.id)}
-                              className="text-white text-[13px] font-bold truncate cursor-pointer group-hover:text-[#00BFFF] transition-colors"
-                            >
-                              {item.name || 'Talent'}
-                            </h5>
-                            <p className="text-gray-500 text-[11px] truncate mt-0.5">
-                              {item.role || item.category || 'Talent'}
-                              {item.location && <span> · {item.location}</span>}
-                            </p>
-                          </div>
-                          <FollowBtn targetUid={item.id} />
+                          <Avatar
+                            userId={item.id || item.uid}
+                            src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
+                            size="lg"
+                          />
                         </div>
-                      ))
-                    )}
-                  </div>
+                        <div className="min-w-0 flex-1">
+                          <h5
+                            onClick={() => onNavigate?.('profile', item.id)}
+                            className="text-white text-base font-extrabold truncate cursor-pointer group-hover:text-[#00BFFF] transition-colors"
+                          >
+                            {item.name || 'Talent'}
+                          </h5>
+                          <p className="text-gray-400 text-xs font-semibold truncate mt-0.5">
+                            {item.role || item.category || 'Talent'}
+                            {item.location && <span> · {item.location}</span>}
+                          </p>
+                        </div>
+                        <FollowBtn targetUid={item.id} />
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}

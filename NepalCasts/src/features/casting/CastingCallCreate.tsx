@@ -38,6 +38,11 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
   const [isLoading, setIsLoading] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState('');
+  const [isOtherType, setIsOtherType] = useState(false);
+  const [customType, setCustomType] = useState('');
+  const [isOtherCategory, setIsOtherCategory] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
+
   const [form, setForm] = useState({
     title: '',
     type: 'Actor',
@@ -309,8 +314,17 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                       Target Talent Type *
                     </label>
                     <select
-                      value={form.type}
-                      onChange={(e) => setForm({ ...form, type: e.target.value })}
+                      value={isOtherType ? 'Other' : form.type}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'Other') {
+                          setIsOtherType(true);
+                          setForm({ ...form, type: customType.trim() || 'Other' });
+                        } else {
+                          setIsOtherType(false);
+                          setForm({ ...form, type: val });
+                        }
+                      }}
                       className="w-full max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-3 py-2.5 text-white text-sm font-bold cursor-pointer"
                     >
                       {CATEGORIES.map((catId) => {
@@ -321,15 +335,40 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                           </option>
                         );
                       })}
+                      <option value="Other" className="bg-[#111]">Other</option>
                     </select>
+
+                    {isOtherType && (
+                      <input
+                        type="text"
+                        value={customType}
+                        onChange={(e) => {
+                          const text = e.target.value;
+                          setCustomType(text);
+                          setForm({ ...form, type: text });
+                        }}
+                        placeholder="Type custom talent type..."
+                        className="w-full mt-2 bg-[#1a1a1a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2.5 text-white text-sm font-medium outline-none placeholder-gray-500"
+                        autoFocus
+                      />
+                    )}
                   </div>
                   <div className="min-w-0 w-full">
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
                       Project Category *
                     </label>
                     <select
-                      value={form.category}
-                      onChange={(e) => setForm({ ...form, category: e.target.value })}
+                      value={isOtherCategory ? 'Other' : form.category}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'Other') {
+                          setIsOtherCategory(true);
+                          setForm({ ...form, category: customCategory.trim() || 'Other' });
+                        } else {
+                          setIsOtherCategory(false);
+                          setForm({ ...form, category: val });
+                        }
+                      }}
                       className="w-full max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-3 py-2.5 text-white text-sm font-bold cursor-pointer"
                     >
                       {CATEGORY_OPTIONS.map((opt) => (
@@ -338,6 +377,21 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                         </option>
                       ))}
                     </select>
+
+                    {isOtherCategory && (
+                      <input
+                        type="text"
+                        value={customCategory}
+                        onChange={(e) => {
+                          const text = e.target.value;
+                          setCustomCategory(text);
+                          setForm({ ...form, category: text });
+                        }}
+                        placeholder="Type custom project category..."
+                        className="w-full mt-2 bg-[#1a1a1a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2.5 text-white text-sm font-medium outline-none placeholder-gray-500"
+                        autoFocus
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -356,7 +410,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 </div>
 
                 {/* Budget & Deadline */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0">
                   <div className="min-w-0 w-full overflow-hidden">
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
                       Pay Range / Budget *
@@ -366,7 +420,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                       value={form.budget}
                       onChange={(e) => setForm({ ...form, budget: e.target.value })}
                       placeholder="e.g. Rs. 10,000 / Day or Competitive"
-                      className="w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-3 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium"
+                      className="block w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-3 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium"
                     />
                   </div>
                   <div className="min-w-0 w-full overflow-hidden">
@@ -384,8 +438,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                           // Ignore if showPicker is not supported by the browser
                         }
                       }}
-                      style={{ colorScheme: 'dark' }}
-                      className="w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-2.5 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium cursor-pointer"
+                      style={{ colorScheme: 'dark', boxSizing: 'border-box' }}
+                      className="block w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-2 sm:px-3 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium cursor-pointer overflow-hidden"
                     />
                   </div>
                 </div>

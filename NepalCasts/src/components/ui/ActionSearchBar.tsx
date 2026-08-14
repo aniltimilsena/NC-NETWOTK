@@ -16,7 +16,7 @@ interface ProfileSuggestion {
 interface HistoryItem {
     type: 'text' | 'profile';
     value: string;
-    name: string;
+    name?: string;
     image?: string;
     verified?: boolean;
     role?: string;

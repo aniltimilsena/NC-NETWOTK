@@ -772,117 +772,381 @@ body.font-devanagari * {
   margin: 0 !important;
 }
 
-/* Clerk Form Input Wrapper/Container Overrides */
+/* Clerk Form Field Layout & 100% Full Length Wrappers */
+.cl-form,
+.cl-formField,
 .cl-formField>div,
-.cl-formField>[class*="cl-internal"],
-.cl-formFieldRow .cl-formField>div,
-.cl-formFieldRow .cl-formField>[class*="cl-internal"] {
-  background: #000000 !important;
-  background-color: #000000 !important;
-  border: 1px solid #2A2A2A !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
+.cl-formField [class*="cl-internal"],
+.cl-formFieldInputContainer,
+.cl-formFieldInputGroup {
   width: 100% !important;
-  transition: border-color 0.15s ease !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.cl-formField {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  margin-bottom: 18px !important;
   position: relative !important;
 }
 
-.cl-formField>div:focus-within,
-.cl-formField>[class*="cl-internal"]:focus-within {
-  border-color: #444444 !important;
+/* Hide optional sub-label text */
+.cl-formFieldLabel__optional,
+.cl-formFieldHintText,
+.cl-formFieldLabelHint,
+[class*="formFieldLabel__optional"],
+[class*="cl-formFieldLabel__optional"],
+[class*="formFieldHintText"],
+[class*="cl-formFieldHintText"],
+[class*="cl-internal"] span[class*="optional"],
+[class*="cl-internal"] span[class*="Optional"],
+.cl-formField label span:nth-child(2),
+.cl-formField label span[class*="optional"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  font-size: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-/* Style ONLY the specific input containers to be full width block elements */
-.cl-formFieldInputContainer,
-.cl-formFieldInputGroup,
-[class*="cl-formFieldInputContainer"],
-[class*="cl-formFieldInputGroup"] {
+/* Hide Last Name field so Full Name field takes 100% full width */
+.cl-formField:has(input[id="lastName-field"]),
+.cl-formField:has(#lastName-field),
+.cl-formFieldRow>.cl-formField:has(#lastName-field),
+div:has(> input[id="lastName-field"]) {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Force Full Name field to span 100% full width */
+.cl-formFieldRow>.cl-formField:has(#firstName-field),
+.cl-formField:has(#firstName-field) {
   width: 100% !important;
   min-width: 100% !important;
   max-width: 100% !important;
-  display: block !important;
-  position: static !important;
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
+  flex: 1 1 100% !important;
 }
 
-/* Clerk Form Input Overrides - Nestled inside the container */
-.cl-formFieldInput,
-input.cl-formFieldInput,
-.cl-formField input,
-.cl-formField input[class],
-.cl-formFieldRow .cl-formField input,
-.cl-formFieldRow input[id],
-input[id="identifier-field"],
-input[id="password-field"],
-input[id="emailAddress-field"],
-input[id="firstName-field"],
-input[id="lastName-field"],
-input[id="username-field"],
-[class*="cl-internal"] input {
+/* Guaranteed uniform padding for custom Auth form input fields */
+.auth-input-field {
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  text-indent: 0px !important;
+}
+
+.auth-input-field-password {
+  padding-left: 20px !important;
+  padding-right: 48px !important;
+  text-indent: 0px !important;
+}
+
+#emailAddress,
+#email,
+input[type="email"] {
+  padding-left: 20px !important;
+  text-indent: 0px !important;
+}
+
+/* Remove Chrome / Edge autofill icon padding shift */
+input::-webkit-credentials-auto-fill-button,
+input::-webkit-contacts-auto-fill-button {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  right: 0 !important;
+}
+
+/* Clerk Form Field Label — White text above the input box */
+.cl-formFieldLabel,
+label.cl-formFieldLabel,
+[class*="cl-formFieldLabel"] {
+  display: block !important;
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  color: #FFFFFF !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  text-transform: none !important;
+  line-height: 1.2 !important;
+  height: auto !important;
+  width: 100% !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
   background: transparent !important;
   background-color: transparent !important;
   border: none !important;
-  border-radius: 0 !important;
-  color: #ffffff !important;
-  display: block !important;
-  margin: 0 auto !important;
+}
+
+/* Type A: Clerk Form Input Container (Password fields with eye icon) */
+.cl-formFieldInputGroup,
+.cl-formFieldInputContainer,
+[class*="cl-formFieldInputGroup"],
+[class*="cl-formFieldInputContainer"] {
   width: 100% !important;
   min-width: 100% !important;
   max-width: 100% !important;
-  padding-top: 14px !important;
-  padding-bottom: 14px !important;
-  padding-left: 20px !important;
-  padding-right: 20px !important;
-  font-size: 0.875rem !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.03em !important;
-  text-align: center !important;
+  display: block !important;
+  position: relative !important;
+  background: #1E1F29 !important;
+  background-color: #1E1F29 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0px !important;
   box-shadow: none !important;
   outline: none !important;
+  overflow: hidden !important;
+  margin-top: 0 !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.15s ease !important;
+}
+
+.cl-formFieldInputGroup:focus-within,
+.cl-formFieldInputContainer:focus-within {
+  border-color: #6C5CE7 !important;
+}
+
+/* Intermediate wrapper divs inside input group span 100% full width of dark container */
+.cl-formFieldInputGroup>div,
+.cl-formFieldInputContainer>div,
+[class*="cl-formFieldInputGroup"]>div,
+[class*="cl-formFieldInputContainer"]>div,
+.cl-formFieldInputGroup [class*="cl-internal"],
+.cl-formFieldInputContainer [class*="cl-internal"] {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  position: relative !important;
+  display: block !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0px !important;
+  box-sizing: border-box !important;
+}
+
+/* Inner password input element inside Clerk prebuilt components */
+.cl-rootBox .cl-formFieldInputGroup input,
+.cl-rootBox .cl-formFieldInputContainer input,
+.cl-rootBox input[type="password"],
+.cl-rootBox input[id="password-field"] {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  height: 44px !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0px !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  display: block !important;
+  padding-left: 20px !important;
+  padding-right: 50px !important;
+  font-size: 0.9375rem !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  pointer-events: auto !important;
+  cursor: text !important;
+  position: relative !important;
+  z-index: 1 !important;
+  margin: 0 !important;
+}
+
+/* Eye Toggle Icon inside Clerk prebuilt components */
+.cl-rootBox .cl-formFieldInputShowPasswordButton,
+.cl-rootBox button.cl-formFieldInputShowPasswordButton {
+  position: absolute !important;
+  right: 12px !important;
+  left: auto !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  max-width: 34px !important;
+  max-height: 34px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  cursor: pointer !important;
+  color: #9CA3AF !important;
+  pointer-events: auto !important;
+  z-index: 20 !important;
+  border-radius: 6px !important;
+}
+
+.cl-rootBox .cl-formFieldInputShowPasswordButton:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.cl-rootBox .cl-formFieldInputShowPasswordButton svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  display: block !important;
+  fill: currentColor !important;
+  color: inherit !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Standalone Clerk Form Input */
+.cl-rootBox .cl-formField>input,
+.cl-rootBox input[id="identifier-field"],
+.cl-rootBox input[id="emailAddress-field"],
+.cl-rootBox input[id="firstName-field"],
+.cl-rootBox input[id="lastName-field"],
+.cl-rootBox input[id="username-field"] {
+  background: #1E1F29 !important;
+  background-color: #1E1F29 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0px !important;
+  color: #ffffff !important;
+  display: block !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  padding: 0 20px !important;
+  font-size: 0.9375rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em !important;
+  text-align: left !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  box-sizing: border-box !important;
   -webkit-appearance: none !important;
   appearance: none !important;
+  transition: border-color 0.15s ease !important;
+}
+
+.cl-formField>input:focus,
+input.cl-formFieldInput:focus,
+input[id="identifier-field"]:focus,
+input[id="emailAddress-field"]:focus,
+input[id="firstName-field"]:focus,
+input[id="lastName-field"]:focus {
+  border-color: #6C5CE7 !important;
 }
 
 .cl-formFieldInput::placeholder,
 .cl-formField input::placeholder,
 input[id="identifier-field"]::placeholder,
 input[id="password-field"]::placeholder,
-input[id="emailAddress-field"]::placeholder {
+input[id="emailAddress-field"]::placeholder,
+input[id="firstName-field"]::placeholder,
+input[id="lastName-field"]::placeholder {
   color: #9CA3AF !important;
   opacity: 1 !important;
-  text-align: center !important;
+  text-align: left !important;
+  text-transform: none !important;
+  font-weight: 400 !important;
 }
 
-.cl-formFieldInput:focus,
-.cl-formFieldInput:focus-visible,
-.cl-formField input:focus,
-.cl-formField input:focus-visible,
-input[id="identifier-field"]:focus,
-input[id="password-field"]:focus {
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
+/* Remove bottom lines and extra borders */
+.cl-formField div::before,
+.cl-formField div::after,
+.cl-formFieldInputGroup *::before,
+.cl-formFieldInputGroup *::after {
+  border-bottom: none !important;
   box-shadow: none !important;
-  outline: none !important;
 }
 
-/* Specific padding for password fields to shift placeholder left and clear eye icon */
-input[id="password-field"],
-input[type="password"] {
-  padding-left: 48px !important;
-  padding-right: 48px !important;
+/* Clerk Error Container & Text — Single Line Inline-Block Display */
+.cl-formFieldError,
+.cl-formFieldErrorText,
+.cl-formFieldWarning,
+.cl-formFieldWarningText,
+.cl-formFieldHintText,
+#error-password,
+[id^="error-"],
+[class*="cl-formFieldError"] {
+  display: block !important;
+  text-align: left !important;
+  color: #F87171 !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  margin-top: 6px !important;
+  margin-bottom: 0 !important;
+  width: 100% !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  clear: both !important;
 }
 
+/* Red exclamation icon — inline element on left of text */
+.cl-formFieldError svg,
+.cl-formFieldErrorIcon,
+[class*="cl-formFieldError"] svg,
+[class*="cl-formFieldErrorIcon"],
+[id^="error-"] svg,
+.cl-formFieldError img,
+[class*="cl-formFieldError"] img {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  margin-right: 6px !important;
+  margin-left: 0 !important;
+  fill: currentColor !important;
+  color: #F87171 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Text inside error paragraph */
+.cl-formFieldErrorText,
+.cl-formFieldError span,
+#error-password span {
+  display: inline !important;
+  vertical-align: middle !important;
+  color: #F87171 !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
 
 .cl-formFieldRow {
   display: flex !important;
@@ -904,14 +1168,6 @@ input[type="password"] {
   justify-content: flex-start !important;
 }
 
-.cl-formFieldLabel {
-  display: none !important;
-}
-
-.cl-formFieldHintText {
-  display: none !important;
-}
-
 
 
 .cl-formButtonPrimary,
@@ -923,19 +1179,19 @@ button[class*="cl-formButtonPrimary"],
 [class*="cl-internal"] button[class*="cl-formButtonPrimary"],
 .cl-form button[type="submit"],
 .cl-rootBox button[type="submit"] {
-  background: #000000 !important;
-  background-color: #000000 !important;
+  background: #6C5CE7 !important;
+  background-color: #6C5CE7 !important;
   background-image: none !important;
   color: #ffffff !important;
   font-weight: 700 !important;
   font-size: 0.875rem !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.15em !important;
-  border-radius: 0px !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
+  border-radius: 12px !important;
   padding: 14px 24px !important;
-  border: 1px solid #2A2A2A !important;
+  border: none !important;
   outline: none !important;
-  box-shadow: none !important;
+  box-shadow: 0 4px 14px rgba(108, 92, 231, 0.4) !important;
   transition: all 0.15s ease !important;
   cursor: pointer !important;
   margin-top: 12px !important;
@@ -943,22 +1199,37 @@ button[class*="cl-formButtonPrimary"],
   appearance: none !important;
 }
 
+/* Hide Arrow SVG Icon in Submit Buttons */
+.cl-formButtonPrimary svg,
+button.cl-formButtonPrimary svg,
+.cl-formButtonPrimary [class*="cl-internal"] svg,
+[class*="cl-formButtonPrimary"] svg,
+.cl-formButtonPrimaryIcon,
+.cl-formButtonPrimaryIconBox,
+[class*="cl-formButtonPrimaryIcon"] {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .cl-formButtonPrimary:hover,
 button.cl-formButtonPrimary:hover,
 .cl-form button.cl-formButtonPrimary:hover,
 .cl-form button[type="submit"]:hover,
 .cl-rootBox button[type="submit"]:hover {
-  background: #0a0a0a !important;
-  background-color: #0a0a0a !important;
+  background: #5A4AD1 !important;
+  background-color: #5A4AD1 !important;
   background-image: none !important;
-  border-color: #444444 !important;
-  box-shadow: none !important;
-  transform: none !important;
+  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.5) !important;
+  transform: translateY(-1px) !important;
 }
 
 .cl-formButtonPrimary:active,
 button.cl-formButtonPrimary:active {
-  transform: none !important;
+  transform: scale(0.99) !important;
   box-shadow: none !important;
 }
 
@@ -967,9 +1238,8 @@ button.cl-formButtonPrimary:active {
 .cl-formButtonPrimary:focus-within,
 button.cl-formButtonPrimary:focus,
 button.cl-formButtonPrimary:focus-visible {
-  border: 1px solid #444444 !important;
+  border: none !important;
   outline: none !important;
-  box-shadow: none !important;
 }
 
 /* Clerk Show/Hide Password Toggle Button */
@@ -980,11 +1250,10 @@ button.cl-formFieldInputShowPasswordButton,
   background: transparent !important;
   background-color: transparent !important;
   border: none !important;
-  border-radius: 0 !important;
   box-shadow: none !important;
   outline: none !important;
-  color: #ffffff !important;
-  padding: 0 16px !important;
+  color: #9CA3AF !important;
+  padding: 0 14px !important;
   margin: 0 !important;
   cursor: pointer !important;
   display: flex !important;
@@ -1001,7 +1270,6 @@ button.cl-formFieldInputShowPasswordButton,
 .cl-formFieldInputShowPasswordButton:hover,
 button.cl-formFieldInputShowPasswordButton:hover,
 .cl-formField button[class*="cl-internal"]:hover {
-  opacity: 0.8 !important;
   color: #ffffff !important;
   background: transparent !important;
   background-color: transparent !important;
@@ -1009,14 +1277,13 @@ button.cl-formFieldInputShowPasswordButton:hover,
 
 .cl-formFieldInputShowPasswordButton svg,
 .cl-formField button[class*="cl-internal"] svg {
-  color: #ffffff !important;
+  color: #9CA3AF !important;
   fill: none !important;
-  stroke: #ffffff !important;
-  width: 20px !important;
-  height: 20px !important;
+  stroke: currentColor !important;
+  width: 18px !important;
+  height: 18px !important;
   display: block !important;
 }
-
 
 /* Hide Clerk Footer and Development Mode Banner */
 .cl-footer,
@@ -1034,13 +1301,13 @@ button.cl-formFieldInputShowPasswordButton:hover,
   justify-content: center !important;
   gap: 8px !important;
   width: 100% !important;
-  max-width: 320px !important;
+  max-width: 340px !important;
   margin: 20px auto !important;
 }
 
 /* Clerk Inline Forgot Password Link Overrides */
 .cl-formFieldAction {
-  color: #9CA3AF !important;
+  color: #826BF1 !important;
   font-size: 0.75rem !important;
   font-weight: 600 !important;
   text-decoration: none !important;
@@ -1048,11 +1315,9 @@ button.cl-formFieldInputShowPasswordButton:hover,
 }
 
 .cl-formFieldAction:hover {
-  color: #ffffff !important;
-  text-decoration: none !important;
+  color: #a291fd !important;
+  text-decoration: underline !important;
 }
-
-
 
 .cl-otpCodeFieldInput,
 .cl-otpCodeFieldInput__0,
@@ -1065,13 +1330,13 @@ button.cl-formFieldInputShowPasswordButton:hover,
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 42px !important;
-  height: 48px !important;
-  min-width: 42px !important;
-  flex: 0 0 42px !important;
-  background: #000000 !important;
-  border: 1px solid #2A2A2A !important;
-  border-radius: 0 !important;
+  width: 44px !important;
+  height: 52px !important;
+  min-width: 44px !important;
+  flex: 0 0 44px !important;
+  background: #1C1C26 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
   color: #ffffff !important;
   font-size: 1.25rem !important;
   font-weight: 800 !important;
@@ -1087,9 +1352,9 @@ button.cl-formFieldInputShowPasswordButton:hover,
 .cl-otpCodeFieldInput:focus,
 .cl-otpCodeFieldInput:focus-visible,
 .cl-otpInput:focus {
-  background: #000000 !important;
-  border-color: #444444 !important;
-  box-shadow: none !important;
+  background: #1C1C26 !important;
+  border-color: #6C5CE7 !important;
+  box-shadow: 0 0 0 1px #6C5CE7 !important;
   outline: none !important;
 }
 

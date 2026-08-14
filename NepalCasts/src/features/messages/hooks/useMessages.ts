@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { subscribeToConversations, subscribeToMessages, sendMessage, createConversation, markConversationAsRead } from '../services/messaging';
@@ -12,6 +12,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
     const [callHistory, setCallHistory] = useState<any[]>([]);
     const [loadingCalls, setLoadingCalls] = useState(true);
+    const resolvedInitialUserRef = useRef<string | null>(null);
     useEffect(() => {
         if (!currentUser?.uid) {
             setLoading(false);
@@ -54,9 +55,11 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     }, [activeChatId, currentUser?.uid]);
     useEffect(() => {
         if (!currentUser?.uid || !initialUserId) return;
+        if (resolvedInitialUserRef.current === initialUserId) return;
         const existingConvo = conversations.find((c) => c.id === initialUserId || c.otherParticipantId === initialUserId);
         if (existingConvo) {
             setActiveChatId(existingConvo.id);
+            resolvedInitialUserRef.current = initialUserId;
             return;
         }
         const resolveConvo = async () => {
@@ -67,10 +70,12 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
                 } else {
                     setActiveChatId(initialUserId);
                 }
+                resolvedInitialUserRef.current = initialUserId;
             }
             catch (err) {
                 console.warn("Failed to resolve initial chat:", err);
                 setActiveChatId(initialUserId);
+                resolvedInitialUserRef.current = initialUserId;
             }
         };
         resolveConvo();
