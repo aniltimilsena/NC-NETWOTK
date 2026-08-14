@@ -25,6 +25,11 @@ vi.mock('@clerk/clerk-react', () => ({
         isSignedIn: false,
         user: null,
     }),
+    useSignIn: () => ({
+        isLoaded: true,
+        signIn: { create: vi.fn() },
+        setActive: vi.fn(),
+    }),
 }));
 
 vi.mock('framer-motion', () => {
@@ -57,7 +62,7 @@ describe('Authentication - SignIn Page', () => {
 
         expect(screen.getByText('Remember me')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /forgot password\?/i })).toBeInTheDocument();
-        expect(screen.getByTestId('clerk-sign-in-mock')).toBeInTheDocument();
+        expect(screen.getByText('Continue with Google')).toBeInTheDocument();
     });
 
     it('navigates to forgot password page when clicking Forgot Password', () => {

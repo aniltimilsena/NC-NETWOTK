@@ -115,46 +115,13 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
 
                 for (const t of rawMapped) {
                     const uid = (t.uid || t.id || '') as string;
-                    const username = (t.username || '').toLowerCase().trim();
-                    const email = (t.email || '').toLowerCase().trim();
                     const name = (t.name || t.displayName || '').trim();
-
-                    const userKey = username ? `usr_${username}` : (email ? `em_${email}` : `uid_${uid}`);
-                    const nameKey = name && name !== 'Talent User' && name !== 'Discovery Talent' ? `nm_${name.toLowerCase().trim()}` : '';
-                    
-                    // If we haven't seen this user yet
-                    if (!seen.has(userKey) && !seen.has(`uid_${uid}`) && (!nameKey || !seen.has(nameKey))) {
-                        // Only include profiles that have a valid name or role (ignore incomplete stub records)
-                        if (name || t.role || t.category || t.bio) {
-                            seen.add(userKey);
-                            seen.add(`uid_${uid}`);
-                            if (nameKey) seen.add(nameKey);
-                            unique.push(t);
-                        }
-                    } else {
-                        // If we see a duplicate for an already added user, merge any photo onto the primary profile
-                        const existingIndex = unique.findIndex(item => {
-                            const itemUid = item.uid || item.id;
-                            const itemUser = ((item as any).username || '').toLowerCase().trim();
-                            const itemEmail = ((item as any).email || '').toLowerCase().trim();
-                            const itemName = ((item as any).name || (item as any).displayName || '').toLowerCase().trim();
-                            const currentName = name.toLowerCase().trim();
-                            return itemUid === uid || (username && itemUser === username) || (email && itemEmail === email) || (currentName && itemName === currentName);
-                        });
-                        if (existingIndex !== -1) {
-                            const existing = unique[existingIndex] as any;
-                            const stubImg = t.image || t.photoURL || t.profileImage;
-                            const existingImg = existing.image || existing.photoURL || existing.profileImage;
-                            if (stubImg && (!existingImg || existingImg.includes('default-avatar.png'))) {
-                                existing.image = stubImg;
-                                existing.photoURL = stubImg;
-                                existing.profileImage = stubImg;
-                            } else if (existingImg && (!stubImg || stubImg.includes('default-avatar.png'))) {
-                                t.image = existingImg;
-                                t.photoURL = existingImg;
-                                t.profileImage = existingImg;
-                            }
-                        }
+                    if (!uid || seen.has(uid)) {
+                        continue;
+                    }
+                    if (name || t.role || t.category || t.bio) {
+                        seen.add(uid);
+                        unique.push(t);
                     }
                 }
 

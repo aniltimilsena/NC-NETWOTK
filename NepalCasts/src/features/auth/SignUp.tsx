@@ -111,7 +111,10 @@ export default function SignUp({ }: SignUpProps) {
             setPendingVerification(true);
         } catch (err: any) {
             console.error('Sign Up Error:', err);
-            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Failed to create account. Please check your details.';
+            let msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Failed to create account. Please check your details.';
+            if (msg.toLowerCase().includes('captcha')) {
+                msg = 'CAPTCHA blocked by browser extension/ad-blocker. Disable ad-blocker or turn off Bot Protection in your Clerk Dashboard.';
+            }
             setError(msg);
         } finally {
             setLoading(false);
@@ -179,6 +182,9 @@ export default function SignUp({ }: SignUpProps) {
                         : 'Welcome! Please fill in the details to get started.'
                     }
                 </p>
+
+                {/* Clerk CAPTCHA Mount Element */}
+                <div id="clerk-captcha" className="w-full mb-3 flex justify-center" />
 
                 {/* Error Message */}
                 {error && (

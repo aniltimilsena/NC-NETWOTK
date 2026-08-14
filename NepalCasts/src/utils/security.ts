@@ -76,16 +76,19 @@ export async function fetchLocation(): Promise<string> {
     }
     return "Unknown Location";
 }
-export async function logLoginAttempt(email: string, status: 'success' | 'failed'): Promise<{ suspicious: boolean }> {
+export async function logLoginAttempt(email: string, status: 'success' | 'failed', userId?: string): Promise<{ suspicious: boolean }> {
     try {
-        const usersRef = collection(db, COLLECTIONS.USERS);
-        const q = query(usersRef, where('email', '==', email.trim().toLowerCase()));
-        const snap = await getDocs(q);
-        if (snap.empty) {
-            logger.warn(`Could not resolve user UID for email: ${email}`);
-            return { suspicious: false };
+        let uid = userId;
+        if (!uid) {
+            const usersRef = collection(db, COLLECTIONS.USERS);
+            const q = query(usersRef, where('email', '==', email.trim().toLowerCase()));
+            const snap = await getDocs(q);
+            if (snap.empty) {
+                logger.warn(`Could not resolve user UID for email: ${email}`);
+                return { suspicious: false };
+            }
+            uid = snap.docs[0].id;
         }
-        const uid = snap.docs[0].id;
         const { os, browser } = getSessionInfo();
         const location = await fetchLocation();
         let suspicious = false;

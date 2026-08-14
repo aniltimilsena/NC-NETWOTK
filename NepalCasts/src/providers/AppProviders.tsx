@@ -188,48 +188,6 @@ export default function AppProviders({ children }: {
                     const profileDoc = await getDoc(profileDocRef);
                     const profileData = profileDoc.exists() ? profileDoc.data() : null;
                     const updateData: any = {};
-
-                    try {
-                        const legacySnapshots = await Promise.all([
-                            email ? getDocs(query(collection(db, 'profiles'), where('email', '==', email))).catch(() => null) : null,
-                            clerkName ? getDocs(query(collection(db, 'profiles'), where('name', '==', clerkName))).catch(() => null) : null,
-                        ]);
-                        for (const snap of legacySnapshots) {
-                            if (!snap) continue;
-                            for (const docSnap of snap.docs) {
-                                if (docSnap.id === uid) continue;
-                                const legacyData = docSnap.data();
-                                Object.assign(updateData, {
-                                    name: profileData?.name || legacyData.name || clerkName,
-                                    role: profileData?.role || legacyData.role || 'Model',
-                                    category: profileData?.category || legacyData.category || legacyData.role || 'Model',
-                                    bio: profileData?.bio || legacyData.bio || '',
-                                    location: profileData?.location || legacyData.location || '',
-                                    gender: profileData?.gender || legacyData.gender || '',
-                                    skills: profileData?.skills || legacyData.skills || [],
-                                    experience: profileData?.experience || legacyData.experience || [],
-                                    education: profileData?.education || legacyData.education || [],
-                                    languages: profileData?.languages || legacyData.languages || [],
-                                    username: profileData?.username || legacyData.username || '',
-                                    verified: profileData?.verified ?? legacyData.verified ?? false,
-                                    premium: profileData?.premium ?? legacyData.premium ?? false,
-                                    isPremium: profileData?.isPremium ?? legacyData.isPremium ?? false,
-                                    featured: profileData?.featured ?? legacyData.featured ?? false,
-                                    rating: profileData?.rating || legacyData.rating || 0,
-                                    reviews: profileData?.reviews || legacyData.reviews || 0,
-                                    coverImage: profileData?.coverImage || legacyData.coverImage || '',
-                                    photoURL: profileData?.photoURL || profileData?.image || legacyData.photoURL || legacyData.image || '',
-                                    image: profileData?.image || profileData?.photoURL || legacyData.image || legacyData.photoURL || '',
-                                    onboarded: profileData?.onboarded !== undefined ? profileData.onboarded : (legacyData.onboarded !== undefined ? legacyData.onboarded : true)
-                                });
-                                try {
-                                    await deleteDoc(doc(db, 'profiles', docSnap.id)).catch(() => {});
-                                    await deleteDoc(doc(db, 'users', docSnap.id)).catch(() => {});
-                                } catch (_delErr) {}
-                            }
-                        }
-                    } catch (_mergeErr) {}
-
                     if (!profileDoc.exists()) {
                         if (!updateData.name) updateData.name = clerkName;
                         if (!updateData.image) updateData.image = photoURL;
@@ -354,7 +312,24 @@ export default function AppProviders({ children }: {
     };
 
     const handleLogout = useCallback(async () => {
-        await signOut();
+        AuthService.setSession({
+            id: null,
+            email: null,
+            fullName: null,
+            username: null,
+            imageUrl: null,
+            getToken: async () => null,
+        });
+        CurrentUser.setProfileInfo('user', false);
+        CurrentUser.setImageUrl(null);
+        CurrentUser.setName(null);
+        setUser(null);
+        setUserProfile(null);
+        setIsAdmin(false);
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem("nc_cached_talents_real");
+        }
+        await signOut().catch(console.warn);
         await firebaseSignOut(auth).catch(console.warn);
     }, [signOut]);
 

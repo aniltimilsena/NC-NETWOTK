@@ -80,7 +80,10 @@ export default function SignIn({ }: SignInProps) {
             }
         } catch (err: any) {
             console.error('Sign In Error:', err);
-            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Invalid email or password.';
+            let msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Invalid email or password.';
+            if (msg.toLowerCase().includes('captcha')) {
+                msg = 'CAPTCHA blocked by browser extension/ad-blocker. Disable ad-blocker or turn off Bot Protection in your Clerk Dashboard.';
+            }
             setError(msg);
         } finally {
             setLoading(false);
@@ -117,6 +120,9 @@ export default function SignIn({ }: SignInProps) {
                 <p className="text-sm text-gray-400 text-center font-normal mb-7">
                     Please enter your details to sign in.
                 </p>
+
+                {/* Clerk CAPTCHA Mount Element */}
+                <div id="clerk-captcha" className="w-full mb-3 flex justify-center" />
 
                 {/* Error Banner */}
                 {error && (
