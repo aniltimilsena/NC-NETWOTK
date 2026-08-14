@@ -15,7 +15,16 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
     const [callHistory, setCallHistory] = useState<any[]>([]);
     const [loadingCalls, setLoadingCalls] = useState(true);
-    const resolvedInitialUserRef = useRef<string | null>(null);
+    const userClosedChatRef = useRef(false);
+
+    const handleSetActiveChatId = useCallback((id: string | null) => {
+        if (id === null) {
+            userClosedChatRef.current = true;
+        } else {
+            userClosedChatRef.current = false;
+        }
+        setActiveChatId(id);
+    }, []);
 
     useEffect(() => {
         if (!currentUser?.uid) {
@@ -30,8 +39,11 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     }, [currentUser?.uid]);
 
     useEffect(() => {
+        if (userClosedChatRef.current) return;
         if (!activeChatId && !initialUserId && conversations.length > 0) {
-            setActiveChatId(conversations[0].id);
+            if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                setActiveChatId(conversations[0].id);
+            }
         }
     }, [conversations, activeChatId, initialUserId]);
 
@@ -89,7 +101,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
 
     useEffect(() => {
         if (!currentUser?.uid || !initialUserId) return;
-        if (resolvedInitialUserRef.current === initialUserId) return;
+        if (userClosedChatRef.current || resolvedInitialUserRef.current === initialUserId) return;
         const existingConvo = conversations.find((c) => c.id === initialUserId || c.otherParticipantId === initialUserId);
         if (existingConvo) {
             setActiveChatId(existingConvo.id);
@@ -171,7 +183,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         conversations,
         activeChatId,
         activeChat,
-        setActiveChatId,
+        setActiveChatId: handleSetActiveChatId,
         messages,
         loading,
         typingUsers,
