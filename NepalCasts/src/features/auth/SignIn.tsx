@@ -12,7 +12,7 @@ interface SignInProps {
     showAlert?: (message: string, type?: 'success' | 'error') => void;
 }
 
-export default function SignIn({ }: SignInProps) {
+export default function SignIn(_props: SignInProps) {
     const navigate = useNavigate();
     const { isLoaded, signIn, setActive } = useSignIn();
 

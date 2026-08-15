@@ -256,7 +256,9 @@ export const notifyProfileUpdated = (uid: string, imageUrl: string) => {
         if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('nc-profile-updated', { detail: { uid, image: imageUrl } }));
         }
-    } catch (_e) {}
+    } catch (_e) {
+        /* ignore event error */
+    }
     
     const saved = getSavedRealTalents();
     if (saved.length > 0) {

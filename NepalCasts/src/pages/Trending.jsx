@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Crown, Search, TrendingUp, ChevronLeft, SlidersHorizontal } from 'lucide-react';
+import { Crown, Search, ChevronLeft, SlidersHorizontal } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
-import { collection, onSnapshot, query, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, deleteDoc, setDoc, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';

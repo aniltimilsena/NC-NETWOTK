@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, laz
 import { useDialog } from './DialogProvider';
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc, query, collection, where, getDocs, deleteDoc } from 'firebase/firestore';
-import { signOut as firebaseSignOut, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
+import { signOut as firebaseSignOut, signInWithCustomToken } from 'firebase/auth';
 import { db, auth } from '../lib/firebase';
 import { AuthService } from '../services/AuthService';
 import { CurrentUser } from '../utils/CurrentUser';
@@ -169,7 +169,9 @@ export default function AppProviders({ children }: {
                             if (token) {
                                 await signInWithCustomToken(auth, token).catch(() => {});
                             }
-                        } catch (_aErr) {}
+                        } catch (_aErr) {
+                            /* ignore custom token error */
+                        }
                     }
                     const userDocRef = doc(db, 'users', uid);
                     const userDoc = await getDoc(userDocRef);
@@ -226,7 +228,9 @@ export default function AppProviders({ children }: {
                                 await deleteDoc(doc(db, 'follows', dSnap.id)).catch(() => {});
                             }
                         }
-                    } catch (_mockErr) {}
+                    } catch (_mockErr) {
+                        /* ignore cleanup error */
+                    }
                 } catch (err) { console.warn("Error syncing Clerk profile to Firestore:", err); }
             })();
         } else if (isLoaded && !isSignedIn) {

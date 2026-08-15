@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MoreVertical, Share2, ChevronLeft, SlidersHorizontal } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { db } from '../lib/firebase';
-import { collection, onSnapshot, query, doc, deleteDoc, setDoc, updateDoc, increment, addDoc, serverTimestamp, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, deleteDoc, setDoc, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import Tag from '../components/ui/Tag';
@@ -14,7 +14,10 @@ import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { CATEGORIES, getCategoryConfig, matchesCategory } from '../constants/categories';
 import { cacheManager } from '../utils/cacheManager';
 import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
-export default function TalentListing({ onNavigate, user, initialCategory = 'All' }) {
+/**
+ * @param {{ onNavigate?: any, user?: any, initialCategory?: string, initialMode?: string }} props
+ */
+export default function TalentListing({ onNavigate, user, initialCategory = 'All', initialMode = '' }) {
     const navigate = useNavigate();
     const { user: clerkUser } = useUser();
     const activeUser = user || (clerkUser ? {
@@ -28,6 +31,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
     const [followingIds, setFollowingIds] = useState([]);
     const [hoveredTalent, setHoveredTalent] = useState(null);
     const [viewMode, setViewMode] = useState(() => {
+        if (initialMode) return initialMode;
         if (initialCategory && initialCategory !== 'All' && CATEGORIES.includes(initialCategory)) {
             return 'talents';
         }
@@ -68,9 +72,13 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         }
         else {
             setSelectedFilters(prev => ({ ...prev, category: 'All' }));
-            setViewMode('categories');
+            if (initialMode) {
+                setViewMode(initialMode);
+            } else {
+                setViewMode('categories');
+            }
         }
-    }, [initialCategory]);
+    }, [initialCategory, initialMode]);
     useEffect(() => {
         return subscribeToTalents((data) => {
             setTalents(data);

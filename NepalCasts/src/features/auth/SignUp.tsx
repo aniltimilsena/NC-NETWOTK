@@ -24,7 +24,7 @@ const ROLES = [
     { value: 'VFX', label: 'VFX / Crew' },
 ];
 
-export default function SignUp({ }: SignUpProps) {
+export default function SignUp(_props: SignUpProps) {
     const navigate = useNavigate();
     const { isLoaded, signUp, setActive } = useSignUp();
 

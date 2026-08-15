@@ -126,7 +126,9 @@ export function useProfile(profileId: string | null, currentUser: any) {
                             }
                         }
                     }
-                } catch (_cacheErr) {}
+                } catch (_cacheErr) {
+                    /* ignore cache error */
+                }
 
                 if (isMounted) {
                     setResolvedUid(profileId);
@@ -188,7 +190,9 @@ export function useProfile(profileId: string | null, currentUser: any) {
                             });
                         }
                     }
-                } catch (_e) {}
+                } catch (_e) {
+                    /* ignore storage error */
+                }
             }
 
             const userPhoto = currentUser?.photoURL || currentUser?.imageUrl || CurrentUser.imageUrl;

@@ -6,7 +6,6 @@ import { getCastingCallById } from './services/casting';
 import { db } from '../../lib/firebase';
 import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
-import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
 import { SavedCallSkeleton } from '../../components/ui/Skeleton';
 

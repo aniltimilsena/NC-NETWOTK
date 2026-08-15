@@ -311,7 +311,7 @@ export default function Home({ onNavigate, user }) {
               <img
                 src="/hero-bg.png"
                 alt="Hero Background"
-                fetchpriority="high"
+                fetchPriority="high"
                 decoding="async"
                 className="w-full h-full object-cover"
               />

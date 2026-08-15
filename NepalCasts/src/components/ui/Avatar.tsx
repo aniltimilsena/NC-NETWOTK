@@ -8,6 +8,9 @@ import { notifyProfileUpdated } from '../../features/profile/services/users';
 import { CurrentUser } from '../../utils/CurrentUser';
 import { cacheManager } from '../../utils/cacheManager';
 
+import { motion, AnimatePresence } from 'framer-motion';
+import { Camera, Upload, Trash2, X } from 'lucide-react';
+
 import ConfirmDialog from './ConfirmDialog';
 import CropModal from './CropModal';
 interface AvatarProps {
@@ -341,29 +344,75 @@ export default function Avatar(props: AvatarProps) {
       {editable && (<input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.gif,.bmp" className="hidden"/>)}
 
       
-      {showOptionsModal && (<div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-          <div className="bg-[#111] border border-white/10 rounded-3xl p-6 w-full max-w-xs space-y-4 shadow-2xl text-center">
-            <h3 className="text-white font-black text-base uppercase tracking-wider">Profile Photo</h3>
-            <p className="text-gray-400 text-xs">Would you like to upload a new profile picture or remove the current one?</p>
-            <div className="flex flex-col gap-2.5 pt-2">
-              <button type="button" onClick={() => {
-                setShowOptionsModal(false);
-                fileInputRef.current?.click();
-            }} className="w-full py-3 bg-[#00BFFF] hover:opacity-95 text-[#0A0A0A] font-bold rounded-xl text-sm transition-all active:scale-[0.98] cursor-pointer">
-                Upload New Photo
-              </button>
-              <button type="button" onClick={() => {
-                setShowOptionsModal(false);
-                setConfirmDeleteOpen(true);
-            }} className="w-full py-3 bg-red-600/20 hover:bg-red-600/30 text-red-400 font-bold border border-red-500/10 rounded-xl text-sm transition-all active:scale-[0.98] cursor-pointer">
-                Remove Current Photo
-              </button>
-              <button type="button" onClick={() => setShowOptionsModal(false)} className="w-full py-3 bg-white/5 hover:bg-white/10 text-gray-400 font-bold rounded-xl text-sm transition-all active:scale-[0.98] cursor-pointer">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>)}
+      <AnimatePresence>
+        {showOptionsModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/75 backdrop-blur-md z-[9999] flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 8 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 8 }}
+              transition={{ type: "spring", duration: 0.3, bounce: 0.1 }}
+              className="relative bg-[#0D0D12]/95 border border-white/10 rounded-2xl p-5 w-full max-w-[270px] shadow-[0_0_40px_rgba(0,0,0,0.9)] text-center overflow-hidden"
+            >
+              {/* Subtle top accent gradient */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#00BFFF] to-transparent opacity-60" />
+
+              {/* Header Icon & Text */}
+              <div className="flex flex-col items-center gap-2 mb-4 pt-0.5">
+                <div className="w-11 h-11 rounded-xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center text-[#00BFFF] shadow-[0_0_15px_rgba(0,191,255,0.15)]">
+                  <Camera className="w-5.5 h-5.5" strokeWidth={1.75} />
+                </div>
+                <div>
+                  <h3 className="text-white font-extrabold text-base tracking-tight">Profile Photo</h3>
+                  <p className="text-gray-400 text-[11px] mt-0.5 max-w-[210px] mx-auto leading-normal">
+                    Upload a new profile picture or remove the current one.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowOptionsModal(false);
+                    fileInputRef.current?.click();
+                  }}
+                  className="w-full py-2.5 px-3 bg-gradient-to-r from-[#00BFFF] to-[#0090FF] hover:from-[#38BDF8] hover:to-[#0080FF] text-[#0A0A0F] font-extrabold rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 shadow-[0_3px_15px_rgba(0,191,255,0.25)] hover:shadow-[0_4px_20px_rgba(0,191,255,0.35)]"
+                >
+                  <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Upload New Photo</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowOptionsModal(false);
+                    setConfirmDeleteOpen(true);
+                  }}
+                  className="w-full py-2 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 font-bold border border-red-500/20 rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-3.5 h-3.5 stroke-[2]" />
+                  <span>Remove Current Photo</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowOptionsModal(false)}
+                  className="w-full py-1 text-gray-400 hover:text-white font-semibold rounded-xl text-[11px] transition-colors cursor-pointer mt-0.5"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       
       <ConfirmDialog isOpen={confirmDeleteOpen} title="Remove profile photo?" description="Are you sure you want to remove your profile picture? This action will set your avatar back to the default silhouette." confirmText="Remove" cancelText="Cancel" type="danger" onClose={() => setConfirmDeleteOpen(false)} onConfirm={handleConfirmDelete}/>

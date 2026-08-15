@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, X, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, TrendingUp, Lock, FileText } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, Lock, FileText } from 'lucide-react';
 import { ActionSearchBar } from '@/components/ui/ActionSearchBar';
 import { subscribeToTalents, subscribeToCastingCalls } from '../../services';
 import Avatar from '../ui/Avatar';

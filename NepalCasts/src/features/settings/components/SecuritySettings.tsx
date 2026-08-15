@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Lock, Trash2, Smartphone, Monitor, CheckCircle2 } from 'lucide-react';
+import { Shield, Lock, Trash2, Smartphone, Monitor } from 'lucide-react';
 import { Button, Avatar } from '../../../components/ui';
 import { auth } from '../../../lib/firebase';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';

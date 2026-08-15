@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../../lib/firebase';
-import { collection, query, where, limit, doc, updateDoc, deleteDoc, onSnapshot, setDoc, increment, serverTimestamp, orderBy } from 'firebase/firestore';
+import { collection, query, where, limit, doc, updateDoc, deleteDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import Avatar from '../../components/ui/Avatar';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { cacheManager } from '../../utils/cacheManager';
