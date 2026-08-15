@@ -148,14 +148,14 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
             <div className="flex items-center gap-3">
               <button
                 onClick={handleBack}
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all cursor-pointer"
+                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
                 title="Go Back"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
               </button>
               <div>
                 <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                  <FileText className="w-6 h-6 text-[#00BFFF]" />
+                  <FileText className="w-6 h-6 text-white" />
                   <span>My Audition Applications</span>
                 </h1>
                 <p className="text-xs text-gray-400 font-medium">Track your status across submitted casting calls</p>
@@ -219,7 +219,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
               {filteredApps.map((app) => {
                 const call = app.castingCall;
                 const title = call?.title || 'Casting Notice';
-                const thumbnail = call?.thumbnail || '/movie-banner.png';
+                const thumbnail = (call?.thumbnail && call.thumbnail !== 'has-file') ? call.thumbnail : '/movie-banner.png';
                 const roleName = app.roleName || app.role || 'Performer Role';
 
                 return (
@@ -232,6 +232,10 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                         src={thumbnail}
                         alt={title}
                         className="w-16 h-16 rounded-xl object-cover border border-white/10 shrink-0"
+                        onError={(e: any) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '/movie-banner.png';
+                        }}
                       />
                       <div className="space-y-1 min-w-0">
                         <h3

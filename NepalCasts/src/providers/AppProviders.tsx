@@ -6,6 +6,7 @@ import { signOut as firebaseSignOut, signInAnonymously, signInWithCustomToken } 
 import { db, auth } from '../lib/firebase';
 import { AuthService } from '../services/AuthService';
 import { CurrentUser } from '../utils/CurrentUser';
+import { notifyProfileUpdated } from '../features/profile/services/users';
 import { PermissionProvider } from '../context/PermissionContext';
 import { CallProvider } from '../context/CallContext';
 import { initOneSignal, oneSignalInitialized } from '../utils/oneSignal';
@@ -61,7 +62,7 @@ export default function AppProviders({ children }: {
                     email: clerkUser.primaryEmailAddress?.emailAddress || null,
                     fullName: clerkUser.fullName || null,
                     username: clerkUser.username || null,
-                    imageUrl: clerkUser.imageUrl || null,
+                    imageUrl: clerkUser.hasImage ? (clerkUser.imageUrl || null) : null,
                     getToken: () => getToken(),
                 });
             } else {
@@ -149,8 +150,8 @@ export default function AppProviders({ children }: {
             const uid = clerkUser.id;
             const email = clerkUser.primaryEmailAddress?.emailAddress || '';
             const clerkName = clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || (email ? email.split('@')[0] : 'Talent User');
-            const rawClerkPhoto = clerkUser.imageUrl || '';
-            const photoURL = rawClerkPhoto.includes('img.clerk.com') ? '' : rawClerkPhoto;
+            const rawClerkPhoto = clerkUser.hasImage ? (clerkUser.imageUrl || '') : '';
+            const photoURL = (rawClerkPhoto.includes('img.clerk.com') || rawClerkPhoto.includes('clerk.dev')) ? '' : rawClerkPhoto;
 
             const isSuperAdminEmail = Boolean(email && email.toLowerCase() === 'aniltimilsena53@gmail.com');
             setIsAdmin(isSuperAdminEmail);
@@ -197,8 +198,11 @@ export default function AppProviders({ children }: {
                     } else {
                         if (!profileData?.name && clerkName) updateData.name = clerkName;
                         const currentImg = profileData?.image || profileData?.photoURL;
-                        const isDefault = !currentImg || currentImg.includes('img.clerk.com');
-                        if (photoURL && isDefault && !updateData.image) {
+                        const isDefault = !currentImg || currentImg.includes('img.clerk.com') || currentImg.includes('clerk.dev');
+                        if (isDefault && currentImg && (currentImg.includes('img.clerk.com') || currentImg.includes('clerk.dev')) && !clerkUser.hasImage) {
+                            updateData.image = '';
+                            updateData.photoURL = '';
+                        } else if (photoURL && isDefault && !updateData.image) {
                             updateData.image = photoURL;
                             updateData.photoURL = photoURL;
                         }
@@ -282,12 +286,21 @@ export default function AppProviders({ children }: {
         if (!user?.uid)
             return;
         const uid = user.uid;
-        await updateDoc(doc(db, 'profiles', uid), {
-            image: null,
-            photoURL: null,
+        await setDoc(doc(db, 'profiles', uid), {
+            image: "",
+            photoURL: "",
+            profileImage: "",
             updatedAt: serverTimestamp()
-        });
-        setUser((prev: any) => prev ? { ...prev, photoURL: '' } : null);
+        }, { merge: true });
+        await setDoc(doc(db, 'users', uid), {
+            image: "",
+            photoURL: "",
+            profileImage: "",
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        CurrentUser.setImageUrl(null);
+        notifyProfileUpdated(uid, "");
+        setUser((prev: any) => prev ? { ...prev, photoURL: '', image: '', profileImage: '' } : null);
     }, [user?.uid]);
 
     const handleCancelDeletion = async () => {

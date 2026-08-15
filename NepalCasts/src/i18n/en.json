@@ -48,7 +48,7 @@
   "trending_now": "Trending Now",
   "followers": "followers",
   "follower": "follower",
-  "view_details": "View details >",
+  "view_details": "View Details",
 
   "categories": {
     "actor": "Actor",
@@ -123,7 +123,8 @@
     "applyNow": "Apply Now",
     "applied": "Applied (Pending)",
     "closed": "Audition Closed",
-    "deleteCall": "Delete Call"
+    "deleteCall": "Delete Call",
+    "searchPlaceholder": "Search casting calls..."
   },
 
   "messages": {

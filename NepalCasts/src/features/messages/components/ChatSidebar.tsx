@@ -90,13 +90,13 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {onNavigate && (<button onClick={() => onNavigate('home')} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer" title="Back to Home" aria-label="Back to Home">
-                <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5}/>
+            {onNavigate && (<button onClick={() => onNavigate('home')} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer" title="Back to Home" aria-label="Back to Home">
+                <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5}/>
               </button>)}
             <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Messages</h2>
           </div>
-          <button onClick={onStartNewChat} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-[#00BFFF] flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer" title="New Message">
-            <MessageSquare className="w-5 h-5 text-[#00BFFF]" strokeWidth={2}/>
+          <button onClick={onStartNewChat} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-white hover:text-gray-300 transition-colors shrink-0 cursor-pointer" title="New Message">
+            <MessageSquare className="w-5 h-5 text-white" strokeWidth={2}/>
           </button>
         </div>
 
@@ -107,11 +107,25 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
         </div>
 
         
-        <div className="flex bg-white/5 rounded-2xl p-1 gap-1">
-          <button onClick={() => setActiveTab('chats')} className={`flex-1 py-1.5 rounded-xl text-[10px] no-scale no-min-h font-black uppercase tracking-wider transition-colors ${activeTab === 'chats' ? 'bg-[#00BFFF] text-black' : 'text-nc-muted hover:text-white'}`}>
+        <div className="flex bg-white/[0.04] border border-white/10 rounded-lg p-0.5 gap-1">
+          <button
+            onClick={() => setActiveTab('chats')}
+            className={`flex-1 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'chats'
+                ? 'bg-white/10 text-white border border-white/15 shadow-sm'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
             Chats
           </button>
-          <button onClick={() => setActiveTab('calls')} className={`flex-1 py-1.5 rounded-xl text-[10px] no-scale no-min-h font-black uppercase tracking-wider transition-colors ${activeTab === 'calls' ? 'bg-[#00BFFF] text-black' : 'text-nc-muted hover:text-white'}`}>
+          <button
+            onClick={() => setActiveTab('calls')}
+            className={`flex-1 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'calls'
+                ? 'bg-white/10 text-white border border-white/15 shadow-sm'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
             Calls
           </button>
         </div>

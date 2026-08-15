@@ -5,6 +5,7 @@ import { uploadProfileMedia } from '../../services';
 import { useUser } from '@clerk/clerk-react';
 import { subscribeToProfile } from '../../features/profile/services/profile';
 import { notifyProfileUpdated } from '../../features/profile/services/users';
+import { CurrentUser } from '../../utils/CurrentUser';
 import { cacheManager } from '../../utils/cacheManager';
 
 import ConfirmDialog from './ConfirmDialog';
@@ -69,13 +70,28 @@ export default function Avatar(props: AvatarProps) {
     const isDefaultImage = (url?: string | null) => {
         if (!url || typeof url !== 'string' || url.trim() === '')
             return true;
-        return url.includes('default-avatar.png') ||
+        if (
+            url.includes('default-avatar.png') ||
             url.includes('default-male.png') ||
             url.includes('default-female.png') ||
-            url.startsWith('data:image/svg+xml');
+            url.includes('achyut.png') ||
+            url.startsWith('data:image/svg+xml')
+        ) {
+            return true;
+        }
+        if (url.includes('img.clerk.com') || url.includes('clerk.dev')) {
+            const isTargetClerkSelf = Boolean(clerkUser && (clerkUser.id === targetId || clerkUser.id === user?.uid));
+            if (isTargetClerkSelf && clerkUser?.hasImage) {
+                return false;
+            }
+            return true;
+        }
+        return false;
     };
 
-    const fallbackSrc = propSrc || user?.image || user?.photoURL || user?.profileImage || user?.avatar || user?.picture || user?.photo || (clerkUser && (clerkUser.id === targetId || clerkUser.id === user?.uid) ? clerkUser.imageUrl : null) || null;
+    const clerkCustomPhoto = (clerkUser && (clerkUser.id === targetId || clerkUser.id === user?.uid) && clerkUser.hasImage) ? clerkUser.imageUrl : null;
+    const rawFallback = propSrc || user?.image || user?.photoURL || user?.profileImage || user?.avatar || user?.picture || user?.photo || clerkCustomPhoto || null;
+    const fallbackSrc = isDefaultImage(rawFallback) ? null : rawFallback;
 
     const resolvedSrc = (liveSrc && !isDefaultImage(liveSrc))
         ? liveSrc
@@ -205,30 +221,35 @@ export default function Avatar(props: AvatarProps) {
     const handleConfirmDelete = async () => {
         setConfirmDeleteOpen(false);
         setUploading(true);
+        setPreviewSrc(null);
+        setLiveSrc("");
+        CurrentUser.setImageUrl(null);
         const activeUserId = userId || user?.uid || user?.id;
         try {
             if (props.onUploadSuccess) {
                 await props.onUploadSuccess("");
             }
-            else if (activeUserId) {
+            if (activeUserId) {
                 try {
                     await setDoc(doc(db, 'profiles', activeUserId), {
-                        image: null,
-                        photoURL: null,
+                        image: "",
+                        photoURL: "",
+                        profileImage: "",
                         updatedAt: serverTimestamp()
                     }, { merge: true });
                     await setDoc(doc(db, 'users', activeUserId), {
-                        image: null,
-                        photoURL: null,
+                        image: "",
+                        photoURL: "",
+                        profileImage: "",
                         updatedAt: serverTimestamp()
                     }, { merge: true });
                 }
                 catch (e) {
                     console.warn("Avatar delete doc update warning:", e);
                 }
-            }
-            if (activeUserId) {
+                notifyProfileUpdated(activeUserId, "");
                 cacheManager.invalidateCache(`profile_${activeUserId}`);
+                cacheManager.invalidateCache(`profile_sub_${activeUserId}`);
             }
             // Sync removal to Clerk
             if (clerkUser) {
@@ -238,7 +259,6 @@ export default function Avatar(props: AvatarProps) {
                     console.warn('Could not remove avatar from Clerk:', clerkErr);
                 }
             }
-            setPreviewSrc(null);
             triggerToast("Profile picture removed", "info");
         }
         catch (err) {
@@ -260,7 +280,7 @@ export default function Avatar(props: AvatarProps) {
         }
     };
     return (<>
-      <div onClick={handleAvatarClick} style={sizeStyle} className={`relative flex-shrink-0 rounded-full border-2 border-nc-accent/20 transition-all duration-300 select-none bg-gradient-to-b from-[#1E1E26] to-[#111116] ${sizeClass} ${className} ${editable ? 'cursor-pointer hover:border-nc-accent group/avatar' : ''}`}>
+      <div onClick={handleAvatarClick} style={sizeStyle} className={`relative flex-shrink-0 rounded-full border-2 border-white/10 transition-all duration-300 select-none bg-gradient-to-b from-[#1E1E26] to-[#111116] ${sizeClass} ${className} ${editable ? 'cursor-pointer hover:border-white/30 group/avatar' : ''}`}>
         <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative">
           {currentSrc ? (
             <>

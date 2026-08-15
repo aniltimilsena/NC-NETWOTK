@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { CATEGORIES, getCategoryConfig } from '../constants/categories';
+import { CATEGORIES, getCategoryConfig, matchesCategory } from '../constants/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 import CategorySkeleton from '../components/ui/CategorySkeleton';
 import Avatar from '../components/ui/Avatar';
@@ -97,7 +97,7 @@ export default function Home({ onNavigate, user }) {
       icon: cfg.icon,
       color: cfg.color,
       bgColor: cfg.bgColor,
-      count: talents.filter(t => (t.role?.toLowerCase() === catId.toLowerCase() || t.category?.toLowerCase() === catId.toLowerCase()) && !t.deactivated).length
+      count: talents.filter(t => matchesCategory(t, catId)).length
     };
   });
 
@@ -425,7 +425,7 @@ export default function Home({ onNavigate, user }) {
                     user={talent}
                     size="none"
                     name={talent.name}
-                    className="w-[125px] h-[125px] sm:w-[155px] sm:h-[155px] rounded-full object-cover border-2 border-white/10 shadow-xl group-hover:border-[#00BFFF] transition-all"
+                    className="w-[125px] h-[125px] sm:w-[155px] sm:h-[155px] rounded-full object-cover border-2 border-white/10 shadow-xl group-hover:border-white/20 transition-all"
                   />
                   <p className="text-white font-bold text-sm sm:text-base text-center mt-2.5 truncate w-full">
                     {formatTalentName(talent.name)}
@@ -466,10 +466,10 @@ export default function Home({ onNavigate, user }) {
                   <button
                     key={cat.id}
                     onClick={() => onNavigate('listing', cat.name)}
-                    className="p-7 sm:p-9 lg:p-11 rounded-3xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 transition-all duration-300 flex flex-col items-center gap-4 sm:gap-5 group cursor-pointer shadow-xl hover:border-[#00BFFF]/30"
+                    className="p-7 sm:p-9 lg:p-11 rounded-3xl bg-white/[0.03] border border-white/5 flex flex-col items-center gap-4 sm:gap-5 cursor-pointer shadow-xl"
                   >
                     <div
-                      className="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                      className="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-full flex items-center justify-center"
                       style={{
                         backgroundColor: `${cat.color}20`,
                         color: cat.color,
@@ -478,7 +478,7 @@ export default function Home({ onNavigate, user }) {
                     >
                       {CatIcon && <CatIcon className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14" strokeWidth={1.5} />}
                     </div>
-                    <span className="text-lg sm:text-xl lg:text-2xl font-black text-white group-hover:text-[#00BFFF] transition-colors">
+                    <span className="text-lg sm:text-xl lg:text-2xl font-black text-white">
                       {t(`categories.${cat.id}`, { defaultValue: cat.name })}
                     </span>
                     <span className="text-sm sm:text-base text-gray-400 font-semibold">
@@ -509,7 +509,7 @@ export default function Home({ onNavigate, user }) {
               </div>
               <button
                 onClick={() => onNavigate('casting')}
-                className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                className="text-[#00BFFF] text-sm sm:text-base font-semibold flex items-center gap-1 cursor-pointer"
               >
                 {t('btn_view_all')} &gt;
               </button>
@@ -523,15 +523,31 @@ export default function Home({ onNavigate, user }) {
                 <div
                   key={item.id || i}
                   onClick={() => onNavigate('casting-detail', item.id)}
-                  className="flex-shrink-0 w-[240px] sm:w-[280px] bg-white/[0.03] hover:bg-white/[0.07] rounded-2xl flex items-center p-3 gap-3.5 border border-white/5 hover:border-[#00BFFF]/30 transition-all duration-300 cursor-pointer group shadow-lg"
+                  className="relative flex-shrink-0 w-[220px] sm:w-[260px] h-[150px] sm:h-[170px] rounded-2xl overflow-hidden border border-white/10 cursor-pointer shadow-xl flex flex-col justify-end p-4 bg-[#111]"
                 >
-                  <div className="w-16 h-20 sm:w-18 sm:h-24 bg-white/5 overflow-hidden rounded-xl shrink-0 shadow-md border border-white/10 group-hover:border-[#00BFFF]/40 transition-colors">
-                    <img src={item.thumbnail || '/movie-banner.png'} alt={item.title} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0 pr-1">
-                    <h4 className="text-white font-bold leading-snug truncate text-xs sm:text-sm group-hover:text-[#00BFFF] transition-colors">{item.title}</h4>
-                    <p className="text-gray-400 text-[11px] mt-0.5 mb-1.5 line-clamp-2 leading-relaxed">{item.type || 'Casting Call'}</p>
-                    <span className="text-[#00BFFF] text-[11px] font-bold uppercase tracking-wider hover:underline">{t('view_details')}</span>
+                  <img
+                    src={(item.thumbnail && item.thumbnail !== 'has-file') ? item.thumbnail : '/movie-banner.png'}
+                    alt={item.title || 'Casting Call'}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = '/movie-banner.png';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/75 to-transparent" />
+
+                  <div className="relative z-10 space-y-1 text-left">
+                    <span className="inline-block px-2 py-0.5 rounded-md bg-[#00BFFF]/20 text-[#00BFFF] border border-[#00BFFF]/30 text-[9px] font-extrabold uppercase tracking-wider mb-0.5">
+                      {item.type || 'Casting Call'}
+                    </span>
+                    <h4 className="text-white font-extrabold text-sm sm:text-base leading-tight truncate drop-shadow-md">
+                      {item.title}
+                    </h4>
+                    <div className="flex items-center justify-between pt-0.5">
+                      <span className="text-[#00BFFF] text-[10px] font-bold tracking-wide flex items-center gap-1">
+                        {t('view_details')} &gt;
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -557,7 +573,7 @@ export default function Home({ onNavigate, user }) {
               </button>
             )}
           </div>
-          <div className="flex flex-col gap-3.5">
+          <div className="flex flex-col gap-1">
             {(!talentsReceived) ? (
               <TrendingListSkeleton count={3} />
             ) : activeTalentsList.length > 0 ? (
@@ -576,7 +592,7 @@ export default function Home({ onNavigate, user }) {
                   <div
                     key={talent.id}
                     onClick={() => onNavigate('profile', talent.id)}
-                    className="group flex items-center justify-between py-4 px-2 hover:bg-white/[0.03] transition-all duration-300 cursor-pointer gap-4 rounded-xl"
+                    className="group flex items-center justify-between py-1.5 px-2 hover:bg-white/[0.03] transition-all duration-300 cursor-pointer gap-4 rounded-xl"
                   >
                     <div className="flex items-center gap-4 min-w-0 flex-1">
                       {/* Rank Number */}
@@ -587,7 +603,7 @@ export default function Home({ onNavigate, user }) {
                         user={talent}
                         size="none"
                         name={talent.name}
-                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-white/10 group-hover:border-[#00BFFF]/40 transition-colors shadow-md"
+                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-white/10 group-hover:border-white/20 transition-colors shadow-md"
                       />
 
                       {/* Basic Info */}

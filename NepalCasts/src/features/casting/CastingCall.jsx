@@ -61,7 +61,7 @@ const getRolesSummary = (call) => {
 };
 
 const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave }) => {
-  const bannerImage = call.thumbnail || '/movie-banner.png';
+  const bannerImage = (call.thumbnail && call.thumbnail !== 'has-file') ? call.thumbnail : '/movie-banner.png';
   const deadlineInfo = getDeadlineStatus(call.deadline);
   const urgentText = getUrgentStatus(call.deadline);
   const roleNeeded = getRolesSummary(call);
@@ -69,81 +69,77 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
   return (
     <div
       onClick={() => onNavigate('casting-detail', call.id)}
-      className="group flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 sm:py-8 border-b border-white/10 hover:border-sky-400/50 transition-all duration-300 cursor-pointer gap-4 sm:gap-6"
+      className="flex items-start justify-between py-3 sm:py-3.5 border-b border-white/10 transition-all cursor-pointer gap-3 sm:gap-6"
     >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 flex-1 w-full min-w-0">
-        {/* Widescreen image thumbnail */}
-        <div className="w-full sm:w-48 h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/5">
+      {/* Left: Poster + Details */}
+      <div className="flex items-start gap-3 sm:gap-5 flex-1 min-w-0">
+        {/* Poster Thumbnail */}
+        <div className="w-36 sm:w-52 h-24 sm:h-32 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/10">
           <img
             src={bannerImage}
             alt={call.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover"
             onError={(e) => {
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=640&auto=format&fit=crop';
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/movie-banner.png';
             }}
           />
           {isApplied && (
-            <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-sky-400 text-black text-[9px] font-black uppercase tracking-wider">
+            <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-[#00BFFF] text-black text-[8px] sm:text-[9px] font-black uppercase tracking-wider">
               Applied
             </div>
           )}
           {urgentText && (
-            <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-red-600/90 border border-red-400 text-white text-[9px] font-black uppercase tracking-wider animate-pulse flex items-center gap-1 shadow-lg backdrop-blur-md">
-              <Flame className="w-3 h-3 text-amber-300 fill-amber-300" />
-              <span>URGENT • {urgentText}</span>
+            <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-red-600/90 border border-red-400 text-white text-[8px] font-black uppercase tracking-wider flex items-center gap-1 shadow-lg backdrop-blur-md">
+              <Flame className="w-2.5 h-2.5 text-amber-300 fill-amber-300" />
+              <span>URGENT</span>
             </div>
           )}
         </div>
 
         {/* Text content details */}
-        <div className="space-y-2 flex-1 min-w-0">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-black uppercase tracking-wider text-sky-400">
+        <div className="space-y-1 sm:space-y-1.5 flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">
               {call.category || call.type || 'Nepali Project'}
             </span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black text-white group-hover:text-sky-400 transition-colors leading-tight truncate">
+          <h2 className="text-base sm:text-2xl font-bold text-white leading-tight truncate">
             {call.title}
           </h2>
 
-          <p className="text-sm text-gray-400 font-medium line-clamp-1 leading-relaxed">
+          <p className="text-xs text-gray-400 font-medium line-clamp-1 leading-relaxed">
             {roleNeeded}
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 pt-1">
-            <span className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-gray-600 shrink-0" />
-              {call.location || 'Nepal'}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs text-gray-400 pt-0.5">
+            <span className="flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-[#00BFFF] shrink-0" />
+              <span className="truncate max-w-[100px] sm:max-w-none">{call.location || 'Nepal'}</span>
             </span>
             {call.budget && (
-              <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                <span className="text-gray-600 text-[10px] font-black">Rs.</span>
-                {call.budget}
+              <span className="flex items-center gap-1 text-[#00BFFF] font-bold">
+                Salary: {call.budget}
               </span>
             )}
           </div>
         </div>
       </div>
 
-      {/* Right: Deadline & Action */}
-      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
-        <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${deadlineInfo.color}`}>
-          <Clock className="w-3 h-3 shrink-0" />
+      {/* Right Action & Deadline Column */}
+      <div className="flex flex-col items-end justify-between self-stretch shrink-0 gap-2">
+        <button
+          onClick={(e) => toggleSave(e, call.id)}
+          className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-gray-400 hover:text-white"
+        >
+          <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-[#00BFFF]' : ''} />
+        </button>
+
+        <span className={`flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border text-[9px] sm:text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${deadlineInfo.color}`}>
+          <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
           {deadlineInfo.label}
         </span>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={(e) => toggleSave(e, call.id)}
-            className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-gray-400 hover:text-white"
-          >
-            <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-sky-400' : ''} />
-          </button>
-          <span className="text-xs font-bold text-sky-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 whitespace-nowrap">
-            View Role &gt;
-          </span>
-        </div>
       </div>
     </div>
   );
@@ -177,7 +173,29 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
   const [visibleLimit, setVisibleLimit] = useState(20);
   const [hasMore, setHasMore] = useState(true);
 
-  const LOCATIONS = ['All', 'Kathmandu', 'Pokhara', 'Lalitpur', 'Chitwan', 'Bhaktapur', 'International'];
+  const LOCATIONS = [
+    'All',
+    'Kathmandu',
+    'Pokhara',
+    'Lalitpur',
+    'Bhaktapur',
+    'Chitwan',
+    'Biratnagar',
+    'Dharan',
+    'Butwal',
+    'Bhairahawa',
+    'Nepalgunj',
+    'Birgunj',
+    'Janakpur',
+    'Hetauda',
+    'Dhangadhi',
+    'Itahari',
+    'Birtamod',
+    'Surkhet',
+    'Gorkha',
+    'Mustang',
+    'International'
+  ];
   const PAY_OPTIONS = [
     { id: 'All', label: 'All Compensation' },
     { id: 'Paid', label: 'Paid Roles Only' },
@@ -363,7 +381,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
       />
 
       {/* Main Feed: Full width centered on desktop */}
-      <div className="max-w-[1600px] mx-auto px-1 sm:px-8 md:px-12 w-full">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 w-full">
 
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-4 mb-8">
@@ -371,11 +389,11 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
           <div className="flex items-center gap-3.5">
             <button
               onClick={() => onNavigate('back')}
-              className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all cursor-pointer shrink-0"
+              className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
               aria-label="Back"
               title="Go Back"
             >
-              <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
+              <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
             </button>
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase leading-none">
@@ -392,7 +410,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder={t('ui.searchPlaceholder')}
+                placeholder={t('casting.searchPlaceholder') || 'Search casting calls...'}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);

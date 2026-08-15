@@ -15,10 +15,12 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
     const [year, setYear] = useState('');
     const [description, setDescription] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const handleAddExperience = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!title.trim() || !role.trim())
+    const handleAddExperience = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!title.trim() || !role.trim()) {
+            showAlert('Please fill in both Project Title and Your Role.', 'error');
             return;
+        }
         const newItem: Experience = {
             title: title.trim(),
             role: role.trim(),
@@ -30,6 +32,7 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
         setRole('');
         setYear('');
         setDescription('');
+        showAlert(`Added "${newItem.title}" to work history. Click "Save Changes" to save.`, 'success');
     };
     const handleRemoveExperience = (idx: number) => {
         setExperienceList(experienceList.filter((_, i) => i !== idx));
@@ -55,37 +58,37 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
     };
     return (<div className="space-y-6">
       
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 space-y-4">
-        <h2 className="text-xl font-black text-white flex items-center gap-2">
-          <Briefcase className="w-5 h-5 text-[#00BFFF]"/>
+      <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-4 sm:p-5 space-y-4">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <Briefcase className="w-4 h-4 text-white"/>
           Add Professional Experience
         </h2>
 
         <form onSubmit={handleAddExperience} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5 text-left">
-              <label className="text-[10px] text-nc-muted uppercase tracking-wider font-black block">Project Title</label>
-              <input type="text" placeholder="e.g. Kathmandu Dreams Film" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none"/>
+              <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Project Title</label>
+              <input type="text" placeholder="e.g. Kathmandu Dreams Film" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
             </div>
 
             <div className="space-y-1.5 text-left">
-              <label className="text-[10px] text-nc-muted uppercase tracking-wider font-black block">Your Role</label>
-              <input type="text" placeholder="e.g. Lead Actor, Supporting, Cameraman" value={role} onChange={(e) => setRole(e.target.value)} className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none"/>
+              <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Your Role</label>
+              <input type="text" placeholder="e.g. Lead Actor, Supporting, Cameraman" value={role} onChange={(e) => setRole(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
             </div>
 
             <div className="space-y-1.5 text-left">
-              <label className="text-[10px] text-nc-muted uppercase tracking-wider font-black block">Year / Period</label>
-              <input type="text" placeholder="e.g. 2024" value={year} onChange={(e) => setYear(e.target.value)} className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none"/>
+              <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Year / Period</label>
+              <input type="text" placeholder="e.g. 2024" value={year} onChange={(e) => setYear(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
             </div>
           </div>
 
           <div className="space-y-1.5 text-left">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-black block">Description</label>
-            <textarea rows={3} placeholder="Detail your responsibilities, working crew, or specific awards received..." value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-[#1A1A1A] border border-white/5 focus:border-[#00BFFF] rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none resize-none"/>
+            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Description</label>
+            <textarea rows={3} placeholder="Detail your responsibilities, working crew, or specific awards received..." value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none resize-none"/>
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" className="px-6 rounded-2xl">
+            <Button type="submit" onClick={handleAddExperience} className="px-4 py-1.5 h-9 rounded-xl text-xs font-bold">
               Add Item
             </Button>
           </div>
@@ -93,11 +96,11 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
       </div>
 
       
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 space-y-4">
-        <h2 className="text-lg font-black text-white">Work History</h2>
+      <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-4 sm:p-5 space-y-4">
+        <h2 className="text-base font-bold text-white">Work History</h2>
 
-        {experienceList.length > 0 ? (<div className="space-y-4">
-            {experienceList.map((item, idx) => (<div key={idx} className="flex gap-4 p-5 bg-white/5 border border-white/5 rounded-2xl items-start">
+        {experienceList.length > 0 ? (<div className="space-y-3">
+            {experienceList.map((item, idx) => (<div key={idx} className="flex gap-4 p-4 bg-white/5 border border-white/5 rounded-xl items-start">
                 <div className="w-10 h-10 rounded-xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center shrink-0">
                   <Briefcase className="w-5 h-5 text-[#00BFFF]"/>
                 </div>
@@ -111,7 +114,7 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
                   </span>
                   {item.description && (<p className="text-xs text-nc-muted leading-relaxed mt-2">{item.description}</p>)}
                 </div>
-                <button type="button" onClick={() => handleRemoveExperience(idx)} className="text-nc-muted hover:text-red-500 transition-colors p-2 self-start">
+                <button type="button" onClick={() => handleRemoveExperience(idx)} className="text-nc-muted hover:text-red-500 transition-colors p-2 self-start cursor-pointer">
                   <Trash2 className="w-4 h-4"/>
                 </button>
               </div>))}
@@ -120,7 +123,7 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
 
       
       <div className="flex justify-end">
-        <Button onClick={handleSave} loading={submitting} className="px-8">
+        <Button onClick={handleSave} loading={submitting} className="px-6 py-2 h-10 rounded-xl text-xs font-bold">
           Save Changes
         </Button>
       </div>

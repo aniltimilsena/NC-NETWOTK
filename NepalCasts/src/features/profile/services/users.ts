@@ -216,7 +216,7 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
 
         const handleProfileUpdateEvent = (e: Event) => {
             const { uid, image } = (e as CustomEvent).detail || {};
-            if (uid && image) {
+            if (uid && image !== undefined) {
                 const currentSaved = getSavedRealTalents();
                 if (currentSaved.length > 0) {
                     const updated = currentSaved.map(t => {

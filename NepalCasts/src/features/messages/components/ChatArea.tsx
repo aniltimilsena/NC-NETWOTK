@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import { PhoneOff, VideoOff, Phone, Video, Check, Trash2, ChevronLeft, X, Pin, PinOff, Clock, Copy } from 'lucide-react';
+import { PhoneOff, VideoOff, Phone, Video, Check, Trash2, ChevronLeft, X, Pin, PinOff, Clock, Copy, Download, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar } from '../../../components/ui';
+import { saveImageDirectly } from '../../../utils/media';
 import type { Message } from '../../../types';
 interface ChatAreaProps {
     chat: any;
@@ -115,8 +116,8 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
       
       <div className="px-6 py-4 pt-6 md:py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="md:hidden w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 shadow-sm active:scale-95 cursor-pointer" title="Back to Inbox" aria-label="Back to Inbox">
-            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2.5}/>
+          <button onClick={onBack} className="md:hidden w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 shadow-sm active:scale-95 cursor-pointer" title="Back to Inbox" aria-label="Back to Inbox">
+            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5}/>
           </button>
           <Avatar userId={otherParticipantId} src={chat?.avatar} name={chat?.name} size="md" className="w-11 h-11 sm:w-12 sm:h-12 shrink-0" showStatus={true} status={isOnline ? 'online' : 'offline'}/>
           <div className="text-left">
@@ -223,8 +224,8 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                           ? `px-4 py-2.5 bg-gradient-to-br from-sky-400 to-sky-500 text-black font-semibold shadow-[0_4px_12px_rgba(56,189,248,0.15)] ${cornerRadius}`
                           : `px-4 py-2.5 bg-[#18181b] text-gray-200 border border-white/[0.03] shadow-sm ${cornerRadius}`}`}>
                         {isImage ? (
-                          <div className="overflow-hidden rounded-xl">
-                            <img src={msg.text} alt="Sent photo" className="max-w-full sm:max-w-[280px] max-h-[280px] rounded-xl object-cover cursor-pointer hover:opacity-95 transition-opacity" onClick={(e) => {
+                          <div className="overflow-hidden rounded-xl aspect-square w-52 sm:w-64 max-w-full">
+                            <img src={msg.text} alt="Sent photo" className="w-full h-full object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity" onClick={(e) => {
                               if (isLongPressActive.current) {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -299,51 +300,112 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
 
       
       <AnimatePresence>
-        {activeActionMessage && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveActionMessage(null)} className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} transition={{ type: 'spring', damping: 25, stiffness: 350 }} className="bg-[#18181b] border border-white/10 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
-              <div className="text-center pb-2 border-b border-white/5">
-                <h4 className="text-sm font-bold text-white uppercase tracking-wider">Message Actions</h4>
-                <p className="text-[11px] text-nc-muted truncate mt-1 px-4">
-                  {activeActionMessage.text}
-                </p>
+        {activeActionMessage && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveActionMessage(null)} className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.95, y: 15 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 15 }} transition={{ type: 'spring', damping: 25, stiffness: 350 }} className="bg-[#121216] border border-white/10 rounded-2xl w-full max-w-xs overflow-hidden shadow-2xl p-4 sm:p-5 space-y-3 text-left" onClick={(e) => e.stopPropagation()}>
+              <div className="text-left pb-2 border-b border-white/10 flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-white tracking-tight">Message Options</h4>
+                  <p className="text-[11px] text-gray-400 font-medium truncate max-w-[200px]">
+                    {activeActionMessage.text || 'Selected Message'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveActionMessage(null)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              <div className="flex flex-col gap-2">
-                
-                {onPinMessage && (<button onClick={() => {
-                    onPinMessage(activeActionMessage.id);
-                    setActiveActionMessage(null);
-                }} className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold text-xs transition-all active:scale-[0.98] text-left flex items-center gap-3 cursor-pointer font-sans">
-                    {activeActionMessage.isPinned
-                    ? <PinOff className="w-4 h-4 text-[#00BFFF]"/>
-                    : <Pin className="w-4 h-4 text-[#00BFFF]"/>}
-                    {activeActionMessage.isPinned ? 'Unpin Message' : 'Pin Message'}
-                  </button>)}
+              <div className="flex flex-col gap-2 pt-1">
+                {/* Save Option (for images/media) */}
+                {activeActionMessage.text && (activeActionMessage.type === 'image' || activeActionMessage.text.startsWith('http')) && (
+                  <button
+                    onClick={() => {
+                      const target = activeActionMessage.text;
+                      setActiveActionMessage(null);
+                      saveImageDirectly(target, 'nepalcasts-media.jpg');
+                    }}
+                    className="w-full py-2.5 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-gray-200 hover:text-white font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 text-gray-300" />
+                    <span>Save Image</span>
+                  </button>
+                )}
 
-                
-                {activeActionMessage.text && (<button onClick={() => {
-                    navigator.clipboard.writeText(activeActionMessage.text);
-                    setActiveActionMessage(null);
-                }} className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold text-xs transition-all active:scale-[0.98] text-left flex items-center gap-3 cursor-pointer font-sans">
-                    <Copy className="w-4 h-4 text-nc-muted"/>
-                    Copy Message
-                  </button>)}
+                {/* Share Option */}
+                {activeActionMessage.text && (
+                  <button
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: 'NepalCasts Attachment',
+                          url: activeActionMessage.text,
+                        }).catch(() => {});
+                      } else {
+                        navigator.clipboard.writeText(activeActionMessage.text);
+                      }
+                      setActiveActionMessage(null);
+                    }}
+                    className="w-full py-2.5 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-gray-200 hover:text-white font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
+                  >
+                    <Share2 className="w-4 h-4 text-gray-300" />
+                    <span>Share</span>
+                  </button>
+                )}
 
-                
-                {activeActionMessage.senderId === currentUser?.uid && onDeleteMessage && (<button onClick={() => {
-                    onDeleteMessage(activeActionMessage.id);
-                    setActiveActionMessage(null);
-                }} className="w-full py-3 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold text-xs transition-all active:scale-[0.98] text-left flex items-center gap-3 cursor-pointer font-sans">
-                    <Trash2 className="w-4 h-4 text-red-400"/>
-                    Delete Message
-                  </button>)}
+                {/* Pin Option */}
+                {onPinMessage && (
+                  <button
+                    onClick={() => {
+                      onPinMessage(activeActionMessage.id);
+                      setActiveActionMessage(null);
+                    }}
+                    className="w-full py-2.5 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-gray-200 hover:text-white font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
+                  >
+                    {activeActionMessage.isPinned ? <PinOff className="w-4 h-4 text-gray-300" /> : <Pin className="w-4 h-4 text-gray-300" />}
+                    <span>{activeActionMessage.isPinned ? 'Unpin Message' : 'Pin Message'}</span>
+                  </button>
+                )}
+
+                {/* Copy Text Option */}
+                {activeActionMessage.text && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(activeActionMessage.text);
+                      setActiveActionMessage(null);
+                    }}
+                    className="w-full py-2.5 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-gray-200 hover:text-white font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
+                  >
+                    <Copy className="w-4 h-4 text-gray-300" />
+                    <span>Copy Message</span>
+                  </button>
+                )}
+
+                {/* Delete Option */}
+                {(activeActionMessage.senderId === currentUser?.uid || currentUser?.role === 'admin') && onDeleteMessage && (
+                  <button
+                    onClick={() => {
+                      onDeleteMessage(activeActionMessage.id);
+                      setActiveActionMessage(null);
+                    }}
+                    className="w-full py-2.5 px-3.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                    <span>Delete</span>
+                  </button>
+                )}
               </div>
 
-              <button onClick={() => setActiveActionMessage(null)} className="w-full py-3 text-center text-xs font-bold text-nc-muted hover:text-white transition-colors cursor-pointer font-sans">
-                Cancel
-              </button>
+              <div className="pt-1">
+                <button onClick={() => setActiveActionMessage(null)} className="w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 text-center text-xs font-bold text-gray-400 hover:text-white transition-all cursor-pointer">
+                  Cancel
+                </button>
+              </div>
             </motion.div>
-          </motion.div>)}
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>);
 }

@@ -18,24 +18,24 @@ const getNotificationDetails = (notif) => {
             themeColor: 'emerald',
             iconName: 'follow',
             text: (<span>
-          <span className="font-bold text-white mr-1">{senderName}</span>
-          started following you
-        </span>),
+                <span className="font-bold text-white mr-1">{senderName}</span>
+                started following you
+            </span>),
         };
     }
     if (type === 'casting' || title.includes('casting') || title.includes('application') || body.includes('casting') || body.includes('applied')) {
         let displayElement = (<span>
-        New casting call matches your profile
-      </span>);
+            New casting call matches your profile
+        </span>);
         if (body.includes('applied to') || body.includes('application')) {
             const cleanBody = notif.body || notif.message || '';
             const actionText = cleanBody.startsWith(senderName)
                 ? cleanBody.substring(senderName.length)
                 : ` applied to your casting call: "${notif.title || ''}"`;
             displayElement = (<span>
-          <span className="font-bold text-white mr-1">{senderName}</span>
-          {actionText}
-        </span>);
+                <span className="font-bold text-white mr-1">{senderName}</span>
+                {actionText}
+            </span>);
         }
         return {
             type: 'casting',
@@ -51,9 +51,9 @@ const getNotificationDetails = (notif) => {
                 themeColor: 'red',
                 iconName: 'missed_call',
                 text: (<span>
-            Missed a video call from
-            <span className="font-bold text-white ml-1">{senderName}</span>
-          </span>),
+                    Missed a video call from
+                    <span className="font-bold text-white ml-1">{senderName}</span>
+                </span>),
             };
         }
         if (body.includes('cancelled') || title.includes('cancelled')) {
@@ -62,8 +62,8 @@ const getNotificationDetails = (notif) => {
                 themeColor: 'amber',
                 iconName: 'call_cancelled',
                 text: (<span>
-            Video call cancelled by caller
-          </span>),
+                    Video call cancelled by caller
+                </span>),
             };
         }
         return {
@@ -71,9 +71,9 @@ const getNotificationDetails = (notif) => {
             themeColor: 'blue',
             iconName: 'message_received',
             text: (<span>
-          <span className="font-bold text-white mr-1">{senderName}</span>
-          sent you a message
-        </span>),
+                <span className="font-bold text-white mr-1">{senderName}</span>
+                sent you a message
+            </span>),
         };
     }
     return {
@@ -81,8 +81,8 @@ const getNotificationDetails = (notif) => {
         themeColor: 'gray',
         iconName: 'system',
         text: (<span>
-        {notif.body || notif.message || "System update"}
-      </span>),
+            {notif.body || notif.message || "System update"}
+        </span>),
     };
 };
 const renderIconCircle = (iconName) => {
@@ -113,7 +113,7 @@ const renderIconCircle = (iconName) => {
         colorClasses = 'bg-gray-500/10 border-gray-500/20 text-gray-400';
     }
     return (<div className={`w-10 h-10 md:w-14 md:h-14 rounded-full border flex items-center justify-center flex-shrink-0 ${colorClasses}`}>
-      <IconComponent className="w-5 h-5 md:w-7 md:h-7"/>
+        <IconComponent className="w-5 h-5 md:w-7 md:h-7" />
     </div>);
 };
 function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, onDeleteRequest, handleNotificationClick, timeAgo }) {
@@ -175,41 +175,41 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
         ? 'bg-transparent hover:bg-white/[0.02]'
         : 'bg-[#00BFFF]/[0.03] hover:bg-[#00BFFF]/[0.06]';
     return (<div className="relative w-full">
-      <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={endPress} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={handleMouseLeave} onClick={handleCardClick} className={`relative z-10 py-4 md:py-5 px-2 sm:px-4 md:px-6 cursor-pointer transition-colors duration-200 flex items-center gap-4 md:gap-6 select-none ${cardBgClass} w-full`}>
-        
-        {showAvatar && (notif.senderAvatar || notif.senderName) ? (<Avatar userId={notif.senderId} src={notif.senderAvatar} name={notif.senderName} size="sm" className="!w-10 !h-10 md:!w-14 md:!h-14 !rounded-full border-none shrink-0"/>) : (renderIconCircle(details.iconName))}
+        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={endPress} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={handleMouseLeave} onClick={handleCardClick} className={`relative z-10 py-4 md:py-5 px-2 sm:px-4 md:px-6 cursor-pointer transition-colors duration-200 flex items-center gap-4 md:gap-6 select-none ${cardBgClass} w-full`}>
 
-        
-        <div className="flex-1 min-w-0 pr-2">
-          <div className={`text-sm md:text-base leading-snug break-words ${notif.read ? 'text-[#888888] font-normal' : 'text-white font-semibold'}`}>
-            {details.text}
-          </div>
+            {showAvatar && (notif.senderAvatar || notif.senderName) ? (<Avatar userId={notif.senderId} src={notif.senderAvatar} name={notif.senderName} size="sm" className="!w-10 !h-10 md:!w-14 md:!h-14 !rounded-full border-none shrink-0" />) : (renderIconCircle(details.iconName))}
 
-          
-          {(notif.type === 'follow' || notif.notificationType === 'follow') && notif.senderId && (<div className="mt-2">
-              {followingIds.has(notif.senderId) ? (<button disabled className="px-3 py-1 md:px-5 md:py-2 rounded-xl bg-white/5 border border-white/10 text-gray-500 text-xs md:text-sm font-bold uppercase tracking-wider cursor-not-allowed">
-                  Following
-                </button>) : (<button onClick={(e) => handleFollowBack(e, notif.senderId)} className="px-3 py-1 md:px-5 md:py-2 rounded-xl bg-[#00BFFF] hover:bg-[#0099e6] text-[#0A0A0A] text-xs md:text-sm font-bold uppercase tracking-wider transition-all active:scale-95">
-                  Follow Back
+
+            <div className="flex-1 min-w-0 pr-2">
+                <div className={`text-sm md:text-base leading-snug break-words ${notif.read ? 'text-[#888888] font-normal' : 'text-white font-semibold'}`}>
+                    {details.text}
+                </div>
+
+
+                {(notif.type === 'follow' || notif.notificationType === 'follow') && notif.senderId && (<div className="mt-2">
+                    {followingIds.has(notif.senderId) ? (<button disabled className="px-3 py-1 md:px-5 md:py-2 rounded-xl bg-white/5 border border-white/10 text-gray-500 text-xs md:text-sm font-bold uppercase tracking-wider cursor-not-allowed">
+                        Following
+                    </button>) : (<button onClick={(e) => handleFollowBack(e, notif.senderId)} className="px-3 py-1 md:px-5 md:py-2 rounded-xl bg-[#00BFFF] hover:bg-[#0099e6] text-[#0A0A0A] text-xs md:text-sm font-bold uppercase tracking-wider transition-all active:scale-95">
+                        Follow Back
+                    </button>)}
+                </div>)}
+            </div>
+
+
+            <div className="flex flex-col items-end gap-1.5 self-start pt-0.5 shrink-0">
+                <span className="text-[11px] md:text-sm text-nc-muted font-medium whitespace-nowrap">
+                    {timeAgo(notif.createdAt?.seconds)}
+                </span>
+
+                {!notif.read && (<button onClick={(e) => {
+                    e.stopPropagation();
+                    markAsRead(notif.id);
+                }} className="group/btn relative w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors" title="Mark as read">
+                    <span className="absolute w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#00BFFF] group-hover/btn:opacity-0 transition-opacity" />
+                    <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#00BFFF] opacity-0 group-hover/btn:opacity-100 transition-opacity shrink-0" />
                 </button>)}
-            </div>)}
+            </div>
         </div>
-
-        
-        <div className="flex flex-col items-end gap-1.5 self-start pt-0.5 shrink-0">
-          <span className="text-[11px] md:text-sm text-nc-muted font-medium whitespace-nowrap">
-            {timeAgo(notif.createdAt?.seconds)}
-          </span>
-          
-          {!notif.read && (<button onClick={(e) => {
-                e.stopPropagation();
-                markAsRead(notif.id);
-            }} className="group/btn relative w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors" title="Mark as read">
-              <span className="absolute w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#00BFFF] group-hover/btn:opacity-0 transition-opacity"/>
-              <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#00BFFF] opacity-0 group-hover/btn:opacity-100 transition-opacity shrink-0"/>
-            </button>)}
-        </div>
-      </div>
     </div>);
 }
 export default function Notifications({ onNavigate, user, initialFilter = 'all' }) {
@@ -440,98 +440,105 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
         }
     };
     const renderSectionHeader = (label) => (<div className="flex items-center gap-3 my-5 md:my-7">
-      <span className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap">
-        {label}
-      </span>
-      <div className="h-[1px] w-full bg-white/5"/>
+        <span className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap">
+            {label}
+        </span>
+        <div className="h-[1px] w-full bg-white/5" />
     </div>);
     const renderGroupList = (groupItems) => (<ul className="w-full">
-      <AnimatePresence initial={false}>
-        {groupItems.map((notif) => (<motion.li key={notif.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }} className="w-full">
-            <NotificationCard notif={notif} followingIds={followingIds} handleFollowBack={handleFollowBack} markAsRead={markAsRead} onDeleteRequest={(id) => setDeletingNotifId(id)} handleNotificationClick={handleNotificationClick} timeAgo={timeAgo}/>
-          </motion.li>))}
-</AnimatePresence>
+        <AnimatePresence initial={false}>
+            {groupItems.map((notif) => (<motion.li key={notif.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }} className="w-full">
+                <NotificationCard notif={notif} followingIds={followingIds} handleFollowBack={handleFollowBack} markAsRead={markAsRead} onDeleteRequest={(id) => setDeletingNotifId(id)} handleNotificationClick={handleNotificationClick} timeAgo={timeAgo} />
+            </motion.li>))}
+        </AnimatePresence>
     </ul>);
     return (<div className="min-h-screen bg-[#0a0a0a] text-white">
-      
-      <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-8 md:px-12 pt-4 sm:pt-6 md:pt-10">
-                {/* Top Bar Header */}
-        <div className="flex items-center justify-between mb-6 md:mb-8 pb-2">
-          <div className="flex items-center gap-3">
-            <button onClick={() => onNavigate('back')} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer" aria-label="Back">
-              <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5}/>
-            </button>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight whitespace-nowrap">
-              Notifications
-            </h1>
-          </div>
-          <div className="flex items-center">
-            <button onClick={handleMarkAllRead} disabled={unreadCount === 0} className={`text-xs sm:text-sm md:text-base font-bold transition-colors px-3 md:px-4 py-1.5 md:py-2 rounded-lg ${unreadCount > 0
-            ? 'text-[#00BFFF] hover:text-[#0099e6] hover:bg-white/5 cursor-pointer'
-            : 'text-gray-600 cursor-not-allowed'}`}>
-              Mark all read
-            </button>
-          </div>
-        </div>
 
-        
-        <div className="relative flex gap-2 md:gap-3 border-b border-white/5 pb-3 md:pb-4 overflow-x-auto scrollbar-hide">
-          {filters.map(f => {
-            const isActive = filter === f.id;
-            return (<button key={f.id} onClick={() => setFilter(f.id)} className={`relative px-3.5 py-1.5 md:px-5 md:py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 ${isActive
-                    ? 'bg-[#00BFFF] text-white shadow-[0_0_12px_rgba(0,191,255,0.25)]'
-                    : 'bg-[#111111] text-gray-400 hover:text-white hover:bg-white/[0.02] border border-white/5'}`}>
-                <span className="relative z-10 flex items-center gap-1.5">
-                  {f.label}
-                  {f.id === 'unread' && unreadCount > 0 && (<span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-black/20 text-white' : 'bg-[#1a2744] text-[#00BFFF]'}`}>
-                      {unreadCount}
-                    </span>)}
-                </span>
-
-                
-                {isActive && (<motion.div layoutId="activeTabUnderline" className="absolute bottom-[-13px] left-0 right-0 h-[2.5px] bg-[#00BFFF] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 28 }}/>)}
-              </button>);
-        })}
-        </div>
-      </div>
-
-      
-      <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-8 md:px-12 pb-24">
-        {loading ? (
-          <NotificationSkeleton count={4} />
-        ) : filtered.length === 0 ? (<div className="text-center py-16">
-            <div className="w-16 h-16 rounded-2xl bg-[#111111] flex items-center justify-center mx-auto mb-4 text-[#555] border border-white/5">
-              <Settings className="w-8 h-8"/>
+        <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-8 md:px-12 pt-4 sm:pt-6 md:pt-10">
+            {/* Top Bar Header */}
+            <div className="flex items-center justify-between mb-6 md:mb-8 pb-2">
+                <div className="flex items-center gap-3">
+                    <button onClick={() => onNavigate('back')} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer" aria-label="Back">
+                        <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+                    </button>
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight whitespace-nowrap">
+                        Notifications
+                    </h1>
+                </div>
+                <div className="flex items-center">
+                    <button onClick={handleMarkAllRead} disabled={unreadCount === 0} className={`text-xs sm:text-sm md:text-base font-bold transition-colors px-3 md:px-4 py-1.5 md:py-2 rounded-lg ${unreadCount > 0
+                        ? 'text-[#00BFFF] hover:text-[#0099e6] hover:bg-white/5 cursor-pointer'
+                        : 'text-gray-600 cursor-not-allowed'}`}>
+                        Mark all read
+                    </button>
+                </div>
             </div>
-            <p className="text-white font-bold text-lg">{getEmptyStateText().title}</p>
-            <p className="text-[#555] text-sm mt-1">{getEmptyStateText().desc}</p>
-          </div>) : (<div className="space-y-6 mt-4 w-full">
-            {grouped.today.length > 0 && (<div>
-                {renderSectionHeader('Today')}
-                {renderGroupList(grouped.today)}
-              </div>)}
-            {grouped.yesterday.length > 0 && (<div>
-                {renderSectionHeader('Yesterday')}
-                {renderGroupList(grouped.yesterday)}
-              </div>)}
-            {grouped.earlier.length > 0 && (<div>
-                {renderSectionHeader('Earlier')}
-                {renderGroupList(grouped.earlier)}
-              </div>)}
 
-            
-            {hasMore && (<div className="flex justify-center pt-4">
-                <button onClick={loadMore} className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 text-xs font-bold tracking-wide transition-all active:scale-95">
-                  Load More
-                </button>
-              </div>)}
-          </div>)}
-      </div>
-      <ConfirmDialog isOpen={deletingNotifId !== null} title="Delete Notification?" description="Are you sure you want to delete this notification? This action cannot be undone." confirmText="Delete" cancelText="Cancel" type="danger" onClose={() => setDeletingNotifId(null)} onConfirm={async () => {
+
+            {/* Notification Filter Tabs (Compact Pill Row) */}
+            <div className="relative flex items-center gap-2 overflow-x-auto scrollbar-none py-1 border-b border-white/5 pb-3">
+                {filters.map(f => {
+                    const isActive = filter === f.id;
+                    return (
+                        <button
+                            key={f.id}
+                            onClick={() => setFilter(f.id)}
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${isActive
+                                ? 'bg-[#00BFFF]/20 border border-[#00BFFF] text-[#00BFFF]'
+                                : 'bg-[#1A1A1E] border border-white/10 text-gray-300 hover:text-white'
+                                }`}
+                        >
+                            <span className="flex items-center gap-1.5">
+                                {f.label}
+                                {f.id === 'unread' && unreadCount > 0 && (
+                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-[#00BFFF] text-black font-bold' : 'bg-white/10 text-[#00BFFF]'}`}>
+                                        {unreadCount}
+                                    </span>
+                                )}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+
+
+        <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-8 md:px-12 pb-24">
+            {loading ? (
+                <NotificationSkeleton count={4} />
+            ) : filtered.length === 0 ? (<div className="text-center py-16">
+                <div className="w-16 h-16 rounded-2xl bg-[#111111] flex items-center justify-center mx-auto mb-4 text-[#555] border border-white/5">
+                    <Settings className="w-8 h-8" />
+                </div>
+                <p className="text-white font-bold text-lg">{getEmptyStateText().title}</p>
+                <p className="text-[#555] text-sm mt-1">{getEmptyStateText().desc}</p>
+            </div>) : (<div className="space-y-6 mt-4 w-full">
+                {grouped.today.length > 0 && (<div>
+                    {renderSectionHeader('Today')}
+                    {renderGroupList(grouped.today)}
+                </div>)}
+                {grouped.yesterday.length > 0 && (<div>
+                    {renderSectionHeader('Yesterday')}
+                    {renderGroupList(grouped.yesterday)}
+                </div>)}
+                {grouped.earlier.length > 0 && (<div>
+                    {renderSectionHeader('Earlier')}
+                    {renderGroupList(grouped.earlier)}
+                </div>)}
+
+
+                {hasMore && (<div className="flex justify-center pt-4">
+                    <button onClick={loadMore} className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 text-xs font-bold tracking-wide transition-all active:scale-95">
+                        Load More
+                    </button>
+                </div>)}
+            </div>)}
+        </div>
+        <ConfirmDialog isOpen={deletingNotifId !== null} title="Delete Notification?" description="Are you sure you want to delete this notification? This action cannot be undone." confirmText="Delete" cancelText="Cancel" type="danger" onClose={() => setDeletingNotifId(null)} onConfirm={async () => {
             if (deletingNotifId) {
                 await deleteNotification(deletingNotifId);
                 setDeletingNotifId(null);
             }
-        }}/>
+        }} />
     </div>);
 }

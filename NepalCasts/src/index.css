@@ -37,19 +37,9 @@
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .studio-card:hover {
-    border-color: rgba(0, 191, 255, 0.3);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 191, 255, 0.12);
-  }
-
   .studio-card-gold {
     border-color: rgba(250, 204, 21, 0.25) !important;
     box-shadow: 0 0 25px rgba(250, 204, 21, 0.08);
-  }
-
-  .studio-card-gold:hover {
-    border-color: rgba(250, 204, 21, 0.5) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 25px rgba(250, 204, 21, 0.2);
   }
 
   /* Softened off-white contrast for headings and names to prevent eye glare and flashiness */
@@ -488,25 +478,16 @@ html.font-size-large {
 }
 
 .category-card:hover {
-  transform: translateY(-6px) !important;
-  filter: brightness(1.08) !important;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(56, 189, 248, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  border-color: rgba(255, 255, 255, 0.04) !important;
 }
 
 /* Top accent glow on hover */
 .category-card::before {
   content: "";
-  position: absolute;
-  top: 0;
-  left: 20%;
-  right: 20%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent);
-  border-radius: 0 0 4px 4px;
-  opacity: 0;
-  transition: opacity 0.35s ease;
-  z-index: 20;
+  display: none !important;
 }
 
 .category-card:hover::before {
@@ -565,17 +546,19 @@ html.font-size-large {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
+  aspect-ratio: 1 / 1;
   background-color: #00BFFF;
   color: #0A0A0A;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 900;
-  border-radius: 50%;
+  border-radius: 9999px;
   margin-left: 6px;
   cursor: help;
   vertical-align: middle;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 /* Devanagari Language Styling Override */
@@ -1385,4 +1368,11 @@ input[name="identifier"] {
   margin: 0 !important;
   padding: 0 !important;
   pointer-events: none !important;
+}
+
+/* Global hover effect removal across the entire codebase */
+*:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
 }

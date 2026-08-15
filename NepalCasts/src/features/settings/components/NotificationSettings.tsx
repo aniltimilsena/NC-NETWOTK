@@ -34,9 +34,9 @@ export default function NotificationSettings({ profile, onUpdate, showAlert }: N
         }
     };
     return (<div className="space-y-6">
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[2.2rem] p-4 sm:p-6 space-y-4">
-        <h2 className="text-xl font-black text-white flex items-center gap-2">
-          <Bell className="w-5 h-5 text-[#00BFFF]"/>
+      <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-4 sm:p-5 space-y-4">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <Bell className="w-4 h-4 text-white"/>
           Notification Preferences
         </h2>
 
@@ -71,7 +71,7 @@ export default function NotificationSettings({ profile, onUpdate, showAlert }: N
 
       
       <div className="flex justify-end">
-        <Button onClick={handleSave} loading={submitting} className="px-8">
+        <Button onClick={handleSave} loading={submitting} className="px-6 py-2 h-10 rounded-xl text-xs font-bold">
           Save Changes
         </Button>
       </div>

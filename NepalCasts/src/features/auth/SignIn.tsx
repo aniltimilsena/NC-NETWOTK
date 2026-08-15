@@ -91,33 +91,35 @@ export default function SignIn({ }: SignInProps) {
     };
 
     return (
-        <div className="min-h-screen bg-[#0F0F13] text-white flex items-center justify-center relative overflow-hidden font-sans py-8 px-6 sm:px-8 sm:py-12">
+        <div className="min-h-screen bg-[#0F0F13] text-white flex flex-col items-center justify-start pt-6 sm:pt-10 pb-8 px-6 sm:px-8 font-sans relative overflow-y-auto">
             <SEO title="Sign In | NepalCasts" description="Access your NepalCasts account safely." noindex />
-
-            {/* Back button */}
-            <button
-                onClick={handleBack}
-                type="button"
-                className="absolute top-4 left-4 sm:top-6 sm:left-6 w-10 h-10 bg-[#1A1A22] border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:border-white/20 transition-all z-20 cursor-pointer shadow-sm active:scale-95"
-                aria-label="Back"
-                title="Go Back"
-            >
-                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-            </button>
 
             {/* Main centered container */}
             <div className="w-full max-w-[370px] flex flex-col items-center z-10 relative">
 
+                {/* Back button row */}
+                <div className="w-full flex items-center justify-start mb-3">
+                    <button
+                        onClick={handleBack}
+                        type="button"
+                        className="w-10 h-10 bg-[#1A1A22] border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:border-white/20 transition-all cursor-pointer shadow-sm active:scale-95"
+                        aria-label="Back"
+                        title="Go Back"
+                    >
+                        <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                    </button>
+                </div>
+
                 {/* Logo — Gold NC */}
-                <div className="mb-5 flex justify-center">
-                    <LogoIcon className="w-14 h-14 object-contain" />
+                <div className="mb-2 flex justify-center">
+                    <LogoIcon className="w-12 h-12 object-contain" />
                 </div>
 
                 {/* Title & Subtitle */}
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white text-center tracking-tight mb-2">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white text-center tracking-tight mb-1">
                     Welcome back
                 </h1>
-                <p className="text-sm text-gray-400 text-center font-normal mb-7">
+                <p className="text-xs sm:text-sm text-gray-400 text-center font-normal mb-4">
                     Please enter your details to sign in.
                 </p>
 

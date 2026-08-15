@@ -161,11 +161,11 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
           <button
             type="button"
             onClick={() => onNavigate && onNavigate('back')}
-            className="sm:absolute sm:left-0 sm:top-1/2 sm:-translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+            className="sm:absolute sm:left-0 sm:top-1/2 sm:-translate-y-1/2 w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
             title="Go Back"
             aria-label="Go Back"
           >
-            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2.5} />
+            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
           </button>
 
           <div className="flex-1 text-center pr-6 sm:pr-0">
@@ -629,7 +629,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
 
                 <div className="grid grid-cols-2 gap-4 text-xs font-medium text-gray-400">
                   <div>Location: <span className="text-white font-bold">{form.location}</span></div>
-                  <div>Budget: <span className="text-white font-bold">{form.budget}</span></div>
+                  <div>Salary: <span className="text-white font-bold">{form.budget}</span></div>
                   <div>Deadline: <span className="text-white font-bold">{form.deadline}</span></div>
                   <div>Roles: <span className="text-white font-bold">{form.roles.length} Roles</span></div>
                 </div>

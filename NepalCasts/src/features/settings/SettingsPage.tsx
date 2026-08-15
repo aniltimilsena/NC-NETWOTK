@@ -75,19 +75,22 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
     const resolveTab = (tabStr?: string): 'about' | 'skills' | 'experience' | 'password' | 'notifications' | 'language' => {
         if (!tabStr) return 'about';
         const clean = tabStr.toLowerCase();
-        if (clean === 'password' || clean === 'security') return 'password';
+        if (clean === 'password' || clean === 'security' || clean === 'account') return 'password';
         if (clean === 'notifications') return 'notifications';
         if (clean === 'language') return 'language';
         if (clean === 'skills') return 'skills';
-        if (clean === 'experience') return 'experience';
+        if (clean === 'experience' || clean === 'history' || clean === 'work') return 'experience';
         return 'about';
     };
 
     const [activeTab, setActiveTab] = useState<'about' | 'skills' | 'experience' | 'password' | 'notifications' | 'language'>(() => resolveTab(initialTab));
-    const [currentMobileView, setCurrentMobileView] = useState<'menu' | 'content'>('menu');
+    const [currentMobileView, setCurrentMobileView] = useState<'menu' | 'content'>(() => (initialTab && initialTab !== 'settings' && initialTab !== 'menu' ? 'content' : 'menu'));
 
     useEffect(() => {
         setActiveTab(resolveTab(initialTab));
+        if (initialTab && initialTab !== 'settings' && initialTab !== 'menu') {
+            setCurrentMobileView('content');
+        }
     }, [initialTab]);
 
     const tabsConfig = [
@@ -129,7 +132,7 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
                     </div>
 
                     <div className="md:col-span-3 space-y-6">
-                        <div className="bg-[#0E0E0E] border border-white/5 rounded-[2.2rem] p-6 space-y-6">
+                        <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-4 sm:p-5 space-y-5">
                             <div className="h-6 bg-white/10 rounded-md w-32 mb-4" />
                             <div className="space-y-4">
                                 <div className="space-y-2">
@@ -178,8 +181,8 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
     return (
         <div className="min-h-screen bg-nc-dark pb-6">
             <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 pt-6 flex items-center gap-4">
-                <button onClick={handleBack} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 cursor-pointer" aria-label="Back">
-                    <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
+                <button onClick={handleBack} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all active:scale-95 shrink-0 cursor-pointer" aria-label="Back">
+                    <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
                 </button>
                 <h1 className="text-2xl font-black text-white">
                     <span className="md:inline hidden">Account Settings</span>
@@ -201,15 +204,13 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
                                     const pathSuffix = tab.id === 'about' ? 'profile' : tab.id === 'password' ? 'security' : tab.id;
                                     onNavigate(`/settings/${pathSuffix}`);
                                 }}
-                                className={`w-fit md:w-full flex items-center justify-start text-left gap-4 px-4 py-3.5 rounded-2xl text-lg font-bold transition-all border ${
+                                className={`w-full flex items-center justify-start text-left gap-3.5 px-4 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer ${
                                     isSelected
-                                        ? 'bg-[#00BFFF]/10 text-[#00BFFF] border-[#00BFFF]/20 shadow-sm'
-                                        : 'text-nc-muted hover:text-white hover:bg-white/5 border-transparent'
+                                        ? 'bg-white/10 text-white font-bold border-white/15 shadow-sm'
+                                        : 'text-gray-400 hover:text-white hover:bg-white/5 border-transparent font-medium'
                                 }`}
                             >
-                                <div className="w-7 h-7 flex items-center justify-center shrink-0">
-                                    <Icon className="w-6 h-6" />
-                                </div>
+                                <Icon className={`w-5 h-5 shrink-0 transition-colors ${isSelected ? 'text-white' : 'text-gray-400'}`} />
                                 <span className="truncate text-left">{tab.label}</span>
                             </button>
                         );

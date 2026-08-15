@@ -1,17 +1,21 @@
 import React, { lazy } from 'react';
-import { Route, useParams } from 'react-router-dom';
+import { Route, useParams, useLocation } from 'react-router-dom';
 
 const Settings = lazy(() => import('../features/settings/SettingsPage'));
 
 const SettingsWrapper = ({ onNavigate, user, showToast, showAlert }: any) => {
   const { tab } = useParams();
+  const location = useLocation();
+  const pathSegment = location.pathname.split('/').filter(Boolean).pop();
+  const currentTab = tab || (pathSegment && pathSegment !== 'settings' ? pathSegment : undefined);
+
   return (
     <Settings
       onNavigate={onNavigate}
       user={user}
       showToast={showToast}
       showAlert={showAlert}
-      initialTab={tab}
+      initialTab={currentTab}
     />
   );
 };

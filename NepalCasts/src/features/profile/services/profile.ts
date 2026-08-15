@@ -107,11 +107,11 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
             }
         }
 
-        const newImage = (cleanData.image || cleanData.photoURL || cleanData.profileImage) as string | undefined;
-        if (newImage && typeof newImage === 'string') {
-            CurrentUser.setImageUrl(newImage);
-            notifyProfileUpdated(uid, newImage);
-        } else {
+        if (cleanData.image !== undefined || cleanData.photoURL !== undefined || cleanData.profileImage !== undefined) {
+            const newImage = (cleanData.image !== undefined ? cleanData.image : (cleanData.photoURL !== undefined ? cleanData.photoURL : cleanData.profileImage)) as string | null | undefined;
+            const finalImgUrl = (newImage && typeof newImage === 'string') ? newImage : "";
+            CurrentUser.setImageUrl(finalImgUrl ? finalImgUrl : null);
+            notifyProfileUpdated(uid, finalImgUrl);
             cacheManager.invalidateCache(`profile_${uid}`);
             cacheManager.invalidateCache(`profile_sub_${uid}`);
             cacheManager.invalidateCache(`talents_list_all`);

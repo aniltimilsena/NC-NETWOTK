@@ -30,9 +30,9 @@ export const AvatarScrollSkeleton = ({ count = 5 }) => (
 
 // 3. Vertical ranks-based list (Trending)
 export const TrendingListSkeleton = ({ count = 3 }) => (
-  <div className="flex flex-col gap-3.5 w-full animate-pulse" aria-hidden="true">
+  <div className="flex flex-col gap-1 w-full animate-pulse" aria-hidden="true">
     {Array.from({ length: count }).map((_, i) => (
-      <div key={i} className="flex items-center justify-between py-4 px-2 gap-4 rounded-xl bg-white/[0.01]">
+      <div key={i} className="flex items-center justify-between py-1.5 px-2 gap-4 rounded-xl bg-white/[0.01]">
         <div className="flex items-center gap-4 min-w-0 flex-1">
           <span className="font-sans text-2xl sm:text-3xl font-black text-white/5 w-8 text-center shrink-0 select-none">
             {i + 1}

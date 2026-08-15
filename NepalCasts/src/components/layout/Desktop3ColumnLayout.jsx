@@ -378,14 +378,11 @@ export default function Desktop3ColumnLayout({
                     <div className="flex-1 min-w-0 text-left flex flex-col gap-0.5">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <h3 className="text-white font-extrabold text-lg leading-snug tracking-tight truncate">{realName}</h3>
-                        {isVerified && (
-                          <span className="w-4.5 h-4.5 rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] text-[9px] font-black shrink-0 shadow-sm" title="Verified Talent">
-                            ✓
-                          </span>
-                        )}
-                        {isPremium && (
-                          <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-extrabold text-[8px] tracking-wider uppercase shrink-0">
-                            PREMIUM
+                        {(isVerified || isPremium) && (
+                          <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0 shadow-sm" style={{ width: '18px', height: '18px' }} title="Verified Talent">
+                            <svg className="w-2.5 h-2.5 text-[#060709]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
                           </span>
                         )}
                       </div>
@@ -609,40 +606,40 @@ export default function Desktop3ColumnLayout({
               <div className="space-y-4 text-left px-1">
                 {/* Point 1 */}
                 <div className="flex gap-3.5 items-start">
-                  <div className="w-9 h-9 rounded-full bg-[#00BFFF]/10 border border-[#00BFFF]/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <svg className="w-5 h-5 text-[#00BFFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  <div className="shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </div>
                   <div>
-                    <h5 className="text-white text-sm font-extrabold font-sans">Remote Live Auditions</h5>
-                    <p className="text-gray-300 text-xs sm:text-[13px] leading-relaxed font-medium mt-1">Audition from anywhere in Nepal via nepalcasts</p>
+                    <h5 className="text-gray-200 text-sm font-bold font-sans">Remote Live Auditions</h5>
+                    <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Audition from anywhere in Nepal via nepalcasts</p>
                   </div>
                 </div>
 
                 {/* Point 2 */}
                 <div className="flex gap-3.5 items-start">
-                  <div className="w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <div className="shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h5 className="text-white text-sm font-extrabold font-sans">Direct Connections</h5>
-                    <p className="text-gray-300 text-xs sm:text-[13px] leading-relaxed font-medium mt-1">Message top directors and production teams directly without middle agents.</p>
+                    <h5 className="text-gray-200 text-sm font-bold font-sans">Direct Connections</h5>
+                    <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Message top directors and production teams directly without middle agents.</p>
                   </div>
                 </div>
 
                 {/* Point 3 */}
                 <div className="flex gap-3.5 items-start">
-                  <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  <div className="shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                     </svg>
                   </div>
                   <div>
-                    <h5 className="text-white text-sm font-extrabold font-sans">Verified PRO Casting</h5>
-                    <p className="text-gray-300 text-xs sm:text-[13px] leading-relaxed font-medium mt-1">Get verified to rank first in search results and stand out to casting teams.</p>
+                    <h5 className="text-gray-200 text-sm font-bold font-sans">Verified PRO Casting</h5>
+                    <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Get verified to rank first in search results and stand out to casting teams.</p>
                   </div>
                 </div>
               </div>
@@ -729,11 +726,12 @@ export default function Desktop3ColumnLayout({
                         {/* Background Image */}
                         <div className="absolute inset-0 select-none pointer-events-none">
                           <img
-                            src={call.thumbnail || call.thumbnailUrl || call.mediaUrl || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=300&auto=format&fit=crop'}
+                            src={(call.thumbnail && call.thumbnail !== 'has-file') ? call.thumbnail : (call.thumbnailUrl || call.mediaUrl || '/movie-banner.png')}
                             alt={call.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             onError={(e) => {
-                              e.currentTarget.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=300&auto=format&fit=crop';
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = '/movie-banner.png';
                             }}
                           />
                           {/* Dark Glassy Overlay */}

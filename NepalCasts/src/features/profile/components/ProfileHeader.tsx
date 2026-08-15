@@ -157,8 +157,8 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent pointer-events-none"/>
 
         {/* Back Button */}
-        <button onClick={() => onNavigate('back')} className="absolute top-4 left-4 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/15 active:scale-95 z-20 shrink-0 cursor-pointer shadow-lg" aria-label="Back">
-          <ChevronLeft className="w-6 h-6" strokeWidth={2.5}/>
+        <button onClick={() => onNavigate('back')} className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/15 active:scale-95 z-20 shrink-0 cursor-pointer shadow-lg" aria-label="Back">
+          <ChevronLeft className="w-5 h-5" strokeWidth={2.5}/>
         </button>
 
         {/* Share Button */}
@@ -189,14 +189,11 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
 
         <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight flex items-center justify-center gap-2 flex-wrap mb-2">
           <span>{name}</span>
-          {profile.verified === true && (
-            <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#00BFFF] inline-flex items-center justify-center text-[#060709] text-xs sm:text-sm font-black shrink-0 shadow-md shadow-[#00BFFF]/30" title="Verified Talent">
-              ✓
-            </span>
-          )}
-          {isPremiumUser && (
-            <span className="px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-extrabold text-[10px] sm:text-xs tracking-widest uppercase no-scale shadow-md shadow-amber-500/20">
-              PREMIUM
+          {(profile.verified === true || isPremiumUser) && (
+            <span className="w-5 h-5 sm:w-6 sm:h-6 aspect-square rounded-full bg-[#00BFFF] inline-flex items-center justify-center text-[#060709] shrink-0 shadow-md shadow-[#00BFFF]/30" title="Verified Talent">
+              <svg className="w-3 h-3 text-[#060709]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
             </span>
           )}
         </h1>

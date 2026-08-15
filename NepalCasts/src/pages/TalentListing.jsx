@@ -11,7 +11,7 @@ import Tag from '../components/ui/Tag';
 import TalentCardSkeleton from '../components/ui/TalentCardSkeleton';
 import ShareSheet from '../components/ui/ShareSheet';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
-import { CATEGORIES, getCategoryConfig } from '../constants/categories';
+import { CATEGORIES, getCategoryConfig, matchesCategory } from '../constants/categories';
 import { cacheManager } from '../utils/cacheManager';
 import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
 export default function TalentListing({ onNavigate, user, initialCategory = 'All' }) {
@@ -112,29 +112,6 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         if (count <= 4)
             return 'Expert';
         return 'Pro';
-    };
-    const matchesCategory = (talent, categoryFilter) => {
-        if (!categoryFilter || categoryFilter === 'All')
-            return true;
-        const filterClean = categoryFilter.trim().toLowerCase();
-        const roleClean = (talent.role || '').trim().toLowerCase();
-        const catClean = (talent.category || '').trim().toLowerCase();
-        const isMatch = (val) => {
-            if (!val)
-                return false;
-            if (val === filterClean)
-                return true;
-            if (val === filterClean + 's' || val + 's' === filterClean)
-                return true;
-            if (filterClean === 'actor' && (val === 'actor' || val === 'actress' || val.includes('actor') || val.includes('actress')))
-                return true;
-            if (filterClean === 'voiceover' && (val === 'voice over' || val === 'voiceover' || val.includes('voice')))
-                return true;
-            if (filterClean === 'vfx' && (val === 'vfx' || val.includes('vfx') || val.includes('visual effects')))
-                return true;
-            return val.includes(filterClean) || filterClean.includes(val);
-        };
-        return isMatch(roleClean) || isMatch(catClean);
     };
     const getFacetedCount = (filterKey, optionValue) => {
         return talents.filter(t => {
@@ -281,17 +258,16 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                     </AnimatePresence>
                 </div>
 
-                <div className="max-w-[1600px] mx-auto px-1 sm:px-8 lg:px-12 relative z-10">
+                <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
 
 
                     {viewMode === 'categories' && (<div className="animate-fade-in space-y-10 text-left">
                         <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                            <button onClick={() => onNavigate('home')} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all shadow-md shrink-0 cursor-pointer" aria-label="Back" title="Go Back">
-                                <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
+                            <button onClick={() => onNavigate('home')} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 shrink-0 cursor-pointer" aria-label="Back" title="Go Back">
+                                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
                             </button>
                             <div>
-                                <h1 className="text-3xl sm:text-4xl font-sans font-black text-white tracking-tight leading-none mb-2">Browse by Category</h1>
-                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[1.5px]">Discover Nepal's finest cinema professionals</p>
+                                <h1 className="text-3xl sm:text-4xl font-sans font-black text-white tracking-tight leading-none">Browse by Category</h1>
                             </div>
                         </div>
 
@@ -311,7 +287,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                     }
                                 }} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }} className="category-card p-7 sm:p-9 lg:p-11 flex flex-col items-center justify-center gap-4 sm:gap-5 group cursor-pointer rounded-3xl">
 
-                                    <div className="relative z-10 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1" style={{
+                                    <div className="relative z-10 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 flex items-center justify-center rounded-full" style={{
                                         backgroundColor: `${detail.color}20`,
                                         color: detail.color,
                                         boxShadow: `0 0 35px ${detail.color}15`,
@@ -319,7 +295,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                         <Icon className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14" strokeWidth={1.5} />
                                     </div>
 
-                                    <span className="text-lg sm:text-xl lg:text-2xl font-black text-white/90 group-hover:text-white transition-colors relative z-10">
+                                    <span className="text-lg sm:text-xl lg:text-2xl font-black text-white relative z-10">
                                         {detail.label}
                                     </span>
 
@@ -346,8 +322,8 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                     } else {
                                         navigate('/talents');
                                     }
-                                }} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all shadow-md cursor-pointer shrink-0" aria-label="Back to Categories" title="Back to Categories">
-                                    <ChevronLeft className="w-6 h-6" strokeWidth={2.5} />
+                                }} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0" aria-label="Back to Categories" title="Back to Categories">
+                                    <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
                                 </button>
                                 <div>
                                     <h2 className="text-xl sm:text-2xl font-black text-white leading-none">
@@ -436,7 +412,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                     const joinYear = createdDate.getFullYear();
                                     const expLevel = getExperienceLevel(talent);
                                     const talentPhoto = talent.image || talent.photoURL || talent.profileImage || talent.avatar || talent.photo;
-                                    return (<div key={talent.id} onMouseEnter={() => setHoveredTalent(talent)} onMouseLeave={() => setHoveredTalent(null)} onClick={() => onNavigate('profile', talent.id)} className="flex items-center justify-between py-4 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group">
+                                    return (<div key={talent.id} onMouseEnter={() => setHoveredTalent(talent)} onMouseLeave={() => setHoveredTalent(null)} onClick={() => onNavigate('profile', talent.id)} className="flex items-center justify-between py-2 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group">
                                         <div className="flex items-center gap-4 min-w-0">
                                             <Avatar userId={talent.id || talent.uid} user={talent} src={talentPhoto} size="lg" name={talent.name} className="w-12 h-12 md:w-14 md:h-14 transition-transform group-hover:scale-105 duration-300" />
                                             <div className="min-w-0 text-left">
@@ -455,11 +431,19 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                         </div>
 
                                         <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                                            {talent.id !== activeUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, talent.id)} className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 border active:scale-[0.98] ${isFollowing
-                                                ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
-                                                : 'bg-white/[0.06] border-white/10 hover:bg-white/10 text-white'}`}>
-                                                {isFollowing ? 'Following' : 'Follow'}
-                                            </button>)}
+                                            {talent.id !== activeUser?.uid && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleToggleFollow(e, talent.id)}
+                                                    className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 border cursor-pointer ${
+                                                        isFollowing
+                                                            ? 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
+                                                            : 'bg-[#18181b] border-white/20 text-white hover:bg-white/15 hover:border-white/30 shadow-sm'
+                                                    }`}
+                                                >
+                                                    {isFollowing ? 'Following' : 'Follow'}
+                                                </button>
+                                            )}
 
                                             <button type="button" onClick={() => setActiveMenuId(activeMenuId === talent.id ? null : talent.id)} className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-white relative bg-transparent hover:bg-white/5 transition-colors">
                                                 <MoreVertical size={16} />

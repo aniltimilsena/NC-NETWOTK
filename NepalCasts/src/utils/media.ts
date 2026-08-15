@@ -27,3 +27,41 @@ export function getOptimizedImageUrl(url?: string | null, options: ImageOptimiza
   const transformString = transforms.join(',');
   return url.replace('/upload/', `/upload/${transformString}/`);
 }
+
+export const saveImageDirectly = async (url: string, filename = 'nepalcasts-photo.jpg') => {
+  if (!url) return;
+  try {
+    // If Cloudinary URL, inject fl_attachment to force direct download headers
+    if (url.includes('cloudinary.com') && url.includes('/upload/')) {
+      const downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
+
+    // For any other image URL, fetch as blob and trigger local object download
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  } catch (err) {
+    // Fallback
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
