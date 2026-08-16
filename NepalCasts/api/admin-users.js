@@ -17,6 +17,19 @@ function initFirebaseAdmin() {
         admin.initializeApp({ projectId });
     }
 }
+function sanitizeString(str) {
+    if (typeof str !== 'string') return '';
+    return str.replace(/[&<>"']/g, (m) => {
+        switch (m) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '"': return '&quot;';
+            case "'": return '&#39;';
+            default: return m;
+        }
+    }).trim();
+}
 async function verifyAdmin(req) {
     const authHeader = req.headers['authorization'] || '';
     const token = authHeader.replace('Bearer ', '').trim();
@@ -240,11 +253,12 @@ export default async function handler(req, res) {
                     banExpiresAt = admin.firestore.Timestamp.fromDate(expiry);
                 }
             }
+            const cleanReason = sanitizeString(reason) || 'No reason provided';
             const updateFields = {
                 status: 'banned',
                 bannedAt: admin.firestore.FieldValue.serverTimestamp(),
                 bannedBy: adminUid,
-                banReason: reason || 'No reason provided',
+                banReason: cleanReason,
                 banExpiresAt,
             };
             await db.collection('users').doc(userId).update(updateFields);

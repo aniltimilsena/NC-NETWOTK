@@ -1,8 +1,67 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.admin == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true
+      );
+    }
+    
+    function isNotModifyingAdminFields() {
+      return resource == null || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'role', 'status', 'verified', 'premium', 'banned', 'banReason']);
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && (!('isAdmin' in request.resource.data) || request.resource.data.isAdmin != true);
+      allow update: if isAdmin() || (isOwner(userId) && isNotModifyingAdminFields());
+      allow delete: if isAdmin();
+    }
+
+    match /profiles/{profileId} {
+      allow read: if true;
+      allow write: if isAdmin() || isOwner(profileId);
+    }
+
+    match /casting_calls/{callId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /conversations/{convId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /messages/{msgId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /notifications/{notifId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /one_time_tokens/{tokenId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /admin_logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
     match /{document=**} {
-      allow read, write: if true;
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
   }
 }
+

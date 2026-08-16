@@ -3,9 +3,24 @@ export default async function handler(req, res) {
     if (!process.env.SERVER_URL) {
         console.warn('SERVER_URL environment variable is not configured. Falling back to localhost.');
     }
-    const path = req.url.replace(/^\/api/, '');
-    const destUrl = `${targetUrl.replace(/\/$/, '')}${path}`;
+    
+    // Extract path and prevent path traversal attacks
+    let rawPath = req.url.replace(/^\/api\/proxy/, '').replace(/^\/api/, '');
+    // Ensure path starts with / and strip query string for path checking
+    if (!rawPath.startsWith('/')) rawPath = '/' + rawPath;
+
+    // Use URL normalization to verify path safety
     try {
+        const base = new URL(targetUrl.endsWith('/') ? targetUrl : `${targetUrl}/`);
+        const resolved = new URL(rawPath.replace(/^\//, ''), base);
+        
+        // Ensure resolved URL starts with base URL path
+        if (!resolved.pathname.startsWith(base.pathname)) {
+            return res.status(400).json({ error: 'Invalid path: path traversal detected' });
+        }
+        
+        const destUrl = resolved.toString();
+
         const headers = { ...req.headers };
         delete headers.host;
         const options = {

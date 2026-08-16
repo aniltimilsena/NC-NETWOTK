@@ -153,9 +153,6 @@ export default function AppProviders({ children }: {
             const rawClerkPhoto = clerkUser.hasImage ? (clerkUser.imageUrl || '') : '';
             const photoURL = (rawClerkPhoto.includes('img.clerk.com') || rawClerkPhoto.includes('clerk.dev')) ? '' : rawClerkPhoto;
 
-            const isSuperAdminEmail = Boolean(email && email.toLowerCase() === 'aniltimilsena53@gmail.com');
-            setIsAdmin(isSuperAdminEmail);
-
             setUser({ uid, email, displayName: clerkName, photoURL, });
 
             (async () => {
@@ -175,16 +172,13 @@ export default function AppProviders({ children }: {
                     }
                     const userDocRef = doc(db, 'users', uid);
                     const userDoc = await getDoc(userDocRef);
-                    const isSuperAdminEmail = email && email.toLowerCase() === 'aniltimilsena53@gmail.com';
                     const hasAdminFlag = userDoc.exists() && userDoc.data()?.isAdmin === true;
-                    const shouldBeAdmin = Boolean(isSuperAdminEmail || hasAdminFlag);
 
                     if (!userDoc.exists()) {
-                        await setDoc(userDocRef, { email, displayName: clerkName, createdAt: serverTimestamp(), isAdmin: shouldBeAdmin, }, { merge: true });
-                        setIsAdmin(shouldBeAdmin);
+                        await setDoc(userDocRef, { email, displayName: clerkName, createdAt: serverTimestamp() }, { merge: true });
+                        setIsAdmin(false);
                     } else {
-                        if (isSuperAdminEmail && !hasAdminFlag) { await setDoc(userDocRef, { isAdmin: true }, { merge: true }); }
-                        setIsAdmin(shouldBeAdmin);
+                        setIsAdmin(hasAdminFlag);
                     }
 
                     const profileDocRef = doc(db, 'profiles', uid);
