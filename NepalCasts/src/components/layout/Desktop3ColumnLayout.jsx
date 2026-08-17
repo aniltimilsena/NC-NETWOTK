@@ -381,7 +381,7 @@ export default function Desktop3ColumnLayout({
 
                     <div className="flex-1 min-w-0 text-left flex flex-col gap-0.5">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h3 className="text-white font-extrabold text-base leading-snug tracking-tight truncate">{realName}</h3>
+                        <h3 className="text-white font-bold text-base leading-snug tracking-tight truncate">{realName}</h3>
                         {(isVerified || isPremium) && (
                           <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0 shadow-sm" style={{ width: '16px', height: '16px' }} title="Verified Talent">
                             <svg className="w-2.5 h-2.5 text-[#060709]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
@@ -392,12 +392,12 @@ export default function Desktop3ColumnLayout({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs font-semibold capitalize truncate">{realRole}</span>
+                        <span className="text-gray-400 text-xs font-normal capitalize truncate">{realRole}</span>
                       </div>
 
                       {openToWork && (
                         <div className="mt-1">
-                          <span className="px-2 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[8px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/20 flex items-center justify-center gap-1 w-fit">
+                          <span className="px-2 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[8px] font-normal tracking-wider uppercase border border-[#00BFFF]/20 flex items-center justify-center gap-1 w-fit">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse" />
                             OPEN TO WORK
                           </span>
@@ -408,11 +408,11 @@ export default function Desktop3ColumnLayout({
                 </>
               ) : (
                 <div className="p-3 text-center space-y-3">
-                  <h3 className="text-white font-extrabold text-base">Join NepalCasts</h3>
+                  <h3 className="text-white font-bold text-base">Join NepalCasts</h3>
                   <p className="text-gray-400 text-xs leading-relaxed">Connect with top directors and casting opportunities in Nepal.</p>
                   <Link
                     to="/signin"
-                    className="w-full py-2.5 bg-[#00BFFF] hover:opacity-90 text-black font-extrabold rounded-full text-sm transition-all cursor-pointer shadow-lg shadow-[#00BFFF]/25 active:scale-[0.98] text-center block"
+                    className="w-full py-2.5 bg-[#00BFFF] hover:opacity-90 text-black font-normal rounded-full text-sm transition-all cursor-pointer shadow-lg shadow-[#00BFFF]/25 active:scale-[0.98] text-center block"
                   >
                     Sign In / Register
                   </Link>

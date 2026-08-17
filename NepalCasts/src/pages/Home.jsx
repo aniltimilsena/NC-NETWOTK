@@ -370,16 +370,16 @@ export default function Home({ onNavigate, user }) {
 
                 {/* Talent Meta beside photo */}
                 <div className="flex flex-col justify-end items-start gap-1 min-w-0 self-end h-[166px] sm:h-[196px] text-left">
-                  <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight truncate drop-shadow-lg text-left w-full">
+                  <h1 className="text-xl sm:text-2xl font-bold text-white leading-tight truncate drop-shadow-lg text-left w-full">
                     {spotlightName}
                   </h1>
-                  <p className="text-sm sm:text-base text-gray-200 font-medium capitalize drop-shadow-md truncate text-left w-full">
+                  <p className="text-sm sm:text-base text-gray-200 font-normal capitalize drop-shadow-md truncate text-left w-full">
                     {spotlightRole}
                   </p>
                   <button
                     type="button"
                     onClick={() => onNavigate('profile', currentPremiumUser.id)}
-                    className="text-[#00BFFF] hover:underline text-sm sm:text-base font-semibold text-left transition-colors cursor-pointer block"
+                    className="text-[#00BFFF] hover:underline text-sm sm:text-base font-normal text-left transition-colors cursor-pointer block"
                   >
                     {t('home.viewProfile')}
                   </button>
@@ -400,7 +400,7 @@ export default function Home({ onNavigate, user }) {
             </div>
             <button
               onClick={() => onNavigate('listing')}
-              className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-normal flex items-center gap-1 transition-colors cursor-pointer"
             >
               {t('btn_view_all')} &gt;
             </button>
@@ -430,7 +430,7 @@ export default function Home({ onNavigate, user }) {
                   <p className="text-white font-bold text-sm sm:text-base text-center mt-2.5 truncate w-full">
                     {formatTalentName(talent.name)}
                   </p>
-                  <p className="text-[#00BFFF] text-xs sm:text-sm text-center font-semibold mt-0.5 truncate w-full">
+                  <p className="text-[#00BFFF] text-xs sm:text-sm text-center font-normal mt-0.5 truncate w-full">
                     {getTalentRoleAndAge(talent)}
                   </p>
                 </div>
@@ -452,7 +452,7 @@ export default function Home({ onNavigate, user }) {
             </div>
             <button
               onClick={() => onNavigate('listing')}
-              className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-normal flex items-center gap-1 transition-colors cursor-pointer"
             >
               {t('btn_view_all')} &gt;
             </button>
@@ -478,12 +478,12 @@ export default function Home({ onNavigate, user }) {
                     >
                       {CatIcon && <CatIcon className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14" strokeWidth={1.5} />}
                     </div>
-                    <span className="text-lg sm:text-xl lg:text-2xl font-black text-white">
+                    <span className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
                       {t(`categories.${cat.id}`, { defaultValue: cat.name })}
                     </span>
-                    <span className="text-sm sm:text-base text-gray-400 font-semibold">
+                    <span className="text-sm sm:text-base text-gray-400 font-normal">
                       {cat.count === 0 ? (
-                        <span className="text-[#00BFFF] font-bold">{t('home.beTheFirst')}</span>
+                        <span className="text-[#00BFFF] font-normal">{t('home.beTheFirst')}</span>
                       ) : (
                         `${cat.count} ${cat.count === 1 ? (t('follower') === 'पछ्याउने' ? 'कलाकार' : 'talent') : (t('follower') === 'पछ्याउने' ? 'कलाकारहरू' : 'talents')}`
                       )}
@@ -509,7 +509,7 @@ export default function Home({ onNavigate, user }) {
               </div>
               <button
                 onClick={() => onNavigate('casting')}
-                className="text-[#00BFFF] text-sm sm:text-base font-semibold flex items-center gap-1 cursor-pointer"
+                className="text-[#00BFFF] text-sm sm:text-base font-normal flex items-center gap-1 cursor-pointer"
               >
                 {t('btn_view_all')} &gt;
               </button>
@@ -537,14 +537,14 @@ export default function Home({ onNavigate, user }) {
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/75 to-transparent" />
 
                   <div className="relative z-10 space-y-1 text-left">
-                    <span className="inline-block px-2 py-0.5 rounded-md bg-[#00BFFF]/20 text-[#00BFFF] border border-[#00BFFF]/30 text-[9px] font-extrabold uppercase tracking-wider mb-0.5">
+                    <span className="inline-block px-2 py-0.5 rounded-md bg-[#00BFFF]/20 text-[#00BFFF] border border-[#00BFFF]/30 text-[9px] font-normal uppercase tracking-wider mb-0.5">
                       {item.type || 'Casting Call'}
                     </span>
-                    <h4 className="text-white font-extrabold text-sm sm:text-base leading-tight truncate drop-shadow-md">
+                    <h4 className="text-white font-normal text-sm sm:text-base leading-tight truncate drop-shadow-md">
                       {item.title}
                     </h4>
                     <div className="flex items-center justify-between pt-0.5">
-                      <span className="text-[#00BFFF] text-[10px] font-bold tracking-wide flex items-center gap-1">
+                      <span className="text-[#00BFFF] text-[10px] font-normal tracking-wide flex items-center gap-1">
                         {t('view_details')} &gt;
                       </span>
                     </div>
@@ -567,7 +567,7 @@ export default function Home({ onNavigate, user }) {
             {talentsReceived && activeTalentsList.length > 0 && (
               <button
                 onClick={() => onNavigate('trending')}
-                className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-semibold transition-all cursor-pointer"
+                className="text-[#00BFFF] hover:text-[#00BFFF]/80 text-sm sm:text-base font-normal transition-all cursor-pointer"
               >
                 {t('btn_view_all')} &gt;
               </button>
@@ -596,7 +596,7 @@ export default function Home({ onNavigate, user }) {
                   >
                     <div className="flex items-center gap-4 min-w-0 flex-1">
                       {/* Rank Number */}
-                      <span className="font-sans text-2xl sm:text-3xl font-black text-white/20 group-hover:text-[#00BFFF]/60 transition-colors w-8 text-center shrink-0 select-none">
+                      <span className="font-sans text-2xl sm:text-3xl font-normal text-white/20 group-hover:text-[#00BFFF]/60 transition-colors w-8 text-center shrink-0 select-none">
                         {idx + 1}
                       </span>
                       <Avatar
@@ -615,13 +615,13 @@ export default function Home({ onNavigate, user }) {
                           )}
                         </div>
                         <div className="flex items-center gap-2 text-gray-400 text-xs sm:text-sm truncate">
-                          <span className="text-sky-400 font-semibold truncate shrink-0">@{(talent.username || talent.name.toLowerCase().replace(/\s+/g, '')).replace(/^@/, '')}</span>
+                          <span className="text-sky-400 font-normal truncate shrink-0">@{(talent.username || talent.name.toLowerCase().replace(/\s+/g, '')).replace(/^@/, '')}</span>
                           <span className="shrink-0 text-gray-600">·</span>
-                          <span className="capitalize truncate font-semibold text-gray-300">
+                          <span className="capitalize truncate font-normal text-gray-300">
                             {t(`categories.${(talent.role?.split(',')[0] || talent.category || '').toLowerCase()}`, { defaultValue: talent.role?.split(',')[0] || talent.category || 'Talent' })}
                           </span>
                           <span className="shrink-0 text-gray-600">·</span>
-                          <span className="capitalize truncate">{talent.location || 'Nepal'}</span>
+                          <span className="capitalize truncate font-normal">{talent.location || 'Nepal'}</span>
                         </div>
                       </div>
                     </div>
@@ -629,8 +629,8 @@ export default function Home({ onNavigate, user }) {
                     {/* Right Status */}
                     <div className="text-right flex flex-col items-end gap-1 px-1 shrink-0 justify-center">
                       <div className="mt-0.5">
-                        <p className="text-gray-400 text-xs sm:text-sm font-medium">
-                          <span className="text-white font-bold text-sm sm:text-base">
+                        <p className="text-gray-400 text-xs sm:text-sm font-normal">
+                          <span className="text-white font-normal text-sm sm:text-base">
                             {(talent.followers || 0) >= 1000
                               ? `${((talent.followers || 0) / 1000).toFixed(1).replace(/\.0$/, '')}K`
                               : (talent.followers || 0)}
