@@ -154,17 +154,17 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
               <div className="hidden md:flex items-center gap-6 ml-4">
                 <div className="relative group">
-                  <button className={`flex items-center gap-1.5 py-2 text-sm font-medium transition-colors ${isDiscoverActive ? 'text-white' : 'text-[#888] hover:text-white'}`}>
-                    {t('nav_discover')}
-                    <svg className="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  <button className={`flex items-center gap-1.5 py-2 text-[15px] font-semibold tracking-tight transition-colors cursor-pointer ${isDiscoverActive ? 'text-white font-bold' : 'text-white/70 hover:text-white'}`}>
+                    <span>{t('nav_discover')}</span>
+                    <svg className="w-3.5 h-3.5 text-white/50 group-hover:text-white group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  <div className="absolute top-full left-0 mt-1 w-44 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-1.5">
-                    <Link to="/discover" className="w-full text-left block px-4 py-2 text-xs text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">Category Grid</Link>
-                    <Link to="/talents" className="w-full text-left block px-4 py-2 text-xs text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_talent_directory')}</Link>
-                    <Link to="/trending" className="w-full text-left block px-4 py-2 text-xs text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_trending_now')}</Link>
-                    <Link to="/settings" className="w-full text-left block px-4 py-2 text-xs text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
+                  <div className="absolute top-full left-0 mt-1 w-44 rounded-2xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
+                    <Link to="/discover" className="w-full text-left block px-4 py-2 text-xs font-semibold text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">Category Grid</Link>
+                    <Link to="/talents" className="w-full text-left block px-4 py-2 text-xs font-semibold text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">{t('nav_talent_directory')}</Link>
+                    <Link to="/trending" className="w-full text-left block px-4 py-2 text-xs font-semibold text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">{t('nav_trending_now')}</Link>
+                    <Link to="/settings" className="w-full text-left block px-4 py-2 text-xs font-semibold text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
                     {isAdmin && (<>
                       <div className="mx-2 my-1 border-t border-white/5"></div>
                       <Link to="/admin" className="w-full text-left block px-4 py-2 text-[9px] uppercase tracking-widest font-black text-admin-primary hover:text-white hover:bg-admin-primary/20 transition-all flex items-center justify-between group/admin">
@@ -176,15 +176,15 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 </div>
 
                 <div className="relative group">
-                  <button className={`flex items-center gap-1.5 py-2 text-sm font-medium transition-colors ${isProjectsActive ? 'text-white' : 'text-[#888] hover:text-white'}`}>
-                    {t('nav_projects')}
-                    <svg className="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  <button className={`flex items-center gap-1.5 py-2 text-[15px] font-semibold tracking-tight transition-colors cursor-pointer ${isProjectsActive ? 'text-white font-bold' : 'text-white/70 hover:text-white'}`}>
+                    <span>{t('nav_projects')}</span>
+                    <svg className="w-3.5 h-3.5 text-white/50 group-hover:text-white group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  <div className="absolute top-full left-0 mt-1 w-44 rounded-3xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/5 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-1.5">
-                    <Link to="/casting" className="w-full text-left block px-4 py-2 text-xs text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_casting_calls')}</Link>
-                    <Link to="/casting/create" className="w-full text-left block px-4 py-2 text-xs text-[#A1A1A1] hover:text-white hover:bg-white/5 transition-colors">{t('nav_post_project')}</Link>
+                  <div className="absolute top-full left-0 mt-1 w-44 rounded-2xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
+                    <Link to="/casting" className="w-full text-left block px-4 py-2 text-xs font-semibold text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">{t('nav_casting_calls')}</Link>
+                    <Link to="/casting/create" className="w-full text-left block px-4 py-2 text-xs font-semibold text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">{t('nav_post_project')}</Link>
                   </div>
                 </div>
               </div>
