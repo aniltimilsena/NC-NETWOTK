@@ -306,13 +306,13 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           <div className="flex flex-col">
             <button
               onClick={() => setExpandedSection(expandedSection === 'discover' ? null : 'discover')}
-              className={`group flex items-center justify-between w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group flex items-center gap-2 w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isDiscoverActive
                   ? "text-white font-medium"
                   : "text-gray-400 font-normal hover:text-white"
               }`}
             >
-              <span className="text-[17px] tracking-tight text-left">{t('nav_discover')}</span>
+              <span className="text-[17px] tracking-tight">{t('nav_discover')}</span>
               <svg className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'discover' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
@@ -332,13 +332,13 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           <div className="flex flex-col">
             <button
               onClick={() => setExpandedSection(expandedSection === 'projects' ? null : 'projects')}
-              className={`group flex items-center justify-between w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group flex items-center gap-2 w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isProjectsActive
                   ? "text-white font-medium"
                   : "text-gray-400 font-normal hover:text-white"
               }`}
             >
-              <span className="text-[17px] tracking-tight text-left">{t('nav_projects')}</span>
+              <span className="text-[17px] tracking-tight">{t('nav_projects')}</span>
               <svg className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'projects' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
@@ -418,8 +418,6 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           >
             <span className="text-[17px] tracking-tight">Support</span>
           </Link>
-
-          <div className="h-[1px] bg-white/[0.06] my-2 mx-3" />
 
           {isLoggedIn ? (
             <button
