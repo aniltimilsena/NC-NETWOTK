@@ -339,10 +339,10 @@ export default function Desktop3ColumnLayout({
         <div className="grid grid-cols-12 gap-2 lg:gap-3">
 
           {/* LEFT SIDEBAR (Desktop: lg+) */}
-          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-20 pt-2 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-4">
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-16 pt-0 h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-hide space-y-2">
 
             {/* Inline Desktop Search Bar */}
-            <div className="px-1">
+            <div className="px-1 pt-1">
               <div
                 onClick={() => setShowSearchOverlay(true)}
                 className="relative flex items-center bg-[#242526] rounded-full px-4 py-2 border border-white/5 hover:border-white/10 transition-all cursor-pointer"
@@ -538,7 +538,7 @@ export default function Desktop3ColumnLayout({
 
           {/* RIGHT SIDEBAR (Desktop Only: Home Page Only) */}
           {isHomePage && (
-            <aside className="hidden xl:block xl:col-span-3 sticky top-20 space-y-4 h-fit pt-2">
+            <aside className="hidden xl:block xl:col-span-3 sticky top-16 pt-0 h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-hide space-y-3">
 
               {/* Go Pro CTA */}
               {!isPremium && !isVerified && (
