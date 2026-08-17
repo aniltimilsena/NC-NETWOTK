@@ -532,7 +532,7 @@ export default function Desktop3ColumnLayout({
           </aside>
 
           {/* CENTER MAIN CONTENT */}
-          <main className={`col-span-12 ${isHomePage ? 'xl:col-span-6' : 'xl:col-span-9'} min-w-0`}>
+          <main className={`col-span-12 ${isHomePage ? 'xl:col-span-6' : 'xl:col-span-9'} min-w-0 lg:h-[calc(100vh-4.5rem)] lg:overflow-y-auto scrollbar-hide`}>
             {children}
           </main>
 
