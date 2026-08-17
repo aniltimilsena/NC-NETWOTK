@@ -557,7 +557,7 @@ export default function Desktop3ColumnLayout({
                       </svg>
                     </div>
                     <div>
-                      <h5 className="text-gray-200 text-sm font-bold font-sans">Remote Live Auditions</h5>
+                      <h5 className="text-gray-200 text-sm font-normal font-sans">Remote Live Auditions</h5>
                       <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Audition from anywhere in Nepal via nepalcasts</p>
                     </div>
                   </div>
@@ -570,7 +570,7 @@ export default function Desktop3ColumnLayout({
                       </svg>
                     </div>
                     <div>
-                      <h5 className="text-gray-200 text-sm font-bold font-sans">Direct Connections</h5>
+                      <h5 className="text-gray-200 text-sm font-normal font-sans">Direct Connections</h5>
                       <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Message top directors and production teams directly without middle agents.</p>
                     </div>
                   </div>
@@ -579,11 +579,11 @@ export default function Desktop3ColumnLayout({
                   <div className="flex gap-3.5 items-start">
                     <div className="shrink-0 mt-0.5">
                       <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                       </svg>
                     </div>
                     <div>
-                      <h5 className="text-gray-200 text-sm font-bold font-sans">Verified PRO Casting</h5>
+                      <h5 className="text-gray-200 text-sm font-normal font-sans">Verified PRO Casting</h5>
                       <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Get verified to rank first in search results and stand out to casting teams.</p>
                     </div>
                   </div>
