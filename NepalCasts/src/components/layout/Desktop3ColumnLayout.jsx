@@ -433,8 +433,8 @@ export default function Desktop3ColumnLayout({
                 </div>
               )}
 
-              {/* === SIDEBAR NAVIGATION (Clean Settings Card Style - No Blue Bars/Gradients) === */}
-              <div className="flex flex-col space-y-1.5 p-2">
+              {/* === SIDEBAR NAVIGATION === */}
+              <div className="flex flex-col py-1">
                 {[
                   { name: "Home", path: "/", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
                   { name: "Discover", path: "/discover", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z" /> },
@@ -457,59 +457,65 @@ export default function Desktop3ColumnLayout({
                     <Link
                       key={i}
                       to={item.path}
-                      className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${isActive
-                        ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
-                        : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
-                        }`}
+                      className={`flex items-center w-full px-6 py-2.5 transition-colors ${
+                        isActive
+                          ? "text-white font-black"
+                          : "text-[#777] hover:text-[#CCC]"
+                      }`}
                     >
-                      <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${isActive ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className={`w-[22px] h-[22px] mr-4 shrink-0 transition-colors ${isActive ? "text-white" : "text-[#777]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         {item.icon}
                       </svg>
-                      <span className="text-[15px] tracking-tight">{item.name}</span>
+                      <span className="font-bold text-[16px]">{item.name}</span>
                     </Link>
                   );
                 })}
 
+                <hr className="border-white/5 my-2 mx-6" />
+
                 <Link
                   to="/settings"
-                  className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${pathname === '/settings' || pathname.startsWith('/settings/')
-                    ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
-                    : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
-                    }`}
+                  className={`flex items-center w-full px-6 py-2.5 transition-colors ${
+                    pathname === '/settings' || pathname.startsWith('/settings/')
+                      ? "text-white font-black"
+                      : "text-[#777] hover:text-[#CCC]"
+                  }`}
                 >
-                  <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${pathname === '/settings' || pathname.startsWith('/settings/') ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className={`w-[22px] h-[22px] mr-4 shrink-0 transition-colors ${pathname === '/settings' || pathname.startsWith('/settings/') ? "text-white" : "text-[#777]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="text-[15px] tracking-tight">Settings</span>
+                  <span className="font-bold text-[16px]">Settings</span>
                 </Link>
 
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${pathname.startsWith("/admin")
-                      ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
-                      : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
-                      }`}
+                    className={`flex items-center w-full px-6 py-2.5 transition-colors ${
+                      pathname.startsWith("/admin")
+                        ? "text-white font-black"
+                        : "text-[#777] hover:text-[#CCC]"
+                    }`}
                   >
-                    <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${pathname.startsWith("/admin") ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-[22px] h-[22px] mr-4 shrink-0 transition-colors ${pathname.startsWith("/admin") ? "text-white" : "text-[#777]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
-                    <span className="text-[15px] tracking-tight">Admin Panel</span>
+                    <span className="font-bold text-[16px]">Admin Panel</span>
                   </Link>
                 )}
 
                 <Link
                   to="/trust-safety"
-                  className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
-                    ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
-                    : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
-                    }`}
+                  className={`flex items-center w-full px-6 py-2.5 transition-colors ${
+                    pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
+                      ? "text-white font-black"
+                      : "text-[#777] hover:text-[#CCC]"
+                  }`}
                 >
-                  <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/') ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className={`w-[22px] h-[22px] mr-4 shrink-0 transition-colors ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/') ? "text-white" : "text-[#777]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="text-[15px] tracking-tight">Support</span>
+                  <span className="font-bold text-[16px]">Support</span>
                 </Link>
 
                 <hr className="border-white/5 my-2 mx-6" />
@@ -518,7 +524,7 @@ export default function Desktop3ColumnLayout({
                   <button
                     type="button"
                     onClick={onLogout || (() => AuthService.signOut())}
-                    className="flex items-center w-full relative px-6 py-2.5 transition-colors text-[#777] hover:text-white text-left cursor-pointer"
+                    className="flex items-center w-full px-6 py-2.5 transition-colors text-[#777] hover:text-white text-left cursor-pointer"
                   >
                     <svg className="w-[22px] h-[22px] mr-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
