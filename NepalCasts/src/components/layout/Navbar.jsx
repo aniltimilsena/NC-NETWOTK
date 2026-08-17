@@ -53,7 +53,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
       default: return false;
     }
   };
-  const isDiscoverActive = isActionActive('listing') || isActionActive('trending') || isActionActive('home') || isActionActive('settings') || pathname.startsWith('/admin');
+  const isDiscoverActive = pathname === '/discover' || isActionActive('listing') || isActionActive('trending') || pathname.startsWith('/categories');
   const isProjectsActive = isActionActive('casting') || isActionActive('casting-create');
   const [menuOpen, setMenuOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState(null);
