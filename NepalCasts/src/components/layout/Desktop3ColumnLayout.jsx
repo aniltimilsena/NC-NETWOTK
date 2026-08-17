@@ -419,85 +419,153 @@ export default function Desktop3ColumnLayout({
                 </div>
               )}
 
-              {/* === TWITTER/X STYLE MINIMALIST FLOATING NAVIGATION === */}
-              <div className="flex flex-col space-y-1 px-2 py-2">
-                {[
-                  { name: "Home", path: "/", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
-                  { name: "Discover", path: "/discover", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z" /> },
-                  { name: "Talent Directory", path: "/talents", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
-                  { name: "Trending", path: "/trending", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
-                  { name: "Casting Calls", path: "/casting", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
-                  { name: "Post Project", path: "/casting/create", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-                  ...(user ? [
-                    { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
-                    { name: "Saved Calls", path: "/saved", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /> },
-                    { name: "Profile", path: `/profile/${user?.uid}`, icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> }
-                  ] : [])
-                ].map((item, i) => {
-                  const isActive = item.path === '/'
-                    ? (pathname === '/' || pathname === '')
-                    : item.path === '/casting'
-                      ? (pathname === '/casting' || (pathname.startsWith('/casting/') && pathname !== '/casting/create'))
-                      : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
-                  return (
+              {/* === CATEGORY GROUPED FLOATING NAVIGATION (LAPTOP VIEW) === */}
+              <div className="flex flex-col space-y-3 px-2 py-1 text-left">
+                {/* DISCOVER GROUP */}
+                <div>
+                  <div className="px-4 pt-1 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">Discover</div>
+                  <div className="space-y-0.5">
+                    {[
+                      { name: "Home", path: "/", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
+                      { name: "Discover", path: "/discover", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z" /> },
+                      { name: "Talent Directory", path: "/talents", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
+                      { name: "Trending", path: "/trending", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
+                    ].map((item, i) => {
+                      const isActive = item.path === '/'
+                        ? (pathname === '/' || pathname === '')
+                        : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
+                      return (
+                        <Link
+                          key={i}
+                          to={item.path}
+                          className={`group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                            isActive
+                              ? "text-white font-medium"
+                              : "text-gray-400 font-normal hover:text-white"
+                          }`}
+                        >
+                          <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            {item.icon}
+                          </svg>
+                          <span className="text-[16px] tracking-tight">{item.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* PROJECTS GROUP */}
+                <div>
+                  <div className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">Projects</div>
+                  <div className="space-y-0.5">
+                    {[
+                      { name: "Casting Calls", path: "/casting", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
+                      { name: "Post Project", path: "/casting/create", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /> },
+                    ].map((item, i) => {
+                      const isActive = item.path === '/casting'
+                        ? (pathname === '/casting' || (pathname.startsWith('/casting/') && pathname !== '/casting/create'))
+                        : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
+                      return (
+                        <Link
+                          key={i}
+                          to={item.path}
+                          className={`group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                            isActive
+                              ? "text-white font-medium"
+                              : "text-gray-400 font-normal hover:text-white"
+                          }`}
+                        >
+                          <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            {item.icon}
+                          </svg>
+                          <span className="text-[16px] tracking-tight">{item.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* PERSONAL GROUP */}
+                {user && (
+                  <div>
+                    <div className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">Personal</div>
+                    <div className="space-y-0.5">
+                      {[
+                        { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
+                        { name: "Saved Calls", path: "/saved", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /> },
+                        { name: "Profile", path: `/profile/${user?.uid}`, icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> }
+                      ].map((item, i) => {
+                        const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/'));
+                        return (
+                          <Link
+                            key={i}
+                            to={item.path}
+                            className={`group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                              isActive
+                                ? "text-white font-medium"
+                                : "text-gray-400 font-normal hover:text-white"
+                            }`}
+                          >
+                            <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              {item.icon}
+                            </svg>
+                            <span className="text-[16px] tracking-tight">{item.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* LEGAL & SUPPORT GROUP */}
+                <div>
+                  <div className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">Legal & Support</div>
+                  <div className="space-y-0.5">
                     <Link
-                      key={i}
-                      to={item.path}
-                      className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                        isActive
+                      to="/trust-safety"
+                      className={`group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                        pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
                           ? "text-white font-medium"
                           : "text-gray-400 font-normal hover:text-white"
                       }`}
                     >
-                      <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        {item.icon}
+                      <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/') ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="text-[17px] tracking-tight">{item.name}</span>
+                      <span className="text-[16px] tracking-tight">Support</span>
                     </Link>
-                  );
-                })}
 
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${pathname.startsWith("/admin")
-                        ? "text-white font-medium"
-                        : "text-gray-400 font-normal hover:text-white"
-                      }`}
-                  >
-                    <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${pathname.startsWith("/admin") ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    <span className="text-[17px] tracking-tight">Admin Panel</span>
-                  </Link>
-                )}
-
-                <Link
-                  to="/trust-safety"
-                  className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
-                      ? "text-white font-medium"
-                      : "text-gray-400 font-normal hover:text-white"
-                    }`}
-                >
-                  <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/') ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-[17px] tracking-tight">Support</span>
-                </Link>
-
-                <div className="h-[1px] bg-white/[0.06] my-2 mx-3" />
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        className={`group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                          pathname.startsWith("/admin")
+                            ? "text-white font-medium"
+                            : "text-gray-400 font-normal hover:text-white"
+                        }`}
+                      >
+                        <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${pathname.startsWith("/admin") ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span className="text-[16px] tracking-tight">Admin Panel</span>
+                      </Link>
+                    )}
+                  </div>
+                </div>
 
                 {user && (
-                  <button
-                    type="button"
-                    onClick={onLogout || (() => AuthService.signOut())}
-                    className="group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 text-gray-400 hover:text-rose-400 font-normal cursor-pointer active:scale-[0.98]"
-                  >
-                    <svg className="w-6 h-6 mr-3.5 shrink-0 transition-colors group-hover:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    <span className="text-[17px] tracking-tight">Logout</span>
-                  </button>
+                  <div className="pt-2 border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={onLogout || (() => AuthService.signOut())}
+                      className="group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 text-gray-400 hover:text-rose-400 font-normal cursor-pointer active:scale-[0.98]"
+                    >
+                      <svg className="w-5 h-5 mr-3.5 shrink-0 transition-colors group-hover:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      <span className="text-[16px] tracking-tight">Logout</span>
+                    </button>
+                  </div>
                 )}
               </div>
 
