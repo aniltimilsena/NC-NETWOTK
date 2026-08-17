@@ -293,7 +293,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           <Link
             to="/"
             onClick={() => setMenuOpen(false)}
-            className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+            className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
               pathname === '/' || pathname === ''
                 ? "text-white font-medium"
                 : "text-gray-400 font-normal hover:text-white"
@@ -303,10 +303,10 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           </Link>
 
           {/* Discover Accordion (Reference Image Style) */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
               onClick={() => setExpandedSection(expandedSection === 'discover' ? null : 'discover')}
-              className={`group flex items-center gap-2 w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group flex items-center justify-start gap-1.5 w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isDiscoverActive
                   ? "text-white font-medium"
                   : "text-gray-400 font-normal hover:text-white"
@@ -320,19 +320,19 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
             {expandedSection === 'discover' && (
               <div className="pl-6 pr-3 py-1 space-y-1 my-1">
-                <Link to="/discover" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">Category Grid</Link>
-                <Link to="/talents" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">{t('nav_talent_directory')}</Link>
-                <Link to="/trending" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">{t('nav_trending_now')}</Link>
-                <Link to="/settings" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">{t('nav_settings')}</Link>
+                <Link to="/discover" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">Category Grid</Link>
+                <Link to="/talents" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">{t('nav_talent_directory')}</Link>
+                <Link to="/trending" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">{t('nav_trending_now')}</Link>
+                <Link to="/settings" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">{t('nav_settings')}</Link>
               </div>
             )}
           </div>
 
           {/* Projects Accordion */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
               onClick={() => setExpandedSection(expandedSection === 'projects' ? null : 'projects')}
-              className={`group flex items-center gap-2 w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group flex items-center justify-start gap-1.5 w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isProjectsActive
                   ? "text-white font-medium"
                   : "text-gray-400 font-normal hover:text-white"
@@ -346,8 +346,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
             {expandedSection === 'projects' && (
               <div className="pl-6 pr-3 py-1 space-y-1 my-1">
-                <Link to="/casting" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">{t('nav_casting_calls')}</Link>
-                <Link to="/casting/create" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">{t('nav_post_project')}</Link>
+                <Link to="/casting" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">{t('nav_casting_calls')}</Link>
+                <Link to="/casting/create" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">{t('nav_post_project')}</Link>
               </div>
             )}
           </div>
@@ -358,37 +358,37 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
               <Link
                 to="/messages"
                 onClick={() => setMenuOpen(false)}
-                className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+                className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
                   pathname.startsWith('/messages')
                     ? "text-white font-medium"
                     : "text-gray-400 font-normal hover:text-white"
                 }`}
               >
-                <span className="text-[17px] tracking-tight">Messages</span>
+                <span className="text-[17px] tracking-tight">{t('nav_messages') || 'Messages'}</span>
               </Link>
 
               <Link
                 to="/saved-castings"
                 onClick={() => setMenuOpen(false)}
-                className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+                className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
                   pathname.startsWith('/saved')
                     ? "text-white font-medium"
                     : "text-gray-400 font-normal hover:text-white"
                 }`}
               >
-                <span className="text-[17px] tracking-tight">Saved Calls</span>
+                <span className="text-[17px] tracking-tight">{t('nav_saved_calls') || 'Saved Calls'}</span>
               </Link>
 
               <Link
                 to={`/profile/${user?.uid}`}
                 onClick={() => setMenuOpen(false)}
-                className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+                className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
                   pathname.startsWith('/profile')
                     ? "text-white font-medium"
                     : "text-gray-400 font-normal hover:text-white"
                 }`}
               >
-                <span className="text-[17px] tracking-tight">Profile</span>
+                <span className="text-[17px] tracking-tight">{t('nav_profile') || 'Profile'}</span>
               </Link>
             </>
           )}
@@ -397,7 +397,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             <Link
               to="/admin"
               onClick={() => setMenuOpen(false)}
-              className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+              className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
                 pathname.startsWith("/admin")
                   ? "text-white font-medium"
                   : "text-gray-400 font-normal hover:text-white"
@@ -410,7 +410,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           <Link
             to="/trust-safety"
             onClick={() => setMenuOpen(false)}
-            className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+            className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
               pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
                 ? "text-white font-medium"
                 : "text-gray-400 font-normal hover:text-white"
@@ -425,7 +425,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 onLogout();
                 setMenuOpen(false);
               }}
-              className="group flex items-center w-full px-4 py-2.5 transition-all duration-200 text-gray-400 hover:text-rose-400 text-left font-normal cursor-pointer active:scale-[0.98]"
+              className="group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 text-gray-400 hover:text-rose-400 text-left font-normal cursor-pointer active:scale-[0.98]"
             >
               <span className="text-[17px] tracking-tight">Logout</span>
             </button>
@@ -433,7 +433,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             <Link
               to="/signin"
               onClick={() => setMenuOpen(false)}
-              className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+              className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
                 pathname === '/signin'
                   ? "text-white font-medium"
                   : "text-gray-400 font-normal hover:text-white"
