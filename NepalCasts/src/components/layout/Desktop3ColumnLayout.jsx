@@ -359,13 +359,13 @@ export default function Desktop3ColumnLayout({
               </div>
             </div>
 
-            <div className="overflow-hidden bg-[#060709] rounded-2xl">
+            <div className="space-y-1">
 
               {/* === PROFILE CARD === */}
               {user ? (
                 <>
                   {/* Avatar + Info (Horizontal Row) */}
-                  <div className="px-4 py-5 relative z-10 flex items-center gap-4 bg-[#0A0A0E]/50 rounded-2xl">
+                  <div className="px-4 py-3 relative z-10 flex items-center gap-4">
                     <div className="relative shrink-0">
                       <Avatar
                         user={user}
@@ -373,8 +373,8 @@ export default function Desktop3ColumnLayout({
                         src={realImage}
                         gender={gender}
                         name={realName}
-                        size={64}
-                        className="ring-2 ring-white/10 shadow-xl"
+                        size={56}
+                        className="ring-2 ring-white/10 shadow-lg"
                       />
                       {/* Online dot */}
                       <span className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-[#060709] shadow-[0_0_8px_rgba(52,211,153,0.8)] pointer-events-none" />
@@ -382,9 +382,9 @@ export default function Desktop3ColumnLayout({
 
                     <div className="flex-1 min-w-0 text-left flex flex-col gap-0.5">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h3 className="text-white font-extrabold text-lg leading-snug tracking-tight truncate">{realName}</h3>
+                        <h3 className="text-white font-extrabold text-base leading-snug tracking-tight truncate">{realName}</h3>
                         {(isVerified || isPremium) && (
-                          <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0 shadow-sm" style={{ width: '18px', height: '18px' }} title="Verified Talent">
+                          <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0 shadow-sm" style={{ width: '16px', height: '16px' }} title="Verified Talent">
                             <svg className="w-2.5 h-2.5 text-[#060709]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
@@ -398,26 +398,13 @@ export default function Desktop3ColumnLayout({
 
                       {openToWork && (
                         <div className="mt-1">
-                          <span className="px-2.5 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[8px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/20 flex items-center justify-center gap-1 w-fit">
+                          <span className="px-2 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[8px] font-extrabold tracking-wider uppercase border border-[#00BFFF]/20 flex items-center justify-center gap-1 w-fit">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse" />
                             OPEN TO WORK
                           </span>
                         </div>
                       )}
                     </div>
-                  </div>
-
-
-                  {/* View My Profile Link */}
-                  <div className="px-4 pb-4 mt-2 text-left">
-                    <button
-                      type="button"
-                      onClick={() => onNavigate?.('profile', user?.uid)}
-                      className="text-[11px] font-bold text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
-                    >
-                      <span>{t('profile.viewProfile')}</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </button>
                   </div>
                 </>
               ) : (
@@ -426,7 +413,7 @@ export default function Desktop3ColumnLayout({
                   <p className="text-gray-400 text-xs leading-relaxed">Connect with top directors and casting opportunities in Nepal.</p>
                   <Link
                     to="/signin"
-                    className="w-full py-2.5 bg-[#00BFFF] hover:opacity-90 text-black font-extrabold rounded-xl text-sm transition-all cursor-pointer shadow-lg shadow-[#00BFFF]/25 active:scale-[0.98] text-center block"
+                    className="w-full py-2.5 bg-[#00BFFF] hover:opacity-90 text-black font-extrabold rounded-full text-sm transition-all cursor-pointer shadow-lg shadow-[#00BFFF]/25 active:scale-[0.98] text-center block"
                   >
                     Sign In / Register
                   </Link>
