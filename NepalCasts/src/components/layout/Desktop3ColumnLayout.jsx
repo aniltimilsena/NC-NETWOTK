@@ -443,11 +443,10 @@ export default function Desktop3ColumnLayout({
                     <Link
                       key={i}
                       to={item.path}
-                      className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                        isActive
+                      className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${isActive
                           ? "bg-white/[0.08] text-white font-black shadow-sm"
                           : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
-                      }`}
+                        }`}
                     >
                       <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         {item.icon}
@@ -461,11 +460,10 @@ export default function Desktop3ColumnLayout({
 
                 <Link
                   to="/settings"
-                  className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                    pathname === '/settings' || pathname.startsWith('/settings/')
+                  className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${pathname === '/settings' || pathname.startsWith('/settings/')
                       ? "bg-white/[0.08] text-white font-black shadow-sm"
                       : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
-                  }`}
+                    }`}
                 >
                   <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${pathname === '/settings' || pathname.startsWith('/settings/') ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -477,11 +475,10 @@ export default function Desktop3ColumnLayout({
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                      pathname.startsWith("/admin")
+                    className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${pathname.startsWith("/admin")
                         ? "bg-white/[0.08] text-white font-black shadow-sm"
                         : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
-                    }`}
+                      }`}
                   >
                     <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${pathname.startsWith("/admin") ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -492,11 +489,10 @@ export default function Desktop3ColumnLayout({
 
                 <Link
                   to="/trust-safety"
-                  className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                    pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
+                  className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
                       ? "bg-white/[0.08] text-white font-black shadow-sm"
                       : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
-                  }`}
+                    }`}
                 >
                   <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/') ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
