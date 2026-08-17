@@ -301,9 +301,11 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                     { name: "Profile", path: `/profile/${user?.uid}`, icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/> }
                 ] : [])
             ].map((item, i) => {
-                const isActive = pathname === item.path || (item.path !== '/' &&
-                    pathname.startsWith(item.path + '/') &&
-                    (item.path !== '/casting' || pathname !== '/casting/create'));
+                const isActive = item.path === '/'
+                  ? (pathname === '/' || pathname === '')
+                  : item.path === '/casting'
+                  ? (pathname === '/casting' || (pathname.startsWith('/casting/') && pathname !== '/casting/create'))
+                  : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
                 return (<Link key={i} to={item.path} onClick={() => setMenuOpen(false)} className={`flex items-center w-full relative px-6 py-2.5 transition-colors ${isActive ? "text-[#00BFFF] bg-gradient-to-r from-transparent to-[#00BFFF]/10" : "text-[#777] hover:text-[#CCC]"}`}>
                     <svg className="w-[22px] h-[22px] mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       {item.icon}
