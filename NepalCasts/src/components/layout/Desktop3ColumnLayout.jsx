@@ -433,20 +433,25 @@ export default function Desktop3ColumnLayout({
                 </div>
               )}
 
-              {/* === SIDEBAR NAVIGATION === */}
-              <div className="flex flex-col py-1">
+              {/* === SIDEBAR NAVIGATION (Settings-Subpage Styled Cards) === */}
+              <div className="flex flex-col space-y-2 p-2">
                 {[
-                  { name: "Home", path: "/", matchNav: ['home'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/> },
-                  { name: "Discover", path: "/discover", matchNav: ['discover'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z"/> },
-                  { name: "Talent Directory", path: "/talents", matchNav: ['talent', 'talents'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/> },
-                  { name: "Trending", path: "/trending", matchNav: ['trending'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/> },
-                  { name: "Casting", path: "/casting", matchNav: ['casting'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/> },
-                  { name: "Create", path: "/casting/create", matchNav: ['casting-create'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/> },
+                  { name: "Home", path: "/", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/> },
+                  { name: "Discover", path: "/discover", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z"/> },
+                  { name: "Talent Directory", path: "/talents", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/> },
+                  { name: "Trending", path: "/trending", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/> },
+                  { name: "Casting", path: "/casting", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/> },
+                  { name: "Create", path: "/casting/create", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/> },
                   ...(user ? [
-                      { name: "Messages", path: "/messages", matchNav: ['messages'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/> },
-                      { name: "Saved Calls", path: "/saved", matchNav: ['saved', 'saved-castings', 'saved-casting'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/> },
-                      { name: "Profile", path: `/profile/${user?.uid}`, matchNav: ['profile', 'profile-detail'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/> }
-                  ] : [])
+                    { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/> },
+                    { name: "Saved Calls", path: "/saved", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/> },
+                    { name: "Profile", path: `/profile/${user?.uid}`, icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/> }
+                  ] : []),
+                  { name: "Settings", path: "/settings", icon: <g><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></g> },
+                  ...(isAdmin ? [
+                    { name: "Admin Panel", path: "/admin", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /> }
+                  ] : []),
+                  { name: "Support", path: "/trust-safety", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/> }
                 ].map((item, i) => {
                   const isActive = item.path === '/'
                     ? (pathname === '/' || pathname === '')
@@ -457,91 +462,50 @@ export default function Desktop3ColumnLayout({
                     <Link
                       key={i}
                       to={item.path}
-                      className={`flex items-center w-full relative px-6 py-2.5 transition-colors ${
+                      className={`flex items-center justify-between w-full p-2.5 rounded-xl border transition-all group ${
                         isActive
-                          ? "text-[#00BFFF] bg-gradient-to-r from-transparent to-[#00BFFF]/10"
-                          : "text-[#777] hover:text-[#CCC]"
+                          ? "bg-[#00BFFF]/10 border-[#00BFFF]/30 text-white shadow-[0_0_12px_rgba(0,191,255,0.12)]"
+                          : "bg-[#12121A]/80 border-white/10 text-gray-300 hover:bg-white/[0.08] hover:border-white/20 hover:text-white"
                       }`}
                     >
-                      <svg className="w-[22px] h-[22px] mr-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        {item.icon}
-                      </svg>
-                      <span className="font-bold text-[16px]">{item.name}</span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                          isActive
+                            ? "bg-[#00BFFF]/20 border border-[#00BFFF]/40 text-[#00BFFF]"
+                            : "bg-white/5 border border-white/10 text-gray-400 group-hover:text-white"
+                        }`}>
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            {item.icon}
+                          </svg>
+                        </div>
+                        <span className={`text-sm font-bold tracking-tight truncate ${isActive ? "text-[#00BFFF]" : "text-gray-200"}`}>
+                          {item.name}
+                        </span>
+                      </div>
+
                       {isActive && (
-                        <div className="absolute right-0 top-0 bottom-0 w-[2.5px] bg-[#00BFFF] shadow-[-2px_0_10px_rgba(0,191,255,0.4)]" />
+                        <span className="text-[10px] font-extrabold text-[#00BFFF] bg-[#00BFFF]/20 px-2 py-0.5 rounded-full border border-[#00BFFF]/30 shrink-0">
+                          ✓ Active
+                        </span>
                       )}
                     </Link>
                   );
                 })}
 
-                <hr className="border-white/5 my-2 mx-6" />
-
-                <Link
-                  to="/settings"
-                  className={`flex items-center w-full relative px-6 py-2.5 transition-colors ${
-                    pathname === '/settings' || pathname.startsWith('/settings/')
-                      ? "text-[#00BFFF] bg-gradient-to-r from-transparent to-[#00BFFF]/10"
-                      : "text-[#777] hover:text-[#CCC]"
-                  }`}
-                >
-                  <svg className="w-[22px] h-[22px] mr-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  </svg>
-                  <span className="font-bold text-[16px]">Settings</span>
-                  {(pathname === '/settings' || pathname.startsWith('/settings/')) && (
-                    <div className="absolute right-0 top-0 bottom-0 w-[2.5px] bg-[#00BFFF] shadow-[-2px_0_10px_rgba(0,191,255,0.4)]" />
-                  )}
-                </Link>
-
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    className={`flex items-center w-full relative px-6 py-2.5 transition-colors ${
-                      pathname.startsWith("/admin")
-                        ? "text-[#00BFFF] bg-gradient-to-r from-transparent to-[#00BFFF]/10"
-                        : "text-[#00BFFF] hover:text-white"
-                    }`}
-                  >
-                    <svg className="w-[22px] h-[22px] mr-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    <span className="font-bold text-[16px]">Admin Panel</span>
-                    {pathname.startsWith("/admin") && (
-                      <div className="absolute right-0 top-0 bottom-0 w-[2.5px] bg-[#00BFFF] shadow-[-2px_0_10px_rgba(0,191,255,0.4)]" />
-                    )}
-                  </Link>
-                )}
-
-                <Link
-                  to="/trust-safety"
-                  className={`flex items-center w-full relative px-6 py-2.5 transition-colors ${
-                    pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
-                      ? "text-[#00BFFF] bg-gradient-to-r from-transparent to-[#00BFFF]/10"
-                      : "text-[#777] hover:text-[#CCC]"
-                  }`}
-                >
-                  <svg className="w-[22px] h-[22px] mr-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  <span className="font-bold text-[16px]">Support</span>
-                  {(pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')) && (
-                    <div className="absolute right-0 top-0 bottom-0 w-[2.5px] bg-[#00BFFF] shadow-[-2px_0_10px_rgba(0,191,255,0.4)]" />
-                  )}
-                </Link>
-
-                <hr className="border-white/5 my-2 mx-6" />
-
                 {user && (
                   <button
                     type="button"
                     onClick={onLogout || (() => AuthService.signOut())}
-                    className="flex items-center w-full relative px-6 py-2.5 transition-colors text-[#777] hover:text-white text-left cursor-pointer"
+                    className="flex items-center justify-between w-full p-2.5 rounded-xl bg-[#12121A]/80 border border-white/10 text-gray-300 hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-400 transition-all text-left group cursor-pointer"
                   >
-                    <svg className="w-[22px] h-[22px] mr-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    <span className="font-bold text-[16px]">Logout</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 group-hover:bg-rose-500/20 group-hover:text-rose-400 group-hover:border-rose-500/30 transition-colors">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                      </div>
+                      <span className="text-sm font-bold tracking-tight">Logout</span>
+                    </div>
                   </button>
                 )}
               </div>
