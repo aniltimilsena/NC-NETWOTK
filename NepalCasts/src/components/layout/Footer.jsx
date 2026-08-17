@@ -33,7 +33,7 @@ export default function Footer({ user }) {
         { label: "Privacy", to: "/privacy" },
         { label: "Terms", to: "/terms" },
     ];
-    return (<footer className="bg-[#0A0A0A] border-0 pt-3 pb-4 mt-auto relative overflow-hidden">
+    return (<footer className="bg-[#0A0A0A] border-0 pt-1 pb-2 lg:pt-3 lg:pb-4 mt-auto relative overflow-hidden">
       
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-nc-accent/5 rounded-full blur-[120px] -z-10"/>
       
@@ -42,7 +42,7 @@ export default function Footer({ user }) {
 
 
         
-        <div className="flex lg:hidden flex-row items-center justify-center flex-wrap gap-x-1 text-center mb-2 text-[10px] text-[#555]">
+        <div className="flex lg:hidden flex-row items-center justify-center flex-wrap gap-x-1 text-center text-[10px] text-[#555]">
           {legalLinks.map((link, i) => (
             <span key={link.label} className="flex items-center gap-x-1">
               {i !== 0 && <span className="opacity-40">·</span>}

@@ -339,7 +339,7 @@ export default function Desktop3ColumnLayout({
         <div className="grid grid-cols-12 gap-2 lg:gap-3">
 
           {/* LEFT SIDEBAR (Desktop: lg+) */}
-          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-14 sm:top-20 pt-0 pb-20 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-2">
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-14 sm:top-20 pt-0 pb-4 lg:pb-20 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-2">
 
             {/* Inline Desktop Search Bar */}
             <div className="px-1 pt-1">
@@ -457,8 +457,6 @@ export default function Desktop3ColumnLayout({
                   );
                 })}
 
-
-
                 {isAdmin && (
                   <Link
                     to="/admin"
@@ -514,13 +512,13 @@ export default function Desktop3ColumnLayout({
           </aside>
 
           {/* CENTER MAIN CONTENT */}
-          <main className={`col-span-12 ${isHomePage ? 'xl:col-span-6' : 'xl:col-span-9'} min-w-0 lg:h-[calc(100vh-3.5rem)] sm:lg:h-[calc(100vh-5rem)] lg:overflow-y-auto scrollbar-hide pb-20`}>
+          <main className={`col-span-12 ${isHomePage ? 'xl:col-span-6' : 'xl:col-span-9'} min-w-0 lg:h-[calc(100vh-3.5rem)] sm:lg:h-[calc(100vh-5rem)] lg:overflow-y-auto scrollbar-hide pb-2 lg:pb-20`}>
             {children}
           </main>
 
           {/* RIGHT SIDEBAR (Desktop Only: Home Page Only) */}
           {isHomePage && (
-            <aside className="hidden xl:block xl:col-span-3 sticky top-14 sm:top-20 pt-0 pb-20 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-3">
+            <aside className="hidden xl:block xl:col-span-3 sticky top-14 sm:top-20 pt-0 pb-4 lg:pb-20 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-3">
 
               {/* Go Pro CTA */}
               {!isPremium && !isVerified && (
