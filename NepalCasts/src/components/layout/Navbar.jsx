@@ -364,7 +364,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                     : "text-gray-400 font-normal hover:text-white"
                 }`}
               >
-                <span className="text-[17px] tracking-tight">{t('nav_messages') || 'Messages'}</span>
+                <span className="text-[17px] tracking-tight">Messages</span>
               </Link>
 
               <Link
@@ -376,7 +376,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                     : "text-gray-400 font-normal hover:text-white"
                 }`}
               >
-                <span className="text-[17px] tracking-tight">{t('nav_saved_calls') || 'Saved Calls'}</span>
+                <span className="text-[17px] tracking-tight">Saved Calls</span>
               </Link>
 
               <Link
@@ -388,7 +388,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                     : "text-gray-400 font-normal hover:text-white"
                 }`}
               >
-                <span className="text-[17px] tracking-tight">{t('nav_profile') || 'Profile'}</span>
+                <span className="text-[17px] tracking-tight">Profile</span>
               </Link>
             </>
           )}
