@@ -447,7 +447,11 @@ export default function Desktop3ColumnLayout({
                       { name: "Profile", path: `/profile/${user?.uid}`, matchNav: ['profile', 'profile-detail'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/> }
                   ] : [])
                 ].map((item, i) => {
-                  const isActive = item.matchNav.includes(activeNav) || pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/') && (item.path !== '/casting' || pathname !== '/casting/create'));
+                  const isActive = item.path === '/'
+                    ? (pathname === '/' || pathname === '')
+                    : item.path === '/casting'
+                    ? (pathname === '/casting' || (pathname.startsWith('/casting/') && pathname !== '/casting/create'))
+                    : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
                   return (
                     <Link
                       key={i}
@@ -474,7 +478,7 @@ export default function Desktop3ColumnLayout({
                 <Link
                   to="/settings"
                   className={`flex items-center w-full relative px-6 py-2.5 transition-colors ${
-                    activeNav === 'settings' || pathname === '/settings'
+                    pathname === '/settings' || pathname.startsWith('/settings/')
                       ? "text-[#00BFFF] bg-gradient-to-r from-transparent to-[#00BFFF]/10"
                       : "text-[#777] hover:text-[#CCC]"
                   }`}
@@ -484,7 +488,7 @@ export default function Desktop3ColumnLayout({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                   </svg>
                   <span className="font-bold text-[16px]">Settings</span>
-                  {(activeNav === 'settings' || pathname === '/settings') && (
+                  {(pathname === '/settings' || pathname.startsWith('/settings/')) && (
                     <div className="absolute right-0 top-0 bottom-0 w-[2.5px] bg-[#00BFFF] shadow-[-2px_0_10px_rgba(0,191,255,0.4)]" />
                   )}
                 </Link>
@@ -511,7 +515,7 @@ export default function Desktop3ColumnLayout({
                 <Link
                   to="/trust-safety"
                   className={`flex items-center w-full relative px-6 py-2.5 transition-colors ${
-                    activeNav === 'trust-safety' || activeNav === 'trust' || pathname === "/trust-safety"
+                    pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
                       ? "text-[#00BFFF] bg-gradient-to-r from-transparent to-[#00BFFF]/10"
                       : "text-[#777] hover:text-[#CCC]"
                   }`}
@@ -520,7 +524,7 @@ export default function Desktop3ColumnLayout({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                   <span className="font-bold text-[16px]">Support</span>
-                  {(activeNav === 'trust-safety' || activeNav === 'trust' || pathname === "/trust-safety") && (
+                  {(pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')) && (
                     <div className="absolute right-0 top-0 bottom-0 w-[2.5px] bg-[#00BFFF] shadow-[-2px_0_10px_rgba(0,191,255,0.4)]" />
                   )}
                 </Link>
