@@ -10,6 +10,7 @@ import { CurrentUser } from '../../utils/CurrentUser';
 import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, collection, query, where, or } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { AuthService } from '../../services/AuthService';
+import { FollowItemSkeleton, SidebarWidgetSkeleton } from '../ui/Skeleton';
 
 // Inline follow button that mirrors ProfileHeader's style and uses Firestore
 function FollowBtn({ targetUid }) {
