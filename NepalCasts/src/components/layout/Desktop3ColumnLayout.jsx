@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Search, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, Lock, FileText } from 'lucide-react';
 import { ActionSearchBar } from '@/components/ui/ActionSearchBar';
 import { subscribeToTalents, subscribeToCastingCalls } from '../../services';
@@ -9,7 +9,7 @@ import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
 import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, collection, query, where, or } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
-import { FollowItemSkeleton, SidebarWidgetSkeleton } from '../ui/Skeleton';
+import { AuthService } from '../../services/AuthService';
 
 // Inline follow button that mirrors ProfileHeader's style and uses Firestore
 function FollowBtn({ targetUid }) {
@@ -70,11 +70,15 @@ export default function Desktop3ColumnLayout({
   children,
   user,
   onNavigate,
+  onLogout = null,
   activeNav = 'discover',
   featuredTalents = [],
   trendingCalls = [],
   loading = false
 }) {
+  const location = useLocation();
+  const pathname = location?.pathname || '';
+  const isAdmin = user?.admin === true || user?.role === 'admin' || CurrentUser.isAdmin === true;
   const [profileData, setProfileData] = useState(null);
 
   const [internalFeatured, setInternalFeatured] = useState([]);
@@ -525,7 +529,7 @@ export default function Desktop3ColumnLayout({
                 {user && (
                   <button
                     type="button"
-                    onClick={onLogout}
+                    onClick={onLogout || (() => AuthService.signOut())}
                     className="flex items-center w-full relative px-6 py-2.5 transition-colors text-[#777] hover:text-white text-left cursor-pointer"
                   >
                     <svg className="w-[22px] h-[22px] mr-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
