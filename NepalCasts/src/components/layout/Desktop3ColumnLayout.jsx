@@ -613,8 +613,10 @@ export default function Desktop3ColumnLayout({
               )}
 
               {/* Why NepalCasts? Section */}
-              <div className="px-2 space-y-4">
-                <h4 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400 text-left px-1">Why NepalCasts?</h4>
+              <div className="px-2 space-y-3">
+                <div className="px-1 pt-1">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none text-left">Why NepalCasts?</h4>
+                </div>
 
                 <div className="space-y-4 text-left px-1">
                   {/* Point 1 */}
@@ -660,13 +662,13 @@ export default function Desktop3ColumnLayout({
 
               {/* === PEOPLE TO FOLLOW === (Enlarged) */}
               {(isTalentsLoading || safeFeatured.length > 0) && (
-                <div className="px-2 space-y-4">
-                  <div className="flex items-center justify-between px-1">
-                    <h4 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400">People to follow</h4>
+                <div className="px-2 space-y-3">
+                  <div className="flex items-center justify-between px-1 pt-1">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">People to follow</h4>
                     <button
                       type="button"
                       onClick={() => onNavigate?.('talent')}
-                      className="text-xs font-extrabold text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
+                      className="text-xs font-normal text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
                     >
                       View all <ChevronRight className="w-3.5 h-3.5" />
                     </button>
@@ -693,11 +695,11 @@ export default function Desktop3ColumnLayout({
                           <div className="min-w-0 flex-1">
                             <h5
                               onClick={() => onNavigate?.('profile', item.id)}
-                              className="text-white text-base font-extrabold truncate cursor-pointer group-hover:text-[#00BFFF] transition-colors"
+                              className="text-white text-base font-bold truncate cursor-pointer group-hover:text-[#00BFFF] transition-colors"
                             >
                               {item.name || 'Talent'}
                             </h5>
-                            <p className="text-gray-400 text-xs font-semibold truncate mt-0.5">
+                            <p className="text-gray-400 text-xs font-normal truncate mt-0.5">
                               {item.role || item.category || 'Talent'}
                               {item.location && <span> · {item.location}</span>}
                             </p>
@@ -713,16 +715,16 @@ export default function Desktop3ColumnLayout({
               {/* Trending Casting Calls Widget (No TrendingUp Icon) */}
               {(isCallsLoading || safeTrending.length > 0) && (
                 <div className="space-y-3 px-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500">
+                  <div className="flex items-center justify-between px-1 pt-1">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">
                       {t('sidebar.activeCastingCalls')}
                     </h4>
                     <button
                       type="button"
                       onClick={() => onNavigate?.('casting')}
-                      className="text-xs font-bold text-[#00BFFF] hover:underline cursor-pointer"
+                      className="text-xs font-normal text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
                     >
-                      {t('sidebar.viewAll')}
+                      View all <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
