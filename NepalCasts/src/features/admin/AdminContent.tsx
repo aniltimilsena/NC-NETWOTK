@@ -26,7 +26,7 @@ export default function AdminContent() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState<'All' | 'Pending' | 'Verified' | 'Featured'>('All');
     const [selectedProfile, setSelectedProfile] = useState<TalentProfile | null>(null);
-    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || '';
     const [confirmConfig, setConfirmConfig] = useState({
         isOpen: false,
         title: '',

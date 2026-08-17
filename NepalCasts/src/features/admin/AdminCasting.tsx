@@ -35,7 +35,7 @@ export default function AdminCasting() {
     const [selectedCall, setSelectedCall] = useState<CastingCall | null>(null);
     const [applicants, setApplicants] = useState<Applicant[]>([]);
     const [loadingApplicants, setLoadingApplicants] = useState(false);
-    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || '';
     const [confirmConfig, setConfirmConfig] = useState({
         isOpen: false,
         title: '',

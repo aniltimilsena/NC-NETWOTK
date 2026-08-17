@@ -38,7 +38,7 @@ export default function AdminUsers() {
     const [pageChangeDirection, setPageChangeDirection] = useState<'next' | 'prev' | null>(null);
     const pageSize = 10;
     const navigate = useNavigate();
-    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || '';
     const [confirmConfig, setConfirmConfig] = useState({
         isOpen: false,
         title: '',
@@ -132,13 +132,7 @@ export default function AdminUsers() {
     const handleUpdateRole = async (userId: string, makeAdmin: boolean) => {
         const nextRole = makeAdmin ? 'Admin' : 'Talent';
         try {
-            try {
-                await apiClient.post(`/admin/users/${userId}/role`, { makeAdmin });
-            } catch (apiErr) {
-                console.warn("Backend API server offline/failed, updating role directly in Firestore:", apiErr);
-                await updateDoc(doc(db, "users", userId), { isAdmin: makeAdmin, role: nextRole }).catch(() => {});
-                await updateDoc(doc(db, "profiles", userId), { isAdmin: makeAdmin, role: nextRole }).catch(() => {});
-            }
+            await apiClient.post(`/admin/users/${userId}/role`, { makeAdmin });
             setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: nextRole, isAdmin: makeAdmin } : u));
             if (selectedUser?.id === userId) {
                 setSelectedUser(prev => prev ? { ...prev, role: nextRole, isAdmin: makeAdmin } : null);
@@ -152,6 +146,7 @@ export default function AdminUsers() {
             alert(errMsg);
         }
     };
+
     const handleTogglePremium = async (userId: string, currentPremium: boolean) => {
         try {
             const targetPremium = !currentPremium;
@@ -193,6 +188,7 @@ export default function AdminUsers() {
             alert("Error updating subscription.");
         }
     };
+
     const handleToggleVerification = async (userId: string, currentVerified: boolean) => {
         try {
             const targetVerified = !currentVerified;
@@ -234,6 +230,7 @@ export default function AdminUsers() {
             alert("Error updating verification badge.");
         }
     };
+
     const handleDeleteUser = (userId: string) => {
         setConfirmConfig({
             isOpen: true,
@@ -246,13 +243,7 @@ export default function AdminUsers() {
             onConfirm: async () => {
                 setConfirmConfig(prev => ({ ...prev, isLoading: true }));
                 try {
-                    try {
-                        await apiClient.post(`/admin/users/${userId}/delete`);
-                    } catch (apiErr) {
-                        console.warn("Backend API server offline/failed, performing Firestore deletion fallback:", apiErr);
-                        await deleteDoc(doc(db, "users", userId)).catch(() => {});
-                        await deleteDoc(doc(db, "profiles", userId)).catch(() => {});
-                    }
+                    await apiClient.post(`/admin/users/${userId}/delete`);
                     setUsers(prev => prev.filter(u => u.id !== userId));
                     if (selectedUser?.id === userId) {
                         setSelectedUser(null);
@@ -272,6 +263,7 @@ export default function AdminUsers() {
             }
         });
     };
+
     const handleBanUser = (userId: string, userName: string) => {
         const reason = window.prompt(`Reason for banning ${userName}:`);
         if (reason === null)
@@ -290,13 +282,7 @@ export default function AdminUsers() {
             onConfirm: async () => {
                 setConfirmConfig(prev => ({ ...prev, isLoading: true }));
                 try {
-                    try {
-                        await apiClient.post(`/admin/users/${userId}/ban`, { reason: reason || "", duration: duration || "" });
-                    } catch (apiErr) {
-                        console.warn("Backend API server offline/failed, updating ban in Firestore:", apiErr);
-                        await updateDoc(doc(db, "users", userId), { status: 'banned', banReason: reason || "", banExpiresAt: duration || "" }).catch(() => {});
-                        await updateDoc(doc(db, "profiles", userId), { status: 'banned', banReason: reason || "", banExpiresAt: duration || "" }).catch(() => {});
-                    }
+                    await apiClient.post(`/admin/users/${userId}/ban`, { reason: reason || "", duration: duration || "" });
                     setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: 'banned' } : u));
                     if (selectedUser?.id === userId) {
                         setSelectedUser(prev => prev ? { ...prev, status: 'banned', banReason: reason, banExpiresAt: duration } : null);
@@ -316,6 +302,7 @@ export default function AdminUsers() {
             }
         });
     };
+
     const handleUnbanUser = (userId: string, userName: string) => {
         setConfirmConfig({
             isOpen: true,
@@ -328,13 +315,7 @@ export default function AdminUsers() {
             onConfirm: async () => {
                 setConfirmConfig(prev => ({ ...prev, isLoading: true }));
                 try {
-                    try {
-                        await apiClient.post(`/admin/users/${userId}/unban`);
-                    } catch (apiErr) {
-                        console.warn("Backend API server offline/failed, unbanning in Firestore:", apiErr);
-                        await updateDoc(doc(db, "users", userId), { status: 'Active', banReason: null, banExpiresAt: null }).catch(() => {});
-                        await updateDoc(doc(db, "profiles", userId), { status: 'Active', banReason: null, banExpiresAt: null }).catch(() => {});
-                    }
+                    await apiClient.post(`/admin/users/${userId}/unban`);
                     setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: 'Active' } : u));
                     if (selectedUser?.id === userId) {
                         setSelectedUser(prev => prev ? { ...prev, status: 'Active' } : null);

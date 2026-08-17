@@ -25,7 +25,7 @@ export default function AdminModeration() {
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<'Pending' | 'Resolved' | 'Dismissed' | 'All'>('Pending');
     const [selectedReport, setSelectedReport] = useState<SafetyReport | null>(null);
-    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || '';
     const [confirmConfig, setConfirmConfig] = useState({
         isOpen: false,
         title: '',

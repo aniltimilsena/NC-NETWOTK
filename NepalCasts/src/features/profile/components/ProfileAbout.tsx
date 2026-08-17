@@ -1,5 +1,5 @@
-import React from 'react';
-import { Mail, Phone, User, FileText, ClipboardList, Layers, Eye, Ruler, Scissors, MessageSquare, Award } from 'lucide-react';
+import React, { useState } from 'react';
+import { Mail, Phone, User, FileText, ClipboardList, Layers, Eye, Ruler, Scissors, Globe, Award, Copy, Check } from 'lucide-react';
 import type { UserProfile } from '../../../types';
 
 interface ProfileAboutProps {
@@ -8,9 +8,13 @@ interface ProfileAboutProps {
 }
 
 export default function ProfileAbout({ profile, showContact }: ProfileAboutProps) {
-  const bio = profile.bio || 'No bio provided yet.';
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
+
+  const bio = profile.bio || '';
   const category = profile.category || 'Not Specified';
   const gender = profile.gender || 'Not Specified';
+
   const languagesRaw: unknown = profile.languages;
   const languagesList: string[] = Array.isArray(languagesRaw)
     ? languagesRaw.map(String)
@@ -27,194 +31,230 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
 
   const eyeColor = profile.eyeColor || 'Not Specified';
   const hairColor = profile.hairColor || 'Not Specified';
+  const height = profile.height || "5'6 ft";
+  const weight = profile.weight || "60 kg";
 
   const getEyeColorStyle = (color: string) => {
     const c = color.toLowerCase();
-    if (c.includes('black') || c.includes('dark')) return 'bg-black border-white/20';
-    if (c.includes('brown')) return 'bg-[#654321] border-white/20';
-    if (c.includes('blue')) return 'bg-[#2b6cb0] border-white/20';
-    if (c.includes('green')) return 'bg-[#2f855a] border-white/20';
-    if (c.includes('hazel')) return 'bg-[#975a16] border-white/20';
-    return 'bg-white/20 border-white/10';
+    if (c.includes('black') || c.includes('dark')) return 'bg-black border-white/30';
+    if (c.includes('brown')) return 'bg-[#654321] border-white/30';
+    if (c.includes('blue')) return 'bg-[#3182ce] border-white/30';
+    if (c.includes('green')) return 'bg-[#38a169] border-white/30';
+    if (c.includes('hazel')) return 'bg-[#d69e2e] border-white/30';
+    return 'bg-white/30 border-white/20';
   };
 
   const getHairColorStyle = (color: string) => {
     const c = color.toLowerCase();
-    if (c.includes('black') || c.includes('dark')) return 'bg-black border-white/20';
-    if (c.includes('brown')) return 'bg-[#4a2e18] border-white/20';
-    if (c.includes('blonde')) return 'bg-[#d69e2e] border-white/20';
-    if (c.includes('red') || c.includes('auburn')) return 'bg-[#9b2c2c] border-white/20';
-    if (c.includes('grey') || c.includes('gray')) return 'bg-gray-400 border-white/20';
-    return 'bg-white/20 border-white/10';
+    if (c.includes('black') || c.includes('dark')) return 'bg-black border-white/30';
+    if (c.includes('brown')) return 'bg-[#4a2e18] border-white/30';
+    if (c.includes('blonde')) return 'bg-[#d69e2e] border-white/30';
+    if (c.includes('red') || c.includes('auburn')) return 'bg-[#e53e3e] border-white/30';
+    if (c.includes('grey') || c.includes('gray')) return 'bg-gray-400 border-white/30';
+    return 'bg-white/30 border-white/20';
+  };
+
+  const handleCopy = (text: string, type: 'email' | 'phone') => {
+    if (!text || text === 'Not Provided') return;
+    navigator.clipboard.writeText(text);
+    if (type === 'email') {
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2000);
+    } else {
+      setCopiedPhone(true);
+      setTimeout(() => setCopiedPhone(false), 2000);
+    }
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-8 w-full text-left">
-      {/* Main Details Column */}
-      <div className={`${showContact ? 'lg:col-span-2 xl:col-span-3' : 'lg:col-span-3 xl:col-span-4'} space-y-8 w-full`}>
-        {/* Bio Section */}
-        <div className="space-y-2">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <FileText className="w-4 h-4 text-white" />
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full text-left font-sans">
+      {/* Main Details Section */}
+      <div className={`${showContact ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-6 w-full`}>
+        
+        {/* Bio Card */}
+        <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-5 sm:p-6 space-y-3 shadow-lg">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-white/5 pb-3">
+            <FileText className="w-4 h-4 text-[#00BFFF]" />
             <span>Bio</span>
           </h2>
-          <p className={`text-sm leading-relaxed whitespace-pre-line ${profile.bio ? 'text-gray-200 font-medium' : 'text-gray-500 font-normal'}`}>
-            {bio}
-          </p>
+          <div className="bg-[#16161a] border border-white/10 rounded-xl p-4">
+            <p className={`text-xs leading-relaxed whitespace-pre-line ${bio ? 'text-gray-200 font-medium' : 'text-gray-500 font-normal'}`}>
+              {bio || 'No bio provided yet.'}
+            </p>
+          </div>
         </div>
 
-        {/* Attributes & Details Section */}
-        <div className="space-y-4 pt-6 border-t border-white/5">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <ClipboardList className="w-4 h-4 text-white" />
+        {/* Attributes & Details Card */}
+        <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-5 sm:p-6 space-y-4 shadow-lg">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-white/5 pb-3">
+            <ClipboardList className="w-4 h-4 text-[#00BFFF]" />
             <span>Attributes &amp; Details</span>
           </h2>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-10 md:gap-x-14 max-w-2xl pt-2 pl-6 sm:pl-12 md:pl-16">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            
             {/* Category */}
-            <div className="flex items-center gap-3 min-w-0">
-              <Layers className="w-4 h-4 text-white shrink-0" />
-              <div className="min-w-0">
-                <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">
-                  Category
-                </span>
-                <span className={`text-xs font-bold capitalize truncate block ${category !== 'Not Specified' ? 'text-white' : 'text-gray-500 font-normal'}`}>
-                  {category}
-                </span>
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-gray-400" />
+                <span>Category</span>
+              </label>
+              <div className="bg-[#16161a] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-white capitalize truncate">
+                {category}
               </div>
             </div>
 
             {/* Gender */}
-            <div className="flex items-center gap-3 min-w-0">
-              <User className="w-4 h-4 text-white shrink-0" />
-              <div className="min-w-0">
-                <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">
-                  Gender
-                </span>
-                <span className={`text-xs font-bold capitalize truncate block ${gender !== 'Not Specified' ? 'text-white' : 'text-gray-500 font-normal'}`}>
-                  {gender}
-                </span>
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-gray-400" />
+                <span>Gender</span>
+              </label>
+              <div className="bg-[#16161a] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-white capitalize truncate">
+                {gender}
               </div>
             </div>
 
             {/* Height & Weight */}
-            <div className="flex items-center gap-3 min-w-0">
-              <Ruler className="w-4 h-4 text-white shrink-0" />
-              <div className="min-w-0">
-                <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">
-                  Height / Weight
-                </span>
-                <span className="text-xs font-bold text-white block">
-                  {profile.height || "5'6 ft"} • {profile.weight || "60 kg"}
-                </span>
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
+                <Ruler className="w-3.5 h-3.5 text-gray-400" />
+                <span>Height / Weight</span>
+              </label>
+              <div className="bg-[#16161a] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-white truncate">
+                {height} • {weight}
               </div>
             </div>
 
             {/* Eye Color */}
-            <div className="flex items-center gap-3 min-w-0">
-              <Eye className="w-4 h-4 text-white shrink-0" />
-              <div className="min-w-0">
-                <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">
-                  Eye Color
-                </span>
-                <div className="flex items-center gap-1.5 min-w-0">
-                  {eyeColor !== 'Not Specified' && (
-                    <span className={`w-2 h-2 rounded-full border shrink-0 ${getEyeColorStyle(eyeColor)}`} />
-                  )}
-                  <span className={`text-xs font-bold capitalize truncate ${eyeColor !== 'Not Specified' ? 'text-white' : 'text-gray-500 font-normal'}`}>
-                    {eyeColor}
-                  </span>
-                </div>
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
+                <Eye className="w-3.5 h-3.5 text-gray-400" />
+                <span>Eye Color</span>
+              </label>
+              <div className="bg-[#16161a] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-white flex items-center gap-2 truncate">
+                {eyeColor !== 'Not Specified' && (
+                  <span className={`w-2.5 h-2.5 rounded-full border shrink-0 ${getEyeColorStyle(eyeColor)}`} />
+                )}
+                <span className="capitalize truncate">{eyeColor}</span>
               </div>
             </div>
 
             {/* Hair Color */}
-            <div className="flex items-center gap-3 min-w-0">
-              <Scissors className="w-4 h-4 text-white shrink-0" />
-              <div className="min-w-0">
-                <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">
-                  Hair Color
-                </span>
-                <div className="flex items-center gap-1.5 min-w-0">
-                  {hairColor !== 'Not Specified' && (
-                    <span className={`w-2 h-2 rounded-full border shrink-0 ${getHairColorStyle(hairColor)}`} />
-                  )}
-                  <span className={`text-xs font-bold capitalize truncate ${hairColor !== 'Not Specified' ? 'text-white' : 'text-gray-500 font-normal'}`}>
-                    {hairColor}
-                  </span>
-                </div>
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
+                <Scissors className="w-3.5 h-3.5 text-gray-400" />
+                <span>Hair Color</span>
+              </label>
+              <div className="bg-[#16161a] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-white flex items-center gap-2 truncate">
+                {hairColor !== 'Not Specified' && (
+                  <span className={`w-2.5 h-2.5 rounded-full border shrink-0 ${getHairColorStyle(hairColor)}`} />
+                )}
+                <span className="capitalize truncate">{hairColor}</span>
               </div>
             </div>
 
             {/* Languages */}
-            <div className="flex items-center gap-3 min-w-0">
-              <MessageSquare className="w-4 h-4 text-white shrink-0" />
-              <div className="min-w-0">
-                <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">
-                  Languages
-                </span>
-                {languagesList.length > 0 ? (
-                  <span className="text-xs font-bold text-white truncate block">
-                    {languagesList.join(', ')}
-                  </span>
-                ) : (
-                  <span className="text-gray-500 text-xs font-normal block truncate">English, Hindi</span>
-                )}
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-gray-400" />
+                <span>Languages</span>
+              </label>
+              <div className="bg-[#16161a] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-white truncate">
+                {languagesList.length > 0 ? languagesList.join(', ') : 'English, Hindi'}
               </div>
             </div>
+
           </div>
         </div>
 
-        {/* Skills Section */}
-        <div className="space-y-4 pt-6 border-t border-white/5">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <Award className="w-4 h-4 text-white" />
+        {/* Skills Section Card */}
+        <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-5 sm:p-6 space-y-4 shadow-lg">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-white/5 pb-3">
+            <Award className="w-4 h-4 text-[#00BFFF]" />
             <span>Skills &amp; Specializations</span>
           </h2>
 
           {skillsList.length > 0 ? (
-            <div className="flex flex-wrap gap-2.5 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {skillsList.map((skill, idx) => (
                 <div
                   key={idx}
-                  className="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-xs font-bold text-white hover:bg-white/10 transition-all"
+                  className="bg-[#16161a] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-white flex items-center justify-between"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
-                  <span>{skill.name}</span>
-                  <span className="text-[10px] font-semibold text-gray-400 bg-white/10 px-2 py-0.5 rounded-md border border-white/5">
+                  <span className="truncate">{skill.name}</span>
+                  <span className="text-[10px] font-extrabold text-[#00BFFF] bg-[#00BFFF]/10 border border-[#00BFFF]/20 px-2 py-0.5 rounded-md shrink-0 ml-2">
                     {skill.level ?? 80}%
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-gray-500 font-normal">No skills added yet.</p>
+            <div className="bg-[#16161a] border border-white/10 rounded-xl p-4">
+              <p className="text-xs text-gray-500 font-normal">No skills added yet.</p>
+            </div>
           )}
         </div>
+
       </div>
 
-      {/* Sidebar Contact Info */}
+      {/* Sidebar Contact Info Card */}
       {showContact && (
-        <div className="space-y-3 lg:border-l lg:border-white/5 lg:pl-6">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <Mail className="w-4 h-4 text-white" />
-            <span>Contact Information</span>
-          </h2>
-          <div className="space-y-4 pt-1 pl-6 sm:pl-12 md:pl-16">
-            <div className="flex items-center gap-3">
-              <Mail className="w-4 h-4 text-white shrink-0" />
-              <div className="min-w-0 flex-1">
-                <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">Email</span>
-                <span className="text-white text-xs font-semibold truncate block">{profile.email || 'Not Provided'}</span>
-              </div>
-            </div>
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-5 sm:p-6 space-y-4 shadow-lg sticky top-24">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-white/5 pb-3">
+              <Mail className="w-4 h-4 text-[#00BFFF]" />
+              <span>Contact Information</span>
+            </h2>
 
-            <div className="flex items-center gap-3">
-              <Phone className="w-4 h-4 text-white shrink-0" />
-              <div className="min-w-0 flex-1">
-                <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-0.5">Phone</span>
-                <span className="text-white text-xs font-semibold truncate block">{profile.phone || 'Not Provided'}</span>
+            <div className="space-y-4">
+              
+              {/* Email Field Box */}
+              <div className="space-y-1.5 text-left">
+                <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-gray-400" />
+                    <span>Email</span>
+                  </span>
+                  {profile.email && profile.email !== 'Not Provided' && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(profile.email || '', 'email')}
+                      className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+                      title="Copy email"
+                    >
+                      {copiedEmail ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+                </label>
+                <div className="bg-[#16161a] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-white break-all">
+                  {profile.email || 'Not Provided'}
+                </div>
               </div>
+
+              {/* Phone Field Box */}
+              <div className="space-y-1.5 text-left">
+                <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-gray-400" />
+                    <span>Phone</span>
+                  </span>
+                  {profile.phone && profile.phone !== 'Not Provided' && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(profile.phone || '', 'phone')}
+                      className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+                      title="Copy phone number"
+                    >
+                      {copiedPhone ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+                </label>
+                <div className="bg-[#16161a] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-bold text-white">
+                  {profile.phone || 'Not Provided'}
+                </div>
+              </div>
+
             </div>
           </div>
         </div>

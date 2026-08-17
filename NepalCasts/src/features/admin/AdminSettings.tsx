@@ -33,7 +33,7 @@ export default function AdminSettings() {
         isLoading: false,
         onConfirm: () => { },
     });
-    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || '';
     const handleSendAnnouncement = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!announcement.title.trim() || !announcement.body.trim()) {

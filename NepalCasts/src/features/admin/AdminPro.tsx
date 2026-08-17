@@ -22,7 +22,7 @@ export default function AdminPro() {
     const [searchTerm, setSearchTerm] = useState('');
     const [tierFilter, setTierFilter] = useState<'All' | 'PRO' | 'Free'>('All');
     const [selectedSub, setSelectedSub] = useState<AdminSubscriber | null>(null);
-    const adminEmail = CurrentUser.email || 'admin@nepalcasts.com';
+    const adminEmail = CurrentUser.email || '';
     useEffect(() => {
         const unsub = onSnapshot(collection(db, "users"), (snap) => {
             const data = snap.docs.map(doc => {
