@@ -79,6 +79,7 @@ export default function Desktop3ColumnLayout({
 }) {
   const location = useLocation();
   const pathname = location?.pathname || '';
+  const isHomePage = pathname === '/' || pathname === '' || activeNav === 'home';
   const isAdmin = user?.admin === true || user?.role === 'admin' || CurrentUser.isAdmin === true;
   const [profileData, setProfileData] = useState(null);
 
@@ -556,12 +557,13 @@ export default function Desktop3ColumnLayout({
           </aside>
 
           {/* CENTER MAIN CONTENT */}
-          <main className="col-span-12 xl:col-span-6 min-w-0">
+          <main className={`col-span-12 ${isHomePage ? 'xl:col-span-6' : 'xl:col-span-9'} min-w-0`}>
             {children}
           </main>
 
-          {/* RIGHT SIDEBAR (Desktop Only: xl+) */}
-          <aside className="hidden xl:block xl:col-span-3 sticky top-20 space-y-4 h-fit pt-2">
+          {/* RIGHT SIDEBAR (Desktop Only: Home Page Only) */}
+          {isHomePage && (
+            <aside className="hidden xl:block xl:col-span-3 sticky top-20 space-y-4 h-fit pt-2">
 
             {/* Go Pro CTA */}
             {!isPremium && !isVerified && (
@@ -743,6 +745,7 @@ export default function Desktop3ColumnLayout({
               </div>
             )}
           </aside>
+          )}
 
         </div>
       </div>
