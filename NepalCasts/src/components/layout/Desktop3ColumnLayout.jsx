@@ -443,10 +443,11 @@ export default function Desktop3ColumnLayout({
                     <Link
                       key={i}
                       to={item.path}
-                      className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${isActive
-                          ? "bg-white/[0.08] text-white font-black shadow-sm"
-                          : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
-                        }`}
+                      className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                        isActive
+                          ? "text-white font-medium"
+                          : "text-gray-400 font-normal hover:text-white"
+                      }`}
                     >
                       <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         {item.icon}
@@ -462,8 +463,8 @@ export default function Desktop3ColumnLayout({
                   <Link
                     to="/admin"
                     className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${pathname.startsWith("/admin")
-                        ? "bg-white/[0.08] text-white font-black shadow-sm"
-                        : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
+                        ? "text-white font-medium"
+                        : "text-gray-400 font-normal hover:text-white"
                       }`}
                   >
                     <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${pathname.startsWith("/admin") ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -476,8 +477,8 @@ export default function Desktop3ColumnLayout({
                 <Link
                   to="/trust-safety"
                   className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
-                      ? "bg-white/[0.08] text-white font-black shadow-sm"
-                      : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
+                      ? "text-white font-medium"
+                      : "text-gray-400 font-normal hover:text-white"
                     }`}
                 >
                   <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/') ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -492,7 +493,7 @@ export default function Desktop3ColumnLayout({
                   <button
                     type="button"
                     onClick={onLogout || (() => AuthService.signOut())}
-                    className="group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 text-left font-semibold cursor-pointer active:scale-[0.98]"
+                    className="group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 text-gray-400 hover:text-rose-400 font-normal cursor-pointer active:scale-[0.98]"
                   >
                     <svg className="w-6 h-6 mr-3.5 shrink-0 transition-colors group-hover:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

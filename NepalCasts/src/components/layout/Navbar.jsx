@@ -295,8 +295,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             onClick={() => setMenuOpen(false)}
             className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
               pathname === '/' || pathname === ''
-                ? "text-white font-extrabold"
-                : "text-gray-400 font-semibold hover:text-white"
+                ? "text-white font-medium"
+                : "text-gray-400 font-normal hover:text-white"
             }`}
           >
             <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${pathname === '/' ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -309,10 +309,10 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           <div className="flex flex-col">
             <button
               onClick={() => setExpandedSection(expandedSection === 'discover' ? null : 'discover')}
-              className={`group flex items-center w-full px-4 py-3 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isDiscoverActive
-                  ? "bg-white/[0.08] text-white font-black shadow-sm"
-                  : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
+                  ? "text-white font-medium"
+                  : "text-gray-400 font-normal hover:text-white"
               }`}
             >
               <svg className="w-6 h-6 mr-3.5 shrink-0 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -326,10 +326,10 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
             {expandedSection === 'discover' && (
               <div className="pl-13 pr-3 py-1 space-y-1 my-1">
-                <Link to="/discover" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-400 hover:text-white transition-colors">Category Grid</Link>
-                <Link to="/talents" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-400 hover:text-white transition-colors">{t('nav_talent_directory')}</Link>
-                <Link to="/trending" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-400 hover:text-white transition-colors">{t('nav_trending_now')}</Link>
-                <Link to="/settings" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-400 hover:text-white transition-colors">{t('nav_settings')}</Link>
+                <Link to="/discover" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">Category Grid</Link>
+                <Link to="/talents" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">{t('nav_talent_directory')}</Link>
+                <Link to="/trending" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">{t('nav_trending_now')}</Link>
+                <Link to="/settings" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">{t('nav_settings')}</Link>
               </div>
             )}
           </div>
@@ -338,10 +338,10 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           <div className="flex flex-col">
             <button
               onClick={() => setExpandedSection(expandedSection === 'projects' ? null : 'projects')}
-              className={`group flex items-center w-full px-4 py-3 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isProjectsActive
-                  ? "bg-white/[0.08] text-white font-black shadow-sm"
-                  : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
+                  ? "text-white font-medium"
+                  : "text-gray-400 font-normal hover:text-white"
               }`}
             >
               <svg className="w-6 h-6 mr-3.5 shrink-0 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -355,8 +355,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
             {expandedSection === 'projects' && (
               <div className="pl-13 pr-3 py-1 space-y-1 my-1">
-                <Link to="/casting" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-400 hover:text-white transition-colors">{t('nav_casting_calls')}</Link>
-                <Link to="/casting/create" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-400 hover:text-white transition-colors">{t('nav_post_project')}</Link>
+                <Link to="/casting" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">{t('nav_casting_calls')}</Link>
+                <Link to="/casting/create" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors">{t('nav_post_project')}</Link>
               </div>
             )}
           </div>
@@ -369,8 +369,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 onClick={() => setMenuOpen(false)}
                 className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
                   pathname.startsWith('/messages')
-                    ? "text-white font-extrabold"
-                    : "text-gray-400 font-semibold hover:text-white"
+                    ? "text-white font-medium"
+                    : "text-gray-400 font-normal hover:text-white"
                 }`}
               >
                 <svg className="w-6 h-6 mr-3.5 shrink-0 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -384,8 +384,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 onClick={() => setMenuOpen(false)}
                 className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
                   pathname.startsWith('/saved')
-                    ? "text-white font-extrabold"
-                    : "text-gray-400 font-semibold hover:text-white"
+                    ? "text-white font-medium"
+                    : "text-gray-400 font-normal hover:text-white"
                 }`}
               >
                 <svg className="w-6 h-6 mr-3.5 shrink-0 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -399,8 +399,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 onClick={() => setMenuOpen(false)}
                 className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
                   pathname.startsWith('/profile')
-                    ? "text-white font-extrabold"
-                    : "text-gray-400 font-semibold hover:text-white"
+                    ? "text-white font-medium"
+                    : "text-gray-400 font-normal hover:text-white"
                 }`}
               >
                 <svg className="w-6 h-6 mr-3.5 shrink-0 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -411,16 +411,14 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             </>
           )}
 
-
-
           {isAdmin && (
             <Link
               to="/admin"
               onClick={() => setMenuOpen(false)}
               className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
                 pathname.startsWith("/admin")
-                  ? "text-white font-extrabold"
-                  : "text-gray-400 font-semibold hover:text-white"
+                  ? "text-white font-medium"
+                  : "text-gray-400 font-normal hover:text-white"
               }`}
             >
               <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${pathname.startsWith("/admin") ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -435,8 +433,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             onClick={() => setMenuOpen(false)}
             className={`group flex items-center w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
               pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
-                ? "text-white font-extrabold"
-                : "text-gray-400 font-semibold hover:text-white"
+                ? "text-white font-medium"
+                : "text-gray-400 font-normal hover:text-white"
             }`}
           >
             <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/') ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
