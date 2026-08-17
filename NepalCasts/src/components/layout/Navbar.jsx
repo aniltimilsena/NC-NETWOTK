@@ -311,11 +311,10 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 key={i}
                 to={item.path}
                 onClick={() => setMenuOpen(false)}
-                className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${
-                  isActive
+                className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${isActive
                     ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
                     : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
-                }`}
+                  }`}
               >
                 <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${isActive ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {item.icon}
@@ -328,11 +327,10 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           <Link
             to="/settings"
             onClick={() => setMenuOpen(false)}
-            className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${
-              pathname === '/settings' || pathname.startsWith('/settings/')
+            className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${pathname === '/settings' || pathname.startsWith('/settings/')
                 ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
                 : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
-            }`}
+              }`}
           >
             <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${pathname === '/settings' || pathname.startsWith('/settings/') ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -345,11 +343,10 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             <Link
               to="/admin"
               onClick={() => setMenuOpen(false)}
-              className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${
-                pathname.startsWith("/admin")
+              className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${pathname.startsWith("/admin")
                   ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
                   : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
-              }`}
+                }`}
             >
               <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${pathname.startsWith("/admin") ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -361,11 +358,10 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           <Link
             to="/trust-safety"
             onClick={() => setMenuOpen(false)}
-            className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${
-              pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
+            className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
                 ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
                 : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
-            }`}
+              }`}
           >
             <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/') ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -390,11 +386,10 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             <Link
               to="/signin"
               onClick={() => setMenuOpen(false)}
-              className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${
-                pathname === '/signin'
+              className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${pathname === '/signin'
                   ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
                   : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
-              }`}
+                }`}
             >
               <svg className="w-5 h-5 mr-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
