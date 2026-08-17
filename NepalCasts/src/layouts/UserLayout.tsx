@@ -116,9 +116,9 @@ export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToa
         </div>
       </div>);
     }
-    return (<div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
+    return (<div className="flex flex-col min-h-screen lg:h-screen lg:overflow-hidden bg-nc-dark text-nc-text">
       {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate}/>)}
-      <main className="flex-1 px-0 pb-8">
+      <main className="flex-1 px-0 pb-0 min-h-0 lg:overflow-hidden">
         <Suspense fallback={<div className="min-h-screen bg-[#070709]" />}>
           <Outlet context={{ user, isAdmin, showAlert, showToast }}/>
         </Suspense>
