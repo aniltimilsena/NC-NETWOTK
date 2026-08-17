@@ -289,42 +289,131 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
         {/* === TWITTER/X STYLE MINIMALIST FLOATING NAVIGATION === */}
         <div className="flex flex-col space-y-1 px-3 py-3 flex-1 overflow-y-auto">
-          {[
-            { name: "Home", path: "/", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
-            { name: "Discover", path: "/discover", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z" /> },
-            { name: "Talent Directory", path: "/talents", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
-            { name: "Trending", path: "/trending", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
-            { name: "Casting", path: "/casting", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
-            { name: "Create", path: "/casting/create", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-            ...(isLoggedIn ? [
-              { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
-              { name: "Saved Calls", path: "/saved-castings", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /> },
-              { name: "Profile", path: `/profile/${user?.uid}`, icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> }
-            ] : [])
-          ].map((item, i) => {
-            const isActive = item.path === '/'
-              ? (pathname === '/' || pathname === '')
-              : item.path === '/casting'
-                ? (pathname === '/casting' || (pathname.startsWith('/casting/') && pathname !== '/casting/create'))
-                : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
-            return (
+          {/* Home */}
+          <Link
+            to="/"
+            onClick={() => setMenuOpen(false)}
+            className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${
+              pathname === '/' || pathname === ''
+                ? "bg-white/[0.08] text-white font-black shadow-sm"
+                : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
+            }`}
+          >
+            <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${pathname === '/' ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="text-[17px] tracking-tight">{t('nav_home')}</span>
+          </Link>
+
+          {/* Discover Accordion (Reference Image Style) */}
+          <div className="flex flex-col">
+            <button
+              onClick={() => setExpandedSection(expandedSection === 'discover' ? null : 'discover')}
+              className={`group flex items-center justify-between w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+                isDiscoverActive
+                  ? "bg-white/[0.08] text-white font-black shadow-sm"
+                  : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
+              }`}
+            >
+              <div className="flex items-center">
+                <svg className="w-6 h-6 mr-3.5 shrink-0 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z" />
+                </svg>
+                <span className="text-[17px] tracking-tight">{t('nav_discover')}</span>
+              </div>
+              <svg className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'discover' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {expandedSection === 'discover' && (
+              <div className="pl-12 pr-3 py-1 space-y-1 bg-white/[0.02] rounded-2xl my-1 border border-white/5">
+                <Link to="/discover" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 rounded-xl transition-colors">Category Grid</Link>
+                <Link to="/talents" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 rounded-xl transition-colors">{t('nav_talent_directory')}</Link>
+                <Link to="/trending" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 rounded-xl transition-colors">{t('nav_trending_now')}</Link>
+                <Link to="/settings" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 rounded-xl transition-colors">{t('nav_settings')}</Link>
+              </div>
+            )}
+          </div>
+
+          {/* Projects Accordion */}
+          <div className="flex flex-col">
+            <button
+              onClick={() => setExpandedSection(expandedSection === 'projects' ? null : 'projects')}
+              className={`group flex items-center justify-between w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+                isProjectsActive
+                  ? "bg-white/[0.08] text-white font-black shadow-sm"
+                  : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
+              }`}
+            >
+              <div className="flex items-center">
+                <svg className="w-6 h-6 mr-3.5 shrink-0 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span className="text-[17px] tracking-tight">{t('nav_projects')}</span>
+              </div>
+              <svg className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'projects' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {expandedSection === 'projects' && (
+              <div className="pl-12 pr-3 py-1 space-y-1 bg-white/[0.02] rounded-2xl my-1 border border-white/5">
+                <Link to="/casting" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 rounded-xl transition-colors">{t('nav_casting_calls')}</Link>
+                <Link to="/casting/create" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 rounded-xl transition-colors">{t('nav_post_project')}</Link>
+              </div>
+            )}
+          </div>
+
+          {/* User Links */}
+          {isLoggedIn && (
+            <>
               <Link
-                key={i}
-                to={item.path}
+                to="/messages"
                 onClick={() => setMenuOpen(false)}
                 className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                  isActive
+                  pathname.startsWith('/messages')
                     ? "bg-white/[0.08] text-white font-black shadow-sm"
                     : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
                 }`}
               >
-                <svg className={`w-6 h-6 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {item.icon}
+                <svg className="w-6 h-6 mr-3.5 shrink-0 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span className="text-[17px] tracking-tight">{item.name}</span>
+                <span className="text-[17px] tracking-tight">Messages</span>
               </Link>
-            );
-          })}
+
+              <Link
+                to="/saved-castings"
+                onClick={() => setMenuOpen(false)}
+                className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                  pathname.startsWith('/saved')
+                    ? "bg-white/[0.08] text-white font-black shadow-sm"
+                    : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
+                }`}
+              >
+                <svg className="w-6 h-6 mr-3.5 shrink-0 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                <span className="text-[17px] tracking-tight">Saved Calls</span>
+              </Link>
+
+              <Link
+                to={`/profile/${user?.uid}`}
+                onClick={() => setMenuOpen(false)}
+                className={`group flex items-center w-full px-4 py-3 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                  pathname.startsWith('/profile')
+                    ? "bg-white/[0.08] text-white font-black shadow-sm"
+                    : "text-gray-300 font-semibold hover:bg-white/[0.06] hover:text-white"
+                }`}
+              >
+                <svg className="w-6 h-6 mr-3.5 shrink-0 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="text-[17px] tracking-tight">Profile</span>
+              </Link>
+            </>
+          )}
 
           <div className="h-[1px] bg-white/[0.06] my-2 mx-3" />
 
