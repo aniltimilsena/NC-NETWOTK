@@ -138,8 +138,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
     });
   }, [user?.uid]);
   return (<>
-    <header className="sticky top-0 left-0 right-0 z-50">
-      <nav className="relative z-30 bg-nc-dark/80 backdrop-blur-md border-b border-white/5">
+    <header className="sticky top-0 left-0 right-0 z-50 bg-[#060709]">
+      <nav className="relative z-30 bg-[#060709]/90 backdrop-blur-md border-b border-white/5">
         <div className="max-w-[1600px] mx-auto px-2 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-20">
 
