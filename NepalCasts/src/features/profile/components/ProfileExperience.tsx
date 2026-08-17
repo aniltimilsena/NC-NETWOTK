@@ -138,9 +138,8 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert }: 
           {experiencesList.map((exp: any, index: number) => (
             <div
               key={index}
-              className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                index > 0 ? 'pt-4' : ''
-              }`}
+              className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${index > 0 ? 'pt-4' : ''
+                }`}
             >
               <div className="space-y-1 min-w-0 flex-1">
                 <div className="flex items-center gap-2.5 flex-wrap">

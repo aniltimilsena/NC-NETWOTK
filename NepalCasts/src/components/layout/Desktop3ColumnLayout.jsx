@@ -433,79 +433,101 @@ export default function Desktop3ColumnLayout({
                 </div>
               )}
 
-              {/* === SIDEBAR NAVIGATION (Settings-Subpage Styled Cards) === */}
-              <div className="flex flex-col space-y-2 p-2">
+              {/* === SIDEBAR NAVIGATION (Clean Settings Card Style - No Blue Bars/Gradients) === */}
+              <div className="flex flex-col space-y-1.5 p-2">
                 {[
-                  { name: "Home", path: "/", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/> },
-                  { name: "Discover", path: "/discover", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z"/> },
-                  { name: "Talent Directory", path: "/talents", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/> },
-                  { name: "Trending", path: "/trending", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/> },
-                  { name: "Casting", path: "/casting", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/> },
-                  { name: "Create", path: "/casting/create", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/> },
+                  { name: "Home", path: "/", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
+                  { name: "Discover", path: "/discover", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z" /> },
+                  { name: "Talent Directory", path: "/talents", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
+                  { name: "Trending", path: "/trending", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
+                  { name: "Casting", path: "/casting", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
+                  { name: "Create", path: "/casting/create", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /> },
                   ...(user ? [
-                    { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/> },
-                    { name: "Saved Calls", path: "/saved", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/> },
-                    { name: "Profile", path: `/profile/${user?.uid}`, icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/> }
-                  ] : []),
-                  { name: "Settings", path: "/settings", icon: <g><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></g> },
-                  ...(isAdmin ? [
-                    { name: "Admin Panel", path: "/admin", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /> }
-                  ] : []),
-                  { name: "Support", path: "/trust-safety", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/> }
+                    { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
+                    { name: "Saved Calls", path: "/saved", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /> },
+                    { name: "Profile", path: `/profile/${user?.uid}`, icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> }
+                  ] : [])
                 ].map((item, i) => {
                   const isActive = item.path === '/'
                     ? (pathname === '/' || pathname === '')
                     : item.path === '/casting'
-                    ? (pathname === '/casting' || (pathname.startsWith('/casting/') && pathname !== '/casting/create'))
-                    : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
+                      ? (pathname === '/casting' || (pathname.startsWith('/casting/') && pathname !== '/casting/create'))
+                      : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
                   return (
                     <Link
                       key={i}
                       to={item.path}
-                      className={`flex items-center justify-between w-full p-2.5 rounded-xl border transition-all group ${
+                      className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${
                         isActive
-                          ? "bg-[#00BFFF]/10 border-[#00BFFF]/30 text-white shadow-[0_0_12px_rgba(0,191,255,0.12)]"
-                          : "bg-[#12121A]/80 border-white/10 text-gray-300 hover:bg-white/[0.08] hover:border-white/20 hover:text-white"
+                          ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
+                          : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
                       }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                          isActive
-                            ? "bg-[#00BFFF]/20 border border-[#00BFFF]/40 text-[#00BFFF]"
-                            : "bg-white/5 border border-white/10 text-gray-400 group-hover:text-white"
-                        }`}>
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            {item.icon}
-                          </svg>
-                        </div>
-                        <span className={`text-sm font-bold tracking-tight truncate ${isActive ? "text-[#00BFFF]" : "text-gray-200"}`}>
-                          {item.name}
-                        </span>
-                      </div>
-
-                      {isActive && (
-                        <span className="text-[10px] font-extrabold text-[#00BFFF] bg-[#00BFFF]/20 px-2 py-0.5 rounded-full border border-[#00BFFF]/30 shrink-0">
-                          ✓ Active
-                        </span>
-                      )}
+                      <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${isActive ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        {item.icon}
+                      </svg>
+                      <span className="text-[15px] tracking-tight">{item.name}</span>
                     </Link>
                   );
                 })}
+
+                <Link
+                  to="/settings"
+                  className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${
+                    pathname === '/settings' || pathname.startsWith('/settings/')
+                      ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
+                      : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
+                  }`}
+                >
+                  <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${pathname === '/settings' || pathname.startsWith('/settings/') ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-[15px] tracking-tight">Settings</span>
+                </Link>
+
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${
+                      pathname.startsWith("/admin")
+                        ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
+                        : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
+                    }`}
+                  >
+                    <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${pathname.startsWith("/admin") ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <span className="text-[15px] tracking-tight">Admin Panel</span>
+                  </Link>
+                )}
+
+                <Link
+                  to="/trust-safety"
+                  className={`flex items-center w-full px-4 py-3 rounded-xl transition-all border ${
+                    pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
+                      ? "bg-[#16161a] border-white/20 text-white font-bold shadow-md"
+                      : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 font-medium"
+                  }`}
+                >
+                  <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-colors ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/') ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-[15px] tracking-tight">Support</span>
+                </Link>
+
+                <hr className="border-white/5 my-2 mx-6" />
 
                 {user && (
                   <button
                     type="button"
                     onClick={onLogout || (() => AuthService.signOut())}
-                    className="flex items-center justify-between w-full p-2.5 rounded-xl bg-[#12121A]/80 border border-white/10 text-gray-300 hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-400 transition-all text-left group cursor-pointer"
+                    className="flex items-center w-full relative px-6 py-2.5 transition-colors text-[#777] hover:text-white text-left cursor-pointer"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 group-hover:bg-rose-500/20 group-hover:text-rose-400 group-hover:border-rose-500/30 transition-colors">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                        </svg>
-                      </div>
-                      <span className="text-sm font-bold tracking-tight">Logout</span>
-                    </div>
+                    <svg className="w-[22px] h-[22px] mr-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span className="font-bold text-[16px]">Logout</span>
                   </button>
                 )}
               </div>
@@ -529,186 +551,186 @@ export default function Desktop3ColumnLayout({
           {isHomePage && (
             <aside className="hidden xl:block xl:col-span-3 sticky top-20 space-y-4 h-fit pt-2">
 
-            {/* Go Pro CTA */}
-            {!isPremium && !isVerified && (
-              <div className="px-2">
-                <div className="bg-[#1C1C1C] rounded-2xl p-3.5 border border-[#2A2A2A] relative overflow-hidden space-y-2">
-                  <div className="flex items-center gap-1.5 relative z-10">
-                    <span className="text-white font-bold text-[14px]">Go Pro</span>
-                    <span className="text-[#00BFFF] text-sm">✓</span>
-                  </div>
-                  <p className="text-[#888] text-[11px] leading-snug relative z-10">
-                    Get a verified badge and appear first in search results.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('premium')}
-                    className="w-full text-center block text-black rounded-lg py-1.5 font-bold text-[12px] hover:opacity-90 transition-all relative z-10 shadow-lg cursor-pointer active:scale-[0.98]"
-                    style={{ backgroundColor: '#FACC15' }}
-                  >
-                    Upgrade Profile
-                  </button>
-                  <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#FACC15] blur-3xl opacity-10 rounded-full" />
-                </div>
-              </div>
-            )}
-
-            {/* Why NepalCasts? Section */}
-            <div className="px-2 space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400 text-left px-1">Why NepalCasts?</h4>
-              
-              <div className="space-y-4 text-left px-1">
-                {/* Point 1 */}
-                <div className="flex gap-3.5 items-start">
-                  <div className="shrink-0 mt-0.5">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h5 className="text-gray-200 text-sm font-bold font-sans">Remote Live Auditions</h5>
-                    <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Audition from anywhere in Nepal via nepalcasts</p>
+              {/* Go Pro CTA */}
+              {!isPremium && !isVerified && (
+                <div className="px-2">
+                  <div className="bg-[#1C1C1C] rounded-2xl p-3.5 border border-[#2A2A2A] relative overflow-hidden space-y-2">
+                    <div className="flex items-center gap-1.5 relative z-10">
+                      <span className="text-white font-bold text-[14px]">Go Pro</span>
+                      <span className="text-[#00BFFF] text-sm">✓</span>
+                    </div>
+                    <p className="text-[#888] text-[11px] leading-snug relative z-10">
+                      Get a verified badge and appear first in search results.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate?.('premium')}
+                      className="w-full text-center block text-black rounded-lg py-1.5 font-bold text-[12px] hover:opacity-90 transition-all relative z-10 shadow-lg cursor-pointer active:scale-[0.98]"
+                      style={{ backgroundColor: '#FACC15' }}
+                    >
+                      Upgrade Profile
+                    </button>
+                    <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#FACC15] blur-3xl opacity-10 rounded-full" />
                   </div>
                 </div>
+              )}
 
-                {/* Point 2 */}
-                <div className="flex gap-3.5 items-start">
-                  <div className="shrink-0 mt-0.5">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h5 className="text-gray-200 text-sm font-bold font-sans">Direct Connections</h5>
-                    <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Message top directors and production teams directly without middle agents.</p>
-                  </div>
-                </div>
-
-                {/* Point 3 */}
-                <div className="flex gap-3.5 items-start">
-                  <div className="shrink-0 mt-0.5">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h5 className="text-gray-200 text-sm font-bold font-sans">Verified PRO Casting</h5>
-                    <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Get verified to rank first in search results and stand out to casting teams.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* === PEOPLE TO FOLLOW === (Enlarged) */}
-            {(isTalentsLoading || safeFeatured.length > 0) && (
+              {/* Why NepalCasts? Section */}
               <div className="px-2 space-y-4">
-                <div className="flex items-center justify-between px-1">
-                  <h4 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400">People to follow</h4>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('talent')}
-                    className="text-xs font-extrabold text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
-                  >
-                    View all <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="px-1 space-y-4">
-                  {isTalentsLoading ? (
-                    <FollowItemSkeleton count={3} />
-                  ) : (
-                    safeFeatured.slice(0, 3).map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-4 group"
-                      >
-                        <div
-                          onClick={() => onNavigate?.('profile', item.id)}
-                          className="cursor-pointer flex-shrink-0"
-                        >
-                          <Avatar
-                            userId={item.id || item.uid}
-                            src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
-                            size="lg"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h5
-                            onClick={() => onNavigate?.('profile', item.id)}
-                            className="text-white text-base font-extrabold truncate cursor-pointer group-hover:text-[#00BFFF] transition-colors"
-                          >
-                            {item.name || 'Talent'}
-                          </h5>
-                          <p className="text-gray-400 text-xs font-semibold truncate mt-0.5">
-                            {item.role || item.category || 'Talent'}
-                            {item.location && <span> · {item.location}</span>}
-                          </p>
-                        </div>
-                        <FollowBtn targetUid={item.id} />
-                      </div>
-                    ))
-                  )}
+                <h4 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400 text-left px-1">Why NepalCasts?</h4>
+
+                <div className="space-y-4 text-left px-1">
+                  {/* Point 1 */}
+                  <div className="flex gap-3.5 items-start">
+                    <div className="shrink-0 mt-0.5">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h5 className="text-gray-200 text-sm font-bold font-sans">Remote Live Auditions</h5>
+                      <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Audition from anywhere in Nepal via nepalcasts</p>
+                    </div>
+                  </div>
+
+                  {/* Point 2 */}
+                  <div className="flex gap-3.5 items-start">
+                    <div className="shrink-0 mt-0.5">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h5 className="text-gray-200 text-sm font-bold font-sans">Direct Connections</h5>
+                      <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Message top directors and production teams directly without middle agents.</p>
+                    </div>
+                  </div>
+
+                  {/* Point 3 */}
+                  <div className="flex gap-3.5 items-start">
+                    <div className="shrink-0 mt-0.5">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h5 className="text-gray-200 text-sm font-bold font-sans">Verified PRO Casting</h5>
+                      <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Get verified to rank first in search results and stand out to casting teams.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Trending Casting Calls Widget (No TrendingUp Icon) */}
-            {(isCallsLoading || safeTrending.length > 0) && (
-              <div className="space-y-3 px-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500">
-                    {t('sidebar.activeCastingCalls')}
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.('casting')}
-                    className="text-xs font-bold text-[#00BFFF] hover:underline cursor-pointer"
-                  >
-                    {t('sidebar.viewAll')}
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  {isCallsLoading ? (
-                    <SidebarWidgetSkeleton count={3} type="casting" />
-                  ) : (
-                    safeTrending.slice(0, 3).map((call) => (
-                      <div
-                        key={call.id}
-                        onClick={() => onNavigate?.('casting-detail', call.id)}
-                        className="relative h-32 rounded-2xl overflow-hidden hover:scale-[1.02] hover:border-white/20 transition-all cursor-pointer group shadow-xl border border-white/5 flex flex-col justify-end p-4"
-                      >
-                        {/* Background Image */}
-                        <div className="absolute inset-0 select-none pointer-events-none">
-                          <img
-                            src={(call.thumbnail && call.thumbnail !== 'has-file') ? call.thumbnail : (call.thumbnailUrl || call.mediaUrl || '/movie-banner.png')}
-                            alt={call.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = '/movie-banner.png';
-                            }}
-                          />
-                          {/* Dark Glassy Overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/40" />
+              {/* === PEOPLE TO FOLLOW === (Enlarged) */}
+              {(isTalentsLoading || safeFeatured.length > 0) && (
+                <div className="px-2 space-y-4">
+                  <div className="flex items-center justify-between px-1">
+                    <h4 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400">People to follow</h4>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate?.('talent')}
+                      className="text-xs font-extrabold text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
+                    >
+                      View all <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="px-1 space-y-4">
+                    {isTalentsLoading ? (
+                      <FollowItemSkeleton count={3} />
+                    ) : (
+                      safeFeatured.slice(0, 3).map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center gap-4 group"
+                        >
+                          <div
+                            onClick={() => onNavigate?.('profile', item.id)}
+                            className="cursor-pointer flex-shrink-0"
+                          >
+                            <Avatar
+                              userId={item.id || item.uid}
+                              src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
+                              size="lg"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h5
+                              onClick={() => onNavigate?.('profile', item.id)}
+                              className="text-white text-base font-extrabold truncate cursor-pointer group-hover:text-[#00BFFF] transition-colors"
+                            >
+                              {item.name || 'Talent'}
+                            </h5>
+                            <p className="text-gray-400 text-xs font-semibold truncate mt-0.5">
+                              {item.role || item.category || 'Talent'}
+                              {item.location && <span> · {item.location}</span>}
+                            </p>
+                          </div>
+                          <FollowBtn targetUid={item.id} />
                         </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
 
-                        {/* Text info */}
-                        <div className="relative z-10 space-y-1">
-                          <h5 className="text-white text-base font-black group-hover:text-[#00BFFF] transition-colors truncate uppercase tracking-wider">
-                            {call.title}
-                          </h5>
-                          <div className="flex items-center justify-between text-xs text-gray-300 font-bold">
-                            <span className="bg-white/10 px-2 py-0.5 rounded text-[10px] tracking-wide uppercase">{call.type || 'General'}</span>
-                            <span className="text-[#00BFFF] font-black capitalize tracking-wide">{call.location || 'Nepal'}</span>
+              {/* Trending Casting Calls Widget (No TrendingUp Icon) */}
+              {(isCallsLoading || safeTrending.length > 0) && (
+                <div className="space-y-3 px-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500">
+                      {t('sidebar.activeCastingCalls')}
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate?.('casting')}
+                      className="text-xs font-bold text-[#00BFFF] hover:underline cursor-pointer"
+                    >
+                      {t('sidebar.viewAll')}
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {isCallsLoading ? (
+                      <SidebarWidgetSkeleton count={3} type="casting" />
+                    ) : (
+                      safeTrending.slice(0, 3).map((call) => (
+                        <div
+                          key={call.id}
+                          onClick={() => onNavigate?.('casting-detail', call.id)}
+                          className="relative h-32 rounded-2xl overflow-hidden hover:scale-[1.02] hover:border-white/20 transition-all cursor-pointer group shadow-xl border border-white/5 flex flex-col justify-end p-4"
+                        >
+                          {/* Background Image */}
+                          <div className="absolute inset-0 select-none pointer-events-none">
+                            <img
+                              src={(call.thumbnail && call.thumbnail !== 'has-file') ? call.thumbnail : (call.thumbnailUrl || call.mediaUrl || '/movie-banner.png')}
+                              alt={call.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = '/movie-banner.png';
+                              }}
+                            />
+                            {/* Dark Glassy Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/40" />
+                          </div>
+
+                          {/* Text info */}
+                          <div className="relative z-10 space-y-1">
+                            <h5 className="text-white text-base font-black group-hover:text-[#00BFFF] transition-colors truncate uppercase tracking-wider">
+                              {call.title}
+                            </h5>
+                            <div className="flex items-center justify-between text-xs text-gray-300 font-bold">
+                              <span className="bg-white/10 px-2 py-0.5 rounded text-[10px] tracking-wide uppercase">{call.type || 'General'}</span>
+                              <span className="text-[#00BFFF] font-black capitalize tracking-wide">{call.location || 'Nepal'}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </aside>
+              )}
+            </aside>
           )}
 
         </div>

@@ -58,9 +58,8 @@ export default function ProfileReviews({
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
-                      className={`w-3.5 h-3.5 ${
-                        star <= Math.round(averageRating) ? 'text-[#FFD700] fill-[#FFD700]' : 'text-white/10'
-                      }`}
+                      className={`w-3.5 h-3.5 ${star <= Math.round(averageRating) ? 'text-[#FFD700] fill-[#FFD700]' : 'text-white/10'
+                        }`}
                     />
                   ))}
                 </div>
@@ -117,9 +116,8 @@ export default function ProfileReviews({
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`w-3 h-3 ${
-                              star <= review.rating ? 'text-[#FFD700] fill-[#FFD700]' : 'text-white/10'
-                            }`}
+                            className={`w-3 h-3 ${star <= review.rating ? 'text-[#FFD700] fill-[#FFD700]' : 'text-white/10'
+                              }`}
                           />
                         ))}
                       </div>
@@ -134,11 +132,10 @@ export default function ProfileReviews({
                   <div className="flex items-center gap-2 pt-1">
                     <button
                       onClick={(e) => onHelpfulToggle(review.id, e)}
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold transition-colors ${
-                        hasLiked
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold transition-colors ${hasLiked
                           ? 'bg-[#00BFFF]/10 text-[#00BFFF] border-[#00BFFF]/20'
                           : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                      }`}
+                        }`}
                     >
                       <ThumbsUp className="w-3.5 h-3.5" />
                       Helpful ({review.helpfulCount || 0})
