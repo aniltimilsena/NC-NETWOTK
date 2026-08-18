@@ -7,7 +7,6 @@ export default function Footer({ user }) {
                 { label: "Home", to: "/" },
                 { label: "Talent Directory", to: "/talents" },
                 { label: "Casting Board", to: "/casting" },
-                { label: "PRO Membership", to: "/premium" },
             ]
         },
         {

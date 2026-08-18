@@ -3,12 +3,18 @@ import { Route, useParams, Navigate } from 'react-router-dom';
 
 const SavedCastingCalls = lazy(() => import('../features/casting/SavedCastingCalls'));
 
-const SavedWrapper = ({ user, onNavigate, showToast }: any) => {
+interface SavedRoutesProps {
+  user?: any;
+  onNavigate?: (page: string, param?: unknown) => void;
+  showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
+}
+
+const SavedWrapper = ({ user, onNavigate, showToast }: SavedRoutesProps) => {
   const { type } = useParams();
   return <SavedCastingCalls user={user} onNavigate={onNavigate} showToast={showToast} activeTab={type || 'casting'} />;
 };
 
-export const SavedRoutes = ({ user, onNavigate, showToast }: any) => (
+export const SavedRoutes = ({ user, onNavigate, showToast }: SavedRoutesProps) => (
   <>
     <Route path="/saved" element={<SavedWrapper user={user} onNavigate={onNavigate} showToast={showToast} />} />
     <Route path="/saved/talent" element={<SavedWrapper user={user} onNavigate={onNavigate} showToast={showToast} />} />

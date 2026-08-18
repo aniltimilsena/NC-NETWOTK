@@ -26,6 +26,9 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
             if (previewUrl) {
                 URL.revokeObjectURL(previewUrl);
             }
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
         };
     }, [previewUrl]);
 
@@ -62,7 +65,9 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
         }
     };
 
-    const handleKeyDown = () => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter')
+            return;
         onTyping(true);
         if (typingTimeoutRef.current) {
             clearTimeout(typingTimeoutRef.current);

@@ -81,15 +81,14 @@ export default function AppProviders({ children }: {
     useEffect(() => {
         if (userProfile) {
             CurrentUser.setProfileInfo(
-                userProfile.role || 'user',
-                userProfile.premium === true || userProfile.isPremium === true
+                userProfile.role || 'user'
             );
             // Sync canonical profile image and name so CurrentUser returns the
             // Firestore values instead of stale Clerk defaults.
             CurrentUser.setImageUrl(userProfile.image || null);
             CurrentUser.setName(userProfile.name || null);
         } else {
-            CurrentUser.setProfileInfo('user', false);
+            CurrentUser.setProfileInfo('user');
             CurrentUser.setImageUrl(null);
             CurrentUser.setName(null);
         }
@@ -331,7 +330,7 @@ export default function AppProviders({ children }: {
             imageUrl: null,
             getToken: async () => null,
         });
-        CurrentUser.setProfileInfo('user', false);
+        CurrentUser.setProfileInfo('user');
         CurrentUser.setImageUrl(null);
         CurrentUser.setName(null);
         setUser(null);
@@ -353,7 +352,6 @@ export default function AppProviders({ children }: {
         photoURL: userProfile?.image || '',
         gender: userProfile?.gender || '',
         profileImage: userProfile?.image || '',
-        premium: userProfile?.premium || isAdmin || false,
         role: userProfile?.category || userProfile?.role || '',
     } : null, [user, userProfile, clerkComputedName, isAdmin]);
 

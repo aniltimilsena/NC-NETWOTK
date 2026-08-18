@@ -31,9 +31,6 @@ export const SettingsRoutes = ({ onNavigate, user, showToast, showAlert }: any) 
     <Route path="/settings/notifications" element={<SettingsWrapper onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert} />} />
     <Route path="/settings/language" element={<SettingsWrapper onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert} />} />
     <Route path="/settings/appearance" element={<SettingsWrapper onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert} />} />
-    <Route path="/settings/subscription" element={<SettingsWrapper onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert} />} />
-    <Route path="/settings/billing" element={<SettingsWrapper onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert} />} />
-    <Route path="/settings/payment-methods" element={<SettingsWrapper onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert} />} />
     <Route path="/settings/blocked-users" element={<SettingsWrapper onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert} />} />
     <Route path="/settings/sessions" element={<SettingsWrapper onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert} />} />
     <Route path="/settings/help" element={<SettingsWrapper onNavigate={onNavigate} user={user} showToast={showToast} showAlert={showAlert} />} />

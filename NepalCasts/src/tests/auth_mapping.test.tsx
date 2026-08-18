@@ -13,7 +13,7 @@ describe('Clerk OAuth Account Mapping & Identity Isolation Audit', () => {
             imageUrl: null,
             getToken: async () => null,
         });
-        CurrentUser.setProfileInfo('user', false);
+        CurrentUser.setProfileInfo('user');
         CurrentUser.setImageUrl(null);
         CurrentUser.setName(null);
     });
@@ -46,7 +46,7 @@ describe('Clerk OAuth Account Mapping & Identity Isolation Audit', () => {
             imageUrl: 'https://img.clerk.com/user53.jpg',
             getToken: async () => 'token-53',
         });
-        CurrentUser.setProfileInfo('admin', true);
+        CurrentUser.setProfileInfo('admin');
         CurrentUser.setName('Anil Timilsena A');
         CurrentUser.setImageUrl('https://firestore/user53.jpg');
 
@@ -62,7 +62,7 @@ describe('Clerk OAuth Account Mapping & Identity Isolation Audit', () => {
             imageUrl: null,
             getToken: async () => null,
         });
-        CurrentUser.setProfileInfo('user', false);
+        CurrentUser.setProfileInfo('user');
         CurrentUser.setName(null);
         CurrentUser.setImageUrl(null);
 
@@ -79,7 +79,7 @@ describe('Clerk OAuth Account Mapping & Identity Isolation Audit', () => {
             imageUrl: 'https://img.clerk.com/user38.jpg',
             getToken: async () => 'token-38',
         });
-        CurrentUser.setProfileInfo('user', false);
+        CurrentUser.setProfileInfo('user');
         CurrentUser.setName('Anil Timilsena B');
 
         // Step 4: Verify Account B does NOT inherit Account A's identity or profile data

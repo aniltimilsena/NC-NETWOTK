@@ -56,12 +56,6 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             setCoverLoaded(true);
         }
     }, [coverImage]);
-    const isPremiumUser = Boolean(
-        profile?.isPremium || 
-        profile?.premium || 
-        (profile as any)?.isPro || 
-        (isRealOwn && CurrentUser.premium)
-    );
     const name = profile?.name || (profile as any)?.displayName || (profile as any)?.fullName || ((profile as any)?.email ? (profile as any).email.split('@')[0] : 'Discovery Talent');
     const extractedRole = profile?.role || (profile as any)?.primaryRole || (profile as any)?.category || (profile as any)?.systemRole || (Array.isArray((profile as any)?.roles) ? (profile as any).roles[0] : null) || (Array.isArray((profile as any)?.categories) ? (profile as any).categories[0] : null) || (isRealOwn ? CurrentUser.role : null);
     const userRole = (extractedRole && extractedRole.toLowerCase() !== 'user' && extractedRole.toLowerCase() !== 'talent') 
@@ -189,7 +183,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
 
         <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight flex items-center justify-center gap-2 flex-wrap mb-2">
           <span>{name}</span>
-          {(profile.verified === true || isPremiumUser) && (
+          {profile.verified === true && (
             <span className="w-5 h-5 sm:w-6 sm:h-6 aspect-square rounded-full bg-[#00BFFF] inline-flex items-center justify-center text-[#060709] shrink-0 shadow-md shadow-[#00BFFF]/30" title="Verified Talent">
               <svg className="w-3 h-3 text-[#060709]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />

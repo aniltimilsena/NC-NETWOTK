@@ -168,14 +168,6 @@ export function useProfile(profileId: string | null, currentUser: any) {
         let uData: any = null;
 
         const handleMerge = () => {
-            const isPrem = Boolean(
-                pData?.isPremium || 
-                pData?.premium || 
-                uData?.isPremium || 
-                uData?.premium || 
-                ((currentUser?.uid === targetUid || currentUser?.id === targetUid) && (currentUser?.isPremium || currentUser?.premium))
-            );
-            
             // Check local persistent storage for fallback data if Firestore docs were sparse
             let cachedTalent: any = null;
             if (!pData?.name && !uData?.name) {
@@ -204,8 +196,6 @@ export function useProfile(profileId: string | null, currentUser: any) {
                 ...cachedTalent,
                 ...uData,
                 ...pData,
-                isPremium: isPrem,
-                premium: isPrem,
                 image: finalPhoto,
                 photoURL: finalPhoto,
                 profileImage: finalPhoto

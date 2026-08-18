@@ -325,9 +325,6 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
                 if (id)
                     onNavigate('casting-detail', id);
             }
-            else if (target === '/premium') {
-                onNavigate('premium');
-            }
             else {
                 onNavigate('home');
             }

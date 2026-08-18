@@ -19,7 +19,6 @@ type AdminUser = {
     joined?: string;
     avatar?: string;
     verified?: boolean;
-    premium?: boolean;
     isAdmin?: boolean;
 };
 export default function AdminUsers() {
@@ -147,47 +146,7 @@ export default function AdminUsers() {
         }
     };
 
-    const handleTogglePremium = async (userId: string, currentPremium: boolean) => {
-        try {
-            const targetPremium = !currentPremium;
-            await updateDoc(doc(db, "users", userId), { premium: targetPremium, isPremium: targetPremium });
-            await updateDoc(doc(db, "profiles", userId), { premium: targetPremium, isPremium: targetPremium });
-            setUsers(prev => prev.map(u => u.id === userId ? { ...u, premium: targetPremium } : u));
-            await logAdminAction(adminEmail, `Update Subscription`, userId, targetPremium ? `Granted PRO Membership` : `Revoked PRO Membership`);
-            try {
-                await addDoc(collection(db, "notifications"), {
-                    userId: userId,
-                    recipientId: userId,
-                    receiverId: userId,
-                    senderId: "system",
-                    senderName: "NepalCasts Team",
-                    senderAvatar: "",
-                    title: targetPremium ? "Premium Activated" : "Premium Subscription Ended",
-                    body: targetPremium
-                        ? "Awesome! Your Premium PRO subscription is now active. Enjoy exclusive features!"
-                        : "Your Premium PRO subscription has ended. Upgrade to continue using pro features.",
-                    type: "system",
-                    notificationType: "system",
-                    isRead: false,
-                    read: false,
-                    createdAt: serverTimestamp(),
-                    targetUrl: "/premium",
-                    profileUrl: "/premium"
-                });
-            }
-            catch (notifErr) {
-                console.warn("Could not send premium status notification:", notifErr);
-            }
-            if (selectedUser?.id === userId) {
-                setSelectedUser(prev => prev ? { ...prev, premium: targetPremium, isPremium: targetPremium } : null);
-            }
-            alert(targetPremium ? "PRO membership granted successfully!" : "PRO membership revoked successfully!");
-        }
-        catch (err) {
-            console.error("Failed to update subscription:", err);
-            alert("Error updating subscription.");
-        }
-    };
+
 
     const handleToggleVerification = async (userId: string, currentVerified: boolean) => {
         try {
@@ -360,7 +319,6 @@ export default function AdminUsers() {
                 status: 'Active',
                 createdAt,
                 verified: false,
-                premium: false,
                 isAdmin: false
             });
             await setDoc(doc(db, "profiles", tempId), {
@@ -370,7 +328,6 @@ export default function AdminUsers() {
                 status: 'Active',
                 createdAt,
                 verified: false,
-                premium: false,
                 isAdmin: false
             });
             await logAdminAction(adminEmail, `Create User`, tempId, `Created new user ${name} (${role})`);
@@ -405,7 +362,6 @@ export default function AdminUsers() {
                         joined: joinedDate,
                         avatar: (u.name || '?').charAt(0).toUpperCase(),
                         verified: !!u.verified,
-                        premium: !!u.premium,
                         isAdmin: !!u.isAdmin
                     };
                 });
@@ -447,7 +403,6 @@ export default function AdminUsers() {
                             joined: joinedDate,
                             avatar: (u.name || '?').charAt(0).toUpperCase(),
                             verified: !!u.verified,
-                            premium: !!u.premium,
                             isAdmin: !!u.isAdmin
                         };
                     });
@@ -583,18 +538,13 @@ export default function AdminUsers() {
                             {user.verified && (<span title="Verified">
                                 <ShieldCheck className="w-3.5 h-3.5 text-admin-success fill-admin-success/10"/>
                               </span>)}
-                            {user.premium && (<span title="PRO Member">
-                                <Award className="w-3.5 h-3.5 text-admin-primary fill-admin-primary/10 animate-pulse"/>
-                              </span>)}
                           </div>
                           <p className="text-xs text-nc-muted">{user.email ?? 'No email'}</p>
                         </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${user.isAdmin ? 'bg-admin-primary/20 text-admin-primary border border-admin-primary/30 shadow-[0_0_12px_rgba(56,189,248,0.2)]' :
-                user.role === 'PRO' || user.premium ? 'bg-admin-primary/20 text-admin-primary border border-admin-primary/20' :
-                    'bg-white/5 text-white/30 border border-white/5'}`}>
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${user.isAdmin ? 'bg-admin-primary/20 text-admin-primary border border-admin-primary/30 shadow-[0_0_12px_rgba(56,189,248,0.2)]' : 'bg-white/5 text-white/30 border border-white/5'}`}>
                       {user.isAdmin ? 'Admin' : user.role ?? 'User'}
                     </span>
                   </td>
@@ -729,18 +679,6 @@ export default function AdminUsers() {
                 ? 'bg-admin-success/20 text-admin-success border border-admin-success/30'
                 : 'bg-white/5 text-white/40 border border-white/5 hover:text-white'}`}>
                         {selectedUser.verified ? 'Verified' : 'Verify'}
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between p-2.5 bg-admin-bg/30 border border-admin-border rounded-xl">
-                      <div>
-                        <p className="text-xs font-bold text-white">PRO Membership</p>
-                        <p className="text-[9px] text-nc-muted uppercase">Premium level subscription</p>
-                      </div>
-                      <button onClick={() => handleTogglePremium(selectedUser.id, !!selectedUser.premium)} className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${selectedUser.premium
-                ? 'bg-admin-primary/20 text-admin-primary border border-admin-primary/30 animate-pulse'
-                : 'bg-white/5 text-white/40 border border-white/5 hover:text-white'}`}>
-                        {selectedUser.premium ? 'PRO Active' : 'Grant PRO'}
                       </button>
                     </div>
 

@@ -75,7 +75,7 @@ export default function AdminSettings() {
                     isRead: false,
                     read: false,
                     createdAt: serverTimestamp(),
-                    targetUrl: "/premium",
+                    targetUrl: "/",
                     profileUrl: "/"
                 });
             });

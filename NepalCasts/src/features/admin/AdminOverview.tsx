@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Users, UserCheck, Briefcase, Zap, AlertCircle, ArrowUpRight, ArrowDownRight, CheckCircle2 } from 'lucide-react';
+import { Users, UserCheck, Briefcase, Zap, AlertCircle, ArrowUpRight, ArrowDownRight, CheckCircle2 } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { AdminStatSkeleton, AdminChartSkeleton } from '../../components/ui/Skeleton';
@@ -7,7 +7,6 @@ export default function AdminOverview() {
     const [counts, setCounts] = useState({
         users: 0,
         activeCastings: 0,
-        proMembers: 0,
         newSignups: 0
     });
     const [loading, setLoading] = useState(true);
@@ -16,8 +15,7 @@ export default function AdminOverview() {
     useEffect(() => {
         const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
             const all = snap.size;
-            const pro = snap.docs.filter(d => d.data().premium).length;
-            setCounts(prev => ({ ...prev, users: all, proMembers: pro }));
+            setCounts(prev => ({ ...prev, users: all }));
             const dates = snap.docs
                 .map(doc => {
                 const u = doc.data();
@@ -122,7 +120,6 @@ export default function AdminOverview() {
         { label: 'Total Users', value: counts.users.toLocaleString(), change: '+2.1%', trend: 'up', icon: Users },
         { label: 'Platform Pulse', value: 'Healthy', change: '100%', trend: 'up', icon: Zap },
         { label: 'Active Castings', value: counts.activeCastings.toLocaleString(), change: '+5.4%', trend: 'up', icon: Briefcase },
-        { label: 'PRO Members', value: counts.proMembers.toLocaleString(), change: '+8.2%', trend: 'up', icon: TrendingUp },
         { label: 'Network Integrity', value: 'Secure', change: '99.9%', trend: 'up', icon: UserCheck },
     ];
     if (loading) {

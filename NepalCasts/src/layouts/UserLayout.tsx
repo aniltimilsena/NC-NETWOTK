@@ -61,9 +61,6 @@ export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToa
             case 'casting-create':
                 navigate('/casting/create');
                 break;
-            case 'premium':
-                navigate('/premium');
-                break;
             case 'messages':
                 navigate(param ? `/messages/${param}` : '/messages');
                 break;

@@ -17,6 +17,13 @@ export default class ErrorBoundary extends Component<Props, State> {
     public static getDerivedStateFromError(error: Error): State {
         return { hasError: true, error, showDetails: false };
     }
+    public componentDidMount() {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('reload')) {
+            url.searchParams.delete('reload');
+            window.history.replaceState({}, '', url.pathname + url.search);
+        }
+    }
     public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
         const errorMsg = error?.message || "";
         const isChunkLoadFailed = errorMsg.includes("Failed to fetch dynamically imported module") ||

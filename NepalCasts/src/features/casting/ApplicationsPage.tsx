@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { collection, query, where, onSnapshot, doc, deleteDoc, limit } from 'firebase/firestore';
 import { FileText, ChevronLeft, Clock, CheckCircle2, XCircle, AlertCircle, Trash2, ArrowRight } from 'lucide-react';
@@ -7,6 +7,7 @@ import { db } from '../../lib/firebase';
 import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 import { ApplicationSkeleton } from '../../components/ui/Skeleton';
+import { DeleteDialog } from '../../components/ui/ConfirmDialog';
 
 interface ApplicationsPageProps {
   user?: any;
@@ -23,8 +24,10 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [visibleLimit, setVisibleLimit] = useState(20);
   const [hasMore, setHasMore] = useState(true);
+  const castingCacheRef = useRef<Map<string, any>>(new Map());
 
   useEffect(() => {
     if (initialFilter) {
@@ -52,21 +55,22 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
       const castingIds = slicedDocs.map(item => item.data.castingId).filter(Boolean);
       const uniqueCastingIds = Array.from(new Set(castingIds));
       
-      const castingCallsMap = new Map();
-      
-      await Promise.all(uniqueCastingIds.map(async (id) => {
-        try {
-          const data = await getCastingCallById(id);
-          if (data) {
-            castingCallsMap.set(id, data);
+      const missingIds = uniqueCastingIds.filter(id => !castingCacheRef.current.has(id));
+      if (missingIds.length > 0) {
+        await Promise.all(missingIds.map(async (id) => {
+          try {
+            const data = await getCastingCallById(id);
+            if (data) {
+              castingCacheRef.current.set(id, data);
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch casting call ${id}:`, err);
           }
-        } catch (err) {
-          console.warn(`Failed to fetch casting call ${id}:`, err);
-        }
-      }));
+        }));
+      }
       
       const appData = slicedDocs.map((item) => {
-        const castingData = castingCallsMap.get(item.data.castingId);
+        const castingData = castingCacheRef.current.get(item.data.castingId);
         return {
           appId: item.id,
           ...item.data,
@@ -81,14 +85,16 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
     return () => unsub();
   }, [currentUser?.uid, visibleLimit]);
 
-  const handleCancel = async (appId: string) => {
+  const handleConfirmCancel = async () => {
+    if (!deleteTargetId) return;
     try {
-      setCancellingId(appId);
-      await deleteDoc(doc(db, 'applications', appId));
+      setCancellingId(deleteTargetId);
+      await deleteDoc(doc(db, 'applications', deleteTargetId));
     } catch (err) {
       console.error('Error cancelling application:', err);
     } finally {
       setCancellingId(null);
+      setDeleteTargetId(null);
     }
   };
 
@@ -258,7 +264,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                     <div className="flex items-center gap-3 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
                       {app.status === 'pending' && (
                         <button
-                          onClick={() => handleCancel(app.appId)}
+                          onClick={() => setDeleteTargetId(app.appId)}
                           disabled={cancellingId === app.appId}
                           className="px-3.5 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
                         >
@@ -296,6 +302,17 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
           )}
         </div>
       </div>
+
+      <DeleteDialog
+        isOpen={Boolean(deleteTargetId)}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={handleConfirmCancel}
+        title="Withdraw Application"
+        description="Are you sure you want to withdraw this audition application? This action cannot be undone."
+        confirmText="Withdraw"
+        cancelText="Keep Application"
+        isLoading={Boolean(cancellingId)}
+      />
     </Desktop3ColumnLayout>
   );
 }

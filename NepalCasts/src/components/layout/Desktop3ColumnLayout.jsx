@@ -125,8 +125,8 @@ export default function Desktop3ColumnLayout({
             }
             return acc;
           }, []);
-        const featuredOnly = allActive.filter(t => t.featured === true || t.premium === true || t.isPremium === true);
-        const finalTalents = featuredOnly.length > 0 ? featuredOnly : allActive;
+        const featuredOnly = allActive.filter(t => t.featured === true);
+        const finalTalents = (featuredOnly.length > 0 ? featuredOnly : allActive).slice(0, 50);
         setInternalFeatured(finalTalents);
       }
       setTalentsLoading(false);
@@ -257,7 +257,6 @@ export default function Desktop3ColumnLayout({
     user?.profileImage;
 
   const isVerified = profileData?.verified === true || user?.verified === true;
-  const isPremium = profileData?.isPremium === true || profileData?.premium === true || user?.isPremium === true || user?.premium === true;
   const gender = profileData?.gender || user?.gender;
 
   // Real-time stats from Firestore collections
@@ -382,7 +381,7 @@ export default function Desktop3ColumnLayout({
                     <div className="flex-1 min-w-0 text-left flex flex-col gap-0.5">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <h3 className="text-white font-bold text-base leading-snug tracking-tight truncate">{realName}</h3>
-                        {(isVerified || isPremium) && (
+                        {isVerified && (
                           <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0 shadow-sm" style={{ width: '16px', height: '16px' }} title="Verified Talent">
                             <svg className="w-2.5 h-2.5 text-[#060709]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -587,30 +586,6 @@ export default function Desktop3ColumnLayout({
           {/* RIGHT SIDEBAR (Desktop Only: Home Page Only) */}
           {isHomePage && (
             <aside className="hidden xl:block xl:col-span-3 sticky top-14 sm:top-20 pt-0 pb-4 lg:pb-20 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-3">
-
-              {/* Go Pro CTA */}
-              {!isPremium && !isVerified && (
-                <div className="px-2">
-                  <div className="bg-[#1C1C1C] rounded-2xl p-3.5 border border-[#2A2A2A] relative overflow-hidden space-y-2">
-                    <div className="flex items-center gap-1.5 relative z-10">
-                      <span className="text-white font-bold text-[14px]">Go Pro</span>
-                      <span className="text-[#00BFFF] text-sm">✓</span>
-                    </div>
-                    <p className="text-[#888] text-[11px] leading-snug relative z-10">
-                      Get a verified badge and appear first in search results.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => onNavigate?.('premium')}
-                      className="w-full text-center block text-black rounded-lg py-1.5 font-bold text-[12px] hover:opacity-90 transition-all relative z-10 shadow-lg cursor-pointer active:scale-[0.98]"
-                      style={{ backgroundColor: '#FACC15' }}
-                    >
-                      Upgrade Profile
-                    </button>
-                    <div className="absolute -top-10 -right-10 w-24 h-24 bg-[#FACC15] blur-3xl opacity-10 rounded-full" />
-                  </div>
-                </div>
-              )}
 
               {/* Why NepalCasts? Section */}
               <div className="px-2 space-y-3">

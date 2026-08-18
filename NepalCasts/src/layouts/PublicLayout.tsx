@@ -54,9 +54,6 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
             case 'casting-create':
                 navigate('/casting/create');
                 break;
-            case 'premium':
-                navigate('/premium');
-                break;
             case 'messages':
                 navigate(param ? `/messages/${param}` : '/messages');
                 break;

@@ -16,7 +16,6 @@ export { default as ToastNotification } from './ToastNotification';
 export * from './ActionSearchBar';
 export * from './AnimatedStateIcons';
 export * from './FileUploadCard';
-export * from './PricingCards';
 export * from './ShadcnButton';
 export * from './ShadcnCard';
 export * from './ShadcnSeparator';

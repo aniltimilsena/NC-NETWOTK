@@ -2,13 +2,11 @@ import { AuthService } from '../services/AuthService';
 
 export class CurrentUser {
     private static userRole: string = 'user';
-    private static isPremiumUser: boolean = false;
     private static canonicalImageUrl: string | null = null;
     private static canonicalName: string | null = null;
 
-    static setProfileInfo(role: string, premium: boolean) {
+    static setProfileInfo(role: string) {
         this.userRole = role;
-        this.isPremiumUser = premium;
     }
 
     /**
@@ -50,9 +48,5 @@ export class CurrentUser {
 
     static get role(): string {
         return this.userRole;
-    }
-
-    static get premium(): boolean {
-        return this.isPremiumUser;
     }
 }

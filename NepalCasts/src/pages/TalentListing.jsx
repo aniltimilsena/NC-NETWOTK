@@ -245,7 +245,9 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         setSearchQuery('');
     };
     const featuredTalents = useMemo(() => {
-        return talents.filter(t => !t.deactivated && (t.featured === true || t.premium === true || t.isPremium === true));
+        const featuredOnly = talents.filter(t => !t.deactivated && t.featured === true);
+        const allActive = talents.filter(t => !t.deactivated);
+        return (featuredOnly.length > 0 ? featuredOnly : allActive).slice(0, 50);
     }, [talents]);
 
     return (

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { BarChart3, Users, UserRound, Briefcase, MessageSquare, CreditCard, ShieldAlert, Settings, ChevronLeft, ChevronRight, LogOut, LayoutDashboard } from 'lucide-react';
+import { BarChart3, Users, UserRound, Briefcase, MessageSquare, ShieldAlert, Settings, ChevronLeft, ChevronRight, LogOut, LayoutDashboard } from 'lucide-react';
 const menuItems = [
     { to: '/admin', end: true, label: 'Dashboard', icon: LayoutDashboard },
     { to: '/admin/users', label: 'User Management', icon: Users },
@@ -8,7 +8,6 @@ const menuItems = [
     { to: '/admin/content', label: 'Talent Content', icon: UserRound },
     { to: '/admin/casting', label: 'Casting Calls', icon: Briefcase },
     { to: '/admin/messages', label: 'Activity Monitoring', icon: MessageSquare },
-    { to: '/admin/pro', label: 'PRO Members', icon: CreditCard },
     { to: '/admin/moderation', label: 'Moderation', icon: ShieldAlert },
     { to: '/admin/settings', label: 'Platform Settings', icon: Settings },
 ];

@@ -15,7 +15,7 @@ export default function Home({ onNavigate, user }) {
   const isLoggedIn = !!user;
   const [isLoading, setIsLoading] = useState(true);
   const [talentsReceived, setTalentsReceived] = useState(false);
-  const [currentPremiumIdx, setCurrentPremiumIdx] = useState(0);
+  const [currentSpotlightIdx, setCurrentSpotlightIdx] = useState(0);
   const [talents, setTalents] = useState([]);
   const [castingCalls, setCastingCalls] = useState([]);
   const scrollRef = useRef(null);
@@ -143,42 +143,32 @@ export default function Home({ onNavigate, user }) {
     setCategoriesReady(false);
   }, [isLoading]);
 
-  const [shouldScroll, setShouldScroll] = useState(false);
+  const [isCastingHovered, setIsCastingHovered] = useState(false);
 
   useEffect(() => {
     const container = scrollRef.current;
-    if (!container || castingCalls.length === 0) return;
-
-    const checkScroll = () => {
-      setShouldScroll(container.scrollWidth > container.offsetWidth);
-    };
-
-    checkScroll();
-    window.addEventListener('resize', checkScroll);
-    return () => window.removeEventListener('resize', checkScroll);
-  }, [castingCalls.length]);
-
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container || !shouldScroll) return;
+    if (!container || castingCalls.length <= 1) return;
 
     let animationId;
-    let scrollPos = container.scrollLeft;
-    const speed = 0.4;
+    const speed = 0.5;
 
     const animate = () => {
-      scrollPos += speed;
-      const loopPoint = castingCalls.length > 3 ? container.scrollWidth / 2 : container.scrollWidth - container.offsetWidth;
-      if (scrollPos >= loopPoint) {
-        scrollPos = 0;
+      if (!isCastingHovered && container) {
+        const maxScroll = container.scrollWidth - container.offsetWidth;
+        if (maxScroll > 0) {
+          let currentScroll = container.scrollLeft + speed;
+          if (currentScroll >= maxScroll - 1) {
+            currentScroll = 0;
+          }
+          container.scrollLeft = currentScroll;
+        }
       }
-      container.scrollLeft = scrollPos;
       animationId = requestAnimationFrame(animate);
     };
 
     animationId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationId);
-  }, [shouldScroll, castingCalls.length]);
+  }, [castingCalls.length, isCastingHovered]);
 
   const activeTalentsList = talents
     .filter(t => !t.deactivated && t.name)
@@ -207,71 +197,60 @@ export default function Home({ onNavigate, user }) {
     coverImage: user?.coverImage || '/hero-bg.png'
   };
 
-  const trendingList = activeTalentsList.filter(t => t.featured === true || t.premium === true || t.isPremium === true);
-  const currentPremiumUser = trendingList[currentPremiumIdx] || activeTalentsList[0] || (user ? { ...defaultTalent, ...user } : defaultTalent);
+  const featuredOnlyList = activeTalentsList.filter(t => t.featured === true);
+  const trendingList = (featuredOnlyList.length > 0 ? featuredOnlyList : activeTalentsList).slice(0, 50);
+  const currentSpotlightUser = trendingList[currentSpotlightIdx] || activeTalentsList[0] || (user ? { ...defaultTalent, ...user } : defaultTalent);
 
   useEffect(() => {
     if (trendingList.length <= 1) return;
     const timer = setInterval(() => {
-      setCurrentPremiumIdx((prevIdx) => (prevIdx + 1) % trendingList.length);
+      setCurrentSpotlightIdx((prevIdx) => (prevIdx + 1) % trendingList.length);
     }, 4000);
     return () => clearInterval(timer);
   }, [trendingList.length]);
 
   useEffect(() => {
     setHeroImageError(false);
-  }, [currentPremiumUser?.id]);
+  }, [currentSpotlightUser?.id]);
 
-  const spotlightUserId = currentPremiumUser?.id || currentPremiumUser?.uid;
+  const spotlightUserId = currentSpotlightUser?.id || currentSpotlightUser?.uid;
 
   useEffect(() => {
     if (!spotlightUserId) {
       setSpotlightProfile(null);
       return;
     }
-    let unsubUser = null;
-    const unsubProfile = onSnapshot(doc(db, 'profiles', spotlightUserId), (snap) => {
-      if (snap.exists()) {
-        if (unsubUser) {
-          unsubUser();
-          unsubUser = null;
-        }
-        setSpotlightProfile(snap.data());
+    const unsub = onSnapshot(doc(db, 'profiles', spotlightUserId), (docSnap) => {
+      if (docSnap.exists()) {
+        setSpotlightProfile({ id: docSnap.id, uid: docSnap.id, ...docSnap.data() });
       } else {
-        if (!unsubUser) {
-          unsubUser = onSnapshot(doc(db, 'users', spotlightUserId), (uSnap) => {
-            if (uSnap.exists()) {
-              setSpotlightProfile(uSnap.data());
-            }
-          });
-        }
+        setSpotlightProfile(null);
       }
-    }, (err) => console.warn("Spotlight profile fetch warning:", err));
-    return () => {
-      unsubProfile();
-      if (unsubUser) unsubUser();
-    };
+    }, (_err) => {
+      setSpotlightProfile(null);
+    });
+    return () => unsub();
   }, [spotlightUserId]);
 
   const isDefaultImage = (url) => {
-    if (!url || typeof url !== 'string' || url.trim() === '') return true;
+    if (!url) return true;
     return url.includes('default-avatar.png') ||
       url.includes('default-male.png') ||
       url.includes('default-female.png') ||
       url.startsWith('data:image/svg+xml');
   };
 
-  // Resolve hero photo from the live spotlightProfile, then fall back to the premium user's fields, then user image
+  // Resolve hero photo from the live spotlightProfile, then fall back to the spotlight user's fields, then user image
   const heroPhotoURL =
     spotlightProfile?.image ||
     spotlightProfile?.photoURL ||
     spotlightProfile?.profileImage ||
-    currentPremiumUser?.image ||
-    currentPremiumUser?.photoURL ||
-    currentPremiumUser?.profileImage ||
-    currentPremiumUser?.avatar ||
-    currentPremiumUser?.picture ||
-    currentPremiumUser?.photo ||
+    currentSpotlightUser?.image ||
+    currentSpotlightUser?.photoURL ||
+    currentSpotlightUser?.profileImage ||
+    currentSpotlightUser?.avatar ||
+    currentSpotlightUser?.picture ||
+    currentSpotlightUser?.photo ||
     user?.photoURL ||
     user?.profileImage ||
     user?.image ||
@@ -282,110 +261,116 @@ export default function Home({ onNavigate, user }) {
     spotlightProfile?.name ||
     spotlightProfile?.fullName ||
     [spotlightProfile?.firstName, spotlightProfile?.lastName].filter(Boolean).join(' ') ||
-    currentPremiumUser?.name ||
+    currentSpotlightUser?.name ||
     'Talent Member';
 
   const spotlightRole =
     spotlightProfile?.role ||
     spotlightProfile?.category ||
-    currentPremiumUser?.role ||
-    currentPremiumUser?.category ||
+    currentSpotlightUser?.role ||
+    currentSpotlightUser?.category ||
     'Actor';
+
+  const heroCoverURL =
+    spotlightProfile?.coverImage ||
+    currentSpotlightUser?.coverImage ||
+    '/hero-bg.webp';
 
   return (
     <Desktop3ColumnLayout
       user={user}
       onNavigate={onNavigate}
       activeNav="discover"
-      featuredTalents={activeTalentsList.filter(t => t.featured === true || t.premium === true || t.isPremium === true)}
+      featuredTalents={trendingList}
       trendingCalls={castingCalls}
       loading={!talentsReceived}
     >
       <div className="min-h-screen bg-[#070709] text-white">
         {/* Hero Section */}
-        <section className="relative flex flex-col justify-end overflow-hidden min-h-[210px] sm:min-h-[360px] px-3 sm:px-6 pb-4 bg-[#091b29]">
-          {/* Cover Background Image */}
-          <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#092238] to-[#070709]">
-            <picture className="absolute inset-0 w-full h-full">
-              <source srcSet="/hero-bg.webp" type="image/webp" />
-              <img
-                src="/hero-bg.png"
-                alt="Hero Background"
-                fetchPriority="high"
-                decoding="async"
-                className="w-full h-full object-cover"
+        <section className="relative flex flex-col justify-end overflow-hidden min-h-[210px] sm:min-h-[360px] px-3 sm:px-6 pb-4 bg-[#070709]">
+          {/* Cover Background Image (Ultra-Smooth Crossfade) */}
+          <div className="absolute inset-0 z-0 bg-[#0A0A0F] overflow-hidden">
+            <AnimatePresence mode="popLayout">
+              <motion.img
+                key={heroCoverURL}
+                src={heroCoverURL}
+                alt="Hero Cover"
+                initial={{ opacity: 0, scale: 1.04 }}
+                animate={{ opacity: 0.85, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.02 }}
+                transition={{ duration: 0.85, ease: [0.25, 0.1, 0.25, 1.0] }}
+                className="w-full h-full object-cover object-center absolute inset-0"
               />
-            </picture>
-            <div
-              className="absolute inset-0"
-              style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(7,7,9,0.95) 100%)' }}
-            />
+            </AnimatePresence>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#070709] via-[#070709]/30 to-transparent pointer-events-none z-10" />
           </div>
 
-          {/* Overlaid Inset Profile Card (Featured Talent Spotlight) */}
+          {/* Overlaid Inset Profile Card (Featured Talent Spotlight - Horizontal Scrolling Slide) */}
           {(!talentsReceived) ? (
             <SpotlightHeroSkeleton />
-          ) : currentPremiumUser && (
-            <AnimatePresence mode="popLayout">
-              <motion.div
-                key={currentPremiumUser?.id || currentPremiumIdx}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.35, ease: "easeInOut" }}
-                className="relative z-20 flex items-end gap-3.5 mt-12 sm:mt-16"
-              >
-                {/* Rectangular Portrait Photo with Blue Accent Line */}
-                <div className="relative shrink-0 flex flex-col items-center overflow-hidden rounded-md shadow-2xl border border-white/10 bg-[#10151c]">
-                  {hasHeroPhoto ? (
-                    <img
-                      src={heroPhotoURL}
-                      alt={currentPremiumUser?.name || 'Featured Talent'}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        const parent = e.target.parentElement;
-                        if (parent) {
-                          const placeholder = parent.querySelector('.placeholder-svg-container');
-                          if (placeholder) placeholder.style.display = 'flex';
-                        }
-                      }}
-                      className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] object-cover transition-all duration-300"
-                    />
-                  ) : null}
+          ) : currentSpotlightUser && (
+            <div className="relative z-20 mt-12 sm:mt-16 py-1 min-h-[170px] sm:min-h-[200px] flex items-end overflow-hidden">
+              <AnimatePresence mode="popLayout">
+                <motion.div
+                  key={currentSpotlightUser?.id || currentSpotlightIdx}
+                  initial={{ opacity: 0, x: 65, scale: 0.97 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -65, scale: 0.97 }}
+                  transition={{ duration: 0.55, ease: [0.25, 1, 0.5, 1] }}
+                  className="flex items-end gap-4 w-full"
+                >
+                  {/* Rectangular Portrait Photo Card */}
+                  <div className="relative shrink-0 flex flex-col items-center overflow-hidden rounded-lg shadow-[0_10px_35px_rgba(0,0,0,0.6)] border border-white/10 bg-[#10151c]">
+                    {hasHeroPhoto ? (
+                      <img
+                        src={heroPhotoURL}
+                        alt={currentSpotlightUser?.name || 'Featured Talent'}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          const parent = e.target.parentElement;
+                          if (parent) {
+                            const placeholder = parent.querySelector('.placeholder-svg-container');
+                            if (placeholder) placeholder.style.display = 'flex';
+                          }
+                        }}
+                        className="w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] object-cover transition-all duration-300"
+                      />
+                    ) : null}
 
-                  {/* Fallback Placeholder (shown when hasHeroPhoto is false or image fails to load) */}
-                  <div
-                    className="placeholder-svg-container w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] bg-gradient-to-b from-[#1a2634] to-[#0a1017] flex items-center justify-center"
-                    style={{ display: hasHeroPhoto ? 'none' : 'flex' }}
-                  >
-                    <svg viewBox="0 0 100 100" fill="#5A5A75" className="w-12 h-12">
-                      <circle cx="50" cy="35" r="20"/>
-                      <ellipse cx="50" cy="85" rx="35" ry="25"/>
-                    </svg>
+                    {/* Fallback Placeholder (shown when hasHeroPhoto is false or image fails to load) */}
+                    <div
+                      className="placeholder-svg-container w-[120px] h-[165px] sm:w-[145px] sm:h-[195px] bg-gradient-to-b from-[#1a2634] to-[#0a1017] flex items-center justify-center"
+                      style={{ display: hasHeroPhoto ? 'none' : 'flex' }}
+                    >
+                      <svg viewBox="0 0 100 100" fill="#5A5A75" className="w-12 h-12">
+                        <circle cx="50" cy="35" r="20"/>
+                        <ellipse cx="50" cy="85" rx="35" ry="25"/>
+                      </svg>
+                    </div>
+
+                    {/* Blue Accent Bar Under Photo */}
+                    <div className="w-full h-1.5 bg-[#00BFFF]" />
                   </div>
 
-                  {/* Blue Accent Bar Under Photo */}
-                  <div className="w-full h-1.5 bg-[#00BFFF]" />
-                </div>
-
-                {/* Talent Meta beside photo */}
-                <div className="flex flex-col justify-end items-start gap-1 min-w-0 self-end h-[166px] sm:h-[196px] text-left">
-                  <h1 className="text-xl sm:text-2xl font-bold text-white leading-tight truncate drop-shadow-lg text-left w-full">
-                    {spotlightName}
-                  </h1>
-                  <p className="text-sm sm:text-base text-gray-200 font-normal capitalize drop-shadow-md truncate text-left w-full">
-                    {spotlightRole}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('profile', currentPremiumUser.id)}
-                    className="text-[#00BFFF] hover:underline text-sm sm:text-base font-normal text-left transition-colors cursor-pointer block"
-                  >
-                    {t('home.viewProfile')}
-                  </button>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+                  {/* Talent Meta beside photo */}
+                  <div className="flex flex-col justify-end items-start gap-1 min-w-0 self-end h-[166px] sm:h-[196px] text-left pb-0.5">
+                    <h1 className="text-xl sm:text-2xl font-bold text-white leading-tight truncate drop-shadow-lg text-left w-full">
+                      {spotlightName}
+                    </h1>
+                    <p className="text-sm sm:text-base text-gray-200 font-normal capitalize drop-shadow-md truncate text-left w-full">
+                      {spotlightRole}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('profile', currentSpotlightUser.id)}
+                      className="text-[#00BFFF] hover:underline text-sm sm:text-base font-normal text-left transition-colors cursor-pointer block mt-0.5"
+                    >
+                      {t('home.viewProfile')}
+                    </button>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
           )}
         </section>
 
@@ -517,7 +502,11 @@ export default function Home({ onNavigate, user }) {
 
             <div
               ref={scrollRef}
-              className="flex overflow-x-auto gap-4 pb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+              onMouseEnter={() => setIsCastingHovered(true)}
+              onMouseLeave={() => setIsCastingHovered(false)}
+              onTouchStart={() => setIsCastingHovered(true)}
+              onTouchEnd={() => setIsCastingHovered(false)}
+              className="flex overflow-x-auto gap-4 pb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
             >
               {castingCalls.slice(0, 10).map((item, i) => (
                 <div

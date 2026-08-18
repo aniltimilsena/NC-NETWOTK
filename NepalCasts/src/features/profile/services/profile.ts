@@ -46,7 +46,7 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
         }, {} as ProfileData);
         const { 
             email, phone, password, passwordHash, passwordReset, fcmToken, fcmTokens,
-            verified, isPremium, premium, isPro, isAdmin, status,
+            verified, isAdmin, status,
             ...profileDataOnly 
         } = cleanData as any;
         const userRef = doc(db, COLLECTIONS.USERS, uid);

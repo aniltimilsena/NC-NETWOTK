@@ -217,7 +217,6 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                         updatedAt: serverTimestamp(),
                         createdAt: serverTimestamp(),
                         verified: false,
-                        premium: false,
                         followers: 0,
                         following: 0,
                         rating: 0,

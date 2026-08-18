@@ -24,7 +24,6 @@ import SignUp from '../features/auth/SignUp';
 import ForgotPassword from '../features/auth/ForgotPassword';
 
 const Home = lazy(() => import('../pages/Home'));
-const Premium = lazy(() => import('../pages/Premium'));
 const About = lazy(() => import('../pages/About'));
 const Contact = lazy(() => import('../pages/Contact'));
 const Help = lazy(() => import('../pages/Help'));
@@ -98,7 +97,6 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/help" element={<Help />} />
-        <Route path="/premium" element={<Premium />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/trust-safety" element={<TrustSafety />} />

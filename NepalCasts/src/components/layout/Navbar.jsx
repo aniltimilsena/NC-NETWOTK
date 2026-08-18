@@ -26,7 +26,6 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
       case 'signup': return '/signup';
       case 'profile-create': return '/profile/create';
       case 'casting-create': return '/casting/create';
-      case 'premium': return '/premium';
       case 'messages': return param ? `/messages/${param}` : '/messages';
       case 'notifications': return '/notifications';
       case 'settings': return param ? `/settings?tab=${param}` : '/settings';
@@ -48,7 +47,6 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
       case 'messages': return pathname.startsWith('/messages');
       case 'notifications': return pathname === '/notifications';
       case 'settings': return pathname.startsWith('/settings');
-      case 'premium': return pathname === '/premium';
       case 'trending': return pathname === '/trending';
       default: return false;
     }
@@ -444,22 +442,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           )}
         </div>
 
-
-        {!isAdmin && !(user?.premium || user?.isPremium || user?.verified) && (<div className="px-6 pb-4 mt-auto">
-          <div className="bg-[#1C1C1C] rounded-2xl p-3.5 border border-[#2A2A2A] relative overflow-hidden">
-            <h4 className="text-white font-bold text-[14px] mb-0.5 relative z-10">Go PRO</h4>
-            <p className="text-[#888] text-[11px] leading-snug mb-2.5 max-w-[200px] relative z-10">
-              Get a verified badge and appear first in search results.
-            </p>
-            <Link to="/premium" onClick={() => setMenuOpen(false)} className="w-full text-center block bg-nc-pro text-black rounded-lg py-1.5 font-bold text-[12px] hover:bg-nc-pro/90 transition-colors relative z-10 shadow-lg shadow-nc-pro/20 animate-none" style={{ backgroundColor: '#FACC15' }}>
-              Go PRO
-            </Link>
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-nc-accent blur-3xl opacity-10 rounded-full"></div>
-          </div>
-        </div>)}
-
       </div>
-    </div>)}
+    </div>) }
 
 
     <AnimatePresence>

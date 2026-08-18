@@ -73,8 +73,7 @@
     "admin": "Admin Page",
     "logout": "Log Out",
     "signIn": "Sign In",
-    "signUp": "Join Now",
-    "goPro": "Upgrade PRO"
+    "signUp": "Join Now"
   },
 
   "sidebar": {
@@ -82,7 +81,6 @@
     "activeCastingCalls": "Active Casting Calls",
     "viewAll": "View All",
     "openToWork": "Open to Work",
-    "upgradeProfile": "Upgrade Profile",
     "promoteCasting": "Promote Your Casting",
     "promoteSubtitle": "Reach thousands of talented actors across Nepal."
   },
