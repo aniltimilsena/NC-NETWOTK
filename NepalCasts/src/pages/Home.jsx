@@ -33,6 +33,14 @@ const HOME_SPONSORED_ADS = [
   }
 ];
 
+const HERO_BACKGROUND_PHOTOS = [
+  '/hero-bg.png',
+  '/hero-stage.jpg',
+  'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=1920&q=80',
+];
+
 function getInitials(name) {
   if (!name) return 'NC';
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -90,8 +98,17 @@ export default function Home({ onNavigate, user }) {
   const [currentSpotlightIdx, setCurrentSpotlightIdx] = useState(0);
   const [talents, setTalents] = useState([]);
   const [castingCalls, setCastingCalls] = useState([]);
+  const [heroImageIdx, setHeroImageIdx] = useState(0);
 
   const actorsScrollRef = useRef(null);
+
+  // Rotate 5 hero background photos smoothly every 4 seconds
+  useEffect(() => {
+    const heroTimer = setInterval(() => {
+      setHeroImageIdx((prev) => (prev + 1) % HERO_BACKGROUND_PHOTOS.length);
+    }, 4000);
+    return () => clearInterval(heroTimer);
+  }, []);
 
   const getTalentAge = (talent) => {
     if (!talent) return null;
@@ -322,15 +339,36 @@ export default function Home({ onNavigate, user }) {
       <div className="min-h-screen bg-[#0a0f1d] text-white pb-2 font-sans selection:bg-blue-600 selection:text-white">
         {/* ================= HERO SECTION ================= */}
         <section className="relative w-full h-[320px] sm:h-[400px] lg:h-[460px] overflow-hidden bg-black select-none">
-          {/* Fixed Cover Background Image */}
-          <div className="absolute inset-0 z-0">
-            <img
-              src="/hero-bg.png"
-              alt="NepalCasts Banner"
-              className="w-full h-full object-cover object-center"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent pointer-events-none" />
+          {/* 5 Smoothly Rotating Background Images (Every 4s) */}
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            <AnimatePresence mode="popLayout">
+              <motion.img
+                key={heroImageIdx}
+                src={HERO_BACKGROUND_PHOTOS[heroImageIdx]}
+                alt="NepalCasts Hero"
+                initial={{ opacity: 0, scale: 1.06 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1.0] }}
+                className="w-full h-full object-cover object-center absolute inset-0"
+              />
+            </AnimatePresence>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/20 to-black/85 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1d] via-black/25 to-transparent pointer-events-none" />
+          </div>
+
+          {/* Subtle Slide Indicators */}
+          <div className="absolute top-3 right-4 sm:top-4 sm:right-6 z-20 flex items-center gap-1.5 pointer-events-none">
+            {HERO_BACKGROUND_PHOTOS.map((_, idx) => (
+              <span
+                key={idx}
+                className={`h-1 rounded-full transition-all duration-500 ${
+                  idx === heroImageIdx
+                    ? 'w-5 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]'
+                    : 'w-1.5 bg-white/30'
+                }`}
+              />
+            ))}
           </div>
 
           {/* Right Side Middle Slogan */}
