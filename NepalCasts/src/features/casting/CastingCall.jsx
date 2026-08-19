@@ -60,8 +60,31 @@ const getRolesSummary = (call) => {
   return `Looking for: ${summaries.join(' | ')}`;
 };
 
+const isMockOrInvalidImage = (url) => {
+  if (!url || typeof url !== 'string') return true;
+  const lower = url.toLowerCase();
+  return (
+    url === 'has-file' ||
+    lower.includes('placeholder') ||
+    lower.includes('dummy') ||
+    lower.includes('sample') ||
+    lower.includes('fake') ||
+    lower.includes('test') ||
+    lower.includes('movie-banner.png') ||
+    lower.includes('movie-banner.webp') ||
+    lower.includes('images.unsplash.com') ||
+    lower.includes('via.placeholder.com')
+  );
+};
+
+const getCastingThumbnail = (call) => {
+  if (!call) return null;
+  const raw = call.thumbnail || call.image || call.coverImage || call.posterUrl || call.poster || call.bannerUrl || call.media?.[0]?.url || call.photoURL || null;
+  return raw && !isMockOrInvalidImage(raw) ? raw : null;
+};
+
 const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave }) => {
-  const bannerImage = (call.thumbnail && call.thumbnail !== 'has-file') ? call.thumbnail : '/movie-banner.png';
+  const bannerImage = getCastingThumbnail(call);
   const deadlineInfo = getDeadlineStatus(call.deadline);
   const urgentText = getUrgentStatus(call.deadline);
   const roleNeeded = getRolesSummary(call);
@@ -74,23 +97,37 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
       {/* Left: Poster + Details */}
       <div className="flex items-start gap-3 sm:gap-5 flex-1 min-w-0">
         {/* Poster Thumbnail */}
-        <div className="w-36 sm:w-52 h-24 sm:h-32 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/10">
-          <img
-            src={bannerImage}
-            alt={call.title}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = '/movie-banner.png';
-            }}
-          />
+        <div className="w-36 sm:w-52 h-24 sm:h-32 rounded-xl overflow-hidden relative shrink-0 bg-[#141418] border border-white/10 flex items-center justify-center shadow-md">
+          {bannerImage ? (
+            <img
+              src={bannerImage}
+              alt={call.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+          ) : null}
+
+          {/* Default Clapperboard Thumbnail Fallback */}
+          <div
+            className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#22222a] via-[#1a1a20] to-[#101014] p-2 text-center"
+            style={{ display: bannerImage ? 'none' : 'flex' }}
+          >
+            <svg className="w-10 h-10 sm:w-14 sm:h-14 text-indigo-300/90 fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
+              <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
+            </svg>
+          </div>
+
           {isApplied && (
-            <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-[#00BFFF] text-black text-[8px] sm:text-[9px] font-black uppercase tracking-wider">
+            <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-[#00BFFF] text-black text-[8px] sm:text-[9px] font-black uppercase tracking-wider z-10">
               Applied
             </div>
           )}
           {urgentText && (
-            <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-red-600/90 border border-red-400 text-white text-[8px] font-black uppercase tracking-wider flex items-center gap-1 shadow-lg backdrop-blur-md">
+            <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-red-600/90 border border-red-400 text-white text-[8px] font-black uppercase tracking-wider flex items-center gap-1 shadow-lg backdrop-blur-md z-10">
               <Flame className="w-2.5 h-2.5 text-amber-300 fill-amber-300" />
               <span>URGENT</span>
             </div>

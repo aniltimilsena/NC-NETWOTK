@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User } from 'lucide-react';
 import { Button, Avatar } from '../../../components/ui';
 import { CurrentUser } from '../../../utils/CurrentUser';
-import { CATEGORIES } from '../../../constants/categories';
+import { CATEGORIES, getCategoryConfig } from '../../../constants/categories';
 import type { UserProfile } from '../../../types';
 interface ProfileSettingsProps {
     profile: UserProfile;
@@ -137,7 +137,10 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
             setRole(e.target.value);
         }} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all appearance-none cursor-pointer">
               <option value="" disabled>Select Specialty</option>
-              {CATEGORIES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              {CATEGORIES.map(opt => {
+                const cfg = getCategoryConfig(opt);
+                return <option key={opt} value={cfg.label}>{cfg.label}</option>;
+              })}
             </select>
           </div>
 

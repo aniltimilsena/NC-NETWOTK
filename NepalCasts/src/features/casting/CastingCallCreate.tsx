@@ -45,7 +45,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
 
   const [form, setForm] = useState({
     title: '',
-    type: 'Actor',
+    type: 'Actor / Actress',
     category: 'Nepali Feature Film',
     location: '',
     description: '',

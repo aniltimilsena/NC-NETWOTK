@@ -51,14 +51,14 @@
   "view_details": "View Details",
 
   "categories": {
-    "actor": "Actor",
-    "model": "Model",
+    "actor": "Actor / Actress",
     "director": "Director",
-    "dancer": "Dancer",
-    "musician": "Musician",
-    "voiceover": "Voice Over",
-    "vfx": "VFX",
-    "writer": "Writer"
+    "writer": "Script Writer",
+    "dop": "DOP / Cinematographer",
+    "model": "Model",
+    "musician": "Song Writer / Singer",
+    "vfx": "Editor / VFX",
+    "producer": "Producer / Manager"
   },
 
   "nav": {

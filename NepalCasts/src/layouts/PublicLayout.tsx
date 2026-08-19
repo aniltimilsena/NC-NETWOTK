@@ -26,12 +26,13 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
                 navigate('/');
                 break;
             case 'discover':
-                navigate('/discover');
+            case 'categories':
+                navigate(param ? `/discover/${param}` : '/discover');
                 break;
             case 'listing':
             case 'talent':
             case 'talents':
-                navigate('/talents');
+                navigate(param ? `/talents/${param}` : '/talents');
                 break;
             case 'profile':
                 navigate(param ? `/profile/${param}` : user?.uid ? `/profile/${user.uid}` : '/profile');

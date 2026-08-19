@@ -283,7 +283,7 @@ export default function Avatar(props: AvatarProps) {
         }
     };
     return (<>
-      <div onClick={handleAvatarClick} style={sizeStyle} className={`relative flex-shrink-0 rounded-full border-2 border-white/10 transition-all duration-300 select-none bg-gradient-to-b from-[#1E1E26] to-[#111116] ${sizeClass} ${className} ${editable ? 'cursor-pointer hover:border-white/30 group/avatar' : ''}`}>
+      <div onClick={handleAvatarClick} style={sizeStyle} className={`relative flex-shrink-0 rounded-full ${currentSrc ? 'border-0 ring-0' : 'border-2 border-white/10'} transition-all duration-300 select-none bg-gradient-to-b from-[#1E1E26] to-[#111116] ${sizeClass} ${className} ${editable ? 'cursor-pointer group/avatar' : ''}`}>
         <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative">
           {currentSrc ? (
             <>

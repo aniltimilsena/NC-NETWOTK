@@ -1,5 +1,5 @@
 import type { Timestamp } from 'firebase/firestore';
-export type TalentRole = 'Actors' | 'Directors' | 'Models' | 'Dancers' | 'Musicians' | 'Voice Over' | 'VFX' | 'Writers';
+export type TalentRole = 'Actor / Actress' | 'Director' | 'Script Writer' | 'DOP / Cinematographer' | 'Model' | 'Song Writer / Singer' | 'Editor / VFX' | 'Producer / Manager' | string;
 export type Gender = 'Male' | 'Female' | 'Other' | '';
 export interface Skill {
     name: string;

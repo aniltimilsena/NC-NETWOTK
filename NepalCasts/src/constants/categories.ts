@@ -35,10 +35,40 @@ export const matchesCategory = (talent: any, categoryFilter: string): boolean =>
         if (!val) return false;
         if (val === filterClean) return true;
         if (val === filterClean + 's' || val + 's' === filterClean) return true;
-        if (filterClean === 'actor' && (val === 'actor' || val === 'actress' || val.includes('actor') || val.includes('actress'))) return true;
-        if (filterClean === 'model' && (val === 'model' || val === 'modeling' || val === 'modelling' || val.includes('model'))) return true;
-        if (filterClean === 'voiceover' && (val === 'voice over' || val === 'voiceover' || val.includes('voice'))) return true;
-        if (filterClean === 'vfx' && (val === 'vfx' || val.includes('vfx') || val.includes('visual effects'))) return true;
+        
+        // 1. Actor / Actress
+        if (filterClean === 'actor' || filterClean === 'actor/actress') {
+            if (val.includes('actor') || val.includes('actress')) return true;
+        }
+        // 2. Director
+        if (filterClean === 'director') {
+            if (val.includes('director') || val.includes('directing')) return true;
+        }
+        // 3. Script Writer
+        if (filterClean === 'writer' || filterClean === 'script writer') {
+            if (val.includes('writer') || val.includes('script') || val.includes('screenplay') || val.includes('author')) return true;
+        }
+        // 4. DOP / Cinematographer
+        if (filterClean === 'dop' || filterClean === 'cinematographer' || filterClean === 'dop / cinematographer') {
+            if (val.includes('dop') || val.includes('cinematograph') || val.includes('camera') || val.includes('videograph')) return true;
+        }
+        // 5. Model
+        if (filterClean === 'model') {
+            if (val.includes('model')) return true;
+        }
+        // 6. Song Writer / Singer
+        if (filterClean === 'musician' || filterClean === 'singer' || filterClean === 'song writer' || filterClean === 'song writer / singer') {
+            if (val.includes('music') || val.includes('sing') || val.includes('song') || val.includes('vocal') || val.includes('composer') || val.includes('audio')) return true;
+        }
+        // 7. Editor / VFX
+        if (filterClean === 'vfx' || filterClean === 'editor' || filterClean === 'editor / vfx') {
+            if (val.includes('edit') || val.includes('vfx') || val.includes('visual effects') || val.includes('animat') || val.includes('cgi') || val.includes('colorist')) return true;
+        }
+        // 8. Producer / Manager
+        if (filterClean === 'producer' || filterClean === 'manager' || filterClean === 'producer / manager') {
+            if (val.includes('produc') || val.includes('manage') || val.includes('exec') || val.includes('line producer')) return true;
+        }
+
         return val.includes(filterClean) || filterClean.includes(val);
     };
 

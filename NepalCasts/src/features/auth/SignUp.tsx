@@ -14,14 +14,14 @@ interface SignUpProps {
 }
 
 const ROLES = [
-    { value: 'Actors', label: 'Actor / Talent' },
-    { value: 'Directors', label: 'Casting Director / Director' },
-    { value: 'Models', label: 'Model' },
-    { value: 'Dancers', label: 'Dancer' },
-    { value: 'Musicians', label: 'Musician / Audio' },
-    { value: 'Voice Over', label: 'Voice Over Artist' },
-    { value: 'Writers', label: 'Writer / Screenwriter' },
-    { value: 'VFX', label: 'VFX / Crew' },
+    { value: 'Actor / Actress', label: 'Actor / Actress' },
+    { value: 'Director', label: 'Director' },
+    { value: 'Script Writer', label: 'Script Writer' },
+    { value: 'DOP / Cinematographer', label: 'DOP / Cinematographer' },
+    { value: 'Model', label: 'Model' },
+    { value: 'Song Writer / Singer', label: 'Song Writer / Singer' },
+    { value: 'Editor / VFX', label: 'Editor / VFX' },
+    { value: 'Producer / Manager', label: 'Producer / Manager' },
 ];
 
 export default function SignUp(_props: SignUpProps) {
@@ -29,7 +29,7 @@ export default function SignUp(_props: SignUpProps) {
     const { isLoaded, signUp, setActive } = useSignUp();
 
     const [fullName, setFullName] = useState('');
-    const [role, setRole] = useState('Actors');
+    const [role, setRole] = useState('Actor / Actress');
     const [emailAddress, setEmailAddress] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');

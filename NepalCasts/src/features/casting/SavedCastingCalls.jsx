@@ -153,9 +153,8 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                 <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
               </button>
               <div>
-                <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                  <Bookmark className="w-6 h-6 text-white" />
-                  <span>Saved Casting Calls</span>
+                <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  Saved Casting Calls
                 </h1>
               </div>
             </div>
@@ -200,7 +199,24 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                       ? (call.roles.name || 'Role')
                       : (call.roles || call.description || 'Audition Opportunity')
                     );
-                const bannerImage = call.bannerImage || call.thumbnail || call.image || '/movie-banner.png';
+                const isMockOrInvalid = (url) => {
+                  if (!url || typeof url !== 'string') return true;
+                  const lower = url.toLowerCase();
+                  return (
+                    url === 'has-file' ||
+                    lower.includes('placeholder') ||
+                    lower.includes('dummy') ||
+                    lower.includes('sample') ||
+                    lower.includes('fake') ||
+                    lower.includes('test') ||
+                    lower.includes('movie-banner.png') ||
+                    lower.includes('movie-banner.webp') ||
+                    lower.includes('images.unsplash.com') ||
+                    lower.includes('via.placeholder.com')
+                  );
+                };
+                const rawBanner = call.bannerImage || call.thumbnail || call.image || call.coverImage || call.posterUrl || call.poster || call.bannerUrl || call.media?.[0]?.url || call.photoURL || null;
+                const bannerImage = rawBanner && !isMockOrInvalid(rawBanner) ? rawBanner : null;
 
                 return (
                   <div
@@ -211,16 +227,29 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                     {/* Left: Poster + Details */}
                     <div className="flex items-start gap-3 sm:gap-5 flex-1 min-w-0">
                       {/* Poster Thumbnail */}
-                      <div className="w-36 sm:w-52 h-24 sm:h-32 rounded-xl overflow-hidden relative shrink-0 bg-[#111] border border-white/10">
-                        <img
-                          src={bannerImage}
-                          alt={call.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = '/movie-banner.png';
-                          }}
-                        />
+                      <div className="w-36 sm:w-52 h-24 sm:h-32 rounded-xl overflow-hidden relative shrink-0 bg-[#141418] border border-white/10 flex items-center justify-center shadow-md">
+                        {bannerImage ? (
+                          <img
+                            src={bannerImage}
+                            alt={call.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+
+                        {/* Default Clapperboard Thumbnail Fallback */}
+                        <div
+                          className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#22222a] via-[#1a1a20] to-[#101014] p-2 text-center"
+                          style={{ display: bannerImage ? 'none' : 'flex' }}
+                        >
+                          <svg className="w-10 h-10 sm:w-14 sm:h-14 text-indigo-300/90 fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
+                            <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
+                          </svg>
+                        </div>
                       </div>
 
                       {/* Text content details */}

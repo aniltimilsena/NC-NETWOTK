@@ -177,7 +177,7 @@ export default function ProfileHeader({ profile, isOwnProfile, isFollowing, foll
             status={profile.isOnline === true ? 'online' : 'offline'} 
             onUploadSuccess={(url: string) => updateProfileData(CurrentUser.id || profile.uid, { image: url, photoURL: url, profileImage: url })} 
             showAlert={showAlert} 
-            className="w-44 h-44 sm:w-56 sm:h-56 rounded-full border-4 border-[#0A0A0F] shadow-2xl ring-2 ring-white/15"
+            className="w-44 h-44 sm:w-56 sm:h-56 rounded-full border-4 border-[#0A0A0F] shadow-2xl overflow-hidden"
           />
         </div>
 

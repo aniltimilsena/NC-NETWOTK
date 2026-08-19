@@ -6,6 +6,8 @@ import {
   Mic2,
   Wand2,
   Feather,
+  Briefcase,
+  Film,
 } from 'lucide-react';
 
 // Custom professional SVG icon for Dancer matching Lucide's 1.5px stroke aesthetic
@@ -44,10 +46,12 @@ export const OpenBookIcon = Feather;
 export const CATEGORY_ICON_MAP = {
   actor: Clapperboard,
   director: Video,
-  model: Camera,
-  dancer: DancerIcon,
-  musician: Music,
-  voiceover: Mic2,
-  vfx: Wand2,
   writer: Feather,
+  dop: Camera,
+  model: Camera,
+  musician: Music,
+  vfx: Wand2,
+  producer: Briefcase,
+  dancer: DancerIcon,
+  voiceover: Mic2,
 };

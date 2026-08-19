@@ -12,6 +12,7 @@ import TalentCardSkeleton from '../components/ui/TalentCardSkeleton';
 import ShareSheet from '../components/ui/ShareSheet';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { CATEGORIES, getCategoryConfig, matchesCategory } from '../constants/categories';
+import { HOME_CATEGORY_CARDS, CategoryCardIcon } from '../components/ui/CategoryCards';
 import { cacheManager } from '../utils/cacheManager';
 import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
 /**
@@ -271,53 +272,58 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                 <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
 
 
-                    {viewMode === 'categories' && (<div className="animate-fade-in space-y-10 text-left">
-                        <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                            <button onClick={() => onNavigate('home')} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 shrink-0 cursor-pointer" aria-label="Back" title="Go Back">
-                                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-                            </button>
-                            <div>
-                                <h1 className="text-3xl sm:text-4xl font-sans font-black text-white tracking-tight leading-none">Browse by Category</h1>
+                    {viewMode === 'categories' && (
+                        <div className="animate-fade-in space-y-6 text-left">
+                            <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                                <button onClick={() => onNavigate('home')} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 shrink-0 cursor-pointer" aria-label="Back" title="Go Back">
+                                    <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                                </button>
+                                <div>
+                                    <h1 className="text-2xl sm:text-4xl font-sans font-black text-white tracking-tight leading-none">Browse by Category</h1>
+                                </div>
                             </div>
+
+                            {loading ? (
+                                <TalentCardSkeleton count={8} />
+                            ) : (
+                                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-5 max-w-2xl">
+                                    {HOME_CATEGORY_CARDS.map((cat, idx) => {
+                                        const count = getFacetedCount('category', cat.filter);
+                                        return (
+                                            <motion.div
+                                                key={cat.id}
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.03 }}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={() => {
+                                                    setSelectedFilters(prev => ({ ...prev, category: cat.filter }));
+                                                    setViewMode('talents');
+                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                    if (typeof onNavigate === 'function') {
+                                                        onNavigate('talents', cat.filter);
+                                                    } else {
+                                                        navigate(`/talents/${cat.filter}`);
+                                                    }
+                                                }}
+                                                style={{ backgroundColor: cat.bgColor }}
+                                                className="rounded-xl p-4 sm:p-6 aspect-square flex flex-col items-center justify-center text-center cursor-pointer shadow-lg transition-transform border border-black/5"
+                                            >
+                                                <CategoryCardIcon type={cat.iconType} className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 text-black fill-current mb-2.5 sm:mb-3" />
+                                                <span className="text-black font-extrabold text-sm sm:text-base lg:text-lg leading-tight whitespace-pre-line mt-1">
+                                                    {cat.label}
+                                                </span>
+                                                <span className="text-black/70 font-semibold text-xs sm:text-sm mt-1">
+                                                    ({count} {count === 1 ? 'talent' : 'talents'})
+                                                </span>
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
-
-                        {loading ? (<TalentCardSkeleton count={8} />) : (<div className="grid grid-cols-2 gap-5 sm:gap-6">
-                            {CATEGORIES.map((cat, idx) => {
-                                const count = getFacetedCount('category', cat);
-                                const detail = getCategoryConfig(cat);
-                                const Icon = detail.icon;
-                                return (<motion.button key={cat} onClick={() => {
-                                    setSelectedFilters(prev => ({ ...prev, category: cat }));
-                                    setViewMode('talents');
-                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                    if (typeof onNavigate === 'function') {
-                                        onNavigate('talents', cat);
-                                    } else {
-                                        navigate(`/talents/${cat}`);
-                                    }
-                                }} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }} className="category-card p-7 sm:p-9 lg:p-11 flex flex-col items-center justify-center gap-4 sm:gap-5 group cursor-pointer rounded-3xl">
-
-                                    <div className="relative z-10 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 flex items-center justify-center rounded-full" style={{
-                                        backgroundColor: `${detail.color}20`,
-                                        color: detail.color,
-                                        boxShadow: `0 0 35px ${detail.color}15`,
-                                    }}>
-                                        <Icon className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14" strokeWidth={1.5} />
-                                    </div>
-
-                                    <span className="text-lg sm:text-xl lg:text-2xl font-black text-white relative z-10">
-                                        {detail.label}
-                                    </span>
-
-                                    {count === 0 ? (<span className="text-sm sm:text-base lg:text-lg font-bold text-[#38BDF8] group-hover:text-cyan-400 transition-colors relative z-10">
-                                        Be the first →
-                                    </span>) : (<span className="text-sm sm:text-base lg:text-lg font-semibold text-nc-muted relative z-10">
-                                        {count} {count === 1 ? 'talent' : 'talents'}
-                                    </span>)}
-                                </motion.button>);
-                            })}
-                        </div>)}
-                    </div>)}
+                    )}
 
                     {viewMode === 'talents' && (<div className="animate-fade-in space-y-3 text-left">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-white/5 mb-6">

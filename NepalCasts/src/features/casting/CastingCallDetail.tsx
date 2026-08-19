@@ -9,6 +9,29 @@ import { doc, onSnapshot, collection, addDoc, serverTimestamp, deleteDoc, update
 import Avatar from '../../components/ui/Avatar';
 import { getProfile } from '../profile/services/profile';
 
+const isMockOrInvalidImage = (url: string | null | undefined) => {
+  if (!url || typeof url !== 'string') return true;
+  const lower = url.toLowerCase();
+  return (
+    url === 'has-file' ||
+    lower.includes('placeholder') ||
+    lower.includes('dummy') ||
+    lower.includes('sample') ||
+    lower.includes('fake') ||
+    lower.includes('test') ||
+    lower.includes('movie-banner.png') ||
+    lower.includes('movie-banner.webp') ||
+    lower.includes('images.unsplash.com') ||
+    lower.includes('via.placeholder.com')
+  );
+};
+
+const getCastingThumbnail = (call: any) => {
+  if (!call) return null;
+  const raw = call.thumbnail || call.image || call.coverImage || call.posterUrl || call.poster || call.bannerUrl || call.media?.[0]?.url || call.photoURL || null;
+  return raw && !isMockOrInvalidImage(raw) ? raw : null;
+};
+
 export default function CastingCallDetail({ onNavigate, castingId, user, showAlert }: any) {
   const [call, setCall] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -733,18 +756,34 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
             <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
           </button>
 
-          <div className="h-72 sm:h-96 w-full relative">
-            <img
-              src={(call.thumbnail && call.thumbnail !== 'has-file') ? call.thumbnail : '/movie-banner.png'}
-              alt={call.title || 'Casting Call'}
-              className="w-full h-full object-cover"
-              onError={(e: any) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = '/movie-banner.png';
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0E0E12] via-[#0E0E12]/75 via-50% to-transparent" />
-          </div>
+          {(() => {
+            const bannerImage = getCastingThumbnail(call);
+            return (
+              <div className="h-72 sm:h-96 w-full relative bg-[#141418] overflow-hidden flex items-center justify-center">
+                {bannerImage ? (
+                  <img
+                    src={bannerImage}
+                    alt={call.title || 'Casting Call'}
+                    className="w-full h-full object-cover"
+                    onError={(e: any) => {
+                      e.currentTarget.style.display = 'none';
+                      const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-banner');
+                      if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div
+                  className="default-clapper-banner w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#22222a] via-[#1a1a20] to-[#0e0e12] p-4 text-center"
+                  style={{ display: bannerImage ? 'none' : 'flex' }}
+                >
+                  <svg className="w-16 h-16 sm:w-24 sm:h-24 text-indigo-300/60 fill-current drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] -mt-10 sm:-mt-14" viewBox="0 0 24 24">
+                    <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
+                  </svg>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0E0E12] via-[#0E0E12]/75 via-50% to-transparent pointer-events-none" />
+              </div>
+            );
+          })()}
 
           <div className="p-6 sm:p-10 -mt-32 sm:-mt-36 relative z-10 space-y-4 text-left">
             <div>

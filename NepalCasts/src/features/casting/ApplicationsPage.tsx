@@ -224,8 +224,24 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
             <div className="space-y-4">
               {filteredApps.map((app) => {
                 const call = app.castingCall;
-                const title = call?.title || 'Casting Notice';
-                const thumbnail = (call?.thumbnail && call.thumbnail !== 'has-file') ? call.thumbnail : '/movie-banner.png';
+                const isMockOrInvalid = (url: string | null | undefined) => {
+                  if (!url || typeof url !== 'string') return true;
+                  const lower = url.toLowerCase();
+                  return (
+                    url === 'has-file' ||
+                    lower.includes('placeholder') ||
+                    lower.includes('dummy') ||
+                    lower.includes('sample') ||
+                    lower.includes('fake') ||
+                    lower.includes('test') ||
+                    lower.includes('movie-banner.png') ||
+                    lower.includes('movie-banner.webp') ||
+                    lower.includes('images.unsplash.com') ||
+                    lower.includes('via.placeholder.com')
+                  );
+                };
+                const rawThumb = call?.thumbnail || call?.image || call?.coverImage || call?.posterUrl || call?.poster || call?.bannerUrl || call?.media?.[0]?.url || call?.photoURL || null;
+                const thumbnail = rawThumb && !isMockOrInvalid(rawThumb) ? rawThumb : null;
                 const roleName = app.roleName || app.role || 'Performer Role';
 
                 return (
@@ -234,15 +250,28 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                     className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 hover:border-white/20 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                   >
                     <div className="flex items-center gap-4 min-w-0 flex-1">
-                      <img
-                        src={thumbnail}
-                        alt={title}
-                        className="w-16 h-16 rounded-xl object-cover border border-white/10 shrink-0"
-                        onError={(e: any) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = '/movie-banner.png';
-                        }}
-                      />
+                      <div className="w-16 h-16 rounded-xl overflow-hidden relative shrink-0 bg-[#141418] border border-white/10 flex items-center justify-center">
+                        {thumbnail ? (
+                          <img
+                            src={thumbnail}
+                            alt={title}
+                            className="w-full h-full object-cover"
+                            onError={(e: any) => {
+                              e.currentTarget.style.display = 'none';
+                              const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
+                              if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#22222a] via-[#1a1a20] to-[#101014] p-1 text-center"
+                          style={{ display: thumbnail ? 'none' : 'flex' }}
+                        >
+                          <svg className="w-8 h-8 text-indigo-300/90 fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
+                            <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
+                          </svg>
+                        </div>
+                      </div>
                       <div className="space-y-1 min-w-0">
                         <h3
                           onClick={() =>

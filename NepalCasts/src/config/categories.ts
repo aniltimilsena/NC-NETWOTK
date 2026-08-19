@@ -2,19 +2,19 @@ export interface CategoryConfig {
     id: string;
     label: string;
     pluralLabel: string;
-    icon: any;
+    icon?: any;
     color: string;
     bgColor: string;
 }
 export const CATEGORY_META: Omit<CategoryConfig, 'icon'>[] = [
-    { id: 'actor', label: 'Actor', pluralLabel: 'Actors', color: '#0099FF', bgColor: 'rgba(0,153,255,0.10)' },
-    { id: 'model', label: 'Model', pluralLabel: 'Models', color: '#EC4899', bgColor: 'rgba(236,72,153,0.10)' },
-    { id: 'director', label: 'Director', pluralLabel: 'Directors', color: '#8B5CF6', bgColor: 'rgba(139,92,246,0.10)' },
-    { id: 'dancer', label: 'Dancer', pluralLabel: 'Dancers', color: '#10B981', bgColor: 'rgba(16,185,129,0.10)' },
-    { id: 'musician', label: 'Musician', pluralLabel: 'Musicians', color: '#F59E0B', bgColor: 'rgba(245,158,11,0.10)' },
-    { id: 'voiceover', label: 'Voice Over', pluralLabel: 'Voice Overs', color: '#06B6D4', bgColor: 'rgba(6,182,212,0.10)' },
-    { id: 'vfx', label: 'VFX', pluralLabel: 'VFX', color: '#3B82F6', bgColor: 'rgba(59,130,246,0.10)' },
-    { id: 'writer', label: 'Writer', pluralLabel: 'Writers', color: '#EF4444', bgColor: 'rgba(239,68,68,0.10)' },
+    { id: 'actor', label: 'Actor / Actress', pluralLabel: 'Actors & Actresses', color: '#72c3be', bgColor: 'rgba(114,195,190,0.15)' },
+    { id: 'director', label: 'Director', pluralLabel: 'Directors', color: '#ff1e1e', bgColor: 'rgba(255,30,30,0.15)' },
+    { id: 'writer', label: 'Script Writer', pluralLabel: 'Script Writers', color: '#34d399', bgColor: 'rgba(52,211,153,0.15)' },
+    { id: 'dop', label: 'DOP / Cinematographer', pluralLabel: 'Cinematographers', color: '#ffb26b', bgColor: 'rgba(255,178,107,0.15)' },
+    { id: 'model', label: 'Model', pluralLabel: 'Models', color: '#7c9bf2', bgColor: 'rgba(124,155,242,0.15)' },
+    { id: 'musician', label: 'Song Writer / Singer', pluralLabel: 'Singers & Songwriters', color: '#9d71c7', bgColor: 'rgba(157,113,199,0.15)' },
+    { id: 'vfx', label: 'Editor / VFX', pluralLabel: 'Editors & VFX', color: '#eab308', bgColor: 'rgba(234,179,8,0.15)' },
+    { id: 'producer', label: 'Producer / Manager', pluralLabel: 'Producers & Managers', color: '#ffffff', bgColor: 'rgba(255,255,255,0.15)' },
 ];
 export const CATEGORIES = CATEGORY_META.map((c) => c.id);
 export const getCategoryColor = (nameOrId: string): string => {
