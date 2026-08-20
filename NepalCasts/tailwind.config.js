@@ -27,8 +27,10 @@ export default {
         'admin-border': '#262A33',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Roboto', 'Inter', 'system-ui', 'sans-serif'],
+        condensed: ['"Roboto Condensed"', 'Roboto', 'sans-serif'],
+        display: ['"Roboto Condensed"', 'Roboto', 'sans-serif'],
+        outfit: ['Outfit', 'sans-serif'],
         serif: ['"Playfair Display"', 'Georgia', 'serif'],
       },
       backdropBlur: {

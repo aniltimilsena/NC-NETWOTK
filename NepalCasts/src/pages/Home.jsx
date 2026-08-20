@@ -372,10 +372,10 @@ export default function Home({ onNavigate, user }) {
 
           {/* Right Side Middle Slogan */}
           <div className="absolute top-1/2 -translate-y-1/2 right-4 sm:right-8 lg:right-12 z-20 pointer-events-none text-right">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.0] tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
-              Show<br />
-              Your Talent<br />
-              Here
+            <h1 className="font-condensed text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-[1.05] tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+              Discover<br />
+              Multiple Talents<br />
+              In One Place
             </h1>
           </div>
 
@@ -439,17 +439,17 @@ export default function Home({ onNavigate, user }) {
           )}
         </section>
 
-        {/* Lower Cards Container with Standard Padding */}
-        <div className="px-2 sm:px-3 lg:px-4 space-y-2 sm:space-y-3">
+        {/* Lower Cards Container */}
+        <div className="px-1 sm:px-1.5 space-y-1.5">
 
         {/* ================= SPONSORED ADS SECTION ================= */}
-        <section className="p-0">
-          <div className="flex gap-2 sm:gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        <section className="px-1 sm:px-2">
+          <div className="flex gap-2 sm:gap-2.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {HOME_SPONSORED_ADS.map((ad) => (
               <div
                 key={ad.id}
                 onClick={() => ad.ctaUrl && onNavigate(ad.ctaUrl.replace('/', ''))}
-                className="flex-1 min-w-[260px] sm:min-w-[320px] relative group overflow-hidden rounded-2xl border border-white/5 p-3.5 sm:p-4 bg-black flex flex-col justify-between cursor-pointer hover:border-white/20 transition-all duration-300 min-h-[135px] sm:min-h-[155px] shadow-lg"
+                className="flex-1 min-w-[260px] sm:min-w-[320px] relative group overflow-hidden rounded-lg border border-white/5 p-3.5 sm:p-4 bg-black flex flex-col justify-between cursor-pointer hover:border-white/20 transition-all duration-300 min-h-[135px] sm:min-h-[155px] shadow-lg"
               >
                 {/* Background image */}
                 {ad.image && (
@@ -504,8 +504,8 @@ export default function Home({ onNavigate, user }) {
         </section>
 
         {/* ================= FEATURED TALENTS SECTION ================= */}
-        <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
-          <div className="flex items-center justify-between mb-3.5">
+        <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+          <div className="flex items-center justify-between mb-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
               <Crown className="w-3.5 h-3.5 text-amber-300 fill-amber-300 drop-shadow-sm" />
               Featured talents
@@ -519,10 +519,10 @@ export default function Home({ onNavigate, user }) {
             </button>
           </div>
 
-          {/* Horizontal Scroll Carousel with Tight Spacing */}
+          {/* Horizontal Scroll Carousel */}
           <div
             ref={actorsScrollRef}
-            className="flex gap-0 overflow-x-auto pt-0.5 pb-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+            className="flex gap-2.5 sm:gap-3 overflow-x-auto pt-0.5 pb-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
           >
             {!talentsReceived ? (
               <AvatarScrollSkeleton count={4} />
@@ -531,14 +531,14 @@ export default function Home({ onNavigate, user }) {
                 <div
                   key={talent.id}
                   onClick={() => onNavigate('profile', talent.id)}
-                  className="flex flex-col items-center shrink-0 w-[115px] sm:w-[145px] cursor-pointer group"
+                  className="flex flex-col items-center shrink-0 w-[100px] sm:w-[125px] cursor-pointer group"
                 >
                   <Avatar
                     userId={talent.id || talent.uid}
                     user={talent}
                     size="none"
                     name={talent.name}
-                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover shadow-md transition-all duration-300"
+                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-md transition-all duration-300"
                   />
                   <p className="text-white font-bold text-[11px] sm:text-xs text-center mt-1.5 truncate w-full px-0.5">
                     {formatTalentName(talent.name)}
@@ -555,8 +555,8 @@ export default function Home({ onNavigate, user }) {
         </section>
 
         {/* ================= TALENTS BY CATEGORY SECTION ================= */}
-        <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
-          <div className="flex items-center justify-between mb-3.5">
+        <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+          <div className="flex items-center justify-between mb-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
               <LayoutGrid className="w-3.5 h-3.5 text-indigo-200" />
               Talents by category
@@ -597,8 +597,8 @@ export default function Home({ onNavigate, user }) {
         </section>
 
         {/* ================= NEW BORN TALENTS SECTION ================= */}
-        <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
-          <div className="flex items-center justify-between mb-3.5">
+        <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+          <div className="flex items-center justify-between mb-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
               <Sprout className="w-3.5 h-3.5 text-emerald-300 drop-shadow-sm" />
               New born talents
@@ -680,16 +680,16 @@ export default function Home({ onNavigate, user }) {
           </div>
         </section>
 
-        {/* ================= CASTING CALLS SECTION (White Card) ================= */}
-        <section className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 text-gray-900 shadow-xl">
-          <div className="flex items-center justify-between mb-3.5">
+        {/* ================= CASTING CALLS SECTION ================= */}
+        <section className="my-1.5 px-2 sm:px-3 text-white">
+          <div className="flex items-center justify-between mb-2.5">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_10px_rgba(37,99,235,0.35)] border border-blue-400/30">
               <Clapperboard className="w-3.5 h-3.5 text-cyan-200" />
               Casting calls
             </span>
             <button
               onClick={() => onNavigate('casting')}
-              className="text-gray-600 hover:text-gray-950 text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+              className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
             >
               <span>View all</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -704,10 +704,10 @@ export default function Home({ onNavigate, user }) {
                   <div
                     key={call.id}
                     onClick={() => onNavigate('casting-detail', call.id)}
-                    className="bg-[#f5f6f8] hover:bg-[#ebedf1] transition-all p-3.5 rounded-xl border border-gray-200 flex items-center justify-between gap-3.5 sm:gap-4 cursor-pointer group shadow-sm"
+                    className="p-3 bg-[#141416] hover:bg-[#1c1c20] transition-all rounded-xl border border-white/5 flex items-center justify-between gap-3.5 sm:gap-4 cursor-pointer group shadow-md"
                   >
                     {/* Thumbnail Container */}
-                    <div className="relative w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-xl overflow-hidden bg-gray-100 border border-gray-300/80 shrink-0 flex items-center justify-center shadow-sm">
+                    <div className="relative w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-xl overflow-hidden bg-[#18181c] border border-white/10 shrink-0 flex items-center justify-center shadow-md">
                       {thumbnail ? (
                         <img
                           src={thumbnail}
@@ -722,10 +722,10 @@ export default function Home({ onNavigate, user }) {
                       ) : null}
                       {/* Default Clapperboard Thumbnail Fallback */}
                       <div
-                        className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-gray-100 to-gray-200 p-2 text-center"
+                        className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c20] to-[#121214] p-2 text-center"
                         style={{ display: thumbnail ? 'none' : 'flex' }}
                       >
-                        <svg className="w-8 h-8 sm:w-10 sm:h-10 text-gray-700 fill-current drop-shadow-sm" viewBox="0 0 24 24">
+                        <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white/70 fill-current drop-shadow-sm" viewBox="0 0 24 24">
                           <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
                         </svg>
                       </div>
@@ -733,33 +733,33 @@ export default function Home({ onNavigate, user }) {
 
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white text-gray-800 border border-gray-300 shadow-xs">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-200">
                           {call.type || call.category || 'Audition'}
                         </span>
                         {call.deadline && (
-                          <span className="text-[10px] font-semibold text-amber-700">
-                            Deadline: {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          <span className="text-[10px] font-medium text-amber-400">
+                            • Deadline: {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                           </span>
                         )}
                       </div>
-                      <h4 className="text-sm sm:text-base font-bold text-gray-950 group-hover:text-[#1d61f2] transition-colors truncate">
+                      <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
                         {call.title || call.project || 'Untitled Casting Call'}
                       </h4>
-                      <p className="text-xs text-gray-600 truncate flex items-center gap-1 font-medium">
+                      <p className="text-xs text-gray-400 truncate flex items-center gap-1 font-medium">
                         <span>{call.company || call.director || 'Production'}</span>
                         <span>•</span>
                         <span>{call.location || 'Nepal'}</span>
                       </p>
                     </div>
-                    <span className="shrink-0 text-xs font-bold text-[#1d61f2] group-hover:text-blue-700 transition-colors flex items-center gap-0.5">
+                    <span className="shrink-0 text-xs font-bold text-[#1d61f2] group-hover:text-cyan-300 transition-colors flex items-center gap-0.5">
                       Apply &gt;
                     </span>
                   </div>
                 );
               })
             ) : (
-              <div className="text-center py-5 bg-gray-50 rounded-2xl border border-gray-200">
-                <p className="text-gray-600 text-xs mb-2">No active casting calls at the moment</p>
+              <div className="text-center py-5 bg-[#141416] rounded-xl border border-white/5">
+                <p className="text-gray-400 text-xs mb-2">No active casting calls at the moment</p>
                 <button
                   onClick={() => onNavigate('casting-create')}
                   className="text-xs bg-[#1d61f2] hover:bg-blue-600 text-white font-bold px-3 py-1.5 rounded-md transition-colors shadow-sm"
@@ -772,8 +772,8 @@ export default function Home({ onNavigate, user }) {
         </section>
 
         {/* ================= TRENDING TALENTS SECTION ================= */}
-        <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
-          <div className="flex items-center justify-between mb-3.5">
+        <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+          <div className="flex items-center justify-between mb-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
               <Flame className="w-3.5 h-3.5 text-rose-300 fill-rose-300/40" />
               Trending talents
@@ -826,7 +826,7 @@ export default function Home({ onNavigate, user }) {
                   {/* Metadata Lines & Talent Details */}
                   <div className="flex-1 min-w-0 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm sm:text-base font-bold text-white truncate group-hover:text-[#38bdf8] transition-colors">
+                      <p className="text-sm sm:text-base font-bold text-white truncate group-hover:text-cyan-300 transition-colors">
                         {talent.name}
                       </p>
                       <span className="text-xs text-[#1d61f2] font-semibold shrink-0">
@@ -860,12 +860,12 @@ export default function Home({ onNavigate, user }) {
           </div>
         </section>
 
-        {/* ================= OUR GOALS SECTION (White Card) ================= */}
-        <section className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 text-gray-900 shadow-xl">
-          <h3 className="text-base sm:text-lg font-black text-gray-950 tracking-wide mb-3 text-center">
+        {/* ================= OUR GOALS SECTION ================= */}
+        <section className="my-2 mb-4 px-3 sm:px-4 text-white">
+          <h3 className="text-base sm:text-lg font-black text-white tracking-wide mb-3 text-center">
             Our goals
           </h3>
-          <ul className="space-y-2.5 text-xs sm:text-sm text-gray-700 leading-relaxed max-w-xl mx-auto font-medium">
+          <ul className="space-y-2.5 text-xs sm:text-sm text-gray-300 leading-relaxed max-w-xl mx-auto font-medium">
             <li className="flex items-start gap-2.5">
               <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
               <span>Connect Nepal&apos;s finest actors, directors, writers, and film technicians with leading casting agencies.</span>

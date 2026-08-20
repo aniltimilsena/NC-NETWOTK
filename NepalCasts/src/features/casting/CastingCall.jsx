@@ -90,7 +90,7 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
   return (
     <div
       onClick={() => onNavigate('casting-detail', call.id)}
-      className="bg-black hover:bg-[#0c0c0c] rounded-2xl border border-white/5 hover:border-white/10 p-4 sm:p-5 transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 shadow-xl group"
+      className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 cursor-pointer flex flex-col justify-between gap-4 shadow-xl"
     >
       {/* Top Body Row */}
       <div className="flex items-start gap-3.5 sm:gap-5 min-w-0">
@@ -100,7 +100,7 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
             <img
               src={bannerImage}
               alt={call.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-cover"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
@@ -114,13 +114,13 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
             className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c1c] via-[#121212] to-[#080808] p-2 text-center"
             style={{ display: bannerImage ? 'none' : 'flex' }}
           >
-            <svg className="w-9 h-9 sm:w-11 sm:h-11 text-cyan-400/80 fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
+            <svg className="w-9 h-9 sm:w-11 sm:h-11 text-white fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
               <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
             </svg>
           </div>
 
           {isApplied && (
-            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-cyan-400 text-black text-[8px] sm:text-[9px] font-black uppercase tracking-wider z-10 shadow">
+            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-white text-black text-[8px] sm:text-[9px] font-black uppercase tracking-wider z-10 shadow">
               Applied
             </div>
           )}
@@ -136,11 +136,11 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
 
             <button
               onClick={(e) => toggleSave(e, call.id)}
-              className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer shrink-0"
+              className="p-1 text-white hover:text-white/80 transition-colors cursor-pointer shrink-0"
               title={isSaved ? "Saved" : "Save casting call"}
               aria-label="Save"
             >
-              <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-cyan-400' : ''} />
+              <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} className="text-white" />
             </button>
           </div>
 
@@ -156,7 +156,7 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
 
           {/* Location */}
           <p className="text-xs text-gray-400 flex items-center gap-1.5 truncate">
-            <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <MapPin className="w-3.5 h-3.5 text-white shrink-0" />
             <span>{call.location || 'Kathmandu'}</span>
           </p>
 
@@ -171,7 +171,7 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
       <div className="flex items-center justify-between pt-3 border-t border-white/5 text-xs">
         {/* Left Deadline */}
         <div className="flex items-center gap-1.5 text-gray-400">
-          <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+          <Clock className="w-3.5 h-3.5 text-white shrink-0" />
           <span>Deadline: {formattedDate}</span>
         </div>
 
@@ -466,7 +466,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
 
           {/* SEARCH BAR & FILTER TOGGLE */}
           <div className="relative flex items-center w-full">
-            <Search className="absolute left-4 w-4 h-4 text-gray-400 pointer-events-none" />
+            <Search className="absolute left-4 w-4 h-4 text-white pointer-events-none" />
             <input
               ref={searchInputRef}
               type="text"
@@ -481,15 +481,15 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
                   triggerSearchLoading();
                 }
               }}
-              className="w-full bg-black border border-white/10 focus:border-cyan-400/60 rounded-2xl py-3 pl-11 pr-12 text-sm text-white placeholder-gray-500 outline-none transition-all shadow-inner"
+              className="w-full bg-black border border-white/10 focus:border-white/30 rounded-2xl py-3 pl-11 pr-12 text-sm text-white placeholder-gray-500 outline-none transition-all shadow-inner"
             />
             <button
               onClick={() => setIsSortOpen(!isSortOpen)}
-              className="absolute right-3.5 p-1.5 text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+              className="absolute right-3.5 p-1.5 text-white hover:text-white/80 transition-colors cursor-pointer"
               title="Filter options"
               aria-label="Filter options"
             >
-              <SlidersHorizontal className="w-4 h-4" strokeWidth={2.2} />
+              <SlidersHorizontal className="w-4 h-4 text-white" strokeWidth={2.2} />
             </button>
 
             {/* Filter Dropdown */}

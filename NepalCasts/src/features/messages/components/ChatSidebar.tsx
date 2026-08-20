@@ -106,22 +106,24 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
       </div>
 
 
-      <div className="flex bg-white/[0.04] border border-white/10 rounded-lg p-0.5 gap-1">
+      <div className="flex bg-[#0d0d10] border border-white/10 rounded-lg p-0.5 gap-1 shadow-inner">
         <button
           onClick={() => setActiveTab('chats')}
-          className={`flex-1 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${activeTab === 'chats'
-              ? 'bg-white/10 text-white border border-white/15 shadow-sm'
-              : 'text-gray-400 hover:text-white'
-            }`}
+          className={`flex-1 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-all cursor-pointer select-none ${
+            activeTab === 'chats'
+              ? 'bg-[#22222a] text-white border border-white/20 shadow-sm'
+              : 'text-zinc-400 hover:text-white'
+          }`}
         >
           Chats
         </button>
         <button
           onClick={() => setActiveTab('calls')}
-          className={`flex-1 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${activeTab === 'calls'
-              ? 'bg-white/10 text-white border border-white/15 shadow-sm'
-              : 'text-gray-400 hover:text-white'
-            }`}
+          className={`flex-1 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-all cursor-pointer select-none ${
+            activeTab === 'calls'
+              ? 'bg-[#22222a] text-white border border-white/20 shadow-sm'
+              : 'text-zinc-400 hover:text-white'
+          }`}
         >
           Calls
         </button>
