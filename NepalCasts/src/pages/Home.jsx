@@ -336,9 +336,9 @@ export default function Home({ onNavigate, user }) {
       trendingCalls={castingCalls}
       loading={!talentsReceived}
     >
-      <div className="min-h-screen bg-[#0a0f1d] text-white pb-2 font-sans selection:bg-blue-600 selection:text-white">
-        {/* ================= HERO SECTION ================= */}
-        <section className="relative w-full h-[320px] sm:h-[400px] lg:h-[460px] overflow-hidden bg-black select-none">
+      <div className="min-h-screen bg-[#141414] text-white pb-6 font-sans selection:bg-blue-600 selection:text-white space-y-2 sm:space-y-3">
+        {/* ================= HERO SECTION (Flush with top navbar) ================= */}
+        <section className="relative w-full h-[320px] sm:h-[400px] lg:h-[460px] overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5">
           {/* 5 Smoothly Rotating Background Images (Every 4s) */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <AnimatePresence mode="popLayout">
@@ -354,7 +354,7 @@ export default function Home({ onNavigate, user }) {
               />
             </AnimatePresence>
             <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/20 to-black/85 pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1d] via-black/25 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-black/25 to-transparent pointer-events-none" />
           </div>
 
           {/* Subtle Slide Indicators */}
@@ -440,14 +440,17 @@ export default function Home({ onNavigate, user }) {
           )}
         </section>
 
-        {/* ================= SPONSORED ADS SECTION (2 CARDS) ================= */}
-        <section className="pt-2 pb-1 bg-[#0a0f1d]">
-          <div className="flex gap-2.5 sm:gap-3.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        {/* Lower Cards Container with Standard Padding */}
+        <div className="px-2 sm:px-3 lg:px-4 space-y-2 sm:space-y-3">
+
+        {/* ================= SPONSORED ADS SECTION ================= */}
+        <section className="p-0">
+          <div className="flex gap-2 sm:gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {HOME_SPONSORED_ADS.map((ad) => (
               <div
                 key={ad.id}
                 onClick={() => ad.ctaUrl && onNavigate(ad.ctaUrl.replace('/', ''))}
-                className="flex-1 min-w-[260px] sm:min-w-[320px] relative group overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 p-3 sm:p-4 bg-black/80 flex flex-col justify-between shadow-xl cursor-pointer hover:border-white/25 transition-all duration-300 min-h-[135px] sm:min-h-[155px]"
+                className="flex-1 min-w-[260px] sm:min-w-[320px] relative group overflow-hidden rounded-2xl border border-white/5 p-3.5 sm:p-4 bg-black flex flex-col justify-between cursor-pointer hover:border-white/20 transition-all duration-300 min-h-[135px] sm:min-h-[155px] shadow-lg"
               >
                 {/* Background image */}
                 {ad.image && (
@@ -501,9 +504,9 @@ export default function Home({ onNavigate, user }) {
           </div>
         </section>
 
-        {/* ================= FEATURED TALENTS SECTION (BLACK CARD) ================= */}
-        <section className="my-1.5 bg-black rounded-xl p-3.5 sm:p-4 text-white shadow-xl">
-          <div className="flex items-center justify-between mb-2.5">
+        {/* ================= FEATURED TALENTS SECTION ================= */}
+        <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-3">
             <span className="bg-[#1d61f2] text-white font-bold text-xs sm:text-sm px-3 py-1 rounded-md tracking-wide shadow-sm">
               Featured talents
             </span>
@@ -550,8 +553,8 @@ export default function Home({ onNavigate, user }) {
           </div>
         </section>
 
-        {/* ================= TALENTS BY CATEGORY SECTION (BLACK CARD) ================= */}
-        <section className="my-1.5 bg-black rounded-xl p-3.5 sm:p-4 text-white shadow-xl">
+        {/* ================= TALENTS BY CATEGORY SECTION ================= */}
+        <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-3.5">
             <span className="bg-[#1d61f2] text-white font-bold text-xs sm:text-sm px-3 py-1 rounded-md tracking-wide shadow-sm">
               Talents by category
@@ -565,17 +568,17 @@ export default function Home({ onNavigate, user }) {
           </div>
 
           {/* 3-Column Grid showing the top 3 Category Cards */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {HOME_CATEGORY_CARDS.slice(0, 3).map((cat) => {
               const count = getCategoryCount(cat.filter);
               return (
                 <motion.div
                   key={cat.id}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => onNavigate('talents', cat.filter)}
                   style={{ backgroundColor: cat.bgColor }}
-                  className="rounded-xl p-2.5 sm:p-4 aspect-square flex flex-col items-center justify-center text-center cursor-pointer shadow-lg transition-transform border border-black/5"
+                  className="rounded-xl p-3 sm:p-4 aspect-square flex flex-col items-center justify-center text-center cursor-pointer shadow transition-transform border border-black/5"
                 >
                   <CategoryCardIcon type={cat.iconType} className="w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 text-black fill-current mb-1 sm:mb-1.5" />
                   <span className="text-black font-extrabold text-xs sm:text-sm leading-tight whitespace-pre-line mt-0.5">
@@ -590,8 +593,8 @@ export default function Home({ onNavigate, user }) {
           </div>
         </section>
 
-        {/* ================= NEW BORN TALENTS SECTION (BLACK CARD) ================= */}
-        <section className="my-3 bg-black rounded-xl p-4 sm:p-5 text-white shadow-xl">
+        {/* ================= NEW BORN TALENTS SECTION ================= */}
+        <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-3.5">
             <span className="bg-[#1d61f2] text-white font-bold text-xs sm:text-sm px-3 py-1 rounded-md tracking-wide shadow-sm">
               New born talents
@@ -605,7 +608,7 @@ export default function Home({ onNavigate, user }) {
           </div>
 
           {/* Ranked Card List Container */}
-          <div className="space-y-4 pt-1">
+          <div className="space-y-2.5 pt-1">
             {!talentsReceived ? (
               [1, 2, 3, 4, 5].map((num) => (
                 <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
@@ -672,21 +675,21 @@ export default function Home({ onNavigate, user }) {
           </div>
         </section>
 
-        {/* ================= CASTING CALLS SECTION (BLACK CARD) ================= */}
-        <section className="my-3 bg-black rounded-xl p-4 sm:p-5 text-white shadow-xl">
+        {/* ================= CASTING CALLS SECTION (White Card) ================= */}
+        <section className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 text-gray-900 shadow-xl">
           <div className="flex items-center justify-between mb-3.5">
             <span className="bg-[#1d61f2] text-white font-bold text-xs sm:text-sm px-3 py-1 rounded-md tracking-wide shadow-sm flex items-center gap-1.5">
               Casting calls
             </span>
             <button
               onClick={() => onNavigate('casting')}
-              className="text-white hover:text-gray-300 text-xs sm:text-sm font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              className="text-gray-900 hover:text-gray-600 text-xs sm:text-sm font-bold flex items-center gap-1 transition-colors cursor-pointer"
             >
               View all &gt;
             </button>
           </div>
 
-          <div className="space-y-3 pt-1">
+          <div className="space-y-2.5 pt-1">
             {activeCastingCalls.length > 0 ? (
               activeCastingCalls.slice(0, 3).map((call) => {
                 const thumbnail = getCastingThumbnail(call);
@@ -694,10 +697,10 @@ export default function Home({ onNavigate, user }) {
                   <div
                     key={call.id}
                     onClick={() => onNavigate('casting-detail', call.id)}
-                    className="bg-[#141416] hover:bg-[#1c1c20] transition-all p-3.5 rounded-xl border border-white/5 flex items-center justify-between gap-3.5 sm:gap-4 cursor-pointer group"
+                    className="bg-[#f5f6f8] hover:bg-[#ebedf1] transition-all p-3.5 rounded-xl border border-gray-200 flex items-center justify-between gap-3.5 sm:gap-4 cursor-pointer group shadow-sm"
                   >
                     {/* Thumbnail Container */}
-                    <div className="relative w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-xl overflow-hidden bg-[#18181c] border border-white/10 shrink-0 flex items-center justify-center shadow-md">
+                    <div className="relative w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-xl overflow-hidden bg-gray-100 border border-gray-300/80 shrink-0 flex items-center justify-center shadow-sm">
                       {thumbnail ? (
                         <img
                           src={thumbnail}
@@ -712,10 +715,10 @@ export default function Home({ onNavigate, user }) {
                       ) : null}
                       {/* Default Clapperboard Thumbnail Fallback */}
                       <div
-                        className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#22222a] via-[#1a1a20] to-[#101014] p-2 text-center"
+                        className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-gray-100 to-gray-200 p-2 text-center"
                         style={{ display: thumbnail ? 'none' : 'flex' }}
                       >
-                        <svg className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-300/90 fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
+                        <svg className="w-8 h-8 sm:w-10 sm:h-10 text-gray-700 fill-current drop-shadow-sm" viewBox="0 0 24 24">
                           <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
                         </svg>
                       </div>
@@ -723,36 +726,36 @@ export default function Home({ onNavigate, user }) {
 
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-white border border-white/10">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white text-gray-800 border border-gray-300 shadow-xs">
                           {call.type || call.category || 'Audition'}
                         </span>
                         {call.deadline && (
-                          <span className="text-[10px] font-medium text-amber-400">
+                          <span className="text-[10px] font-semibold text-amber-700">
                             Deadline: {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                           </span>
                         )}
                       </div>
-                      <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-[#38bdf8] transition-colors truncate">
+                      <h4 className="text-sm sm:text-base font-bold text-gray-950 group-hover:text-[#1d61f2] transition-colors truncate">
                         {call.title || call.project || 'Untitled Casting Call'}
                       </h4>
-                      <p className="text-xs text-gray-400 truncate flex items-center gap-1">
+                      <p className="text-xs text-gray-600 truncate flex items-center gap-1 font-medium">
                         <span>{call.company || call.director || 'Production'}</span>
                         <span>•</span>
                         <span>{call.location || 'Nepal'}</span>
                       </p>
                     </div>
-                    <span className="shrink-0 text-xs font-bold text-[#1d61f2] group-hover:text-[#38bdf8] transition-colors flex items-center gap-0.5">
+                    <span className="shrink-0 text-xs font-bold text-[#1d61f2] group-hover:text-blue-700 transition-colors flex items-center gap-0.5">
                       Apply &gt;
                     </span>
                   </div>
                 );
               })
             ) : (
-              <div className="text-center py-5 bg-[#141416] rounded-xl border border-white/5">
-                <p className="text-gray-400 text-xs mb-2">No active casting calls at the moment</p>
+              <div className="text-center py-5 bg-gray-50 rounded-2xl border border-gray-200">
+                <p className="text-gray-600 text-xs mb-2">No active casting calls at the moment</p>
                 <button
                   onClick={() => onNavigate('casting-create')}
-                  className="text-xs bg-[#1d61f2] hover:bg-blue-600 text-white font-bold px-3 py-1.5 rounded-md transition-colors"
+                  className="text-xs bg-[#1d61f2] hover:bg-blue-600 text-white font-bold px-3 py-1.5 rounded-md transition-colors shadow-sm"
                 >
                   + Post a Casting Call
                 </button>
@@ -761,8 +764,8 @@ export default function Home({ onNavigate, user }) {
           </div>
         </section>
 
-        {/* ================= TRENDING TALENTS SECTION (BLACK CARD) ================= */}
-        <section className="my-3 bg-black rounded-xl p-4 sm:p-5 text-white shadow-xl">
+        {/* ================= TRENDING TALENTS SECTION ================= */}
+        <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-3.5">
             <span className="bg-[#1d61f2] text-white font-bold text-xs sm:text-sm px-3 py-1 rounded-md tracking-wide shadow-sm flex items-center gap-1">
               Trending talents
@@ -776,7 +779,7 @@ export default function Home({ onNavigate, user }) {
           </div>
 
           {/* Ranked Trending List Container */}
-          <div className="space-y-4 pt-1">
+          <div className="space-y-2.5 pt-1">
             {!talentsReceived ? (
               [1, 2, 3, 4, 5].map((num) => (
                 <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
@@ -848,34 +851,35 @@ export default function Home({ onNavigate, user }) {
           </div>
         </section>
 
-        {/* ================= OUR GOALS SECTION (BLACK CARD) ================= */}
-        <section className="my-3 mb-6 bg-black rounded-xl p-5 sm:p-6 text-white shadow-xl">
-          <h3 className="text-base sm:text-lg font-black text-white tracking-wide mb-3 text-center">
+        {/* ================= OUR GOALS SECTION (White Card) ================= */}
+        <section className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 text-gray-900 shadow-xl">
+          <h3 className="text-base sm:text-lg font-black text-gray-950 tracking-wide mb-3 text-center">
             Our goals
           </h3>
-          <ul className="space-y-2 text-xs sm:text-sm text-gray-300 leading-relaxed max-w-xl mx-auto">
-            <li className="flex items-start gap-2">
-              <span className="text-[#1d61f2] font-bold mt-0.5">•</span>
+          <ul className="space-y-2.5 text-xs sm:text-sm text-gray-700 leading-relaxed max-w-xl mx-auto font-medium">
+            <li className="flex items-start gap-2.5">
+              <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
               <span>Connect Nepal&apos;s finest actors, directors, writers, and film technicians with leading casting agencies.</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-[#1d61f2] font-bold mt-0.5">•</span>
+            <li className="flex items-start gap-2.5">
+              <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
               <span>Provide a unified platform for talent discovery and casting opportunities across Nepal.</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-[#1d61f2] font-bold mt-0.5">•</span>
+            <li className="flex items-start gap-2.5">
+              <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
               <span>Empower emerging artists by giving them visibility to global production houses.</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-[#1d61f2] font-bold mt-0.5">•</span>
+            <li className="flex items-start gap-2.5">
+              <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
               <span>Simplify the casting process for producers, directors, and agencies.</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-[#1d61f2] font-bold mt-0.5">•</span>
+            <li className="flex items-start gap-2.5">
+              <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
               <span>Build a strong community that supports and grows Nepal&apos;s entertainment industry.</span>
             </li>
           </ul>
         </section>
+        </div>
       </div>
     </Desktop3ColumnLayout>
   );

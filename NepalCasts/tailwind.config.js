@@ -4,10 +4,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        'nc-dark': '#0a0a0a',
-        'nc-darker': '#050505',
-        'nc-surface': '#111111',
-        'nc-card': '#1a1a1a',
+        'nc-dark': '#141414',
+        'nc-darker': '#0a0a0a',
+        'nc-surface': '#000000',
+        'nc-card': '#000000',
         'nc-border': '#222222',
         'nc-accent': '#00BFFF',
         'nc-pro': '#FFD700',
@@ -21,7 +21,7 @@ export default {
         'admin-success': '#10B981',
         'admin-warning': '#F59E0B',
         'admin-error': '#EF4444',
-        'admin-bg': '#050507',
+        'admin-bg': '#141414',
         'admin-surface': '#0F1117',
         'admin-surface-light': '#1A1D25',
         'admin-border': '#262A33',

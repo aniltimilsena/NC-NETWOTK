@@ -136,14 +136,14 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
     });
   }, [user?.uid]);
   return (<>
-    <header className="sticky top-0 left-0 right-0 z-50 bg-[#060709]">
-      <nav className="relative z-30 bg-[#060709]/90 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-[1600px] mx-auto px-2 sm:px-6 lg:px-8">
+    <header className="sticky top-0 left-0 right-0 z-50 bg-[#141414]">
+      <nav className="relative z-30 bg-[#141414]/95 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-20">
 
             <div className="flex items-center gap-4 sm:gap-6">
-              {showBack && (<button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shrink-0" title="Go Back" aria-label="Go Back">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {showBack && (<button onClick={onBack} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shrink-0" title="Go Back" aria-label="Go Back">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>)}
@@ -189,10 +189,10 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             </div>
 
 
-            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3.5 flex-shrink-0">
 
 
-              <button onClick={() => setShowSearchOverlay(true)} className="lg:hidden text-nc-secondary hover:text-white p-1.5 transition-colors" aria-label="Search">
+              <button onClick={() => setShowSearchOverlay(true)} className="lg:hidden text-nc-secondary hover:text-white p-2 transition-colors" aria-label="Search">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -202,13 +202,13 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
               {isLoggedIn ? (<>
 
-                <Link to="/notifications" className={`text-nc-secondary hover:text-white p-1.5 relative transition-colors ${isActionActive('notifications') ? 'text-white' : ''}`} aria-label="Notifications">
+                <Link to="/notifications" className={`text-nc-secondary hover:text-white p-2 relative transition-colors ${isActionActive('notifications') ? 'text-white' : ''}`} aria-label="Notifications">
                   <NotificationIcon size={24} color="currentColor" active={false} />
-                  {unreadCount > 0 && (<span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#ef4444]" />)}
+                  {unreadCount > 0 && (<span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#ef4444]" />)}
                 </Link>
-                <Link to="/messages" className={`text-nc-secondary hover:text-white p-1.5 relative transition-colors ${isActionActive('messages') ? 'text-white' : ''}`} aria-label="Messages">
+                <Link to="/messages" className={`text-nc-secondary hover:text-white p-2 relative transition-colors ${isActionActive('messages') ? 'text-white' : ''}`} aria-label="Messages">
                   <SendIcon size={24} color="currentColor" active={isActionActive('messages')} />
-                  {unreadMessagesCount > 0 && (<span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#00BFFF] rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#00BFFF]" />)}
+                  {unreadMessagesCount > 0 && (<span className="absolute top-2 right-2 w-2 h-2 bg-[#00BFFF] rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#00BFFF]" />)}
                 </Link>
 
                 <div className="relative flex items-center">
@@ -263,7 +263,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 Join Now
               </Link>)}
 
-              <button className="md:hidden text-nc-secondary hover:text-white p-1.5 -mr-1 flex items-center justify-center h-10 w-10" onClick={() => setMenuOpen(!menuOpen)} title="Toggle Menu" aria-label="Toggle Menu">
+              <button className="md:hidden text-nc-secondary hover:text-white p-2 flex items-center justify-center h-10 w-10" onClick={() => setMenuOpen(!menuOpen)} title="Toggle Menu" aria-label="Toggle Menu">
                 <MenuCloseIcon active={menuOpen} size={28} color="currentColor" />
               </button>
             </div>

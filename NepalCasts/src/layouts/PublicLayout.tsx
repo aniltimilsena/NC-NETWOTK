@@ -95,13 +95,13 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
         location.pathname.startsWith('/sso-callback');
     const showNavbar = !isAuthPage && !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications');
     return (<div className="flex flex-col min-h-screen lg:h-screen lg:overflow-hidden bg-nc-dark text-nc-text">
-      {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate}/>)}
-      <main className="flex-1 px-0 pb-0 min-h-0 lg:overflow-hidden">
-        <Suspense fallback={<div className="min-h-screen bg-[#070709]" />}>
-          <Outlet context={{ user, isAdmin, showAlert, showToast }}/>
-        </Suspense>
-      </main>
-      {!isAuthPage && location.pathname === '/' && <Footer user={user}/>}
+        {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate} />)}
+        <main className="flex-1 px-0 pb-0 min-h-0 lg:overflow-hidden">
+            <Suspense fallback={<div className="min-h-screen bg-[#070709]" />}>
+                <Outlet context={{ user, isAdmin, showAlert, showToast }} />
+            </Suspense>
+        </main>
+        {!isAuthPage && location.pathname === '/' && <Footer user={user} />}
     </div>);
 }
 

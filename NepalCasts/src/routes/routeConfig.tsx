@@ -100,7 +100,7 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/trust-safety" element={<TrustSafety />} />
-        
+
         {/* Authentication Routes */}
         <Route path="/login" element={<Navigate to="/signin" replace />} />
         <Route path="/signin/*" element={<SignIn onNavigate={onNavigate} />} />

@@ -8,13 +8,13 @@ const ProfileCreate = lazy(() => import('../features/profile/ProfileCreate'));
 
 const ProfileWrapper = ({ onNavigate, user, isAdmin, showAlert, authReady, defaultTab }: any) => {
   const { id, tab } = useParams();
-  
+
   if (!authReady) {
     return <div className="min-h-screen bg-[#070709]" />;
   }
 
   const targetId = id || user?.uid || user?.id || CurrentUser.id;
-  
+
   if (!targetId && !user && !CurrentUser.id) {
     return <Navigate to="/signin" replace />;
   }
