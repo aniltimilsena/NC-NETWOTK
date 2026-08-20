@@ -7,7 +7,7 @@ import { subscribeToTalents, subscribeToCastingCalls } from '../services';
 import { matchesCategory } from '../constants/categories';
 import { subscribeToProfile } from '../features/profile/services/profile';
 import { AvatarScrollSkeleton } from '../components/ui/Skeleton';
-import { Megaphone, Tag, ExternalLink, Sparkles, Flame, Clapperboard, LayoutGrid, Star, ChevronRight } from 'lucide-react';
+import { Megaphone, Tag, ExternalLink, Sparkles, Flame, Clapperboard, LayoutGrid, Star, ChevronRight, Crown } from 'lucide-react';
 
 const HOME_SPONSORED_ADS = [
   {
@@ -507,7 +507,7 @@ export default function Home({ onNavigate, user }) {
         <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-3.5">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-200" />
+              <Crown className="w-3.5 h-3.5 text-amber-300 fill-amber-300 drop-shadow-sm" />
               Featured talents
             </span>
             <button
