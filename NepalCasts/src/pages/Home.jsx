@@ -7,8 +7,7 @@ import { subscribeToTalents, subscribeToCastingCalls } from '../services';
 import { matchesCategory } from '../constants/categories';
 import { subscribeToProfile } from '../features/profile/services/profile';
 import { AvatarScrollSkeleton } from '../components/ui/Skeleton';
-import { AdBanner } from '../components/ui/AdBanner';
-import { Megaphone, Tag, ExternalLink } from 'lucide-react';
+import { Megaphone, Tag, ExternalLink, Sparkles, Flame, Clapperboard, LayoutGrid, Star, ChevronRight } from 'lucide-react';
 
 const HOME_SPONSORED_ADS = [
   {
@@ -506,15 +505,17 @@ export default function Home({ onNavigate, user }) {
 
         {/* ================= FEATURED TALENTS SECTION ================= */}
         <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
-          <div className="flex items-center justify-between mb-3">
-            <span className="bg-[#1d61f2] text-white font-bold text-xs sm:text-sm px-3 py-1 rounded-md tracking-wide shadow-sm">
+          <div className="flex items-center justify-between mb-3.5">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-200" />
               Featured talents
             </span>
             <button
               onClick={() => onNavigate('listing')}
-              className="text-white hover:text-gray-300 text-xs sm:text-sm font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
             >
-              View all talents &gt;
+              <span>View all talents</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
@@ -556,14 +557,16 @@ export default function Home({ onNavigate, user }) {
         {/* ================= TALENTS BY CATEGORY SECTION ================= */}
         <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-3.5">
-            <span className="bg-[#1d61f2] text-white font-bold text-xs sm:text-sm px-3 py-1 rounded-md tracking-wide shadow-sm">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
+              <LayoutGrid className="w-3.5 h-3.5 text-indigo-200" />
               Talents by category
             </span>
             <button
               onClick={() => onNavigate('discover')}
-              className="text-white hover:text-gray-300 text-xs sm:text-sm font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
             >
-              View all &gt;
+              <span>View all</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
@@ -596,14 +599,16 @@ export default function Home({ onNavigate, user }) {
         {/* ================= NEW BORN TALENTS SECTION ================= */}
         <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-3.5">
-            <span className="bg-[#1d61f2] text-white font-bold text-xs sm:text-sm px-3 py-1 rounded-md tracking-wide shadow-sm">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
+              <Star className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
               New born talents
             </span>
             <button
               onClick={() => onNavigate('listing')}
-              className="text-white hover:text-gray-300 text-xs sm:text-sm font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
             >
-              View all &gt;
+              <span>View all</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
@@ -678,14 +683,16 @@ export default function Home({ onNavigate, user }) {
         {/* ================= CASTING CALLS SECTION (White Card) ================= */}
         <section className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 text-gray-900 shadow-xl">
           <div className="flex items-center justify-between mb-3.5">
-            <span className="bg-[#1d61f2] text-white font-bold text-xs sm:text-sm px-3 py-1 rounded-md tracking-wide shadow-sm flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_10px_rgba(37,99,235,0.35)] border border-blue-400/30">
+              <Clapperboard className="w-3.5 h-3.5 text-cyan-200" />
               Casting calls
             </span>
             <button
               onClick={() => onNavigate('casting')}
-              className="text-gray-900 hover:text-gray-600 text-xs sm:text-sm font-bold flex items-center gap-1 transition-colors cursor-pointer"
+              className="text-gray-600 hover:text-gray-950 text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
             >
-              View all &gt;
+              <span>View all</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
@@ -767,14 +774,16 @@ export default function Home({ onNavigate, user }) {
         {/* ================= TRENDING TALENTS SECTION ================= */}
         <section className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-3.5">
-            <span className="bg-[#1d61f2] text-white font-bold text-xs sm:text-sm px-3 py-1 rounded-md tracking-wide shadow-sm flex items-center gap-1">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
+              <Flame className="w-3.5 h-3.5 text-rose-300 fill-rose-300/40" />
               Trending talents
             </span>
             <button
               onClick={() => onNavigate('trending')}
-              className="text-white hover:text-gray-300 text-xs sm:text-sm font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
             >
-              View all &gt;
+              <span>View all</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
