@@ -12,44 +12,33 @@ import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 import { CastingCallSkeleton } from '../../components/ui/Skeleton';
 
-const getUrgentStatus = (deadlineStr) => {
-  if (!deadlineStr) return null;
+const formatDeadlineDate = (deadlineStr) => {
+  if (!deadlineStr) return 'No deadline';
   const dDate = new Date(deadlineStr);
-  if (isNaN(dDate.getTime())) return null;
-  const diffMs = dDate.getTime() - new Date().getTime();
-  const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
-  if (diffHours >= 0 && diffHours <= 48) {
-    return `${diffHours}h left`;
-  }
-  return null;
+  if (isNaN(dDate.getTime())) return deadlineStr;
+  return dDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-const getDeadlineStatus = (deadlineStr) => {
-  if (!deadlineStr) return { color: 'text-gray-400 border-white/5 bg-white/5', label: 'No deadline' };
+const getDeadlineBadge = (deadlineStr) => {
+  if (!deadlineStr) return { label: 'OPEN', isClosed: false };
   const dDate = new Date(deadlineStr);
-  if (isNaN(dDate.getTime())) {
-
-    return { color: 'text-gray-400 border-white/5 bg-white/5', label: deadlineStr };
-  }
+  if (isNaN(dDate.getTime())) return { label: 'OPEN', isClosed: false };
   const now = new Date();
   const diffTime = dDate.getTime() - now.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
-    return { color: 'text-red-500/60 border-red-500/10 bg-red-500/5', label: 'Closed' };
+    return { label: 'CLOSED', isClosed: true };
   }
-  if (diffDays < 3) {
-    return { color: 'text-red-400 border-red-500/20 bg-red-500/10 shadow-[0_0_15px_rgba(239,68,68,0.1)] font-bold', label: `${diffDays}d left` };
+  if (diffDays === 0) {
+    return { label: 'TODAY', isClosed: false };
   }
-  if (diffDays < 7) {
-    return { color: 'text-yellow-400 border-yellow-500/20 bg-yellow-500/10 font-bold', label: `${diffDays}d left` };
-  }
-  return { color: 'text-gray-400 border-white/5 bg-white/5', label: `${diffDays}d left` };
+  return { label: `${diffDays}D LEFT`, isClosed: false };
 };
 
 const getRolesSummary = (call) => {
   if (!call.roles || !Array.isArray(call.roles) || call.roles.length === 0) {
-    return 'Looking for: Casting Roles';
+    return 'Looking for: All Roles';
   }
   const summaries = call.roles.map(r => {
     if (typeof r === 'string') return r;
@@ -57,7 +46,7 @@ const getRolesSummary = (call) => {
     const age = r.ageRange ? `, ${r.ageRange}` : '';
     return `${name}${age}`;
   });
-  return `Looking for: ${summaries.join(' | ')}`;
+  return `Looking for: ${summaries.join(', ')}`;
 };
 
 const isMockOrInvalidImage = (url) => {
@@ -83,26 +72,35 @@ const getCastingThumbnail = (call) => {
   return raw && !isMockOrInvalidImage(raw) ? raw : null;
 };
 
+const formatCategoryTag = (call) => {
+  const cat = call.category || call.type || 'Project';
+  if (cat.toLowerCase().startsWith('nepali')) {
+    return cat.toUpperCase();
+  }
+  return `NEPALI ${cat.toUpperCase()}`;
+};
+
 const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave }) => {
   const bannerImage = getCastingThumbnail(call);
-  const deadlineInfo = getDeadlineStatus(call.deadline);
-  const urgentText = getUrgentStatus(call.deadline);
+  const deadlineBadge = getDeadlineBadge(call.deadline);
+  const formattedDate = formatDeadlineDate(call.deadline);
   const roleNeeded = getRolesSummary(call);
+  const categoryTag = formatCategoryTag(call);
 
   return (
     <div
       onClick={() => onNavigate('casting-detail', call.id)}
-      className="flex items-start justify-between py-3 sm:py-3.5 border-b border-white/10 transition-all cursor-pointer gap-3 sm:gap-6"
+      className="bg-[#0b0f19] hover:bg-[#0f1422] rounded-2xl border border-white/10 hover:border-cyan-500/30 p-4 sm:p-5 transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 shadow-xl group"
     >
-      {/* Left: Poster + Details */}
-      <div className="flex items-start gap-3 sm:gap-5 flex-1 min-w-0">
+      {/* Top Body Row */}
+      <div className="flex items-start gap-3.5 sm:gap-5 min-w-0">
         {/* Poster Thumbnail */}
-        <div className="w-36 sm:w-52 h-24 sm:h-32 rounded-xl overflow-hidden relative shrink-0 bg-[#141418] border border-white/10 flex items-center justify-center shadow-md">
+        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#161c2b] border border-white/10 flex items-center justify-center shadow-md">
           {bannerImage ? (
             <img
               src={bannerImage}
               alt={call.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
@@ -113,69 +111,77 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
 
           {/* Default Clapperboard Thumbnail Fallback */}
           <div
-            className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#22222a] via-[#1a1a20] to-[#101014] p-2 text-center"
+            className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c2438] via-[#141b2a] to-[#0c111c] p-2 text-center"
             style={{ display: bannerImage ? 'none' : 'flex' }}
           >
-            <svg className="w-10 h-10 sm:w-14 sm:h-14 text-indigo-300/90 fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
+            <svg className="w-9 h-9 sm:w-11 sm:h-11 text-cyan-300/90 fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
               <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
             </svg>
           </div>
 
           {isApplied && (
-            <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-[#00BFFF] text-black text-[8px] sm:text-[9px] font-black uppercase tracking-wider z-10">
+            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-cyan-400 text-black text-[8px] sm:text-[9px] font-black uppercase tracking-wider z-10 shadow">
               Applied
             </div>
           )}
-          {urgentText && (
-            <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-red-600/90 border border-red-400 text-white text-[8px] font-black uppercase tracking-wider flex items-center gap-1 shadow-lg backdrop-blur-md z-10">
-              <Flame className="w-2.5 h-2.5 text-amber-300 fill-amber-300" />
-              <span>URGENT</span>
-            </div>
-          )}
         </div>
 
-        {/* Text content details */}
-        <div className="space-y-1 sm:space-y-1.5 flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">
-              {call.category || call.type || 'Nepali Project'}
+        {/* Info Column */}
+        <div className="flex-1 min-w-0 space-y-1 sm:space-y-1.5">
+          {/* Top Row: Category Tag & Bookmark */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#0e2a47] border border-cyan-500/20 text-cyan-300 font-bold text-[9px] sm:text-[10px] tracking-wider uppercase truncate">
+              {categoryTag}
             </span>
+
+            <button
+              onClick={(e) => toggleSave(e, call.id)}
+              className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer shrink-0"
+              title={isSaved ? "Saved" : "Save casting call"}
+              aria-label="Save"
+            >
+              <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-cyan-400' : ''} />
+            </button>
           </div>
 
-          <h2 className="text-base sm:text-2xl font-bold text-white leading-tight truncate">
-            {call.title}
-          </h2>
+          {/* Project Title */}
+          <h3 className="text-base sm:text-lg font-bold text-white leading-tight truncate group-hover:text-cyan-300 transition-colors">
+            {call.title || 'Untitled Casting Call'}
+          </h3>
 
-          <p className="text-xs text-gray-400 font-medium line-clamp-1 leading-relaxed">
+          {/* Looking for */}
+          <p className="text-xs sm:text-sm text-gray-300 font-medium line-clamp-1">
             {roleNeeded}
           </p>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs text-gray-400 pt-0.5">
-            <span className="flex items-center gap-1">
-              <MapPin className="w-3 h-3 text-[#00BFFF] shrink-0" />
-              <span className="truncate max-w-[100px] sm:max-w-none">{call.location || 'Nepal'}</span>
-            </span>
-            {call.budget && (
-              <span className="flex items-center gap-1 text-[#00BFFF] font-bold">
-                Salary: {call.budget}
-              </span>
-            )}
-          </div>
+          {/* Location */}
+          <p className="text-xs text-gray-400 flex items-center gap-1.5 truncate">
+            <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span>{call.location || 'Kathmandu'}</span>
+          </p>
+
+          {/* Salary / Compensation */}
+          <p className="text-xs sm:text-sm font-bold text-[#38bdf8] pt-0.5 truncate">
+            Salary: {call.budget || call.salary || 'NPR Negotiable'}
+          </p>
         </div>
       </div>
 
-      {/* Right Action & Deadline Column */}
-      <div className="flex flex-col items-end justify-between self-stretch shrink-0 gap-2">
-        <button
-          onClick={(e) => toggleSave(e, call.id)}
-          className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-gray-400 hover:text-white"
-        >
-          <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} className={isSaved ? 'text-[#00BFFF]' : ''} />
-        </button>
+      {/* Bottom Status Row / Footer */}
+      <div className="flex items-center justify-between pt-3 border-t border-white/5 text-xs">
+        {/* Left Deadline */}
+        <div className="flex items-center gap-1.5 text-gray-400">
+          <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+          <span>Deadline: {formattedDate}</span>
+        </div>
 
-        <span className={`flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border text-[9px] sm:text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${deadlineInfo.color}`}>
-          <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
-          {deadlineInfo.label}
+        {/* Right Status Badge */}
+        <span className={`px-3 py-1 rounded-md text-[10px] sm:text-xs font-black tracking-wider uppercase border ${
+          deadlineBadge.isClosed
+            ? 'bg-[#0e2138] border-cyan-500/20 text-cyan-400'
+            : 'bg-[#0e2a47] border-cyan-500/30 text-cyan-300'
+        }`}>
+          {deadlineBadge.label}
         </span>
       </div>
     </div>
@@ -183,8 +189,20 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
 });
 CastingCallItem.displayName = 'CastingCallItem';
 
+const CATEGORY_TABS = [
+  'All',
+  'Feature Film',
+  'Short Film',
+  'Web Series',
+  'Commercial',
+  'Music Video',
+  'Theatre',
+  'Documentary'
+];
+
 export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' }) {
   const { t } = useTranslation();
+  const [selectedCategoryTab, setSelectedCategoryTab] = useState('All');
   const [activeFilter, setActiveFilter] = useState(filter === 'my-calls' ? 'My Applications' : 'All');
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
@@ -204,7 +222,6 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
   const [appliedCastingIds, setAppliedCastingIds] = useState([]);
   const [activeSort, setActiveSort] = useState('Latest');
   const [isSortOpen, setIsSortOpen] = useState(false);
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('All');
   const [selectedPayStatus, setSelectedPayStatus] = useState('All');
   const [visibleLimit, setVisibleLimit] = useState(20);
@@ -253,7 +270,6 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
     { id: 'Category', label: 'Category' }
   ];
 
-
   useEffect(() => {
     setIsLoading(true);
     const unsubscribe = subscribeToCastingCalls('All', (data) => {
@@ -286,7 +302,6 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
     return () => unsub();
   }, [user?.uid]);
 
-
   useEffect(() => {
     if (!user) {
       setAppliedCastingIds([]);
@@ -305,13 +320,10 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
     return () => unsub();
   }, [user?.uid]);
 
-
   const canPostCall = user && (user.role === 'Director' || user.role === 'Directors' || isAdmin);
-
 
   const filteredCalls = calls
     .filter(call => {
-
       const matchesSearch = !searchQuery ||
         call.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         call.production?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -321,6 +333,12 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
 
       if (!matchesSearch) return false;
 
+      // Category Horizontal Tabs Filter
+      if (selectedCategoryTab !== 'All') {
+        const catStr = (call.category || call.type || '').toLowerCase();
+        if (!catStr.includes(selectedCategoryTab.toLowerCase())) return false;
+      }
+
       // Location Filter
       if (selectedLocation !== 'All') {
         const locLower = (call.location || '').toLowerCase();
@@ -329,7 +347,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
 
       // Pay Status Filter
       if (selectedPayStatus !== 'All') {
-        const budgetStr = (call.budget || '').toLowerCase();
+        const budgetStr = (call.budget || call.salary || '').toLowerCase();
         if (selectedPayStatus === 'Paid') {
           if (budgetStr.includes('unpaid') || budgetStr.includes('volunteer')) return false;
         } else if (selectedPayStatus === 'Stipend') {
@@ -338,7 +356,6 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
           if (budgetStr && !budgetStr.includes('unpaid') && !budgetStr.includes('volunteer')) return false;
         }
       }
-
 
       if (activeFilter === 'Open') {
         if (!call.deadline) return true;
@@ -411,232 +428,243 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
 
   return (
     <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting" trendingCalls={calls}>
-      <div className="min-h-screen bg-[#0A0A0A] text-white relative font-sans">
-      <SEO
-        title="Casting Calls & Auditions | NepalCasts"
-        description="Find Nepali movie casting calls, short films, models, and dancers auditions."
-      />
+      <div className="min-h-screen bg-[#07090e] text-white relative font-sans pb-12">
+        <SEO
+          title="Casting Calls & Auditions | NepalCasts"
+          description="Find Nepali movie casting calls, short films, models, and dancers auditions."
+        />
 
-      {/* Main Feed: Full width centered on desktop */}
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 w-full">
+        {/* Main Feed Container */}
+        <div className="max-w-4xl mx-auto px-3 sm:px-6 w-full pt-4 space-y-4">
 
-        {/* HEADER */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-4 mb-8">
-          {/* Left Side: Back button & Title */}
-          <div className="flex items-center gap-3.5">
+          {/* PAGE TITLE */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onNavigate('back')}
+                className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
+                aria-label="Back"
+                title="Go Back"
+              >
+                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+              </button>
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
+                CASTING CALLS & AUDITIONS
+              </h1>
+            </div>
+
+            {canPostCall && (
+              <button
+                onClick={() => onNavigate('casting-create')}
+                className="hidden sm:inline-flex items-center gap-1.5 bg-[#0e2a47] hover:bg-[#153e66] border border-cyan-500/30 text-cyan-300 text-xs font-bold uppercase px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm"
+              >
+                <Plus size={14} strokeWidth={3} />
+                Post Call
+              </button>
+            )}
+          </div>
+
+          {/* SEARCH BAR & FILTER TOGGLE */}
+          <div className="relative flex items-center w-full">
+            <Search className="absolute left-4 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search casting calls..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                triggerSearchLoading();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  triggerSearchLoading();
+                }
+              }}
+              className="w-full bg-[#10141f] border border-white/10 focus:border-cyan-400/60 rounded-2xl py-3 pl-11 pr-12 text-sm text-white placeholder-gray-500 outline-none transition-all shadow-inner"
+            />
             <button
-              onClick={() => onNavigate('back')}
-              className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
-              aria-label="Back"
-              title="Go Back"
+              onClick={() => setIsSortOpen(!isSortOpen)}
+              className="absolute right-3.5 p-1.5 text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+              title="Filter options"
+              aria-label="Filter options"
             >
-              <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+              <SlidersHorizontal className="w-4 h-4" strokeWidth={2.2} />
             </button>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase leading-none">
-                {t('casting.title')}
-              </h2>
-            </div>
-          </div>
 
-          {/* Right Side: Search, Filters & Post button */}
-          <div className="flex items-center gap-3 self-end sm:self-center">
-
-            {/* Always Visible Search Box with Clickable Search Icon on Right Side */}
-            <div className="relative flex items-center">
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={t('casting.searchPlaceholder') || 'Search casting calls...'}
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  triggerSearchLoading();
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    triggerSearchLoading();
-                  }
-                }}
-                className="bg-white/5 border border-white/10 focus:border-sky-400/60 rounded-full py-1.5 pl-4 pr-9 text-xs text-white placeholder-gray-500 outline-none w-36 sm:w-52 transition-all duration-300"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  triggerSearchLoading();
-                  if (searchInputRef.current) {
-                    searchInputRef.current.focus();
-                  }
-                }}
-                className="absolute right-2.5 text-gray-400 hover:text-sky-400 transition-colors p-1 cursor-pointer"
-                title="Search projects"
-                aria-label="Search projects"
-              >
-                <Search className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Filter/Sort Dropdown Button (Icon Only) */}
-            <div className="relative">
-              <button
-                onClick={() => setIsSortOpen(!isSortOpen)}
-                className="w-7 h-7 flex items-center justify-center text-sky-400 hover:text-sky-300 transition-colors duration-200 cursor-pointer"
-                aria-label="Filter and Sort options"
-                title="Filter and Sort options"
-              >
-                <SlidersHorizontal className="w-[18px] h-[18px] text-sky-400" strokeWidth={2} />
-              </button>
-
-              <AnimatePresence>
-                {isSortOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-30"
-                      onClick={() => setIsSortOpen(false)}
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-44 bg-[#111116] border border-white/10 rounded-xl shadow-2xl py-2 z-40 text-left"
-                    >
-                      {/* Section 1: Filter */}
-                      <div className="px-4 py-1 text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Filter By</div>
-                      {filterPills.map(pill => {
-                        const isActive = activeFilter === pill.id;
-                        return (
-                          <button
-                            key={pill.id}
-                            onClick={() => {
-                              setActiveFilter(pill.id);
-                              setIsSortOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
-                                ? 'text-sky-400 bg-sky-400/5'
-                                : 'text-gray-400 hover:text-white hover:bg-white/5'
-                              }`}
-                          >
-                            {pill.label}
-                          </button>
-                        );
-                      })}
-
-                      {/* Section 2: Location */}
-                      <div className="h-px bg-white/5 my-2" />
-                      <div className="px-4 py-1 text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Region / Location</div>
-                      <div className="px-2 space-y-1">
-                        <select
-                          value={selectedLocation}
-                          onChange={(e) => setSelectedLocation(e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] text-white font-semibold outline-none cursor-pointer"
-                        >
-                          {LOCATIONS.map((loc) => (
-                            <option key={loc} value={loc} className="bg-[#111116] text-white">
-                              {loc === 'All' ? 'All Regions' : loc}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Section 3: Pay Status */}
-                      <div className="h-px bg-white/5 my-2" />
-                      <div className="px-4 py-1 text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Compensation</div>
-                      <div className="px-2 space-y-1">
-                        <select
-                          value={selectedPayStatus}
-                          onChange={(e) => setSelectedPayStatus(e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] text-white font-semibold outline-none cursor-pointer"
-                        >
-                          {PAY_OPTIONS.map((opt) => (
-                            <option key={opt.id} value={opt.id} className="bg-[#111116] text-white">
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="h-px bg-white/5 my-2" />
-
-                      {/* Section 4: Sort */}
-                      <div className="px-4 py-1 text-[9px] text-gray-500 uppercase tracking-widest font-black mb-1">Sort By</div>
-                      {sortOptions.map(opt => {
-                        const isActive = activeSort === opt.id;
-                        return (
-                          <button
-                            key={opt.id}
-                            onClick={() => {
-                              setActiveSort(opt.id);
-                              setIsSortOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
-                                ? 'text-sky-400 bg-sky-400/5'
-                                : 'text-gray-400 hover:text-white hover:bg-white/5'
-                              }`}
-                          >
-                            {opt.label}
-                          </button>
-                        );
-                      })}
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
-
-
-          </div>
-        </div>
-
-        {/* LISTINGS */}
-        <div className="flex flex-col">
-          {isLoading || isSearching ? (
-            <CastingCallSkeleton count={3} />
-          ) : filteredCalls.length === 0 ? (
-            <div className="min-h-[65vh] flex flex-col items-center justify-center text-center py-12 px-6 border-b border-white/5 w-full">
-              <AlertCircle size={48} className="text-gray-600 mb-4" />
-              <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">No Casting Calls Found</h3>
-              <p className="text-gray-400 text-sm max-w-sm mx-auto mb-8 leading-relaxed">
-                Try adjusting your filters, search term, or check back later for new auditions.
-              </p>
-              {canPostCall && (
-                <button
-                  onClick={() => onNavigate('casting-create')}
-                  className="bg-gradient-to-br from-sky-400 to-sky-600 text-black px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-sky-500/10 hover:brightness-110 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Plus size={16} strokeWidth={3} />
-                  Post a Call
-                </button>
-              )}
-            </div>
-          ) : (
-            <>
-              {filteredCalls.map(call => (
-                <CastingCallItem
-                  key={call.id}
-                  call={call}
-                  isSaved={savedIds.includes(call.id)}
-                  isApplied={appliedCastingIds.includes(call.id)}
-                  onNavigate={onNavigate}
-                  toggleSave={toggleSave}
-                />
-              ))}
-              {hasMore && (
-                <div className="flex justify-center mt-6 py-4">
-                  <button
-                    onClick={() => setVisibleLimit(prev => prev + 20)}
-                    className="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer"
+            {/* Filter Dropdown */}
+            <AnimatePresence>
+              {isSortOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setIsSortOpen(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full right-0 mt-2 w-52 bg-[#0e121d] border border-white/15 rounded-2xl shadow-2xl py-3 z-40 text-left"
                   >
-                    Load More
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                    {/* Status Filter */}
+                    <div className="px-4 py-1 text-[9px] text-gray-400 uppercase tracking-widest font-black mb-1">Status</div>
+                    {filterPills.map(pill => {
+                      const isActive = activeFilter === pill.id;
+                      return (
+                        <button
+                          key={pill.id}
+                          onClick={() => {
+                            setActiveFilter(pill.id);
+                            setIsSortOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
+                              ? 'text-cyan-400 bg-cyan-400/10'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                        >
+                          {pill.label}
+                        </button>
+                      );
+                    })}
 
+                    {/* Region */}
+                    <div className="h-px bg-white/5 my-2" />
+                    <div className="px-4 py-1 text-[9px] text-gray-400 uppercase tracking-widest font-black mb-1">Region</div>
+                    <div className="px-3">
+                      <select
+                        value={selectedLocation}
+                        onChange={(e) => setSelectedLocation(e.target.value)}
+                        className="w-full bg-[#161c2a] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-semibold outline-none cursor-pointer"
+                      >
+                        {LOCATIONS.map((loc) => (
+                          <option key={loc} value={loc} className="bg-[#0e121d] text-white">
+                            {loc === 'All' ? 'All Regions' : loc}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Compensation */}
+                    <div className="h-px bg-white/5 my-2" />
+                    <div className="px-4 py-1 text-[9px] text-gray-400 uppercase tracking-widest font-black mb-1">Compensation</div>
+                    <div className="px-3">
+                      <select
+                        value={selectedPayStatus}
+                        onChange={(e) => setSelectedPayStatus(e.target.value)}
+                        className="w-full bg-[#161c2a] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-semibold outline-none cursor-pointer"
+                      >
+                        {PAY_OPTIONS.map((opt) => (
+                          <option key={opt.id} value={opt.id} className="bg-[#0e121d] text-white">
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Sort By */}
+                    <div className="h-px bg-white/5 my-2" />
+                    <div className="px-4 py-1 text-[9px] text-gray-400 uppercase tracking-widest font-black mb-1">Sort By</div>
+                    {sortOptions.map(opt => {
+                      const isActive = activeSort === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          onClick={() => {
+                            setActiveSort(opt.id);
+                            setIsSortOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
+                              ? 'text-cyan-400 bg-cyan-400/10'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* CATEGORY TABS (HORIZONTAL SCROLL) */}
+          <div className="flex items-center gap-6 overflow-x-auto pb-1 border-b border-white/10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+            {CATEGORY_TABS.map((tab) => {
+              const isActive = selectedCategoryTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setSelectedCategoryTab(tab)}
+                  className={`relative py-1.5 text-xs sm:text-sm whitespace-nowrap transition-colors cursor-pointer ${
+                    isActive
+                      ? 'text-cyan-400 font-extrabold'
+                      : 'text-gray-400 hover:text-white font-medium'
+                  }`}
+                >
+                  <span>{tab}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeCategoryIndicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"
+                      transition={{ duration: 0.2 }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* LISTINGS FEED */}
+          <div className="space-y-3.5 pt-1">
+            {isLoading || isSearching ? (
+              <CastingCallSkeleton count={3} />
+            ) : filteredCalls.length === 0 ? (
+              <div className="min-h-[50vh] flex flex-col items-center justify-center text-center py-12 px-6 bg-[#0b0f19] rounded-2xl border border-white/10 w-full">
+                <AlertCircle size={44} className="text-gray-600 mb-3" />
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-1.5">No Casting Calls Found</h3>
+                <p className="text-gray-400 text-xs sm:text-sm max-w-sm mx-auto mb-6 leading-relaxed">
+                  Try adjusting your category filter, location, or check back later for new auditions.
+                </p>
+                {canPostCall && (
+                  <button
+                    onClick={() => onNavigate('casting-create')}
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 text-black px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md hover:brightness-110 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus size={14} strokeWidth={3} />
+                    Post a Call
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                {filteredCalls.map(call => (
+                  <CastingCallItem
+                    key={call.id}
+                    call={call}
+                    isSaved={savedIds.includes(call.id)}
+                    isApplied={appliedCastingIds.includes(call.id)}
+                    onNavigate={onNavigate}
+                    toggleSave={toggleSave}
+                  />
+                ))}
+                {hasMore && (
+                  <div className="flex justify-center pt-3 pb-6">
+                    <button
+                      onClick={() => setVisibleLimit(prev => prev + 20)}
+                      className="px-6 py-2.5 rounded-full bg-[#0e2a47] hover:bg-[#143e67] border border-cyan-500/30 text-xs font-bold uppercase tracking-wider text-cyan-300 transition-all cursor-pointer shadow-md"
+                    >
+                      Load More
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+        </div>
       </div>
-    </div>
     </Desktop3ColumnLayout>
   );
 }
