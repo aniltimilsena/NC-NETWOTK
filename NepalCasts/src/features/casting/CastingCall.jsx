@@ -90,12 +90,12 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
   return (
     <div
       onClick={() => onNavigate('casting-detail', call.id)}
-      className="bg-black hover:bg-[#0c0c0c] rounded-2xl border border-white/10 hover:border-cyan-500/40 p-4 sm:p-5 transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 shadow-xl group"
+      className="bg-black hover:bg-[#0c0c0c] rounded-2xl border border-white/5 hover:border-white/10 p-4 sm:p-5 transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 shadow-xl group"
     >
       {/* Top Body Row */}
       <div className="flex items-start gap-3.5 sm:gap-5 min-w-0">
         {/* Poster Thumbnail */}
-        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#121212] border border-white/10 flex items-center justify-center shadow-md">
+        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#121212] border border-white/5 flex items-center justify-center shadow-md">
           {bannerImage ? (
             <img
               src={bannerImage}
@@ -145,7 +145,7 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
           </div>
 
           {/* Project Title */}
-          <h3 className="text-base sm:text-lg font-bold text-white leading-tight truncate group-hover:text-cyan-300 transition-colors">
+          <h3 className="text-base sm:text-lg font-bold text-white leading-tight truncate">
             {call.title || 'Untitled Casting Call'}
           </h3>
 
