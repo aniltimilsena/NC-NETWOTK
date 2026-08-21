@@ -9,6 +9,20 @@ import { doc, setDoc, query, collection, where, getDocs, serverTimestamp, docume
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
 import { updateProfileData, uploadProfileMedia } from '../../services';
+import {
+  Pencil,
+  Plus,
+  Ruler,
+  ShoppingBag,
+  Phone,
+  Mail,
+  MapPin,
+  Eye,
+  UserCheck,
+  CreditCard,
+  Briefcase,
+  Play,
+} from 'lucide-react';
 
 interface ProfilePageProps {
   onNavigate: (page: string, param?: any) => void;
@@ -25,7 +39,6 @@ export default function ProfilePage({
   profileId,
   isAdmin,
   showAlert,
-  initialTab,
 }: ProfilePageProps) {
   const {
     profile,
@@ -48,6 +61,11 @@ export default function ProfilePage({
   const [showContactModal, setShowContactModal] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+  const isRealOwn =
+    isOwnProfile ||
+    Boolean(CurrentUser.id && (profile?.uid === CurrentUser.id || (profile as any)?.id === CurrentUser.id));
 
   const handleFollowModalClose = () => {
     setShowFollowModal(null);
@@ -254,10 +272,10 @@ export default function ProfilePage({
   if (loading || resolvingUid) {
     return (
       <div className="min-h-screen bg-[#06080C] pb-6 text-left animate-pulse flex flex-col items-center justify-center p-6">
-        <div className="w-28 h-28 rounded-full border-2 border-white/10 skeleton mb-4" />
+        <div className="w-24 h-24 rounded-full border-2 border-white/10 skeleton mb-4" />
         <div className="h-6 w-48 skeleton rounded-lg mb-2" />
         <div className="h-4 w-32 skeleton rounded-md mb-4" />
-        <div className="h-24 w-full max-w-lg skeleton rounded-2xl" />
+        <div className="h-24 w-full max-w-md skeleton rounded-2xl" />
       </div>
     );
   }
@@ -276,8 +294,26 @@ export default function ProfilePage({
     );
   }
 
-  const contactEmail = profile?.email || (profile as any)?.contactEmail || null;
-  const contactPhone = profile?.phone || (profile as any)?.phoneNumber || null;
+  const bio = profile.bio || '';
+  const height = profile.height || (profile as any)?.heightInCm ? `${(profile as any).heightInCm} cm` : null;
+  const weight = profile.weight || (profile as any)?.weightInKg ? `${(profile as any).weightInKg} kg` : null;
+  const contactPhone = profile.phone || (profile as any)?.phoneNumber || null;
+  const contactEmail = profile.email || (profile as any)?.contactEmail || null;
+  const locationName = (profile.location || (profile as any)?.city || (profile as any)?.district || 'Kathmandu, Nepal').trim();
+
+  const rawSkills: any = profile.skills;
+  const skillsList: string[] = Array.isArray(rawSkills)
+    ? rawSkills.map((s) => (typeof s === 'string' ? s : s?.name || '')).filter(Boolean)
+    : typeof rawSkills === 'string' && rawSkills.trim() !== ''
+    ? rawSkills.split(',').map((s: string) => s.trim()).filter(Boolean)
+    : [];
+
+  const rawMedia: unknown = profile?.media;
+  const mediaList: string[] = Array.isArray(rawMedia)
+    ? rawMedia.map(String).filter((s) => s && s.trim() !== '')
+    : [];
+
+  const experiencesList = Array.isArray(profile?.experience) ? profile.experience : [];
 
   return (
     <div className="min-h-screen bg-[#06080C] pb-16 text-white font-sans">
@@ -288,12 +324,12 @@ export default function ProfilePage({
         noindex={(profile as any).isPrivate === true}
       />
 
-      {/* Unified Profile Page Container */}
-      <div className="max-w-2xl mx-auto px-4 sm:px-6">
-        {/* 1. Header (Centered Avatar, Name, Role, Pills & Actions) */}
+      {/* Unified Profile Container */}
+      <div className="max-w-md mx-auto px-4 sm:px-5 space-y-5">
+        {/* 1. Header (Centered Avatar, 3 Meta Pills, Followers Count Box) */}
         <ProfileHeader
           profile={profile}
-          isOwnProfile={isOwnProfile}
+          isOwnProfile={isRealOwn}
           isFollowing={isFollowing}
           followerCount={followerCount}
           followingCount={followingCount}
@@ -304,99 +340,272 @@ export default function ProfilePage({
           onFollowClick={handleFollowModalOpen}
         />
 
-        {/* 2. Main Profile Sections (About, Media, Experience) */}
-        <div className="space-y-6 mt-4">
-          {/* About Section */}
-          <section className="text-left space-y-2">
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
+        {/* 2. About Section */}
+        <section className="text-left space-y-2 pt-1">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
               About
-            </h2>
-            {profile.bio ? (
-              <p className="text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-line">
-                {profile.bio}
-              </p>
-            ) : (
-              <p className="text-xs text-gray-500 italic">
-                {isOwnProfile
-                  ? 'Add a bio in Edit Profile to introduce yourself to casting directors.'
-                  : 'No bio provided yet.'}
-              </p>
+            </h3>
+            {isRealOwn && (
+              <button
+                onClick={() => onNavigate('/settings/profile')}
+                className="text-[#0088CC] hover:text-[#38c9ff] transition-colors p-1 cursor-pointer"
+                title="Edit About"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
             )}
-          </section>
+          </div>
 
-          {/* Media Section */}
-          <section className="text-left">
-            <ProfileMedia
-              profile={profile}
-              isOwnProfile={isOwnProfile}
-              onUploadMedia={handleUploadMedia}
-              onDeleteMedia={handleDeleteMedia}
-              onUploadIntroVideo={handleUploadIntroVideo}
-              onDeleteIntroVideo={handleDeleteIntroVideo}
-            />
-          </section>
-
-          {/* Experience Section */}
-          <section className="text-left">
-            <ProfileExperience
-              profile={profile}
-              isOwnProfile={isOwnProfile}
-              showAlert={showAlert}
-            />
-          </section>
-
-          {/* 3. Bottom Action Section (Contact & Message) */}
-          <section className="pt-2">
-            {!isOwnProfile ? (
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    if (contactPhone || contactEmail) {
-                      setShowContactModal(true);
-                    } else {
-                      showAlert('Contact Direct', 'info', `${profile.name || 'Talent'} has not shared direct phone/email. Please send a message!`);
-                      onNavigate('messages', profile.uid || (profile as any).id);
-                    }
-                  }}
-                  className="flex-1 py-3 px-6 rounded-2xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-lg shadow-[#0088CC]/30"
-                >
-                  Contact
-                </button>
-                <button
-                  onClick={() => onNavigate('messages', profile.uid || (profile as any).id)}
-                  className="flex-1 py-3 px-6 rounded-2xl bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-md"
-                >
-                  Message
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => onNavigate('/settings/profile')}
-                  className="flex-1 py-3 px-6 rounded-2xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-lg shadow-[#0088CC]/30"
-                >
-                  Edit Profile
-                </button>
-                <button
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({
-                        title: profile.name || 'Talent',
-                        url: window.location.href,
-                      }).catch(() => {});
-                    } else {
-                      navigator.clipboard.writeText(window.location.href);
-                      showAlert('Link Copied', 'info', 'Profile link copied to clipboard.');
-                    }
-                  }}
-                  className="flex-1 py-3 px-6 rounded-2xl bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-md"
-                >
-                  Share Profile
-                </button>
-              </div>
+          <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-line">
+            {bio ? bio : (
+              <span className="text-gray-500 italic">Add a short bio about yourself...</span>
             )}
-          </section>
-        </div>
+          </p>
+
+          {/* Attributes Box */}
+          <div className="bg-[#0D121D] border border-[#172033] rounded-2xl p-3 divide-y divide-[#172033] shadow-sm mt-2">
+            {/* Height Row */}
+            <div className="py-2.5 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2.5 text-gray-300">
+                <span className="font-mono font-bold text-[#0088CC]">II</span>
+                <span className="font-semibold text-white">Height</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={height ? 'text-gray-300 font-medium' : 'text-gray-500'}>
+                  {height ? height : 'Not added'}
+                </span>
+                {isRealOwn && (
+                  <button
+                    onClick={() => onNavigate('/settings/profile')}
+                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
+                  >
+                    {height ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Weight Row */}
+            <div className="py-2.5 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2.5 text-gray-300">
+                <ShoppingBag className="w-3.5 h-3.5 text-[#0088CC]" />
+                <span className="font-semibold text-white">Weight</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={weight ? 'text-gray-300 font-medium' : 'text-gray-500'}>
+                  {weight ? weight : 'Not added'}
+                </span>
+                {isRealOwn && (
+                  <button
+                    onClick={() => onNavigate('/settings/profile')}
+                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
+                  >
+                    {weight ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Contacts Row */}
+            <div className="py-2.5 flex items-start justify-between text-xs">
+              <div className="flex items-center gap-2.5 text-gray-300 pt-0.5">
+                <Phone className="w-3.5 h-3.5 text-[#0088CC]" />
+                <span className="font-semibold text-white">Contacts</span>
+              </div>
+              <div className="flex items-start gap-2 text-right">
+                {contactPhone || contactEmail ? (
+                  <div className="space-y-0.5 text-gray-300 font-medium text-[11px]">
+                    {contactPhone && (
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Phone className="w-2.5 h-2.5 text-gray-500" />
+                        <span>{contactPhone}</span>
+                      </div>
+                    )}
+                    {contactEmail && (
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Mail className="w-2.5 h-2.5 text-gray-500" />
+                        <span>{contactEmail}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-gray-500">Not added</span>
+                )}
+                {isRealOwn && (
+                  <button
+                    onClick={() => onNavigate('/settings/profile')}
+                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer pt-0.5"
+                  >
+                    {contactPhone || contactEmail ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Media Section */}
+        <section className="text-left space-y-1.5 pt-1">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
+              Media
+            </h3>
+            {mediaList.length > 0 && (
+              <button
+                onClick={() => {
+                  const elem = document.getElementById('portfolio-upload');
+                  if (isRealOwn && elem) elem.click();
+                }}
+                className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
+              >
+                See all
+              </button>
+            )}
+          </div>
+
+          <ProfileMedia
+            profile={profile}
+            isOwnProfile={isRealOwn}
+            onUploadMedia={handleUploadMedia}
+            onDeleteMedia={handleDeleteMedia}
+            onUploadIntroVideo={handleUploadIntroVideo}
+            onDeleteIntroVideo={handleDeleteIntroVideo}
+          />
+        </section>
+
+        {/* 4. Experience Section */}
+        <section className="text-left space-y-1.5 pt-1">
+          <ProfileExperience
+            profile={profile}
+            isOwnProfile={isRealOwn}
+            showAlert={showAlert}
+          />
+        </section>
+
+        {/* 5. Skills Section */}
+        <section className="text-left space-y-2 pt-1">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
+              Skills
+            </h3>
+            {isRealOwn && (
+              <button
+                onClick={() => onNavigate('/settings/profile')}
+                className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer"
+              >
+                {skillsList.length > 0 ? 'Edit' : '+ Add Skills'}
+              </button>
+            )}
+          </div>
+
+          {skillsList.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {skillsList.map((skill, index) => (
+                <span
+                  key={index}
+                  className="bg-[#0088CC] text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div
+              onClick={() => isRealOwn && onNavigate('/settings/profile')}
+              className="border border-dashed border-[#172033] bg-[#0D121D] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#0088CC]/50 transition-colors group"
+            >
+              <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#0088CC] mb-1" />
+              <span className="text-xs font-semibold text-gray-400 group-hover:text-white">
+                Add Skills
+              </span>
+              <p className="text-[10px] text-gray-500 mt-0.5">Add skills you are good at...</p>
+            </div>
+          )}
+        </section>
+
+        {/* 6. Location Section */}
+        <section className="text-left space-y-2 pt-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-[#0088CC]" />
+              <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
+                Location
+              </h3>
+              <span className="text-xs text-gray-400 ml-1 truncate max-w-[180px]">
+                {locationName}
+              </span>
+            </div>
+            {isRealOwn && (
+              <button
+                onClick={() => onNavigate('/settings/profile')}
+                className="text-[#0088CC] hover:text-[#38c9ff] p-1 cursor-pointer"
+                title="Edit Location"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Stylized Map Card */}
+          <div className="relative w-full h-24 sm:h-28 rounded-2xl overflow-hidden border border-[#172033] bg-[#0D121D] shadow-sm">
+            {/* Map vector grid background */}
+            <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#1E293B_1px,transparent_1px)] [background-size:12px_12px]" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex items-center gap-2 bg-[#06080C]/90 border border-[#0088CC]/40 px-3.5 py-1.5 rounded-xl shadow-lg">
+                <MapPin className="w-4 h-4 text-[#0088CC] fill-[#0088CC]/20 animate-bounce" />
+                <span className="text-xs font-bold text-white">{locationName}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 7. Bottom Action Bar */}
+        <section className="pt-3">
+          {isRealOwn && !isPreviewMode ? (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onNavigate('/settings/profile')}
+                className="flex-1 py-3 px-5 rounded-2xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/30"
+              >
+                <Pencil className="w-4 h-4" />
+                <span>Update Profile</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsPreviewMode(true);
+                  showAlert('Preview Mode', 'info', 'Viewing your profile as seen by casting directors.');
+                }}
+                className="flex-1 py-3 px-5 rounded-2xl bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Preview Profile</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  if (contactPhone || contactEmail) {
+                    setShowContactModal(true);
+                  } else {
+                    showAlert('Contact Direct', 'info', `${profile.name || 'Talent'} has not shared direct phone/email. Please send a message!`);
+                    onNavigate('messages', profile.uid || (profile as any).id);
+                  }
+                }}
+                className="flex-1 py-3.5 px-6 rounded-2xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-lg shadow-[#0088CC]/30"
+              >
+                Contact
+              </button>
+              <button
+                onClick={() => onNavigate('messages', profile.uid || (profile as any).id)}
+                className="flex-1 py-3.5 px-6 rounded-2xl bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-md"
+              >
+                Message
+              </button>
+            </div>
+          )}
+        </section>
       </div>
 
       {/* Contact Info Modal */}

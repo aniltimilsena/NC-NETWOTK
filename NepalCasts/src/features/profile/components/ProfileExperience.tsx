@@ -193,10 +193,15 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert }: 
           ))}
         </div>
       ) : !showAddForm ? (
-        <div className="bg-[#111622] border border-dashed border-[#1E2638] rounded-xl p-6 text-center">
-          <p className="text-xs text-gray-400">
-            {isOwnProfile ? 'No experience added yet. Click "+ Add Experience" above.' : 'This talent has not listed experience credits yet.'}
-          </p>
+        <div
+          onClick={() => isOwnProfile && setShowAddForm(true)}
+          className="border border-dashed border-[#172033] bg-[#0D121D] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#0088CC]/50 transition-colors group"
+        >
+          <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#0088CC] mb-1" />
+          <span className="text-xs font-semibold text-gray-400 group-hover:text-white">
+            Add Experience
+          </span>
+          <p className="text-[10px] text-gray-500 mt-0.5">Share your work experience...</p>
         </div>
       ) : null}
     </div>
