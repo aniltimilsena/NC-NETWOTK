@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Film, Image as ImageIcon, Video, Trash2, Plus, Upload, Play, Loader2, X, ChevronLeft, ChevronRight, Download, Share2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Image as ImageIcon, Trash2, Plus, Upload, Play, Loader2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
-import { saveImageDirectly } from '../../../utils/media';
 import type { UserProfile } from '../../../types';
 
 interface ProfileMediaProps {
@@ -12,7 +10,6 @@ interface ProfileMediaProps {
   onDeleteMedia?: (src: string) => Promise<void> | void;
   onUploadIntroVideo?: (file: File) => Promise<void> | void;
   onDeleteIntroVideo?: () => Promise<void> | void;
-  onSelectImage?: (url: string) => void;
 }
 
 export default function ProfileMedia({
@@ -22,61 +19,66 @@ export default function ProfileMedia({
   onDeleteMedia,
   onUploadIntroVideo,
   onDeleteIntroVideo,
-  onSelectImage,
 }: ProfileMediaProps) {
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
-  const [deletePhotoTarget, setDeletePhotoTarget] = useState<string | null>(null);
-  const [activeActionPhoto, setActiveActionPhoto] = useState<string | null>(null);
+  const [deletePhotoTarget, setDeletePhotoTarget] = useState<{ index: number; url: string } | null>(null);
   const [deleteVideoConfirmOpen, setDeleteVideoConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
-  const introVideo = profile.introVideo || profile.introVideoUrl || profile.showreel || profile.showreelUrl || null;
-  const media = Array.isArray(profile.media) ? profile.media : [];
+  const rawMedia: unknown = profile?.media;
+  const media: string[] = Array.isArray(rawMedia)
+    ? rawMedia.map(String).filter((s) => s && s.trim() !== '')
+    : [];
 
-  const handleMediaChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0 && onUploadMedia) {
-      setIsUploadingPhotos(true);
-      try {
-        await onUploadMedia(e.target.files);
-      } finally {
-        setIsUploadingPhotos(false);
-      }
-    }
-    e.target.value = '';
-  };
+  const introVideo = profile?.introVideo || null;
 
   const handleIntroChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && onUploadIntroVideo) {
-      setIsUploadingVideo(true);
-      try {
-        await onUploadIntroVideo(file);
-      } finally {
-        setIsUploadingVideo(false);
-      }
+    if (!file || !onUploadIntroVideo) return;
+    setIsUploadingVideo(true);
+    try {
+      await onUploadIntroVideo(file);
+    } finally {
+      setIsUploadingVideo(false);
+      e.target.value = '';
     }
-    e.target.value = '';
   };
 
-  const openLightbox = (index: number, url: string) => {
+  const handleMediaChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !onUploadMedia) return;
+    setIsUploadingPhotos(true);
+    try {
+      await onUploadMedia(files);
+    } finally {
+      setIsUploadingPhotos(false);
+      e.target.value = '';
+    }
+  };
+
+  const openLightbox = (index: number) => {
     setLightboxIndex(index);
-    onSelectImage?.(url);
   };
 
   const closeLightbox = () => {
     setLightboxIndex(null);
   };
 
-  const prevPhoto = () => {
-    if (lightboxIndex === null || media.length === 0) return;
-    setLightboxIndex((lightboxIndex - 1 + media.length) % media.length);
+  const nextPhoto = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (lightboxIndex !== null && media.length > 0) {
+      setLightboxIndex((lightboxIndex + 1) % media.length);
+    }
   };
 
-  const nextPhoto = () => {
-    if (lightboxIndex === null || media.length === 0) return;
-    setLightboxIndex((lightboxIndex + 1) % media.length);
+  const prevPhoto = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (lightboxIndex !== null && media.length > 0) {
+      setLightboxIndex((lightboxIndex - 1 + media.length) % media.length);
+    }
   };
 
   useEffect(() => {
@@ -91,7 +93,7 @@ export default function ProfileMedia({
   }, [lightboxIndex, media.length]);
 
   return (
-    <div className="w-full py-0 px-0 space-y-2.5 font-sans text-left">
+    <div className="w-full space-y-2 text-left font-sans">
       {isOwnProfile && (
         <>
           <input
@@ -112,135 +114,131 @@ export default function ProfileMedia({
         </>
       )}
 
-      {/* 1. Intro Video Section */}
-      <section className="bg-[#121215] rounded-2xl border border-white/10 p-3.5 sm:p-4 flex flex-col gap-2.5 shadow-xl">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs sm:text-sm font-bold text-white tracking-wider uppercase font-mono">
-            INTRO VIDEO
-          </h2>
-          {isOwnProfile && introVideo && (
+      {/* Media Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
+          Media
+        </h2>
+
+        {isOwnProfile && (
+          <div className="flex items-center gap-2">
             <button
               onClick={() => document.getElementById('intro-video-upload')?.click()}
               disabled={isUploadingVideo}
-              className="text-xs font-mono font-bold py-1.5 px-4 rounded-xl bg-[#0088CC] text-white hover:bg-[#0077B3] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 uppercase tracking-wider shadow-md"
+              className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer flex items-center gap-1"
             >
               {isUploadingVideo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-              <span>Replace</span>
+              <span>{introVideo ? 'Replace Video' : '+ Video'}</span>
             </button>
-          )}
-        </div>
 
-        {introVideo ? (
-          <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 bg-black w-full shadow-2xl group">
-            <video
-              key={introVideo}
-              src={introVideo}
-              controls
-              playsInline
-              preload="auto"
-              className="w-full h-full object-contain bg-black"
-            />
-            {isOwnProfile && onDeleteIntroVideo && (
-              <button
-                onClick={() => setDeleteVideoConfirmOpen(true)}
-                className="absolute top-4 right-4 bg-black/80 hover:bg-red-600 p-2.5 rounded-full border border-white/20 transition-all text-white hover:scale-110 shadow-lg cursor-pointer z-10"
-                title="Remove Video"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="bg-[#18181D] border border-dashed border-white/10 rounded-2xl p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-2">
-            <div className="w-12 h-12 rounded-full border-2 border-white/30 flex items-center justify-center mb-1 text-white bg-white/5">
-              {isUploadingVideo ? (
-                <Loader2 className="w-6 h-6 animate-spin text-[#0088CC]" />
-              ) : (
-                <Play className="w-6 h-6 ml-0.5 text-white" />
-              )}
-            </div>
-            <p className="text-sm font-semibold text-white">
-              {isUploadingVideo ? 'Uploading intro video...' : isOwnProfile ? 'No intro video uploaded yet' : 'No intro video available'}
-            </p>
-            <p className="text-xs text-gray-400 max-w-sm">
-              {isOwnProfile ? 'Click to upload your intro video (MP4, MOV, WEBM)' : 'This talent has not uploaded an intro video yet.'}
-            </p>
-            {isOwnProfile && (
-              <button
-                type="button"
-                onClick={() => !isUploadingVideo && document.getElementById('intro-video-upload')?.click()}
-                disabled={isUploadingVideo}
-                className="mt-3 bg-[#0088CC] hover:bg-[#0077B3] text-white font-mono font-bold text-xs px-6 py-2.5 rounded-xl uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-lg shadow-[#0088CC]/30"
-              >
-                <Upload className="w-4 h-4" />
-                <span>UPLOAD VIDEO</span>
-              </button>
-            )}
-          </div>
-        )}
-      </section>
+            <span className="text-gray-600">•</span>
 
-      {/* 2. Portfolio Photos Section */}
-      <section className="bg-[#121215] rounded-2xl border border-white/10 p-3.5 sm:p-4 flex flex-col gap-2.5 shadow-xl">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs sm:text-sm font-bold text-white tracking-wider uppercase font-mono">
-            PORTFOLIO PHOTOS
-          </h2>
-          {isOwnProfile && media.length > 0 && (
             <button
               onClick={() => document.getElementById('portfolio-upload')?.click()}
               disabled={isUploadingPhotos}
-              className="text-xs font-mono font-bold py-1.5 px-4 rounded-xl bg-[#0088CC] text-white hover:bg-[#0077B3] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 uppercase tracking-wider shadow-md"
+              className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer flex items-center gap-1"
             >
               {isUploadingPhotos ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-              <span>Add Photos</span>
+              <span>+ Photos</span>
             </button>
-          )}
-        </div>
-
-        {media.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
-            {media.map((url, index) => (
-              <GalleryImage
-                key={url}
-                url={url}
-                index={index}
-                onSelectImage={() => openLightbox(index, url)}
-                isOwnProfile={isOwnProfile}
-                onDeletePhotoClick={(target) => setDeletePhotoTarget(target)}
-                onLongPressPhoto={(target) => setActiveActionPhoto(target)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-[#18181D] border border-dashed border-white/10 rounded-2xl p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-2">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-1 text-white bg-white/5 border border-white/10">
-              {isUploadingPhotos ? (
-                <Loader2 className="w-6 h-6 animate-spin text-[#0088CC]" />
-              ) : (
-                <ImageIcon className="w-8 h-8 text-white" />
-              )}
-            </div>
-            <p className="text-sm font-semibold text-white">
-              {isUploadingPhotos ? 'Uploading photos...' : isOwnProfile ? 'No portfolio photos yet' : 'No portfolio photos available'}
-            </p>
-            <p className="text-xs text-gray-400 max-w-sm">
-              {isOwnProfile ? 'Click to add photos to your lookbook gallery (JPG, PNG, WEBP)' : 'This talent has not added portfolio photos yet.'}
-            </p>
-            {isOwnProfile && (
-              <button
-                type="button"
-                onClick={() => !isUploadingPhotos && document.getElementById('portfolio-upload')?.click()}
-                disabled={isUploadingPhotos}
-                className="mt-3 bg-[#0088CC] hover:bg-[#0077B3] text-white font-mono font-bold text-xs px-6 py-2.5 rounded-xl uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-lg shadow-[#0088CC]/30"
-              >
-                <Plus className="w-4 h-4" />
-                <span>ADD PHOTOS</span>
-              </button>
-            )}
           </div>
         )}
-      </section>
+      </div>
+
+      {/* Horizontal Scrollable Reel */}
+      {(introVideo || media.length > 0) ? (
+        <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-none">
+          {/* 1. Intro Video Card (First in Reel with Play Overlay) */}
+          {introVideo && (
+            <div
+              onClick={() => setShowVideoModal(true)}
+              className="relative shrink-0 w-28 sm:w-32 aspect-[3/4] rounded-xl overflow-hidden border border-[#1E2638] bg-black group cursor-pointer shadow-md"
+            >
+              <video
+                key={introVideo}
+                src={introVideo}
+                className="w-full h-full object-cover"
+                preload="metadata"
+              />
+              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-black/60 border border-white/30 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                  <Play className="w-4 h-4 ml-0.5 fill-white" />
+                </div>
+              </div>
+
+              {isOwnProfile && onDeleteIntroVideo && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteVideoConfirmOpen(true);
+                  }}
+                  className="absolute top-2 right-2 bg-black/80 hover:bg-red-600 p-1.5 rounded-full border border-white/20 transition-all text-white hover:scale-110 shadow-lg cursor-pointer z-10 opacity-0 group-hover:opacity-100"
+                  title="Remove Video"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* 2. Portfolio Photos */}
+          {media.map((url, index) => (
+            <div
+              key={url}
+              onClick={() => openLightbox(index)}
+              className="relative shrink-0 w-28 sm:w-32 aspect-[3/4] rounded-xl overflow-hidden border border-[#1E2638] bg-[#111622] group cursor-pointer shadow-md"
+            >
+              <img
+                src={url}
+                alt={`Portfolio ${index + 1}`}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              {isOwnProfile && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeletePhotoTarget({ index, url });
+                  }}
+                  className="absolute top-2 right-2 bg-black/80 hover:bg-red-600 p-1.5 rounded-full border border-white/20 transition-all text-white hover:scale-110 shadow-lg cursor-pointer z-10 opacity-0 group-hover:opacity-100"
+                  title="Remove Photo"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-[#111622] border border-dashed border-[#1E2638] rounded-xl p-6 text-center">
+          <p className="text-xs text-gray-400">
+            {isOwnProfile ? 'No media uploaded yet. Click "+ Video" or "+ Photos" above.' : 'This talent has not added portfolio photos or videos yet.'}
+          </p>
+        </div>
+      )}
+
+      {/* Intro Video Fullscreen Player Modal */}
+      {showVideoModal && introVideo && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setShowVideoModal(false)}
+        >
+          <div className="relative max-w-3xl w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <video
+              src={introVideo}
+              controls
+              autoPlay
+              playsInline
+              className="w-full h-full object-contain"
+            />
+            <button
+              onClick={() => setShowVideoModal(false)}
+              className="absolute top-3 right-3 bg-black/70 hover:bg-black p-2 rounded-full text-white cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Full Screen Lightbox Modal */}
       {lightboxIndex !== null && media[lightboxIndex] && (
@@ -248,162 +246,45 @@ export default function ProfileMedia({
           className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200"
           onClick={closeLightbox}
         >
-          {/* Close Button */}
           <button
             onClick={closeLightbox}
-            className="absolute top-5 right-5 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer"
-            title="Close (Esc)"
+            className="absolute top-4 right-4 z-20 text-white/70 hover:text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
 
-          {/* Previous Arrow */}
           {media.length > 1 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                prevPhoto();
-              }}
-              className="absolute left-4 sm:left-8 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer"
-              title="Previous Photo"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
+            <>
+              <button
+                onClick={prevPhoto}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 text-white/70 hover:text-white p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all cursor-pointer"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                onClick={nextPhoto}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 text-white/70 hover:text-white p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all cursor-pointer"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
           )}
 
-          {/* Full Screen Image */}
-          <div
-            className="relative max-w-5xl max-h-[85vh] flex items-center justify-center"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="relative max-w-4xl max-h-[85vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
             <img
               src={media[lightboxIndex]}
-              alt={`Full Screen Portfolio ${lightboxIndex + 1}`}
-              className="max-h-[85vh] max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
+              alt={`Gallery Full ${lightboxIndex + 1}`}
+              className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
             />
           </div>
-
-          {/* Next Arrow */}
-          {media.length > 1 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                nextPhoto();
-              }}
-              className="absolute right-4 sm:right-8 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer"
-              title="Next Photo"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          )}
-
-          {/* Photo Counter */}
-          {media.length > 1 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-xs font-bold text-gray-400 bg-white/10 px-4 py-1.5 rounded-full border border-white/10">
-              {lightboxIndex + 1} / {media.length}
-            </div>
-          )}
         </div>
       )}
 
-      {/* Photo Actions Modal (1-second long press) */}
-      <AnimatePresence>
-        {activeActionPhoto && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setActiveActionPhoto(null)}
-            className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 15 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 15 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="bg-[#121216] border border-white/10 rounded-2xl w-full max-w-xs overflow-hidden shadow-2xl p-4 sm:p-5 space-y-3 text-left"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="text-left pb-2 border-b border-white/10 flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-white tracking-tight">Photo Options</h4>
-                  <p className="text-[11px] text-gray-400 font-medium">Choose an action for this photo</p>
-                </div>
-                <button
-                  onClick={() => setActiveActionPhoto(null)}
-                  className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-2 pt-1">
-                {/* Save Image */}
-                <button
-                  onClick={() => {
-                    const target = activeActionPhoto;
-                    setActiveActionPhoto(null);
-                    saveImageDirectly(target, 'nepalcasts-portfolio-photo.jpg');
-                  }}
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-gray-200 hover:text-white font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
-                >
-                  <Download className="w-4 h-4 text-gray-300" />
-                  <span>Save Image</span>
-                </button>
-
-                {/* Share Photo */}
-                <button
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({
-                        title: 'NepalCasts Portfolio Photo',
-                        url: activeActionPhoto,
-                      }).catch(() => {});
-                    } else {
-                      navigator.clipboard.writeText(activeActionPhoto);
-                    }
-                    setActiveActionPhoto(null);
-                  }}
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-gray-200 hover:text-white font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
-                >
-                  <Share2 className="w-4 h-4 text-gray-300" />
-                  <span>Share Photo</span>
-                </button>
-
-                {/* Delete Photo */}
-                {isOwnProfile && (
-                  <button
-                    onClick={() => {
-                      const target = activeActionPhoto;
-                      setActiveActionPhoto(null);
-                      setDeletePhotoTarget(target);
-                    }}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-400" />
-                    <span>Delete Photo</span>
-                  </button>
-                )}
-              </div>
-
-              <div className="pt-1">
-                <button
-                  onClick={() => setActiveActionPhoto(null)}
-                  className="w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 text-center text-xs font-bold text-gray-400 hover:text-white transition-all cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Delete Photo Confirmation */}
       <ConfirmDialog
-        isOpen={Boolean(deletePhotoTarget)}
-        title="Delete Portfolio Photo?"
-        description="Are you sure you want to remove this photo from your portfolio gallery? This action cannot be undone."
+        isOpen={!!deletePhotoTarget}
+        title="Delete Photo?"
+        description="Are you sure you want to remove this photo from your lookbook?"
         confirmText="Remove Photo"
         cancelText="Cancel"
         type="danger"
@@ -413,7 +294,7 @@ export default function ProfileMedia({
           if (deletePhotoTarget && onDeleteMedia) {
             setIsDeleting(true);
             try {
-              await onDeleteMedia(deletePhotoTarget);
+              await onDeleteMedia(deletePhotoTarget.url);
             } finally {
               setIsDeleting(false);
               setDeletePhotoTarget(null);
@@ -443,67 +324,6 @@ export default function ProfileMedia({
             }
           }
         }}
-      />
-    </div>
-  );
-}
-
-interface GalleryImageProps {
-  url: string;
-  index: number;
-  onSelectImage?: (url: string) => void;
-  isOwnProfile: boolean;
-  onDeletePhotoClick: (url: string) => void;
-  onLongPressPhoto: (url: string) => void;
-}
-
-function GalleryImage({ url, index, onSelectImage, isOwnProfile, onDeletePhotoClick, onLongPressPhoto }: GalleryImageProps) {
-  const [loaded, setLoaded] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isLongPressRef = useRef(false);
-
-  const startPress = () => {
-    isLongPressRef.current = false;
-    timerRef.current = setTimeout(() => {
-      isLongPressRef.current = true;
-      if (window.navigator && window.navigator.vibrate) {
-        window.navigator.vibrate(60);
-      }
-      onLongPressPhoto(url);
-    }, 1000);
-  };
-
-  const endPress = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  return (
-    <div
-      className="relative aspect-square rounded-xl overflow-hidden border border-white/10 bg-black cursor-pointer shadow-md select-none"
-      onTouchStart={startPress}
-      onTouchEnd={endPress}
-      onTouchMove={endPress}
-      onMouseDown={(e) => {
-        if (e.button !== 0) return;
-        startPress();
-      }}
-      onMouseUp={endPress}
-      onMouseLeave={endPress}
-      onClick={() => {
-        if (isLongPressRef.current) return;
-        onSelectImage?.(url);
-      }}
-    >
-      {!loaded && <div className="absolute inset-0 skeleton" />}
-      <img
-        src={url}
-        alt={`Portfolio ${index + 1}`}
-        onLoad={() => setLoaded(true)}
-        className={`w-full h-full object-cover ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        loading="lazy"
       />
     </div>
   );

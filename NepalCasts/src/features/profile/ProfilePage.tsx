@@ -306,81 +306,81 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         experience: 'Experience',
     };
     return (
-        <div className="min-h-screen bg-[#08080A] pb-10 text-white">
+        <div className="min-h-screen bg-[#06080C] pb-12 text-white">
             <SEO
                 title={`${profile.name || 'Talent'} | NepalCasts Profile`}
                 description={profile.bio || `View ${profile.name || 'this talent'}'s portfolio, auditions, and experience on NepalCasts.`}
                 image={profile.image || undefined}
                 noindex={(profile as any).isPrivate === true}
             />
-            <ProfileHeader profile={profile} isOwnProfile={isOwnProfile} isFollowing={isFollowing} followerCount={followerCount} followingCount={followingCount} savedCount={savedCount} onFollowToggle={handleFollowToggle} onNavigate={onNavigate} showAlert={showAlert} onFollowClick={handleFollowModalOpen} />
+            
+            {/* Unified Profile Page Container */}
+            <div className="max-w-2xl mx-auto px-4 sm:px-6">
+                {/* 1. Header (Centered Avatar, Name, Role, Pills & Actions) */}
+                <ProfileHeader
+                    profile={profile}
+                    isOwnProfile={isOwnProfile}
+                    isFollowing={isFollowing}
+                    followerCount={followerCount}
+                    followingCount={followingCount}
+                    savedCount={savedCount}
+                    onFollowToggle={handleFollowToggle}
+                    onNavigate={onNavigate}
+                    showAlert={showAlert}
+                    onFollowClick={handleFollowModalOpen}
+                />
 
-            {/* Profile Main Content Container (2-Side Full Screen Layout on PC) */}
-            <div className="w-full px-1.5 sm:px-3 lg:px-6 mt-3">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
+                {/* 2. Main Profile Sections (About, Media, Experience) */}
+                <div className="space-y-6 mt-4">
                     
-                    {/* Left Column on PC: Profile Specs Sidebar */}
-                    <div className="hidden lg:block lg:col-span-5 xl:col-span-4.5">
-                        <ProfileSpecsSidebar profile={profile} showContact={showContact} />
-                    </div>
+                    {/* About Section */}
+                    <section className="text-left space-y-2">
+                        <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
+                            About
+                        </h2>
+                        {profile.bio ? (
+                            <p className="text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-line">
+                                {profile.bio}
+                            </p>
+                        ) : (
+                            <p className="text-xs text-gray-500 italic">
+                                {isOwnProfile ? 'Add a bio in Edit Profile to introduce yourself to casting directors.' : 'No bio provided yet.'}
+                            </p>
+                        )}
+                    </section>
 
-                    {/* Right Column on PC (Full Width on Mobile): Tabs + Active Tab Content */}
-                    <div className="col-span-12 lg:col-span-7 xl:col-span-7.5 flex flex-col gap-2.5">
-                        
-                        {/* Clean Professional Tab Navigation */}
-                        <div className="flex border border-white/10 gap-6 sm:gap-8 overflow-x-auto scrollbar-none justify-start px-4 sm:px-5 bg-[#121215] rounded-2xl pt-3 pb-1 shadow-xl backdrop-blur-md">
-                            {tabs.map((tab) => {
-                                const isSelected = activeTab === tab;
-                                return (
-                                    <button
-                                        key={tab}
-                                        onClick={() => {
-                                            setActiveTab(tab);
-                                            const base = isOwnProfile && !profileId ? '/profile' : `/profile/${resolvedUid || profileId}`;
-                                            if (tab === 'about') {
-                                                onNavigate(base);
-                                            } else {
-                                                onNavigate(`${base}/${tab}`);
-                                            }
-                                        }}
-                                        className={`pb-2.5 text-xs sm:text-sm font-bold capitalize tracking-wide transition-all relative whitespace-nowrap cursor-pointer ${
-                                            tab === 'about' ? 'lg:hidden' : ''
-                                        } ${
-                                            isSelected ? 'text-[#0088CC]' : 'text-gray-400 hover:text-white'
-                                        }`}
-                                    >
-                                        {tabLabelMap[tab] || tab}
-                                        {isSelected && (
-                                            <div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0088CC] rounded-full shadow-[0_0_12px_rgba(0,136,204,0.7)]" />
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                    {/* Media Section */}
+                    <section className="text-left">
+                        <ProfileMedia
+                            profile={profile}
+                            isOwnProfile={isOwnProfile}
+                            onUploadMedia={handleUploadMedia}
+                            onDeleteMedia={handleDeleteMedia}
+                            onUploadIntroVideo={handleUploadIntroVideo}
+                            onDeleteIntroVideo={handleDeleteIntroVideo}
+                        />
+                    </section>
 
-                        {/* Active Tab Content */}
-                        <div className="animate-fade-in">
-                            {activeTab === 'about' && (
-                                <div className="lg:hidden">
-                                    <ProfileAbout profile={profile} showContact={showContact} />
-                                </div>
-                            )}
-                            {(activeTab === 'media' || activeTab === 'about') && (
-                                <div className={activeTab === 'about' ? 'hidden lg:block' : ''}>
-                                    <ProfileMedia profile={profile} isOwnProfile={isOwnProfile} onUploadMedia={handleUploadMedia} onDeleteMedia={handleDeleteMedia} onUploadIntroVideo={handleUploadIntroVideo} onDeleteIntroVideo={handleDeleteIntroVideo} />
-                                </div>
-                            )}
-                            {activeTab === 'experience' && (
-                                <ProfileExperience profile={profile} isOwnProfile={isOwnProfile} showAlert={showAlert} />
-                            )}
-                        </div>
-
-                    </div>
+                    {/* Experience Section */}
+                    <section className="text-left">
+                        <ProfileExperience
+                            profile={profile}
+                            isOwnProfile={isOwnProfile}
+                            showAlert={showAlert}
+                        />
+                    </section>
 
                 </div>
             </div>
 
-
-            <FollowModal type={showFollowModal || 'followers'} isOpen={!!showFollowModal} onClose={handleFollowModalClose} list={followList} loading={loadingFollowList} onNavigate={onNavigate} />
-        </div>);
+            <FollowModal
+                type={showFollowModal || 'followers'}
+                isOpen={!!showFollowModal}
+                onClose={handleFollowModalClose}
+                list={followList}
+                loading={loadingFollowList}
+                onNavigate={onNavigate}
+            />
+        </div>
+    );
 }
