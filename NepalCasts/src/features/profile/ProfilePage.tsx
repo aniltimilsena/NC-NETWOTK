@@ -457,6 +457,7 @@ export default function ProfilePage({
             onDeleteMedia={handleDeleteMedia}
             onUploadIntroVideo={handleUploadIntroVideo}
             onDeleteIntroVideo={handleDeleteIntroVideo}
+            onNavigate={onNavigate}
           />
         </section>
 
@@ -466,6 +467,7 @@ export default function ProfilePage({
             profile={profile}
             isOwnProfile={isRealOwn}
             showAlert={showAlert}
+            onNavigate={onNavigate}
           />
         </section>
 
@@ -477,7 +479,7 @@ export default function ProfilePage({
             </h3>
             {isRealOwn && (
               <button
-                onClick={() => onNavigate('/settings/profile')}
+                onClick={() => onNavigate('/settings/skills')}
                 className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer"
               >
                 {skillsList.length > 0 ? 'Edit' : '+ Add Skills'}
@@ -498,7 +500,7 @@ export default function ProfilePage({
             </div>
           ) : (
             <div
-              onClick={() => isRealOwn && onNavigate('/settings/profile')}
+              onClick={() => isRealOwn && onNavigate('/settings/skills')}
               className="border border-dashed border-[#172033] bg-[#0D121D] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#0088CC]/50 transition-colors group"
             >
               <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#0088CC] mb-1" />

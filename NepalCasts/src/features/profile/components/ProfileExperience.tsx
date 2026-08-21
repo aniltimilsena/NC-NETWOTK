@@ -7,9 +7,10 @@ interface ProfileExperienceProps {
   profile: UserProfile;
   isOwnProfile: boolean;
   showAlert?: (message: string, type?: any, detail?: string) => void;
+  onNavigate?: (page: string, param?: any) => void;
 }
 
-export default function ProfileExperience({ profile, isOwnProfile, showAlert }: ProfileExperienceProps) {
+export default function ProfileExperience({ profile, isOwnProfile, showAlert, onNavigate }: ProfileExperienceProps) {
   const experiencesList = Array.isArray(profile.experience) ? profile.experience : [];
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -194,7 +195,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert }: 
         </div>
       ) : !showAddForm ? (
         <div
-          onClick={() => isOwnProfile && setShowAddForm(true)}
+          onClick={() => isOwnProfile && (onNavigate ? onNavigate('/settings/experience') : setShowAddForm(true))}
           className="border border-dashed border-[#172033] bg-[#0D121D] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#0088CC]/50 transition-colors group"
         >
           <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#0088CC] mb-1" />

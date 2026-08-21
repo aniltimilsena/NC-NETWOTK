@@ -10,6 +10,7 @@ interface ProfileMediaProps {
   onDeleteMedia?: (src: string) => Promise<void> | void;
   onUploadIntroVideo?: (file: File) => Promise<void> | void;
   onDeleteIntroVideo?: () => Promise<void> | void;
+  onNavigate?: (page: string, param?: any) => void;
 }
 
 export default function ProfileMedia({
@@ -19,6 +20,7 @@ export default function ProfileMedia({
   onDeleteMedia,
   onUploadIntroVideo,
   onDeleteIntroVideo,
+  onNavigate,
 }: ProfileMediaProps) {
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
@@ -210,7 +212,15 @@ export default function ProfileMedia({
         </div>
       ) : (
         <div
-          onClick={() => isOwnProfile && document.getElementById('portfolio-upload')?.click()}
+          onClick={() => {
+            if (!isOwnProfile) return;
+            const input = document.getElementById('portfolio-upload');
+            if (input) {
+              input.click();
+            } else if (onNavigate) {
+              onNavigate('/settings/profile');
+            }
+          }}
           className="border border-dashed border-[#172033] bg-[#0D121D] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#0088CC]/50 transition-colors group"
         >
           <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#0088CC] mb-1" />
