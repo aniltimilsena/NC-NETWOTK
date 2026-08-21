@@ -160,10 +160,10 @@ export default function ProfileMedia({
               )}
             </div>
             <p className="text-sm font-semibold text-gray-900">
-              {isUploadingVideo ? 'Uploading intro video...' : 'No intro video uploaded yet'}
+              {isUploadingVideo ? 'Uploading intro video...' : isOwnProfile ? 'No intro video uploaded yet' : 'No intro video available'}
             </p>
             <p className="text-xs text-gray-500 max-w-sm">
-              Click to upload your intro video (MP4, MOV, WEBM)
+              {isOwnProfile ? 'Click to upload your intro video (MP4, MOV, WEBM)' : 'This talent has not uploaded an intro video yet.'}
             </p>
             {isOwnProfile && (
               <button
@@ -222,10 +222,10 @@ export default function ProfileMedia({
               )}
             </div>
             <p className="text-sm font-semibold text-gray-900">
-              {isUploadingPhotos ? 'Uploading photos...' : 'No portfolio photos yet'}
+              {isUploadingPhotos ? 'Uploading photos...' : isOwnProfile ? 'No portfolio photos yet' : 'No portfolio photos available'}
             </p>
             <p className="text-xs text-gray-500 max-w-sm">
-              Click to add photos to your lookbook gallery (JPG, PNG, WEBP)
+              {isOwnProfile ? 'Click to add photos to your lookbook gallery (JPG, PNG, WEBP)' : 'This talent has not added portfolio photos yet.'}
             </p>
             {isOwnProfile && (
               <button

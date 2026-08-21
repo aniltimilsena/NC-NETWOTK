@@ -207,10 +207,10 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert }: 
               <Briefcase className="w-6 h-6 text-gray-800" />
             </div>
             <p className="text-sm font-semibold text-gray-900">
-              No experience credits listed yet
+              {isOwnProfile ? 'No experience credits listed yet' : 'No experience credits available'}
             </p>
             <p className="text-xs text-gray-500 max-w-sm">
-              Add your production credits, film roles, and modeling experience
+              {isOwnProfile ? 'Add your production credits, film roles, and modeling experience' : 'This talent has not listed work experience credits yet.'}
             </p>
             {isOwnProfile && (
               <button
