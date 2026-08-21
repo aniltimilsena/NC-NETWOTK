@@ -299,15 +299,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         </div>);
     }
     const showContact = isOwnProfile || isFollowing || profile.showContactInfo === true;
-    const hasMediaContent = Boolean(profile.introVideo || (profile.media && profile.media.length > 0));
-    const hasExperience = Boolean(profile.experience && Array.isArray(profile.experience) && profile.experience.length > 0);
-    const tabs = ['about'];
-    if (isOwnProfile || hasMediaContent) {
-        tabs.push('media');
-    }
-    if (isOwnProfile || hasExperience) {
-        tabs.push('experience');
-    }
+    const tabs = ['about', 'media', 'experience'];
     const tabLabelMap: Record<string, string> = {
         about: 'About',
         media: 'Media',
@@ -369,12 +361,16 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
                         {/* Active Tab Content */}
                         <div className="animate-fade-in">
                             {activeTab === 'about' && (
-                                <ProfileAbout profile={profile} showContact={showContact} />
+                                <div className="lg:hidden">
+                                    <ProfileAbout profile={profile} showContact={showContact} />
+                                </div>
                             )}
-                            {(isOwnProfile || hasMediaContent) && activeTab === 'media' && (
-                                <ProfileMedia profile={profile} isOwnProfile={isOwnProfile} onUploadMedia={handleUploadMedia} onDeleteMedia={handleDeleteMedia} onUploadIntroVideo={handleUploadIntroVideo} onDeleteIntroVideo={handleDeleteIntroVideo} />
+                            {(activeTab === 'media' || activeTab === 'about') && (
+                                <div className={activeTab === 'about' ? 'hidden lg:block' : ''}>
+                                    <ProfileMedia profile={profile} isOwnProfile={isOwnProfile} onUploadMedia={handleUploadMedia} onDeleteMedia={handleDeleteMedia} onUploadIntroVideo={handleUploadIntroVideo} onDeleteIntroVideo={handleDeleteIntroVideo} />
+                                </div>
                             )}
-                            {(isOwnProfile || hasExperience) && activeTab === 'experience' && (
+                            {activeTab === 'experience' && (
                                 <ProfileExperience profile={profile} isOwnProfile={isOwnProfile} showAlert={showAlert} />
                             )}
                         </div>
