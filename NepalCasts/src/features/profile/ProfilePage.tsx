@@ -447,23 +447,6 @@ export default function ProfilePage({
 
         {/* 3. Media Section */}
         <section className="text-left space-y-1.5 pt-1">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
-              Media
-            </h3>
-            {mediaList.length > 0 && (
-              <button
-                onClick={() => {
-                  const elem = document.getElementById('portfolio-upload');
-                  if (isRealOwn && elem) elem.click();
-                }}
-                className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
-              >
-                See all
-              </button>
-            )}
-          </div>
-
           <ProfileMedia
             profile={profile}
             isOwnProfile={isRealOwn}
