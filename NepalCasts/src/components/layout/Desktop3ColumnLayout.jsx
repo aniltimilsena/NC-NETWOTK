@@ -158,7 +158,6 @@ export default function Desktop3ColumnLayout({
 
   const [realFollowers, setRealFollowers] = useState(0);
   const [realFollowing, setRealFollowing] = useState(0);
-  const [realReviews, setRealReviews] = useState(0);
 
   const uid = user?.uid || user?.id;
 
@@ -167,7 +166,6 @@ export default function Desktop3ColumnLayout({
       setProfileData(null);
       setRealFollowers(0);
       setRealFollowing(0);
-      setRealReviews(0);
       return;
     }
 
@@ -206,21 +204,6 @@ export default function Desktop3ColumnLayout({
       setRealFollowing(valid.length);
     }, () => setRealFollowing(0));
 
-    // Real-time Reviews count
-    let unsubReviews = () => { };
-    try {
-      const qReviews = query(collection(db, 'reviews'), or(where('targetUid', '==', uid), where('targetUserId', '==', uid)));
-      unsubReviews = onSnapshot(qReviews, (snap) => {
-        setRealReviews(snap.size);
-      }, () => {
-        const qSingle = query(collection(db, 'reviews'), where('targetUid', '==', uid));
-        unsubReviews = onSnapshot(qSingle, (sSnap) => setRealReviews(sSnap.size), () => { });
-      });
-    } catch {
-      const qSingle = query(collection(db, 'reviews'), where('targetUid', '==', uid));
-      unsubReviews = onSnapshot(qSingle, (sSnap) => setRealReviews(sSnap.size), () => { });
-    }
-
     return () => {
       unsubProfile();
       if (unsubUser) {
@@ -228,7 +211,6 @@ export default function Desktop3ColumnLayout({
       }
       unsubFollowers();
       unsubFollowing();
-      unsubReviews();
     };
   }, [uid, profileData?.uid, profileData?.id, profileData?.username]);
 
@@ -262,7 +244,6 @@ export default function Desktop3ColumnLayout({
   // Real-time stats from Firestore collections
   const followersCount = realFollowers;
   const followingCount = realFollowing;
-  const reviewsCount = realReviews || profileData?.reviewsCount || (Array.isArray(profileData?.reviews) ? profileData.reviews.length : 0) || user?.reviewsCount || 0;
 
   // Profile strength calculation
   const computeProfileStrength = () => {

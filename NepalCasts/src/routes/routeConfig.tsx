@@ -69,6 +69,7 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
     let path = '/' + targetPage;
     if (targetPage === 'home') path = '/';
     if (targetPage === 'profile-create') path = '/profile/create';
+    if (targetPage === 'profile-edit') path = '/settings/profile';
     if (targetPage === 'casting-create') path = '/casting/create';
 
     if (targetPage === 'profile') {

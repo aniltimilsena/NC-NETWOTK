@@ -321,24 +321,13 @@ export default function Avatar(props: AvatarProps) {
         </div>
 
         
-        {editable && !uploading && (<div className="absolute bottom-0 right-0 p-2 bg-black/80 hover:bg-black text-white rounded-full hover:scale-110 active:scale-95 transition-all shadow-xl border border-white/25 backdrop-blur-md z-20 flex items-center justify-center">
-            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-            </svg>
-          </div>)}
-
-        {verified && (<div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#00BFFF] rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg ring-2 ring-nc-dark z-20">
-            ✓
-          </div>)}
-
-        {showStatus && status && status !== 'offline' && !editable && (<div className="absolute bottom-0 right-0 z-20 flex items-center justify-center">
-            <span className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full ring-2 ring-[#0A0A0F] shadow-lg ${status === 'in-call'
-                ? 'bg-[#00BFFF] shadow-[0_0_10px_rgba(0,191,255,0.9)] animate-pulse'
-                : status === 'busy'
-                    ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]'
-                    : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.9)] animate-pulse'}`}/>
-          </div>)}
-      </div>
+          {/* Subtle Hover overlay when editable */}
+          {editable && !uploading && (
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-full z-10">
+              <Camera className="w-6 h-6 text-white drop-shadow-md" />
+            </div>
+          )}
+        </div>
 
       
       {editable && (<input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.gif,.bmp" className="hidden"/>)}

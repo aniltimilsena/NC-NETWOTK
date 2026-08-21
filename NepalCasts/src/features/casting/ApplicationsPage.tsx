@@ -45,16 +45,16 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
       where('userId', '==', currentUser.uid),
       limit(visibleLimit + 1)
     );
- 
+
     const unsub = onSnapshot(q, async (snap) => {
       const docsData = snap.docs.map(d => ({ id: d.id, data: d.data() }));
       const hasMoreData = docsData.length > visibleLimit;
       const slicedDocs = hasMoreData ? docsData.slice(0, visibleLimit) : docsData;
       setHasMore(hasMoreData);
-      
+
       const castingIds = slicedDocs.map(item => item.data.castingId).filter(Boolean);
       const uniqueCastingIds = Array.from(new Set(castingIds));
-      
+
       const missingIds = uniqueCastingIds.filter(id => !castingCacheRef.current.has(id));
       if (missingIds.length > 0) {
         await Promise.all(missingIds.map(async (id) => {
@@ -68,7 +68,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
           }
         }));
       }
-      
+
       const appData = slicedDocs.map((item) => {
         const castingData = castingCacheRef.current.get(item.data.castingId);
         return {
@@ -77,7 +77,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
           castingCall: castingData || null
         };
       });
-      
+
       setApplications(appData);
       setLoading(false);
     });
@@ -189,11 +189,10 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                     setFilter(tab.id);
                     navigate(tab.path);
                   }}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    isActive
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${isActive
                       ? 'bg-[#00BFFF]/10 border border-[#00BFFF]/30 text-[#00BFFF]'
                       : 'bg-white/[0.02] border border-white/5 text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -242,6 +241,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                 };
                 const rawThumb = call?.thumbnail || call?.image || call?.coverImage || call?.posterUrl || call?.poster || call?.bannerUrl || call?.media?.[0]?.url || call?.photoURL || null;
                 const thumbnail = rawThumb && !isMockOrInvalid(rawThumb) ? rawThumb : null;
+                const title = call?.title || app.castingTitle || 'Casting Call';
                 const roleName = app.roleName || app.role || 'Performer Role';
 
                 return (

@@ -91,7 +91,7 @@ export default function ProfileMedia({
   }, [lightboxIndex, media.length]);
 
   return (
-    <div className="space-y-8 w-full text-left">
+    <div className="w-full py-1.5 px-0 space-y-1.5 font-sans text-left">
       {isOwnProfile && (
         <>
           <input
@@ -112,163 +112,135 @@ export default function ProfileMedia({
         </>
       )}
 
-      {/* Main Section Title */}
-      <div className="space-y-2">
-        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-          <Film className="w-4 h-4 text-white" />
-          <span>Media Showcase</span>
-        </h2>
-      </div>
+      {/* 1. Intro Video Section */}
+      <section className="bg-[#FCFBF7] rounded-xl border border-[#EBE7DF] p-3 sm:p-3.5 flex flex-col gap-2 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-gray-900 tracking-wider uppercase font-mono">
+            INTRO VIDEO
+          </h2>
+          {isOwnProfile && introVideo && (
+            <button
+              onClick={() => document.getElementById('intro-video-upload')?.click()}
+              disabled={isUploadingVideo}
+              className="text-xs font-mono font-bold py-1.5 px-4 rounded-xl bg-[#0088CC] text-white hover:bg-[#0077B3] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 uppercase tracking-wider"
+            >
+              {isUploadingVideo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+              <span>Replace</span>
+            </button>
+          )}
+        </div>
 
-      {/* Video Section */}
-      {(isOwnProfile || introVideo) && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">
-              <Video className="w-4 h-4 text-white" />
-              <span>Intro Video</span>
-            </h3>
-            {isOwnProfile && onUploadIntroVideo && !introVideo && (
+        {introVideo ? (
+          <div className="relative aspect-video rounded-xl overflow-hidden border border-[#EBE7DF] bg-[#000000] w-full shadow-lg group">
+            <video
+              key={introVideo}
+              src={introVideo}
+              controls
+              playsInline
+              preload="auto"
+              className="w-full h-full object-contain bg-black"
+            />
+            {isOwnProfile && onDeleteIntroVideo && (
               <button
-                onClick={() => document.getElementById('intro-video-upload')?.click()}
+                onClick={() => setDeleteVideoConfirmOpen(true)}
+                className="absolute top-4 right-4 bg-black/80 hover:bg-red-600 p-2.5 rounded-full border border-white/20 transition-all text-white hover:scale-110 shadow-lg cursor-pointer z-10"
+                title="Remove Video"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="bg-[#F5F2EB] border border-dashed border-[#DDD7CC] rounded-xl p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-2">
+            <div className="w-12 h-12 rounded-full border-2 border-gray-400 flex items-center justify-center mb-1 text-gray-800">
+              {isUploadingVideo ? (
+                <Loader2 className="w-6 h-6 animate-spin text-[#0088CC]" />
+              ) : (
+                <Play className="w-6 h-6 ml-0.5" />
+              )}
+            </div>
+            <p className="text-sm font-semibold text-gray-900">
+              {isUploadingVideo ? 'Uploading intro video...' : 'No intro video uploaded yet'}
+            </p>
+            <p className="text-xs text-gray-500 max-w-sm">
+              Click to upload your intro video (MP4, MOV, WEBM)
+            </p>
+            {isOwnProfile && (
+              <button
+                type="button"
+                onClick={() => !isUploadingVideo && document.getElementById('intro-video-upload')?.click()}
                 disabled={isUploadingVideo}
-                className="text-xs font-bold py-1.5 px-4 rounded-full bg-[#00BFFF]/10 border border-[#00BFFF]/30 text-[#00BFFF] hover:bg-[#00BFFF]/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
+                className="mt-3 bg-[#0088CC] hover:bg-[#0077B3] text-white font-mono font-bold text-xs px-6 py-2.5 rounded-xl uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-md"
               >
-                {isUploadingVideo ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Uploading...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Upload Video</span>
-                  </>
-                )}
+                <Upload className="w-4 h-4" />
+                <span>UPLOAD VIDEO</span>
               </button>
             )}
           </div>
+        )}
+      </section>
 
-          {introVideo ? (
-            <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 bg-black w-full shadow-2xl group">
-              <video
-                key={introVideo}
-                src={introVideo}
-                controls
-                playsInline
-                preload="auto"
-                className="w-full h-full object-contain bg-black"
+      {/* 2. Portfolio Photos Section */}
+      <section className="bg-[#FCFBF7] rounded-xl border border-[#EBE7DF] p-3 sm:p-3.5 flex flex-col gap-2 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-gray-900 tracking-wider uppercase font-mono">
+            PORTFOLIO PHOTOS
+          </h2>
+          {isOwnProfile && media.length > 0 && (
+            <button
+              onClick={() => document.getElementById('portfolio-upload')?.click()}
+              disabled={isUploadingPhotos}
+              className="text-xs font-mono font-bold py-1.5 px-4 rounded-xl bg-[#0088CC] text-white hover:bg-[#0077B3] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 uppercase tracking-wider"
+            >
+              {isUploadingPhotos ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+              <span>Add Photos</span>
+            </button>
+          )}
+        </div>
+
+        {media.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+            {media.map((url, index) => (
+              <GalleryImage
+                key={url}
+                url={url}
+                index={index}
+                onSelectImage={() => openLightbox(index, url)}
+                isOwnProfile={isOwnProfile}
+                onDeletePhotoClick={(target) => setDeletePhotoTarget(target)}
+                onLongPressPhoto={(target) => setActiveActionPhoto(target)}
               />
-              {isOwnProfile && onDeleteIntroVideo && (
-                <button
-                  onClick={() => setDeleteVideoConfirmOpen(true)}
-                  className="absolute top-4 right-4 bg-black/70 hover:bg-red-600 p-2.5 rounded-full border border-white/15 transition-all text-white hover:scale-110 shadow-lg cursor-pointer z-10"
-                  title="Remove Video"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-[#F5F2EB] border border-dashed border-[#DDD7CC] rounded-xl p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-2">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-1 text-gray-800 bg-[#EAE5DA] border border-[#DDD7CC]">
+              {isUploadingPhotos ? (
+                <Loader2 className="w-6 h-6 animate-spin text-[#0088CC]" />
+              ) : (
+                <ImageIcon className="w-8 h-8 text-gray-800" />
               )}
             </div>
-          ) : (
-            <div
-              onClick={() => isOwnProfile && !isUploadingVideo && document.getElementById('intro-video-upload')?.click()}
-              className={`border border-dashed border-white/10 rounded-2xl p-8 text-center flex flex-col items-center justify-center transition-all ${
-                isOwnProfile && !isUploadingVideo
-                  ? 'cursor-pointer hover:border-[#00BFFF]/50 hover:bg-[#00BFFF]/5 group'
-                  : ''
-              }`}
-            >
-              <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 group-hover:text-[#00BFFF] group-hover:border-[#00BFFF]/30 transition-all mb-3">
-                {isUploadingVideo ? (
-                  <Loader2 className="w-6 h-6 animate-spin text-[#00BFFF]" />
-                ) : (
-                  <Play className="w-6 h-6 ml-0.5" />
-                )}
-              </div>
-              <p className="text-xs font-bold text-gray-300">
-                {isUploadingVideo ? 'Uploading intro video...' : 'No intro video uploaded yet'}
-              </p>
-              {isOwnProfile && !isUploadingVideo && (
-                <p className="text-[11px] text-gray-500 mt-1 font-medium">
-                  Click to upload your intro video (MP4, MOV, WEBM)
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Photo Section */}
-      {(isOwnProfile || media.length > 0) && (
-        <div className="space-y-4 pt-6 border-t border-white/5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">
-              <ImageIcon className="w-4 h-4 text-white" />
-              <span>Portfolio Photos</span>
-            </h3>
-            {isOwnProfile && onUploadMedia && (
+            <p className="text-sm font-semibold text-gray-900">
+              {isUploadingPhotos ? 'Uploading photos...' : 'No portfolio photos yet'}
+            </p>
+            <p className="text-xs text-gray-500 max-w-sm">
+              Click to add photos to your lookbook gallery (JPG, PNG, WEBP)
+            </p>
+            {isOwnProfile && (
               <button
-                onClick={() => document.getElementById('portfolio-upload')?.click()}
+                type="button"
+                onClick={() => !isUploadingPhotos && document.getElementById('portfolio-upload')?.click()}
                 disabled={isUploadingPhotos}
-                className="text-xs font-bold py-1.5 px-4 rounded-full bg-[#00BFFF]/10 border border-[#00BFFF]/30 text-[#00BFFF] hover:bg-[#00BFFF]/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
+                className="mt-3 bg-[#0088CC] hover:bg-[#0077B3] text-white font-mono font-bold text-xs px-6 py-2.5 rounded-xl uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-md"
               >
-                {isUploadingPhotos ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Uploading...</span>
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" />
-                    <span>Add Photos</span>
-                  </>
-                )}
+                <Plus className="w-4 h-4" />
+                <span>ADD PHOTOS</span>
               </button>
             )}
           </div>
-
-          {media.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {media.map((url, index) => (
-                <GalleryImage
-                  key={url}
-                  url={url}
-                  index={index}
-                  onSelectImage={() => openLightbox(index, url)}
-                  isOwnProfile={isOwnProfile}
-                  onDeletePhotoClick={(target) => setDeletePhotoTarget(target)}
-                  onLongPressPhoto={(target) => setActiveActionPhoto(target)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div
-              onClick={() => isOwnProfile && !isUploadingPhotos && document.getElementById('portfolio-upload')?.click()}
-              className={`border border-dashed border-white/10 rounded-2xl p-8 text-center flex flex-col items-center justify-center transition-all ${
-                isOwnProfile && !isUploadingPhotos
-                  ? 'cursor-pointer hover:border-[#00BFFF]/50 hover:bg-[#00BFFF]/5 group'
-                  : ''
-              }`}
-            >
-              <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 group-hover:text-[#00BFFF] group-hover:border-[#00BFFF]/30 transition-all mb-3">
-                {isUploadingPhotos ? (
-                  <Loader2 className="w-6 h-6 animate-spin text-[#00BFFF]" />
-                ) : (
-                  <ImageIcon className="w-6 h-6" />
-                )}
-              </div>
-              <p className="text-xs font-bold text-gray-300">
-                {isUploadingPhotos ? 'Uploading photos...' : 'No portfolio photos yet'}
-              </p>
-              {isOwnProfile && !isUploadingPhotos && (
-                <p className="text-[11px] text-gray-500 mt-1 font-medium">
-                  Click to add photos to your lookbook gallery (JPG, PNG, WEBP)
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </section>
 
       {/* Full Screen Lightbox Modal */}
       {lightboxIndex !== null && media[lightboxIndex] && (

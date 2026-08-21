@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useProfile } from './hooks/useProfile';
 import SEO from '../../components/SEO';
 import ProfileHeader from './components/ProfileHeader';
-import ProfileAbout from './components/ProfileAbout';
+import ProfileAbout, { ProfileSpecsSidebar } from './components/ProfileAbout';
 import ProfileMedia from './components/ProfileMedia';
 import ProfileExperience from './components/ProfileExperience';
-import ProfileReviews from './components/ProfileReviews';
 import FollowModal from './components/FollowModal';
-import ReviewModal from './components/ReviewModal';
 import { doc, setDoc, query, collection, where, getDocs, serverTimestamp, increment, updateDoc, documentId } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
@@ -21,19 +19,19 @@ interface ProfilePageProps {
     initialTab?: string;
 }
 export default function ProfilePage({ onNavigate, user, profileId, isAdmin, showAlert, initialTab }: ProfilePageProps) {
-    const { profile, setProfile, resolvedUid, resolvingUid, loading, isOwnProfile, targetUid, isFollowing, followerCount, followingCount, reviewsList, loadingReviews, savedCount, hasWorkedTogether, toggleFollow } = useProfile(profileId, user);
-    const [activeTab, setActiveTab] = useState(initialTab || 'about');
+    const { profile, setProfile, resolvedUid, resolvingUid, loading, isOwnProfile, targetUid, isFollowing, followerCount, followingCount, savedCount, toggleFollow } = useProfile(profileId, user);
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+    const [activeTab, setActiveTab] = useState(initialTab || (isDesktop ? 'media' : 'about'));
     useEffect(() => {
         if (initialTab) {
             setActiveTab(initialTab);
         } else {
-            setActiveTab('about');
+            setActiveTab(window.innerWidth >= 1024 ? 'media' : 'about');
         }
     }, [resolvedUid, initialTab]);
     const [showFollowModal, setShowFollowModal] = useState<'followers' | 'following' | 'projects' | null>(null);
     const [followList, setFollowList] = useState<any[]>([]);
     const [loadingFollowList, setLoadingFollowList] = useState(false);
-    const [showReviewModal, setShowReviewModal] = useState(false);
     const handleFollowModalClose = () => {
         setShowFollowModal(null);
         setFollowList([]);
@@ -86,7 +84,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
                         console.warn("Failed to batch fetch follow profiles chunk:", err);
                     }
                 }));
-                
+
                 userIds.forEach(uid => {
                     const pData = profileMap.get(uid);
                     if (pData) {
@@ -142,89 +140,6 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         }
         else {
             showAlert(res.error || 'Failed to update follow status', 'error');
-        }
-    };
-    const handleReviewSubmit = async (ratingInput: number, reviewText: string, workedAsInput: string) => {
-        if (!user || !targetUid)
-            return;
-        const isOwn = isOwnProfile || user.uid === targetUid || (CurrentUser.id && targetUid === CurrentUser.id);
-        if (isOwn) {
-            showAlert("You cannot review your own profile.", "error");
-            return;
-        }
-        try {
-            const reviewId = `${user.uid}_${targetUid}`;
-            const reviewDocRef = doc(db, "reviews", reviewId);
-            await setDoc(reviewDocRef, {
-                reviewerId: user.uid,
-                reviewerName: user.displayName || 'Discovery Talent',
-                reviewerPhoto: user.photoURL || '',
-                targetUid,
-                targetUserId: targetUid,
-                rating: ratingInput,
-                text: reviewText,
-                workedAs: workedAsInput,
-                helpfulCount: 0,
-                helpfulUsers: [],
-                createdAt: serverTimestamp()
-            });
-            const q = query(collection(db, "reviews"), where("targetUid", "==", targetUid));
-            const snap = await getDocs(q);
-            const totalReviews = snap.size;
-            let totalRating = 0;
-            snap.docs.forEach(docSnap => {
-                totalRating += (docSnap.data().rating || 0);
-            });
-            const avgRating = totalReviews > 0 ? parseFloat((totalRating / totalReviews).toFixed(1)) : 0;
-            await updateDoc(doc(db, "profiles", targetUid), {
-                rating: avgRating,
-                reviews: totalReviews
-            });
-            try {
-                await updateDoc(doc(db, "users", targetUid), {
-                    rating: avgRating,
-                    reviews: totalReviews
-                });
-            }
-            catch (e) {
-                console.warn("Could not sync rating to users doc:", e);
-            }
-            showAlert('Review submitted successfully!', 'success');
-            setShowReviewModal(false);
-        }
-        catch (err) {
-            console.error(err);
-            showAlert('Failed to submit review', 'error');
-        }
-    };
-    const handleHelpfulToggle = async (reviewId: string, event: React.MouseEvent) => {
-        event.stopPropagation();
-        if (!user) {
-            onNavigate('signin');
-            return;
-        }
-        const reviewRef = doc(db, "reviews", reviewId);
-        const review = reviewsList.find(r => r.id === reviewId);
-        if (!review)
-            return;
-        const helpfulUsers = review.helpfulUsers || [];
-        const hasLiked = helpfulUsers.includes(user.uid);
-        try {
-            if (hasLiked) {
-                await updateDoc(reviewRef, {
-                    helpfulCount: increment(-1),
-                    helpfulUsers: helpfulUsers.filter((uid: string) => uid !== user.uid)
-                });
-            }
-            else {
-                await updateDoc(reviewRef, {
-                    helpfulCount: increment(1),
-                    helpfulUsers: [...helpfulUsers, user.uid]
-                });
-            }
-        }
-        catch (err) {
-            console.error(err);
         }
     };
     const handleUploadMedia = async (files: FileList) => {
@@ -328,60 +243,60 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
     };
     if (loading || resolvingUid) {
         return (<div className="min-h-screen bg-nc-dark pb-6 text-left animate-pulse">
-        
-        <div className="block h-[220px] sm:h-[320px] relative w-full overflow-hidden bg-[#0A0A0F] select-none">
-          <div className="absolute inset-0 skeleton" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/30 to-transparent"/>
-        </div>
 
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 sm:-mt-24 relative z-20 flex flex-col items-center text-center">
-          <div className="relative z-10 mb-3 shrink-0">
-            <div className="w-44 h-44 sm:w-56 sm:h-56 rounded-full border-4 border-[#0A0A0F] bg-[#0A0A0F] skeleton ring-2 ring-white/15"/>
-          </div>
-
-          <div className="space-y-3 pb-6 border-b border-white/5 w-full flex flex-col items-center">
-            <div className="h-7 skeleton w-56 rounded-xl"/>
-            <div className="h-4 skeleton w-24 rounded-lg"/>
-            <div className="h-3.5 skeleton w-44 rounded-md"/>
-          </div>
-
-          
-          <div className="grid grid-cols-3 gap-2 mt-6 pt-4 border-t border-white/5 w-full max-w-md mx-auto">
-            {[1, 2, 3].map(i => (<div key={i} className="flex flex-col items-center justify-center py-1 space-y-1.5">
-                <div className="h-5 skeleton w-12 rounded"/>
-                <div className="h-3.5 skeleton w-16 rounded"/>
-              </div>))}
-          </div>
-
-          
-          <div className="w-full mt-8">
-            <div className="flex border-b border-white/10 gap-8 mb-8 justify-center sm:justify-start">
-              {[1, 2, 3].map(i => (<div key={i} className="h-8 skeleton w-20 rounded pb-3"/>))}
+            <div className="block h-[220px] sm:h-[320px] relative w-full overflow-hidden bg-[#0A0A0F] select-none">
+                <div className="absolute inset-0 skeleton" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F]/30 to-transparent" />
             </div>
 
-            <div className="bg-[#111]/80 border border-white/5 rounded-[2rem] p-6 sm:p-8 space-y-6">
-              <div className="h-5 skeleton w-32 rounded"/>
-              <div className="space-y-3">
-                <div className="h-3.5 skeleton w-full rounded"/>
-                <div className="h-3.5 skeleton w-11/12 rounded"/>
-                <div className="h-3.5 skeleton w-4/5 rounded"/>
-              </div>
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 sm:-mt-24 relative z-20 flex flex-col items-center text-center">
+                <div className="relative z-10 mb-3 shrink-0">
+                    <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-[#0E0F15] bg-[#0E0F15] skeleton"/>
+                </div>
+
+                <div className="space-y-3 pb-6 border-b border-white/5 w-full flex flex-col items-center">
+                    <div className="h-7 skeleton w-56 rounded-xl" />
+                    <div className="h-4 skeleton w-24 rounded-lg" />
+                    <div className="h-3.5 skeleton w-44 rounded-md" />
+                </div>
+
+
+                <div className="grid grid-cols-3 gap-2 mt-6 pt-4 border-t border-white/5 w-full max-w-md mx-auto">
+                    {[1, 2, 3].map(i => (<div key={i} className="flex flex-col items-center justify-center py-1 space-y-1.5">
+                        <div className="h-5 skeleton w-12 rounded" />
+                        <div className="h-3.5 skeleton w-16 rounded" />
+                    </div>))}
+                </div>
+
+
+                <div className="w-full mt-8">
+                    <div className="flex border-b border-white/10 gap-8 mb-8 justify-center sm:justify-start">
+                        {[1, 2, 3].map(i => (<div key={i} className="h-8 skeleton w-20 rounded pb-3" />))}
+                    </div>
+
+                    <div className="bg-[#111]/80 border border-white/5 rounded-[2rem] p-6 sm:p-8 space-y-6">
+                        <div className="h-5 skeleton w-32 rounded" />
+                        <div className="space-y-3">
+                            <div className="h-3.5 skeleton w-full rounded" />
+                            <div className="h-3.5 skeleton w-11/12 rounded" />
+                            <div className="h-3.5 skeleton w-4/5 rounded" />
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>);
+        </div>);
     }
     if (!profile) {
         return (<div className="min-h-screen bg-nc-dark pb-6 flex flex-col items-center justify-center text-center p-6">
-        <h2 className="text-xl font-bold text-white mb-2">Profile Not Found</h2>
-        <p className="text-nc-muted text-sm max-w-xs mb-6">
-          The profile you are looking for does not exist or has been deleted.
-        </p>
-        <button onClick={() => onNavigate('home')} className="px-6 py-2.5 bg-[#00BFFF] text-black font-bold rounded-2xl">
-          Go Back Home
-        </button>
-      </div>);
+            <h2 className="text-xl font-bold text-white mb-2">Profile Not Found</h2>
+            <p className="text-nc-muted text-sm max-w-xs mb-6">
+                The profile you are looking for does not exist or has been deleted.
+            </p>
+            <button onClick={() => onNavigate('home')} className="px-6 py-2.5 bg-[#00BFFF] text-black font-bold rounded-2xl">
+                Go Back Home
+            </button>
+        </div>);
     }
     const showContact = isOwnProfile || isFollowing || profile.showContactInfo === true;
     const hasMediaContent = Boolean(profile.introVideo || (profile.media && profile.media.length > 0));
@@ -393,63 +308,83 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
     if (isOwnProfile || hasExperience) {
         tabs.push('experience');
     }
-    tabs.push('reviews');
     const tabLabelMap: Record<string, string> = {
         about: 'About',
         media: 'Media',
         experience: 'Experience',
-        reviews: 'Reviews',
     };
     return (
-      <div className="min-h-screen bg-nc-dark pb-6">
-        <SEO
-          title={`${profile.name || 'Talent'} | NepalCasts Profile`}
-          description={profile.bio || `View ${profile.name || 'this talent'}'s portfolio, auditions, and experience on NepalCasts.`}
-          image={profile.image || undefined}
-          noindex={(profile as any).isPrivate === true}
-        />
-        <ProfileHeader profile={profile} isOwnProfile={isOwnProfile} isFollowing={isFollowing} followerCount={followerCount} followingCount={followingCount} savedCount={savedCount} onFollowToggle={handleFollowToggle} onNavigate={onNavigate} showAlert={showAlert} onFollowClick={handleFollowModalOpen}/>
+        <div className="min-h-screen bg-[#F7F6F2] pb-0 text-gray-900">
+            <SEO
+                title={`${profile.name || 'Talent'} | NepalCasts Profile`}
+                description={profile.bio || `View ${profile.name || 'this talent'}'s portfolio, auditions, and experience on NepalCasts.`}
+                image={profile.image || undefined}
+                noindex={(profile as any).isPrivate === true}
+            />
+            <ProfileHeader profile={profile} isOwnProfile={isOwnProfile} isFollowing={isFollowing} followerCount={followerCount} followingCount={followingCount} savedCount={savedCount} onFollowToggle={handleFollowToggle} onNavigate={onNavigate} showAlert={showAlert} onFollowClick={handleFollowModalOpen} />
 
-        {/* Profile Main Content Container */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-          <div className="flex border-b border-white/10 gap-8 mb-8 overflow-x-auto scrollbar-none justify-center sm:justify-start">
-            {tabs.map((tab) => (
-              <button key={tab} onClick={() => {
-                setActiveTab(tab);
-                const base = isOwnProfile && !profileId ? '/profile' : `/profile/${resolvedUid || profileId}`;
-                if (tab === 'about') {
-                    onNavigate(base);
-                } else {
-                    onNavigate(`${base}/${tab}`);
-                }
-              }} className={`pb-3 text-sm sm:text-base font-bold capitalize tracking-wide transition-colors relative whitespace-nowrap ${activeTab === tab ? 'text-[#00BFFF]' : 'text-gray-400 hover:text-white'}`}>
-                {tabLabelMap[tab] || tab}
-                {activeTab === tab && (<div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#00BFFF] rounded-full shadow-[0_0_8px_rgba(0,191,255,0.8)]"/>)}
-              </button>
-            ))}
-          </div>
-        
-        <div className="animate-fade-in">
-          {activeTab === 'about' && (<ProfileAbout profile={profile} showContact={showContact}/>)}
-          {(isOwnProfile || hasMediaContent) && activeTab === 'media' && (<ProfileMedia profile={profile} isOwnProfile={isOwnProfile} onUploadMedia={handleUploadMedia} onDeleteMedia={handleDeleteMedia} onUploadIntroVideo={handleUploadIntroVideo} onDeleteIntroVideo={handleDeleteIntroVideo}/>)}
-          {(isOwnProfile || hasExperience) && activeTab === 'experience' && (<ProfileExperience profile={profile} isOwnProfile={isOwnProfile} showAlert={showAlert}/>)}
-          {activeTab === 'reviews' && (<ProfileReviews reviews={reviewsList} loading={loadingReviews} isOwnProfile={isOwnProfile || (!!user && targetUid === user.uid)} hasWorkedTogether={hasWorkedTogether} onWriteReviewClick={() => {
-                if (!user) {
-                    onNavigate('signin');
-                }
-                else if (targetUid === user.uid) {
-                    showAlert("You cannot review your own profile.", "error");
-                }
-                else {
-                    setShowReviewModal(true);
-                }
-            }} onHelpfulToggle={handleHelpfulToggle} currentUserId={user?.uid}/>)}
-        </div>
-      </div>
+            {/* Profile Main Content Container (2-Side Full Screen Layout on PC) */}
+            <div className="w-full px-1 sm:px-2 lg:px-4 mt-2">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-start">
+                    
+                    {/* Left Column on PC: Profile Specs Sidebar */}
+                    <div className="hidden lg:block lg:col-span-5 xl:col-span-4.5">
+                        <ProfileSpecsSidebar profile={profile} showContact={showContact} />
+                    </div>
 
-      
-      <FollowModal type={showFollowModal || 'followers'} isOpen={!!showFollowModal} onClose={handleFollowModalClose} list={followList} loading={loadingFollowList} onNavigate={onNavigate}/>
+                    {/* Right Column on PC (Full Width on Mobile): Tabs + Active Tab Content */}
+                    <div className="col-span-12 lg:col-span-7 xl:col-span-7.5 flex flex-col gap-2">
+                        
+                        {/* Clean Professional Tab Navigation */}
+                        <div className="flex border border-[#E8E3D9] gap-6 sm:gap-8 overflow-x-auto scrollbar-none justify-start px-3 sm:px-4 bg-[#FCFBF7] rounded-xl pt-2.5 pb-1 shadow-sm">
+                            {tabs.map((tab) => {
+                                const isSelected = activeTab === tab;
+                                return (
+                                    <button
+                                        key={tab}
+                                        onClick={() => {
+                                            setActiveTab(tab);
+                                            const base = isOwnProfile && !profileId ? '/profile' : `/profile/${resolvedUid || profileId}`;
+                                            if (tab === 'about') {
+                                                onNavigate(base);
+                                            } else {
+                                                onNavigate(`${base}/${tab}`);
+                                            }
+                                        }}
+                                        className={`pb-2.5 text-xs sm:text-sm font-bold capitalize tracking-wide transition-colors relative whitespace-nowrap cursor-pointer ${
+                                            tab === 'about' ? 'lg:hidden' : ''
+                                        } ${
+                                            isSelected ? 'text-[#0088CC]' : 'text-gray-600 hover:text-gray-900'
+                                        }`}
+                                    >
+                                        {tabLabelMap[tab] || tab}
+                                        {isSelected && (
+                                            <div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0088CC] rounded-full shadow-[0_0_8px_rgba(0,136,204,0.4)]" />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
 
-      <ReviewModal isOpen={showReviewModal} onClose={() => setShowReviewModal(false)} onSubmit={handleReviewSubmit}/>
-    </div>);
+                        {/* Active Tab Content */}
+                        <div className="animate-fade-in">
+                            {activeTab === 'about' && (
+                                <ProfileAbout profile={profile} showContact={showContact} />
+                            )}
+                            {(isOwnProfile || hasMediaContent) && activeTab === 'media' && (
+                                <ProfileMedia profile={profile} isOwnProfile={isOwnProfile} onUploadMedia={handleUploadMedia} onDeleteMedia={handleDeleteMedia} onUploadIntroVideo={handleUploadIntroVideo} onDeleteIntroVideo={handleDeleteIntroVideo} />
+                            )}
+                            {(isOwnProfile || hasExperience) && activeTab === 'experience' && (
+                                <ProfileExperience profile={profile} isOwnProfile={isOwnProfile} showAlert={showAlert} />
+                            )}
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+
+            <FollowModal type={showFollowModal || 'followers'} isOpen={!!showFollowModal} onClose={handleFollowModalClose} list={followList} loading={loadingFollowList} onNavigate={onNavigate} />
+        </div>);
 }

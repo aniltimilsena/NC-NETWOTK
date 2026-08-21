@@ -46,10 +46,6 @@ export const ProfileRoutes = ({ onNavigate, user, isAdmin, showAlert, authReady 
       element={<ProfileWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} showAlert={showAlert} authReady={authReady} defaultTab="experience" />}
     />
     <Route
-      path="/profile/reviews"
-      element={<ProfileWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} showAlert={showAlert} authReady={authReady} defaultTab="reviews" />}
-    />
-    <Route
       path="/profile"
       element={<ProfileWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} showAlert={showAlert} authReady={authReady} />}
     />

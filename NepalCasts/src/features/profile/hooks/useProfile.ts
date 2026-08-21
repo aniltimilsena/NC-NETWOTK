@@ -11,10 +11,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
     const [isFollowing, setIsFollowing] = useState(false);
     const [followerCount, setFollowerCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
-    const [reviewsList, setReviewsList] = useState<any[]>([]);
-    const [loadingReviews, setLoadingReviews] = useState(true);
     const [savedCount, setSavedCount] = useState(0);
-    const [hasWorkedTogether, setHasWorkedTogether] = useState(false);
     const [contactInfo, setContactInfo] = useState<{
         email?: string;
         phone?: string;
@@ -291,68 +288,6 @@ export function useProfile(profileId: string | null, currentUser: any) {
         return () => unsub();
     }, [currentUser?.uid, targetUid]);
     useEffect(() => {
-        if (!targetUid) {
-            setLoadingReviews(false);
-            return;
-        }
-        const q = query(collection(db, "reviews"), or(where("targetUid", "==", targetUid), where("targetUserId", "==", targetUid)));
-        const unsub = onSnapshot(q, (snap) => {
-            const listMap = new Map();
-            snap.docs.forEach(docSnap => {
-                const r = docSnap.data();
-                let dateStr = 'Just now';
-                if (r.createdAt) {
-                    const date = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
-                    dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-                }
-                listMap.set(docSnap.id, {
-                    id: docSnap.id,
-                    ...r,
-                    dateFormatted: dateStr
-                });
-            });
-            const list = Array.from(listMap.values());
-            setReviewsList(list);
-            setLoadingReviews(false);
-            if (isOwnProfile && list.length > 0) {
-                const totalRating = list.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
-                const avg = parseFloat((totalRating / list.length).toFixed(1));
-                updateDoc(doc(db, "profiles", targetUid), {
-                    rating: avg,
-                    reviews: list.length
-                }).catch((e) => console.warn("Failed to auto-sync rating:", e));
-            }
-        }, (err) => {
-            console.warn("Failed to subscribe to reviews:", err);
-            setLoadingReviews(false);
-        });
-        return () => unsub();
-    }, [targetUid]);
-    useEffect(() => {
-        if (!currentUser || isOwnProfile || !targetUid) {
-            setHasWorkedTogether(false);
-            return;
-        }
-        const checkWorked = async () => {
-            try {
-                const q1 = query(collection(db, "applications"), where("userId", "==", currentUser.uid), where("creatorId", "==", targetUid), where("status", "==", "accepted"));
-                const snap1 = await getDocs(q1);
-                if (!snap1.empty) {
-                    setHasWorkedTogether(true);
-                    return;
-                }
-                const q2 = query(collection(db, "applications"), where("userId", "==", targetUid), where("creatorId", "==", currentUser.uid), where("status", "==", "accepted"));
-                const snap2 = await getDocs(q2);
-                setHasWorkedTogether(!snap2.empty);
-            }
-            catch (err) {
-                console.warn("Error checking applications history:", err);
-                setHasWorkedTogether(false);
-            }
-        };
-        checkWorked();
-    }, [currentUser, isOwnProfile, targetUid]);
-    useEffect(() => {
         if (!isOwnProfile || !currentUser?.uid)
             return;
         const q = query(collection(db, 'saved_calls'), where('userId', '==', currentUser.uid));
@@ -442,12 +377,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
         return () => unsub();
     }, [targetUid, currentUser]);
 
-    const computedRating = reviewsList.length > 0
-        ? parseFloat((reviewsList.reduce((acc, r) => acc + (Number(r.rating) || 0), 0) / reviewsList.length).toFixed(1))
-        : (profile?.rating || (profile?.totalRating && profile?.reviewCount ? parseFloat((profile.totalRating / profile.reviewCount).toFixed(1)) : 0));
-
     const resolvedName = (profile?.name && profile.name !== 'Discovery Talent' ? profile.name : null) ||
-
         (profile as any)?.displayName ||
         (profile as any)?.fullName ||
         (isOwnProfile && currentUser?.displayName ? currentUser.displayName : null) ||
@@ -459,7 +389,6 @@ export function useProfile(profileId: string | null, currentUser: any) {
         name: resolvedName,
         email: contactInfo?.email || profile.email || (isOwnProfile ? currentUser?.email : ''),
         phone: contactInfo?.phone || profile.phone,
-        rating: computedRating
     } : (isOwnProfile && currentUser?.uid ? {
         uid: currentUser.uid,
         id: currentUser.uid,
@@ -467,8 +396,6 @@ export function useProfile(profileId: string | null, currentUser: any) {
         email: currentUser.email || '',
         photoURL: currentUser.photoURL || '',
         role: currentUser.role || 'Actor',
-        rating: 0,
-        reviews: 0
     } as unknown as UserProfile : null);
 
     return {
@@ -482,10 +409,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
         isFollowing,
         followerCount,
         followingCount,
-        reviewsList,
-        loadingReviews,
         savedCount,
-        hasWorkedTogether,
         toggleFollow
     };
 }
