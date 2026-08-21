@@ -126,7 +126,7 @@ export default function ProfileHeader({
 
   return (
     <div className="w-full font-sans select-none pt-4 pb-2">
-      {/* Top Bar with Back and Share Buttons */}
+      {/* Top Bar with Back and Action Buttons */}
       <div className="flex items-center justify-between px-2 sm:px-4 mb-4">
         <button
           onClick={() => onNavigate('back')}
@@ -136,13 +136,39 @@ export default function ProfileHeader({
           <ChevronLeft className="w-6 h-6 stroke-[2.5] text-white" />
         </button>
 
-        <button
-          onClick={handleShare}
-          className="w-10 h-10 rounded-full bg-[#111622] hover:bg-[#161D2B] border border-[#1E2638] text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-md"
-          title="Share Profile"
-        >
-          <Share2 className="w-5 h-5 text-white" />
-        </button>
+        <div className="flex items-center gap-2">
+          {!isRealOwn && (
+            <button
+              onClick={onFollowToggle}
+              className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-md ${
+                isFollowing
+                  ? 'bg-[#111622] border border-[#1E2638] text-white hover:bg-[#161D2B]'
+                  : 'bg-[#0088CC] hover:bg-[#0077B3] text-white'
+              }`}
+            >
+              {isFollowing ? <Check className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+              <span>{isFollowing ? 'Following' : 'Follow'}</span>
+            </button>
+          )}
+
+          {isRealOwn && (
+            <button
+              onClick={() => onNavigate('/settings/profile')}
+              className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#111622] hover:bg-[#161D2B] text-white text-xs font-bold border border-[#1E2638] transition-all active:scale-95 cursor-pointer shadow-md"
+            >
+              <Pencil className="w-3.5 h-3.5 text-gray-300" />
+              <span>Edit</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleShare}
+            className="w-10 h-10 rounded-full bg-[#111622] hover:bg-[#161D2B] border border-[#1E2638] text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-md"
+            title="Share Profile"
+          >
+            <Share2 className="w-5 h-5 text-white" />
+          </button>
+        </div>
       </div>
 
       {/* Centered Profile Avatar, Name, Role & Meta Pills */}
@@ -225,62 +251,27 @@ export default function ProfileHeader({
           </div>
         </div>
 
-        {/* Action Buttons & Follower Counts */}
-        <div className="flex flex-col items-center gap-2.5 pt-2 w-full max-w-sm">
-          {!isRealOwn ? (
-            <div className="flex items-center gap-2.5 w-full justify-center">
-              <button
-                onClick={onFollowToggle}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-6 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-lg ${
-                  isFollowing
-                    ? 'bg-[#111622] border border-[#1E2638] text-white hover:bg-[#161D2B]'
-                    : 'bg-[#0088CC] hover:bg-[#0077B3] text-white shadow-[#0088CC]/30'
-                }`}
-              >
-                {isFollowing ? <Check className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-                <span>{isFollowing ? 'Following' : 'Follow'}</span>
-              </button>
+        {/* Subtle Followers / Following Counts */}
+        <div className="flex items-center justify-center gap-3 text-xs text-gray-400 font-medium pt-0.5">
+          <button
+            type="button"
+            onClick={() => onFollowClick?.('followers')}
+            className="hover:text-[#0088CC] transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <span className="text-white font-bold">{followerCount ?? 0}</span>
+            <span>followers</span>
+          </button>
 
-              <button
-                onClick={() => onNavigate('messages', profile.uid)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-6 rounded-xl bg-[#111622] border border-[#1E2638] hover:bg-[#161D2B] text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-md"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-[#0088CC]" />
-                <span>Message</span>
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => onNavigate('/settings/profile')}
-              className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-xl bg-[#111622] hover:bg-[#161D2B] text-white text-xs font-bold border border-[#1E2638] transition-all active:scale-95 cursor-pointer shadow-md w-full"
-            >
-              <Pencil className="w-3.5 h-3.5 text-gray-300" />
-              <span>Edit Profile</span>
-            </button>
-          )}
+          <span className="text-gray-600 font-bold">•</span>
 
-          {/* Followers / Following Counts */}
-          <div className="flex items-center gap-4 text-xs text-gray-400 font-medium pt-0.5">
-            <button
-              type="button"
-              onClick={() => onFollowClick?.('followers')}
-              className="hover:text-[#0088CC] transition-colors cursor-pointer flex items-center gap-1.5"
-            >
-              <span className="text-white font-bold">{followerCount ?? 0}</span>
-              <span>followers</span>
-            </button>
-
-            <span className="text-gray-600 font-bold">•</span>
-
-            <button
-              type="button"
-              onClick={() => onFollowClick?.('following')}
-              className="hover:text-[#0088CC] transition-colors cursor-pointer flex items-center gap-1.5"
-            >
-              <span className="text-white font-bold">{followingCount ?? 0}</span>
-              <span>following</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => onFollowClick?.('following')}
+            className="hover:text-[#0088CC] transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <span className="text-white font-bold">{followingCount ?? 0}</span>
+            <span>following</span>
+          </button>
         </div>
 
       </div>
