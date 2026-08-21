@@ -361,11 +361,10 @@ export default function Home({ onNavigate, user }) {
             {HERO_BACKGROUND_PHOTOS.map((_, idx) => (
               <span
                 key={idx}
-                className={`h-1 rounded-full transition-all duration-500 ${
-                  idx === heroImageIdx
+                className={`h-1 rounded-full transition-all duration-500 ${idx === heroImageIdx
                     ? 'w-5 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]'
                     : 'w-1.5 bg-white/30'
-                }`}
+                  }`}
               />
             ))}
           </div>
@@ -442,452 +441,452 @@ export default function Home({ onNavigate, user }) {
         {/* Lower Cards Container */}
         <div className="px-1 sm:px-1.5 space-y-1.5">
 
-        {/* ================= SPONSORED ADS SECTION ================= */}
-        <section className="px-1 sm:px-2">
-          <div className="flex gap-2 sm:gap-2.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-            {HOME_SPONSORED_ADS.map((ad) => (
-              <div
-                key={ad.id}
-                onClick={() => ad.ctaUrl && onNavigate(ad.ctaUrl.replace('/', ''))}
-                className="flex-1 min-w-[260px] sm:min-w-[320px] relative group overflow-hidden rounded-lg border border-white/5 p-3.5 sm:p-4 bg-black flex flex-col justify-between cursor-pointer hover:border-white/20 transition-all duration-300 min-h-[135px] sm:min-h-[155px] shadow-lg"
-              >
-                {/* Background image */}
-                {ad.image && (
-                  <div className="absolute inset-0 z-0">
-                    <img
-                      src={ad.image}
-                      alt={ad.title}
-                      className="w-full h-full object-cover opacity-35 group-hover:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/80 to-black/60" />
-                  </div>
-                )}
-
-                {/* Glowing subtle accent */}
-                <div className="absolute -top-16 -right-16 w-36 h-36 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-cyan-500/20 transition-all z-0" />
-
-                {/* Content */}
-                <div className="relative z-10 space-y-1.5 sm:space-y-2 text-left">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 text-cyan-300 font-extrabold px-2 py-0.5 rounded-md text-[8px] sm:text-[9px] tracking-wider uppercase border border-white/10 backdrop-blur-md">
-                      <Megaphone className="w-2.5 h-2.5 text-cyan-400 animate-pulse" />
-                      {ad.badge}
-                    </span>
-                    {ad.discount && (
-                      <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-400 to-amber-500 text-black font-black px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] tracking-wider uppercase shadow-sm">
-                        <Tag className="w-2.5 h-2.5 fill-black text-black" />
-                        {ad.discount}
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="text-xs sm:text-sm font-extrabold text-white tracking-tight leading-snug group-hover:text-cyan-200 transition-colors line-clamp-2 drop-shadow">
-                    {ad.title}
-                  </h3>
-
-                  {ad.subtitle && (
-                    <p className="text-gray-300 text-[10px] sm:text-xs line-clamp-1 leading-normal drop-shadow">
-                      {ad.subtitle}
-                    </p>
+          {/* ================= SPONSORED ADS SECTION ================= */}
+          <section className="px-1 sm:px-2">
+            <div className="flex gap-2 sm:gap-2.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+              {HOME_SPONSORED_ADS.map((ad) => (
+                <div
+                  key={ad.id}
+                  onClick={() => ad.ctaUrl && onNavigate(ad.ctaUrl.replace('/', ''))}
+                  className="flex-1 min-w-[260px] sm:min-w-[320px] relative group overflow-hidden rounded-lg border border-white/5 p-3.5 sm:p-4 bg-black flex flex-col justify-between cursor-pointer hover:border-white/20 transition-all duration-300 min-h-[135px] sm:min-h-[155px] shadow-lg"
+                >
+                  {/* Background image */}
+                  {ad.image && (
+                    <div className="absolute inset-0 z-0">
+                      <img
+                        src={ad.image}
+                        alt={ad.title}
+                        className="w-full h-full object-cover opacity-35 group-hover:scale-105 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/80 to-black/60" />
+                    </div>
                   )}
-                </div>
 
-                <div className="relative z-10 pt-2 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500 to-blue-600 group-hover:from-cyan-400 group-hover:to-blue-500 text-black font-extrabold px-3 py-1 rounded-lg text-[10px] sm:text-xs transition-all shadow-md shadow-cyan-500/20">
-                    <span>{ad.ctaText}</span>
-                    <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+                  {/* Glowing subtle accent */}
+                  <div className="absolute -top-16 -right-16 w-36 h-36 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-cyan-500/20 transition-all z-0" />
 
-        {/* ================= FEATURED TALENTS SECTION ================= */}
-        <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-          <div className="flex items-center justify-between mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
-              <Crown className="w-3.5 h-3.5 text-amber-300 fill-amber-300 drop-shadow-sm" />
-              Featured talents
-            </span>
-            <button
-              onClick={() => onNavigate('listing')}
-              className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
-            >
-              <span>View all talents</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-
-          {/* Horizontal Scroll Carousel */}
-          <div
-            ref={actorsScrollRef}
-            className="flex gap-2.5 sm:gap-3 overflow-x-auto pt-0.5 pb-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
-          >
-            {!talentsReceived ? (
-              <AvatarScrollSkeleton count={4} />
-            ) : displayFeaturedList.length > 0 ? (
-              displayFeaturedList.map((talent) => (
-                <div
-                  key={talent.id}
-                  onClick={() => onNavigate('profile', talent.id)}
-                  className="flex flex-col items-center shrink-0 w-[100px] sm:w-[125px] cursor-pointer group"
-                >
-                  <Avatar
-                    userId={talent.id || talent.uid}
-                    user={talent}
-                    size="none"
-                    name={talent.name}
-                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-md transition-all duration-300"
-                  />
-                  <p className="text-white font-bold text-[11px] sm:text-xs text-center mt-1.5 truncate w-full px-0.5">
-                    {formatTalentName(talent.name)}
-                  </p>
-                  <p className="text-[#1d61f2] font-semibold text-[10px] sm:text-[11px] text-center mt-0.5 truncate w-full px-0.5">
-                    {getTalentRoleAndAge(talent)}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="text-gray-400 text-xs py-4">No talents found</div>
-            )}
-          </div>
-        </section>
-
-        {/* ================= TALENTS BY CATEGORY SECTION ================= */}
-        <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-          <div className="flex items-center justify-between mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
-              <LayoutGrid className="w-3.5 h-3.5 text-white" />
-              Talents by category
-            </span>
-            <button
-              onClick={() => onNavigate('discover')}
-              className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
-            >
-              <span>View all</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-
-          {/* 3-Column Grid showing the top 3 Category Cards */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {HOME_CATEGORY_CARDS.slice(0, 3).map((cat) => {
-              const count = getCategoryCount(cat.filter);
-              return (
-                <motion.div
-                  key={cat.id}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => onNavigate('talents', cat.filter)}
-                  style={{ backgroundColor: cat.bgColor }}
-                  className="rounded-xl p-3 sm:p-4 aspect-square flex flex-col items-center justify-center text-center cursor-pointer shadow transition-transform border border-black/5"
-                >
-                  <CategoryCardIcon type={cat.iconType} className="w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 text-black fill-current mb-1 sm:mb-1.5" />
-                  <span className="text-black font-extrabold text-xs sm:text-sm leading-tight whitespace-pre-line mt-0.5">
-                    {cat.label}
-                  </span>
-                  <span className="text-black/70 font-medium text-[10px] sm:text-xs mt-1">
-                    ({count} {count === 1 ? 'talent' : 'talents'})
-                  </span>
-                </motion.div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ================= NEW BORN TALENTS SECTION ================= */}
-        <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-          <div className="flex items-center justify-between mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
-              <Sprout className="w-3.5 h-3.5 text-emerald-300 drop-shadow-sm" />
-              New born talents
-            </span>
-            <button
-              onClick={() => onNavigate('listing')}
-              className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
-            >
-              <span>View all</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-
-          {/* Ranked Card List Container */}
-          <div className="space-y-2.5 pt-1">
-            {!talentsReceived ? (
-              [1, 2, 3, 4, 5].map((num) => (
-                <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
-                  <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
-                    {num}
-                  </span>
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 shrink-0 animate-pulse" />
-                  <div className="flex-1 space-y-2">
-                    <div className="w-full h-2.5 bg-white/10 rounded-full animate-pulse" />
-                    <div className="w-3/4 h-2 bg-white/10 rounded-full animate-pulse" />
-                  </div>
-                </div>
-              ))
-            ) : newBornTalents.length > 0 ? (
-              newBornTalents.slice(0, 5).map((talent, idx) => (
-                <div
-                  key={talent.id || idx}
-                  onClick={() => onNavigate('profile', talent.id)}
-                  className="flex items-center gap-3 sm:gap-4 py-1 cursor-pointer group"
-                >
-                  {/* Rank Number */}
-                  <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
-                    {idx + 1}
-                  </span>
-
-                  {/* Circular Avatar */}
-                  <Avatar
-                    userId={talent.id}
-                    user={talent}
-                    size="none"
-                    name={talent.name}
-                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover shrink-0"
-                  />
-
-                  {/* Metadata Lines & Talent Details */}
-                  <div className="flex-1 min-w-0 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm sm:text-base font-bold text-white truncate group-hover:text-[#38bdf8] transition-colors">
-                        {talent.name}
-                      </p>
-                      <span className="text-xs text-[#1d61f2] font-semibold shrink-0">
-                        {getTalentRoleAndAge(talent)}
+                  {/* Content */}
+                  <div className="relative z-10 space-y-1.5 sm:space-y-2 text-left">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 text-cyan-300 font-extrabold px-2 py-0.5 rounded-md text-[8px] sm:text-[9px] tracking-wider uppercase border border-white/10 backdrop-blur-md">
+                        <Megaphone className="w-2.5 h-2.5 text-cyan-400 animate-pulse" />
+                        {ad.badge}
                       </span>
+                      {ad.discount && (
+                        <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-400 to-amber-500 text-black font-black px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] tracking-wider uppercase shadow-sm">
+                          <Tag className="w-2.5 h-2.5 fill-black text-black" />
+                          {ad.discount}
+                        </span>
+                      )}
                     </div>
 
-                    {/* Username & Location */}
-                    <p className="text-xs text-gray-400 truncate">
-                      @{talent.username || talent.name?.toLowerCase().replace(/\s+/g, '')}
-                    </p>
-                    {formatTalentLocation(talent) && (
-                      <p className="text-xs text-gray-500 truncate flex items-center gap-1">
-                        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                        </svg>
-                        {formatTalentLocation(talent)}
+                    <h3 className="text-xs sm:text-sm font-extrabold text-white tracking-tight leading-snug group-hover:text-cyan-200 transition-colors line-clamp-2 drop-shadow">
+                      {ad.title}
+                    </h3>
+
+                    {ad.subtitle && (
+                      <p className="text-gray-300 text-[10px] sm:text-xs line-clamp-1 leading-normal drop-shadow">
+                        {ad.subtitle}
                       </p>
                     )}
                   </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-gray-400 text-xs py-4 text-center">No talents found</div>
-            )}
-          </div>
-        </section>
 
-        {/* ================= CASTING CALLS SECTION ================= */}
-        <section className="my-1.5 px-2 sm:px-3 text-white">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
-              <Clapperboard className="w-3.5 h-3.5 text-white" />
-              Casting calls
-            </span>
-            <button
-              onClick={() => onNavigate('casting')}
-              className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
-            >
-              <span>View all</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-
-          <div className="space-y-2.5 pt-1">
-            {activeCastingCalls.length > 0 ? (
-              activeCastingCalls.slice(0, 3).map((call) => {
-                const thumbnail = getCastingThumbnail(call);
-                return (
-                  <div
-                    key={call.id}
-                    onClick={() => onNavigate('casting-detail', call.id)}
-                    className="p-3 bg-[#141416] hover:bg-[#1c1c20] transition-all rounded-xl border border-white/5 flex items-center justify-between gap-3.5 sm:gap-4 cursor-pointer group shadow-md"
-                  >
-                    {/* Thumbnail Container */}
-                    <div className="relative w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-xl overflow-hidden bg-[#18181c] border border-white/10 shrink-0 flex items-center justify-center shadow-md">
-                      {thumbnail ? (
-                        <img
-                          src={thumbnail}
-                          alt={call.title || 'Casting'}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-xl"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
-                            if (fallback) fallback.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      {/* Default Clapperboard Thumbnail Fallback */}
-                      <div
-                        className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c20] to-[#121214] p-2 text-center"
-                        style={{ display: thumbnail ? 'none' : 'flex' }}
-                      >
-                        <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white/70 fill-current drop-shadow-sm" viewBox="0 0 24 24">
-                          <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-200">
-                          {call.type || call.category || 'Audition'}
-                        </span>
-                        {call.deadline && (
-                          <span className="text-[10px] font-medium text-amber-400">
-                            • Deadline: {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                          </span>
-                        )}
-                      </div>
-                      <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
-                        {call.title || call.project || 'Untitled Casting Call'}
-                      </h4>
-                      <p className="text-xs text-gray-400 truncate flex items-center gap-1 font-medium">
-                        <span>{call.company || call.director || 'Production'}</span>
-                        <span>•</span>
-                        <span>{call.location || 'Nepal'}</span>
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-xs font-bold text-[#1d61f2] group-hover:text-cyan-300 transition-colors flex items-center gap-0.5">
-                      Apply &gt;
+                  <div className="relative z-10 pt-2 flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-500 to-blue-600 group-hover:from-cyan-400 group-hover:to-blue-500 text-black font-extrabold px-3 py-1 rounded-lg text-[10px] sm:text-xs transition-all shadow-md shadow-cyan-500/20">
+                      <span>{ad.ctaText}</span>
+                      <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     </span>
                   </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-5 bg-[#141416] rounded-xl border border-white/5">
-                <p className="text-gray-400 text-xs mb-2">No active casting calls at the moment</p>
-                <button
-                  onClick={() => onNavigate('casting-create')}
-                  className="text-xs bg-[#1d61f2] hover:bg-blue-600 text-white font-bold px-3 py-1.5 rounded-md transition-colors shadow-sm"
-                >
-                  + Post a Casting Call
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* ================= TRENDING TALENTS SECTION ================= */}
-        <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-          <div className="flex items-center justify-between mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
-              <Flame className="w-3.5 h-3.5 text-amber-300 fill-amber-300/40" />
-              Trending talents
-            </span>
-            <button
-              onClick={() => onNavigate('trending')}
-              className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
-            >
-              <span>View all</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-
-          {/* Ranked Trending List Container */}
-          <div className="space-y-2.5 pt-1">
-            {!talentsReceived ? (
-              [1, 2, 3, 4, 5].map((num) => (
-                <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
-                  <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
-                    {num}
-                  </span>
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 shrink-0 animate-pulse" />
-                  <div className="flex-1 space-y-2">
-                    <div className="w-full h-2.5 bg-white/10 rounded-full animate-pulse" />
-                    <div className="w-3/4 h-2 bg-white/10 rounded-full animate-pulse" />
-                  </div>
                 </div>
-              ))
-            ) : trendingTalents.length > 0 ? (
-              trendingTalents.slice(0, 5).map((talent, idx) => (
-                <div
-                  key={talent.id || idx}
-                  onClick={() => onNavigate('profile', talent.id)}
-                  className="flex items-center gap-3 sm:gap-4 py-1 cursor-pointer group"
-                >
-                  {/* Rank Number with podium colors */}
-                  <span className={`text-xl sm:text-2xl font-black w-5 text-center shrink-0 ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-gray-300' : idx === 2 ? 'text-amber-600' : 'text-white'}`}>
-                    {idx + 1}
-                  </span>
+              ))}
+            </div>
+          </section>
 
-                  {/* Circular Avatar */}
-                  <Avatar
-                    userId={talent.id}
-                    user={talent}
-                    size="none"
-                    name={talent.name}
-                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover shrink-0"
-                  />
+          {/* ================= FEATURED TALENTS SECTION ================= */}
+          <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+            <div className="flex items-center justify-between mb-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
+                <Crown className="w-3.5 h-3.5 text-amber-300 fill-amber-300 drop-shadow-sm" />
+                Featured talents
+              </span>
+              <button
+                onClick={() => onNavigate('listing')}
+                className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+              >
+                <span>View all talents</span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
 
-                  {/* Metadata Lines & Talent Details */}
-                  <div className="flex-1 min-w-0 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm sm:text-base font-bold text-white truncate group-hover:text-cyan-300 transition-colors">
-                        {talent.name}
-                      </p>
-                      <span className="text-xs text-[#1d61f2] font-semibold shrink-0">
-                        {getTalentRoleAndAge(talent)}
-                      </span>
+            {/* Horizontal Scroll Carousel */}
+            <div
+              ref={actorsScrollRef}
+              className="flex gap-2.5 sm:gap-3 overflow-x-auto pt-0.5 pb-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+            >
+              {!talentsReceived ? (
+                <AvatarScrollSkeleton count={4} />
+              ) : displayFeaturedList.length > 0 ? (
+                displayFeaturedList.map((talent) => (
+                  <div
+                    key={talent.id}
+                    onClick={() => onNavigate('profile', talent.id)}
+                    className="flex flex-col items-center shrink-0 w-[100px] sm:w-[125px] cursor-pointer group"
+                  >
+                    <Avatar
+                      userId={talent.id || talent.uid}
+                      user={talent}
+                      size="none"
+                      name={talent.name}
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-md transition-all duration-300"
+                    />
+                    <p className="text-white font-bold text-[11px] sm:text-xs text-center mt-1.5 truncate w-full px-0.5">
+                      {formatTalentName(talent.name)}
+                    </p>
+                    <p className="text-[#1d61f2] font-semibold text-[10px] sm:text-[11px] text-center mt-0.5 truncate w-full px-0.5">
+                      {getTalentRoleAndAge(talent)}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-400 text-xs py-4">No talents found</div>
+              )}
+            </div>
+          </section>
+
+          {/* ================= TALENTS BY CATEGORY SECTION ================= */}
+          <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+            <div className="flex items-center justify-between mb-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
+                <LayoutGrid className="w-3.5 h-3.5 text-white" />
+                Talents by category
+              </span>
+              <button
+                onClick={() => onNavigate('discover')}
+                className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+              >
+                <span>View all</span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+
+            {/* 3-Column Grid showing the top 3 Category Cards */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              {HOME_CATEGORY_CARDS.slice(0, 3).map((cat) => {
+                const count = getCategoryCount(cat.filter);
+                return (
+                  <motion.div
+                    key={cat.id}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => onNavigate('talents', cat.filter)}
+                    style={{ backgroundColor: cat.bgColor }}
+                    className="rounded-xl p-3 sm:p-4 aspect-square flex flex-col items-center justify-center text-center cursor-pointer shadow transition-transform border border-black/5"
+                  >
+                    <CategoryCardIcon type={cat.iconType} className="w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 text-black fill-current mb-1 sm:mb-1.5" />
+                    <span className="text-black font-extrabold text-xs sm:text-sm leading-tight whitespace-pre-line mt-0.5">
+                      {cat.label}
+                    </span>
+                    <span className="text-black/70 font-medium text-[10px] sm:text-xs mt-1">
+                      ({count} {count === 1 ? 'talent' : 'talents'})
+                    </span>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* ================= NEW BORN TALENTS SECTION ================= */}
+          <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+            <div className="flex items-center justify-between mb-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
+                <Sprout className="w-3.5 h-3.5 text-emerald-300 drop-shadow-sm" />
+                New born talents
+              </span>
+              <button
+                onClick={() => onNavigate('listing')}
+                className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+              >
+                <span>View all</span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+
+            {/* Ranked Card List Container */}
+            <div className="space-y-2.5 pt-1">
+              {!talentsReceived ? (
+                [1, 2, 3, 4, 5].map((num) => (
+                  <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
+                    <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
+                      {num}
+                    </span>
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 shrink-0 animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="w-full h-2.5 bg-white/10 rounded-full animate-pulse" />
+                      <div className="w-3/4 h-2 bg-white/10 rounded-full animate-pulse" />
                     </div>
+                  </div>
+                ))
+              ) : newBornTalents.length > 0 ? (
+                newBornTalents.slice(0, 5).map((talent, idx) => (
+                  <div
+                    key={talent.id || idx}
+                    onClick={() => onNavigate('profile', talent.id)}
+                    className="flex items-center gap-3 sm:gap-4 py-1 cursor-pointer group"
+                  >
+                    {/* Rank Number */}
+                    <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
+                      {idx + 1}
+                    </span>
 
-                    {/* Username & Location / Followers */}
-                    <div className="flex items-center justify-between text-xs text-gray-400">
-                      <p className="truncate">
+                    {/* Circular Avatar */}
+                    <Avatar
+                      userId={talent.id}
+                      user={talent}
+                      size="none"
+                      name={talent.name}
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover shrink-0"
+                    />
+
+                    {/* Metadata Lines & Talent Details */}
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm sm:text-base font-bold text-white truncate group-hover:text-[#38bdf8] transition-colors">
+                          {talent.name}
+                        </p>
+                        <span className="text-xs text-[#1d61f2] font-semibold shrink-0">
+                          {getTalentRoleAndAge(talent)}
+                        </span>
+                      </div>
+
+                      {/* Username & Location */}
+                      <p className="text-xs text-gray-400 truncate">
                         @{talent.username || talent.name?.toLowerCase().replace(/\s+/g, '')}
                       </p>
-                      <span className="text-gray-400 font-medium text-[11px] shrink-0">
-                        {getTalentFollowersCount(talent)} {getTalentFollowersCount(talent) === 1 ? 'follower' : 'followers'}
+                      {formatTalentLocation(talent) && (
+                        <p className="text-xs text-gray-500 truncate flex items-center gap-1">
+                          <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                          {formatTalentLocation(talent)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-400 text-xs py-4 text-center">No talents found</div>
+              )}
+            </div>
+          </section>
+
+          {/* ================= CASTING CALLS SECTION ================= */}
+          <section className="my-1.5 px-2 sm:px-3 text-white">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
+                <Clapperboard className="w-3.5 h-3.5 text-white" />
+                Casting calls
+              </span>
+              <button
+                onClick={() => onNavigate('casting')}
+                className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+              >
+                <span>View all</span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 pt-1">
+              {activeCastingCalls.length > 0 ? (
+                activeCastingCalls.slice(0, 3).map((call) => {
+                  const thumbnail = getCastingThumbnail(call);
+                  return (
+                    <div
+                      key={call.id}
+                      onClick={() => onNavigate('casting-detail', call.id)}
+                      className="p-3 bg-[#141416] hover:bg-[#1c1c20] transition-all rounded-xl border border-white/5 flex items-center justify-between gap-3.5 sm:gap-4 cursor-pointer group shadow-md"
+                    >
+                      {/* Thumbnail Container */}
+                      <div className="relative w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-xl overflow-hidden bg-[#18181c] border border-white/10 shrink-0 flex items-center justify-center shadow-md">
+                        {thumbnail ? (
+                          <img
+                            src={thumbnail}
+                            alt={call.title || 'Casting'}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-xl"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        {/* Default Clapperboard Thumbnail Fallback */}
+                        <div
+                          className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c20] to-[#121214] p-2 text-center"
+                          style={{ display: thumbnail ? 'none' : 'flex' }}
+                        >
+                          <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white/70 fill-current drop-shadow-sm" viewBox="0 0 24 24">
+                            <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-200">
+                            {call.type || call.category || 'Audition'}
+                          </span>
+                          {call.deadline && (
+                            <span className="text-[10px] font-medium text-amber-400">
+                              • Deadline: {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
+                          {call.title || call.project || 'Untitled Casting Call'}
+                        </h4>
+                        <p className="text-xs text-gray-400 truncate flex items-center gap-1 font-medium">
+                          <span>{call.company || call.director || 'Production'}</span>
+                          <span>•</span>
+                          <span>{call.location || 'Nepal'}</span>
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-xs font-bold text-[#1d61f2] group-hover:text-cyan-300 transition-colors flex items-center gap-0.5">
+                        Apply &gt;
                       </span>
                     </div>
-                    {formatTalentLocation(talent) && (
-                      <p className="text-xs text-gray-500 truncate flex items-center gap-1">
-                        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                        </svg>
-                        {formatTalentLocation(talent)}
-                      </p>
-                    )}
-                  </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-5 bg-[#141416] rounded-xl border border-white/5">
+                  <p className="text-gray-400 text-xs mb-2">No active casting calls at the moment</p>
+                  <button
+                    onClick={() => onNavigate('casting-create')}
+                    className="text-xs bg-[#1d61f2] hover:bg-blue-600 text-white font-bold px-3 py-1.5 rounded-md transition-colors shadow-sm"
+                  >
+                    + Post a Casting Call
+                  </button>
                 </div>
-              ))
-            ) : (
-              <div className="text-gray-400 text-xs py-4 text-center">No trending talents found</div>
-            )}
-          </div>
-        </section>
+              )}
+            </div>
+          </section>
 
-        {/* ================= OUR GOALS SECTION ================= */}
-        <section className="my-2 mb-4 px-3 sm:px-4 text-white">
-          <h3 className="text-base sm:text-lg font-black text-white tracking-wide mb-3 text-center">
-            Our goals
-          </h3>
-          <ul className="space-y-2.5 text-xs sm:text-sm text-gray-300 leading-relaxed max-w-xl mx-auto font-medium">
-            <li className="flex items-start gap-2.5">
-              <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
-              <span>Connect Nepal&apos;s finest actors, directors, writers, and film technicians with leading casting agencies.</span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
-              <span>Provide a unified platform for talent discovery and casting opportunities across Nepal.</span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
-              <span>Empower emerging artists by giving them visibility to global production houses.</span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
-              <span>Simplify the casting process for producers, directors, and agencies.</span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
-              <span>Build a strong community that supports and grows Nepal&apos;s entertainment industry.</span>
-            </li>
-          </ul>
-        </section>
+          {/* ================= TRENDING TALENTS SECTION ================= */}
+          <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+            <div className="flex items-center justify-between mb-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
+                <Flame className="w-3.5 h-3.5 text-amber-300 fill-amber-300/40" />
+                Trending talents
+              </span>
+              <button
+                onClick={() => onNavigate('trending')}
+                className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+              >
+                <span>View all</span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+
+            {/* Ranked Trending List Container */}
+            <div className="space-y-2.5 pt-1">
+              {!talentsReceived ? (
+                [1, 2, 3, 4, 5].map((num) => (
+                  <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
+                    <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
+                      {num}
+                    </span>
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 shrink-0 animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="w-full h-2.5 bg-white/10 rounded-full animate-pulse" />
+                      <div className="w-3/4 h-2 bg-white/10 rounded-full animate-pulse" />
+                    </div>
+                  </div>
+                ))
+              ) : trendingTalents.length > 0 ? (
+                trendingTalents.slice(0, 5).map((talent, idx) => (
+                  <div
+                    key={talent.id || idx}
+                    onClick={() => onNavigate('profile', talent.id)}
+                    className="flex items-center gap-3 sm:gap-4 py-1 cursor-pointer group"
+                  >
+                    {/* Rank Number with podium colors */}
+                    <span className={`text-xl sm:text-2xl font-black w-5 text-center shrink-0 ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-gray-300' : idx === 2 ? 'text-amber-600' : 'text-white'}`}>
+                      {idx + 1}
+                    </span>
+
+                    {/* Circular Avatar */}
+                    <Avatar
+                      userId={talent.id}
+                      user={talent}
+                      size="none"
+                      name={talent.name}
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover shrink-0"
+                    />
+
+                    {/* Metadata Lines & Talent Details */}
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm sm:text-base font-bold text-white truncate group-hover:text-cyan-300 transition-colors">
+                          {talent.name}
+                        </p>
+                        <span className="text-xs text-[#1d61f2] font-semibold shrink-0">
+                          {getTalentRoleAndAge(talent)}
+                        </span>
+                      </div>
+
+                      {/* Username & Location / Followers */}
+                      <div className="flex items-center justify-between text-xs text-gray-400">
+                        <p className="truncate">
+                          @{talent.username || talent.name?.toLowerCase().replace(/\s+/g, '')}
+                        </p>
+                        <span className="text-gray-400 font-medium text-[11px] shrink-0">
+                          {getTalentFollowersCount(talent)} {getTalentFollowersCount(talent) === 1 ? 'follower' : 'followers'}
+                        </span>
+                      </div>
+                      {formatTalentLocation(talent) && (
+                        <p className="text-xs text-gray-500 truncate flex items-center gap-1">
+                          <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                          {formatTalentLocation(talent)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-400 text-xs py-4 text-center">No trending talents found</div>
+              )}
+            </div>
+          </section>
+
+          {/* ================= OUR GOALS SECTION ================= */}
+          <section className="my-2 mb-4 px-3 sm:px-4 text-white">
+            <h3 className="text-base sm:text-lg font-black text-white tracking-wide mb-3 text-center">
+              Our goals
+            </h3>
+            <ul className="space-y-2.5 text-xs sm:text-sm text-gray-300 leading-relaxed max-w-xl mx-auto font-medium">
+              <li className="flex items-start gap-2.5">
+                <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
+                <span>Connect Nepal&apos;s finest actors, directors, writers, and film technicians with leading casting agencies.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
+                <span>Provide a unified platform for talent discovery and casting opportunities across Nepal.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
+                <span>Empower emerging artists by giving them visibility to global production houses.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
+                <span>Simplify the casting process for producers, directors, and agencies.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="text-[#1d61f2] font-black text-base leading-none mt-0.5">•</span>
+                <span>Build a strong community that supports and grows Nepal&apos;s entertainment industry.</span>
+              </li>
+            </ul>
+          </section>
         </div>
       </div>
     </Desktop3ColumnLayout>
