@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useProfile } from './hooks/useProfile';
 import SEO from '../../components/SEO';
 import ProfileHeader from './components/ProfileHeader';
@@ -8,6 +8,7 @@ import FollowModal from './components/FollowModal';
 import { doc, setDoc, query, collection, where, getDocs, serverTimestamp, documentId } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
+import { AuthService } from '../../services/AuthService';
 import { updateProfileData, uploadProfileMedia } from '../../services';
 import {
   Pencil,
@@ -18,13 +19,15 @@ import {
   Mail,
   MapPin,
   Eye,
-  UserCheck,
-  CreditCard,
   Briefcase,
   Play,
   UserPlus,
   Check,
   MessageSquare,
+  X,
+  Loader2,
+  Video,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 interface ProfilePageProps {
@@ -35,6 +38,23 @@ interface ProfilePageProps {
   showAlert: (message: string, type?: any, detail?: string, action?: any) => void;
   initialTab?: string;
 }
+
+const PRESET_SKILLS = [
+  'Acting',
+  'Voice Over',
+  'Dance',
+  'Modeling',
+  'Body Language',
+  'Improvisation',
+  'Script Reading',
+  'Theater',
+  'Singing',
+  'Stunt',
+  'Hosting',
+  'Fight Choreography',
+  'Directing',
+  'Screenwriting',
+];
 
 export default function ProfilePage({
   onNavigate,
@@ -61,14 +81,39 @@ export default function ProfilePage({
   const [showFollowModal, setShowFollowModal] = useState<'followers' | 'following' | 'projects' | null>(null);
   const [followList, setFollowList] = useState<any[]>([]);
   const [loadingFollowList, setLoadingFollowList] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
-  const [copiedEmail, setCopiedEmail] = useState(false);
-  const [copiedPhone, setCopiedPhone] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+  // Direct Interactive Modals
+  const [showSkillsModal, setShowSkillsModal] = useState(false);
+  const [editingSkills, setEditingSkills] = useState<string[]>([]);
+  const [customSkillInput, setCustomSkillInput] = useState('');
+  const [isSavingSkills, setIsSavingSkills] = useState(false);
+
+  const [showExperienceModal, setShowExperienceModal] = useState(false);
+  const [expTitle, setExpTitle] = useState('');
+  const [expCompany, setExpCompany] = useState('');
+  const [expYear, setExpYear] = useState('');
+  const [expDesc, setExpDesc] = useState('');
+  const [isSavingExp, setIsSavingExp] = useState(false);
+
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [bioInput, setBioInput] = useState('');
+  const [isSavingBio, setIsSavingBio] = useState(false);
+
+  const [showAttributesModal, setShowAttributesModal] = useState(false);
+  const [heightInput, setHeightInput] = useState('');
+  const [weightInput, setWeightInput] = useState('');
+  const [phoneInput, setPhoneInput] = useState('');
+  const [emailInput, setEmailInput] = useState('');
+  const [isSavingAttributes, setIsSavingAttributes] = useState(false);
+
+  const [showMediaModal, setShowMediaModal] = useState(false);
+
+  const activeUserId = CurrentUser.id || AuthService.getUserId() || user?.uid || profile?.uid;
 
   const isRealOwn =
     isOwnProfile ||
-    Boolean(CurrentUser.id && (profile?.uid === CurrentUser.id || (profile as any)?.id === CurrentUser.id));
+    Boolean(activeUserId && (profile?.uid === activeUserId || (profile as any)?.id === activeUserId));
 
   const handleFollowModalClose = () => {
     setShowFollowModal(null);
@@ -173,14 +218,14 @@ export default function ProfilePage({
   };
 
   const handleUploadMedia = async (files: FileList) => {
-    const activeUid = CurrentUser.id || user?.uid || profile?.uid;
-    if (!activeUid) return;
+    const uidToUse = profile?.uid || activeUserId || user?.uid;
+    if (!uidToUse) return;
     const newUrls: string[] = [];
     let failedCount = 0;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
-        const url = await uploadProfileMedia(activeUid, file);
+        const url = await uploadProfileMedia(uidToUse, file);
         if (url) {
           newUrls.push(url);
         } else {
@@ -195,30 +240,31 @@ export default function ProfilePage({
       const currentMedia = Array.isArray(profile?.media) ? profile.media : [];
       const updatedMedia = [...currentMedia, ...newUrls];
       setProfile((prev: any) => (prev ? { ...prev, media: updatedMedia } : prev));
-      await updateProfileData(activeUid, { media: updatedMedia });
+      await updateProfileData(uidToUse, { media: updatedMedia });
+      showAlert('Photos Uploaded', 'success');
     } else if (failedCount > 0) {
-      showAlert('Upload Failed', 'error', 'Failed to upload photo(s). Please check your file size or network connection.');
+      showAlert('Upload Failed', 'error', 'Failed to upload photo(s).');
     }
   };
 
   const handleDeleteMedia = async (src: string) => {
-    const activeUid = CurrentUser.id || user?.uid || profile?.uid;
-    if (!activeUid || !profile) return;
+    const uidToUse = profile?.uid || activeUserId || user?.uid;
+    if (!uidToUse || !profile) return;
     try {
       const currentMedia = Array.isArray(profile.media) ? profile.media : [];
       const updatedMedia = currentMedia.filter((item) => item !== src);
       setProfile((prev: any) => (prev ? { ...prev, media: updatedMedia } : prev));
-      await updateProfileData(activeUid, { media: updatedMedia });
+      await updateProfileData(uidToUse, { media: updatedMedia });
     } catch (err) {
       console.error(err);
     }
   };
 
   const handleUploadIntroVideo = async (file: File) => {
-    const activeUid = CurrentUser.id || user?.uid || profile?.uid;
-    if (!activeUid) return;
+    const uidToUse = profile?.uid || activeUserId || user?.uid;
+    if (!uidToUse) return;
     try {
-      const url = await uploadProfileMedia(activeUid, file);
+      const url = await uploadProfileMedia(uidToUse, file);
       if (url) {
         setProfile((prev: any) =>
           prev
@@ -231,14 +277,15 @@ export default function ProfilePage({
               }
             : prev
         );
-        await updateProfileData(activeUid, {
+        await updateProfileData(uidToUse, {
           introVideo: url,
           introVideoUrl: url,
           showreel: url,
           showreelUrl: url,
         });
+        showAlert('Video Uploaded', 'success');
       } else {
-        showAlert('Upload Failed', 'error', 'Failed to upload intro video.');
+        showAlert('Upload Failed', 'error', 'Failed to upload video.');
       }
     } catch (err) {
       console.error('Video upload error:', err);
@@ -247,8 +294,8 @@ export default function ProfilePage({
   };
 
   const handleDeleteIntroVideo = async () => {
-    const activeUid = CurrentUser.id || user?.uid || profile?.uid;
-    if (!activeUid) return;
+    const uidToUse = profile?.uid || activeUserId || user?.uid;
+    if (!uidToUse) return;
     try {
       setProfile((prev: any) =>
         prev
@@ -261,7 +308,7 @@ export default function ProfilePage({
             }
           : prev
       );
-      await updateProfileData(activeUid, {
+      await updateProfileData(uidToUse, {
         introVideo: null,
         introVideoUrl: null,
         showreel: null,
@@ -269,6 +316,107 @@ export default function ProfilePage({
       });
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  // 1. Direct Save Skills
+  const handleSaveSkills = async () => {
+    const uidToUse = profile?.uid || activeUserId || user?.uid;
+    if (!uidToUse) return;
+    setIsSavingSkills(true);
+    try {
+      setProfile((prev: any) => (prev ? { ...prev, skills: editingSkills } : prev));
+      await updateProfileData(uidToUse, { skills: editingSkills });
+      showAlert('Skills Updated', 'success');
+      setShowSkillsModal(false);
+    } catch (err: any) {
+      showAlert('Failed to update skills', 'error', err.message);
+    } finally {
+      setIsSavingSkills(false);
+    }
+  };
+
+  const toggleSkillTag = (skill: string) => {
+    setEditingSkills((prev) =>
+      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
+    );
+  };
+
+  const addCustomSkill = () => {
+    const trimmed = customSkillInput.trim();
+    if (trimmed && !editingSkills.includes(trimmed)) {
+      setEditingSkills((prev) => [...prev, trimmed]);
+      setCustomSkillInput('');
+    }
+  };
+
+  // 2. Direct Save Experience
+  const handleSaveExperience = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const uidToUse = profile?.uid || activeUserId || user?.uid;
+    if (!uidToUse || !expTitle.trim()) return;
+    setIsSavingExp(true);
+    try {
+      const currentList = Array.isArray(profile?.experience) ? profile.experience : [];
+      const newExp = {
+        title: expTitle.trim(),
+        company: expCompany.trim(),
+        year: expYear.trim(),
+        description: expDesc.trim(),
+      };
+      const updatedList = [newExp, ...currentList];
+      setProfile((prev: any) => (prev ? { ...prev, experience: updatedList } : prev));
+      await updateProfileData(uidToUse, { experience: updatedList });
+      showAlert('Experience Added', 'success');
+      setExpTitle('');
+      setExpCompany('');
+      setExpYear('');
+      setExpDesc('');
+      setShowExperienceModal(false);
+    } catch (err: any) {
+      showAlert('Failed to add experience', 'error', err.message);
+    } finally {
+      setIsSavingExp(false);
+    }
+  };
+
+  // 3. Direct Save Bio
+  const handleSaveBio = async () => {
+    const uidToUse = profile?.uid || activeUserId || user?.uid;
+    if (!uidToUse) return;
+    setIsSavingBio(true);
+    try {
+      setProfile((prev: any) => (prev ? { ...prev, bio: bioInput } : prev));
+      await updateProfileData(uidToUse, { bio: bioInput });
+      showAlert('Bio Updated', 'success');
+      setShowAboutModal(false);
+    } catch (err: any) {
+      showAlert('Failed to update bio', 'error', err.message);
+    } finally {
+      setIsSavingBio(false);
+    }
+  };
+
+  // 4. Direct Save Attributes (Height, Weight, Contacts)
+  const handleSaveAttributes = async () => {
+    const uidToUse = profile?.uid || activeUserId || user?.uid;
+    if (!uidToUse) return;
+    setIsSavingAttributes(true);
+    try {
+      const updatePayload: Record<string, any> = {};
+      if (heightInput !== undefined) updatePayload.height = heightInput;
+      if (weightInput !== undefined) updatePayload.weight = weightInput;
+      if (phoneInput !== undefined) updatePayload.phone = phoneInput;
+      if (emailInput !== undefined) updatePayload.email = emailInput;
+
+      setProfile((prev: any) => (prev ? { ...prev, ...updatePayload } : prev));
+      await updateProfileData(uidToUse, updatePayload);
+      showAlert('Profile Info Updated', 'success');
+      setShowAttributesModal(false);
+    } catch (err: any) {
+      showAlert('Failed to update info', 'error', err.message);
+    } finally {
+      setIsSavingAttributes(false);
     }
   };
 
@@ -302,7 +450,6 @@ export default function ProfilePage({
   const weight = profile.weight || (profile as any)?.weightInKg ? `${(profile as any).weightInKg} kg` : null;
   const contactPhone = profile.phone || (profile as any)?.phoneNumber || null;
   const contactEmail = profile.email || (profile as any)?.contactEmail || null;
-  const locationName = (profile.location || (profile as any)?.city || (profile as any)?.district || 'Kathmandu, Nepal').trim();
 
   const rawSkills: any = profile.skills;
   const skillsList: string[] = Array.isArray(rawSkills)
@@ -311,13 +458,6 @@ export default function ProfilePage({
     ? rawSkills.split(',').map((s: string) => s.trim()).filter(Boolean)
     : [];
 
-  const rawMedia: unknown = profile?.media;
-  const mediaList: string[] = Array.isArray(rawMedia)
-    ? rawMedia.map(String).filter((s) => s && s.trim() !== '')
-    : [];
-
-  const experiencesList = Array.isArray(profile?.experience) ? profile.experience : [];
-
   return (
     <div className="min-h-screen bg-[#06080C] pb-16 text-white font-sans">
       <SEO
@@ -325,6 +465,33 @@ export default function ProfilePage({
         description={profile.bio || `View ${profile.name || 'this talent'}'s portfolio, auditions, and experience on NepalCasts.`}
         image={profile.image || undefined}
         noindex={(profile as any).isPrivate === true}
+      />
+
+      {/* Hidden file inputs for media uploads */}
+      <input
+        type="file"
+        id="profile-direct-photo-upload"
+        multiple
+        accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif"
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            handleUploadMedia(e.target.files);
+            setShowMediaModal(false);
+          }
+        }}
+      />
+      <input
+        type="file"
+        id="profile-direct-video-upload"
+        accept="video/*,.mp4,.mov,.webm"
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) {
+            handleUploadIntroVideo(e.target.files[0]);
+            setShowMediaModal(false);
+          }
+        }}
       />
 
       {/* Full Screen Unified Profile Container */}
@@ -349,18 +516,25 @@ export default function ProfilePage({
             <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
               About
             </h3>
-            {isRealOwn && (
-              <button
-                onClick={() => onNavigate('/settings/profile')}
-                className="text-[#0088CC] hover:text-[#38c9ff] transition-colors p-1 cursor-pointer"
-                title="Edit About"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
-            )}
+            <button
+              onClick={() => {
+                setBioInput(profile.bio || '');
+                setShowAboutModal(true);
+              }}
+              className="text-[#0088CC] hover:text-[#38c9ff] transition-colors p-1 cursor-pointer"
+              title="Edit About"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
           </div>
 
-          <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-line">
+          <p
+            onClick={() => {
+              setBioInput(profile.bio || '');
+              setShowAboutModal(true);
+            }}
+            className="text-xs text-gray-300 leading-relaxed whitespace-pre-line cursor-pointer hover:text-white"
+          >
             {bio ? bio : (
               <span className="text-gray-500 italic">Add a short bio about yourself...</span>
             )}
@@ -378,14 +552,18 @@ export default function ProfilePage({
                 <span className={height ? 'text-gray-300 font-medium' : 'text-gray-500'}>
                   {height ? height : 'Not added'}
                 </span>
-                {isRealOwn && (
-                  <button
-                    onClick={() => onNavigate('/settings/profile')}
-                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
-                  >
-                    {height ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    setHeightInput(profile.height || '');
+                    setWeightInput(profile.weight || '');
+                    setPhoneInput(profile.phone || '');
+                    setEmailInput(profile.email || '');
+                    setShowAttributesModal(true);
+                  }}
+                  className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
+                >
+                  {height ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+                </button>
               </div>
             </div>
 
@@ -399,14 +577,18 @@ export default function ProfilePage({
                 <span className={weight ? 'text-gray-300 font-medium' : 'text-gray-500'}>
                   {weight ? weight : 'Not added'}
                 </span>
-                {isRealOwn && (
-                  <button
-                    onClick={() => onNavigate('/settings/profile')}
-                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
-                  >
-                    {weight ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    setHeightInput(profile.height || '');
+                    setWeightInput(profile.weight || '');
+                    setPhoneInput(profile.phone || '');
+                    setEmailInput(profile.email || '');
+                    setShowAttributesModal(true);
+                  }}
+                  className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
+                >
+                  {weight ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+                </button>
               </div>
             </div>
 
@@ -435,14 +617,18 @@ export default function ProfilePage({
                 ) : (
                   <span className="text-gray-500">Not added</span>
                 )}
-                {isRealOwn && (
-                  <button
-                    onClick={() => onNavigate('/settings/profile')}
-                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer pt-0.5"
-                  >
-                    {contactPhone || contactEmail ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    setHeightInput(profile.height || '');
+                    setWeightInput(profile.weight || '');
+                    setPhoneInput(profile.phone || '');
+                    setEmailInput(profile.email || '');
+                    setShowAttributesModal(true);
+                  }}
+                  className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer pt-0.5"
+                >
+                  {contactPhone || contactEmail ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+                </button>
               </div>
             </div>
           </div>
@@ -457,7 +643,7 @@ export default function ProfilePage({
             onDeleteMedia={handleDeleteMedia}
             onUploadIntroVideo={handleUploadIntroVideo}
             onDeleteIntroVideo={handleDeleteIntroVideo}
-            onNavigate={onNavigate}
+            onNavigate={() => setShowMediaModal(true)}
           />
         </section>
 
@@ -467,7 +653,7 @@ export default function ProfilePage({
             profile={profile}
             isOwnProfile={isRealOwn}
             showAlert={showAlert}
-            onNavigate={onNavigate}
+            onNavigate={() => setShowExperienceModal(true)}
           />
         </section>
 
@@ -477,14 +663,15 @@ export default function ProfilePage({
             <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
               Skills
             </h3>
-            {isRealOwn && (
-              <button
-                onClick={() => onNavigate('/settings/skills')}
-                className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer"
-              >
-                {skillsList.length > 0 ? 'Edit' : '+ Add Skills'}
-              </button>
-            )}
+            <button
+              onClick={() => {
+                setEditingSkills(skillsList);
+                setShowSkillsModal(true);
+              }}
+              className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer"
+            >
+              {skillsList.length > 0 ? 'Edit' : '+ Add Skills'}
+            </button>
           </div>
 
           {skillsList.length > 0 ? (
@@ -500,7 +687,10 @@ export default function ProfilePage({
             </div>
           ) : (
             <div
-              onClick={() => isRealOwn && onNavigate('/settings/skills')}
+              onClick={() => {
+                setEditingSkills(skillsList);
+                setShowSkillsModal(true);
+              }}
               className="border border-dashed border-[#172033] bg-[#0D121D] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#0088CC]/50 transition-colors group"
             >
               <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#0088CC] mb-1" />
@@ -512,15 +702,13 @@ export default function ProfilePage({
           )}
         </section>
 
-
-
-        {/* 7. Bottom Action Bar */}
+        {/* 6. Bottom Action Bar */}
         <section className="pt-3">
           {isRealOwn && !isPreviewMode ? (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => onNavigate('/settings/profile')}
-                className="flex-1 py-3 px-5 rounded-2xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/30"
+                className="flex-1 py-3.5 px-5 rounded-2xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/30"
               >
                 <Pencil className="w-4 h-4" />
                 <span>Update Profile</span>
@@ -530,7 +718,7 @@ export default function ProfilePage({
                   setIsPreviewMode(true);
                   showAlert('Preview Mode', 'info', 'Viewing your profile as seen by casting directors.');
                 }}
-                className="flex-1 py-3 px-5 rounded-2xl bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                className="flex-1 py-3.5 px-5 rounded-2xl bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
               >
                 <Eye className="w-4 h-4" />
                 <span>Preview Profile</span>
@@ -561,77 +749,399 @@ export default function ProfilePage({
         </section>
       </div>
 
-      {/* Contact Info Modal */}
-      {showContactModal && (
+      {/* MODAL 1: ADD / EDIT SKILLS */}
+      {showSkillsModal && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={() => setShowContactModal(false)}
+          onClick={() => setShowSkillsModal(false)}
+        >
+          <div
+            className="bg-[#0A0D14] border border-[#1E2638] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">Edit Skills</h3>
+              <button
+                onClick={() => setShowSkillsModal(false)}
+                className="text-gray-400 hover:text-white text-sm cursor-pointer p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-400">
+              Tap skill tags to select or type your custom skill below.
+            </p>
+
+            {/* Presets */}
+            <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
+              {PRESET_SKILLS.map((skill) => {
+                const isSelected = editingSkills.includes(skill);
+                return (
+                  <button
+                    key={skill}
+                    type="button"
+                    onClick={() => toggleSkillTag(skill)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#0088CC] text-white shadow-md'
+                        : 'bg-[#111622] text-gray-300 border border-[#1E2638] hover:border-gray-500'
+                    }`}
+                  >
+                    {isSelected ? `✓ ${skill}` : `+ ${skill}`}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom Skill Input */}
+            <div className="flex gap-2 pt-2">
+              <input
+                type="text"
+                placeholder="Add other skill (e.g. Martial Arts)"
+                value={customSkillInput}
+                onChange={(e) => setCustomSkillInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addCustomSkill();
+                  }
+                }}
+                className="flex-1 bg-[#111622] border border-[#1E2638] rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+              />
+              <button
+                type="button"
+                onClick={addCustomSkill}
+                className="px-3.5 py-2 bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white text-xs font-bold rounded-xl cursor-pointer"
+              >
+                Add
+              </button>
+            </div>
+
+            {/* Save Buttons */}
+            <div className="flex justify-end gap-2 pt-3">
+              <button
+                type="button"
+                onClick={() => setShowSkillsModal(false)}
+                className="px-4 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveSkills}
+                disabled={isSavingSkills}
+                className="px-6 py-2 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isSavingSkills ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                <span>Save Skills</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: ADD EXPERIENCE */}
+      {showExperienceModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowExperienceModal(false)}
+        >
+          <div
+            className="bg-[#0A0D14] border border-[#1E2638] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">Add Work Experience</h3>
+              <button
+                onClick={() => setShowExperienceModal(false)}
+                className="text-gray-400 hover:text-white text-sm cursor-pointer p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveExperience} className="space-y-3">
+              <div>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
+                  Role / Title *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Lead Actor, Supporting Actor, Model"
+                  value={expTitle}
+                  onChange={(e) => setExpTitle(e.target.value)}
+                  required
+                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
+                  Production / Project / Company
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Maya Short Film, Ek Din Web Series"
+                  value={expCompany}
+                  onChange={(e) => setExpCompany(e.target.value)}
+                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
+                  Year / Timeline
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 2024 or 2021 - 2023"
+                  value={expYear}
+                  onChange={(e) => setExpYear(e.target.value)}
+                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
+                  Description (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Brief details about your role..."
+                  value={expDesc}
+                  onChange={(e) => setExpDesc(e.target.value)}
+                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowExperienceModal(false)}
+                  className="px-4 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingExp}
+                  className="px-6 py-2 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {isSavingExp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>Save Experience</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: ADD MEDIA QUICK PICKER */}
+      {showMediaModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowMediaModal(false)}
         >
           <div
             className="bg-[#0A0D14] border border-[#1E2638] rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-fade-in text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white">
-                Contact {profile.name || 'Talent'}
-              </h3>
+              <h3 className="text-base font-bold text-white">Add Portfolio Media</h3>
               <button
-                onClick={() => setShowContactModal(false)}
-                className="text-gray-400 hover:text-white text-sm cursor-pointer"
+                onClick={() => setShowMediaModal(false)}
+                className="text-gray-400 hover:text-white text-sm cursor-pointer p-1"
               >
-                ✕
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById('profile-direct-photo-upload')?.click();
+                }}
+                className="w-full p-4 rounded-xl bg-[#111622] hover:bg-[#161D2B] border border-[#1E2638] flex items-center gap-3.5 text-left transition-all cursor-pointer group"
+              >
+                <div className="w-10 h-10 rounded-lg bg-[#0088CC]/10 text-[#0088CC] flex items-center justify-center shrink-0">
+                  <ImageIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-sm font-bold text-white block group-hover:text-[#0088CC] transition-colors">
+                    Upload Photos
+                  </span>
+                  <span className="text-[11px] text-gray-400 block">
+                    JPG, PNG, WebP portfolio shots
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById('profile-direct-video-upload')?.click();
+                }}
+                className="w-full p-4 rounded-xl bg-[#111622] hover:bg-[#161D2B] border border-[#1E2638] flex items-center gap-3.5 text-left transition-all cursor-pointer group"
+              >
+                <div className="w-10 h-10 rounded-lg bg-[#0088CC]/10 text-[#0088CC] flex items-center justify-center shrink-0">
+                  <Video className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-sm font-bold text-white block group-hover:text-[#0088CC] transition-colors">
+                    Upload Intro Video
+                  </span>
+                  <span className="text-[11px] text-gray-400 block">
+                    MP4, MOV audition showreel
+                  </span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: EDIT BIO */}
+      {showAboutModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowAboutModal(false)}
+        >
+          <div
+            className="bg-[#0A0D14] border border-[#1E2638] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">Edit Bio</h3>
+              <button
+                onClick={() => setShowAboutModal(false)}
+                className="text-gray-400 hover:text-white text-sm cursor-pointer p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <textarea
+              rows={4}
+              placeholder="Tell casting directors about your passion, training, and acting background..."
+              value={bioInput}
+              onChange={(e) => setBioInput(e.target.value)}
+              className="w-full bg-[#111622] border border-[#1E2638] rounded-xl p-3.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] resize-none leading-relaxed"
+            />
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAboutModal(false)}
+                className="px-4 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveBio}
+                disabled={isSavingBio}
+                className="px-6 py-2 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isSavingBio ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                <span>Save Bio</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 5: EDIT ATTRIBUTES (Height, Weight, Contacts) */}
+      {showAttributesModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowAttributesModal(false)}
+        >
+          <div
+            className="bg-[#0A0D14] border border-[#1E2638] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">Edit Physical & Contact Info</h3>
+              <button
+                onClick={() => setShowAttributesModal(false)}
+                className="text-gray-400 hover:text-white text-sm cursor-pointer p-1"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3">
-              {contactEmail && (
-                <div className="p-3 bg-[#111622] rounded-xl border border-[#1E2638] flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <span className="text-[10px] text-gray-400 uppercase font-mono block">Email</span>
-                    <span className="text-xs text-white font-medium truncate block">{contactEmail}</span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(contactEmail);
-                      setCopiedEmail(true);
-                      setTimeout(() => setCopiedEmail(false), 2000);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-[#0088CC] text-white text-xs font-bold shrink-0 cursor-pointer"
-                  >
-                    {copiedEmail ? 'Copied' : 'Copy'}
-                  </button>
-                </div>
-              )}
+              <div>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
+                  Height
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 5'10&quot; (178 cm)"
+                  value={heightInput}
+                  onChange={(e) => setHeightInput(e.target.value)}
+                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                />
+              </div>
 
-              {contactPhone && (
-                <div className="p-3 bg-[#111622] rounded-xl border border-[#1E2638] flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <span className="text-[10px] text-gray-400 uppercase font-mono block">Phone</span>
-                    <span className="text-xs text-white font-medium truncate block">{contactPhone}</span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(contactPhone);
-                      setCopiedPhone(true);
-                      setTimeout(() => setCopiedPhone(false), 2000);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-[#0088CC] text-white text-xs font-bold shrink-0 cursor-pointer"
-                  >
-                    {copiedPhone ? 'Copied' : 'Copy'}
-                  </button>
-                </div>
-              )}
+              <div>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
+                  Weight
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 68 kg"
+                  value={weightInput}
+                  onChange={(e) => setWeightInput(e.target.value)}
+                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. +977 9812345678"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
+                  Contact Email
+                </label>
+                <input
+                  type="email"
+                  placeholder="e.g. anil.timilsena@gmail.com"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                />
+              </div>
             </div>
 
-            <div className="pt-2">
+            <div className="flex justify-end gap-2 pt-2">
               <button
-                onClick={() => {
-                  setShowContactModal(false);
-                  onNavigate('messages', profile.uid || (profile as any).id);
-                }}
-                className="w-full py-2.5 rounded-xl bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white text-xs font-bold transition-all text-center cursor-pointer"
+                type="button"
+                onClick={() => setShowAttributesModal(false)}
+                className="px-4 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
               >
-                Send Direct Message &gt;
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAttributes}
+                disabled={isSavingAttributes}
+                className="px-6 py-2 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isSavingAttributes ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                <span>Save Info</span>
               </button>
             </div>
           </div>

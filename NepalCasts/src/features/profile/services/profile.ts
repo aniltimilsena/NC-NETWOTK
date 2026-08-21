@@ -44,10 +44,10 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
                 acc[k] = v;
             return acc;
         }, {} as ProfileData);
-        const { 
+        const {
             email, phone, password, passwordHash, passwordReset, fcmToken, fcmTokens,
             verified, isAdmin, status,
-            ...profileDataOnly 
+            ...profileDataOnly
         } = cleanData as any;
         const userRef = doc(db, COLLECTIONS.USERS, uid);
         const userUpdate: Record<string, any> = { updatedAt: serverTimestamp() };
