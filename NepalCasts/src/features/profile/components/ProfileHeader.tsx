@@ -94,10 +94,10 @@ export default function ProfileHeader({
   return (
     <div className="w-full px-0 pt-0 font-sans select-none">
       {/* Main Profile Header Card (Edge to Edge Full Screen) */}
-      <div className="w-full bg-[#FCFBF7] border-b border-[#EBE7DF] overflow-hidden shadow-sm">
+      <div className="w-full bg-[#121215] border-b border-white/10 overflow-hidden shadow-2xl">
         
         {/* Cover Photo Banner */}
-        <div className="relative h-52 sm:h-72 md:h-80 lg:h-96 w-full bg-[#EAE5DA] overflow-hidden group/cover">
+        <div className="relative h-52 sm:h-72 md:h-80 lg:h-96 w-full bg-[#18181D] overflow-hidden group/cover">
           {!coverLoaded && <div className="absolute inset-0 skeleton" />}
           <img
             ref={coverImgRef}
@@ -110,7 +110,7 @@ export default function ProfileHeader({
               coverLoaded ? 'opacity-95' : 'opacity-0'
             }`}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#121215] via-[#121215]/40 to-transparent" />
 
           {/* Top Back and Share Actions */}
           <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-20">
@@ -132,8 +132,8 @@ export default function ProfileHeader({
           </div>
         </div>
 
-        {/* Profile Info Details inside Cream Card */}
-        <div className="px-4 sm:px-8 pb-5 sm:pb-6 pt-0 relative bg-[#FCFBF7]">
+        {/* Profile Info Details inside Dark Card */}
+        <div className="px-4 sm:px-8 pb-5 sm:pb-6 pt-0 relative bg-[#121215]">
           
           {/* Main Info Row: Avatar + Name/Location on Left, Actions on Right */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -168,7 +168,7 @@ export default function ProfileHeader({
                     })
                   }
                   showAlert={showAlert}
-                  className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-0 shadow-xl overflow-hidden"
+                  className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-[#121215] bg-[#121215] shadow-2xl overflow-hidden"
                 />
               </div>
 
@@ -177,12 +177,12 @@ export default function ProfileHeader({
                 
                 {/* Full Name */}
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight truncate">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight truncate">
                     {name}
                   </h1>
                   {profile.verified === true && (
                     <span
-                      className="w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full bg-[#0088CC] inline-flex items-center justify-center text-white shrink-0"
+                      className="w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full bg-[#0088CC] inline-flex items-center justify-center text-white shrink-0 shadow-md"
                       title="Verified Professional Talent"
                     >
                       <svg className="w-3 h-3 text-white stroke-[3.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -193,35 +193,35 @@ export default function ProfileHeader({
                 </div>
 
                 {/* Role & Location */}
-                <p className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                  <span className="capitalize">{userRole}</span>
-                  <span className="text-gray-400">•</span>
-                  <span className="text-gray-600 flex items-center gap-1 font-normal truncate">
-                    <MapPin className="w-3.5 h-3.5 text-gray-600 shrink-0" />
+                <p className="text-xs sm:text-sm font-semibold text-gray-300 flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <span className="capitalize text-[#0088CC]">{userRole}</span>
+                  <span className="text-gray-500">•</span>
+                  <span className="text-gray-400 flex items-center gap-1 font-normal truncate">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                     <span className="truncate">{location}</span>
                   </span>
                 </p>
 
                 {/* Followers & Following Stats */}
-                <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-700 font-medium pt-1">
+                <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-300 font-medium pt-1">
                   <button
                     type="button"
                     onClick={() => onFollowClick?.('followers')}
                     className="hover:text-[#0088CC] transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    <span className="text-gray-900 font-extrabold text-sm sm:text-base">{followerCount ?? 0}</span>
-                    <span className="text-gray-500 font-medium">followers</span>
+                    <span className="text-white font-extrabold text-sm sm:text-base">{followerCount ?? 0}</span>
+                    <span className="text-gray-400 font-medium">followers</span>
                   </button>
 
-                  <span className="text-gray-400 font-bold">•</span>
+                  <span className="text-gray-600 font-bold">•</span>
 
                   <button
                     type="button"
                     onClick={() => onFollowClick?.('following')}
                     className="hover:text-[#0088CC] transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    <span className="text-gray-900 font-extrabold text-sm sm:text-base">{followingCount ?? 0}</span>
-                    <span className="text-gray-500 font-medium">following</span>
+                    <span className="text-white font-extrabold text-sm sm:text-base">{followingCount ?? 0}</span>
+                    <span className="text-gray-400 font-medium">following</span>
                   </button>
                 </div>
 
@@ -235,10 +235,10 @@ export default function ProfileHeader({
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <button
                     onClick={onFollowToggle}
-                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm ${
+                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-lg ${
                       isFollowing
-                        ? 'bg-[#EAE5DA] border border-[#DDD7CC] text-gray-900 hover:bg-[#E2DCCE]'
-                        : 'bg-[#0088CC] hover:bg-[#0077B3] text-white shadow-md'
+                        ? 'bg-white/10 border border-white/15 text-white hover:bg-white/15'
+                        : 'bg-[#0088CC] hover:bg-[#0077B3] text-white shadow-[#0088CC]/30'
                     }`}
                   >
                     {isFollowing ? <Check className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
@@ -247,7 +247,7 @@ export default function ProfileHeader({
 
                   <button
                     onClick={() => onNavigate('messages', profile.uid)}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#EAE5DA] border border-[#DDD7CC] hover:bg-[#E2DCCE] text-gray-900 text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 border border-white/15 hover:bg-white/15 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-md"
                   >
                     <MessageSquare className="w-3.5 h-3.5 text-[#0088CC]" />
                     <span>Message</span>
@@ -256,9 +256,9 @@ export default function ProfileHeader({
               ) : (
                 <button
                   onClick={() => onNavigate('/settings/profile')}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#EAE5DA] hover:bg-[#E2DCCE] text-gray-900 text-xs font-semibold border border-[#DDD7CC] transition-all active:scale-95 cursor-pointer shadow-sm"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold border border-white/15 transition-all active:scale-95 cursor-pointer shadow-md"
                 >
-                  <Pencil className="w-3.5 h-3.5 text-gray-800" />
+                  <Pencil className="w-3.5 h-3.5 text-gray-300" />
                   <span>Edit profile</span>
                 </button>
               )}
@@ -268,9 +268,9 @@ export default function ProfileHeader({
 
           {/* Open to Work Tag */}
           {profile.openToWork && (
-            <div className="mt-3 pt-2.5 border-t border-black/5 flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+            <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-[11px] font-bold border border-emerald-500/20 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>Open to Castings &amp; Projects</span>
               </span>
             </div>

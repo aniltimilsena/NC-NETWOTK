@@ -91,7 +91,7 @@ export default function ProfileMedia({
   }, [lightboxIndex, media.length]);
 
   return (
-    <div className="w-full py-1.5 px-0 space-y-1.5 font-sans text-left">
+    <div className="w-full py-0 px-0 space-y-2.5 font-sans text-left">
       {isOwnProfile && (
         <>
           <input
@@ -113,16 +113,16 @@ export default function ProfileMedia({
       )}
 
       {/* 1. Intro Video Section */}
-      <section className="bg-[#FCFBF7] rounded-xl border border-[#EBE7DF] p-3 sm:p-3.5 flex flex-col gap-2 shadow-sm">
+      <section className="bg-[#121215] rounded-2xl border border-white/10 p-3.5 sm:p-4 flex flex-col gap-2.5 shadow-xl">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-gray-900 tracking-wider uppercase font-mono">
+          <h2 className="text-xs sm:text-sm font-bold text-white tracking-wider uppercase font-mono">
             INTRO VIDEO
           </h2>
           {isOwnProfile && introVideo && (
             <button
               onClick={() => document.getElementById('intro-video-upload')?.click()}
               disabled={isUploadingVideo}
-              className="text-xs font-mono font-bold py-1.5 px-4 rounded-xl bg-[#0088CC] text-white hover:bg-[#0077B3] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 uppercase tracking-wider"
+              className="text-xs font-mono font-bold py-1.5 px-4 rounded-xl bg-[#0088CC] text-white hover:bg-[#0077B3] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 uppercase tracking-wider shadow-md"
             >
               {isUploadingVideo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
               <span>Replace</span>
@@ -131,7 +131,7 @@ export default function ProfileMedia({
         </div>
 
         {introVideo ? (
-          <div className="relative aspect-video rounded-xl overflow-hidden border border-[#EBE7DF] bg-[#000000] w-full shadow-lg group">
+          <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 bg-black w-full shadow-2xl group">
             <video
               key={introVideo}
               src={introVideo}
@@ -151,18 +151,18 @@ export default function ProfileMedia({
             )}
           </div>
         ) : (
-          <div className="bg-[#F5F2EB] border border-dashed border-[#DDD7CC] rounded-xl p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-2">
-            <div className="w-12 h-12 rounded-full border-2 border-gray-400 flex items-center justify-center mb-1 text-gray-800">
+          <div className="bg-[#18181D] border border-dashed border-white/10 rounded-2xl p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-2">
+            <div className="w-12 h-12 rounded-full border-2 border-white/30 flex items-center justify-center mb-1 text-white bg-white/5">
               {isUploadingVideo ? (
                 <Loader2 className="w-6 h-6 animate-spin text-[#0088CC]" />
               ) : (
-                <Play className="w-6 h-6 ml-0.5" />
+                <Play className="w-6 h-6 ml-0.5 text-white" />
               )}
             </div>
-            <p className="text-sm font-semibold text-gray-900">
+            <p className="text-sm font-semibold text-white">
               {isUploadingVideo ? 'Uploading intro video...' : isOwnProfile ? 'No intro video uploaded yet' : 'No intro video available'}
             </p>
-            <p className="text-xs text-gray-500 max-w-sm">
+            <p className="text-xs text-gray-400 max-w-sm">
               {isOwnProfile ? 'Click to upload your intro video (MP4, MOV, WEBM)' : 'This talent has not uploaded an intro video yet.'}
             </p>
             {isOwnProfile && (
@@ -170,7 +170,7 @@ export default function ProfileMedia({
                 type="button"
                 onClick={() => !isUploadingVideo && document.getElementById('intro-video-upload')?.click()}
                 disabled={isUploadingVideo}
-                className="mt-3 bg-[#0088CC] hover:bg-[#0077B3] text-white font-mono font-bold text-xs px-6 py-2.5 rounded-xl uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-md"
+                className="mt-3 bg-[#0088CC] hover:bg-[#0077B3] text-white font-mono font-bold text-xs px-6 py-2.5 rounded-xl uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-lg shadow-[#0088CC]/30"
               >
                 <Upload className="w-4 h-4" />
                 <span>UPLOAD VIDEO</span>
@@ -181,16 +181,16 @@ export default function ProfileMedia({
       </section>
 
       {/* 2. Portfolio Photos Section */}
-      <section className="bg-[#FCFBF7] rounded-xl border border-[#EBE7DF] p-3 sm:p-3.5 flex flex-col gap-2 shadow-sm">
+      <section className="bg-[#121215] rounded-2xl border border-white/10 p-3.5 sm:p-4 flex flex-col gap-2.5 shadow-xl">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-gray-900 tracking-wider uppercase font-mono">
+          <h2 className="text-xs sm:text-sm font-bold text-white tracking-wider uppercase font-mono">
             PORTFOLIO PHOTOS
           </h2>
           {isOwnProfile && media.length > 0 && (
             <button
               onClick={() => document.getElementById('portfolio-upload')?.click()}
               disabled={isUploadingPhotos}
-              className="text-xs font-mono font-bold py-1.5 px-4 rounded-xl bg-[#0088CC] text-white hover:bg-[#0077B3] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 uppercase tracking-wider"
+              className="text-xs font-mono font-bold py-1.5 px-4 rounded-xl bg-[#0088CC] text-white hover:bg-[#0077B3] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95 uppercase tracking-wider shadow-md"
             >
               {isUploadingPhotos ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
               <span>Add Photos</span>
@@ -213,18 +213,18 @@ export default function ProfileMedia({
             ))}
           </div>
         ) : (
-          <div className="bg-[#F5F2EB] border border-dashed border-[#DDD7CC] rounded-xl p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-2">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-1 text-gray-800 bg-[#EAE5DA] border border-[#DDD7CC]">
+          <div className="bg-[#18181D] border border-dashed border-white/10 rounded-2xl p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-2">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-1 text-white bg-white/5 border border-white/10">
               {isUploadingPhotos ? (
                 <Loader2 className="w-6 h-6 animate-spin text-[#0088CC]" />
               ) : (
-                <ImageIcon className="w-8 h-8 text-gray-800" />
+                <ImageIcon className="w-8 h-8 text-white" />
               )}
             </div>
-            <p className="text-sm font-semibold text-gray-900">
+            <p className="text-sm font-semibold text-white">
               {isUploadingPhotos ? 'Uploading photos...' : isOwnProfile ? 'No portfolio photos yet' : 'No portfolio photos available'}
             </p>
-            <p className="text-xs text-gray-500 max-w-sm">
+            <p className="text-xs text-gray-400 max-w-sm">
               {isOwnProfile ? 'Click to add photos to your lookbook gallery (JPG, PNG, WEBP)' : 'This talent has not added portfolio photos yet.'}
             </p>
             {isOwnProfile && (
@@ -232,7 +232,7 @@ export default function ProfileMedia({
                 type="button"
                 onClick={() => !isUploadingPhotos && document.getElementById('portfolio-upload')?.click()}
                 disabled={isUploadingPhotos}
-                className="mt-3 bg-[#0088CC] hover:bg-[#0077B3] text-white font-mono font-bold text-xs px-6 py-2.5 rounded-xl uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-md"
+                className="mt-3 bg-[#0088CC] hover:bg-[#0077B3] text-white font-mono font-bold text-xs px-6 py-2.5 rounded-xl uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-lg shadow-[#0088CC]/30"
               >
                 <Plus className="w-4 h-4" />
                 <span>ADD PHOTOS</span>

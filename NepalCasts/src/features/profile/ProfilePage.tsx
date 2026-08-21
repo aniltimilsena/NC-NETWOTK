@@ -306,7 +306,7 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
         experience: 'Experience',
     };
     return (
-        <div className="min-h-screen bg-[#F7F6F2] pb-0 text-gray-900">
+        <div className="min-h-screen bg-[#08080A] pb-10 text-white">
             <SEO
                 title={`${profile.name || 'Talent'} | NepalCasts Profile`}
                 description={profile.bio || `View ${profile.name || 'this talent'}'s portfolio, auditions, and experience on NepalCasts.`}
@@ -316,8 +316,8 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
             <ProfileHeader profile={profile} isOwnProfile={isOwnProfile} isFollowing={isFollowing} followerCount={followerCount} followingCount={followingCount} savedCount={savedCount} onFollowToggle={handleFollowToggle} onNavigate={onNavigate} showAlert={showAlert} onFollowClick={handleFollowModalOpen} />
 
             {/* Profile Main Content Container (2-Side Full Screen Layout on PC) */}
-            <div className="w-full px-1 sm:px-2 lg:px-4 mt-2">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-start">
+            <div className="w-full px-1.5 sm:px-3 lg:px-6 mt-3">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
                     
                     {/* Left Column on PC: Profile Specs Sidebar */}
                     <div className="hidden lg:block lg:col-span-5 xl:col-span-4.5">
@@ -325,10 +325,10 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
                     </div>
 
                     {/* Right Column on PC (Full Width on Mobile): Tabs + Active Tab Content */}
-                    <div className="col-span-12 lg:col-span-7 xl:col-span-7.5 flex flex-col gap-2">
+                    <div className="col-span-12 lg:col-span-7 xl:col-span-7.5 flex flex-col gap-2.5">
                         
                         {/* Clean Professional Tab Navigation */}
-                        <div className="flex border border-[#E8E3D9] gap-6 sm:gap-8 overflow-x-auto scrollbar-none justify-start px-3 sm:px-4 bg-[#FCFBF7] rounded-xl pt-2.5 pb-1 shadow-sm">
+                        <div className="flex border border-white/10 gap-6 sm:gap-8 overflow-x-auto scrollbar-none justify-start px-4 sm:px-5 bg-[#121215] rounded-2xl pt-3 pb-1 shadow-xl backdrop-blur-md">
                             {tabs.map((tab) => {
                                 const isSelected = activeTab === tab;
                                 return (
@@ -343,15 +343,15 @@ export default function ProfilePage({ onNavigate, user, profileId, isAdmin, show
                                                 onNavigate(`${base}/${tab}`);
                                             }
                                         }}
-                                        className={`pb-2.5 text-xs sm:text-sm font-bold capitalize tracking-wide transition-colors relative whitespace-nowrap cursor-pointer ${
+                                        className={`pb-2.5 text-xs sm:text-sm font-bold capitalize tracking-wide transition-all relative whitespace-nowrap cursor-pointer ${
                                             tab === 'about' ? 'lg:hidden' : ''
                                         } ${
-                                            isSelected ? 'text-[#0088CC]' : 'text-gray-600 hover:text-gray-900'
+                                            isSelected ? 'text-[#0088CC]' : 'text-gray-400 hover:text-white'
                                         }`}
                                     >
                                         {tabLabelMap[tab] || tab}
                                         {isSelected && (
-                                            <div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0088CC] rounded-full shadow-[0_0_8px_rgba(0,136,204,0.4)]" />
+                                            <div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0088CC] rounded-full shadow-[0_0_12px_rgba(0,136,204,0.7)]" />
                                         )}
                                     </button>
                                 );
