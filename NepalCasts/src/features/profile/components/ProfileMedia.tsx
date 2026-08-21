@@ -123,27 +123,25 @@ export default function ProfileMedia({
         </h2>
 
         {isOwnProfile && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => document.getElementById('intro-video-upload')?.click()}
-              disabled={isUploadingVideo}
-              className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer flex items-center gap-1"
-            >
-              {isUploadingVideo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-              <span>{introVideo ? 'Replace Video' : '+ Video'}</span>
-            </button>
-
-            <span className="text-gray-600">•</span>
-
-            <button
-              onClick={() => document.getElementById('portfolio-upload')?.click()}
-              disabled={isUploadingPhotos}
-              className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer flex items-center gap-1"
-            >
-              {isUploadingPhotos ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-              <span>+ Photos</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (onNavigate) {
+                onNavigate('upload');
+              } else {
+                document.getElementById('portfolio-upload')?.click();
+              }
+            }}
+            disabled={isUploadingVideo || isUploadingPhotos}
+            className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            {isUploadingVideo || isUploadingPhotos ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Upload className="w-3.5 h-3.5" />
+            )}
+            <span>Upload</span>
+          </button>
         )}
       </div>
 

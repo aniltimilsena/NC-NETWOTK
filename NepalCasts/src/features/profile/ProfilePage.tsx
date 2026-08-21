@@ -106,14 +106,16 @@ export default function ProfilePage({
   const [phoneInput, setPhoneInput] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [isSavingAttributes, setIsSavingAttributes] = useState(false);
-
   const [showMediaModal, setShowMediaModal] = useState(false);
 
-  const activeUserId = CurrentUser.id || AuthService.getUserId() || user?.uid || profile?.uid;
+  const loggedInUserId = CurrentUser.id || AuthService.getUserId() || user?.uid || user?.id;
+  const targetProfileId = profile?.uid || (profile as any)?.id;
 
   const isRealOwn =
     isOwnProfile ||
-    Boolean(activeUserId && (profile?.uid === activeUserId || (profile as any)?.id === activeUserId));
+    Boolean(loggedInUserId && targetProfileId && loggedInUserId === targetProfileId);
+
+  const activeUserId = isRealOwn ? (targetProfileId || loggedInUserId) : null;
 
   const handleFollowModalClose = () => {
     setShowFollowModal(null);
@@ -516,27 +518,33 @@ export default function ProfilePage({
             <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
               About
             </h3>
-            <button
-              onClick={() => {
-                setBioInput(profile.bio || '');
-                setShowAboutModal(true);
-              }}
-              className="text-[#0088CC] hover:text-[#38c9ff] transition-colors p-1 cursor-pointer"
-              title="Edit About"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
+            {isRealOwn && (
+              <button
+                onClick={() => {
+                  setBioInput(profile.bio || '');
+                  setShowAboutModal(true);
+                }}
+                className="text-[#0088CC] hover:text-[#38c9ff] transition-colors p-1 cursor-pointer"
+                title="Edit About"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           <p
             onClick={() => {
-              setBioInput(profile.bio || '');
-              setShowAboutModal(true);
+              if (isRealOwn) {
+                setBioInput(profile.bio || '');
+                setShowAboutModal(true);
+              }
             }}
-            className="text-xs text-gray-300 leading-relaxed whitespace-pre-line cursor-pointer hover:text-white"
+            className={`text-xs text-gray-300 leading-relaxed whitespace-pre-line ${isRealOwn ? 'cursor-pointer hover:text-white' : ''}`}
           >
             {bio ? bio : (
-              <span className="text-gray-500 italic">Add a short bio about yourself...</span>
+              <span className="text-gray-500 italic">
+                {isRealOwn ? 'Add a short bio about yourself...' : 'No bio provided yet.'}
+              </span>
             )}
           </p>
 
@@ -552,18 +560,20 @@ export default function ProfilePage({
                 <span className={height ? 'text-gray-300 font-medium' : 'text-gray-500'}>
                   {height ? height : 'Not added'}
                 </span>
-                <button
-                  onClick={() => {
-                    setHeightInput(profile.height || '');
-                    setWeightInput(profile.weight || '');
-                    setPhoneInput(profile.phone || '');
-                    setEmailInput(profile.email || '');
-                    setShowAttributesModal(true);
-                  }}
-                  className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
-                >
-                  {height ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
-                </button>
+                {isRealOwn && (
+                  <button
+                    onClick={() => {
+                      setHeightInput(profile.height || '');
+                      setWeightInput(profile.weight || '');
+                      setPhoneInput(profile.phone || '');
+                      setEmailInput(profile.email || '');
+                      setShowAttributesModal(true);
+                    }}
+                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
+                  >
+                    {height ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -577,38 +587,40 @@ export default function ProfilePage({
                 <span className={weight ? 'text-gray-300 font-medium' : 'text-gray-500'}>
                   {weight ? weight : 'Not added'}
                 </span>
-                <button
-                  onClick={() => {
-                    setHeightInput(profile.height || '');
-                    setWeightInput(profile.weight || '');
-                    setPhoneInput(profile.phone || '');
-                    setEmailInput(profile.email || '');
-                    setShowAttributesModal(true);
-                  }}
-                  className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
-                >
-                  {weight ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
-                </button>
+                {isRealOwn && (
+                  <button
+                    onClick={() => {
+                      setHeightInput(profile.height || '');
+                      setWeightInput(profile.weight || '');
+                      setPhoneInput(profile.phone || '');
+                      setEmailInput(profile.email || '');
+                      setShowAttributesModal(true);
+                    }}
+                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
+                  >
+                    {weight ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Contacts Row */}
-            <div className="py-2.5 flex items-start justify-between text-xs">
-              <div className="flex items-center gap-2.5 text-gray-300 pt-0.5">
+            <div className="py-2.5 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2.5 text-gray-300 shrink-0">
                 <Phone className="w-3.5 h-3.5 text-[#0088CC]" />
                 <span className="font-semibold text-white">Contacts</span>
               </div>
-              <div className="flex items-start gap-2 text-right">
+              <div className="flex items-center gap-2 text-right">
                 {contactPhone || contactEmail ? (
-                  <div className="space-y-0.5 text-gray-300 font-medium text-[11px]">
+                  <div className="flex items-center gap-2.5 text-gray-300 font-medium text-[11px] flex-wrap justify-end">
                     {contactPhone && (
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center gap-1.5">
                         <Phone className="w-2.5 h-2.5 text-gray-500" />
                         <span>{contactPhone}</span>
                       </div>
                     )}
                     {contactEmail && (
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center gap-1.5">
                         <Mail className="w-2.5 h-2.5 text-gray-500" />
                         <span>{contactEmail}</span>
                       </div>
@@ -617,18 +629,20 @@ export default function ProfilePage({
                 ) : (
                   <span className="text-gray-500">Not added</span>
                 )}
-                <button
-                  onClick={() => {
-                    setHeightInput(profile.height || '');
-                    setWeightInput(profile.weight || '');
-                    setPhoneInput(profile.phone || '');
-                    setEmailInput(profile.email || '');
-                    setShowAttributesModal(true);
-                  }}
-                  className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer pt-0.5"
-                >
-                  {contactPhone || contactEmail ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
-                </button>
+                {isRealOwn && (
+                  <button
+                    onClick={() => {
+                      setHeightInput(profile.height || '');
+                      setWeightInput(profile.weight || '');
+                      setPhoneInput(profile.phone || '');
+                      setEmailInput(profile.email || '');
+                      setShowAttributesModal(true);
+                    }}
+                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer shrink-0"
+                  >
+                    {contactPhone || contactEmail ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -663,15 +677,17 @@ export default function ProfilePage({
             <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
               Skills
             </h3>
-            <button
-              onClick={() => {
-                setEditingSkills(skillsList);
-                setShowSkillsModal(true);
-              }}
-              className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer"
-            >
-              {skillsList.length > 0 ? 'Edit' : '+ Add Skills'}
-            </button>
+            {isRealOwn && (
+              <button
+                onClick={() => {
+                  setEditingSkills(skillsList);
+                  setShowSkillsModal(true);
+                }}
+                className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer"
+              >
+                {skillsList.length > 0 ? 'Edit' : '+ Add Skills'}
+              </button>
+            )}
           </div>
 
           {skillsList.length > 0 ? (
@@ -685,7 +701,7 @@ export default function ProfilePage({
                 </span>
               ))}
             </div>
-          ) : (
+          ) : isRealOwn ? (
             <div
               onClick={() => {
                 setEditingSkills(skillsList);
@@ -699,6 +715,8 @@ export default function ProfilePage({
               </span>
               <p className="text-[10px] text-gray-500 mt-0.5">Add skills you are good at...</p>
             </div>
+          ) : (
+            <p className="text-xs text-gray-500 italic pt-1">No skills listed yet.</p>
           )}
         </section>
 
