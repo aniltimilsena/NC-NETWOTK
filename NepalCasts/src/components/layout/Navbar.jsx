@@ -259,7 +259,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                   </div>
                 </div>
 
-              </>) : (<Link to="/signup" className="bg-nc-accent text-nc-darker text-xs sm:text-sm px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full font-extrabold hover:bg-sky-400 transition-all ml-1 shadow-lg shadow-nc-accent/20">
+              </>) : (<Link to="/signup" className="bg-[#0088CC] hover:bg-[#0077B3] text-white text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-xl font-bold transition-all ml-1 shadow-md active:scale-95 flex items-center justify-center">
                 Join Now
               </Link>)}
 
