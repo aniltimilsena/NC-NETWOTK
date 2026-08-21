@@ -116,18 +116,18 @@ export default function ProfileHeader({
           <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-20">
             <button
               onClick={() => onNavigate('back')}
-              className="w-10 h-10 rounded-full bg-white/80 hover:bg-white backdrop-blur-md flex items-center justify-center text-gray-900 border border-black/10 transition-all active:scale-95 cursor-pointer shadow-md"
+              className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md flex items-center justify-center text-white border border-white/20 transition-all active:scale-95 cursor-pointer shadow-lg"
               aria-label="Back"
             >
-              <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
+              <ChevronLeft className="w-6 h-6 stroke-[2.5] text-white" />
             </button>
 
             <button
               onClick={handleShare}
-              className="w-10 h-10 rounded-full bg-white/80 hover:bg-white backdrop-blur-md border border-black/10 text-gray-900 flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-md"
+              className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-lg"
               title="Share Profile"
             >
-              <Share2 className="w-5 h-5" />
+              <Share2 className="w-5 h-5 text-white" />
             </button>
           </div>
         </div>
