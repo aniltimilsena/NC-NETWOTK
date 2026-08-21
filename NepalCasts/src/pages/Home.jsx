@@ -506,7 +506,7 @@ export default function Home({ onNavigate, user }) {
         {/* ================= FEATURED TALENTS SECTION ================= */}
         <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
           <div className="flex items-center justify-between mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
               <Crown className="w-3.5 h-3.5 text-amber-300 fill-amber-300 drop-shadow-sm" />
               Featured talents
             </span>
@@ -557,8 +557,8 @@ export default function Home({ onNavigate, user }) {
         {/* ================= TALENTS BY CATEGORY SECTION ================= */}
         <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
           <div className="flex items-center justify-between mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
-              <LayoutGrid className="w-3.5 h-3.5 text-indigo-200" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
+              <LayoutGrid className="w-3.5 h-3.5 text-white" />
               Talents by category
             </span>
             <button
@@ -599,7 +599,7 @@ export default function Home({ onNavigate, user }) {
         {/* ================= NEW BORN TALENTS SECTION ================= */}
         <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
           <div className="flex items-center justify-between mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_12px_rgba(37,99,235,0.4)] border border-blue-400/30">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
               <Sprout className="w-3.5 h-3.5 text-emerald-300 drop-shadow-sm" />
               New born talents
             </span>
@@ -683,8 +683,8 @@ export default function Home({ onNavigate, user }) {
         {/* ================= CASTING CALLS SECTION ================= */}
         <section className="my-1.5 px-2 sm:px-3 text-white">
           <div className="flex items-center justify-between mb-2.5">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-[0_2px_10px_rgba(37,99,235,0.35)] border border-blue-400/30">
-              <Clapperboard className="w-3.5 h-3.5 text-cyan-200" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
+              <Clapperboard className="w-3.5 h-3.5 text-white" />
               Casting calls
             </span>
             <button
