@@ -22,6 +22,9 @@ import {
   CreditCard,
   Briefcase,
   Play,
+  UserPlus,
+  Check,
+  MessageSquare,
 } from 'lucide-react';
 
 interface ProfilePageProps {
@@ -534,23 +537,22 @@ export default function ProfilePage({
           ) : (
             <div className="flex items-center gap-3">
               <button
-                onClick={() => {
-                  if (contactPhone || contactEmail) {
-                    setShowContactModal(true);
-                  } else {
-                    showAlert('Contact Direct', 'info', `${profile.name || 'Talent'} has not shared direct phone/email. Please send a message!`);
-                    onNavigate('messages', profile.uid || (profile as any).id);
-                  }
-                }}
-                className="flex-1 py-3.5 px-6 rounded-2xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-lg shadow-[#0088CC]/30"
+                onClick={handleFollowToggle}
+                className={`flex-1 py-3.5 px-6 rounded-2xl font-bold text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg ${
+                  isFollowing
+                    ? 'bg-[#111622] border border-[#1E2638] text-white hover:bg-[#161D2B]'
+                    : 'bg-[#0088CC] hover:bg-[#0077B3] text-white shadow-[#0088CC]/30'
+                }`}
               >
-                Contact
+                {isFollowing ? <Check className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                <span>{isFollowing ? 'Following' : 'Follow'}</span>
               </button>
               <button
                 onClick={() => onNavigate('messages', profile.uid || (profile as any).id)}
-                className="flex-1 py-3.5 px-6 rounded-2xl bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-md"
+                className="flex-1 py-3.5 px-6 rounded-2xl bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-md flex items-center justify-center gap-2"
               >
-                Message
+                <MessageSquare className="w-4 h-4 text-[#0088CC]" />
+                <span>Message</span>
               </button>
             </div>
           )}
