@@ -220,73 +220,70 @@ export default function ProfileHeader({
         </div>
 
         {/* 3 Meta Info Pills (Location, Age, Experience) */}
-        <div className="grid grid-cols-3 gap-2.5 w-full max-w-xl sm:max-w-2xl pt-1">
+        <div className="grid grid-cols-3 gap-2 w-full max-w-xl pt-0.5">
           {/* Location Pill */}
-          <div className="bg-[#0D121D] border border-[#172033] text-gray-300 rounded-xl p-2.5 sm:py-3 text-center flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 shadow-sm min-h-[52px]">
-            <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-            <div className="text-xs sm:text-sm font-medium leading-tight">
-              <span className="block truncate">{location.split(',')[0]}</span>
-              {location.includes('Not added') && (
-                <span className="text-[10px] text-gray-500 block">Not added</span>
+          <div className="bg-[#0D121D] border border-[#172033] text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-sm">
+            <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            <div className="text-xs font-medium truncate">
+              {location.includes('Not added') ? (
+                <span className="text-[11px] text-gray-400">
+                  {location.split('\n')[0] || location.split(',')[0]}
+                </span>
+              ) : (
+                <span>{location.split(',')[0]}</span>
               )}
             </div>
           </div>
 
           {/* Age Pill */}
-          <div className="bg-[#0D121D] border border-[#172033] text-gray-300 rounded-xl p-2.5 sm:py-3 text-center flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 shadow-sm min-h-[52px]">
-            <UserIcon className="w-4 h-4 text-gray-400 shrink-0" />
-            <div className="text-xs sm:text-sm font-medium leading-tight">
+          <div className="bg-[#0D121D] border border-[#172033] text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-sm">
+            <UserIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            <div className="text-xs font-medium truncate">
               {talentAge ? (
                 <span>{talentAge} Years</span>
               ) : (
-                <>
-                  <span className="block">Age</span>
-                  <span className="text-[10px] text-gray-500 block">Not added</span>
-                </>
+                <span className="text-[11px] text-gray-400">Age Not added</span>
               )}
             </div>
           </div>
 
           {/* Experience Pill */}
-          <div className="bg-[#0D121D] border border-[#172033] text-gray-300 rounded-xl p-2.5 sm:py-3 text-center flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 shadow-sm min-h-[52px]">
-            <Briefcase className="w-4 h-4 text-gray-400 shrink-0" />
-            <div className="text-xs sm:text-sm font-medium leading-tight">
+          <div className="bg-[#0D121D] border border-[#172033] text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-sm">
+            <Briefcase className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            <div className="text-xs font-medium truncate">
               {experiencesList.length > 0 ? (
                 <span>{experiencesList.length}+ Years Exp.</span>
               ) : (profile as any)?.experienceYears ? (
                 <span>{(profile as any).experienceYears}+ Years Exp.</span>
               ) : (
-                <>
-                  <span className="block">Experience</span>
-                  <span className="text-[10px] text-gray-500 block">Not added</span>
-                </>
+                <span className="text-[11px] text-gray-400">Exp. Not added</span>
               )}
             </div>
           </div>
         </div>
 
         {/* Followers / Following Box */}
-        <div className="bg-[#0D121D] border border-[#172033] rounded-2xl py-3 px-8 grid grid-cols-2 text-center w-full max-w-xl sm:max-w-2xl my-2 shadow-sm divide-x divide-[#172033]">
+        <div className="bg-[#0D121D] border border-[#172033] rounded-xl py-1.5 px-6 grid grid-cols-2 text-center w-full max-w-xl my-1 shadow-sm divide-x divide-[#172033]">
           <button
             type="button"
             onClick={() => onFollowClick?.('followers')}
-            className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pr-4"
+            className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pr-3 py-0.5"
           >
-            <span className="text-white font-bold text-base sm:text-lg">
+            <span className="text-white font-bold text-sm sm:text-base leading-tight">
               {followerCount ? (followerCount > 999 ? `${(followerCount / 1000).toFixed(1)}K` : followerCount) : '0'}
             </span>
-            <span className="text-xs text-gray-400">Followers</span>
+            <span className="text-[10px] text-gray-400 font-medium">Followers</span>
           </button>
 
           <button
             type="button"
             onClick={() => onFollowClick?.('following')}
-            className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pl-4"
+            className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pl-3 py-0.5"
           >
-            <span className="text-white font-bold text-base sm:text-lg">
+            <span className="text-white font-bold text-sm sm:text-base leading-tight">
               {followingCount ? (followingCount > 999 ? `${(followingCount / 1000).toFixed(1)}K` : followingCount) : '0'}
             </span>
-            <span className="text-xs text-gray-400">Following</span>
+            <span className="text-[10px] text-gray-400 font-medium">Following</span>
           </button>
         </div>
       </div>
