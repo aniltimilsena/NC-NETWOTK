@@ -324,8 +324,8 @@ export default function ProfilePage({
         noindex={(profile as any).isPrivate === true}
       />
 
-      {/* Unified Profile Container */}
-      <div className="max-w-md mx-auto px-4 sm:px-5 space-y-5">
+      {/* Full Screen Unified Profile Container */}
+      <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* 1. Header (Centered Avatar, 3 Meta Pills, Followers Count Box) */}
         <ProfileHeader
           profile={profile}
