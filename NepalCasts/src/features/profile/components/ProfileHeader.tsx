@@ -159,7 +159,7 @@ export default function ProfileHeader({
       {/* 2. Centered Avatar with Cyan Ring & Camera Badge */}
       <div className="flex flex-col items-center text-center space-y-2.5 px-4">
         <div className="relative">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 border-[#0088CC] shadow-[0_0_24px_rgba(0,136,204,0.35)] overflow-hidden bg-[#0D121D]">
+          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 border-[#1E2638] overflow-hidden bg-[#0D121D]">
             <Avatar
               user={profile}
               src={
