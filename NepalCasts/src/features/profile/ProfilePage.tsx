@@ -524,41 +524,7 @@ export default function ProfilePage({
           )}
         </section>
 
-        {/* 6. Location Section */}
-        <section className="text-left space-y-2 pt-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-[#0088CC]" />
-              <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
-                Location
-              </h3>
-              <span className="text-xs text-gray-400 ml-1 truncate max-w-[180px]">
-                {locationName}
-              </span>
-            </div>
-            {isRealOwn && (
-              <button
-                onClick={() => onNavigate('/settings/profile')}
-                className="text-[#0088CC] hover:text-[#38c9ff] p-1 cursor-pointer"
-                title="Edit Location"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
 
-          {/* Stylized Map Card */}
-          <div className="relative w-full h-24 sm:h-28 rounded-2xl overflow-hidden border border-[#172033] bg-[#0D121D] shadow-sm">
-            {/* Map vector grid background */}
-            <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#1E293B_1px,transparent_1px)] [background-size:12px_12px]" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex items-center gap-2 bg-[#06080C]/90 border border-[#0088CC]/40 px-3.5 py-1.5 rounded-xl shadow-lg">
-                <MapPin className="w-4 h-4 text-[#0088CC] fill-[#0088CC]/20 animate-bounce" />
-                <span className="text-xs font-bold text-white">{locationName}</span>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* 7. Bottom Action Bar */}
         <section className="pt-3">
