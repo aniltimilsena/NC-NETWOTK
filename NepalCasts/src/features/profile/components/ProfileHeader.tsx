@@ -198,24 +198,29 @@ export default function ProfileHeader({
           </p>
         </div>
 
-        {/* 3 Meta Info Pills */}
-        <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
-          <div className="bg-[#111622] border border-[#1E2638] text-gray-300 rounded-xl px-3.5 py-1.5 text-xs font-medium flex items-center gap-1.5 shadow-sm">
-            <MapPin className="w-3.5 h-3.5 text-[#0088CC]" />
+        {/* 3 Meta Info Pills (Location, Age, Experience) */}
+        <div className="flex items-center justify-center gap-2.5 flex-wrap pt-1.5">
+          {/* Location Pill */}
+          <div className="bg-[#121824] border border-[#1E293B]/80 text-gray-200 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-medium flex items-center gap-2 shadow-sm">
+            <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
             <span>{location}</span>
           </div>
 
-          {talentAge && (
-            <div className="bg-[#111622] border border-[#1E2638] text-gray-300 rounded-xl px-3.5 py-1.5 text-xs font-medium flex items-center gap-1.5 shadow-sm">
-              <UserIcon className="w-3.5 h-3.5 text-[#0088CC]" />
-              <span>{talentAge} Years</span>
-            </div>
-          )}
+          {/* Age Pill */}
+          <div className="bg-[#121824] border border-[#1E293B]/80 text-gray-200 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-medium flex items-center gap-2 shadow-sm">
+            <UserIcon className="w-4 h-4 text-gray-400 shrink-0" />
+            <span>{talentAge ? `${talentAge} Years` : '22+ Years'}</span>
+          </div>
 
-          <div className="bg-[#111622] border border-[#1E2638] text-gray-300 rounded-xl px-3.5 py-1.5 text-xs font-medium flex items-center gap-1.5 shadow-sm">
-            <Briefcase className="w-3.5 h-3.5 text-[#0088CC]" />
+          {/* Experience Pill */}
+          <div className="bg-[#121824] border border-[#1E293B]/80 text-gray-200 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-medium flex items-center gap-2 shadow-sm">
+            <Briefcase className="w-4 h-4 text-gray-400 shrink-0" />
             <span>
-              {experiencesList.length > 0 ? `${experiencesList.length}+ Years Exp.` : profile.openToWork ? 'Open to Work' : 'Professional Talent'}
+              {experiencesList.length > 0
+                ? `${experiencesList.length}+ Years Exp.`
+                : (profile as any)?.experienceYears
+                ? `${(profile as any).experienceYears}+ Years Exp.`
+                : '3+ Years Exp.'}
             </span>
           </div>
         </div>
