@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Users, Film, Bookmark, MessageSquare, Compass, ShieldCheck, ChevronRight, Lock, FileText } from 'lucide-react';
+import { Search, ChevronRight } from 'lucide-react';
 import { ActionSearchBar } from '@/components/ui/ActionSearchBar';
 import { subscribeToTalents, subscribeToCastingCalls } from '../../services';
 import Avatar from '../ui/Avatar';
 import { getAvatar } from '../../utils/avatars';
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
-import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, collection, query, where, or } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, collection, query, where } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { AuthService } from '../../services/AuthService';
 import { FollowItemSkeleton, SidebarWidgetSkeleton } from '../ui/Skeleton';
@@ -319,7 +319,7 @@ export default function Desktop3ColumnLayout({
         <div className="grid grid-cols-12 gap-2 lg:gap-3">
 
           {/* LEFT SIDEBAR (Desktop: lg+) */}
-          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-14 sm:top-20 pt-0 pb-4 lg:pb-20 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-2">
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-14 sm:top-16 pt-0 pb-3 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] overflow-y-auto scrollbar-hide space-y-2">
 
             {/* Inline Desktop Search Bar */}
             <div className="px-1 pt-1">
@@ -499,35 +499,84 @@ export default function Desktop3ColumnLayout({
 
                 {/* LEGAL & SUPPORT GROUP */}
                 <div>
-                  <div className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">Legal & Support</div>
+                  <div className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">About & Support</div>
                   <div className="space-y-0.5">
-                    <Link
-                      to="/trust-safety"
-                      className={`group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                        pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
-                          ? "text-white font-medium"
-                          : "text-gray-400 font-normal hover:text-white"
-                      }`}
-                    >
-                      <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${pathname === '/trust-safety' || pathname.startsWith('/trust-safety/') ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-[16px] tracking-tight">Support</span>
-                    </Link>
+                    {[
+                      {
+                        name: "About Us",
+                        path: "/about",
+                        icon: (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        ),
+                      },
+                      {
+                        name: "Help & FAQ",
+                        path: "/help",
+                        icon: (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        ),
+                      },
+                      {
+                        name: "Contact",
+                        path: "/contact",
+                        icon: (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        ),
+                      },
+                      {
+                        name: "Trust & Safety",
+                        path: "/trust-safety",
+                        icon: (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        ),
+                      },
+                      {
+                        name: "Privacy Policy",
+                        path: "/privacy",
+                        icon: (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        ),
+                      },
+                      {
+                        name: "Terms of Service",
+                        path: "/terms",
+                        icon: (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        ),
+                      },
+                    ].map((item) => {
+                      const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className={`group flex items-center w-full px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                            isActive
+                              ? "text-white font-medium bg-white/5"
+                              : "text-gray-400 font-normal hover:text-white hover:bg-white/[0.03]"
+                          }`}
+                        >
+                          <svg className={`w-4 h-4 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            {item.icon}
+                          </svg>
+                          <span className="text-[15px] tracking-tight">{item.name}</span>
+                        </Link>
+                      );
+                    })}
 
                     {isAdmin && (
                       <Link
                         to="/admin"
-                        className={`group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                        className={`group flex items-center w-full px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.98] ${
                           pathname.startsWith("/admin")
-                            ? "text-white font-medium"
-                            : "text-gray-400 font-normal hover:text-white"
+                            ? "text-white font-medium bg-white/5"
+                            : "text-gray-400 font-normal hover:text-white hover:bg-white/[0.03]"
                         }`}
                       >
-                        <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${pathname.startsWith("/admin") ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className={`w-4 h-4 mr-3.5 shrink-0 transition-all duration-200 ${pathname.startsWith("/admin") ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
-                        <span className="text-[16px] tracking-tight">Admin Panel</span>
+                        <span className="text-[15px] tracking-tight">Admin Panel</span>
                       </Link>
                     )}
                   </div>
@@ -560,13 +609,13 @@ export default function Desktop3ColumnLayout({
           </aside>
 
           {/* CENTER MAIN CONTENT */}
-          <main className={`col-span-12 ${isHomePage ? 'xl:col-span-6' : 'xl:col-span-9'} min-w-0 lg:h-[calc(100vh-3.5rem)] sm:lg:h-[calc(100vh-5rem)] lg:overflow-y-auto scrollbar-hide pb-2 lg:pb-20`}>
+          <main className={`col-span-12 ${isHomePage ? 'xl:col-span-6' : 'xl:col-span-9'} min-w-0 lg:h-[calc(100vh-3.5rem)] sm:lg:h-[calc(100vh-4rem)] lg:overflow-y-auto scrollbar-hide pb-3`}>
             {children}
           </main>
 
           {/* RIGHT SIDEBAR (Desktop Only: Home Page Only) */}
           {isHomePage && (
-            <aside className="hidden xl:block xl:col-span-3 sticky top-14 sm:top-20 pt-0 pb-4 lg:pb-20 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-3">
+            <aside className="hidden xl:block xl:col-span-3 sticky top-14 sm:top-16 pt-0 pb-3 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] overflow-y-auto scrollbar-hide space-y-3">
 
               {/* Why NepalCasts? Section */}
               <div className="px-2 space-y-3">

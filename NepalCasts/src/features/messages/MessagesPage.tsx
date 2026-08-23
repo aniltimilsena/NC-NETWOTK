@@ -170,26 +170,26 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
       </div>);
     }
     if (!user) {
-        return (<div className="min-h-screen bg-nc-dark pb-24 flex flex-col items-center justify-center text-center p-6">
+        return (<div className="min-h-screen bg-[#141414] pb-24 flex flex-col items-center justify-center text-center p-6">
         <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
-        <p className="text-nc-muted text-sm max-w-xs mb-6">
+        <p className="text-gray-400 text-sm max-w-xs mb-6">
           Please log in to check your messages.
         </p>
-        <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-[#00BFFF] text-black font-bold rounded-2xl">
+        <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-[#00BFFF] text-black font-bold rounded-xl cursor-pointer">
           Sign In
         </button>
       </div>);
     }
-    return (<div className="h-screen bg-nc-dark flex">
+    return (<div className="h-screen bg-[#141414] flex">
       
-      <div className="w-full flex h-full overflow-hidden shadow-2xl">
+      <div className="w-full flex h-full overflow-hidden">
         
-        <div className={`w-full md:w-96 h-full shrink-0 ${activeChatId ? 'hidden md:block' : 'block'}`}>
+        <div className={`w-full md:w-[380px] lg:w-[420px] xl:w-[450px] h-full shrink-0 ${activeChatId ? 'hidden md:block' : 'block'}`}>
           <ChatSidebar conversations={conversations} activeChatId={activeChatId} onSelectChat={setActiveChatId} onDeleteChat={setDeletingConvoId} callHistory={callHistory} loadingCalls={loadingCalls} currentUser={user} onStartNewChat={() => setShowNewChatModal(true)} onNavigate={onNavigate} onInitiateCall={handleInitiateDirectCall}/>
         </div>
 
         
-        <div className={`flex-1 h-full flex flex-col ${!activeChatId ? 'hidden md:flex items-center justify-center bg-[#0E0E0E] text-nc-muted text-xs' : 'flex'}`}>
+        <div className={`flex-1 h-full flex flex-col ${!activeChatId ? 'hidden md:flex items-center justify-center bg-[#141414] text-gray-400 text-xs' : 'flex'}`}>
           {activeChat ? (<>
               <div className="flex-1 min-h-0">
                 <ChatArea chat={activeChat} messages={messages} currentUser={user} typingUsers={typingUsers} onBack={() => setActiveChatId(null)} onInitiateCall={handleInitiateCall} onReplyTo={setReplyingTo} onDeleteMessage={handleDeleteMessage} onPinMessage={handlePinMessage} onTogglePinnedDrawer={() => setShowPinnedDrawer(!showPinnedDrawer)} isPinnedDrawerOpen={showPinnedDrawer}/>
@@ -205,7 +205,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
 
         
         <AnimatePresence>
-          {showPinnedDrawer && activeChat && (<motion.div initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: '100%', opacity: 0 }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-y-0 right-0 z-40 w-full sm:w-80 md:w-96 lg:static lg:h-full lg:w-80 border-l border-white/5 bg-[#0E0E0E] flex flex-col shadow-2xl shrink-0">
+          {showPinnedDrawer && activeChat && (<motion.div initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: '100%', opacity: 0 }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-y-0 right-0 z-40 w-full sm:w-80 md:w-96 lg:static lg:h-full lg:w-80 border-l border-white/5 bg-[#141414] flex flex-col shadow-2xl shrink-0">
               
               <div className="p-4 pt-6 md:p-4 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">

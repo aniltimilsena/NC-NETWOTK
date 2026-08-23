@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from 'lucide-react';
 import { Button, Avatar } from '../../../components/ui';
 import { CurrentUser } from '../../../utils/CurrentUser';
@@ -10,23 +10,41 @@ interface ProfileSettingsProps {
     showAlert: (message: string, type?: any) => void;
 }
 export default function ProfileSettings({ profile, onUpdate, showAlert }: ProfileSettingsProps) {
-    const [name, setName] = useState(profile.name || '');
-    const [role, setRole] = useState(profile.role || '');
-    const [category, setCategory] = useState(profile.category || '');
-    const [gender, setGender] = useState(profile.gender || '');
-    const [bio, setBio] = useState(profile.bio || '');
-    const [location, setLocation] = useState(profile.location || '');
-    const [height, setHeight] = useState(profile.height || '');
-    const [weight, setWeight] = useState(profile.weight || '');
-    const [eyeColor, setEyeColor] = useState(profile.eyeColor || '');
-    const [hairColor, setHairColor] = useState(profile.hairColor || '');
-    const [showContactInfo, setShowContactInfo] = useState(profile.showContactInfo || false);
+    const [name, setName] = useState(profile?.name || '');
+    const [role, setRole] = useState(profile?.role || (profile as any)?.category || '');
+    const [category, setCategory] = useState((profile as any)?.category || profile?.role || '');
+    const [gender, setGender] = useState(profile?.gender || '');
+    const [bio, setBio] = useState(profile?.bio || '');
+    const [location, setLocation] = useState(profile?.location || '');
+    const [height, setHeight] = useState(profile?.height || '');
+    const [weight, setWeight] = useState(profile?.weight || '');
+    const [eyeColor, setEyeColor] = useState(profile?.eyeColor || '');
+    const [hairColor, setHairColor] = useState(profile?.hairColor || '');
+    const [showContactInfo, setShowContactInfo] = useState(profile?.showContactInfo || false);
     const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (profile) {
+            setName(profile.name || '');
+            const r = profile.role || (profile as any)?.category || '';
+            setRole(r);
+            setCategory((profile as any)?.category || r);
+            setGender(profile.gender || '');
+            setBio(profile.bio || '');
+            setLocation(profile.location || '');
+            setHeight(profile.height || '');
+            setWeight(profile.weight || '');
+            setEyeColor(profile.eyeColor || '');
+            setHairColor(profile.hairColor || '');
+            setShowContactInfo(profile.showContactInfo || false);
+        }
+    }, [profile]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
         try {
-            const selectedRole = category || role;
+            const selectedRole = role || category || 'Actor';
             const res = await onUpdate({
                 name,
                 role: selectedRole,
@@ -132,15 +150,22 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
           
           <div className="space-y-1.5 text-left">
             <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Role / Specialty</label>
-            <select value={category || role} onChange={(e) => {
-            setCategory(e.target.value);
-            setRole(e.target.value);
-        }} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all appearance-none cursor-pointer">
+            <select
+              value={role || category}
+              onChange={(e) => {
+                setCategory(e.target.value);
+                setRole(e.target.value);
+              }}
+              className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all appearance-none cursor-pointer"
+            >
               <option value="" disabled>Select Specialty</option>
               {CATEGORIES.map(opt => {
                 const cfg = getCategoryConfig(opt);
                 return <option key={opt} value={cfg.label}>{cfg.label}</option>;
               })}
+              {role && !CATEGORIES.some(opt => getCategoryConfig(opt).label === role) && (
+                <option value={role}>{role}</option>
+              )}
             </select>
           </div>
 

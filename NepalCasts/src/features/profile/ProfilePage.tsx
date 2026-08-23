@@ -15,13 +15,10 @@ import {
   Pencil,
   Plus,
   Ruler,
-  ShoppingBag,
+  Scale,
   Phone,
   Mail,
-  MapPin,
   Eye,
-  Briefcase,
-  Play,
   UserPlus,
   Check,
   MessageSquare,
@@ -29,8 +26,6 @@ import {
   Loader2,
   Video,
   Image as ImageIcon,
-  Camera,
-  Trash2,
   ChevronLeft,
   Share2,
 } from 'lucide-react';
@@ -475,7 +470,7 @@ export default function ProfilePage({
   const effectiveIsOwn = isRealOwn && !isPreviewMode;
 
   const renderAttributesCard = () => (
-    <div className="bg-black border border-white/5 rounded-xl p-4 divide-y divide-white/5 shadow-md">
+    <div className="bg-[#181818] rounded-xl p-4 divide-y divide-white/5 shadow-sm">
       <div className="pb-2.5 flex items-center justify-between text-xs sm:text-sm">
         <h4 className="font-bold text-white tracking-wide">Physical Specs & Contact</h4>
       </div>
@@ -483,11 +478,11 @@ export default function ProfilePage({
       {/* Height Row */}
       <div className="py-2.5 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2.5 text-gray-300">
-          <span className="font-mono font-bold text-[#0088CC]">II</span>
+          <Ruler className="w-3.5 h-3.5 text-gray-400" />
           <span className="font-semibold text-white">Height</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className={height ? 'text-gray-300 font-medium' : 'text-gray-500'}>
+          <span className={height ? 'text-gray-200 font-medium' : 'text-gray-500'}>
             {height ? height : 'Not added'}
           </span>
           {effectiveIsOwn && (
@@ -499,7 +494,7 @@ export default function ProfilePage({
                 setEmailInput(profile.email || '');
                 setShowAttributesModal(true);
               }}
-              className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
+              className="text-gray-400 hover:text-white transition-colors cursor-pointer"
             >
               {height ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
             </button>
@@ -510,11 +505,11 @@ export default function ProfilePage({
       {/* Weight Row */}
       <div className="py-2.5 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2.5 text-gray-300">
-          <ShoppingBag className="w-3.5 h-3.5 text-[#0088CC]" />
+          <Scale className="w-3.5 h-3.5 text-gray-400" />
           <span className="font-semibold text-white">Weight</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className={weight ? 'text-gray-300 font-medium' : 'text-gray-500'}>
+          <span className={weight ? 'text-gray-200 font-medium' : 'text-gray-500'}>
             {weight ? weight : 'Not added'}
           </span>
           {effectiveIsOwn && (
@@ -526,7 +521,7 @@ export default function ProfilePage({
                 setEmailInput(profile.email || '');
                 setShowAttributesModal(true);
               }}
-              className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
+              className="text-gray-400 hover:text-white transition-colors cursor-pointer"
             >
               {weight ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
             </button>
@@ -537,7 +532,7 @@ export default function ProfilePage({
       {/* Contacts Row */}
       <div className="py-2.5 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2.5 text-gray-300 shrink-0">
-          <Phone className="w-3.5 h-3.5 text-[#0088CC]" />
+          <Phone className="w-3.5 h-3.5 text-gray-400" />
           <span className="font-semibold text-white">Contacts</span>
         </div>
         <div className="flex items-center gap-2 text-right">
@@ -568,7 +563,7 @@ export default function ProfilePage({
                 setEmailInput(profile.email || '');
                 setShowAttributesModal(true);
               }}
-              className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer shrink-0"
+              className="text-gray-400 hover:text-white transition-colors cursor-pointer ml-1"
             >
               {contactPhone || contactEmail ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
             </button>
@@ -789,7 +784,7 @@ export default function ProfilePage({
                 )}
               </div>
 
-              <div className="bg-black border border-white/5 rounded-xl p-4 shadow-md">
+              <div className="bg-[#181818] rounded-xl p-4 shadow-sm">
                 <p
                   onClick={() => {
                     if (effectiveIsOwn) {

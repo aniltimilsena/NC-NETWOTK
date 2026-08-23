@@ -23,12 +23,45 @@ interface DialogContextType {
   closeActiveDialog: () => void;
 }
 
+const defaultDialogContext: DialogContextType = {
+  showDialog: (options) => {
+    if (typeof window !== 'undefined') {
+      window.alert(options.description || options.title);
+    }
+  },
+  showConfirmDialog: (title, description, onConfirm) => {
+    if (typeof window !== 'undefined' && window.confirm(`${title}\n${description}`)) {
+      onConfirm?.();
+    }
+  },
+  showSuccessDialog: (title, description) => {
+    if (typeof window !== 'undefined') {
+      window.alert(`${title}\n${description}`);
+    }
+  },
+  showErrorDialog: (title, description) => {
+    if (typeof window !== 'undefined') {
+      window.alert(`${title}\n${description}`);
+    }
+  },
+  showWarningDialog: (title, description, onConfirm) => {
+    if (typeof window !== 'undefined' && window.confirm(`${title}\n${description}`)) {
+      onConfirm?.();
+    }
+  },
+  showDeleteDialog: (title, description, onConfirm) => {
+    if (typeof window !== 'undefined' && window.confirm(`${title}\n${description}`)) {
+      onConfirm?.();
+    }
+  },
+  closeActiveDialog: () => {}
+};
+
 const DialogContext = createContext<DialogContextType | null>(null);
 
-export const useDialog = () => {
+export const useDialog = (): DialogContextType => {
   const context = useContext(DialogContext);
-  if (!context) throw new Error('useDialog must be used within a DialogProvider');
-  return context;
+  return context || defaultDialogContext;
 };
 
 export const DialogProvider = ({ children }: { children: ReactNode }) => {

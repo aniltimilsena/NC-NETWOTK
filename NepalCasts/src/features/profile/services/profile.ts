@@ -35,8 +35,8 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
     error: string | null;
 }> => {
     try {
-        const currentUserUid = AuthService.getUserId();
-        if (!currentUserUid || currentUserUid !== uid) {
+        const currentUserUid = AuthService.getUserId() || CurrentUser.id;
+        if (!currentUserUid || (currentUserUid !== uid && !uid.includes(currentUserUid))) {
             return { success: false, error: "Unauthorized profile update" };
         }
         const cleanData = Object.entries(data).reduce((acc, [k, v]) => {
@@ -51,10 +51,14 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
         } = cleanData as any;
         const userRef = doc(db, COLLECTIONS.USERS, uid);
         const userUpdate: Record<string, any> = { updatedAt: serverTimestamp() };
-        if (cleanData.name !== undefined)
+        if (cleanData.name !== undefined) {
             userUpdate.name = cleanData.name;
-        if (cleanData.role !== undefined)
+            CurrentUser.setName(cleanData.name as string);
+        }
+        if (cleanData.role !== undefined) {
             userUpdate.role = cleanData.role;
+            CurrentUser.setProfileInfo(cleanData.role as string);
+        }
         if (cleanData.gender !== undefined)
             userUpdate.gender = cleanData.gender;
         if (cleanData.category !== undefined)
@@ -107,15 +111,16 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
             }
         }
 
-        if (cleanData.image !== undefined || cleanData.photoURL !== undefined || cleanData.profileImage !== undefined) {
-            const newImage = (cleanData.image !== undefined ? cleanData.image : (cleanData.photoURL !== undefined ? cleanData.photoURL : cleanData.profileImage)) as string | null | undefined;
-            const finalImgUrl = (newImage && typeof newImage === 'string') ? newImage : "";
-            CurrentUser.setImageUrl(finalImgUrl ? finalImgUrl : null);
-            notifyProfileUpdated(uid, finalImgUrl);
-            cacheManager.invalidateCache(`profile_${uid}`);
-            cacheManager.invalidateCache(`profile_sub_${uid}`);
-            cacheManager.invalidateCache(`talents_list_all`);
+        const newImage = (cleanData.image !== undefined ? cleanData.image : (cleanData.photoURL !== undefined ? cleanData.photoURL : cleanData.profileImage)) as string | null | undefined;
+        const finalImgUrl = (newImage && typeof newImage === 'string') ? newImage : "";
+        if (finalImgUrl) {
+            CurrentUser.setImageUrl(finalImgUrl);
         }
+        notifyProfileUpdated(uid, finalImgUrl, cleanData);
+        cacheManager.invalidateCache(`profile_${uid}`);
+        cacheManager.invalidateCache(`profile_sub_${uid}`);
+        cacheManager.invalidateCache(`talents_list_all`);
+        cacheManager.invalidateCache(`user_doc_${uid}`);
         return { success: true, error: null };
     }
     catch (error: unknown) {

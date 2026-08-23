@@ -149,7 +149,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
 
       {/* Stacked Experience Card List */}
       {experiencesList.length > 0 ? (
-        <div className="bg-black border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5 shadow-md">
+        <div className="bg-[#181818] rounded-xl overflow-hidden divide-y divide-white/5 shadow-sm">
           {experiencesList.map((exp: any, index: number) => (
             <div
               key={index}

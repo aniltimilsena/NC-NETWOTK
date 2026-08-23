@@ -53,6 +53,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
   };
   const isDiscoverActive = pathname === '/discover' || isActionActive('listing') || isActionActive('trending') || pathname.startsWith('/categories');
   const isProjectsActive = isActionActive('casting') || isActionActive('casting-create');
+  const isSupportActive = ['/about', '/help', '/contact', '/trust-safety', '/privacy', '/terms'].some(p => pathname === p || pathname.startsWith(`${p}/`));
   const [menuOpen, setMenuOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState(null);
   const [showSearchOverlay, setShowSearchOverlay] = useState(false);
@@ -218,7 +219,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                       appearance={{
                         elements: {
                           avatarBox: 'w-9 h-9 rounded-full',
-                          userButtonPopoverCard: 'bg-[#111116] border border-white/10 text-white shadow-2xl rounded-2xl p-2 w-64',
+                          userButtonPopoverCard: 'bg-[#181818] border border-white/10 text-white shadow-2xl rounded-xl p-2 w-64',
                           userButtonPopoverMain: 'space-y-0.5 p-0 bg-transparent',
                           userPreview: 'p-3 border-b border-white/10 mb-1',
                           userPreviewMainIdentifier: 'text-white font-bold text-sm',
@@ -226,7 +227,9 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                           userButtonPopoverActions: 'space-y-0.5 p-0',
                           userButtonPopoverActionButton: 'w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-transparent hover:bg-white/10 text-white font-medium transition-all text-sm cursor-pointer border-0 shadow-none',
                           userButtonPopoverActionButtonText: 'text-gray-200 hover:text-white font-semibold text-sm',
-                          userButtonPopoverActionButtonIcon: 'text-gray-400',
+                          userButtonPopoverActionButtonIcon: 'text-white',
+                          userButtonPopoverActionButtonIcon__manageAccount: 'text-white',
+                          userButtonPopoverActionButtonIcon__signOut: 'text-white',
                           userButtonPopoverFooter: 'hidden',
                         }
                       }}
@@ -235,7 +238,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                         <UserButton.Link
                           label="View Profile"
                           labelIcon={
-                            <svg className="w-4 h-4 text-[#00BFFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                           }
@@ -405,17 +408,33 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             </Link>
           )}
 
-          <Link
-            to="/trust-safety"
-            onClick={() => setMenuOpen(false)}
-            className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
-              pathname === '/trust-safety' || pathname.startsWith('/trust-safety/')
-                ? "text-white font-medium"
-                : "text-gray-400 font-normal hover:text-white"
-            }`}
-          >
-            <span className="text-[17px] tracking-tight">Support</span>
-          </Link>
+          {/* Support Accordion */}
+          <div className="flex flex-col w-full">
+            <button
+              onClick={() => setExpandedSection(expandedSection === 'support' ? null : 'support')}
+              className={`group flex items-center justify-start gap-1.5 w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+                isSupportActive
+                  ? "text-white font-medium"
+                  : "text-gray-400 font-normal hover:text-white"
+              }`}
+            >
+              <span className="text-[17px] tracking-tight">Support</span>
+              <svg className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'support' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {expandedSection === 'support' && (
+              <div className="pl-6 pr-3 py-1 space-y-1 my-1">
+                <Link to="/about" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/about' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>About Us</Link>
+                <Link to="/help" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/help' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>Help & FAQ</Link>
+                <Link to="/contact" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/contact' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>Contact</Link>
+                <Link to="/trust-safety" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/trust-safety' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>Trust & Safety</Link>
+                <Link to="/privacy" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/privacy' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>Privacy Policy</Link>
+                <Link to="/terms" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/terms' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>Terms of Service</Link>
+              </div>
+            )}
+          </div>
 
           {isLoggedIn ? (
             <button

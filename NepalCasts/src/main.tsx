@@ -8,6 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { initErrorTracking } from './utils/errorTracking';
 import './index.css';
 import { LanguageProvider } from './i18n/LanguageProvider';
+import { DialogProvider } from './providers/DialogProvider';
 import './config/i18n';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ?? '';
@@ -92,7 +93,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     <ClerkProviderWithNavigate>
                         <HelmetProvider>
                             <LanguageProvider>
-                                <App />
+                                <DialogProvider>
+                                    <App />
+                                </DialogProvider>
                             </LanguageProvider>
                         </HelmetProvider>
                     </ClerkProviderWithNavigate>

@@ -7,7 +7,6 @@ import {
   Wand2,
   Feather,
   Briefcase,
-  Film,
 } from 'lucide-react';
 
 // Custom professional SVG icon for Dancer matching Lucide's 1.5px stroke aesthetic

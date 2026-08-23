@@ -132,33 +132,35 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
     };
 
     return (
-        <div className="min-h-screen bg-[#0F0F13] text-white flex items-center justify-center relative overflow-hidden font-sans py-8 px-6 sm:px-8 sm:py-12">
+        <div className="min-h-screen bg-[#141414] text-white flex items-center justify-center relative overflow-y-auto font-sans py-10 px-4 sm:px-8">
             <SEO title="Forgot Password | NepalCasts Account Recovery" description="Reset your NepalCasts account password safely." noindex />
 
-            {/* Back button */}
-            <button
-                onClick={handleBack}
-                type="button"
-                className="absolute top-4 left-4 sm:top-6 sm:left-6 w-10 h-10 bg-[#1A1A22] border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:border-white/20 transition-all z-20 cursor-pointer shadow-sm active:scale-95"
-                aria-label="Back"
-                title="Go Back"
-            >
-                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-            </button>
-
             {/* Main centered container */}
-            <div className="w-full max-w-[370px] flex flex-col items-center z-10 relative">
+            <div className="w-full max-w-[500px] sm:max-w-[540px] flex flex-col items-center z-10 relative">
+
+                {/* Back button */}
+                <div className="w-full flex items-center justify-start mb-4">
+                    <button
+                        onClick={handleBack}
+                        type="button"
+                        className="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-all cursor-pointer shadow-sm active:scale-95"
+                        aria-label="Back"
+                        title="Go Back"
+                    >
+                        <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+                    </button>
+                </div>
 
                 {/* Logo — Gold NC */}
-                <div className="mb-5 flex justify-center">
+                <div className="mb-4 flex justify-center">
                     <LogoIcon className="w-14 h-14 object-contain" />
                 </div>
 
                 {/* Title & Subtitle */}
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white text-center tracking-tight mb-2">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-white text-center tracking-tight mb-2">
                     {successfulCreation ? 'Enter Verification Code' : 'Reset your password'}
                 </h1>
-                <p className="text-sm text-gray-400 text-center font-normal mb-7">
+                <p className="text-xs sm:text-sm text-gray-400 text-center font-normal mb-6">
                     {successfulCreation
                         ? `Enter the 6-digit code sent to ${email} and choose a new password.`
                         : 'Enter your email address to receive a verification code.'
@@ -167,27 +169,27 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
 
                 {/* Info message banner */}
                 {infoMessage && (
-                    <div className="w-full bg-[#162B21] border border-[#22C55E]/30 text-[#4ADE80] text-xs font-medium px-4 py-3 rounded-xl mb-4 flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-[#4ADE80] shrink-0" />
+                    <div className="w-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-medium px-4 py-3 rounded-xl mb-4 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                         <span>{infoMessage}</span>
                     </div>
                 )}
 
                 {/* Error message text */}
                 {error && (
-                    <p className="w-full text-xs font-medium text-red-400 text-left mb-3">
+                    <p className="w-full text-xs font-medium text-red-400 text-left mb-4">
                         {error}
                     </p>
                 )}
 
                 {/* Step 1: Email Form */}
                 {!successfulCreation ? (
-                    <form onSubmit={handleSendCode} className="w-full space-y-3.5">
-                        <div className="flex flex-col space-y-1.5 text-left">
-                            <label htmlFor="email" className="text-sm font-medium text-gray-300">
+                    <form onSubmit={handleSendCode} className="w-full space-y-4">
+                        <div className="flex flex-col space-y-2 text-left">
+                            <label htmlFor="email" className="text-xs sm:text-sm font-medium text-gray-300">
                                 Email address
                             </label>
-                            <div className="relative w-full flex items-center bg-[#1C1C26] border border-white/[0.08] rounded-xl focus-within:border-[#6C5CE7] transition-all min-h-[44px]">
+                            <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
                                 <input
                                     id="email"
                                     type="email"
@@ -196,8 +198,8 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="Enter your email address"
-                                    style={{ paddingLeft: '20px', paddingRight: '20px', textIndent: '0px' }}
-                                    className="w-full auth-input-field h-full bg-transparent border-0 text-white text-sm placeholder-gray-500/80 focus:outline-none font-medium rounded-xl"
+                                    style={{ paddingLeft: '18px', paddingRight: '18px', textIndent: '0px' }}
+                                    className="w-full auth-input-field h-full bg-transparent border-0 text-white text-sm placeholder-gray-500 focus:outline-none font-medium rounded-xl"
                                 />
                             </div>
                         </div>
@@ -205,7 +207,7 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                         <button
                             type="submit"
                             disabled={loading || !email}
-                            className="w-full py-3 rounded-xl bg-[#6C5CE7] hover:bg-[#5A4AD1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all mt-2 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[44px] flex items-center justify-center gap-2"
+                            className="w-full py-3.5 rounded-xl bg-[#0088CC] hover:bg-[#0077b3] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all mt-3 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[48px] flex items-center justify-center gap-2"
                         >
                             {loading ? (
                                 <>
@@ -219,21 +221,21 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                     </form>
                 ) : (
                     /* Step 2: Verification Code & New Password Form */
-                    <form onSubmit={handleResetPassword} className="w-full space-y-3.5">
+                    <form onSubmit={handleResetPassword} className="w-full space-y-4">
                         {/* OTP Verification Code */}
-                        <div className="flex flex-col space-y-1.5 text-left">
-                            <label htmlFor="code" className="text-sm font-medium text-gray-300 flex items-center justify-between">
+                        <div className="flex flex-col space-y-2 text-left">
+                            <label htmlFor="code" className="text-xs sm:text-sm font-medium text-gray-300 flex items-center justify-between">
                                 <span>Verification Code</span>
                                 <button
                                     type="button"
                                     onClick={handleResendCode}
                                     disabled={loading}
-                                    className="text-xs text-[#826BF1] hover:underline font-semibold cursor-pointer border-0 bg-transparent p-0"
+                                    className="text-xs text-[#00BFFF] hover:underline font-semibold cursor-pointer border-0 bg-transparent p-0"
                                 >
                                     Resend code
                                 </button>
                             </label>
-                            <div className="relative w-full flex items-center bg-[#1C1C26] border border-white/[0.08] rounded-xl focus-within:border-[#6C5CE7] transition-all min-h-[44px]">
+                            <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
                                 <input
                                     id="code"
                                     type="text"
@@ -241,18 +243,18 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                                     value={code}
                                     onChange={(e) => setCode(e.target.value)}
                                     placeholder="Enter 6-digit code"
-                                    style={{ paddingLeft: '20px', paddingRight: '20px', textIndent: '0px' }}
-                                    className="w-full auth-input-field h-full bg-transparent border-0 text-white text-sm placeholder-gray-500/80 focus:outline-none font-medium rounded-xl tracking-wider"
+                                    style={{ paddingLeft: '18px', paddingRight: '18px', textIndent: '0px' }}
+                                    className="w-full auth-input-field h-full bg-transparent border-0 text-white text-sm placeholder-gray-500 focus:outline-none font-medium rounded-xl tracking-wider"
                                 />
                             </div>
                         </div>
 
                         {/* New Password */}
-                        <div className="flex flex-col space-y-1.5 text-left">
-                            <label htmlFor="password" className="text-sm font-medium text-gray-300">
+                        <div className="flex flex-col space-y-2 text-left">
+                            <label htmlFor="password" className="text-xs sm:text-sm font-medium text-gray-300">
                                 New password
                             </label>
-                            <div className="relative w-full flex items-center bg-[#1C1C26] border border-white/[0.08] rounded-xl focus-within:border-[#6C5CE7] transition-all min-h-[44px]">
+                            <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
                                 <input
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
@@ -260,8 +262,8 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Enter new password (min. 8 chars)"
-                                    style={{ paddingLeft: '20px', paddingRight: '48px', textIndent: '0px' }}
-                                    className="w-full auth-input-field-password h-full bg-transparent border-0 text-white text-sm placeholder-gray-500/80 focus:outline-none font-medium rounded-xl"
+                                    style={{ paddingLeft: '18px', paddingRight: '48px', textIndent: '0px' }}
+                                    className="w-full auth-input-field-password h-full bg-transparent border-0 text-white text-sm placeholder-gray-500 focus:outline-none font-medium rounded-xl"
                                 />
                                 <button
                                     type="button"
@@ -274,11 +276,11 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                         </div>
 
                         {/* Confirm Password */}
-                        <div className="flex flex-col space-y-1.5 text-left">
-                            <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-300">
+                        <div className="flex flex-col space-y-2 text-left">
+                            <label htmlFor="confirmPassword" className="text-xs sm:text-sm font-medium text-gray-300">
                                 Confirm new password
                             </label>
-                            <div className="relative w-full flex items-center bg-[#1C1C26] border border-white/[0.08] rounded-xl focus-within:border-[#6C5CE7] transition-all min-h-[44px]">
+                            <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
                                 <input
                                     id="confirmPassword"
                                     type={showConfirmPassword ? 'text' : 'password'}
@@ -286,8 +288,8 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="Confirm new password"
-                                    style={{ paddingLeft: '20px', paddingRight: '48px', textIndent: '0px' }}
-                                    className="w-full auth-input-field-password h-full bg-transparent border-0 text-white text-sm placeholder-gray-500/80 focus:outline-none font-medium rounded-xl"
+                                    style={{ paddingLeft: '18px', paddingRight: '48px', textIndent: '0px' }}
+                                    className="w-full auth-input-field-password h-full bg-transparent border-0 text-white text-sm placeholder-gray-500 focus:outline-none font-medium rounded-xl"
                                 />
                                 <button
                                     type="button"
@@ -302,7 +304,7 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                         <button
                             type="submit"
                             disabled={loading || !code || !password || !confirmPassword}
-                            className="w-full py-3 rounded-xl bg-[#6C5CE7] hover:bg-[#5A4AD1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all mt-2 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[44px] flex items-center justify-center gap-2"
+                            className="w-full py-3.5 rounded-xl bg-[#0088CC] hover:bg-[#0077b3] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all mt-3 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[48px] flex items-center justify-center gap-2"
                         >
                             {loading ? (
                                 <>
@@ -317,12 +319,12 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                 )}
 
                 {/* Footer link */}
-                <div className="mt-7 flex items-center justify-center gap-1.5 text-sm text-gray-400 font-medium">
+                <div className="mt-8 flex items-center justify-center gap-1.5 text-sm text-gray-400 font-medium">
                     <span>Remembered your password?</span>
                     <button
                         onClick={() => navigate('/signin')}
                         type="button"
-                        className="text-[#826BF1] hover:underline font-semibold cursor-pointer"
+                        className="text-[#00BFFF] hover:underline font-semibold cursor-pointer"
                     >
                         Sign in
                     </button>
@@ -331,7 +333,7 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                 {/* Security badge */}
                 <div className="mt-8 flex items-center gap-2 text-gray-500 text-xs font-medium tracking-wider">
                     <ShieldCheck className="w-4 h-4 text-gray-500" />
-                    <span>Secured by Clerk</span>
+                    <span>Secured Authentication</span>
                 </div>
             </div>
         </div>

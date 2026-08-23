@@ -108,27 +108,27 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
     const hasContent = Boolean(text.trim() || selectedFile);
 
     return (
-        <div className="p-4 pb-6 md:p-4 bg-[#0E0E0E] border-t border-white/5 space-y-3">
+        <div className="p-3 sm:p-4 bg-[#141414] border-t border-white/5 space-y-2.5">
             {replyingTo && (
-                <div className="flex justify-between items-center bg-white/5 border border-white/5 p-3 rounded-2xl text-xs text-nc-muted">
+                <div className="flex justify-between items-center bg-[#1a1a1a] p-2.5 rounded-xl text-xs text-gray-400">
                     <div className="text-left truncate max-w-[80%]">
                         <span className="font-bold text-white block mb-0.5">Replying to:</span>
                         <span>{replyingTo.text}</span>
                     </div>
-                    <button onClick={onCancelReply} className="text-nc-muted hover:text-white transition-colors">
+                    <button onClick={onCancelReply} className="text-gray-400 hover:text-white transition-colors cursor-pointer">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
             )}
 
             {previewUrl && selectedFile && (
-                <div className="relative inline-block bg-white/5 border border-white/5 p-2 rounded-2xl max-w-[200px] text-left animate-in fade-in zoom-in duration-200">
+                <div className="relative inline-block bg-[#1a1a1a] p-2 rounded-xl max-w-[200px] text-left animate-in fade-in zoom-in duration-200">
                     {selectedFile.type.startsWith('image/') ? (
-                        <img src={previewUrl} alt="Preview" className="max-w-[180px] max-h-[120px] rounded-xl object-cover border border-white/10" />
+                        <img src={previewUrl} alt="Preview" className="max-w-[180px] max-h-[120px] rounded-lg object-cover" />
                     ) : (
-                        <video src={previewUrl} className="max-w-[180px] max-h-[120px] rounded-xl object-cover border border-white/10" />
+                        <video src={previewUrl} className="max-w-[180px] max-h-[120px] rounded-lg object-cover" />
                     )}
-                    <button type="button" onClick={handleRemovePreview} disabled={uploading} className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all z-10" title="Remove attachment">
+                    <button type="button" onClick={handleRemovePreview} disabled={uploading} className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all z-10 cursor-pointer" title="Remove attachment">
                         <X className="w-3.5 h-3.5" />
                     </button>
                 </div>
@@ -146,22 +146,22 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
                 </div>
             )}
 
-            <form onSubmit={handleSend} className="flex gap-3 items-center">
-                <button type="button" onClick={handleAttachClick} disabled={uploading} className="w-11 h-11 bg-white/5 hover:bg-white/10 disabled:opacity-50 rounded-2xl flex items-center justify-center text-nc-muted hover:text-white transition-all shrink-0 active:scale-95" title="Attach photo or video">
+            <form onSubmit={handleSend} className="flex gap-2 sm:gap-3 items-center">
+                <button type="button" onClick={handleAttachClick} disabled={uploading} className="w-10 h-10 sm:w-11 sm:h-11 bg-[#1a1a1a] hover:bg-[#242424] disabled:opacity-50 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition-all shrink-0 active:scale-95 cursor-pointer" title="Attach photo or video">
                     <Paperclip className="w-4 h-4" />
                 </button>
 
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*,video/*" className="hidden" />
 
-                <input type="text" placeholder={uploading ? "Uploading media..." : "Write your message..."} value={text} disabled={uploading} onChange={(e) => setText(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-[#00BFFF]/20 transition-colors disabled:opacity-50" />
+                <input type="text" placeholder={uploading ? "Uploading media..." : "Write a message..."} value={text} disabled={uploading} onChange={(e) => setText(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 bg-[#1a1a1a] rounded-xl px-4 py-2.5 sm:py-3 text-sm text-white placeholder-gray-500 outline-none focus:ring-1 focus:ring-white/20 transition-all disabled:opacity-50" />
 
                 <button
                     type="submit"
                     disabled={!hasContent || uploading}
-                    className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black transition-all shrink-0 active:scale-95 ${
+                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center font-black transition-all shrink-0 active:scale-95 ${
                         hasContent
-                            ? 'bg-[#00BFFF] text-black hover:bg-[#00BFFF]/90 shadow-[0_0_12px_rgba(0,191,255,0.35)] cursor-pointer'
-                            : 'bg-white/5 text-white/20 cursor-not-allowed'
+                            ? 'bg-[#0088CC] text-white hover:bg-[#0077b3] shadow-sm cursor-pointer'
+                            : 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
                     }`}
                     title="Send message"
                 >

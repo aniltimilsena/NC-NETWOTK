@@ -692,7 +692,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   }
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white pt-4 pb-20 px-4 sm:px-8 font-sans">
+    <div className="min-h-screen bg-[#141414] text-white pb-20 font-sans">
       <SEO
         title={`${call.title} | NepalCasts Casting Call`}
         description={call.description}
@@ -740,140 +740,141 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
       />
 
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header Hero Banner with subtle rounded-xl curved edges */}
-        <div className="relative rounded-xl overflow-hidden border border-white/5 bg-black shadow-xl">
-          {/* Floating Consistent Back Button */}
-          <button
-            onClick={() => onNavigate('casting')}
-            className="absolute top-4 left-4 z-20 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white hover:bg-black/80 transition-all cursor-pointer shadow-lg flex items-center justify-center active:scale-95"
-            aria-label="Back"
-            title="Back to Casting Calls"
-          >
-            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
-          </button>
+      {/* Full-Width Edge-to-Edge Hero Banner with small curved bottom edges */}
+      <div className="relative w-full rounded-none rounded-b-xl sm:rounded-b-2xl overflow-hidden border-b border-white/5 bg-black shadow-xl">
+        {/* Floating Consistent Back Button */}
+        <button
+          onClick={() => onNavigate('casting')}
+          className="absolute top-4 left-4 sm:left-8 lg:left-12 z-20 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white hover:bg-black/80 transition-all cursor-pointer shadow-lg flex items-center justify-center active:scale-95"
+          aria-label="Back"
+          title="Back to Casting Calls"
+        >
+          <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+        </button>
 
-          {(() => {
-            const bannerImage = getCastingThumbnail(call);
-            return (
-              <div className="h-72 sm:h-96 w-full relative bg-black overflow-hidden flex items-center justify-center">
-                {bannerImage ? (
-                  <img
-                    src={bannerImage}
-                    alt={call.title || 'Casting Call'}
-                    className="w-full h-full object-cover"
-                    onError={(e: any) => {
-                      e.currentTarget.style.display = 'none';
-                      const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-banner');
-                      if (fallback) (fallback as HTMLElement).style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div
-                  className="default-clapper-banner w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c2333] via-[#141b2a] to-black p-4 text-center"
-                  style={{ display: bannerImage ? 'none' : 'flex' }}
-                >
-                  <svg className="w-16 h-16 sm:w-24 sm:h-24 text-indigo-300/60 fill-current drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] -mt-10 sm:-mt-14" viewBox="0 0 24 24">
-                    <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
-                  </svg>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 via-50% to-transparent pointer-events-none" />
+        {(() => {
+          const bannerImage = getCastingThumbnail(call);
+          return (
+            <div className="h-72 sm:h-96 w-full relative bg-black overflow-hidden flex items-center justify-center">
+              {bannerImage ? (
+                <img
+                  src={bannerImage}
+                  alt={call.title || 'Casting Call'}
+                  className="w-full h-full object-cover"
+                  onError={(e: any) => {
+                    e.currentTarget.style.display = 'none';
+                    const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-banner');
+                    if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div
+                className="default-clapper-banner w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c2333] via-[#141b2a] to-black p-4 text-center"
+                style={{ display: bannerImage ? 'none' : 'flex' }}
+              >
+                <svg className="w-16 h-16 sm:w-24 sm:h-24 text-indigo-300/60 fill-current drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] -mt-10 sm:-mt-14" viewBox="0 0 24 24">
+                  <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
+                </svg>
               </div>
-            );
-          })()}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 via-50% to-transparent pointer-events-none" />
+            </div>
+          );
+        })()}
 
-          <div className="p-6 sm:p-10 -mt-32 sm:-mt-36 relative z-10 space-y-4 text-left">
-            <div>
-              <span className="px-3.5 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-wider backdrop-blur-md">
-                {call.category || call.type || 'Nepali Film'}
+        <div className="max-w-6xl mx-auto p-6 sm:p-10 -mt-32 sm:-mt-36 relative z-10 space-y-4 text-left">
+          <div>
+            <span className="px-3.5 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-wider backdrop-blur-md">
+              {call.category || call.type || 'Nepali Film'}
+            </span>
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-lg">
+            {call.title}
+          </h1>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+            <div className="flex flex-wrap items-center gap-6 text-xs text-gray-300 font-semibold">
+              <span className="flex items-center gap-2">
+                <MapPin size={14} className="text-[#00BFFF]" />
+                {call.location}
+              </span>
+              <span className="flex items-center gap-2">
+                <Clock size={14} className="text-[#00BFFF]" />
+                Deadline: {call.deadline} {timeLeft ? `(${timeLeft})` : ''}
+              </span>
+              <span className="flex items-center gap-2 text-[#00BFFF] font-bold text-sm sm:text-base">
+                Salary: {call.budget}
               </span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-lg">
-              {call.title}
-            </h1>
-
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-              <div className="flex flex-wrap items-center gap-6 text-xs text-gray-300 font-semibold">
-                <span className="flex items-center gap-2">
-                  <MapPin size={14} className="text-[#00BFFF]" />
-                  {call.location}
-                </span>
-                <span className="flex items-center gap-2">
-                  <Clock size={14} className="text-[#00BFFF]" />
-                  Deadline: {call.deadline} {timeLeft ? `(${timeLeft})` : ''}
-                </span>
-                <span className="flex items-center gap-2 text-[#00BFFF] font-bold text-sm sm:text-base">
-                  Salary: {call.budget}
-                </span>
-              </div>
-
-              {/* Action Buttons beside Salary */}
-              <div className="flex flex-wrap items-center gap-2">
-                {isCreator ? (
+            {/* Action Buttons beside Salary */}
+            <div className="flex flex-wrap items-center gap-2">
+              {isCreator ? (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleDelete}
+                  loading={deleting}
+                  disabled={deleting}
+                  className="rounded-xl font-semibold text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Call</span>
+                </Button>
+              ) : (
+                <>
                   <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={handleDelete}
-                    loading={deleting}
-                    disabled={deleting}
-                    className="rounded-full font-semibold text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Delete Call</span>
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      className={`rounded-xl font-black uppercase tracking-wider text-xs transition-all cursor-pointer px-6 py-2 ${
-                        applicationStatus === 'accepted'
-                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default'
-                          : applicationStatus === 'rejected'
-                          ? 'bg-red-600/20 text-red-400 border border-red-500/30 cursor-default'
-                          : 'bg-[#00BFFF] text-black hover:bg-[#00BFFF]/90 shadow-lg shadow-[#00BFFF]/20'
-                      }`}
-                      size="sm"
-                      onClick={openApplyModal}
-                      disabled={applied || applying || isExpired}
-                    >
-                      {applying
-                        ? 'Submitting...'
-                        : applicationStatus === 'accepted'
-                        ? '✓ Application Accepted'
+                    className={`rounded-xl font-black uppercase tracking-wider text-xs transition-all cursor-pointer px-6 py-2 ${
+                      applicationStatus === 'accepted'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default'
                         : applicationStatus === 'rejected'
-                        ? '✕ Application Rejected'
-                        : applied
-                        ? '✓ Applied (Pending)'
-                        : isExpired
-                        ? 'Audition Closed'
-                        : 'Apply Now'}
-                    </Button>
+                        ? 'bg-red-600/20 text-red-400 border border-red-500/30 cursor-default'
+                        : 'bg-[#00BFFF] text-black hover:bg-[#00BFFF]/90 shadow-lg shadow-[#00BFFF]/20'
+                    }`}
+                    size="sm"
+                    onClick={openApplyModal}
+                    disabled={applied || applying || isExpired}
+                  >
+                    {applying
+                      ? 'Submitting...'
+                      : applicationStatus === 'accepted'
+                      ? '✓ Application Accepted'
+                      : applicationStatus === 'rejected'
+                      ? '✕ Application Rejected'
+                      : applied
+                      ? '✓ Applied (Pending)'
+                      : isExpired
+                      ? 'Audition Closed'
+                      : 'Apply Now'}
+                  </Button>
 
-                    {applied && applicationId && applicationStatus === 'pending' && (
-                      <button
-                        onClick={handleCancelApplication}
-                        disabled={cancelling}
-                        className="px-4 py-2 rounded-xl border border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/10 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
-                      >
-                        Withdraw
-                      </button>
-                    )}
-
+                  {applied && applicationId && applicationStatus === 'pending' && (
                     <button
-                      onClick={handleSave}
-                      disabled={saved}
-                      className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl border border-white/10 bg-white/10 transition-colors cursor-pointer ${
-                        saved ? 'text-[#00BFFF] cursor-default' : 'text-gray-300 hover:text-white'
-                      }`}
+                      onClick={handleCancelApplication}
+                      disabled={cancelling}
+                      className="px-4 py-2 rounded-xl border border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/10 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                     >
-                      {saved ? 'Saved' : 'Save'}
+                      Withdraw
                     </button>
-                  </>
-                )}
-              </div>
+                  )}
+
+                  <button
+                    onClick={handleSave}
+                    disabled={saved}
+                    className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl border border-white/10 bg-white/10 transition-colors cursor-pointer ${
+                      saved ? 'text-[#00BFFF] cursor-default' : 'text-gray-300 hover:text-white'
+                    }`}
+                  >
+                    {saved ? 'Saved' : 'Save'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 pt-4">
 
         {/* Clean Content Layout (No Extra Card Boxes) */}
         <div className="space-y-8 text-left pt-2">

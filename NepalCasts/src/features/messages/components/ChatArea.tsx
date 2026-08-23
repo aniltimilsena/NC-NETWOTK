@@ -112,37 +112,37 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
     useEffect(() => {
         isInitialMount.current = true;
     }, [chat?.id]);
-    return (<div className="flex flex-col h-full bg-[#0b0b0c]">
+    return (<div className="flex flex-col h-full bg-[#141414]">
       
-      <div className="px-6 py-4 pt-6 md:py-4 flex items-center justify-between">
+      <div className="px-5 py-3.5 border-b border-white/5 flex items-center justify-between bg-[#141414]">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="md:hidden w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 shadow-sm active:scale-95 cursor-pointer" title="Back to Inbox" aria-label="Back to Inbox">
             <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5}/>
           </button>
-          <Avatar userId={otherParticipantId} src={chat?.avatar} name={chat?.name} size="md" className="w-11 h-11 sm:w-12 sm:h-12 shrink-0" showStatus={true} status={isOnline ? 'online' : 'offline'}/>
+          <Avatar userId={otherParticipantId} src={chat?.avatar} name={chat?.name} size="md" className="w-10 h-10 sm:w-11 sm:h-11 shrink-0" showStatus={true} status={isOnline ? 'online' : 'offline'}/>
           <div className="text-left">
-            <span className="text-base sm:text-lg font-extrabold text-white block leading-tight">{chat?.name}</span>
-            <span className="text-xs block uppercase tracking-wider font-semibold mt-0.5">
-              {isTyping ? <span className="text-[#00BFFF] animate-pulse">Typing...</span> : isOnline ? <span className="text-emerald-400">Online</span> : <span className="text-nc-muted">Offline</span>}
+            <span className="text-sm sm:text-base font-extrabold text-white block leading-tight">{chat?.name}</span>
+            <span className="text-[11px] block tracking-wide font-medium mt-0.5">
+              {isTyping ? <span className="text-[#00BFFF] animate-pulse">Typing...</span> : isOnline ? <span className="text-emerald-400">Online</span> : <span className="text-gray-500">Offline</span>}
             </span>
           </div>
         </div>
 
         
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button onClick={() => onInitiateCall('audio')} title="Start Voice Call" className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 text-white/80 hover:text-white border border-white/10 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95">
-            <Phone className="w-5 h-5 text-white/90" strokeWidth={2}/>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <button onClick={() => onInitiateCall('audio')} title="Start Voice Call" className="p-2 text-gray-300 hover:text-white transition-colors cursor-pointer active:scale-95">
+            <Phone className="w-5 h-5" strokeWidth={1.8}/>
           </button>
-          {onTogglePinnedDrawer && (<button onClick={onTogglePinnedDrawer} title="View Pinned Messages" className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 border ${isPinnedDrawerOpen
-                ? 'bg-[#00BFFF] border-[#00BFFF] text-black hover:bg-[#00BFFF]/90'
-                : 'bg-white/5 hover:bg-white/15 text-white/80 hover:text-white border border-white/10'}`}>
-              <Pin className="w-5 h-5" strokeWidth={2}/>
+          {onTogglePinnedDrawer && (<button onClick={onTogglePinnedDrawer} title="View Pinned Messages" className={`p-2 transition-colors cursor-pointer active:scale-95 ${isPinnedDrawerOpen
+                ? 'text-[#00BFFF]'
+                : 'text-gray-300 hover:text-white'}`}>
+              <Pin className="w-5 h-5" strokeWidth={1.8}/>
             </button>)}
         </div>
       </div>
 
       
-      <div ref={containerRef} className="flex-1 overflow-y-auto p-6 space-y-1 no-scrollbar bg-black/10 flex flex-col">
+      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-1 no-scrollbar bg-[#141414] flex flex-col">
         {messages.length > 0 ? (messages.map((msg, index) => {
             const isMe = msg.senderId === currentUser?.uid;
             const isSystemMsg = msg.senderId === 'system' || msg.isSystem || (typeof msg.text === 'string' && (msg.text.includes('call •') || msg.text.includes('Call •')));
@@ -157,9 +157,9 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                 const borderColor = isMissed ? 'border-red-900/50' : 'border-emerald-900/50';
                 const bgColor = isMissed ? 'bg-[#1F0A0B]' : 'bg-[#0B1F12]';
                 return (<div key={msg.id} className="flex justify-center my-3">
-                      <div className={`inline-flex items-center gap-2.5 px-5 py-2 rounded-full border ${borderColor} ${bgColor} shadow-md backdrop-blur-md`}>
-                        <Icon className={`w-4 h-4 ${color} shrink-0`}/>
-                        <span className={`text-xs sm:text-sm font-semibold ${color}`}>{text}</span>
+                      <div className={`inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border ${borderColor} ${bgColor} shadow-md backdrop-blur-md`}>
+                        <Icon className={`w-3.5 h-3.5 ${color} shrink-0`}/>
+                        <span className={`text-xs font-semibold ${color}`}>{text}</span>
                       </div>
                     </div>);
             }
@@ -174,25 +174,25 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
             let cornerRadius: string;
             if (isMe) {
                 if (isGroupedWithPrev && isGroupedWithNext) {
-                    cornerRadius = 'rounded-2xl rounded-tr-sm rounded-br-sm';
+                    cornerRadius = 'rounded-xl rounded-tr-sm rounded-br-sm';
                 } else if (isGroupedWithNext) {
-                    cornerRadius = 'rounded-2xl rounded-tr-sm';
+                    cornerRadius = 'rounded-xl rounded-tr-sm';
                 } else {
-                    cornerRadius = 'rounded-2xl rounded-br-none';
+                    cornerRadius = 'rounded-xl rounded-br-none';
                 }
             } else {
                 if (isGroupedWithPrev && isGroupedWithNext) {
-                    cornerRadius = 'rounded-2xl rounded-tl-sm rounded-bl-sm';
+                    cornerRadius = 'rounded-xl rounded-tl-sm rounded-bl-sm';
                 } else if (isGroupedWithNext) {
-                    cornerRadius = 'rounded-2xl rounded-tl-sm';
+                    cornerRadius = 'rounded-xl rounded-tl-sm';
                 } else {
-                    cornerRadius = 'rounded-2xl rounded-bl-none';
+                    cornerRadius = 'rounded-xl rounded-bl-none';
                 }
             }
             const marginClass = (isGroupedWithPrev || isGroupedWithNext) ? 'my-0.5' : 'my-2.5';
             const showAvatar = !isMe && !isGroupedWithNext;
             const showTimestamp = !isGroupedWithNext || msg.isPinned || msg.hasPendingWrites;
-            return (<div key={msg.id} className={`group flex items-end gap-2.5 max-w-[85%] sm:max-w-[75%] ${marginClass} ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`} onTouchStart={() => startMessagePress(msg)} onTouchEnd={endMessagePress} onTouchMove={endMessagePress} onMouseDown={(e) => {
+            return (<div key={msg.id} className={`group flex items-end gap-2 max-w-[85%] sm:max-w-[75%] ${marginClass} ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`} onTouchStart={() => startMessagePress(msg)} onTouchEnd={endMessagePress} onTouchMove={endMessagePress} onMouseDown={(e) => {
                     if (e.button !== 0)
                         return;
                     startMessagePress(msg);
@@ -208,7 +208,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
 
                 
                 <div className="flex flex-col min-w-0">
-                  {msg.replyTo && (<div className="bg-white/5 border-l-2 border-[#00BFFF] p-2 rounded-xl text-[10px] text-nc-muted mb-1 max-w-[240px] truncate text-left">
+                  {msg.replyTo && (<div className="bg-white/5 border-l-2 border-[#00BFFF] p-2 rounded-xl text-[10px] text-gray-400 mb-1 max-w-[240px] truncate text-left">
                       {msg.replyTo.text}
                     </div>)}
 
@@ -219,10 +219,10 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
 
                     return (
                       <div className={`text-sm text-left ${isMediaMsg
-                        ? `p-1 bg-[#18181b] border border-white/10 shadow-md ${cornerRadius} overflow-hidden`
+                        ? `p-0 bg-[#181818] shadow-sm ${cornerRadius} overflow-hidden`
                         : isMe
-                          ? `px-4 py-2.5 bg-gradient-to-br from-sky-400 to-sky-500 text-black font-semibold shadow-[0_4px_12px_rgba(56,189,248,0.15)] ${cornerRadius}`
-                          : `px-4 py-2.5 bg-[#18181b] text-gray-200 border border-white/[0.03] shadow-sm ${cornerRadius}`}`}>
+                          ? `px-3.5 py-2 bg-[#0088CC] text-white font-medium shadow-sm ${cornerRadius}`
+                          : `px-3.5 py-2 bg-[#222222] text-gray-200 shadow-sm ${cornerRadius}`}`}>
                         {isImage ? (
                           <div className="overflow-hidden rounded-xl aspect-square w-52 sm:w-64 max-w-full">
                             <img src={msg.text} alt="Sent photo" className="w-full h-full object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity" onClick={(e) => {

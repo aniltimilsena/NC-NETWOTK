@@ -1,90 +1,204 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
+import { ShieldCheck, AlertTriangle, MapPin, MessageSquare, Lock, CheckCircle2, Building2, FileCheck, ShieldAlert, Sparkles, ChevronLeft } from 'lucide-react';
+
 export default function TrustSafety() {
-    return (<div className="min-h-screen bg-nc-dark pt-2 pb-6">
-      <SEO title="Trust & Safety | Scam Prevention on NepalCasts" description="Learn how NepalCasts protects actors from scams. Read our E-E-A-T verified trust and safety guidelines, how we verify casting directors, and tips for safe auditions."/>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16 space-y-4">
-          <h1 className="text-4xl sm:text-5xl font-black text-white px-2">Trust & Safety Center</h1>
-          <p className="text-nc-secondary text-lg max-w-2xl mx-auto">
-            Your safety is our top priority. We maintain strict verification standards to ensure a professional, scam-free casting environment.
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-[#141414] pt-4 pb-16 text-white text-left">
+      <SEO
+        title="Trust & Safety Center | NepalCasts - Cinema & Talent Network"
+        description="Learn how NepalCasts protects actors, directors, and filmmakers from scams. Read our verified safety guidelines, casting verification protocols, and audition security."
+      />
+
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12 space-y-12">
+        {/* Navigation Bar */}
+        <div className="flex items-center pt-2">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0 shadow-sm"
+            title="Go Back"
+            aria-label="Go Back"
+          >
+            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+          </button>
+        </div>
+
+        {/* Hero Header */}
+        <div className="text-center space-y-4 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider">
+            <ShieldCheck className="w-4 h-4 text-white" />
+            <span>Verified Industry Safety</span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-sans font-black tracking-tight text-white leading-tight">
+            Trust & Safety <span className="text-[#00BFFF]">Center</span>
+          </h1>
+          <p className="text-gray-400 text-sm sm:text-base lg:text-lg leading-relaxed">
+            Your safety and professional dignity are our highest priorities. We enforce strict manual vetting standards to guarantee an authentic, scam-free casting ecosystem across Nepal.
           </p>
         </div>
 
-        <div className="space-y-12">
-          
-          <section className="bg-nc-card border border-nc-border rounded-3xl p-8 sm:p-10">
-            <div className="flex gap-4 items-start mb-6">
-              <div className="w-12 h-12 rounded-full bg-nc-accent/10 flex items-center justify-center flex-shrink-0 text-nc-accent">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                </svg>
+        {/* Verification Protocol Banner */}
+        <section className="bg-[#181818] rounded-2xl p-6 sm:p-8 lg:p-10 shadow-2xl space-y-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-white/5">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-white shrink-0">
+                <Building2 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">Our Casting Director Verification Protocol</h2>
-                <p className="text-nc-muted leading-relaxed">
-                  To establish high Experience, Expertise, Authoritativeness, and Trustworthiness (E-E-A-T), NepalCasts employs a rigorous manual verification process before any production house is allowed to post a job.
+                <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                  Casting Director & Production Vetting Protocol
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
+                  Every production house, director, and agency undergoes manual review before posting jobs.
                 </p>
               </div>
             </div>
-            
-            <div className="grid sm:grid-cols-2 gap-6 pl-0 sm:pl-16">
-              <div className="space-y-2">
-                <h3 className="font-bold text-white text-lg">1. Identity Verification</h3>
-                <p className="text-nc-secondary text-sm">We require government-issued ID and company registration documents from all casting entities.</p>
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-bold text-white text-lg">2. Portfolio Review</h3>
-                <p className="text-nc-secondary text-sm">Casting directors must provide verifiable links to previous projects (IMDb, official websites).</p>
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-bold text-white text-lg">3. Communication Check</h3>
-                <p className="text-nc-secondary text-sm">Valid corporate email addresses are required. Free domains (e.g., Gmail) undergo extensive secondary checks.</p>
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-bold text-white text-lg">4. The "Verified" Badge</h3>
-                <p className="text-nc-secondary text-sm">Only productions passing all checks receive the <span className="text-nc-blue font-black">Verified Check</span> badge on their profiles and listings.</p>
-              </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-bold shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>E-E-A-T Verified</span>
             </div>
-          </section>
+          </div>
 
-          
-          <section className="space-y-8">
-            <h2 className="text-3xl font-black text-white border-b border-nc-border pb-4">Actor Scam Prevention Guide</h2>
-            
-            <div className="grid sm:grid-cols-3 gap-6">
-              <div className="bg-nc-surface border border-nc-border rounded-xl p-6 hover:border-red-500/50 transition-colors group">
-                <div className="text-nc-muted mb-4 group-hover:text-red-500 transition-colors">
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                  </svg>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              {
+                step: '01',
+                title: 'Identity & Registration',
+                desc: 'Government-issued citizenship ID and company registration documentation required from all casting entities.',
+                icon: FileCheck,
+              },
+              {
+                step: '02',
+                title: 'Portfolio Review',
+                desc: 'Verifiable proof of work history, IMDb film credits, YouTube/Vimeo links, and active production history.',
+                icon: Sparkles,
+              },
+              {
+                step: '03',
+                title: 'Direct Communication Audit',
+                desc: 'Corporate email addresses and official domain checks. Free webmail providers undergo secondary manual verification.',
+                icon: MessageSquare,
+              },
+              {
+                step: '04',
+                title: 'The Verified Checkmark',
+                desc: 'Only authorized casting directors receive the official Verified Checkmark badge displayed on all calls and profiles.',
+                icon: ShieldCheck,
+              },
+            ].map((item, idx) => (
+              <div key={idx} className="bg-[#141414] rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-4 hover:bg-[#111111] transition-colors shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-[#00BFFF] font-mono tracking-wider">{item.step}</span>
+                  <item.icon className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="font-bold text-white mb-2">Never Pay to Audition</h3>
-                <p className="text-nc-secondary text-sm">Legitimate casting directors will never ask you for an "audition fee," "registration cost," or require you to use specific paid photographic services.</p>
-              </div>
-              
-              <div className="bg-nc-surface border border-nc-border rounded-xl p-6 hover:border-red-500/50 transition-colors group">
-                <div className="text-nc-muted mb-4 group-hover:text-red-500 transition-colors">
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  </svg>
+                <div className="space-y-1.5">
+                  <h3 className="font-bold text-white text-base leading-snug">{item.title}</h3>
+                  <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">{item.desc}</p>
                 </div>
-                <h3 className="font-bold text-white mb-2">Location Safety</h3>
-                <p className="text-nc-secondary text-sm">Verified auditions will always take place in studios, offices, or public places. Never agree to audition in a hotel room or private residence.</p>
               </div>
-              
-              <div className="bg-nc-surface border border-nc-border rounded-xl p-6 hover:border-red-500/50 transition-colors group">
-                <div className="text-nc-muted mb-4 group-hover:text-red-500 transition-colors">
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-                  </svg>
-                </div>
-                <h3 className="font-bold text-white mb-2">Keep Comms On-Platform</h3>
-                <p className="text-nc-secondary text-sm">Use NepalCasts Messages. Scammers often try to move the conversation immediately to WhatsApp or Telegram to bypass our security filters.</p>
-              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Actor Scam Prevention Guide */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between border-b border-white/5 pb-4">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Actor & Talent Scam Prevention Guide
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">
+                Protect yourself by knowing the key warning signs of illegitimate casting calls.
+              </p>
             </div>
-          </section>
-        </div>
+            <ShieldAlert className="w-7 h-7 text-white shrink-0 hidden sm:block" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {[
+              {
+                icon: AlertTriangle,
+                title: 'Never Pay to Audition',
+                desc: 'Legitimate filmmakers will never demand audition fees, script fees, registration charges, or mandatory paid photoshoot packages.',
+                badge: 'Zero Upfront Cost',
+                badgeColor: 'text-red-400 bg-red-500/15',
+              },
+              {
+                icon: MapPin,
+                title: 'Safe Audition Locations',
+                desc: 'Official auditions always occur in studios, corporate offices, or established public venues. Never attend an audition in a hotel room or private home.',
+                badge: 'Verified Studios Only',
+                badgeColor: 'text-amber-400 bg-amber-500/15',
+              },
+              {
+                icon: MessageSquare,
+                title: 'Keep Chats On-Platform',
+                desc: 'Use NepalCasts encrypted messages. Fraudulent actors attempt to immediately switch to WhatsApp or Telegram to avoid audit trails.',
+                badge: 'In-App Protection',
+                badgeColor: 'text-[#00BFFF] bg-[#00BFFF]/15',
+              },
+              {
+                icon: Lock,
+                title: 'Protect Sensitive Personal Data',
+                desc: 'Never share bank details, OTP codes, or sensitive identification before an official contract with production management is executed.',
+                badge: 'Privacy Standard',
+                badgeColor: 'text-purple-400 bg-purple-500/15',
+              },
+              {
+                icon: FileCheck,
+                title: 'Insist on Written Contracts',
+                desc: 'Ensure all roles, remuneration, shoot schedules, and usage rights are clearly defined in a binding bilateral agreement prior to shooting.',
+                badge: 'Legal Security',
+                badgeColor: 'text-emerald-400 bg-emerald-500/15',
+              },
+              {
+                icon: ShieldCheck,
+                title: 'Report Suspicious Activity',
+                desc: 'If any user exhibits inappropriate behavior or violates community guidelines, report their profile or casting call immediately for instant moderation.',
+                badge: '24/7 Moderation',
+                badgeColor: 'text-sky-400 bg-sky-500/15',
+              },
+            ].map((card, i) => (
+              <div
+                key={i}
+                className="bg-[#181818] rounded-2xl p-6 sm:p-7 space-y-4 hover:bg-[#1c1c1c] shadow-lg transition-all flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                      <card.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${card.badgeColor}`}>
+                      {card.badge}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-white leading-snug">{card.title}</h3>
+                  <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">{card.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Emergency & Support Callout */}
+        <section className="bg-[#181818] rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
+          <div className="space-y-1.5 text-center sm:text-left">
+            <h3 className="text-lg sm:text-xl font-bold text-white">Need to report a scam or security concern?</h3>
+            <p className="text-xs sm:text-sm text-gray-400">
+              Our trust & safety team reviews reported accounts and notices within 2 business hours.
+            </p>
+          </div>
+          <a
+            href="mailto:safety@nepalcasts.com"
+            className="px-6 py-3 bg-[#0088CC] hover:bg-[#0077b3] text-white font-bold rounded-xl text-xs sm:text-sm transition-all shadow-md active:scale-95 shrink-0"
+          >
+            Contact Safety Team
+          </a>
+        </section>
       </div>
-    </div>);
+    </div>
+  );
 }

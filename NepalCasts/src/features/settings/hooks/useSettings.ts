@@ -141,11 +141,11 @@ export function useSettings(currentUser: any) {
             return { success: false, error: 'Authentication required' };
         }
         const res = await updateProfileData(activeUid, data);
-        if (res.success && profile) {
-            setProfile({ ...profile, ...data });
+        if (res.success) {
+            setProfile(prev => prev ? { ...prev, ...data } : ({ uid: activeUid, ...data } as any));
         }
         return res;
-    }, [currentUser?.uid, currentUser?.id, profile]);
+    }, [currentUser?.uid, currentUser?.id]);
     const revokeSession = useCallback(async (sessionId: string): Promise<ServiceResult> => {
         if (!currentUser?.uid) {
             return { success: false, error: 'Authentication required' };

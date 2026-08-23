@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Image as ImageIcon, Trash2, Plus, Upload, Play, Loader2, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Trash2, Plus, Upload, Play, Loader2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import type { UserProfile } from '../../../types';
 

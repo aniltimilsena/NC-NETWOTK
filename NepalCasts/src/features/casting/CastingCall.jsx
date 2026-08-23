@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bookmark,
-  MapPin, Plus, Search, AlertCircle, Clock, SlidersHorizontal, ChevronLeft, Flame
+  MapPin, Plus, Search, AlertCircle, Clock, SlidersHorizontal, ChevronLeft
 } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -90,44 +90,43 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
   return (
     <div
       onClick={() => onNavigate('casting-detail', call.id)}
-      className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 cursor-pointer flex flex-col justify-between gap-4 shadow-xl"
+      className="bg-black rounded-xl border border-white/5 overflow-hidden cursor-pointer flex flex-row shadow-xl"
     >
-      {/* Top Body Row */}
-      <div className="flex items-start gap-3.5 sm:gap-5 min-w-0">
-        {/* Poster Thumbnail */}
-        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#121212] border border-white/5 flex items-center justify-center shadow-md">
-          {bannerImage ? (
-            <img
-              src={bannerImage}
-              alt={call.title}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
-                if (fallback) fallback.style.display = 'flex';
-              }}
-            />
-          ) : null}
+      {/* Full-Bleed Poster Thumbnail (No empty black padding around it) */}
+      <div className="w-28 sm:w-40 md:w-44 self-stretch relative shrink-0 bg-[#121212] overflow-hidden flex items-center justify-center">
+        {bannerImage ? (
+          <img
+            src={bannerImage}
+            alt={call.title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+              const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
+              if (fallback) fallback.style.display = 'flex';
+            }}
+          />
+        ) : null}
 
-          {/* Default Clapperboard Thumbnail Fallback */}
-          <div
-            className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c1c] via-[#121212] to-[#080808] p-2 text-center"
-            style={{ display: bannerImage ? 'none' : 'flex' }}
-          >
-            <svg className="w-9 h-9 sm:w-11 sm:h-11 text-white fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
-              <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
-            </svg>
-          </div>
-
-          {isApplied && (
-            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-white text-black text-[8px] sm:text-[9px] font-black uppercase tracking-wider z-10 shadow">
-              Applied
-            </div>
-          )}
+        {/* Default Clapperboard Thumbnail Fallback */}
+        <div
+          className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c1c] via-[#121212] to-[#080808] p-2 text-center"
+          style={{ display: bannerImage ? 'none' : 'flex' }}
+        >
+          <svg className="w-9 h-9 sm:w-11 sm:h-11 text-white fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
+            <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
+          </svg>
         </div>
 
-        {/* Info Column */}
-        <div className="flex-1 min-w-0 space-y-1 sm:space-y-1.5">
+        {isApplied && (
+          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-white text-black text-[8px] sm:text-[9px] font-black uppercase tracking-wider z-10 shadow">
+            Applied
+          </div>
+        )}
+      </div>
+
+      {/* Info & Content Column */}
+      <div className="flex-1 p-3.5 sm:p-5 flex flex-col justify-between gap-3 min-w-0">
+        <div className="space-y-1 sm:space-y-1.5">
           {/* Top Row: Category Tag & Bookmark */}
           <div className="flex items-center justify-between gap-2">
             <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#0a1f33] border border-cyan-500/25 text-cyan-300 font-bold text-[9px] sm:text-[10px] tracking-wider uppercase truncate">
@@ -165,24 +164,24 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
             Salary: {call.budget || call.salary || 'NPR Negotiable'}
           </p>
         </div>
-      </div>
 
-      {/* Bottom Status Row / Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-white/5 text-xs">
-        {/* Left Deadline */}
-        <div className="flex items-center gap-1.5 text-gray-400">
-          <Clock className="w-3.5 h-3.5 text-white shrink-0" />
-          <span>Deadline: {formattedDate}</span>
+        {/* Bottom Status Row / Footer */}
+        <div className="flex items-center justify-between pt-2.5 border-t border-white/5 text-xs">
+          {/* Left Deadline */}
+          <div className="flex items-center gap-1.5 text-gray-400 text-[11px] sm:text-xs">
+            <Clock className="w-3.5 h-3.5 text-white shrink-0" />
+            <span>Deadline: {formattedDate}</span>
+          </div>
+
+          {/* Right Status Badge */}
+          <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-md text-[9px] sm:text-xs font-black tracking-wider uppercase border ${
+            deadlineBadge.isClosed
+              ? 'bg-[#0e2138] border-cyan-500/20 text-cyan-400'
+              : 'bg-[#0e2a47] border-cyan-500/30 text-cyan-300'
+          }`}>
+            {deadlineBadge.label}
+          </span>
         </div>
-
-        {/* Right Status Badge */}
-        <span className={`px-3 py-1 rounded-md text-[10px] sm:text-xs font-black tracking-wider uppercase border ${
-          deadlineBadge.isClosed
-            ? 'bg-[#0e2138] border-cyan-500/20 text-cyan-400'
-            : 'bg-[#0e2a47] border-cyan-500/30 text-cyan-300'
-        }`}>
-          {deadlineBadge.label}
-        </span>
       </div>
     </div>
   );
@@ -481,7 +480,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
                   triggerSearchLoading();
                 }
               }}
-              className="w-full bg-black border border-white/10 focus:border-white/30 rounded-2xl py-3 pl-11 pr-12 text-sm text-white placeholder-gray-500 outline-none transition-all shadow-inner"
+              className="w-full bg-black border border-white/10 focus:border-white/30 rounded-xl py-3 pl-11 pr-12 text-sm text-white placeholder-gray-500 outline-none transition-all shadow-inner"
             />
             <button
               onClick={() => setIsSortOpen(!isSortOpen)}
@@ -505,7 +504,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full right-0 mt-2 w-52 bg-black border border-white/15 rounded-2xl shadow-2xl py-3 z-40 text-left"
+                    className="absolute top-full right-0 mt-2 w-52 bg-black border border-white/15 rounded-xl shadow-2xl py-3 z-40 text-left"
                   >
                     {/* Status Filter */}
                     <div className="px-4 py-1 text-[9px] text-gray-400 uppercase tracking-widest font-black mb-1">Status</div>
@@ -621,7 +620,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
             {isLoading || isSearching ? (
               <CastingCallSkeleton count={3} />
             ) : filteredCalls.length === 0 ? (
-              <div className="min-h-[50vh] flex flex-col items-center justify-center text-center py-12 px-6 bg-black rounded-2xl border border-white/10 w-full">
+              <div className="min-h-[50vh] flex flex-col items-center justify-center text-center py-12 px-6 bg-black rounded-xl border border-white/10 w-full">
                 <AlertCircle size={44} className="text-gray-600 mb-3" />
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-1.5">No Casting Calls Found</h3>
                 <p className="text-gray-400 text-xs sm:text-sm max-w-sm mx-auto mb-6 leading-relaxed">

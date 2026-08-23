@@ -237,10 +237,10 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
     }, (data) => callback(data));
 };
 
-export const notifyProfileUpdated = (uid: string, imageUrl: string) => {
+export const notifyProfileUpdated = (uid: string, imageUrl?: string, updatedData?: Record<string, any>) => {
     try {
         if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('nc-profile-updated', { detail: { uid, image: imageUrl } }));
+            window.dispatchEvent(new CustomEvent('nc-profile-updated', { detail: { uid, image: imageUrl, ...updatedData } }));
         }
     } catch (_e) {
         /* ignore event error */
@@ -253,9 +253,8 @@ export const notifyProfileUpdated = (uid: string, imageUrl: string) => {
             if (tUid === uid) {
                 return {
                     ...t,
-                    image: imageUrl,
-                    photoURL: imageUrl,
-                    profileImage: imageUrl
+                    ...(imageUrl ? { image: imageUrl, photoURL: imageUrl, profileImage: imageUrl } : {}),
+                    ...(updatedData ? updatedData : {})
                 };
             }
             return t;

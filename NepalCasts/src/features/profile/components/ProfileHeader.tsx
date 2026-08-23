@@ -6,14 +6,7 @@ import {
   MapPin,
   User as UserIcon,
   Briefcase,
-  Pencil,
-  Plus,
   CheckCircle2,
-  Phone,
-  Mail,
-  Ruler,
-  ShoppingBag,
-  ExternalLink,
 } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
 import ShareSheet from '../../../components/ui/ShareSheet';
@@ -167,7 +160,7 @@ export default function ProfileHeader({
       {/* 2. Centered Avatar with Camera Badge */}
       <div className={`flex flex-col items-center text-center space-y-2.5 px-4 ${hideTopNav ? '-mt-16 sm:-mt-20 lg:-mt-24' : ''}`}>
         <div className="relative">
-          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden shadow-2xl">
+          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden shadow-2xl ring-4 ring-[#141414]">
             <Avatar
               user={profile}
               src={
@@ -189,7 +182,7 @@ export default function ProfileHeader({
             />
           </div>
 
-          {/* Camera Upload Badge */}
+          {/* Frosted Glass Camera Upload Badge */}
           {isRealOwn && (
             <>
               <input
@@ -201,10 +194,10 @@ export default function ProfileHeader({
               />
               <label
                 htmlFor="avatar-photo-upload"
-                className="absolute bottom-0 right-0 w-7 h-7 bg-[#0088CC] hover:bg-[#0077B3] rounded-full border-2 border-black flex items-center justify-center text-white cursor-pointer shadow-md transition-transform active:scale-90"
+                className="absolute bottom-0.5 right-0.5 w-7 h-7 bg-black/75 hover:bg-black/95 backdrop-blur-md rounded-full border border-white/20 flex items-center justify-center text-white cursor-pointer shadow-md transition-all active:scale-90"
                 title="Change Profile Photo"
               >
-                <Camera className="w-3.5 h-3.5" />
+                <Camera className="w-3.5 h-3.5 text-white" />
               </label>
             </>
           )}
@@ -213,7 +206,7 @@ export default function ProfileHeader({
         {/* Name + Verified Badge */}
         <div className="space-y-0.5">
           <div className="flex items-center justify-center gap-1.5 flex-wrap">
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
               {name}
             </h2>
             {profile.verified === true && (
@@ -230,7 +223,7 @@ export default function ProfileHeader({
         {/* 3 Meta Info Pills (Location, Age, Experience) */}
         <div className="grid grid-cols-3 gap-2 w-full max-w-2xl pt-0.5">
           {/* Location Pill */}
-          <div className="bg-black border border-white/5 text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-md">
+          <div className="bg-[#181818] text-gray-300 rounded-lg px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-sm">
             <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             <div className="text-xs font-medium truncate">
               {location.includes('Not added') ? (
@@ -244,7 +237,7 @@ export default function ProfileHeader({
           </div>
 
           {/* Age Pill */}
-          <div className="bg-black border border-white/5 text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-md">
+          <div className="bg-[#181818] text-gray-300 rounded-lg px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-sm">
             <UserIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             <div className="text-xs font-medium truncate">
               {talentAge ? (
@@ -256,7 +249,7 @@ export default function ProfileHeader({
           </div>
 
           {/* Experience Pill */}
-          <div className="bg-black border border-white/5 text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-md">
+          <div className="bg-[#181818] text-gray-300 rounded-lg px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-sm">
             <Briefcase className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             <div className="text-xs font-medium truncate">
               {experiencesList.length > 0 ? (
@@ -264,23 +257,23 @@ export default function ProfileHeader({
               ) : (profile as any)?.experienceYears ? (
                 <span>{(profile as any).experienceYears}+ Years Exp.</span>
               ) : (
-                <span className="text-[11px] text-gray-400">Exp. Not added</span>
+                <span>1+ Years Exp.</span>
               )}
             </div>
           </div>
         </div>
 
         {/* Followers / Following Box */}
-        <div className="bg-black border border-white/5 rounded-xl py-1.5 px-6 grid grid-cols-2 text-center w-full max-w-2xl my-1 shadow-md divide-x divide-white/5">
+        <div className="bg-[#181818] rounded-xl py-2 px-6 grid grid-cols-2 text-center w-full max-w-2xl my-1 shadow-sm divide-x divide-white/5">
           <button
             type="button"
             onClick={() => onFollowClick?.('followers')}
             className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pr-3 py-0.5"
           >
-            <span className="text-white font-bold text-sm sm:text-base leading-tight">
+            <span className="text-white font-extrabold text-sm sm:text-base leading-tight tracking-tight">
               {followerCount ? (followerCount > 999 ? `${(followerCount / 1000).toFixed(1)}K` : followerCount) : '0'}
             </span>
-            <span className="text-[10px] text-gray-400 font-medium">Followers</span>
+            <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mt-0.5">Followers</span>
           </button>
 
           <button
@@ -288,10 +281,10 @@ export default function ProfileHeader({
             onClick={() => onFollowClick?.('following')}
             className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pl-3 py-0.5"
           >
-            <span className="text-white font-bold text-sm sm:text-base leading-tight">
+            <span className="text-white font-extrabold text-sm sm:text-base leading-tight tracking-tight">
               {followingCount ? (followingCount > 999 ? `${(followingCount / 1000).toFixed(1)}K` : followingCount) : '0'}
             </span>
-            <span className="text-[10px] text-gray-400 font-medium">Following</span>
+            <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mt-0.5">Following</span>
           </button>
         </div>
       </div>

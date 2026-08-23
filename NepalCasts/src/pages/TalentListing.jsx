@@ -253,7 +253,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
 
     return (
         <Desktop3ColumnLayout user={activeUser} onNavigate={onNavigate} activeNav="talent" featuredTalents={featuredTalents}>
-            <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-6 relative font-sans">
+            <div className="min-h-screen bg-[#141414] text-white pt-2 sm:pt-4 pb-6 relative font-sans">
                 <SEO title="Browse Professional Talent | NepalCasts" description="Premium directory of cinema professionals in Nepal." />
 
 
@@ -262,9 +262,9 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                         {hoveredTalent && (hoveredTalent.photoURL || hoveredTalent.profileImage || hoveredTalent.image) && (<motion.div key={hoveredTalent.id} initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 0.35, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} className="absolute right-0 top-0 bottom-0 w-[45vw] h-full hidden md:block">
                             <img src={hoveredTalent.photoURL || hoveredTalent.profileImage || hoveredTalent.image} alt={hoveredTalent.name} className="w-full h-full object-cover filter grayscale brightness-50 contrast-125 transition-all duration-300" />
 
-                            <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-[#0A0A0A]" />
-                            <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A] via-transparent to-[#0A0A0A]" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-[#141414] via-[#141414]/60 to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-[#141414]" />
+                            <div className="absolute inset-0 bg-gradient-to-b from-[#141414] via-transparent to-[#141414]" />
                         </motion.div>)}
                     </AnimatePresence>
                 </div>
@@ -279,14 +279,14 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                     <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
                                 </button>
                                 <div>
-                                    <h1 className="text-2xl sm:text-4xl font-sans font-black text-white tracking-tight leading-none">Browse by Category</h1>
+                                    <h1 className="text-2xl sm:text-4xl font-sans font-black text-white tracking-tight leading-none">Talents by Category</h1>
                                 </div>
                             </div>
 
                             {loading ? (
-                                <TalentCardSkeleton count={8} />
+                                <TalentCardSkeleton count={6} />
                             ) : (
-                                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-5 max-w-2xl">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 w-full">
                                     {HOME_CATEGORY_CARDS.map((cat, idx) => {
                                         const count = getFacetedCount('category', cat.filter);
                                         return (
@@ -308,15 +308,21 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                                     }
                                                 }}
                                                 style={{ backgroundColor: cat.bgColor }}
-                                                className="rounded-xl p-4 sm:p-6 aspect-square flex flex-col items-center justify-center text-center cursor-pointer shadow-lg transition-transform border border-black/5"
+                                                className="rounded-2xl p-5 sm:p-8 lg:p-10 aspect-square w-full h-full flex flex-col items-center justify-between text-center cursor-pointer shadow-xl transition-transform border border-black/5"
                                             >
-                                                <CategoryCardIcon type={cat.iconType} className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 text-black fill-current mb-2.5 sm:mb-3" />
-                                                <span className="text-black font-extrabold text-sm sm:text-base lg:text-lg leading-tight whitespace-pre-line mt-1">
-                                                    {cat.label}
-                                                </span>
-                                                <span className="text-black/70 font-semibold text-xs sm:text-sm mt-1">
-                                                    ({count} {count === 1 ? 'talent' : 'talents'})
-                                                </span>
+                                                <div className="flex-1 flex items-center justify-center min-h-0 w-full pt-2">
+                                                    <CategoryCardIcon type={cat.iconType} className="w-16 h-16 sm:w-24 sm:h-24 lg:w-28 lg:h-28 text-black fill-current" />
+                                                </div>
+                                                <div className="w-full flex flex-col items-center justify-center shrink-0">
+                                                    <div className="min-h-[3rem] sm:min-h-[3.75rem] flex items-center justify-center w-full">
+                                                        <span className="text-black font-black text-base sm:text-2xl lg:text-3xl leading-tight whitespace-pre-line text-center">
+                                                            {cat.label}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-black/75 font-bold text-xs sm:text-base lg:text-lg mt-1">
+                                                        ({count} {count === 1 ? 'talent' : 'talents'})
+                                                    </span>
+                                                </div>
                                             </motion.div>
                                         );
                                     })}
@@ -326,9 +332,9 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                     )}
 
                     {viewMode === 'talents' && (<div className="animate-fade-in space-y-3 text-left">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-white/5 mb-6">
+                        <div className="flex items-center justify-between gap-4 pb-3 border-b border-white/5 mb-6">
 
-                            <div className="flex items-center gap-3.5">
+                            <div className="flex items-center gap-3.5 min-w-0">
                                 <button onClick={() => {
                                     setSelectedFilters(prev => ({ ...prev, category: 'All' }));
                                     setViewMode('categories');
@@ -341,8 +347,8 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                 }} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0" aria-label="Back to Categories" title="Back to Categories">
                                     <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
                                 </button>
-                                <div>
-                                    <h2 className="text-xl sm:text-2xl font-black text-white leading-none">
+                                <div className="min-w-0">
+                                    <h2 className="text-xl sm:text-2xl font-black text-white leading-none truncate">
                                         {selectedFilters.category === 'All' ? 'All' : getCategoryConfig(selectedFilters.category).label}
                                     </h2>
                                     <p className="text-[10px] sm:text-xs text-nc-muted mt-1 font-semibold">
@@ -351,8 +357,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                 </div>
                             </div>
 
-
-                            <div className="relative self-end sm:self-center">
+                            <div className="relative shrink-0">
                                 <button onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)} className="w-7 h-7 flex items-center justify-center text-sky-400 hover:text-sky-300 transition-colors duration-200 cursor-pointer" aria-label="Sort options" title="Sort options">
                                     <SlidersHorizontal className="w-[18px] h-[18px] text-sky-400" strokeWidth={2} />
                                 </button>

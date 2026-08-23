@@ -99,7 +99,9 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
         <Route path="/contact" element={<Contact />} />
         <Route path="/help" element={<Help />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
         <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
         <Route path="/trust-safety" element={<TrustSafety />} />
 
         {/* Authentication Routes */}

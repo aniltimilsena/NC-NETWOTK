@@ -218,7 +218,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
 
           {/* Empty State */}
           {!loading && savedCalls.length === 0 && (
-            <div className="py-16 text-center space-y-5 bg-black rounded-2xl border border-white/10 p-6 sm:p-10">
+            <div className="py-16 text-center space-y-5 bg-black rounded-xl border border-white/10 p-6 sm:p-10">
               <div className="w-16 h-16 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 flex items-center justify-center mx-auto shadow-xl">
                 <BookmarkX className="w-8 h-8" />
               </div>
@@ -228,7 +228,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                   Bookmark interesting auditions while browsing to revisit and apply later.
                 </p>
               </div>
-              <Button onClick={handleBrowse} variant="primary" size="lg" className="rounded-full font-bold px-6 text-xs uppercase tracking-wider">
+              <Button onClick={handleBrowse} variant="primary" size="lg" className="rounded-xl font-bold px-6 text-xs uppercase tracking-wider">
                 Browse Active Casting Calls
               </Button>
             </div>
@@ -254,38 +254,37 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                   <div
                     key={call.saveId}
                     onClick={() => handleViewDetails(call.castingId)}
-                    className="bg-black rounded-2xl border border-white/5 p-4 sm:p-5 cursor-pointer flex flex-col justify-between gap-4 shadow-xl"
+                    className="bg-black rounded-xl border border-white/5 overflow-hidden cursor-pointer flex flex-row shadow-xl"
                   >
-                    {/* Top Body Row */}
-                    <div className="flex items-start gap-3.5 sm:gap-5 min-w-0">
-                      {/* Poster Thumbnail */}
-                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden relative shrink-0 bg-[#121212] border border-white/5 flex items-center justify-center shadow-md">
-                        {bannerImage ? (
-                          <img
-                            src={bannerImage}
-                            alt={call.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
-                              if (fallback) fallback.style.display = 'flex';
-                            }}
-                          />
-                        ) : null}
+                    {/* Full-Bleed Poster Thumbnail (No empty black padding around it) */}
+                    <div className="w-28 sm:w-40 md:w-44 self-stretch relative shrink-0 bg-[#121212] overflow-hidden flex items-center justify-center">
+                      {bannerImage ? (
+                        <img
+                          src={bannerImage}
+                          alt={call.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
 
-                        {/* Default Clapperboard Thumbnail Fallback */}
-                        <div
-                          className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c1c] via-[#121212] to-[#080808] p-2 text-center"
-                          style={{ display: bannerImage ? 'none' : 'flex' }}
-                        >
-                          <svg className="w-9 h-9 sm:w-11 sm:h-11 text-white fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
-                            <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
-                          </svg>
-                        </div>
+                      {/* Default Clapperboard Thumbnail Fallback */}
+                      <div
+                        className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c1c] via-[#121212] to-[#080808] p-2 text-center"
+                        style={{ display: bannerImage ? 'none' : 'flex' }}
+                      >
+                        <svg className="w-9 h-9 sm:w-11 sm:h-11 text-white fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
+                          <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
+                        </svg>
                       </div>
+                    </div>
 
-                      {/* Info Column */}
-                      <div className="flex-1 min-w-0 space-y-1 sm:space-y-1.5">
+                    {/* Info & Content Column */}
+                    <div className="flex-1 p-3.5 sm:p-5 flex flex-col justify-between gap-3 min-w-0">
+                      <div className="space-y-1 sm:space-y-1.5">
                         {/* Top Row: Category Tag & Delete action */}
                         <div className="flex items-center justify-between gap-2">
                           <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#0a1f33] border border-cyan-500/25 text-cyan-300 font-bold text-[9px] sm:text-[10px] tracking-wider uppercase truncate">
@@ -327,24 +326,24 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                           Salary: {call.budget || call.salary || 'NPR Negotiable'}
                         </p>
                       </div>
-                    </div>
 
-                    {/* Bottom Status Row / Footer */}
-                    <div className="flex items-center justify-between pt-3 border-t border-white/5 text-xs">
-                      {/* Left Deadline */}
-                      <div className="flex items-center gap-1.5 text-gray-400">
-                        <Clock className="w-3.5 h-3.5 text-white shrink-0" />
-                        <span>Deadline: {formattedDate}</span>
+                      {/* Bottom Status Row / Footer */}
+                      <div className="flex items-center justify-between pt-2.5 border-t border-white/5 text-xs">
+                        {/* Left Deadline */}
+                        <div className="flex items-center gap-1.5 text-gray-400 text-[11px] sm:text-xs">
+                          <Clock className="w-3.5 h-3.5 text-white shrink-0" />
+                          <span>Deadline: {formattedDate}</span>
+                        </div>
+
+                        {/* Right Status Badge */}
+                        <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-md text-[9px] sm:text-xs font-black tracking-wider uppercase border ${
+                          deadlineBadge.isClosed
+                            ? 'bg-[#0e2138] border-cyan-500/20 text-cyan-400'
+                            : 'bg-[#0e2a47] border-cyan-500/30 text-cyan-300'
+                        }`}>
+                          {deadlineBadge.label}
+                        </span>
                       </div>
-
-                      {/* Right Status Badge */}
-                      <span className={`px-3 py-1 rounded-md text-[10px] sm:text-xs font-black tracking-wider uppercase border ${
-                        deadlineBadge.isClosed
-                          ? 'bg-[#0e2138] border-cyan-500/20 text-cyan-400'
-                          : 'bg-[#0e2a47] border-cyan-500/30 text-cyan-300'
-                      }`}>
-                        {deadlineBadge.label}
-                      </span>
                     </div>
                   </div>
                 );

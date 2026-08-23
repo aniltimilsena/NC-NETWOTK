@@ -83,9 +83,9 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
     return nameMatch || msgMatch;
   });
 
-  return (<div className="w-full md:w-80 lg:w-96 h-full bg-[#070709] border-r border-white/10 flex flex-col shrink-0 select-none">
+  return (<div className="w-full h-full bg-[#141414] border-r border-white/5 flex flex-col shrink-0 select-none">
 
-    <div className="p-4 border-b border-white/10 space-y-3">
+    <div className="p-4 border-b border-white/5 space-y-3">
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -101,28 +101,28 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
 
 
       <div className="relative">
-        <Search className="w-4 h-4 text-nc-muted absolute left-3 top-1/2 -translate-y-1/2" />
-        <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search messages..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-nc-muted focus:outline-none focus:border-[#00BFFF] transition-colors" />
+        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search messages..." className="w-full bg-[#1a1a1a] rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all" />
       </div>
 
 
-      <div className="flex bg-[#0d0d10] border border-white/10 rounded-lg p-0.5 gap-1 shadow-inner">
+      <div className="flex bg-[#181818] rounded-xl p-1 gap-1">
         <button
           onClick={() => setActiveTab('chats')}
-          className={`flex-1 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-all cursor-pointer select-none ${
+          className={`flex-1 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer select-none ${
             activeTab === 'chats'
-              ? 'bg-[#22222a] text-white border border-white/20 shadow-sm'
-              : 'text-zinc-400 hover:text-white'
+              ? 'bg-[#282828] text-white shadow-sm'
+              : 'text-gray-400 hover:text-white'
           }`}
         >
           Chats
         </button>
         <button
           onClick={() => setActiveTab('calls')}
-          className={`flex-1 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-all cursor-pointer select-none ${
+          className={`flex-1 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer select-none ${
             activeTab === 'calls'
-              ? 'bg-[#22222a] text-white border border-white/20 shadow-sm'
-              : 'text-zinc-400 hover:text-white'
+              ? 'bg-[#282828] text-white shadow-sm'
+              : 'text-gray-400 hover:text-white'
           }`}
         >
           Calls
@@ -131,8 +131,8 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
     </div>
 
 
-    <div className="flex-1 overflow-y-auto no-scrollbar">
-      {activeTab === 'chats' ? (filteredConversations.length > 0 ? (<div className="flex flex-col">
+    <div className="flex-1 overflow-y-auto no-scrollbar py-2">
+      {activeTab === 'chats' ? (filteredConversations.length > 0 ? (<div className="flex flex-col gap-0.5">
         {filteredConversations.map((c) => {
           const isSelected = c.id === activeChatId;
           const unreadCount = c.unreadCounts?.[currentUser?.uid] || 0;
@@ -149,25 +149,25 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
               return;
             }
             onSelectChat(c.id);
-          }} className={`flex items-center gap-3 py-3 px-4 cursor-pointer transition-all ${isSelected ? 'bg-white/10' : 'bg-transparent hover:bg-white/5'}`}>
+          }} className={`flex items-center gap-3 py-3 px-3.5 mx-2 rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-white/10' : 'bg-transparent hover:bg-white/[0.04]'}`}>
             <Avatar userId={c.otherParticipantId} src={c.avatar} name={c.name} size="md" />
             <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
-              <span className="text-[15px] font-bold text-white block truncate leading-snug">{c.name}</span>
-              <p className="text-[13px] text-nc-muted truncate font-medium mt-0.5 leading-snug">
+              <span className="text-[14px] font-bold text-white block truncate leading-snug">{c.name}</span>
+              <p className="text-[12px] text-gray-400 truncate font-medium mt-0.5 leading-snug">
                 {formatLastMessage(c.lastMessage) || <span className="italic opacity-50 text-xs">No messages yet</span>}
               </p>
             </div>
             <div className="flex flex-col items-end justify-center gap-1.5 shrink-0 ml-2 self-center">
-              {timeString && (<span className={`text-[11px] font-medium leading-none ${unreadCount > 0 ? 'text-[#00BFFF] font-semibold' : 'text-nc-muted'}`}>
+              {timeString && (<span className={`text-[10px] font-medium leading-none ${unreadCount > 0 ? 'text-[#00BFFF] font-semibold' : 'text-gray-400'}`}>
                 {timeString}
               </span>)}
-              {unreadCount > 0 && (<span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[#00BFFF] text-black font-extrabold text-[11px] flex items-center justify-center shadow-sm shadow-[#00BFFF]/30 leading-none">
+              {unreadCount > 0 && (<span className="min-w-[18px] h-4.5 px-1.5 rounded-full bg-[#00BFFF] text-black font-extrabold text-[10px] flex items-center justify-center shadow-sm shadow-[#00BFFF]/30 leading-none">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>)}
             </div>
           </div>);
         })}
-      </div>) : (<p className="text-xs text-nc-muted text-center py-8">No chats found.</p>)) : (!loadingCalls ? (callHistory.length > 0 ? (<div className="flex flex-col">
+      </div>) : (<p className="text-xs text-gray-400 text-center py-8">No chats found.</p>)) : (!loadingCalls ? (callHistory.length > 0 ? (<div className="flex flex-col gap-0.5">
         {callHistory.map((call) => {
           const isIncoming = call.calleeId === currentUser?.uid;
           const targetUserId = isIncoming ? call.callerId : call.calleeId;

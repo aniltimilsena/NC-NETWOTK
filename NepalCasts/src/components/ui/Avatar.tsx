@@ -9,7 +9,7 @@ import { CurrentUser } from '../../utils/CurrentUser';
 import { cacheManager } from '../../utils/cacheManager';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Upload, Trash2, X } from 'lucide-react';
+import { Camera, Upload, Trash2 } from 'lucide-react';
 
 import ConfirmDialog from './ConfirmDialog';
 import CropModal from './CropModal';

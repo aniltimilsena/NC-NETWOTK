@@ -7,7 +7,7 @@ import { subscribeToTalents, subscribeToCastingCalls } from '../services';
 import { matchesCategory } from '../constants/categories';
 import { subscribeToProfile } from '../features/profile/services/profile';
 import { AvatarScrollSkeleton } from '../components/ui/Skeleton';
-import { Megaphone, Tag, ExternalLink, Sparkles, Flame, Clapperboard, LayoutGrid, Star, ChevronRight, Crown, Sprout } from 'lucide-react';
+import { Megaphone, Tag, ExternalLink, Flame, Clapperboard, LayoutGrid, ChevronRight, Crown, Sprout } from 'lucide-react';
 
 const HOME_SPONSORED_ADS = [
   {
@@ -580,15 +580,21 @@ export default function Home({ onNavigate, user }) {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => onNavigate('talents', cat.filter)}
                     style={{ backgroundColor: cat.bgColor }}
-                    className="rounded-xl p-3 sm:p-4 aspect-square flex flex-col items-center justify-center text-center cursor-pointer shadow transition-transform border border-black/5"
+                    className="rounded-xl p-3 sm:p-4 aspect-square w-full h-full flex flex-col items-center justify-between text-center cursor-pointer shadow transition-transform border border-black/5"
                   >
-                    <CategoryCardIcon type={cat.iconType} className="w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 text-black fill-current mb-1 sm:mb-1.5" />
-                    <span className="text-black font-extrabold text-xs sm:text-sm leading-tight whitespace-pre-line mt-0.5">
-                      {cat.label}
-                    </span>
-                    <span className="text-black/70 font-medium text-[10px] sm:text-xs mt-1">
-                      ({count} {count === 1 ? 'talent' : 'talents'})
-                    </span>
+                    <div className="flex-1 flex items-center justify-center min-h-0 w-full pt-0.5">
+                      <CategoryCardIcon type={cat.iconType} className="w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 text-black fill-current" />
+                    </div>
+                    <div className="w-full flex flex-col items-center justify-center shrink-0">
+                      <div className="min-h-[2rem] sm:min-h-[2.3rem] flex items-center justify-center w-full">
+                        <span className="text-black font-extrabold text-xs sm:text-sm leading-tight whitespace-pre-line text-center">
+                          {cat.label}
+                        </span>
+                      </div>
+                      <span className="text-black/70 font-medium text-[10px] sm:text-xs mt-0.5">
+                        ({count} {count === 1 ? 'talent' : 'talents'})
+                      </span>
+                    </div>
                   </motion.div>
                 );
               })}

@@ -247,10 +247,10 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                 return (
                   <div
                     key={app.appId}
-                    className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 hover:border-white/20 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                    className="p-5 rounded-xl bg-black border border-white/5 hover:border-white/20 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md"
                   >
                     <div className="flex items-center gap-4 min-w-0 flex-1">
-                      <div className="w-16 h-16 rounded-xl overflow-hidden relative shrink-0 bg-[#141418] border border-white/10 flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-none overflow-hidden relative shrink-0 bg-[#141418] border border-white/10 flex items-center justify-center">
                         {thumbnail ? (
                           <img
                             src={thumbnail}

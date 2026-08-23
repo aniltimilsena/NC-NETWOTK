@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
-import { HelpCircle, ShieldCheck, UserCheck, FileText, ChevronDown } from 'lucide-react';
+import { HelpCircle, ShieldCheck, UserCheck, FileText, ChevronDown, ChevronLeft, MessageSquare } from 'lucide-react';
 
 export default function Help() {
-  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const navigate = useNavigate();
+  const [activeFaq, setActiveFaq] = useState(null);
 
   const faqs = [
     {
@@ -12,7 +14,7 @@ export default function Help() {
     },
     {
       q: "How do Directors get verified badges?",
-      a: "Directors and production houses can request verification through their Account Settings or by contacting support@nepalcasts.com with proof of production credits (IMDb, film posters, studio credentials)."
+      a: "Directors and production houses can request verification through their Account Settings or by contacting safety@nepalcasts.com with proof of production credits (IMDb, film posters, studio credentials)."
     },
     {
       q: "Is NepalCasts free for actors and models?",
@@ -20,86 +22,105 @@ export default function Help() {
     },
     {
       q: "How do I report fake casting calls or suspicious activity?",
-      a: "Safety is our priority. Every casting notice has a 'Report' button. You can also review our Trust & Safety guidelines (/trust-safety) or email support@nepalcasts.com immediately."
+      a: "Safety is our priority. Every casting notice has a 'Report' button. You can also review our Trust & Safety guidelines (/trust-safety) or email safety@nepalcasts.com immediately."
     },
     {
       q: "Can I update my headshots and work experience after creating a profile?",
-      a: "Yes. Go to your Profile page (/profile/me or click Profile in the menu) and select 'Edit Profile' to add new photos, showreels, and updated credits."
+      a: "Yes. Go to your Profile page (/profile or click Profile in the menu) and select 'Edit Profile' to add new photos, showreels, and updated credits."
     }
   ];
 
   return (
-    <div className="min-h-screen bg-nc-dark pt-4 pb-12 text-white">
+    <div className="min-h-screen bg-[#141414] pt-4 pb-16 text-white text-left">
       <SEO
         title="Help & FAQ Center | NepalCasts Support"
         description="Find answers to common questions about auditions, profile verification, casting call submissions, and account management on NepalCasts."
       />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div className="text-center space-y-3 pt-6">
-          <div className="w-12 h-12 rounded-2xl bg-[#00BFFF]/10 border border-[#00BFFF]/20 text-[#00BFFF] flex items-center justify-center mx-auto">
-            <HelpCircle className="w-6 h-6" />
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12 space-y-12">
+        {/* Navigation Bar */}
+        <div className="flex items-center pt-2">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0 shadow-sm"
+            title="Go Back"
+            aria-label="Go Back"
+          >
+            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+          </button>
+        </div>
+
+        {/* Hero Header */}
+        <div className="text-center space-y-4 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider">
+            <HelpCircle className="w-4 h-4 text-white" />
+            <span>Support & Guidance</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-sans font-black tracking-tight text-white leading-tight">
             Help & <span className="text-[#00BFFF]">FAQ Center</span>
           </h1>
-          <p className="text-gray-400 text-sm max-w-lg mx-auto">
-            Everything you need to know about using NepalCasts for talent discovery and auditions.
+          <p className="text-gray-400 text-sm sm:text-base lg:text-lg max-w-lg mx-auto leading-relaxed">
+            Everything you need to know about using NepalCasts for talent discovery, portfolios, and auditions.
           </p>
         </div>
 
         {/* Quick Topics */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           {[
-            { icon: UserCheck, title: 'Profile & Portfolio', desc: 'Setting up your profile, photos, and skills' },
-            { icon: FileText, title: 'Auditions & Applications', desc: 'Applying to casting calls and tracking status' },
-            { icon: ShieldCheck, title: 'Trust & Safety', desc: 'Scam prevention and verification guidelines' }
+            { icon: UserCheck, title: 'Profile & Portfolio', desc: 'Setting up your profile, headshots, showreels, and skills' },
+            { icon: FileText, title: 'Auditions & Applications', desc: 'Applying to casting calls and tracking application status' },
+            { icon: ShieldCheck, title: 'Trust & Safety', desc: 'Scam prevention, director vetting, and verification guidelines' }
           ].map((topic, i) => (
-            <div key={i} className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2">
-              <topic.icon className="w-5 h-5 text-[#00BFFF]" />
-              <h3 className="text-sm font-bold text-white">{topic.title}</h3>
-              <p className="text-xs text-gray-400">{topic.desc}</p>
+            <div key={i} className="p-7 rounded-2xl bg-[#181818] space-y-3 shadow-lg hover:bg-[#1c1c1c] transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                <topic.icon className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-base font-bold text-white leading-snug">{topic.title}</h3>
+              <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">{topic.desc}</p>
             </div>
           ))}
         </div>
 
         {/* FAQs */}
-        <div className="space-y-3 pt-4">
-          <h2 className="text-xl font-bold text-white mb-4">Frequently Asked Questions</h2>
-          {faqs.map((faq, index) => (
-            <div
-              key={index}
-              className="rounded-2xl bg-white/[0.02] border border-white/10 overflow-hidden transition-all"
-            >
-              <button
-                onClick={() => setActiveFaq(activeFaq === index ? null : index)}
-                className="w-full px-6 py-4 text-left font-bold text-sm text-white flex justify-between items-center gap-4 hover:bg-white/[0.02]"
+        <div className="space-y-4 text-left">
+          <h2 className="text-xl sm:text-2xl font-black text-white pb-2 border-b border-white/5 text-left">Frequently Asked Questions</h2>
+          <div className="space-y-3">
+            {faqs.map((faq, index) => (
+              <div
+                key={index}
+                className="rounded-2xl bg-[#181818] overflow-hidden transition-all shadow-md text-left"
               >
-                <span>{faq.q}</span>
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${activeFaq === index ? 'rotate-180 text-[#00BFFF]' : ''}`} />
-              </button>
-              {activeFaq === index && (
-                <div className="px-6 pb-4 text-xs text-gray-400 leading-relaxed border-t border-white/5 pt-3">
-                  {faq.a}
-                </div>
-              )}
-            </div>
-          ))}
+                <button
+                  onClick={() => setActiveFaq(activeFaq === index ? null : index)}
+                  className="w-full px-5 sm:px-6 py-4 sm:py-5 text-left font-bold text-sm sm:text-base text-white flex justify-between items-center gap-4 hover:bg-white/[0.02] cursor-pointer"
+                >
+                  <span className="text-left flex-1">{faq.q}</span>
+                  <ChevronDown className={`w-5 h-5 text-white shrink-0 ml-auto transition-transform ${activeFaq === index ? 'rotate-180 text-[#00BFFF]' : ''}`} />
+                </button>
+                {activeFaq === index && (
+                  <div className="px-5 sm:px-6 pb-5 text-xs sm:text-sm text-gray-400 text-left leading-relaxed border-t border-white/5 pt-4">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Contact Footer */}
-        <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div>
-            <h3 className="text-sm font-bold text-white">Still have questions?</h3>
-            <p className="text-xs text-gray-400">Our support team is here to assist you with any inquiries.</p>
+        <div className="p-8 sm:p-10 rounded-2xl bg-[#181818] flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left shadow-xl">
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-white">Still have questions?</h3>
+            <p className="text-xs sm:text-sm text-gray-400">Our support team is here to assist you with any inquiries.</p>
           </div>
-          <a
-            href="/contact"
-            className="px-5 py-2.5 rounded-full bg-[#00BFFF] text-black font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all shrink-0"
+          <button
+            onClick={() => navigate('/contact')}
+            className="px-6 py-3 rounded-xl bg-[#0088CC] hover:bg-[#0077b3] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 shrink-0 cursor-pointer"
           >
             Contact Support
-          </a>
+          </button>
         </div>
       </div>
     </div>
   );
 }
+

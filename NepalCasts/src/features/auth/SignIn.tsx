@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSignIn } from '@clerk/clerk-react';
-import { ChevronLeft, Eye, EyeOff, Loader2, Play, Check } from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff, Loader2, Check } from 'lucide-react';
 import { LogoIcon } from '../../components/ui/Logo';
 import SEO from '../../components/SEO';
 
@@ -91,35 +91,35 @@ export default function SignIn(_props: SignInProps) {
     };
 
     return (
-        <div className="min-h-screen bg-[#0F0F13] text-white flex flex-col items-center justify-start pt-6 sm:pt-10 pb-8 px-6 sm:px-8 font-sans relative overflow-y-auto">
+        <div className="min-h-screen bg-[#141414] text-white flex flex-col items-center justify-center py-10 px-4 sm:px-8 font-sans relative overflow-y-auto">
             <SEO title="Sign In | NepalCasts" description="Access your NepalCasts account safely." noindex />
 
             {/* Main centered container */}
-            <div className="w-full max-w-[370px] flex flex-col items-center z-10 relative">
+            <div className="w-full max-w-[500px] sm:max-w-[540px] flex flex-col items-center z-10 relative">
 
                 {/* Back button row */}
-                <div className="w-full flex items-center justify-start mb-3">
+                <div className="w-full flex items-center justify-start mb-4">
                     <button
                         onClick={handleBack}
                         type="button"
-                        className="w-10 h-10 bg-[#1A1A22] border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:border-white/20 transition-all cursor-pointer shadow-sm active:scale-95"
+                        className="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-all cursor-pointer shadow-sm active:scale-95"
                         aria-label="Back"
                         title="Go Back"
                     >
-                        <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                        <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
                     </button>
                 </div>
 
                 {/* Logo — Gold NC */}
-                <div className="mb-2 flex justify-center">
-                    <LogoIcon className="w-12 h-12 object-contain" />
+                <div className="mb-3 flex justify-center">
+                    <LogoIcon className="w-14 h-14 object-contain" />
                 </div>
 
                 {/* Title & Subtitle */}
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white text-center tracking-tight mb-1">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-white text-center tracking-tight mb-2">
                     Welcome back
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-400 text-center font-normal mb-4">
+                <p className="text-xs sm:text-sm text-gray-400 text-center font-normal mb-6">
                     Please enter your details to sign in.
                 </p>
 
@@ -137,7 +137,7 @@ export default function SignIn(_props: SignInProps) {
                 <button
                     type="button"
                     onClick={handleGoogleSignIn}
-                    className="w-full bg-[#1A1A22] hover:bg-[#22222D] border border-white/10 hover:border-white/20 text-white rounded-xl py-2.5 px-4 font-semibold text-sm transition-all duration-150 flex items-center justify-center gap-3 cursor-pointer mb-5 min-h-[44px]"
+                    className="w-full bg-[#181818] hover:bg-[#202020] border border-white/10 hover:border-white/20 text-white rounded-xl py-3 px-4 font-semibold text-sm transition-all duration-150 flex items-center justify-center gap-3 cursor-pointer mb-6 min-h-[48px]"
                 >
                     <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -149,20 +149,20 @@ export default function SignIn(_props: SignInProps) {
                 </button>
 
                 {/* Divider */}
-                <div className="w-full flex items-center justify-center gap-4 mb-5">
+                <div className="w-full flex items-center justify-center gap-4 mb-6">
                     <div className="flex-1 h-[1px] bg-white/10" />
                     <span className="text-xs text-gray-400 font-medium">or</span>
                     <div className="flex-1 h-[1px] bg-white/10" />
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="w-full space-y-3.5">
+                <form onSubmit={handleSubmit} className="w-full space-y-4">
                     {/* Email address */}
-                    <div className="flex flex-col space-y-1.5 text-left">
-                        <label htmlFor="email" className="text-sm font-medium text-gray-300">
+                    <div className="flex flex-col space-y-2 text-left">
+                        <label htmlFor="email" className="text-xs sm:text-sm font-medium text-gray-300">
                             Email address
                         </label>
-                        <div className="relative w-full flex items-center bg-[#1C1C26] border border-white/[0.08] rounded-xl focus-within:border-[#6C5CE7] transition-all min-h-[44px]">
+                        <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
                             <input
                                 id="email"
                                 type="email"
@@ -170,17 +170,18 @@ export default function SignIn(_props: SignInProps) {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Enter your email address"
-                                className="w-full auth-input-field h-full bg-transparent border-0 text-white text-sm placeholder-gray-500/80 focus:outline-none font-medium rounded-xl"
+                                style={{ paddingLeft: '18px', paddingRight: '18px', textIndent: '0px' }}
+                                className="w-full auth-input-field h-full bg-transparent border-0 text-white text-sm placeholder-gray-500 focus:outline-none font-medium rounded-xl"
                             />
                         </div>
                     </div>
 
                     {/* Password */}
-                    <div className="flex flex-col space-y-1.5 text-left">
-                        <label htmlFor="password" className="text-sm font-medium text-gray-300">
+                    <div className="flex flex-col space-y-2 text-left">
+                        <label htmlFor="password" className="text-xs sm:text-sm font-medium text-gray-300">
                             Password
                         </label>
-                        <div className="relative w-full flex items-center bg-[#1C1C26] border border-white/[0.08] rounded-xl focus-within:border-[#6C5CE7] transition-all min-h-[44px]">
+                        <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
                             <input
                                 id="password"
                                 type={showPassword ? 'text' : 'password'}
@@ -188,7 +189,8 @@ export default function SignIn(_props: SignInProps) {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Enter your password"
-                                className="w-full auth-input-field-password h-full bg-transparent border-0 text-white text-sm placeholder-gray-500/80 focus:outline-none font-medium rounded-xl"
+                                style={{ paddingLeft: '18px', paddingRight: '48px', textIndent: '0px' }}
+                                className="w-full auth-input-field-password h-full bg-transparent border-0 text-white text-sm placeholder-gray-500 focus:outline-none font-medium rounded-xl"
                             />
                             <button
                                 type="button"
@@ -208,9 +210,9 @@ export default function SignIn(_props: SignInProps) {
                             className="flex items-center gap-2 cursor-pointer select-none group border-0 bg-transparent p-0"
                             aria-pressed={rememberMe}
                         >
-                            <div className={`w-4 h-4 rounded-md flex items-center justify-center transition-colors duration-150 border ${rememberMe
-                                ? 'bg-[#6C5CE7] border-[#6C5CE7]'
-                                : 'bg-[#1C1C26] border-white/20 group-hover:border-white/40'
+                            <div className={`w-4 h-4 min-w-[16px] min-h-[16px] max-w-[16px] max-h-[16px] shrink-0 rounded flex items-center justify-center transition-colors duration-150 border ${rememberMe
+                                ? 'bg-[#0088CC] border-[#0088CC]'
+                                : 'bg-[#181818] border-white/20 group-hover:border-white/40'
                                 }`}>
                                 {rememberMe && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                             </div>
@@ -219,7 +221,7 @@ export default function SignIn(_props: SignInProps) {
                         <button
                             onClick={() => navigate('/forgot-password')}
                             type="button"
-                            className="text-xs text-[#826BF1] hover:underline font-semibold transition-colors cursor-pointer border-0 bg-transparent p-0"
+                            className="text-xs text-[#00BFFF] hover:underline font-semibold transition-colors cursor-pointer border-0 bg-transparent p-0"
                         >
                             Forgot password?
                         </button>
@@ -229,7 +231,7 @@ export default function SignIn(_props: SignInProps) {
                     <button
                         type="submit"
                         disabled={loading || !email || !password}
-                        className="w-full py-3 rounded-xl bg-[#6C5CE7] hover:bg-[#5A4AD1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all mt-2 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[44px] flex items-center justify-center gap-2"
+                        className="w-full py-3.5 rounded-xl bg-[#0088CC] hover:bg-[#0077b3] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all mt-3 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[48px] flex items-center justify-center gap-2"
                     >
                         {loading ? (
                             <>
@@ -237,12 +239,31 @@ export default function SignIn(_props: SignInProps) {
                                 <span>Signing in...</span>
                             </>
                         ) : (
-                            <>
-                                <span>Continue</span>
-                                <Play className="w-3 h-3 fill-current ml-0.5" />
-                            </>
+                            <span>Continue</span>
                         )}
                     </button>
+
+                    {/* Terms & Privacy Note */}
+                    <p className="text-center text-xs text-gray-400 mt-3 leading-relaxed">
+                        By signing in, you agree to our{' '}
+                        <a
+                            href="/terms"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#00BFFF] hover:underline font-medium"
+                        >
+                            Terms of Service
+                        </a>{' '}
+                        and{' '}
+                        <a
+                            href="/privacy"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#00BFFF] hover:underline font-medium"
+                        >
+                            Privacy Policy
+                        </a>.
+                    </p>
                 </form>
 
                 {/* Footer link */}
@@ -251,7 +272,7 @@ export default function SignIn(_props: SignInProps) {
                     <button
                         onClick={() => navigate('/signup')}
                         type="button"
-                        className="text-[#826BF1] hover:underline font-semibold cursor-pointer"
+                        className="text-[#00BFFF] hover:underline font-semibold cursor-pointer"
                     >
                         Sign up
                     </button>

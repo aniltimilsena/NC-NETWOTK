@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, ShieldCheck, UserMinus, Trash2, ExternalLink, Activity, X, UserCheck, ShieldAlert, ShieldX, Award, Mail } from 'lucide-react';
+import { Search, Filter, ShieldCheck, UserMinus, Trash2, ExternalLink, Activity, X, UserCheck, ShieldAlert, ShieldX, Mail } from 'lucide-react';
 import { db } from "../../lib/firebase";
 import { CurrentUser } from '../../utils/CurrentUser';
-import { collection, doc, updateDoc, setDoc, addDoc, deleteDoc, serverTimestamp, getDocs, query, orderBy, limit, startAfter, endBefore, limitToLast, getCountFromServer } from "firebase/firestore";
+import { collection, doc, updateDoc, setDoc, addDoc, serverTimestamp, getDocs, query, orderBy, limit, startAfter, endBefore, limitToLast, getCountFromServer } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 import { logAdminAction } from '../../services';
 import apiClient from '../../api/client';
