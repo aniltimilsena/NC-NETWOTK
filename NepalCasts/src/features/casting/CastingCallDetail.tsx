@@ -635,10 +635,10 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white pt-12 pb-20 px-4 sm:px-8 font-sans">
+      <div className="min-h-screen bg-[#141414] text-white pt-12 pb-20 px-4 sm:px-8 font-sans">
         <div className="max-w-6xl mx-auto space-y-8 animate-pulse text-left">
           <div className="h-4 skeleton rounded-md w-28" />
-          <div className="rounded-[2.5rem] border border-white/10 bg-[#111] overflow-hidden space-y-4">
+          <div className="rounded-xl border border-white/5 bg-black overflow-hidden space-y-4 shadow-xl">
             <div className="h-64 sm:h-80 w-full skeleton" />
             <div className="p-6 sm:p-10 space-y-4">
               <div className="flex gap-2">
@@ -655,7 +655,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              <div className="bg-[#111] border border-white/5 rounded-3xl p-6 sm:p-8 space-y-4">
+              <div className="bg-black border border-white/5 rounded-xl p-6 sm:p-8 space-y-4">
                 <div className="h-6 skeleton rounded-md w-40 mb-3" />
                 <div className="space-y-2">
                   <div className="h-4 skeleton rounded w-full" />
@@ -665,9 +665,9 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               </div>
             </div>
             <div className="space-y-8">
-              <div className="bg-[#111] border border-white/5 rounded-3xl p-6 space-y-4">
+              <div className="bg-black border border-white/5 rounded-xl p-6 space-y-4">
                 <div className="h-6 skeleton rounded-md w-28 mb-3" />
-                <div className="h-12 skeleton rounded-2xl w-full" />
+                <div className="h-12 skeleton rounded-xl w-full" />
               </div>
             </div>
           </div>
@@ -678,12 +678,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   if (!call) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-4 text-center">
+      <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center p-4 text-center">
         <h2 className="text-xl font-bold text-white mb-2">Casting Call Not Found</h2>
         <p className="text-gray-400 text-xs mb-6">This casting call may have been removed or closed.</p>
         <button
           onClick={() => onNavigate('casting')}
-          className="px-6 py-2.5 rounded-full bg-[#00BFFF] text-black font-bold text-xs uppercase tracking-wider"
+          className="px-6 py-2.5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
         >
           Back to Casting Calls
         </button>
@@ -692,7 +692,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white pt-4 pb-20 px-4 sm:px-8 font-sans">
+    <div className="min-h-screen bg-[#141414] text-white pt-4 pb-20 px-4 sm:px-8 font-sans">
       <SEO
         title={`${call.title} | NepalCasts Casting Call`}
         description={call.description}
@@ -708,6 +708,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           hiringOrganization: {
             '@type': 'Organization',
             name: directorProfile?.name || call.directorName || 'NepalCasts',
+            sameAs: 'https://nepalcasts.com',
           },
           jobLocation: {
             '@type': 'Place',
@@ -717,15 +718,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               addressCountry: 'NP',
             },
           },
-          baseSalary: call.budget ? {
+          baseSalary: {
             '@type': 'MonetaryAmount',
             currency: 'NPR',
-            value: {
-              '@type': 'QuantitativeValue',
-              value: call.budget,
-              unitText: 'PROJECT'
-            }
-          } : undefined,
+            value: call.budget || 'Negotiable',
+          },
           employmentType: 'CONTRACTOR',
           industry: 'Entertainment',
           url: `${typeof window !== 'undefined' ? window.location.origin : 'https://nepalcasts.com'}/casting/${castingId}`,
@@ -745,7 +742,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header Hero Banner with subtle rounded-xl curved edges */}
-        <div className="relative rounded-xl overflow-hidden border border-white/10 bg-[#0E0E12] shadow-2xl">
+        <div className="relative rounded-xl overflow-hidden border border-white/5 bg-black shadow-xl">
           {/* Floating Consistent Back Button */}
           <button
             onClick={() => onNavigate('casting')}
@@ -759,7 +756,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           {(() => {
             const bannerImage = getCastingThumbnail(call);
             return (
-              <div className="h-72 sm:h-96 w-full relative bg-[#141418] overflow-hidden flex items-center justify-center">
+              <div className="h-72 sm:h-96 w-full relative bg-black overflow-hidden flex items-center justify-center">
                 {bannerImage ? (
                   <img
                     src={bannerImage}
@@ -773,14 +770,14 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   />
                 ) : null}
                 <div
-                  className="default-clapper-banner w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#22222a] via-[#1a1a20] to-[#0e0e12] p-4 text-center"
+                  className="default-clapper-banner w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c2333] via-[#141b2a] to-black p-4 text-center"
                   style={{ display: bannerImage ? 'none' : 'flex' }}
                 >
                   <svg className="w-16 h-16 sm:w-24 sm:h-24 text-indigo-300/60 fill-current drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] -mt-10 sm:-mt-14" viewBox="0 0 24 24">
                     <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
                   </svg>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0E0E12] via-[#0E0E12]/75 via-50% to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 via-50% to-transparent pointer-events-none" />
               </div>
             );
           })()}
