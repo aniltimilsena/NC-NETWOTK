@@ -5,6 +5,7 @@ import ProfileHeader from './components/ProfileHeader';
 import ProfileMedia from './components/ProfileMedia';
 import ProfileExperience from './components/ProfileExperience';
 import FollowModal from './components/FollowModal';
+import ShareSheet from '../../components/ui/ShareSheet';
 import { doc, setDoc, query, collection, where, getDocs, serverTimestamp, documentId } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
@@ -28,6 +29,10 @@ import {
   Loader2,
   Video,
   Image as ImageIcon,
+  Camera,
+  Trash2,
+  ChevronLeft,
+  Share2,
 } from 'lucide-react';
 
 interface ProfilePageProps {
@@ -107,6 +112,7 @@ export default function ProfilePage({
   const [emailInput, setEmailInput] = useState('');
   const [isSavingAttributes, setIsSavingAttributes] = useState(false);
   const [showMediaModal, setShowMediaModal] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
 
   const loggedInUserId = CurrentUser.id || AuthService.getUserId() || user?.uid || user?.id;
   const targetProfileId = profile?.uid || (profile as any)?.id;
@@ -424,7 +430,7 @@ export default function ProfilePage({
 
   if (loading || resolvingUid) {
     return (
-      <div className="min-h-screen bg-[#06080C] pb-6 text-left animate-pulse flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-[#141414] pb-6 text-left animate-pulse flex flex-col items-center justify-center p-6">
         <div className="w-24 h-24 rounded-full border-2 border-white/10 skeleton mb-4" />
         <div className="h-6 w-48 skeleton rounded-lg mb-2" />
         <div className="h-4 w-32 skeleton rounded-md mb-4" />
@@ -435,7 +441,7 @@ export default function ProfilePage({
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#06080C] pb-6 flex flex-col items-center justify-center text-center p-6 text-white">
+      <div className="min-h-screen bg-[#141414] pb-6 flex flex-col items-center justify-center text-center p-6 text-white">
         <h2 className="text-xl font-bold mb-2">Profile Not Found</h2>
         <p className="text-gray-400 text-sm max-w-xs mb-6">
           The profile you are looking for does not exist or has been deleted.
@@ -460,14 +466,214 @@ export default function ProfilePage({
     ? rawSkills.split(',').map((s: string) => s.trim()).filter(Boolean)
     : [];
 
+  const coverUrl =
+    profile?.coverImage ||
+    (profile as any)?.coverPhoto ||
+    (profile as any)?.bannerImage ||
+    '/hero-bg.png';
+
+  const effectiveIsOwn = isRealOwn && !isPreviewMode;
+
+  const renderAttributesCard = () => (
+    <div className="bg-black border border-white/5 rounded-xl p-4 divide-y divide-white/5 shadow-md">
+      <div className="pb-2.5 flex items-center justify-between text-xs sm:text-sm">
+        <h4 className="font-bold text-white tracking-wide">Physical Specs & Contact</h4>
+      </div>
+
+      {/* Height Row */}
+      <div className="py-2.5 flex items-center justify-between text-xs">
+        <div className="flex items-center gap-2.5 text-gray-300">
+          <span className="font-mono font-bold text-[#0088CC]">II</span>
+          <span className="font-semibold text-white">Height</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={height ? 'text-gray-300 font-medium' : 'text-gray-500'}>
+            {height ? height : 'Not added'}
+          </span>
+          {effectiveIsOwn && (
+            <button
+              onClick={() => {
+                setHeightInput(profile.height || '');
+                setWeightInput(profile.weight || '');
+                setPhoneInput(profile.phone || '');
+                setEmailInput(profile.email || '');
+                setShowAttributesModal(true);
+              }}
+              className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
+            >
+              {height ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Weight Row */}
+      <div className="py-2.5 flex items-center justify-between text-xs">
+        <div className="flex items-center gap-2.5 text-gray-300">
+          <ShoppingBag className="w-3.5 h-3.5 text-[#0088CC]" />
+          <span className="font-semibold text-white">Weight</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={weight ? 'text-gray-300 font-medium' : 'text-gray-500'}>
+            {weight ? weight : 'Not added'}
+          </span>
+          {effectiveIsOwn && (
+            <button
+              onClick={() => {
+                setHeightInput(profile.height || '');
+                setWeightInput(profile.weight || '');
+                setPhoneInput(profile.phone || '');
+                setEmailInput(profile.email || '');
+                setShowAttributesModal(true);
+              }}
+              className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
+            >
+              {weight ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Contacts Row */}
+      <div className="py-2.5 flex items-center justify-between text-xs">
+        <div className="flex items-center gap-2.5 text-gray-300 shrink-0">
+          <Phone className="w-3.5 h-3.5 text-[#0088CC]" />
+          <span className="font-semibold text-white">Contacts</span>
+        </div>
+        <div className="flex items-center gap-2 text-right">
+          {contactPhone || contactEmail ? (
+            <div className="flex items-center gap-2.5 text-gray-300 font-medium text-[11px] flex-wrap justify-end">
+              {contactPhone && (
+                <div className="flex items-center gap-1.5">
+                  <Phone className="w-2.5 h-2.5 text-gray-500" />
+                  <span>{contactPhone}</span>
+                </div>
+              )}
+              {contactEmail && (
+                <div className="flex items-center gap-1.5">
+                  <Mail className="w-2.5 h-2.5 text-gray-500" />
+                  <span>{contactEmail}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <span className="text-gray-500">Not added</span>
+          )}
+          {effectiveIsOwn && (
+            <button
+              onClick={() => {
+                setHeightInput(profile.height || '');
+                setWeightInput(profile.weight || '');
+                setPhoneInput(profile.phone || '');
+                setEmailInput(profile.email || '');
+                setShowAttributesModal(true);
+              }}
+              className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer shrink-0"
+            >
+              {contactPhone || contactEmail ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderActionButtons = () => (
+    <div>
+      {isRealOwn && isPreviewMode ? (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsPreviewMode(false)}
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+          >
+            <Eye className="w-4 h-4 text-cyan-400" />
+            <span>Exit Preview</span>
+          </button>
+          <button
+            onClick={() => onNavigate('/settings/profile')}
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/30"
+          >
+            <Pencil className="w-4 h-4" />
+            <span>Update Profile</span>
+          </button>
+        </div>
+      ) : isRealOwn ? (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onNavigate('/settings/profile')}
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/30"
+          >
+            <Pencil className="w-4 h-4" />
+            <span>Update Profile</span>
+          </button>
+          <button
+            onClick={() => {
+              setIsPreviewMode(true);
+              showAlert('Preview Mode Active', 'info', 'Viewing your profile as seen by casting directors.');
+            }}
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+          >
+            <Eye className="w-4 h-4" />
+            <span>Preview Profile</span>
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleFollowToggle}
+            className={`flex-1 py-3.5 px-6 rounded-xl font-bold text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg ${
+              isFollowing
+                ? 'bg-[#1f1f1f] border border-white/10 text-white hover:bg-[#2a2a2a]'
+                : 'bg-[#0088CC] hover:bg-[#0077B3] text-white shadow-[#0088CC]/30'
+            }`}
+          >
+            {isFollowing ? <Check className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+            <span>{isFollowing ? 'Following' : 'Follow'}</span>
+          </button>
+          <button
+            onClick={() => onNavigate('messages', profile.uid || (profile as any).id)}
+            className="flex-1 py-3.5 px-6 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-md flex items-center justify-center gap-2"
+          >
+            <MessageSquare className="w-4 h-4 text-[#0088CC]" />
+            <span>Message</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-[#06080C] pb-16 text-white font-sans">
+    <div className="min-h-screen bg-[#141414] pb-16 text-white font-sans">
       <SEO
         title={`${profile.name || 'Talent'} | NepalCasts Profile`}
         description={profile.bio || `View ${profile.name || 'this talent'}'s portfolio, auditions, and experience on NepalCasts.`}
         image={profile.image || undefined}
         noindex={(profile as any).isPrivate === true}
       />
+
+      {/* Preview Mode Alert Banner */}
+      {isRealOwn && isPreviewMode && (
+        <div className="sticky top-14 sm:top-20 z-40 bg-[#0088CC]/15 border-b border-[#0088CC]/30 backdrop-blur-md px-4 py-2.5 text-center flex items-center justify-between gap-3 text-xs sm:text-sm">
+          <div className="flex items-center gap-2 text-cyan-300 font-medium">
+            <Eye className="w-4 h-4 text-cyan-400 shrink-0 animate-pulse" />
+            <span><strong>Preview Mode</strong>: Viewing as seen by casting directors & visitors</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setIsPreviewMode(false)}
+              className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg transition-colors cursor-pointer text-xs"
+            >
+              Exit Preview
+            </button>
+            <button
+              onClick={() => onNavigate('/settings/profile')}
+              className="px-3 py-1 bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold rounded-lg transition-colors cursor-pointer text-xs"
+            >
+              Update Profile
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hidden file inputs for media uploads */}
       <input
@@ -496,275 +702,195 @@ export default function ProfilePage({
         }}
       />
 
-      {/* Full Screen Unified Profile Container */}
-      <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        {/* 1. Header (Centered Avatar, 3 Meta Pills, Followers Count Box) */}
-        <ProfileHeader
-          profile={profile}
-          isOwnProfile={isRealOwn}
-          isFollowing={isFollowing}
-          followerCount={followerCount}
-          followingCount={followingCount}
-          savedCount={savedCount}
-          onFollowToggle={handleFollowToggle}
-          onNavigate={onNavigate}
-          showAlert={showAlert}
-          onFollowClick={handleFollowModalOpen}
+      {/* Full-Width Edge-to-Edge Cinematic Cover Banner with Subtle Curved Bottom Edges */}
+      <div className="relative w-full h-52 sm:h-64 md:h-76 lg:h-84 overflow-hidden bg-[#161616] group border-b border-white/10 rounded-b-xl sm:rounded-b-2xl">
+        <img
+          src={coverUrl}
+          alt={`${profile.name || 'Talent'} Cover`}
+          className="w-full h-full object-cover object-center"
         />
 
-        {/* 2. About Section */}
-        <section className="text-left space-y-2 pt-1">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
-              About
-            </h3>
-            {isRealOwn && (
-              <button
-                onClick={() => {
-                  setBioInput(profile.bio || '');
-                  setShowAboutModal(true);
-                }}
-                className="text-[#0088CC] hover:text-[#38c9ff] transition-colors p-1 cursor-pointer"
-                title="Edit About"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+        {/* Ambient Contrast Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/40 pointer-events-none" />
 
-          <p
-            onClick={() => {
-              if (isRealOwn) {
-                setBioInput(profile.bio || '');
-                setShowAboutModal(true);
-              }
-            }}
-            className={`text-xs text-gray-300 leading-relaxed whitespace-pre-line ${isRealOwn ? 'cursor-pointer hover:text-white' : ''}`}
+        {/* Floating Top Navigation: Back Button & Share Button */}
+        <div className="absolute top-3 sm:top-5 left-3 sm:left-6 lg:left-10 right-3 sm:right-6 lg:right-10 flex items-center justify-between z-10 pointer-events-auto max-w-[1600px] mx-auto">
+          <button
+            onClick={() => onNavigate('back')}
+            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0 shadow-lg"
+            aria-label="Back"
+            title="Go Back"
           >
-            {bio ? bio : (
-              <span className="text-gray-500 italic">
-                {isRealOwn ? 'Add a short bio about yourself...' : 'No bio provided yet.'}
-              </span>
-            )}
-          </p>
+            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+          </button>
 
-          {/* Attributes Box */}
-          <div className="bg-[#0D121D] border border-[#172033] rounded-2xl p-3 divide-y divide-[#172033] shadow-sm mt-2">
-            {/* Height Row */}
-            <div className="py-2.5 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2.5 text-gray-300">
-                <span className="font-mono font-bold text-[#0088CC]">II</span>
-                <span className="font-semibold text-white">Height</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={height ? 'text-gray-300 font-medium' : 'text-gray-500'}>
-                  {height ? height : 'Not added'}
-                </span>
-                {isRealOwn && (
-                  <button
-                    onClick={() => {
-                      setHeightInput(profile.height || '');
-                      setWeightInput(profile.weight || '');
-                      setPhoneInput(profile.phone || '');
-                      setEmailInput(profile.email || '');
-                      setShowAttributesModal(true);
-                    }}
-                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
-                  >
-                    {height ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
-                  </button>
-                )}
-              </div>
+          <button
+            onClick={() => setShowShareSheet(true)}
+            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0 shadow-lg"
+            title="Share Profile"
+            aria-label="Share Profile"
+          >
+            <Share2 className="w-5 h-5 text-white" />
+          </button>
+        </div>
+      </div>
+
+      {/* Full Screen Unified Profile Container */}
+      <div className="w-full max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 space-y-6">
+        {/* Main Content Grid: 1 column on mobile, 2 columns on PC / Desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+          {/* Left Column (Desktop Hero & Specs Sidebar) */}
+          <div className="lg:col-span-5 xl:col-span-4 space-y-6 lg:sticky lg:top-20">
+            {/* 1. Header (Centered Avatar overlapping cover, 3 Meta Pills, Followers Count Box) */}
+            <ProfileHeader
+              profile={profile}
+              isOwnProfile={effectiveIsOwn}
+              isFollowing={isFollowing}
+              followerCount={followerCount}
+              followingCount={followingCount}
+              savedCount={savedCount}
+              onFollowToggle={handleFollowToggle}
+              onNavigate={onNavigate}
+              showAlert={showAlert}
+              onFollowClick={handleFollowModalOpen}
+              hideTopNav={true}
+            />
+
+            {/* Desktop Attributes & Contacts */}
+            <div className="hidden lg:block">
+              {renderAttributesCard()}
             </div>
 
-            {/* Weight Row */}
-            <div className="py-2.5 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2.5 text-gray-300">
-                <ShoppingBag className="w-3.5 h-3.5 text-[#0088CC]" />
-                <span className="font-semibold text-white">Weight</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={weight ? 'text-gray-300 font-medium' : 'text-gray-500'}>
-                  {weight ? weight : 'Not added'}
-                </span>
-                {isRealOwn && (
-                  <button
-                    onClick={() => {
-                      setHeightInput(profile.height || '');
-                      setWeightInput(profile.weight || '');
-                      setPhoneInput(profile.phone || '');
-                      setEmailInput(profile.email || '');
-                      setShowAttributesModal(true);
-                    }}
-                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer"
-                  >
-                    {weight ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Contacts Row */}
-            <div className="py-2.5 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2.5 text-gray-300 shrink-0">
-                <Phone className="w-3.5 h-3.5 text-[#0088CC]" />
-                <span className="font-semibold text-white">Contacts</span>
-              </div>
-              <div className="flex items-center gap-2 text-right">
-                {contactPhone || contactEmail ? (
-                  <div className="flex items-center gap-2.5 text-gray-300 font-medium text-[11px] flex-wrap justify-end">
-                    {contactPhone && (
-                      <div className="flex items-center gap-1.5">
-                        <Phone className="w-2.5 h-2.5 text-gray-500" />
-                        <span>{contactPhone}</span>
-                      </div>
-                    )}
-                    {contactEmail && (
-                      <div className="flex items-center gap-1.5">
-                        <Mail className="w-2.5 h-2.5 text-gray-500" />
-                        <span>{contactEmail}</span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-gray-500">Not added</span>
-                )}
-                {isRealOwn && (
-                  <button
-                    onClick={() => {
-                      setHeightInput(profile.height || '');
-                      setWeightInput(profile.weight || '');
-                      setPhoneInput(profile.phone || '');
-                      setEmailInput(profile.email || '');
-                      setShowAttributesModal(true);
-                    }}
-                    className="text-[#0088CC] hover:text-[#38c9ff] cursor-pointer shrink-0"
-                  >
-                    {contactPhone || contactEmail ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
-                  </button>
-                )}
-              </div>
+            {/* Desktop Action Buttons */}
+            <div className="hidden lg:block pt-2">
+              {renderActionButtons()}
             </div>
           </div>
-        </section>
 
-        {/* 3. Media Section */}
-        <section className="text-left space-y-1.5 pt-1">
-          <ProfileMedia
-            profile={profile}
-            isOwnProfile={isRealOwn}
-            onUploadMedia={handleUploadMedia}
-            onDeleteMedia={handleDeleteMedia}
-            onUploadIntroVideo={handleUploadIntroVideo}
-            onDeleteIntroVideo={handleDeleteIntroVideo}
-            onNavigate={() => setShowMediaModal(true)}
-          />
-        </section>
+          {/* Right Column (Portfolio, Bio, Media, Experience, Skills) */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+            {/* 2. About Section */}
+            <section className="text-left space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
+                  About
+                </h3>
+                {effectiveIsOwn && (
+                  <button
+                    onClick={() => {
+                      setBioInput(profile.bio || '');
+                      setShowAboutModal(true);
+                    }}
+                    className="text-[#0088CC] hover:text-[#38c9ff] transition-colors p-1 cursor-pointer"
+                    title="Edit About"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
 
-        {/* 4. Experience Section */}
-        <section className="text-left space-y-1.5 pt-1">
-          <ProfileExperience
-            profile={profile}
-            isOwnProfile={isRealOwn}
-            showAlert={showAlert}
-            onNavigate={() => setShowExperienceModal(true)}
-          />
-        </section>
-
-        {/* 5. Skills Section */}
-        <section className="text-left space-y-2 pt-1">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
-              Skills
-            </h3>
-            {isRealOwn && (
-              <button
-                onClick={() => {
-                  setEditingSkills(skillsList);
-                  setShowSkillsModal(true);
-                }}
-                className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer"
-              >
-                {skillsList.length > 0 ? 'Edit' : '+ Add Skills'}
-              </button>
-            )}
-          </div>
-
-          {skillsList.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {skillsList.map((skill, index) => (
-                <span
-                  key={index}
-                  className="bg-[#0088CC] text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm"
+              <div className="bg-black border border-white/5 rounded-xl p-4 shadow-md">
+                <p
+                  onClick={() => {
+                    if (effectiveIsOwn) {
+                      setBioInput(profile.bio || '');
+                      setShowAboutModal(true);
+                    }
+                  }}
+                  className={`text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-line ${effectiveIsOwn ? 'cursor-pointer hover:text-white' : ''}`}
                 >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          ) : isRealOwn ? (
-            <div
-              onClick={() => {
-                setEditingSkills(skillsList);
-                setShowSkillsModal(true);
-              }}
-              className="border border-dashed border-[#172033] bg-[#0D121D] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#0088CC]/50 transition-colors group"
-            >
-              <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#0088CC] mb-1" />
-              <span className="text-xs font-semibold text-gray-400 group-hover:text-white">
-                Add Skills
-              </span>
-              <p className="text-[10px] text-gray-500 mt-0.5">Add skills you are good at...</p>
-            </div>
-          ) : (
-            <p className="text-xs text-gray-500 italic pt-1">No skills listed yet.</p>
-          )}
-        </section>
+                  {bio ? bio : (
+                    <span className="text-gray-500 italic">
+                      {effectiveIsOwn ? 'Add a short bio about yourself...' : 'No bio provided yet.'}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </section>
 
-        {/* 6. Bottom Action Bar */}
-        <section className="pt-3">
-          {isRealOwn && !isPreviewMode ? (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => onNavigate('/settings/profile')}
-                className="flex-1 py-3.5 px-5 rounded-2xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/30"
-              >
-                <Pencil className="w-4 h-4" />
-                <span>Update Profile</span>
-              </button>
-              <button
-                onClick={() => {
-                  setIsPreviewMode(true);
-                  showAlert('Preview Mode', 'info', 'Viewing your profile as seen by casting directors.');
-                }}
-                className="flex-1 py-3.5 px-5 rounded-2xl bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
-              >
-                <Eye className="w-4 h-4" />
-                <span>Preview Profile</span>
-              </button>
+            {/* Attributes Box (mobile only) */}
+            <div className="lg:hidden">
+              {renderAttributesCard()}
             </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleFollowToggle}
-                className={`flex-1 py-3.5 px-6 rounded-2xl font-bold text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg ${
-                  isFollowing
-                    ? 'bg-[#111622] border border-[#1E2638] text-white hover:bg-[#161D2B]'
-                    : 'bg-[#0088CC] hover:bg-[#0077B3] text-white shadow-[#0088CC]/30'
-                }`}
-              >
-                {isFollowing ? <Check className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                <span>{isFollowing ? 'Following' : 'Follow'}</span>
-              </button>
-              <button
-                onClick={() => onNavigate('messages', profile.uid || (profile as any).id)}
-                className="flex-1 py-3.5 px-6 rounded-2xl bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-md flex items-center justify-center gap-2"
-              >
-                <MessageSquare className="w-4 h-4 text-[#0088CC]" />
-                <span>Message</span>
-              </button>
+
+            {/* 3. Media Section */}
+            <section className="text-left space-y-1.5 pt-1">
+              <ProfileMedia
+                profile={profile}
+                isOwnProfile={effectiveIsOwn}
+                onUploadMedia={handleUploadMedia}
+                onDeleteMedia={handleDeleteMedia}
+                onUploadIntroVideo={handleUploadIntroVideo}
+                onDeleteIntroVideo={handleDeleteIntroVideo}
+                onNavigate={() => setShowMediaModal(true)}
+              />
+            </section>
+
+            {/* 4. Experience Section */}
+            <section className="text-left space-y-1.5 pt-1">
+              <ProfileExperience
+                profile={profile}
+                isOwnProfile={effectiveIsOwn}
+                showAlert={showAlert}
+                onNavigate={() => setShowExperienceModal(true)}
+              />
+            </section>
+
+            {/* 5. Skills Section */}
+            <section className="text-left space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
+                  Skills
+                </h3>
+                {effectiveIsOwn && (
+                  <button
+                    onClick={() => {
+                      setEditingSkills(skillsList);
+                      setShowSkillsModal(true);
+                    }}
+                    className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer"
+                  >
+                    {skillsList.length > 0 ? 'Edit' : '+ Add Skills'}
+                  </button>
+                )}
+              </div>
+
+              {skillsList.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {skillsList.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="bg-[#0088CC] text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              ) : effectiveIsOwn ? (
+                <div
+                  onClick={() => {
+                    setEditingSkills(skillsList);
+                    setShowSkillsModal(true);
+                  }}
+                  className="border border-dashed border-white/10 bg-black rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-white/20 transition-colors group"
+                >
+                  <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#0088CC] mb-1" />
+                  <span className="text-xs font-semibold text-gray-400 group-hover:text-white">
+                    Add Skills
+                  </span>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Add skills you are good at...</p>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 italic pt-1">No skills listed yet.</p>
+              )}
+            </section>
+
+            {/* Mobile Action Buttons */}
+            <div className="lg:hidden pt-3">
+              {renderActionButtons()}
             </div>
-          )}
-        </section>
+          </div>
+        </div>
       </div>
 
       {/* MODAL 1: ADD / EDIT SKILLS */}
@@ -774,7 +900,7 @@ export default function ProfilePage({
           onClick={() => setShowSkillsModal(false)}
         >
           <div
-            className="bg-[#0A0D14] border border-[#1E2638] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            className="bg-[#181818] border border-white/10 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -803,7 +929,7 @@ export default function ProfilePage({
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-[#0088CC] text-white shadow-md'
-                        : 'bg-[#111622] text-gray-300 border border-[#1E2638] hover:border-gray-500'
+                        : 'bg-[#121212] text-gray-300 border border-white/10 hover:border-white/20'
                     }`}
                   >
                     {isSelected ? `✓ ${skill}` : `+ ${skill}`}
@@ -825,12 +951,12 @@ export default function ProfilePage({
                     addCustomSkill();
                   }
                 }}
-                className="flex-1 bg-[#111622] border border-[#1E2638] rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                className="flex-1 bg-[#121212] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
               />
               <button
                 type="button"
                 onClick={addCustomSkill}
-                className="px-3.5 py-2 bg-[#121824] hover:bg-[#1A2234] border border-[#1E293B] text-white text-xs font-bold rounded-xl cursor-pointer"
+                className="px-3.5 py-2 bg-[#242424] hover:bg-[#2e2e2e] border border-white/10 text-white text-xs font-bold rounded-xl cursor-pointer"
               >
                 Add
               </button>
@@ -866,7 +992,7 @@ export default function ProfilePage({
           onClick={() => setShowExperienceModal(false)}
         >
           <div
-            className="bg-[#0A0D14] border border-[#1E2638] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            className="bg-[#181818] border border-white/10 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -890,7 +1016,7 @@ export default function ProfilePage({
                   value={expTitle}
                   onChange={(e) => setExpTitle(e.target.value)}
                   required
-                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
                 />
               </div>
 
@@ -903,7 +1029,7 @@ export default function ProfilePage({
                   placeholder="e.g. Maya Short Film, Ek Din Web Series"
                   value={expCompany}
                   onChange={(e) => setExpCompany(e.target.value)}
-                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
                 />
               </div>
 
@@ -916,7 +1042,7 @@ export default function ProfilePage({
                   placeholder="e.g. 2024 or 2021 - 2023"
                   value={expYear}
                   onChange={(e) => setExpYear(e.target.value)}
-                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
                 />
               </div>
 
@@ -929,7 +1055,7 @@ export default function ProfilePage({
                   placeholder="Brief details about your role..."
                   value={expDesc}
                   onChange={(e) => setExpDesc(e.target.value)}
-                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] resize-none"
+                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] resize-none"
                 />
               </div>
 
@@ -962,7 +1088,7 @@ export default function ProfilePage({
           onClick={() => setShowMediaModal(false)}
         >
           <div
-            className="bg-[#0A0D14] border border-[#1E2638] rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            className="bg-[#181818] border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-fade-in text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -981,7 +1107,7 @@ export default function ProfilePage({
                 onClick={() => {
                   document.getElementById('profile-direct-photo-upload')?.click();
                 }}
-                className="w-full p-4 rounded-xl bg-[#111622] hover:bg-[#161D2B] border border-[#1E2638] flex items-center gap-3.5 text-left transition-all cursor-pointer group"
+                className="w-full p-4 rounded-xl bg-[#222222] hover:bg-[#2a2a2a] border border-white/10 flex items-center gap-3.5 text-left transition-all cursor-pointer group"
               >
                 <div className="w-10 h-10 rounded-lg bg-[#0088CC]/10 text-[#0088CC] flex items-center justify-center shrink-0">
                   <ImageIcon className="w-5 h-5" />
@@ -1001,7 +1127,7 @@ export default function ProfilePage({
                 onClick={() => {
                   document.getElementById('profile-direct-video-upload')?.click();
                 }}
-                className="w-full p-4 rounded-xl bg-[#111622] hover:bg-[#161D2B] border border-[#1E2638] flex items-center gap-3.5 text-left transition-all cursor-pointer group"
+                className="w-full p-4 rounded-xl bg-[#222222] hover:bg-[#2a2a2a] border border-white/10 flex items-center gap-3.5 text-left transition-all cursor-pointer group"
               >
                 <div className="w-10 h-10 rounded-lg bg-[#0088CC]/10 text-[#0088CC] flex items-center justify-center shrink-0">
                   <Video className="w-5 h-5" />
@@ -1027,7 +1153,7 @@ export default function ProfilePage({
           onClick={() => setShowAboutModal(false)}
         >
           <div
-            className="bg-[#0A0D14] border border-[#1E2638] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            className="bg-[#181818] border border-white/10 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -1045,7 +1171,7 @@ export default function ProfilePage({
               placeholder="Tell casting directors about your passion, training, and acting background..."
               value={bioInput}
               onChange={(e) => setBioInput(e.target.value)}
-              className="w-full bg-[#111622] border border-[#1E2638] rounded-xl p-3.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] resize-none leading-relaxed"
+              className="w-full bg-[#121212] border border-white/10 rounded-xl p-3.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] resize-none leading-relaxed"
             />
 
             <div className="flex justify-end gap-2 pt-2">
@@ -1077,7 +1203,7 @@ export default function ProfilePage({
           onClick={() => setShowAttributesModal(false)}
         >
           <div
-            className="bg-[#0A0D14] border border-[#1E2638] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            className="bg-[#181818] border border-white/10 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -1100,7 +1226,7 @@ export default function ProfilePage({
                   placeholder="e.g. 5'10&quot; (178 cm)"
                   value={heightInput}
                   onChange={(e) => setHeightInput(e.target.value)}
-                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
                 />
               </div>
 
@@ -1113,7 +1239,7 @@ export default function ProfilePage({
                   placeholder="e.g. 68 kg"
                   value={weightInput}
                   onChange={(e) => setWeightInput(e.target.value)}
-                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
                 />
               </div>
 
@@ -1126,7 +1252,7 @@ export default function ProfilePage({
                   placeholder="e.g. +977 9812345678"
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value)}
-                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
                 />
               </div>
 
@@ -1139,7 +1265,7 @@ export default function ProfilePage({
                   placeholder="e.g. anil.timilsena@gmail.com"
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
-                  className="w-full bg-[#111622] border border-[#1E2638] rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
+                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC]"
                 />
               </div>
             </div>
@@ -1174,6 +1300,23 @@ export default function ProfilePage({
         loading={loadingFollowList}
         onNavigate={onNavigate}
       />
+
+      {showShareSheet && (
+        <ShareSheet
+          profile={{
+            id: profile?.uid || (profile as any)?.id || CurrentUser.id || '',
+            name: profile.name || 'Talent',
+            role: profile.role || 'Actor',
+            location: (profile.location || 'Kathmandu, Nepal').replace('\nNot added', ''),
+            followers: followerCount || 0,
+            rating: (profile as any)?.rating || 5.0,
+            image: (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || null,
+            verified: profile?.verified === true,
+            username: (profile as any)?.username || null,
+          }}
+          onClose={() => setShowShareSheet(false)}
+        />
+      )}
     </div>
   );
 }

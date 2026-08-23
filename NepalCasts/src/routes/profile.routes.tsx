@@ -10,7 +10,7 @@ const ProfileWrapper = ({ onNavigate, user, isAdmin, showAlert, authReady, defau
   const { id, tab } = useParams();
 
   if (!authReady) {
-    return <div className="min-h-screen bg-[#070709]" />;
+    return <div className="min-h-screen bg-[#141414]" />;
   }
 
   const targetId = id || user?.uid || user?.id || CurrentUser.id;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   ChevronLeft,
-  Settings,
+  Share2,
   Camera,
   MapPin,
   User as UserIcon,
@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
+import ShareSheet from '../../../components/ui/ShareSheet';
 import { updateProfileData, uploadProfileMedia } from '../../../services';
 import { CurrentUser } from '../../../utils/CurrentUser';
 import type { UserProfile } from '../../../types';
@@ -31,6 +32,7 @@ interface ProfileHeaderProps {
   onNavigate: (page: string, param?: any) => void;
   showAlert: (message: string, type?: any, detail?: string, action?: any) => void;
   onFollowClick?: (type: 'followers' | 'following') => void;
+  hideTopNav?: boolean;
 }
 
 export default function ProfileHeader({
@@ -44,8 +46,10 @@ export default function ProfileHeader({
   onNavigate,
   showAlert,
   onFollowClick,
+  hideTopNav = false,
 }: ProfileHeaderProps) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
 
   const isRealOwn =
     isOwnProfile ||
@@ -132,34 +136,38 @@ export default function ProfileHeader({
   };
 
   return (
-    <div className="w-full font-sans select-none pt-3 pb-2 text-left">
-      {/* 1. Top Navigation Bar: Back Arrow, Centered "Profile", Settings / Edit Gear */}
-      <div className="flex items-center justify-between px-1 sm:px-2 mb-4">
-        <button
-          onClick={() => onNavigate('back')}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-all active:scale-95 cursor-pointer"
-          aria-label="Back"
-        >
-          <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
-        </button>
+    <div className={`w-full font-sans select-none pb-2 text-left ${hideTopNav ? 'pt-0' : 'pt-3'}`}>
+      {/* 1. Top Navigation Bar: Back Arrow, Centered "Profile", Share Button */}
+      {!hideTopNav && (
+        <div className="flex items-center justify-between px-1 sm:px-2 mb-4">
+          <button
+            onClick={() => onNavigate('back')}
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0 shadow-sm"
+            aria-label="Back"
+            title="Go Back"
+          >
+            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+          </button>
 
-        <h1 className="text-base sm:text-lg font-bold text-white tracking-wide">
-          Profile
-        </h1>
+          <h1 className="text-base sm:text-lg font-bold text-white tracking-wide">
+            Profile
+          </h1>
 
-        <button
-          onClick={() => onNavigate(isRealOwn ? '/settings/profile' : '/settings')}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-all active:scale-95 cursor-pointer"
-          title="Settings"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
-      </div>
+          <button
+            onClick={() => setShowShareSheet(true)}
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0 shadow-sm"
+            title="Share Profile"
+            aria-label="Share Profile"
+          >
+            <Share2 className="w-5 h-5 text-white" />
+          </button>
+        </div>
+      )}
 
-      {/* 2. Centered Avatar with Cyan Ring & Camera Badge */}
-      <div className="flex flex-col items-center text-center space-y-2.5 px-4">
+      {/* 2. Centered Avatar with Camera Badge */}
+      <div className={`flex flex-col items-center text-center space-y-2.5 px-4 ${hideTopNav ? '-mt-16 sm:-mt-20 lg:-mt-24' : ''}`}>
         <div className="relative">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 border-[#1E2638] overflow-hidden bg-[#0D121D]">
+          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden shadow-2xl">
             <Avatar
               user={profile}
               src={
@@ -193,7 +201,7 @@ export default function ProfileHeader({
               />
               <label
                 htmlFor="avatar-photo-upload"
-                className="absolute bottom-0 right-0 w-7 h-7 bg-[#0088CC] hover:bg-[#0077B3] rounded-full border-2 border-[#06080C] flex items-center justify-center text-white cursor-pointer shadow-md transition-transform active:scale-90"
+                className="absolute bottom-0 right-0 w-7 h-7 bg-[#0088CC] hover:bg-[#0077B3] rounded-full border-2 border-black flex items-center justify-center text-white cursor-pointer shadow-md transition-transform active:scale-90"
                 title="Change Profile Photo"
               >
                 <Camera className="w-3.5 h-3.5" />
@@ -220,9 +228,9 @@ export default function ProfileHeader({
         </div>
 
         {/* 3 Meta Info Pills (Location, Age, Experience) */}
-        <div className="grid grid-cols-3 gap-2 w-full max-w-xl pt-0.5">
+        <div className="grid grid-cols-3 gap-2 w-full max-w-2xl pt-0.5">
           {/* Location Pill */}
-          <div className="bg-[#0D121D] border border-[#172033] text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-sm">
+          <div className="bg-black border border-white/5 text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-md">
             <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             <div className="text-xs font-medium truncate">
               {location.includes('Not added') ? (
@@ -236,7 +244,7 @@ export default function ProfileHeader({
           </div>
 
           {/* Age Pill */}
-          <div className="bg-[#0D121D] border border-[#172033] text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-sm">
+          <div className="bg-black border border-white/5 text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-md">
             <UserIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             <div className="text-xs font-medium truncate">
               {talentAge ? (
@@ -248,7 +256,7 @@ export default function ProfileHeader({
           </div>
 
           {/* Experience Pill */}
-          <div className="bg-[#0D121D] border border-[#172033] text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-sm">
+          <div className="bg-black border border-white/5 text-gray-300 rounded-xl px-2.5 py-1.5 sm:py-2 text-center flex items-center justify-center gap-1.5 shadow-md">
             <Briefcase className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             <div className="text-xs font-medium truncate">
               {experiencesList.length > 0 ? (
@@ -263,7 +271,7 @@ export default function ProfileHeader({
         </div>
 
         {/* Followers / Following Box */}
-        <div className="bg-[#0D121D] border border-[#172033] rounded-xl py-1.5 px-6 grid grid-cols-2 text-center w-full max-w-xl my-1 shadow-sm divide-x divide-[#172033]">
+        <div className="bg-black border border-white/5 rounded-xl py-1.5 px-6 grid grid-cols-2 text-center w-full max-w-2xl my-1 shadow-md divide-x divide-white/5">
           <button
             type="button"
             onClick={() => onFollowClick?.('followers')}
@@ -287,6 +295,23 @@ export default function ProfileHeader({
           </button>
         </div>
       </div>
+
+      {showShareSheet && (
+        <ShareSheet
+          profile={{
+            id: profile?.uid || (profile as any)?.id || CurrentUser.id || '',
+            name: name,
+            role: userRole,
+            location: location.replace('\nNot added', ''),
+            followers: followerCount || 0,
+            rating: (profile as any)?.rating || 5.0,
+            image: (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || null,
+            verified: profile?.verified === true,
+            username: (profile as any)?.username || null,
+          }}
+          onClose={() => setShowShareSheet(false)}
+        />
+      )}
     </div>
   );
 }

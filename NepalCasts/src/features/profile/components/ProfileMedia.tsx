@@ -147,12 +147,12 @@ export default function ProfileMedia({
 
       {/* Horizontal Scrollable Reel */}
       {(introVideo || media.length > 0) ? (
-        <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-none">
+        <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-none">
           {/* 1. Intro Video Card (First in Reel with Play Overlay) */}
           {introVideo && (
             <div
               onClick={() => setShowVideoModal(true)}
-              className="relative shrink-0 w-28 sm:w-32 aspect-[3/4] rounded-xl overflow-hidden border border-[#1E2638] bg-black group cursor-pointer shadow-md"
+              className="relative shrink-0 w-40 sm:w-52 md:w-60 lg:w-64 xl:w-72 aspect-[3/4] rounded-xl overflow-hidden border border-white/10 bg-black group cursor-pointer shadow-lg"
             >
               <video
                 key={introVideo}
@@ -161,8 +161,8 @@ export default function ProfileMedia({
                 preload="metadata"
               />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                <div className="w-9 h-9 rounded-full bg-black/60 border border-white/30 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                  <Play className="w-4 h-4 ml-0.5 fill-white" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-lg">
+                  <Play className="w-5 h-5 sm:w-6 sm:h-6 ml-0.5 fill-white" />
                 </div>
               </div>
 
@@ -172,10 +172,10 @@ export default function ProfileMedia({
                     e.stopPropagation();
                     setDeleteVideoConfirmOpen(true);
                   }}
-                  className="absolute top-2 right-2 bg-black/80 hover:bg-red-600 p-1.5 rounded-full border border-white/20 transition-all text-white hover:scale-110 shadow-lg cursor-pointer z-10 opacity-0 group-hover:opacity-100"
+                  className="absolute top-2.5 right-2.5 bg-black/80 hover:bg-red-600 p-2 rounded-full border border-white/20 transition-all text-white hover:scale-110 shadow-lg cursor-pointer z-10 opacity-0 group-hover:opacity-100"
                   title="Remove Video"
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
@@ -186,7 +186,7 @@ export default function ProfileMedia({
             <div
               key={url}
               onClick={() => openLightbox(index)}
-              className="relative shrink-0 w-28 sm:w-32 aspect-[3/4] rounded-xl overflow-hidden border border-[#1E2638] bg-[#111622] group cursor-pointer shadow-md"
+              className="relative shrink-0 w-40 sm:w-52 md:w-60 lg:w-64 xl:w-72 aspect-[3/4] rounded-xl overflow-hidden border border-white/10 bg-black group cursor-pointer shadow-lg"
             >
               <img
                 src={url}
@@ -199,19 +199,18 @@ export default function ProfileMedia({
                     e.stopPropagation();
                     setDeletePhotoTarget({ index, url });
                   }}
-                  className="absolute top-2 right-2 bg-black/80 hover:bg-red-600 p-1.5 rounded-full border border-white/20 transition-all text-white hover:scale-110 shadow-lg cursor-pointer z-10 opacity-0 group-hover:opacity-100"
+                  className="absolute top-2.5 right-2.5 bg-black/80 hover:bg-red-600 p-2 rounded-full border border-white/20 transition-all text-white hover:scale-110 shadow-lg cursor-pointer z-10 opacity-0 group-hover:opacity-100"
                   title="Remove Photo"
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
           ))}
         </div>
-      ) : (
+      ) : isOwnProfile ? (
         <div
           onClick={() => {
-            if (!isOwnProfile) return;
             const input = document.getElementById('portfolio-upload');
             if (input) {
               input.click();
@@ -219,7 +218,7 @@ export default function ProfileMedia({
               onNavigate('/settings/profile');
             }
           }}
-          className="border border-dashed border-[#172033] bg-[#0D121D] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#0088CC]/50 transition-colors group"
+          className="border border-dashed border-white/10 bg-black rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-white/20 transition-colors group"
         >
           <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#0088CC] mb-1" />
           <span className="text-xs font-semibold text-gray-400 group-hover:text-white">
@@ -227,6 +226,8 @@ export default function ProfileMedia({
           </span>
           <p className="text-[10px] text-gray-500 mt-0.5">Add your photos and videos...</p>
         </div>
+      ) : (
+        <p className="text-xs text-gray-500 italic pt-1">No media uploaded yet.</p>
       )}
 
       {/* Intro Video Fullscreen Player Modal */}

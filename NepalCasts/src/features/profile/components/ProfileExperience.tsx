@@ -79,7 +79,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
       {isOwnProfile && showAddForm && (
         <form
           onSubmit={handleAddExperience}
-          className="bg-[#111622] border border-[#1E2638] rounded-xl p-4 space-y-3 animate-fade-in"
+          className="bg-black border border-white/5 rounded-xl p-4 space-y-3 animate-fade-in shadow-md"
         >
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">
@@ -94,14 +94,14 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               required
-              className="bg-[#0A0D14] border border-[#1E2638] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
+              className="bg-[#181818] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
             />
             <input
               type="text"
               placeholder="Production / Company (e.g. Maya Short Film)"
               value={newCompany}
               onChange={(e) => setNewCompany(e.target.value)}
-              className="bg-[#0A0D14] border border-[#1E2638] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
+              className="bg-[#181818] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
             />
           </div>
 
@@ -110,7 +110,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
             placeholder="Year / Period (e.g. 2024, 2021 - 2023)"
             value={newYear}
             onChange={(e) => setNewYear(e.target.value)}
-            className="w-full bg-[#0A0D14] border border-[#1E2638] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
+            className="w-full bg-[#181818] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
           />
 
           <textarea
@@ -118,7 +118,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
             rows={2}
-            className="w-full bg-[#0A0D14] border border-[#1E2638] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] resize-none transition-colors"
+            className="w-full bg-[#181818] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] resize-none transition-colors"
           />
 
           <div className="flex justify-end gap-2 pt-1">
@@ -149,11 +149,11 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
 
       {/* Stacked Experience Card List */}
       {experiencesList.length > 0 ? (
-        <div className="bg-[#111622] border border-[#1E2638] rounded-xl overflow-hidden divide-y divide-[#1E2638]">
+        <div className="bg-black border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5 shadow-md">
           {experiencesList.map((exp: any, index: number) => (
             <div
               key={index}
-              className="p-3.5 flex items-center justify-between gap-3 text-xs sm:text-sm hover:bg-[#161D2B] transition-colors group"
+              className="p-3.5 flex items-center justify-between gap-3 text-xs sm:text-sm hover:bg-[#1a1a1a] transition-colors group"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 truncate">
@@ -194,16 +194,20 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
           ))}
         </div>
       ) : !showAddForm ? (
-        <div
-          onClick={() => isOwnProfile && (onNavigate ? onNavigate('/settings/experience') : setShowAddForm(true))}
-          className="border border-dashed border-[#172033] bg-[#0D121D] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#0088CC]/50 transition-colors group"
-        >
-          <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#0088CC] mb-1" />
-          <span className="text-xs font-semibold text-gray-400 group-hover:text-white">
-            Add Experience
-          </span>
-          <p className="text-[10px] text-gray-500 mt-0.5">Share your work experience...</p>
-        </div>
+        isOwnProfile ? (
+          <div
+            onClick={() => (onNavigate ? onNavigate('/settings/experience') : setShowAddForm(true))}
+            className="border border-dashed border-white/10 bg-black rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-white/20 transition-colors group"
+          >
+            <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#0088CC] mb-1" />
+            <span className="text-xs font-semibold text-gray-400 group-hover:text-white">
+              Add Experience
+            </span>
+            <p className="text-[10px] text-gray-500 mt-0.5">Share your work experience...</p>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-500 italic pt-1">No experience listed yet.</p>
+        )
       ) : null}
     </div>
   );
