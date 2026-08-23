@@ -744,8 +744,8 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       />
 
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header Hero Banner */}
-        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#0E0E12] shadow-2xl">
+        {/* Header Hero Banner with subtle rounded-xl curved edges */}
+        <div className="relative rounded-xl overflow-hidden border border-white/10 bg-[#0E0E12] shadow-2xl">
           {/* Floating Consistent Back Button */}
           <button
             onClick={() => onNavigate('casting')}
@@ -989,7 +989,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   <p className="text-gray-500 text-xs font-medium">Loading applicants...</p>
                 </div>
               ) : filteredApps.length === 0 ? (
-                <div className="text-center py-12 border border-dashed border-white/5 rounded-2xl">
+                <div className="text-center py-12 border border-dashed border-white/5 rounded-xl">
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">
                     No applications in this status stage
                   </p>
