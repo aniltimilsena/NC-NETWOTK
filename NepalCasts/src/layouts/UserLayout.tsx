@@ -92,7 +92,9 @@ export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToa
             default: navigate('/' + page);
         }
     };
-    const showNavbar = !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications') && !location.pathname.startsWith('/call');
+    const showNavbar =
+        !location.pathname.startsWith('/call') &&
+        !location.pathname.startsWith('/messages');
     if (maintenanceMode && !isAdmin && !location.pathname.startsWith('/admin')) {
         return (<div className="min-h-screen bg-[#070707] text-white flex flex-col items-center justify-center p-6 text-center">
             <div className="max-w-md w-full space-y-6">

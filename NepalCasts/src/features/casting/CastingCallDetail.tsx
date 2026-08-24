@@ -1,13 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Clock, MapPin, Video, Printer, Sparkles, X, Trash2, FileText, Users, Inbox } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  ChevronLeft,
+  Bookmark,
+  User,
+  MapPin,
+  Briefcase,
+  Globe,
+  ShoppingBag,
+  Calendar,
+  Clapperboard,
+  Sparkles,
+  X,
+  Trash2,
+  Printer,
+  Video,
+  CheckCircle2,
+  Inbox,
+  Clock,
+  Upload
+} from 'lucide-react';
 import Button from '../../components/ui/Button';
 import SEO from '../../components/SEO';
 import { InlineAlert } from '../../components/ui/AlertBanner';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { db } from '../../lib/firebase';
-import { doc, onSnapshot, collection, addDoc, serverTimestamp, deleteDoc, updateDoc, query, where, getDocs, limit } from 'firebase/firestore';
+import {
+  doc,
+  onSnapshot,
+  collection,
+  addDoc,
+  serverTimestamp,
+  deleteDoc,
+  updateDoc,
+  query,
+  where,
+  getDocs,
+  limit
+} from 'firebase/firestore';
 import Avatar from '../../components/ui/Avatar';
 import { getProfile } from '../profile/services/profile';
+import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 
 const isMockOrInvalidImage = (url: string | null | undefined) => {
   if (!url || typeof url !== 'string') return true;
@@ -28,18 +60,44 @@ const isMockOrInvalidImage = (url: string | null | undefined) => {
 
 const getCastingThumbnail = (call: any) => {
   if (!call) return null;
-  const raw = call.thumbnail || call.image || call.coverImage || call.posterUrl || call.poster || call.bannerUrl || call.media?.[0]?.url || call.photoURL || null;
+  const raw =
+    call.thumbnail ||
+    call.image ||
+    call.coverImage ||
+    call.posterUrl ||
+    call.poster ||
+    call.bannerUrl ||
+    call.media?.[0]?.url ||
+    call.photoURL ||
+    null;
   return raw && !isMockOrInvalidImage(raw) ? raw : null;
 };
 
-export default function CastingCallDetail({ onNavigate, castingId, user, showAlert }: any) {
+const formatDeadline = (dl?: string) => {
+  if (!dl) return 'Open';
+  const d = new Date(dl);
+  if (isNaN(d.getTime())) return dl;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const formatShortDeadline = (dl?: string) => {
+  if (!dl) return 'Open';
+  const d = new Date(dl);
+  if (isNaN(d.getTime())) return dl;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+export default function CastingCallDetail({ onNavigate, castingId, user, showAlert, activeTab }: any) {
   const [call, setCall] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
-  const [applyAlert, setApplyAlert] = useState<{ type: string | null; message: string | null; detail?: string | null }>({ type: null, message: null, detail: null });
+  const [applyAlert, setApplyAlert] = useState<{ type: string | null; message: string | null; detail?: string | null }>({
+    type: null,
+    message: null,
+    detail: null,
+  });
   const [saved, setSaved] = useState(false);
-  const [saveAlert, setSaveAlert] = useState<{ type: string | null; message: string | null }>({ type: null, message: null });
   const [apps, setApps] = useState<any[]>([]);
   const [loadingApps, setLoadingApps] = useState(true);
   const [deleting, setDeleting] = useState(false);
@@ -47,15 +105,14 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   const [cancelling, setCancelling] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
   const [directorProfile, setDirectorProfile] = useState<any>(null);
-  const [relatedCalls, setRelatedCalls] = useState<any[]>([]);
 
-  // Apply Modal state
-  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isApplyView, setIsApplyView] = useState(activeTab === 'apply');
   const [selectedRole, setSelectedRole] = useState('');
   const [selfTapeUrl, setSelfTapeUrl] = useState('');
   const [coverNote, setCoverNote] = useState('');
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Roster Filter state for directors
   const [pipelineFilter, setPipelineFilter] = useState('all');
 
   const [confirmConfig, setConfirmConfig] = useState<any>({
@@ -69,32 +126,14 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   });
 
   const isCreator = user && call && (call.creatorId === user.uid || call.createdBy === user.uid);
-  const [timeLeft, setTimeLeft] = useState('');
   const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
     if (!call?.deadline) return;
     const deadlineDate = new Date(call.deadline);
-    if (isNaN(deadlineDate.getTime())) {
-      setTimeLeft(call.deadline);
-      return;
+    if (!isNaN(deadlineDate.getTime())) {
+      setIsExpired(deadlineDate.getTime() <= new Date().getTime());
     }
-    const updateTimer = () => {
-      const diff = deadlineDate.getTime() - new Date().getTime();
-      if (diff <= 0) {
-        setTimeLeft('Closed');
-        setIsExpired(true);
-        return;
-      }
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      const seconds = Math.floor((diff / 1000) % 60);
-      setTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
-    };
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
   }, [call?.deadline]);
 
   useEffect(() => {
@@ -121,28 +160,34 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   useEffect(() => {
     if (!call?.creatorId) return;
-    getProfile(call.creatorId).then((res) => {
-      if (res.data) {
-        setDirectorProfile(res.data);
-      }
-    }).catch((err) => console.warn(err));
+    getProfile(call.creatorId)
+      .then((res) => {
+        if (res.data) {
+          setDirectorProfile(res.data);
+        }
+      })
+      .catch((err) => console.warn(err));
   }, [call?.creatorId]);
 
   useEffect(() => {
-    if (!call?.type) return;
+    if (!castingId || !user?.uid) {
+      setSaved(false);
+      return;
+    }
     const q = query(
-      collection(db, 'casting_calls'),
-      where('type', '==', call.type),
-      limit(10)
+      collection(db, 'saved_calls'),
+      where('userId', '==', user.uid),
+      where('castingId', '==', castingId)
     );
-    getDocs(q).then((snap) => {
-      const data = snap.docs
-        .map((d) => ({ id: d.id, ...d.data() }))
-        .filter((c: any) => c.id !== call.id)
-        .slice(0, 3);
-      setRelatedCalls(data);
-    }).catch((err) => console.warn(err));
-  }, [call?.id, call?.type]);
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setSaved(!snap.empty);
+      },
+      (err) => console.warn('Saved check failed:', err)
+    );
+    return () => unsub();
+  }, [castingId, user?.uid]);
 
   useEffect(() => {
     if (!castingId || !user) return;
@@ -151,7 +196,8 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       where('castingId', '==', castingId),
       where('userId', '==', user.uid)
     );
-    const unsub = onSnapshot(q,
+    const unsub = onSnapshot(
+      q,
       (snap) => {
         if (!snap.empty) {
           setApplied(true);
@@ -164,7 +210,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         }
       },
       (error) => {
-        console.error("Checking applied status failed:", error);
+        console.error('Checking applied status failed:', error);
       }
     );
     return () => unsub();
@@ -182,7 +228,8 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       where('castingId', '==', castingId),
       where('creatorId', '==', user.uid)
     );
-    const unsub = onSnapshot(q,
+    const unsub = onSnapshot(
+      q,
       (snap) => {
         const docs = snap.docs.map((d) => ({
           id: d.id,
@@ -203,12 +250,42 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         setLoadingApps(false);
       },
       (error) => {
-        console.error("Applications snapshot listener failed:", error);
+        console.error('Applications snapshot listener failed:', error);
         setLoadingApps(false);
       }
     );
     return () => unsub();
   }, [castingId, isCreator, user?.uid]);
+
+  const handleToggleSave = async () => {
+    if (!user) {
+      onNavigate('signin');
+      return;
+    }
+    try {
+      const q = query(
+        collection(db, 'saved_calls'),
+        where('userId', '==', user.uid),
+        where('castingId', '==', castingId)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        for (const d of snap.docs) {
+          await deleteDoc(d.ref);
+        }
+        showAlert?.('Removed from saved casting calls', 'info');
+      } else {
+        await addDoc(collection(db, 'saved_calls'), {
+          userId: user.uid,
+          castingId: castingId,
+          savedAt: new Date().toISOString(),
+        });
+        showAlert?.('Saved casting call!', 'success');
+      }
+    } catch (err) {
+      console.error('Error toggling save:', err);
+    }
+  };
 
   const openApplyModal = () => {
     if (!user) {
@@ -216,7 +293,10 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       return;
     }
     if (applied || applying) return;
-    setIsApplyModalOpen(true);
+    if (call?.roles && call.roles.length > 0 && !selectedRole) {
+      setSelectedRole(call.roles[0]?.name || '');
+    }
+    setIsApplyView(true);
   };
 
   const handleConfirmSubmitApplication = async (e: React.FormEvent) => {
@@ -233,39 +313,20 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         userEmail: user.email,
         userName: user.displayName || 'Anonymous Actor',
         userPhoto: user.photoURL || '',
-        roleName: selectedRole || 'General Role',
+        roleName: selectedRole || call.roles?.[0]?.name || call.category || 'General Role',
         selfTapeUrl: selfTapeUrl.trim(),
         coverNote: coverNote.trim(),
+        fileName: attachedFile ? attachedFile.name : null,
         appliedAt: serverTimestamp(),
         status: 'pending',
         creatorId: creatorId,
       });
-
-      if (creatorId) {
-        await addDoc(collection(db, 'notifications'), {
-          userId: creatorId,
-          recipientId: creatorId,
-          receiverId: creatorId,
-          senderId: user.uid,
-          senderName: user.displayName || 'Anonymous Talent',
-          senderAvatar: user.photoURL || '',
-          title: 'New Audition Application',
-          body: `${user.displayName || 'Someone'} applied for "${selectedRole || 'Role'}" on "${call.title}"`,
-          type: 'casting',
-          notificationType: 'casting',
-          isRead: false,
-          read: false,
-          createdAt: serverTimestamp(),
-          targetUrl: `/casting/${call.id}`,
-        });
-      }
-
       setApplied(true);
-      setIsApplyModalOpen(false);
+      setIsApplyView(false);
       setApplyAlert({
         type: 'success',
         message: `Audition submitted for "${selectedRole || call.title}"`,
-        detail: 'The casting team has received your self-tape and profile.',
+        detail: 'The casting team has received your profile.',
       });
       showAlert?.(`Applied to "${call.title}"`, 'success');
     } catch (err) {
@@ -319,14 +380,6 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     });
   };
 
-  const handleSave = () => {
-    setSaved(!saved);
-    setSaveAlert({
-      type: 'success',
-      message: saved ? 'Removed from saved' : 'Saved for later!',
-    });
-  };
-
   const handleUpdateAppStatus = async (appId: string, newStatus: string) => {
     try {
       await updateDoc(doc(db, 'applications', appId), {
@@ -343,390 +396,267 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     if (!call) return;
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-
     const logoUrl = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : '/logo.png';
     const dateStr = new Date().toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     });
 
-    const rolesList = (call.roles || []).map((r: any) => `
-      <tr>
-        <td style="padding: 8px 12px; font-weight: bold; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${r.name || 'General'}</td>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">${r.ageRange || 'Any'}</td>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #0284c7; font-weight: bold;">${r.pay || 'Paid'}</td>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #475569;">${r.description || '-'}</td>
-      </tr>
-    `).join('');
-
-    const appsList = (apps || []).map((app: any, idx: number) => `
-      <tr style="page-break-inside: avoid;">
-        <td style="padding: 10px 12px; text-align: center; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">${idx + 1}</td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">
-          <div style="font-weight: 800; font-size: 13px; color: #0f172a;">${app.userName || 'Applicant'}</div>
-          <div style="font-size: 11px; color: #64748b;">${app.userEmail || ''}</div>
-        </td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0284c7;">
-          ${app.roleName || 'General Role'}
-        </td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
-          <span style="display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
-            ${app.status === 'accepted' || app.status === 'cast' ? 'background: #dcfce7; color: #166534; border: 1px solid #86efac;' :
-              app.status === 'shortlisted' ? 'background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc;' :
-              app.status === 'rejected' ? 'background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;' :
-              'background: #fef3c7; color: #92400e; border: 1px solid #fde68a;'
-            }">
-            ${app.status || 'pending'}
-          </span>
-        </td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #334155;">
-          ${app.selfTapeUrl ? `<a href="${app.selfTapeUrl}" target="_blank" style="color: #0284c7; text-decoration: underline; font-weight: 600;">Watch Self-Tape</a>` : '-'}
-          ${app.coverNote ? `<div style="font-style: italic; margin-top: 4px; color: #64748b; font-size: 10.5px;">"${app.coverNote}"</div>` : ''}
-        </td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #64748b; text-align: right;">
-          ${app.appliedAtFormatted || '-'}
-        </td>
-      </tr>
-    `).join('');
+    const appsList = apps
+      .map(
+        (a: any, i: number) => `
+        <tr>
+          <td style="text-align: center; font-weight: bold; color: #64748b;">${i + 1}</td>
+          <td><strong>${a.userName || 'Unnamed'}</strong><br/><span style="color:#64748b; font-size: 10px;">${a.userEmail || ''}</span></td>
+          <td><span style="font-weight: 700; color: #0284c7;">${a.roleName || 'General Role'}</span></td>
+          <td style="text-align: center;"><span style="display: inline-block; padding: 2px 6px; border-radius: 4px; font-weight: 800; font-size: 9px; text-transform: uppercase; background: #e2e8f0;">${a.status || 'pending'}</span></td>
+          <td>${a.coverNote ? `<div><em>"${a.coverNote}"</em></div>` : ''}${a.selfTapeUrl ? `<div><a href="${a.selfTapeUrl}">Video Reel Link</a></div>` : ''}</td>
+          <td style="text-align: right; color: #64748b; font-size: 10px;">${a.appliedAtFormatted || 'N/A'}</td>
+        </tr>
+      `
+      )
+      .join('');
 
     const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>${call.title} - Official Casting Roster | NepalCasts</title>
+          <title>${call.title} - Candidate Roster</title>
           <style>
-            @page {
-              size: A4;
-              margin: 12mm 15mm;
-            }
-            * {
-              box-sizing: border-box;
-            }
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-              color: #0f172a;
-              background: #ffffff;
-              margin: 0;
-              padding: 0;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            .header-container {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              border-bottom: 2.5px solid #00bfff;
-              padding-bottom: 14px;
-              margin-bottom: 18px;
-            }
-            .logo-brand {
-              display: flex;
-              align-items: center;
-              gap: 14px;
-            }
-            .logo-img {
-              height: 44px;
-              max-width: 160px;
-              object-fit: contain;
-            }
-            .brand-title {
-              font-size: 10px;
-              font-weight: 900;
-              letter-spacing: 2px;
-              color: #00bfff;
-              text-transform: uppercase;
-              margin-bottom: 2px;
-            }
-            .doc-title {
-              font-size: 22px;
-              font-weight: 900;
-              color: #0f172a;
-              margin: 0;
-              letter-spacing: -0.5px;
-            }
-            .header-meta {
-              text-align: right;
-              font-size: 10.5px;
-              color: #475569;
-              line-height: 1.5;
-            }
-            .meta-grid {
-              display: grid;
-              grid-template-columns: repeat(4, 1fr);
-              gap: 12px;
-              background: #f8fafc;
-              border: 1px solid #e2e8f0;
-              border-radius: 8px;
-              padding: 12px 16px;
-              margin-bottom: 20px;
-            }
-            .meta-item {
-              display: flex;
-              flex-direction: column;
-            }
-            .meta-label {
-              font-size: 9px;
-              font-weight: 800;
-              color: #64748b;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-              margin-bottom: 3px;
-            }
-            .meta-value {
-              font-size: 12px;
-              font-weight: 800;
-              color: #0f172a;
-            }
-            .section-heading {
-              font-size: 11px;
-              font-weight: 900;
-              text-transform: uppercase;
-              letter-spacing: 1.5px;
-              color: #0f172a;
-              margin: 20px 0 10px 0;
-              border-bottom: 1.5px solid #0f172a;
-              padding-bottom: 5px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 20px;
-              font-size: 11px;
-            }
-            th {
-              background: #0f172a;
-              color: #ffffff;
-              font-size: 9px;
-              font-weight: 800;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-              padding: 8px 12px;
-              text-align: left;
-            }
-            tr:nth-child(even) {
-              background: #f8fafc;
-            }
-            .footer {
-              margin-top: 30px;
-              padding-top: 10px;
-              border-top: 1px solid #e2e8f0;
-              display: flex;
-              justify-content: space-between;
-              font-size: 9px;
-              color: #94a3b8;
-            }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; color: #0f172a; font-size: 11px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            th { background: #0f172a; color: #fff; padding: 8px 10px; text-align: left; font-size: 10px; }
+            td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
           </style>
         </head>
         <body>
-          <div class="header-container">
-            <div class="logo-brand">
-              <img src="${logoUrl}" alt="NepalCasts Logo" class="logo-img" onError="this.style.display='none'" />
-              <div>
-                <div class="brand-title">NEPALCASTS • OFFICIAL AUDITION ROSTER</div>
-                <h1 class="doc-title">${call.title}</h1>
-              </div>
-            </div>
-            <div class="header-meta">
-              <div><strong>Date Generated:</strong> ${dateStr}</div>
-              <div><strong>Total Applicants:</strong> ${apps.length}</div>
-            </div>
-          </div>
-
-          <div class="meta-grid">
-            <div class="meta-item">
-              <span class="meta-label">Category</span>
-              <span class="meta-value">${call.category || call.type || 'Film/TV'}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Location</span>
-              <span class="meta-value">${call.location || 'Nepal'}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Deadline</span>
-              <span class="meta-value">${call.deadline || 'N/A'}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Salary / Budget</span>
-              <span class="meta-value" style="color: #0284c7;">${call.budget || 'Negotiable'}</span>
-            </div>
-          </div>
-
-          ${rolesList ? `
-            <div class="section-heading">Roles Open for Audition</div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Role Name</th>
-                  <th>Age Range</th>
-                  <th>Pay Rate</th>
-                  <th>Role Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rolesList}
-              </tbody>
-            </table>
-          ` : ''}
-
-          <div class="section-heading">Candidate Roster (${apps.length})</div>
-          ${apps.length > 0 ? `
-            <table>
-              <thead>
-                <tr>
-                  <th style="width: 30px; text-align: center;">#</th>
-                  <th>Applicant Name & Email</th>
-                  <th>Applied Role</th>
-                  <th style="text-align: center;">Status</th>
-                  <th>Audition Material / Notes</th>
-                  <th style="text-align: right;">Applied Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${appsList}
-              </tbody>
-            </table>
-          ` : `
-            <div style="padding: 20px; text-align: center; border: 1px dashed #cbd5e1; border-radius: 8px; color: #64748b; font-size: 11px;">
-              No applications recorded for this casting call yet.
-            </div>
-          `}
-
-          <div class="footer">
-            <span>Confidential • Official Casting Roster Document generated via NepalCasts Platform</span>
-            <span>NepalCasts Network</span>
-          </div>
-
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-              }, 400);
-            };
-          </script>
+          <h2>${call.title} - Candidate Roster (${apps.length})</h2>
+          <p>Generated on ${dateStr}</p>
+          <table>
+            <thead>
+              <tr><th>#</th><th>Applicant</th><th>Role</th><th>Status</th><th>Notes</th><th>Date</th></tr>
+            </thead>
+            <tbody>${appsList}</tbody>
+          </table>
+          <script>window.onload = function() { setTimeout(function() { window.print(); }, 400); };</script>
         </body>
       </html>
     `;
-
     printWindow.document.write(htmlContent);
     printWindow.document.close();
   };
 
-  const getStatusBadgeClass = (statusStr: string) => {
-    const s = (statusStr || 'pending').toLowerCase();
-    if (s === 'accepted' || s === 'cast') return 'bg-[#00BFFF]/20 text-[#00BFFF] border-[#00BFFF]/30';
-    if (s === 'shortlisted') return 'bg-sky-500/20 text-sky-400 border-sky-500/30';
-    if (s === 'callback') return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-    if (s === 'rejected') return 'bg-red-500/20 text-red-400 border-red-500/30';
-    return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-  };
-
-  const filteredApps = apps.filter((app) => {
-    const s = (app.status || 'pending').toLowerCase();
-    if (pipelineFilter === 'pending') return s === 'pending';
-    if (pipelineFilter === 'shortlisted') return s === 'shortlisted';
-    if (pipelineFilter === 'callback') return s === 'callback';
-    if (pipelineFilter === 'accepted') return s === 'accepted' || s === 'cast';
-    if (pipelineFilter === 'rejected') return s === 'rejected';
-    return true;
-  });
+  const bannerImage = getCastingThumbnail(call);
+  const primaryRole = call?.roles?.[0]?.name || call?.category || call?.role || 'WRITER';
+  const shortDeadline = formatShortDeadline(call?.deadline);
+  const fullDeadline = formatDeadline(call?.deadline);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#141414] text-white pt-12 pb-20 px-4 sm:px-8 font-sans">
-        <div className="max-w-6xl mx-auto space-y-8 animate-pulse text-left">
-          <div className="h-4 skeleton rounded-md w-28" />
-          <div className="rounded-xl border border-white/5 bg-black overflow-hidden space-y-4 shadow-xl">
-            <div className="h-64 sm:h-80 w-full skeleton" />
-            <div className="p-6 sm:p-10 space-y-4">
-              <div className="flex gap-2">
-                <div className="h-6 skeleton rounded-full w-20" />
-                <div className="h-6 skeleton rounded-full w-32" />
-              </div>
-              <div className="h-10 skeleton rounded-xl w-3/4" />
-              <div className="flex gap-4">
-                <div className="h-4 skeleton rounded w-24" />
-                <div className="h-4 skeleton rounded w-32" />
-                <div className="h-4 skeleton rounded w-20" />
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
-              <div className="bg-black border border-white/5 rounded-xl p-6 sm:p-8 space-y-4">
-                <div className="h-6 skeleton rounded-md w-40 mb-3" />
-                <div className="space-y-2">
-                  <div className="h-4 skeleton rounded w-full" />
-                  <div className="h-4 skeleton rounded w-11/12" />
-                  <div className="h-4 skeleton rounded w-4/5" />
-                </div>
-              </div>
-            </div>
-            <div className="space-y-8">
-              <div className="bg-black border border-white/5 rounded-xl p-6 space-y-4">
-                <div className="h-6 skeleton rounded-md w-28 mb-3" />
-                <div className="h-12 skeleton rounded-xl w-full" />
-              </div>
-            </div>
-          </div>
+      <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting">
+        <div className="min-h-screen bg-[#141414] text-white p-4 sm:p-6 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-2 border-[#00BFFF]/30 border-t-[#00BFFF] animate-spin" />
         </div>
-      </div>
+      </Desktop3ColumnLayout>
     );
   }
 
   if (!call) {
     return (
-      <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center p-4 text-center">
-        <h2 className="text-xl font-bold text-white mb-2">Casting Call Not Found</h2>
-        <p className="text-gray-400 text-xs mb-6">This casting call may have been removed or closed.</p>
-        <button
-          onClick={() => onNavigate('casting')}
-          className="px-6 py-2.5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
-        >
-          Back to Casting Calls
-        </button>
-      </div>
+      <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting">
+        <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center p-4 text-center">
+          <h2 className="text-xl font-bold text-white mb-2">Casting Call Not Found</h2>
+          <p className="text-gray-400 text-xs mb-6">This casting call may have been removed or closed.</p>
+          <button
+            onClick={() => onNavigate('casting')}
+            className="px-6 py-2.5 rounded-xl bg-[#00BFFF] text-black font-bold text-xs uppercase tracking-wider cursor-pointer"
+          >
+            Back to Casting Calls
+          </button>
+        </div>
+      </Desktop3ColumnLayout>
+    );
+  }
+
+  if (isApplyView) {
+    return (
+      <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting">
+        <div className="min-h-screen bg-[#141414] text-white pb-24 font-sans select-none">
+          <SEO
+            title={`Apply - ${call.title} | NepalCasts`}
+            description={`Submit your audition application for ${call.title}`}
+          />
+
+          <div className="w-full max-w-xl mx-auto px-4 sm:px-6 py-4 space-y-6 text-left">
+            {/* Top Header: ← Apply for Casting */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsApplyView(false)}
+                className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
+                title="Back"
+                aria-label="Back"
+              >
+                <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+              </button>
+              <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">
+                Apply for Casting
+              </h1>
+            </div>
+
+            {/* Casting Call Preview Card (Header Card from screenshot) */}
+            <div className="bg-[#18181c] border border-white/5 rounded-2xl p-3.5 sm:p-4 flex items-center gap-3.5 shadow-lg">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-black/60 shrink-0 border border-white/5">
+                {bannerImage ? (
+                  <img src={bannerImage} alt={call.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-[#1a1f2e] to-[#0d0d12]">
+                    <Clapperboard className="w-6 h-6 text-white/50" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1 min-w-0 flex-1">
+                <span className="uppercase text-xs font-extrabold text-white tracking-wider block">
+                  {selectedRole || primaryRole}
+                </span>
+                <h2 className="text-base sm:text-lg font-bold text-[#00BFFF] lowercase truncate">
+                  {call.title}
+                </h2>
+                <p className="text-xs text-amber-400 font-medium">
+                  Deadline: {fullDeadline}
+                </p>
+              </div>
+            </div>
+
+            {/* Application Form */}
+            <form onSubmit={handleConfirmSubmitApplication} className="space-y-5">
+              <div className="space-y-1">
+                <h3 className="text-base sm:text-lg font-bold text-white">Your Application</h3>
+              </div>
+
+              {/* Role Selection if multiple roles exist */}
+              {call.roles && call.roles.length > 1 && (
+                <div className="space-y-1.5">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-300">
+                    Select Role *
+                  </label>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    required
+                    className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white outline-none focus:border-[#00BFFF]"
+                  >
+                    {call.roles.map((r: any, idx: number) => (
+                      <option key={idx} value={r.name} className="bg-[#18181c] text-white">
+                        {r.name} {r.ageRange ? `(${r.ageRange})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Cover Letter */}
+              <div className="space-y-1.5">
+                <label className="text-xs sm:text-sm font-semibold text-gray-300">
+                  Cover Letter
+                </label>
+                <div className="relative">
+                  <textarea
+                    rows={5}
+                    maxLength={500}
+                    placeholder="Tell us why you are the right fit for this role..."
+                    value={coverNote}
+                    onChange={(e) => setCoverNote(e.target.value)}
+                    className="w-full bg-[#16161b] border border-white/10 rounded-xl p-3.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#00BFFF] resize-none pb-7 leading-relaxed"
+                  />
+                  <span className="absolute bottom-2.5 right-3 text-[11px] text-gray-500 font-medium select-none">
+                    {coverNote.length}/500
+                  </span>
+                </div>
+              </div>
+
+              {/* Portfolio / Work Samples */}
+              <div className="space-y-1.5">
+                <label className="text-xs sm:text-sm font-semibold text-gray-300">
+                  Portfolio / Work Samples
+                </label>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border border-dashed border-white/15 hover:border-white/30 rounded-xl bg-[#16161b]/50 p-6 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all hover:bg-[#16161b]/80 group"
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setAttachedFile(e.target.files[0]);
+                      }
+                    }}
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.zip,.png,.jpg,.jpeg"
+                  />
+                  <Upload className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                  <div>
+                    {attachedFile ? (
+                      <p className="text-xs font-bold text-cyan-400 truncate max-w-xs">
+                        ✓ {attachedFile.name}
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-200">
+                          Upload files (PDF, DOC, ZIP)
+                        </p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          or drag and drop
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Links (Optional) */}
+              <div className="space-y-1.5">
+                <label className="text-xs sm:text-sm font-semibold text-gray-300">
+                  Additional Links (Optional)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://yourportfolio.com"
+                  value={selfTapeUrl}
+                  onChange={(e) => setSelfTapeUrl(e.target.value)}
+                  className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#00BFFF]"
+                />
+              </div>
+
+              {/* Submit Application Button */}
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  loading={applying}
+                  disabled={applying}
+                  className="w-full bg-[#2563EB] hover:bg-[#1d4ed8] text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 cursor-pointer transition-all active:scale-[0.98]"
+                >
+                  <Inbox className="w-4 h-4" />
+                  <span>Submit Application</span>
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </Desktop3ColumnLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white pb-20 font-sans">
+    <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting">
+      <div className="min-h-screen bg-[#141414] text-white pb-24 font-sans select-none">
       <SEO
         title={`${call.title} | NepalCasts Casting Call`}
         description={call.description}
-        image={call.thumbnailUrl || call.mediaUrl || undefined}
+        image={bannerImage || undefined}
         url={`${typeof window !== 'undefined' ? window.location.origin : 'https://nepalcasts.com'}/casting/${castingId}`}
-        schema={{
-          '@context': 'https://schema.org',
-          '@type': 'JobPosting',
-          title: call.title,
-          description: call.description,
-          datePosted: call.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          validThrough: call.deadline ? new Date(call.deadline).toISOString() : undefined,
-          hiringOrganization: {
-            '@type': 'Organization',
-            name: directorProfile?.name || call.directorName || 'NepalCasts',
-            sameAs: 'https://nepalcasts.com',
-          },
-          jobLocation: {
-            '@type': 'Place',
-            address: {
-              '@type': 'PostalAddress',
-              addressLocality: call.location || 'Nepal',
-              addressCountry: 'NP',
-            },
-          },
-          baseSalary: {
-            '@type': 'MonetaryAmount',
-            currency: 'NPR',
-            value: call.budget || 'Negotiable',
-          },
-          employmentType: 'CONTRACTOR',
-          industry: 'Entertainment',
-          url: `${typeof window !== 'undefined' ? window.location.origin : 'https://nepalcasts.com'}/casting/${castingId}`,
-        }}
       />
 
       <ConfirmDialog
@@ -740,462 +670,337 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
       />
 
-      {/* Full-Width Edge-to-Edge Hero Banner with small curved bottom edges */}
-      <div className="relative w-full rounded-none rounded-b-xl sm:rounded-b-2xl overflow-hidden border-b border-white/5 bg-black shadow-xl">
-        {/* Floating Consistent Back Button */}
-        <button
-          onClick={() => onNavigate('casting')}
-          className="absolute top-4 left-4 sm:left-8 lg:left-12 z-20 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white hover:bg-black/80 transition-all cursor-pointer shadow-lg flex items-center justify-center active:scale-95"
-          aria-label="Back"
-          title="Back to Casting Calls"
-        >
-          <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
-        </button>
-
-        {(() => {
-          const bannerImage = getCastingThumbnail(call);
-          return (
-            <div className="h-72 sm:h-96 w-full relative bg-black overflow-hidden flex items-center justify-center">
-              {bannerImage ? (
-                <img
-                  src={bannerImage}
-                  alt={call.title || 'Casting Call'}
-                  className="w-full h-full object-cover"
-                  onError={(e: any) => {
-                    e.currentTarget.style.display = 'none';
-                    const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-banner');
-                    if (fallback) (fallback as HTMLElement).style.display = 'flex';
-                  }}
-                />
-              ) : null}
-              <div
-                className="default-clapper-banner w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c2333] via-[#141b2a] to-black p-4 text-center"
-                style={{ display: bannerImage ? 'none' : 'flex' }}
-              >
-                <svg className="w-16 h-16 sm:w-24 sm:h-24 text-indigo-300/60 fill-current drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] -mt-10 sm:-mt-14" viewBox="0 0 24 24">
-                  <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
-                </svg>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 via-50% to-transparent pointer-events-none" />
-            </div>
-          );
-        })()}
-
-        <div className="max-w-6xl mx-auto p-6 sm:p-10 -mt-32 sm:-mt-36 relative z-10 space-y-4 text-left">
-          <div>
-            <span className="px-3.5 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-wider backdrop-blur-md">
-              {call.category || call.type || 'Nepali Film'}
-            </span>
+      <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-3 space-y-3">
+        {/* Top Header */}
+        <div className="flex items-center justify-between py-1">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => onNavigate('casting')}
+              className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
+              title="Back"
+              aria-label="Back"
+            >
+              <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+            </button>
+            <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">
+              Casting Call
+            </h1>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-lg">
-            {call.title}
-          </h1>
-
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-            <div className="flex flex-wrap items-center gap-6 text-xs text-gray-300 font-semibold">
-              <span className="flex items-center gap-2">
-                <MapPin size={14} className="text-[#00BFFF]" />
-                {call.location}
-              </span>
-              <span className="flex items-center gap-2">
-                <Clock size={14} className="text-[#00BFFF]" />
-                Deadline: {call.deadline} {timeLeft ? `(${timeLeft})` : ''}
-              </span>
-              <span className="flex items-center gap-2 text-[#00BFFF] font-bold text-sm sm:text-base">
-                Salary: {call.budget}
-              </span>
-            </div>
-
-            {/* Action Buttons beside Salary */}
-            <div className="flex flex-wrap items-center gap-2">
-              {isCreator ? (
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={handleDelete}
-                  loading={deleting}
-                  disabled={deleting}
-                  className="rounded-xl font-semibold text-xs px-4 py-2 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete Call</span>
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    className={`rounded-xl font-black uppercase tracking-wider text-xs transition-all cursor-pointer px-6 py-2 ${
-                      applicationStatus === 'accepted'
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default'
-                        : applicationStatus === 'rejected'
-                        ? 'bg-red-600/20 text-red-400 border border-red-500/30 cursor-default'
-                        : 'bg-[#00BFFF] text-black hover:bg-[#00BFFF]/90 shadow-lg shadow-[#00BFFF]/20'
-                    }`}
-                    size="sm"
-                    onClick={openApplyModal}
-                    disabled={applied || applying || isExpired}
-                  >
-                    {applying
-                      ? 'Submitting...'
-                      : applicationStatus === 'accepted'
-                      ? '✓ Application Accepted'
-                      : applicationStatus === 'rejected'
-                      ? '✕ Application Rejected'
-                      : applied
-                      ? '✓ Applied (Pending)'
-                      : isExpired
-                      ? 'Audition Closed'
-                      : 'Apply Now'}
-                  </Button>
-
-                  {applied && applicationId && applicationStatus === 'pending' && (
-                    <button
-                      onClick={handleCancelApplication}
-                      disabled={cancelling}
-                      className="px-4 py-2 rounded-xl border border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/10 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
-                    >
-                      Withdraw
-                    </button>
-                  )}
-
-                  <button
-                    onClick={handleSave}
-                    disabled={saved}
-                    className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl border border-white/10 bg-white/10 transition-colors cursor-pointer ${
-                      saved ? 'text-[#00BFFF] cursor-default' : 'text-gray-300 hover:text-white'
-                    }`}
-                  >
-                    {saved ? 'Saved' : 'Save'}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 pt-4">
-
-        {/* Clean Content Layout (No Extra Card Boxes) */}
-        <div className="space-y-8 text-left pt-2">
-          {applyAlert.type && (
-            <InlineAlert
-              type={applyAlert.type as any}
-              message={applyAlert.message || ''}
-              detail={applyAlert.detail}
-              onDismiss={() => setApplyAlert({ type: null, message: null, detail: null })}
-            />
+          {isCreator && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="text-red-400 hover:text-red-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer p-1"
+              title="Delete Casting Call"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Delete</span>
+            </button>
           )}
+        </div>
 
-          {/* Merged Overview & Roles Section */}
-          <div className="space-y-6 pt-2">
-            {/* Overview */}
-            <div className="space-y-2">
-              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <FileText className="w-4 h-4 text-white" />
-                <span>Project Overview</span>
-              </h2>
-              <p className="text-gray-200 text-xs sm:text-sm leading-relaxed whitespace-pre-line pl-6">
-                {call.description || 'No detailed description provided.'}
-              </p>
+        {applyAlert.type && (
+          <InlineAlert
+            type={applyAlert.type as any}
+            message={applyAlert.message || ''}
+            detail={applyAlert.detail}
+            onDismiss={() => setApplyAlert({ type: null, message: null, detail: null })}
+          />
+        )}
+
+        {/* Main Card Container (Solid Black matching Home page) */}
+        <div className="w-full bg-black border border-white/5 rounded-3xl overflow-hidden shadow-2xl p-4 sm:p-6 md:p-8 space-y-6 text-left">
+          {/* Hero Banner with Badge & Bookmark */}
+          <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:h-[380px] rounded-2xl overflow-hidden bg-[#111111] border border-white/5">
+            {bannerImage ? (
+              <img
+                src={bannerImage}
+                alt={call.title}
+                className="w-full h-full object-cover"
+                onError={(e: any) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-banner');
+                  if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                }}
+              />
+            ) : null}
+
+            <div
+              className="default-clapper-banner w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1a1f2e] to-[#0d0d12] p-4 text-center"
+              style={{ display: bannerImage ? 'none' : 'flex' }}
+            >
+              <Clapperboard className="w-16 h-16 text-cyan-400/50" />
             </div>
 
-            {/* Roles Open for Audition */}
-            <div className="space-y-3 pt-5 border-t border-white/5">
-              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <Users className="w-4 h-4 text-white" />
-                <span>Roles Open for Audition</span>
-              </h2>
-              <div className="space-y-3 pl-6">
-                {call.roles && call.roles.length > 0 ? (
-                  call.roles.map((role: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="py-2 border-b border-white/5 last:border-b-0 space-y-1"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
-                          <h3 className="font-bold text-white text-sm sm:text-base">{role.name}</h3>
-                          {role.ageRange && (
-                            <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 font-semibold">
-                              Age: {role.ageRange}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[#00BFFF] text-xs font-bold uppercase tracking-wider shrink-0">
-                          {role.pay || 'Paid'}
-                        </span>
-                      </div>
-                      {role.description && (
-                        <p className="text-xs text-gray-400 font-medium leading-relaxed max-w-xl whitespace-pre-line">
-                          {role.description}
-                        </p>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-xs italic">General roles available.</p>
+            {/* Gradient Overlay for bottom text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+
+            {/* Bookmark button top-right (No background box/container, clean white icon) */}
+            <button
+              onClick={handleToggleSave}
+              className="absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 p-1.5 text-white hover:text-white transition-all cursor-pointer drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] active:scale-90 z-10"
+              title={saved ? 'Remove bookmark' : 'Bookmark casting call'}
+              aria-label="Bookmark"
+            >
+              <Bookmark
+                className={`w-6 h-6 sm:w-7 sm:h-7 ${saved ? 'fill-white text-white' : 'text-white'}`}
+                strokeWidth={2.2}
+              />
+            </button>
+
+            {/* Tag on bottom of image: ROLE • Deadline */}
+            <div className="absolute bottom-3.5 left-3.5 sm:bottom-4 sm:left-4 flex items-center gap-2 text-xs sm:text-sm font-bold text-white drop-shadow-md bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-white/10">
+              <span className="uppercase tracking-wider text-white font-extrabold">{primaryRole}</span>
+              <span className="text-amber-400 font-bold">•</span>
+              <span className="text-amber-400 font-semibold">Deadline: {shortDeadline}</span>
+            </div>
+          </div>
+
+          {/* Title & Subtitle */}
+          <div className="space-y-1.5">
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#00BFFF] lowercase tracking-tight">
+              {call.title}
+            </h2>
+            <p className="text-sm sm:text-base text-gray-400 font-medium">
+              {call.category || call.type || 'Production'} • {call.location || 'Kathmandu'}
+            </p>
+          </div>
+
+          {/* About the Project */}
+          <div className="space-y-2 pt-1">
+            <h3 className="text-base sm:text-lg font-bold text-white">
+              About the Project
+            </h3>
+            <p className="text-sm sm:text-base text-gray-300 leading-relaxed whitespace-pre-line font-normal">
+              {call.description || 'We are looking for passionate talent to join this creative project.'}
+            </p>
+          </div>
+
+          {/* Structured Details Grid / Key-Value Rows (Responsive 2-column on tablet/desktop with White Icons) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 pt-2">
+            {/* Role */}
+            <div className="flex items-center justify-between text-sm sm:text-base py-2.5 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2.5 text-gray-300">
+                <User className="w-4.5 h-4.5 text-white shrink-0" strokeWidth={2} />
+                <span>Role</span>
+              </div>
+              <span className="font-semibold text-white text-right">
+                {call.roles?.[0]?.name || call.category || 'Writer'}
+              </span>
+            </div>
+
+            {/* Location */}
+            <div className="flex items-center justify-between text-sm sm:text-base py-2.5 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2.5 text-gray-300">
+                <MapPin className="w-4.5 h-4.5 text-white shrink-0" strokeWidth={2} />
+                <span>Location</span>
+              </div>
+              <span className="font-semibold text-white text-right">
+                {call.location || 'Kathmandu'}
+              </span>
+            </div>
+
+            {/* Type */}
+            <div className="flex items-center justify-between text-sm sm:text-base py-2.5 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2.5 text-gray-300">
+                <Briefcase className="w-4.5 h-4.5 text-white shrink-0" strokeWidth={2} />
+                <span>Type</span>
+              </div>
+              <span className="font-semibold text-white text-right">
+                {call.compensationType || call.type || 'Paid'}
+              </span>
+            </div>
+
+            {/* Language */}
+            <div className="flex items-center justify-between text-sm sm:text-base py-2.5 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2.5 text-gray-300">
+                <Globe className="w-4.5 h-4.5 text-white shrink-0" strokeWidth={2} />
+                <span>Language</span>
+              </div>
+              <span className="font-semibold text-white text-right">
+                {call.language || 'Nepali / English'}
+              </span>
+            </div>
+
+            {/* Budget */}
+            <div className="flex items-center justify-between text-sm sm:text-base py-2.5 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2.5 text-gray-300">
+                <ShoppingBag className="w-4.5 h-4.5 text-white shrink-0" strokeWidth={2} />
+                <span>Budget</span>
+              </div>
+              <span className="font-semibold text-white text-right">
+                {call.budget || 'Negotiable'}
+              </span>
+            </div>
+
+            {/* Application Deadline */}
+            <div className="flex items-center justify-between text-sm sm:text-base py-2.5 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2.5 text-gray-300">
+                <Calendar className="w-4.5 h-4.5 text-white shrink-0" strokeWidth={2} />
+                <span>Application Deadline</span>
+              </div>
+              <span className="font-semibold text-white text-right">
+                {fullDeadline}
+              </span>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            {isCreator ? (
+              <div className="space-y-2">
+                <div className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-center text-xs font-bold text-cyan-400">
+                  You created this casting call ({apps.length} applicants)
+                </div>
+              </div>
+            ) : applied ? (
+              <div className="flex items-center gap-2">
+                <div
+                  className={`flex-1 py-3.5 px-4 rounded-xl text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2 ${applicationStatus === 'accepted'
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : applicationStatus === 'rejected'
+                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        : 'bg-[#2563EB]/20 text-blue-300 border border-blue-500/30'
+                    }`}
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>
+                    {applicationStatus === 'accepted'
+                      ? 'Application Accepted'
+                      : applicationStatus === 'rejected'
+                        ? 'Application Rejected'
+                        : 'Applied (Pending Review)'}
+                  </span>
+                </div>
+                {applicationStatus === 'pending' && applicationId && (
+                  <button
+                    onClick={handleCancelApplication}
+                    disabled={cancelling}
+                    className="px-4 py-3.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-bold transition-all cursor-pointer shrink-0"
+                  >
+                    Withdraw
+                  </button>
                 )}
               </div>
-            </div>
+            ) : isExpired ? (
+              <button
+                disabled
+                className="w-full py-3.5 px-6 rounded-xl bg-white/5 border border-white/10 text-gray-500 font-bold text-sm text-center cursor-not-allowed"
+              >
+                Audition Closed
+              </button>
+            ) : (
+              <button
+                onClick={openApplyModal}
+                disabled={applying}
+                className="w-full py-3.5 px-6 rounded-xl bg-[#2563EB] hover:bg-[#1d4ed8] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 transition-all active:scale-[0.98] cursor-pointer"
+              >
+                <Clapperboard className="w-4 h-4" />
+                <span>{applying ? 'Submitting...' : 'Apply Now'}</span>
+              </button>
+            )}
           </div>
+        </div>
 
-          {/* Section 3: Applications Received (if Creator) */}
-          {isCreator && (
-            <div className="space-y-4 pt-6 border-t border-white/5">
-              <div className="flex items-center justify-between gap-4">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Inbox className="w-4 h-4 text-white" />
-                  <span>Applications Received ({apps.length})</span>
-                </h2>
+        {isCreator && (
+          <div className="bg-black border border-white/5 rounded-3xl p-4 sm:p-6 space-y-4 text-left shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                <Inbox className="w-4 h-4 text-cyan-400" />
+                <span>Applications Received ({apps.length})</span>
+              </h3>
+              <button
+                onClick={handlePrintRoster}
+                className="text-cyan-400 hover:underline text-xs font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print</span>
+              </button>
+            </div>
 
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+              {[
+                { id: 'all', label: `All (${apps.length})` },
+                { id: 'pending', label: 'Pending' },
+                { id: 'shortlisted', label: 'Shortlisted' },
+                { id: 'accepted', label: 'Cast' },
+                { id: 'rejected', label: 'Rejected' },
+              ].map((tab) => (
                 <button
-                  onClick={handlePrintRoster}
-                  className="text-[#00BFFF] hover:underline text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5 text-[#00BFFF]" />
-                  <span>Print Roster</span>
-                </button>
-              </div>
-
-              {/* Pipeline Tabs (Compact Pill Row) */}
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 max-w-full">
-                {[
-                  { id: 'all', label: `All (${apps.length})` },
-                  { id: 'pending', label: 'Pending' },
-                  { id: 'shortlisted', label: 'Shortlisted' },
-                  { id: 'accepted', label: 'Cast' },
-                  { id: 'rejected', label: 'Rejected' },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setPipelineFilter(tab.id)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-                      pipelineFilter === tab.id
-                        ? 'bg-[#00BFFF]/20 border border-[#00BFFF] text-[#00BFFF]'
-                        : 'bg-[#1A1A1E] border border-white/10 text-gray-300 hover:text-white'
+                  key={tab.id}
+                  onClick={() => setPipelineFilter(tab.id)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${pipelineFilter === tab.id
+                      ? 'bg-[#00BFFF] text-black shadow-sm shadow-[#00BFFF]/20'
+                      : 'bg-[#18181c] text-gray-400 hover:text-white border border-white/5'
                     }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-              {loadingApps ? (
-                <div className="flex flex-col items-center py-8 gap-2">
-                  <div className="w-6 h-6 rounded-full border-2 border-[#00BFFF]/30 border-t-[#00BFFF] animate-spin" />
-                  <p className="text-gray-500 text-xs font-medium">Loading applicants...</p>
-                </div>
-              ) : filteredApps.length === 0 ? (
-                <div className="text-center py-12 border border-dashed border-white/5 rounded-xl">
-                  <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">
-                    No applications in this status stage
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredApps.map((app) => (
-                    <div
-                      key={app.id}
-                      className="py-4 border-b border-white/5 last:border-b-0 space-y-3"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar
-                            userId={app.userId}
-                            src={app.userPhoto}
-                            size={44}
-                            name={app.userName}
-                            className="border border-white/10"
-                          />
+            {loadingApps ? (
+              <div className="py-8 text-center text-xs text-gray-500">Loading applicants...</div>
+            ) : apps.length === 0 ? (
+              <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
+                No applications received yet.
+              </div>
+            ) : (
+              <div className="divide-y divide-white/5 space-y-3">
+                {apps
+                  .filter((a) => {
+                    if (pipelineFilter === 'all') return true;
+                    return (a.status || 'pending').toLowerCase() === pipelineFilter;
+                  })
+                  .map((app) => (
+                    <div key={app.id} className="pt-3 space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar userId={app.userId} src={app.userPhoto} name={app.userName} size="sm" />
                           <div>
-                            <div className="font-bold text-white flex items-center gap-2 text-base">
-                              <span>{app.userName}</span>
-                              <span
-                                className={`text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full border ${getStatusBadgeClass(
-                                  app.status
-                                )}`}
-                              >
-                                {app.status || 'pending'}
-                              </span>
-                            </div>
-                            <div className="text-xs text-[#00BFFF] font-semibold mt-0.5">
-                              Applied for: <span className="text-white font-bold">{app.roleName || 'General Role'}</span>
-                            </div>
-                            <div className="text-[10px] text-gray-500 font-medium">
-                              Submitted: {app.appliedAtFormatted} • {app.userEmail}
-                            </div>
+                            <span className="font-bold text-white block">{app.userName}</span>
+                            <span className="text-[11px] text-cyan-400">{app.roleName || 'General Role'}</span>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-2 self-end sm:self-center">
-                          <button
-                            onClick={() => onNavigate('profile', app.userId)}
-                            className="px-3 py-1.5 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-wider text-gray-300 hover:text-white transition-all bg-white/5 cursor-pointer"
-                          >
-                            View Profile
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => onNavigate('profile', app.userId)}
+                          className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] text-gray-300 hover:text-white cursor-pointer"
+                        >
+                          Profile
+                        </button>
                       </div>
 
-                      {/* Self Tape & Cover note info */}
-                      {(app.selfTapeUrl || app.coverNote) && (
-                        <div className="p-3.5 rounded-xl bg-black/40 border border-white/5 space-y-2 text-xs">
-                          {app.selfTapeUrl && (
-                            <div className="flex items-center gap-2 text-sky-400 font-semibold">
-                              <Video className="w-4 h-4 shrink-0" />
-                              <span>Audition Self-Tape:</span>
-                              <a
-                                href={app.selfTapeUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline hover:text-white truncate"
-                              >
-                                {app.selfTapeUrl}
-                              </a>
-                            </div>
-                          )}
-                          {app.coverNote && (
-                            <div className="text-gray-300 leading-relaxed font-medium">
-                              <span className="text-gray-500 font-bold">Cover Note:</span> "{app.coverNote}"
-                            </div>
-                          )}
-                        </div>
+                      {app.coverNote && (
+                        <p className="text-gray-400 italic bg-black/40 p-2 rounded-lg text-[11px]">
+                          "{app.coverNote}"
+                        </p>
                       )}
 
-                      {/* Status Pipeline Action Controls */}
-                      <div className="pt-2 border-t border-white/5 flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                          Pipeline Stage:
-                        </span>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {[
-                            { id: 'shortlisted', label: 'Shortlist', color: 'hover:bg-sky-500/20 text-sky-400' },
-                            { id: 'accepted', label: 'Cast', color: 'hover:bg-emerald-500/20 text-emerald-400' },
-                            { id: 'rejected', label: 'Reject', color: 'hover:bg-red-500/20 text-red-400' },
-                          ].map((st) => (
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[10px] text-gray-500">{app.appliedAtFormatted}</span>
+                        <div className="flex items-center gap-1">
+                          {['shortlisted', 'accepted', 'rejected'].map((st) => (
                             <button
-                              key={st.id}
-                              onClick={() => handleUpdateAppStatus(app.id, st.id)}
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-white/10 transition-all cursor-pointer ${app.status === st.id ? 'bg-white/15 text-white border-white/30' : st.color
+                              key={st}
+                              onClick={() => handleUpdateAppStatus(app.id, st)}
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all cursor-pointer ${app.status === st
+                                  ? 'bg-cyan-500 text-black'
+                                  : 'bg-white/5 text-gray-400 hover:text-white border border-white/5'
                                 }`}
                             >
-                              {st.label}
+                              {st}
                             </button>
                           ))}
                         </div>
                       </div>
                     </div>
                   ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Audition Application Modal */}
-      {isApplyModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#111116] border border-white/10 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
-            <button
-              onClick={() => setIsApplyModalOpen(false)}
-              className="absolute top-5 right-5 text-gray-400 hover:text-white p-1 rounded-full bg-white/5 cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="space-y-1 text-left">
-              <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#00BFFF]" />
-                <span>Submit Audition Application</span>
-              </h2>
-              <p className="text-xs text-gray-400 font-medium">
-                Audition for "{call.title}"
-              </p>
-            </div>
-
-            <form onSubmit={handleConfirmSubmitApplication} className="space-y-5 text-left">
-              {/* Role Selection */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-300">
-                  Select Role to Audition For *
-                </label>
-                {call.roles && call.roles.length > 0 ? (
-                  <select
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value)}
-                    required
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#00BFFF]"
-                  >
-                    {call.roles.map((r: any, idx: number) => (
-                      <option key={idx} value={r.name} className="bg-[#111116] text-white">
-                        {r.name} {r.ageRange ? `(${r.ageRange})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value)}
-                    placeholder="e.g. Lead Actor / Supporting Performer"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none"
-                  />
-                )}
               </div>
-
-              {/* Self-Tape Video Link */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center justify-between">
-                  <span>Self-Tape Video Reel URL (Optional)</span>
-                  <span className="text-[10px] text-[#00BFFF]">YouTube / Drive / Vimeo</span>
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://youtube.com/watch?v=... or Drive link"
-                  value={selfTapeUrl}
-                  onChange={(e) => setSelfTapeUrl(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-600 outline-none focus:border-[#00BFFF]"
-                />
-              </div>
-
-              {/* Cover Note */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-300">
-                  Custom Cover Note to Director (Optional)
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Introduce yourself, mention experience or availability..."
-                  value={coverNote}
-                  onChange={(e) => setCoverNote(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-600 outline-none focus:border-[#00BFFF] resize-none"
-                />
-              </div>
-
-              {/* Submit CTA */}
-              <div className="pt-2 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsApplyModalOpen(false)}
-                  className="w-1/3 py-3 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <Button
-                  type="submit"
-                  loading={applying}
-                  disabled={applying}
-                  className="w-2/3 bg-[#00BFFF] text-black hover:bg-[#0099e6] rounded-xl font-bold uppercase tracking-wider text-xs"
-                >
-                  Confirm & Submit
-                </Button>
-              </div>
-            </form>
+            )}
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+      </div>
+    </Desktop3ColumnLayout>
   );
 }

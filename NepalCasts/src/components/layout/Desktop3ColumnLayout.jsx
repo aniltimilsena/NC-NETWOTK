@@ -33,15 +33,31 @@ function FollowBtn({ targetUid }) {
     setLoading(true);
     const followId = `${currentUserId}_${targetUid}`;
     const followDocRef = doc(db, 'follows', followId);
+    const notifId = `${currentUserId}_${targetUid}_follow`;
     try {
       if (following) {
         await deleteDoc(followDocRef);
+        await deleteDoc(doc(db, 'notifications', notifId)).catch(() => {});
       } else {
         await setDoc(followDocRef, {
           followerId: currentUserId,
           followingId: targetUid,
           createdAt: serverTimestamp(),
         });
+        await setDoc(doc(db, 'notifications', notifId), {
+          userId: targetUid,
+          recipientId: targetUid,
+          receiverId: targetUid,
+          senderId: currentUserId,
+          notificationType: 'follow',
+          type: 'follow',
+          isRead: false,
+          read: false,
+          createdAt: serverTimestamp(),
+          targetUrl: `/profile/${currentUserId}`,
+          title: 'New Follower',
+          body: 'Someone started following you.',
+        }, { merge: true });
       }
     } catch (err) {
       console.error('Follow toggle failed:', err);
@@ -266,33 +282,7 @@ export default function Desktop3ColumnLayout({
   const openToWork = profileData?.openToWork;
 
 
-  const safeFeaturedRaw = (Array.isArray(featuredTalents) && featuredTalents.length > 0) ? featuredTalents : internalFeatured;
-  const safeFeatured = safeFeaturedRaw.length > 0 ? safeFeaturedRaw : [
-    {
-      id: 'mock_talent_1',
-      name: 'Achyut Devkota',
-      role: 'Actor / Model',
-      category: 'Actor',
-      gender: 'male',
-      location: 'Kathmandu',
-    },
-    {
-      id: 'mock_talent_2',
-      name: 'Sushma Karki',
-      role: 'Actress / Model',
-      category: 'Actress',
-      gender: 'female',
-      location: 'Lalitpur',
-    },
-    {
-      id: 'mock_talent_3',
-      name: 'Dayahang Rai',
-      role: 'Actor',
-      category: 'Actor',
-      gender: 'male',
-      location: 'Kathmandu',
-    }
-  ];
+  const safeFeatured = (Array.isArray(featuredTalents) && featuredTalents.length > 0) ? featuredTalents : internalFeatured;
   const safeTrending = (Array.isArray(trendingCalls) && trendingCalls.length > 0) ? trendingCalls : internalTrending;
   const isTalentsLoading = loading || talentsLoading;
   const isCallsLoading = loading || callsLoading;

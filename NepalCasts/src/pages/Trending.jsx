@@ -118,9 +118,11 @@ export default function Trending({ onNavigate, user }) {
       }
       return p;
     }));
+    const notifId = `${currentUser.uid}_${talentId}_follow`;
     try {
       if (isFollowing) {
         await deleteDoc(followDocRef);
+        await deleteDoc(doc(db, "notifications", notifId)).catch(() => {});
       }
       else {
         await setDoc(followDocRef, {
@@ -128,7 +130,7 @@ export default function Trending({ onNavigate, user }) {
           followingId: talentId,
           createdAt: serverTimestamp()
         });
-        await addDoc(collection(db, "notifications"), {
+        await setDoc(doc(db, "notifications", notifId), {
           userId: talentId,
           recipientId: talentId,
           receiverId: talentId,
@@ -143,7 +145,7 @@ export default function Trending({ onNavigate, user }) {
           read: false,
           createdAt: serverTimestamp(),
           targetUrl: `/profile/${currentUser.uid}`
-        });
+        }, { merge: true });
       }
       notifyFollowUpdated(talentId);
     }

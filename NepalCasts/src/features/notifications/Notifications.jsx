@@ -6,7 +6,7 @@ import Avatar from '../../components/ui/Avatar';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { cacheManager } from '../../utils/cacheManager';
 import { NotificationSkeleton } from '../../components/ui/Skeleton';
-import { ChevronLeft, MessageSquare, PhoneMissed, PhoneOff, UserPlus, Star, Settings, Check } from 'lucide-react';
+import { ChevronLeft, MessageSquare, PhoneMissed, PhoneOff, UserPlus, Clapperboard, Settings, Check } from 'lucide-react';
 const getNotificationDetails = (notif) => {
     const type = (notif.type || notif.notificationType || '').toLowerCase();
     const body = (notif.body || notif.message || '').toLowerCase();
@@ -39,7 +39,7 @@ const getNotificationDetails = (notif) => {
         }
         return {
             type: 'casting',
-            themeColor: 'yellow',
+            themeColor: 'white',
             iconName: 'casting',
             text: displayElement,
         };
@@ -87,10 +87,10 @@ const getNotificationDetails = (notif) => {
 };
 const renderIconCircle = (iconName) => {
     let IconComponent = Settings;
-    let colorClasses = 'bg-gray-500/10 border-gray-500/20 text-gray-400';
+    let colorClasses = 'bg-white/10 border-white/20 text-white';
     if (iconName === 'message_received') {
         IconComponent = MessageSquare;
-        colorClasses = 'bg-blue-500/10 border-blue-500/20 text-blue-400';
+        colorClasses = 'bg-white/10 border-white/20 text-white';
     }
     else if (iconName === 'missed_call') {
         IconComponent = PhoneMissed;
@@ -102,18 +102,18 @@ const renderIconCircle = (iconName) => {
     }
     else if (iconName === 'follow') {
         IconComponent = UserPlus;
-        colorClasses = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500';
+        colorClasses = 'bg-white/10 border-white/20 text-white';
     }
     else if (iconName === 'casting') {
-        IconComponent = Star;
-        colorClasses = 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400';
+        IconComponent = Clapperboard;
+        colorClasses = 'bg-white/10 border-white/20 text-white';
     }
     else if (iconName === 'system') {
         IconComponent = Settings;
-        colorClasses = 'bg-gray-500/10 border-gray-500/20 text-gray-400';
+        colorClasses = 'bg-white/10 border-white/20 text-white';
     }
     return (<div className={`w-10 h-10 md:w-14 md:h-14 rounded-full border flex items-center justify-center flex-shrink-0 ${colorClasses}`}>
-        <IconComponent className="w-5 h-5 md:w-7 md:h-7" />
+        <IconComponent className="w-5 h-5 md:w-7 md:h-7 text-white" />
     </div>);
 };
 function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, onDeleteRequest, handleNotificationClick, timeAgo }) {
@@ -177,7 +177,7 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
     return (<div className="relative w-full">
         <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={endPress} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={handleMouseLeave} onClick={handleCardClick} className={`relative z-10 py-4 md:py-5 px-2 sm:px-4 md:px-6 cursor-pointer transition-colors duration-200 flex items-center gap-4 md:gap-6 select-none ${cardBgClass} w-full`}>
 
-            {showAvatar && (notif.senderAvatar || notif.senderName) ? (<Avatar userId={notif.senderId} src={notif.senderAvatar} name={notif.senderName} size="sm" className="!w-10 !h-10 md:!w-14 md:!h-14 !rounded-full border-none shrink-0" />) : (renderIconCircle(details.iconName))}
+            {showAvatar && (notif.senderAvatar || notif.senderName || notif.senderId) ? (<Avatar userId={notif.senderId} src={notif.senderAvatar} name={notif.senderName} size="sm" className="!w-10 !h-10 md:!w-14 md:!h-14 !rounded-full border-none shrink-0" />) : (renderIconCircle(details.iconName))}
 
 
             <div className="flex-1 min-w-0 pr-2">
@@ -217,6 +217,8 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [followingIds, setFollowingIds] = useState(new Set());
+    const [myFollowerIds, setMyFollowerIds] = useState(new Set());
+    const [followersLoaded, setFollowersLoaded] = useState(false);
     const [visibleLimit, setVisibleLimit] = useState(15);
     const [hasMore, setHasMore] = useState(false);
     const [deletingNotifId, setDeletingNotifId] = useState(null);
@@ -236,9 +238,12 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
     useEffect(() => {
         if (!user?.uid) {
             setFollowingIds(new Set());
+            setMyFollowerIds(new Set());
+            setFollowersLoaded(false);
             return;
         }
-        return cacheManager.subscribePooled(`user_follows_${user.uid}`, (pooledCb) => {
+        // Subscribe to who I am following
+        const unsubFollowing = cacheManager.subscribePooled(`user_follows_${user.uid}`, (pooledCb) => {
             const q = query(collection(db, 'follows'), where('followerId', '==', user.uid));
             return onSnapshot(q, (snapshot) => {
                 const ids = snapshot.docs.map(docSnap => docSnap.data().followingId);
@@ -252,7 +257,26 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
         }, (ids) => {
             setFollowingIds(new Set(ids));
         });
+
+        // Subscribe to who is following me (my active followers)
+        const qFollowers = query(collection(db, 'follows'), where('followingId', '==', user.uid));
+        const unsubFollowers = onSnapshot(qFollowers, (snapshot) => {
+            const ids = new Set(snapshot.docs.map(d => d.data().followerId).filter(Boolean));
+            setMyFollowerIds(ids);
+            setFollowersLoaded(true);
+        }, (err) => {
+            if (err.code !== 'permission-denied') {
+                console.error("Followers subscription failed in Notifications:", err);
+            }
+            setFollowersLoaded(true);
+        });
+
+        return () => {
+            unsubFollowing();
+            unsubFollowers();
+        };
     }, [user?.uid]);
+
     useEffect(() => {
         if (!user?.uid) {
             setNotifications([]);
@@ -262,12 +286,33 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
         setLoading(true);
         const q = query(collection(db, 'notifications'), where('userId', '==', user.uid), limit(100));
         const unsub = onSnapshot(q, (snapshot) => {
-            const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            items.sort((a, b) => {
+            const rawItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            rawItems.sort((a, b) => {
                 const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
                 const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
                 return timeB - timeA;
             });
+
+            // Deduplicate follow notifications & filter out unfollowed users
+            const seenFollowSenders = new Set();
+            const items = rawItems.filter(item => {
+                const isFollow = item.type === 'follow' || item.notificationType === 'follow';
+                if (isFollow && item.senderId) {
+                    // If we already have a newer follow notification from this sender, drop and delete older duplicate
+                    if (seenFollowSenders.has(item.senderId)) {
+                        deleteDoc(doc(db, 'notifications', item.id)).catch(() => {});
+                        return false;
+                    }
+                    // If followers list is loaded and this person is no longer following, drop and delete notification
+                    if (followersLoaded && !myFollowerIds.has(item.senderId)) {
+                        deleteDoc(doc(db, 'notifications', item.id)).catch(() => {});
+                        return false;
+                    }
+                    seenFollowSenders.add(item.senderId);
+                }
+                return true;
+            });
+
             if (items.length > visibleLimit) {
                 setHasMore(true);
                 setNotifications(items.slice(0, visibleLimit));
@@ -283,7 +328,7 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             setLoading(false);
         });
         return () => unsub();
-    }, [user?.uid, visibleLimit]);
+    }, [user?.uid, visibleLimit, myFollowerIds, followersLoaded]);
     const markAsRead = async (notifId) => {
         setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, read: true, isRead: true } : n));
         if (user?.uid) {

@@ -6,7 +6,7 @@ import ProfileMedia from './components/ProfileMedia';
 import ProfileExperience from './components/ProfileExperience';
 import FollowModal from './components/FollowModal';
 import ShareSheet from '../../components/ui/ShareSheet';
-import { doc, setDoc, query, collection, where, getDocs, serverTimestamp, documentId } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, query, collection, where, getDocs, serverTimestamp, documentId } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
 import { AuthService } from '../../services/AuthService';
@@ -186,11 +186,11 @@ export default function ProfilePage({
       onNavigate('signin');
       return;
     }
+    const notifId = `${user.uid}_${targetUid}_follow`;
     const res = await toggleFollow();
     if (res.success) {
       if (!isFollowing && targetUid) {
         try {
-          const notifId = `${user.uid}_${targetUid}_follow`;
           await setDoc(
             doc(db, 'notifications', notifId),
             {
@@ -204,6 +204,7 @@ export default function ProfilePage({
               read: false,
               createdAt: serverTimestamp(),
               profileUrl: `/profile/${user.uid}`,
+              targetUrl: `/profile/${user.uid}`,
               title: 'New Follower',
               body: `${user.displayName || 'Someone'} started following you.`,
               senderName: user.displayName || 'Someone',
@@ -213,6 +214,12 @@ export default function ProfilePage({
           );
         } catch (err) {
           console.warn('Could not dispatch follow notification:', err);
+        }
+      } else if (isFollowing && targetUid) {
+        try {
+          await deleteDoc(doc(db, 'notifications', notifId));
+        } catch (err) {
+          console.warn('Could not remove follow notification:', err);
         }
       }
     } else {

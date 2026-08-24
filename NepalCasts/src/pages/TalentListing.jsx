@@ -175,10 +175,12 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         }
         const followId = `${currentUser.uid}_${talentId}`;
         const followDocRef = doc(db, "follows", followId);
+        const notifId = `${currentUser.uid}_${talentId}_follow`;
         const isFollowing = followingIds.includes(talentId);
         try {
             if (isFollowing) {
                 await deleteDoc(followDocRef);
+                await deleteDoc(doc(db, "notifications", notifId)).catch(() => {});
             }
             else {
                 await setDoc(followDocRef, {
@@ -186,7 +188,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                     followingId: talentId,
                     createdAt: serverTimestamp()
                 });
-                await addDoc(collection(db, "notifications"), {
+                await setDoc(doc(db, "notifications", notifId), {
                     userId: talentId,
                     recipientId: talentId,
                     receiverId: talentId,
@@ -201,7 +203,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                     read: false,
                     createdAt: serverTimestamp(),
                     targetUrl: `/profile/${currentUser.uid}`
-                });
+                }, { merge: true });
             }
             notifyFollowUpdated(talentId);
         }

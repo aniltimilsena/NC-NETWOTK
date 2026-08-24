@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MessageSquare, Phone, Video, PhoneIncoming, PhoneOutgoing, ChevronLeft } from 'lucide-react';
+import { Search, ChevronLeft, X, MessageSquare, Plus } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
 
 interface ChatSidebarProps {
@@ -15,21 +15,20 @@ interface ChatSidebarProps {
   onNavigate?: (page: string, param?: any) => void;
   onInitiateCall?: (type: 'audio' | 'video', calleeId: string, calleeName: string, calleePhoto: string) => void;
 }
+
 const formatLastMessage = (text?: string) => {
-  if (!text || typeof text !== 'string')
-    return '';
+  if (!text || typeof text !== 'string') return '';
   if (text.startsWith('http') && (text.includes('/image/upload/') || text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i))) {
-    return ' Sent a photo';
+    return 'Sent a photo';
   }
   if (text.startsWith('http') && (text.includes('/video/upload/') || text.match(/\.(mp4|webm|ogg|mov)/i))) {
-    return ' Sent a video';
+    return 'Sent a video';
   }
   if (text.startsWith('http')) {
-    return ' Sent a file';
+    return 'Sent a file';
   }
   if (text.includes('call •') || text.includes('Call •')) {
-    const isVideo = text.toLowerCase().includes('video');
-    return isVideo ? ` ${text}` : ` ${text}`;
+    return text;
   }
   return text;
 };
@@ -40,26 +39,42 @@ const formatChatTime = (timestamp?: any) => {
     const date = timestamp.toDate ? timestamp.toDate() : (timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp));
     if (isNaN(date.getTime())) return '';
     const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    if (isToday) {
-      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-    }
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays < 7) {
-      return date.toLocaleDateString([], { weekday: 'short' });
-    }
-    return date.toLocaleDateString([], { month: 'numeric', day: 'numeric' });
+    const diffSecs = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diffSecs < 60) return 'Just now';
+    const diffMins = Math.floor(diffSecs / 60);
+    if (diffMins < 60) return `${diffMins}m`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d`;
+    const diffWeeks = Math.floor(diffDays / 7);
+    if (diffWeeks < 4) return `${diffWeeks}w`;
+    const diffMonths = Math.floor(diffDays / 30);
+    if (diffMonths < 12) return `${diffMonths}mo`;
+    const diffYears = Math.floor(diffDays / 365);
+    return `${diffYears}y`;
   } catch {
     return '';
   }
 };
 
-export default function ChatSidebar({ conversations, activeChatId, onSelectChat, onDeleteChat, callHistory, loadingCalls, currentUser, onStartNewChat, onNavigate, onInitiateCall }: ChatSidebarProps) {
+type FilterType = 'all' | 'unread' | 'connections' | 'applications';
+
+export default function ChatSidebar({
+  conversations,
+  activeChatId,
+  onSelectChat,
+  onDeleteChat,
+  currentUser,
+  onStartNewChat,
+  onNavigate,
+}: ChatSidebarProps) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'chats' | 'calls'>('chats');
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [query, setQuery] = useState('');
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPressActive = useRef(false);
+
   const startPress = useCallback((convoId: string) => {
     isLongPressActive.current = false;
     longPressTimer.current = setTimeout(() => {
@@ -70,6 +85,7 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
       onDeleteChat(convoId);
     }, 600);
   }, [onDeleteChat]);
+
   const endPress = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
@@ -77,141 +93,204 @@ export default function ChatSidebar({ conversations, activeChatId, onSelectChat,
     }
   }, []);
 
+  const handleBack = () => {
+    if (onNavigate) {
+      onNavigate('home');
+    } else {
+      navigate('/');
+    }
+  };
+
   const filteredConversations = conversations.filter((c) => {
-    const nameMatch = c.name?.toLowerCase().includes(query.toLowerCase());
-    const msgMatch = c.lastMessage?.toLowerCase().includes(query.toLowerCase());
-    return nameMatch || msgMatch;
+    const nameMatch = (c.name || '').toLowerCase().includes(query.toLowerCase());
+    const msgMatch = (c.lastMessage || '').toLowerCase().includes(query.toLowerCase());
+    if (query && !nameMatch && !msgMatch) {
+      return false;
+    }
+
+    const unreadCount = c.unreadCounts?.[currentUser?.uid] || 0;
+    const isUnread = unreadCount > 0 || c.unread === true;
+    const isApp = Boolean(
+      c.isApplication ||
+      c.castingId ||
+      c.type === 'application' ||
+      c.name?.toLowerCase().includes('casting') ||
+      c.lastMessage?.toLowerCase().includes('application')
+    );
+
+    if (activeFilter === 'unread') {
+      return isUnread;
+    }
+    if (activeFilter === 'connections') {
+      return !isApp;
+    }
+    if (activeFilter === 'applications') {
+      return isApp;
+    }
+    return true;
   });
 
-  return (<div className="w-full h-full bg-[#141414] border-r border-white/5 flex flex-col shrink-0 select-none">
+  const filterTabs: { id: FilterType; label: string }[] = [
+    { id: 'all', label: 'All' },
+    { id: 'unread', label: 'Unread' },
+    { id: 'connections', label: 'Connections' },
+    { id: 'applications', label: 'Applications' },
+  ];
 
-    <div className="p-4 border-b border-white/5 space-y-3">
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {onNavigate && (<button onClick={() => onNavigate('home')} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer" title="Back to Home" aria-label="Back to Home">
-            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
-          </button>)}
-          <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Messages</h2>
-        </div>
-        <button onClick={onStartNewChat} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-white hover:text-gray-300 transition-colors shrink-0 cursor-pointer" title="New Message">
-          <MessageSquare className="w-5 h-5 text-white" strokeWidth={2} />
-        </button>
-      </div>
-
-
-      <div className="relative">
-        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-        <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search messages..." className="w-full bg-[#1a1a1a] rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all" />
-      </div>
-
-
-      <div className="flex bg-[#181818] rounded-xl p-1 gap-1">
-        <button
-          onClick={() => setActiveTab('chats')}
-          className={`flex-1 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer select-none ${
-            activeTab === 'chats'
-              ? 'bg-[#282828] text-white shadow-sm'
-              : 'text-gray-400 hover:text-white'
-          }`}
-        >
-          Chats
-        </button>
-        <button
-          onClick={() => setActiveTab('calls')}
-          className={`flex-1 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer select-none ${
-            activeTab === 'calls'
-              ? 'bg-[#282828] text-white shadow-sm'
-              : 'text-gray-400 hover:text-white'
-          }`}
-        >
-          Calls
-        </button>
-      </div>
-    </div>
-
-
-    <div className="flex-1 overflow-y-auto no-scrollbar py-2">
-      {activeTab === 'chats' ? (filteredConversations.length > 0 ? (<div className="flex flex-col gap-0.5">
-        {filteredConversations.map((c) => {
-          const isSelected = c.id === activeChatId;
-          const unreadCount = c.unreadCounts?.[currentUser?.uid] || 0;
-          const timeString = formatChatTime(c.lastMessageAt || c.updatedAt);
-          return (<div key={c.id} onTouchStart={() => startPress(c.id)} onTouchEnd={endPress} onTouchMove={endPress} onMouseDown={(e) => {
-            if (e.button !== 0)
-              return;
-            startPress(c.id);
-          }} onMouseUp={endPress} onMouseLeave={endPress} onClick={(e) => {
-            if (isLongPressActive.current) {
-              e.stopPropagation();
-              e.preventDefault();
-              isLongPressActive.current = false;
-              return;
-            }
-            onSelectChat(c.id);
-          }} className={`flex items-center gap-3 py-3 px-3.5 mx-2 rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-white/10' : 'bg-transparent hover:bg-white/[0.04]'}`}>
-            <Avatar userId={c.otherParticipantId} src={c.avatar} name={c.name} size="md" />
-            <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
-              <span className="text-[14px] font-bold text-white block truncate leading-snug">{c.name}</span>
-              <p className="text-[12px] text-gray-400 truncate font-medium mt-0.5 leading-snug">
-                {formatLastMessage(c.lastMessage) || <span className="italic opacity-50 text-xs">No messages yet</span>}
-              </p>
-            </div>
-            <div className="flex flex-col items-end justify-center gap-1.5 shrink-0 ml-2 self-center">
-              {timeString && (<span className={`text-[10px] font-medium leading-none ${unreadCount > 0 ? 'text-[#00BFFF] font-semibold' : 'text-gray-400'}`}>
-                {timeString}
-              </span>)}
-              {unreadCount > 0 && (<span className="min-w-[18px] h-4.5 px-1.5 rounded-full bg-[#00BFFF] text-black font-extrabold text-[10px] flex items-center justify-center shadow-sm shadow-[#00BFFF]/30 leading-none">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>)}
-            </div>
-          </div>);
-        })}
-      </div>) : (<p className="text-xs text-gray-400 text-center py-8">No chats found.</p>)) : (!loadingCalls ? (callHistory.length > 0 ? (<div className="flex flex-col gap-0.5">
-        {callHistory.map((call) => {
-          const isIncoming = call.calleeId === currentUser?.uid;
-          const targetUserId = isIncoming ? call.callerId : call.calleeId;
-          const callType: 'audio' | 'video' = call.callType === 'video' ? 'video' : 'audio';
-          const date = call.createdAt?.toDate ? call.createdAt.toDate().toLocaleDateString() : 'N/A';
-          const handleCallClick = (e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (targetUserId && onInitiateCall) {
-              onInitiateCall(callType, targetUserId, call.otherUser?.name || 'User', call.otherUser?.image || '');
-            }
-          };
-          return (<div key={call.id} onClick={handleCallClick} className="flex justify-between items-center py-3.5 px-4 bg-transparent hover:bg-white/5 transition-all cursor-pointer group">
-            <div className="flex items-center gap-3">
-              <Avatar userId={targetUserId} src={call.otherUser?.image} name={call.otherUser?.name} size="md" />
-              <div className="text-left">
-                <span className="text-[15px] font-bold text-white block">{call.otherUser?.name}</span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  {isIncoming ? (<PhoneIncoming className="w-3 h-3 text-[#00BFFF]" />) : (<PhoneOutgoing className="w-3 h-3 text-nc-muted" />)}
-                  <span className="text-[11px] text-nc-muted font-medium">{date} • {callType}</span>
-                </div>
-              </div>
-            </div>
-
-            <button onClick={handleCallClick} className="w-8 h-8 rounded-xl bg-white/5 group-hover:bg-[#00BFFF] group-hover:text-black flex items-center justify-center text-white/70 hover:text-black transition-all active:scale-95 shrink-0" title={`Call ${call.otherUser?.name || 'User'} (${callType})`}>
-              {callType === 'video' ? (<Video className="w-4 h-4" />) : (<Phone className="w-4 h-4" />)}
+  return (
+    <div className="w-full h-full bg-[#0d0d0f] border-r border-white/5 flex flex-col shrink-0 select-none">
+      {/* Top Header */}
+      <div className="p-4 sm:p-5 pb-3 border-b border-white/5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleBack}
+              className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
+              title="Back"
+              aria-label="Back"
+            >
+              <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
             </button>
-          </div>);
-        })}
-      </div>) : (<p className="text-xs text-nc-muted text-center py-8">No call history found.</p>)) : (
-        <div className="flex flex-col">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex justify-between items-center py-3.5 px-4 bg-transparent animate-pulse gap-3" aria-hidden="true">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full skeleton shrink-0" />
-                <div className="space-y-2 text-left">
-                  <div className="h-4 skeleton rounded w-24" />
-                  <div className="h-3 skeleton rounded w-16" />
-                </div>
-              </div>
-              <div className="w-8 h-8 rounded-xl skeleton shrink-0" />
-            </div>
-          ))}
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              Messages
+            </h1>
+          </div>
+          <button
+            onClick={onStartNewChat}
+            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all cursor-pointer"
+            title="New Conversation"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         </div>
-      ))}
+
+        {/* Search Input Bar */}
+        <div className="relative">
+          <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search messages..."
+            className="w-full bg-[#18181c] border border-white/5 rounded-xl pl-10 pr-9 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#00BFFF]/50 focus:border-[#00BFFF]/50 transition-all"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Filter Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-0.5">
+          {filterTabs.map((tab) => {
+            const isActive = activeFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveFilter(tab.id)}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-[#00BFFF] text-[#0A0A0A] shadow-sm shadow-[#00BFFF]/20'
+                    : 'bg-[#18181c] text-gray-400 hover:text-white border border-white/5'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Conversations List */}
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        {filteredConversations.length > 0 ? (
+          <div className="flex flex-col divide-y divide-white/[0.03]">
+            {filteredConversations.map((c) => {
+              const isSelected = c.id === activeChatId;
+              const unreadCount = c.unreadCounts?.[currentUser?.uid] || 0;
+              const timeString = formatChatTime(c.lastMessageAt || c.updatedAt);
+              return (
+                <div
+                  key={c.id}
+                  onTouchStart={() => startPress(c.id)}
+                  onTouchEnd={endPress}
+                  onTouchMove={endPress}
+                  onMouseDown={(e) => {
+                    if (e.button !== 0) return;
+                    startPress(c.id);
+                  }}
+                  onMouseUp={endPress}
+                  onMouseLeave={endPress}
+                  onClick={(e) => {
+                    if (isLongPressActive.current) {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      isLongPressActive.current = false;
+                      return;
+                    }
+                    onSelectChat(c.id);
+                  }}
+                  className={`flex items-center gap-3.5 px-4 sm:px-5 py-3.5 cursor-pointer transition-all ${
+                    isSelected
+                      ? 'bg-white/[0.08]'
+                      : 'bg-transparent hover:bg-white/[0.03]'
+                  }`}
+                >
+                  <Avatar
+                    userId={c.otherParticipantId}
+                    src={c.avatar}
+                    name={c.name}
+                    size="md"
+                    className="!w-12 !h-12 md:!w-13 md:!h-13 shrink-0 rounded-full"
+                  />
+                  <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
+                    <span className="text-[15px] font-bold text-white block truncate leading-tight">
+                      {c.name || 'User'}
+                    </span>
+                    <p className="text-[13px] text-gray-400 truncate font-normal mt-1 leading-snug">
+                      {formatLastMessage(c.lastMessage) || (
+                        <span className="italic opacity-50 text-xs">No messages yet</span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end justify-center gap-1.5 shrink-0 ml-2 self-start pt-1">
+                    {timeString && (
+                      <span
+                        className={`text-xs font-medium whitespace-nowrap leading-none ${
+                          unreadCount > 0 ? 'text-[#00BFFF] font-semibold' : 'text-gray-500'
+                        }`}
+                      >
+                        {timeString}
+                      </span>
+                    )}
+                    {unreadCount > 0 && (
+                      <span className="min-w-[18px] h-4.5 px-1.5 rounded-full bg-[#00BFFF] text-black font-extrabold text-[10px] flex items-center justify-center shadow-sm shadow-[#00BFFF]/30 leading-none">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="py-16 px-6 text-center flex flex-col items-center justify-center space-y-2">
+            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-500 mb-1">
+              <MessageSquare className="w-5 h-5 text-gray-500" />
+            </div>
+            <p className="text-sm font-medium text-gray-300">
+              {query ? 'No matching messages' : 'No messages in this category'}
+            </p>
+            <p className="text-xs text-gray-500 max-w-xs">
+              {query ? 'Try searching with a different keyword.' : 'Conversations will appear here as you chat.'}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
-  </div>);
+  );
 }

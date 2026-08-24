@@ -96,9 +96,22 @@ export default function Avatar(props: AvatarProps) {
     const rawFallback = propSrc || user?.image || user?.photoURL || user?.profileImage || user?.avatar || user?.picture || user?.photo || clerkCustomPhoto || null;
     const fallbackSrc = isDefaultImage(rawFallback) ? null : rawFallback;
 
-    const resolvedSrc = (liveSrc && !isDefaultImage(liveSrc))
-        ? liveSrc
-        : fallbackSrc;
+    // When targetId (userId) is provided, prioritize the live profile status.
+    // If the user has a photo, show liveSrc.
+    // If liveSrc is explicitly empty string "" (user has no photo or deleted it), do not fall back to stale static propSrc.
+    let resolvedSrc: string | null = null;
+    if (targetId) {
+        if (liveSrc && !isDefaultImage(liveSrc)) {
+            resolvedSrc = liveSrc;
+        } else if (liveSrc === "") {
+            resolvedSrc = null;
+        } else {
+            // liveSrc is still loading (null)
+            resolvedSrc = null;
+        }
+    } else {
+        resolvedSrc = fallbackSrc;
+    }
 
     const hasPhoto = Boolean(resolvedSrc && !isDefaultImage(resolvedSrc) && !imageError);
     const currentSrc = previewSrc || (hasPhoto ? resolvedSrc : null);

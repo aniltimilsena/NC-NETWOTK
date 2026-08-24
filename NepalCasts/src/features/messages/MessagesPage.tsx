@@ -180,7 +180,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
         </button>
       </div>);
     }
-    return (<div className="h-screen bg-[#141414] flex">
+    return (<div className="h-screen h-dvh bg-[#0d0d0f] flex overflow-hidden">
       
       <div className="w-full flex h-full overflow-hidden">
         
@@ -189,7 +189,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
         </div>
 
         
-        <div className={`flex-1 h-full flex flex-col ${!activeChatId ? 'hidden md:flex items-center justify-center bg-[#141414] text-gray-400 text-xs' : 'flex'}`}>
+        <div className={`flex-1 h-full flex flex-col ${!activeChatId ? 'hidden md:flex items-center justify-center bg-[#0d0d0f] text-gray-400 text-xs' : 'flex'}`}>
           {activeChat ? (<>
               <div className="flex-1 min-h-0">
                 <ChatArea chat={activeChat} messages={messages} currentUser={user} typingUsers={typingUsers} onBack={() => setActiveChatId(null)} onInitiateCall={handleInitiateCall} onReplyTo={setReplyingTo} onDeleteMessage={handleDeleteMessage} onPinMessage={handlePinMessage} onTogglePinnedDrawer={() => setShowPinnedDrawer(!showPinnedDrawer)} isPinnedDrawerOpen={showPinnedDrawer}/>

@@ -93,7 +93,10 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
         location.pathname.startsWith('/forgot-password') ||
         location.pathname.startsWith('/reset-password') ||
         location.pathname.startsWith('/sso-callback');
-    const showNavbar = !isAuthPage && !location.pathname.startsWith('/messages') && !location.pathname.startsWith('/notifications');
+    const showNavbar =
+        !isAuthPage &&
+        !location.pathname.startsWith('/call') &&
+        !location.pathname.startsWith('/messages');
     return (<div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
         {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate} />)}
         <main className="flex-1 px-0 pb-0 min-h-0">
