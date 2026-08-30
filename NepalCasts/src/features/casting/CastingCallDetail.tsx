@@ -61,12 +61,14 @@ const isMockOrInvalidImage = (url: string | null | undefined) => {
 const getCastingThumbnail = (call: any) => {
   if (!call) return null;
   const raw =
+    call.horizontalThumbnail ||
+    call.bannerUrl ||
+    call.bannerImage ||
+    call.coverImage ||
     call.thumbnail ||
     call.image ||
-    call.coverImage ||
     call.posterUrl ||
     call.poster ||
-    call.bannerUrl ||
     call.media?.[0]?.url ||
     call.photoURL ||
     null;
@@ -710,9 +712,9 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         )}
 
         {/* Main Card Container (Solid Black matching Home page) */}
-        <div className="w-full bg-black border border-white/5 rounded-3xl overflow-hidden shadow-2xl p-4 sm:p-6 md:p-8 space-y-6 text-left">
-          {/* Hero Banner with Badge & Bookmark */}
-          <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:h-[380px] rounded-2xl overflow-hidden bg-[#111111] border border-white/5">
+        <div className="w-full bg-black rounded-3xl overflow-hidden shadow-2xl p-4 sm:p-6 md:p-8 space-y-6 text-left">
+          {/* Hero Banner with Badge & Bookmark (9:16 Aspect Ratio) */}
+          <div className="relative w-full aspect-[9/16] max-h-[85vh] mx-auto rounded-2xl overflow-hidden bg-[#111111]">
             {bannerImage ? (
               <img
                 src={bannerImage}

@@ -38,6 +38,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
   const [isLoading, setIsLoading] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState('');
+  const [horizontalThumbnailFile, setHorizontalThumbnailFile] = useState<File | null>(null);
+  const [horizontalThumbnailPreview, setHorizontalThumbnailPreview] = useState('');
   const [isOtherType, setIsOtherType] = useState(false);
   const [customType, setCustomType] = useState('');
   const [isOtherCategory, setIsOtherCategory] = useState(false);
@@ -50,6 +52,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
     location: '',
     description: '',
     thumbnail: '',
+    horizontalThumbnail: '',
     budget: '',
     deadline: '',
     contactInfo: '',
@@ -76,20 +79,32 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
     setIsLoading(true);
     try {
       let thumbnailUrl = form.thumbnail;
+      let horizontalUrl = form.horizontalThumbnail;
+
       if (thumbnailFile) {
         const uploadedUrl = await uploadProfileMedia(
           user.uid,
           thumbnailFile,
           undefined,
-          `castings/${castingId}/banner.jpg`
+          `castings/${castingId}/poster.jpg`
         );
-        if (!uploadedUrl) {
-          throw new Error(
-            'Failed to upload thumbnail image. Please check your connection or try another image.'
-          );
-        }
-        thumbnailUrl = uploadedUrl;
+        if (uploadedUrl) thumbnailUrl = uploadedUrl;
       }
+
+      if (horizontalThumbnailFile) {
+        const uploadedBannerUrl = await uploadProfileMedia(
+          user.uid,
+          horizontalThumbnailFile,
+          undefined,
+          `castings/${castingId}/horizontal_banner.jpg`
+        );
+        if (uploadedBannerUrl) horizontalUrl = uploadedBannerUrl;
+      }
+
+      // Auto-fallback if only one is uploaded
+      if (!thumbnailUrl && horizontalUrl) thumbnailUrl = horizontalUrl;
+      if (!horizontalUrl && thumbnailUrl) horizontalUrl = thumbnailUrl;
+
       const requirementList: string[] = [];
       if (form.requirements.headshot) requirementList.push('Professional Headshots Required');
       if (form.requirements.wardrobe) requirementList.push('Own Wardrobe Required');
@@ -105,6 +120,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
         ...form,
         id: castingId,
         thumbnail: thumbnailUrl,
+        horizontalThumbnail: horizontalUrl,
+        bannerUrl: horizontalUrl,
         requirements: requirementList,
         production: user.displayName || 'Independent Production',
         budget: form.budget,
@@ -237,58 +254,111 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
               <h2 className="text-lg font-black text-white uppercase tracking-wider">Project Information</h2>
 
               <div className="space-y-5">
-                {/* Poster */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">
-                    Project Poster / Photo
-                  </label>
-                  <div className="flex flex-col sm:flex-row gap-5 items-start">
-                    <div className="w-full sm:w-48 h-32 bg-[#1a1a1a] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative group hover:border-[#00BFFF] transition-all cursor-pointer">
-                      {thumbnailPreview || form.thumbnail ? (
-                        <>
-                          <img
-                            src={thumbnailPreview || form.thumbnail}
-                            alt="Poster preview"
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setForm({ ...form, thumbnail: '' });
-                              setThumbnailFile(null);
-                              setThumbnailPreview('');
-                            }}
-                            className="absolute top-2.5 right-2.5 bg-black/70 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors"
-                          >
-                            <X size={14} />
-                          </button>
-                        </>
-                      ) : (
-                        <div className="text-center p-4">
-                          <Upload className="w-7 h-7 text-gray-500 mx-auto mb-2 group-hover:text-[#00BFFF] transition-colors" />
-                          <p className="text-[9px] text-gray-500 font-bold tracking-widest uppercase">Upload Photo</p>
-                        </div>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setThumbnailFile(file);
-                            setThumbnailPreview(URL.createObjectURL(file));
-                            setForm({ ...form, thumbnail: 'has-file' });
-                          }
-                        }}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                      />
+                {/* Horizontal & Vertical Thumbnail Uploads */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                      Horizontal Banner / Thumbnail (16:9 Landscape)
+                    </label>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Shown on the Casting Call Detail page header.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 items-start">
+                      <div className="w-full sm:w-56 aspect-[16/9] bg-[#1a1a1a] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative group hover:border-[#00BFFF] transition-all cursor-pointer">
+                        {horizontalThumbnailPreview || form.horizontalThumbnail ? (
+                          <>
+                            <img
+                              src={horizontalThumbnailPreview || form.horizontalThumbnail}
+                              alt="Horizontal thumbnail preview"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setForm({ ...form, horizontalThumbnail: '' });
+                                setHorizontalThumbnailFile(null);
+                                setHorizontalThumbnailPreview('');
+                              }}
+                              className="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors"
+                            >
+                              <X size={14} />
+                            </button>
+                          </>
+                        ) : (
+                          <div className="text-center p-3">
+                            <Upload className="w-6 h-6 text-gray-500 mx-auto mb-1.5 group-hover:text-[#00BFFF] transition-colors" />
+                            <p className="text-[9px] text-gray-400 font-bold tracking-widest uppercase">Upload Horizontal Banner</p>
+                            <p className="text-[8px] text-gray-600 mt-0.5">16:9 Widescreen</p>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setHorizontalThumbnailFile(file);
+                              setHorizontalThumbnailPreview(URL.createObjectURL(file));
+                              setForm({ ...form, horizontalThumbnail: 'has-file' });
+                            }
+                          }}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                      </div>
                     </div>
-                    <div className="flex-1 space-y-2">
-                      <p className="text-xs text-gray-400 leading-relaxed font-medium">
-                        Upload a premium poster image. Auditions with photos get significantly higher engagement and applications.
-                      </p>
-                      <p className="text-[10px] text-[#00BFFF] font-bold tracking-widest uppercase">Aspect Ratio: 16:9 Preferred</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                      Vertical Poster Thumbnail (Portrait)
+                    </label>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Shown on Home Page & casting carousels.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 items-start">
+                      <div className="w-32 aspect-[9/14] bg-[#1a1a1a] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative group hover:border-[#00BFFF] transition-all cursor-pointer">
+                        {thumbnailPreview || form.thumbnail ? (
+                          <>
+                            <img
+                              src={thumbnailPreview || form.thumbnail}
+                              alt="Poster preview"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setForm({ ...form, thumbnail: '' });
+                                setThumbnailFile(null);
+                                setThumbnailPreview('');
+                              }}
+                              className="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors"
+                            >
+                              <X size={14} />
+                            </button>
+                          </>
+                        ) : (
+                          <div className="text-center p-3">
+                            <Upload className="w-6 h-6 text-gray-500 mx-auto mb-1.5 group-hover:text-[#00BFFF] transition-colors" />
+                            <p className="text-[9px] text-gray-400 font-bold tracking-widest uppercase">Upload Poster</p>
+                            <p className="text-[8px] text-gray-600 mt-0.5">Tall Portrait</p>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setThumbnailFile(file);
+                              setThumbnailPreview(URL.createObjectURL(file));
+                              setForm({ ...form, thumbnail: 'has-file' });
+                            }
+                          }}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
