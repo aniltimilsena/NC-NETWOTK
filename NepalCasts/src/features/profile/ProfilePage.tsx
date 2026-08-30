@@ -815,11 +815,11 @@ export default function ProfilePage({
               />
             </section>
 
-            {/* 3. About Section */}
+            {/* 3. Bio Section */}
             <section className="text-left space-y-2.5 pt-1">
               <div className="flex items-center justify-between">
                 <h3 className="font-apple font-bold text-lg sm:text-xl text-white tracking-tight">
-                  About
+                  Bio
                 </h3>
                 {effectiveIsOwn && (
                   <button
@@ -828,7 +828,7 @@ export default function ProfilePage({
                       setShowAboutModal(true);
                     }}
                     className="text-cyan-400 hover:text-cyan-300 transition-colors p-1 cursor-pointer"
-                    title="Edit About"
+                    title="Edit Bio"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
