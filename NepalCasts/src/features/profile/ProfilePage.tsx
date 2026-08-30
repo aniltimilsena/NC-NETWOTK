@@ -789,14 +789,14 @@ export default function ProfilePage({
               hideTopNav={true}
             />
 
+            {/* Action Buttons (Immediately visible at top on mobile and desktop) */}
+            <div className="w-full pt-1">
+              {renderActionButtons()}
+            </div>
+
             {/* Desktop Attributes & Contacts */}
             <div className="hidden lg:block">
               {renderAttributesCard()}
-            </div>
-
-            {/* Desktop Action Buttons */}
-            <div className="hidden lg:block pt-2">
-              {renderActionButtons()}
             </div>
           </div>
 
