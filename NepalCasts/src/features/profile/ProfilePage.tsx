@@ -503,20 +503,20 @@ export default function ProfilePage({
   };
 
   const renderAttributesCard = () => (
-    <div className="bg-[#161616] border border-white/5 rounded-2xl p-4 sm:p-5 divide-y divide-white/10 shadow-md">
-      <div className="pb-3 flex items-center justify-between">
-        <h4 className="font-apple font-bold text-sm sm:text-base text-white tracking-tight">
+    <div className="bg-[#161616] border border-white/5 rounded-2xl p-4 sm:p-5 shadow-md space-y-2 text-center">
+      <div className="pb-1.5 flex items-center justify-center text-center">
+        <h4 className="font-apple font-bold text-sm sm:text-base text-white tracking-tight text-center">
           Physical Specs & Contact
         </h4>
       </div>
 
-      {/* Height Row */}
-      <div className="py-3 flex items-center justify-between text-xs sm:text-sm font-apple">
-        <div className="flex items-center gap-2.5 text-neutral-300">
-          <Ruler className="w-4 h-4 text-white" />
-          <span className="font-medium text-neutral-200">Height</span>
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="divide-y divide-white/10">
+        {/* Height Row */}
+        <div className="py-2.5 flex items-center justify-center gap-2.5 text-xs sm:text-sm font-apple">
+          <div className="flex items-center gap-1.5 text-neutral-300">
+            <Ruler className="w-4 h-4 text-white" />
+            <span className="font-medium text-neutral-300">Height:</span>
+          </div>
           <span className={height ? 'text-white font-semibold' : 'text-neutral-500'}>
             {height ? height : 'Not added'}
           </span>
@@ -529,21 +529,19 @@ export default function ProfilePage({
                 setEmailInput(profile.email || '');
                 setShowAttributesModal(true);
               }}
-              className="text-white/70 hover:text-white transition-colors cursor-pointer"
+              className="text-white/70 hover:text-white transition-colors cursor-pointer ml-1"
             >
               {height ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
             </button>
           )}
         </div>
-      </div>
 
-      {/* Weight Row */}
-      <div className="py-3 flex items-center justify-between text-xs sm:text-sm font-apple">
-        <div className="flex items-center gap-2.5 text-neutral-300">
-          <Scale className="w-4 h-4 text-white" />
-          <span className="font-medium text-neutral-200">Weight</span>
-        </div>
-        <div className="flex items-center gap-2">
+        {/* Weight Row */}
+        <div className="py-2.5 flex items-center justify-center gap-2.5 text-xs sm:text-sm font-apple">
+          <div className="flex items-center gap-1.5 text-neutral-300">
+            <Scale className="w-4 h-4 text-white" />
+            <span className="font-medium text-neutral-300">Weight:</span>
+          </div>
           <span className={weight ? 'text-white font-semibold' : 'text-neutral-500'}>
             {weight ? weight : 'Not added'}
           </span>
@@ -556,23 +554,21 @@ export default function ProfilePage({
                 setEmailInput(profile.email || '');
                 setShowAttributesModal(true);
               }}
-              className="text-white/70 hover:text-white transition-colors cursor-pointer"
+              className="text-white/70 hover:text-white transition-colors cursor-pointer ml-1"
             >
               {weight ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
             </button>
           )}
         </div>
-      </div>
 
-      {/* Contacts Row */}
-      <div className="py-3 flex items-center justify-between text-xs sm:text-sm font-apple">
-        <div className="flex items-center gap-2.5 text-neutral-300 shrink-0">
-          <Phone className="w-4 h-4 text-white" />
-          <span className="font-medium text-neutral-200">Contacts</span>
-        </div>
-        <div className="flex items-center gap-2 text-right">
+        {/* Contacts Row */}
+        <div className="py-2.5 flex items-center justify-center gap-2.5 text-xs sm:text-sm font-apple flex-wrap">
+          <div className="flex items-center gap-1.5 text-neutral-300">
+            <Phone className="w-4 h-4 text-white" />
+            <span className="font-medium text-neutral-300">Contacts:</span>
+          </div>
           {contactPhone || contactEmail ? (
-            <div className="flex items-center gap-3 text-neutral-200 font-medium text-xs sm:text-sm flex-wrap justify-end">
+            <div className="flex items-center gap-3 text-neutral-200 font-medium text-xs sm:text-sm flex-wrap justify-center">
               {contactPhone && (
                 <div className="flex items-center gap-1.5">
                   <Phone className="w-3 h-3 text-white/80" />
