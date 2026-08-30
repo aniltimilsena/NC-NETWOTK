@@ -802,20 +802,7 @@ export default function ProfilePage({
 
           {/* Right Column (Portfolio, Bio, Media, Experience, Skills) */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-            {/* 2. Media Section */}
-            <section className="text-left pt-1">
-              <ProfileMedia
-                profile={profile}
-                isOwnProfile={effectiveIsOwn}
-                onUploadMedia={handleUploadMedia}
-                onDeleteMedia={handleDeleteMedia}
-                onUploadIntroVideo={handleUploadIntroVideo}
-                onDeleteIntroVideo={handleDeleteIntroVideo}
-                onNavigate={() => setShowMediaModal(true)}
-              />
-            </section>
-
-            {/* 3. Bio Section */}
+            {/* 2. Bio Section */}
             <section className="text-left space-y-2.5 pt-1">
               <div className="flex items-center justify-between">
                 <h3 className="font-apple font-bold text-lg sm:text-xl text-white tracking-tight">
@@ -869,6 +856,19 @@ export default function ProfilePage({
                   </div>
                 )}
               </div>
+            </section>
+
+            {/* 3. Media Section */}
+            <section className="text-left pt-1">
+              <ProfileMedia
+                profile={profile}
+                isOwnProfile={effectiveIsOwn}
+                onUploadMedia={handleUploadMedia}
+                onDeleteMedia={handleDeleteMedia}
+                onUploadIntroVideo={handleUploadIntroVideo}
+                onDeleteIntroVideo={handleDeleteIntroVideo}
+                onNavigate={() => setShowMediaModal(true)}
+              />
             </section>
 
             {/* Attributes Box (mobile only) */}
