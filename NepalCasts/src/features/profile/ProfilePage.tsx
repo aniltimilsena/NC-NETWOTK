@@ -456,8 +456,19 @@ export default function ProfilePage({
   }
 
   const bio = profile.bio || '';
-  const height = profile.height || (profile as any)?.heightInCm ? `${(profile as any).heightInCm} cm` : null;
-  const weight = profile.weight || (profile as any)?.weightInKg ? `${(profile as any).weightInKg} kg` : null;
+  
+  const formatPhysicalSpec = (val: any, unit: string) => {
+    if (val === null || val === undefined) return null;
+    const str = String(val).trim();
+    if (!str || str.toLowerCase() === 'undefined' || str.toLowerCase() === 'null') return null;
+    if (str.toLowerCase().includes(unit.toLowerCase()) || str.includes("'") || str.includes('"')) {
+      return str;
+    }
+    return `${str} ${unit}`;
+  };
+
+  const height = formatPhysicalSpec(profile.height || (profile as any)?.heightInCm, 'cm');
+  const weight = formatPhysicalSpec(profile.weight || (profile as any)?.weightInKg, 'kg');
   const contactPhone = profile.phone || (profile as any)?.phoneNumber || null;
   const contactEmail = profile.email || (profile as any)?.contactEmail || null;
 
@@ -476,20 +487,37 @@ export default function ProfilePage({
 
   const effectiveIsOwn = isRealOwn && !isPreviewMode;
 
+  const renderFormattedBio = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <strong key={i} className="font-apple font-bold text-white">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      return part;
+    });
+  };
+
   const renderAttributesCard = () => (
-    <div className="bg-[#181818] rounded-xl p-4 divide-y divide-white/5 shadow-sm">
-      <div className="pb-2.5 flex items-center justify-between text-xs sm:text-sm">
-        <h4 className="font-bold text-white tracking-wide">Physical Specs & Contact</h4>
+    <div className="bg-[#161616] border border-white/5 rounded-2xl p-4 sm:p-5 divide-y divide-white/10 shadow-md">
+      <div className="pb-3 flex items-center justify-between">
+        <h4 className="font-apple font-bold text-sm sm:text-base text-white tracking-tight">
+          Physical Specs & Contact
+        </h4>
       </div>
 
       {/* Height Row */}
-      <div className="py-2.5 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2.5 text-gray-300">
-          <Ruler className="w-3.5 h-3.5 text-gray-400" />
-          <span className="font-semibold text-white">Height</span>
+      <div className="py-3 flex items-center justify-between text-xs sm:text-sm font-apple">
+        <div className="flex items-center gap-2.5 text-neutral-300">
+          <Ruler className="w-4 h-4 text-cyan-400" />
+          <span className="font-medium text-neutral-200">Height</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className={height ? 'text-gray-200 font-medium' : 'text-gray-500'}>
+          <span className={height ? 'text-white font-semibold' : 'text-neutral-500'}>
             {height ? height : 'Not added'}
           </span>
           {effectiveIsOwn && (
@@ -501,22 +529,22 @@ export default function ProfilePage({
                 setEmailInput(profile.email || '');
                 setShowAttributesModal(true);
               }}
-              className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
             >
-              {height ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+              {height ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
             </button>
           )}
         </div>
       </div>
 
       {/* Weight Row */}
-      <div className="py-2.5 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2.5 text-gray-300">
-          <Scale className="w-3.5 h-3.5 text-gray-400" />
-          <span className="font-semibold text-white">Weight</span>
+      <div className="py-3 flex items-center justify-between text-xs sm:text-sm font-apple">
+        <div className="flex items-center gap-2.5 text-neutral-300">
+          <Scale className="w-4 h-4 text-cyan-400" />
+          <span className="font-medium text-neutral-200">Weight</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className={weight ? 'text-gray-200 font-medium' : 'text-gray-500'}>
+          <span className={weight ? 'text-white font-semibold' : 'text-neutral-500'}>
             {weight ? weight : 'Not added'}
           </span>
           {effectiveIsOwn && (
@@ -528,38 +556,38 @@ export default function ProfilePage({
                 setEmailInput(profile.email || '');
                 setShowAttributesModal(true);
               }}
-              className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
             >
-              {weight ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+              {weight ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
             </button>
           )}
         </div>
       </div>
 
       {/* Contacts Row */}
-      <div className="py-2.5 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2.5 text-gray-300 shrink-0">
-          <Phone className="w-3.5 h-3.5 text-gray-400" />
-          <span className="font-semibold text-white">Contacts</span>
+      <div className="py-3 flex items-center justify-between text-xs sm:text-sm font-apple">
+        <div className="flex items-center gap-2.5 text-neutral-300 shrink-0">
+          <Phone className="w-4 h-4 text-cyan-400" />
+          <span className="font-medium text-neutral-200">Contacts</span>
         </div>
         <div className="flex items-center gap-2 text-right">
           {contactPhone || contactEmail ? (
-            <div className="flex items-center gap-2.5 text-gray-300 font-medium text-[11px] flex-wrap justify-end">
+            <div className="flex items-center gap-3 text-neutral-200 font-medium text-xs sm:text-sm flex-wrap justify-end">
               {contactPhone && (
                 <div className="flex items-center gap-1.5">
-                  <Phone className="w-2.5 h-2.5 text-gray-500" />
+                  <Phone className="w-3 h-3 text-neutral-400" />
                   <span>{contactPhone}</span>
                 </div>
               )}
               {contactEmail && (
                 <div className="flex items-center gap-1.5">
-                  <Mail className="w-2.5 h-2.5 text-gray-500" />
+                  <Mail className="w-3 h-3 text-neutral-400" />
                   <span>{contactEmail}</span>
                 </div>
               )}
             </div>
           ) : (
-            <span className="text-gray-500">Not added</span>
+            <span className="text-neutral-500">Not added</span>
           )}
           {effectiveIsOwn && (
             <button
@@ -570,9 +598,9 @@ export default function ProfilePage({
                 setEmailInput(profile.email || '');
                 setShowAttributesModal(true);
               }}
-              className="text-gray-400 hover:text-white transition-colors cursor-pointer ml-1"
+              className="text-neutral-400 hover:text-white transition-colors cursor-pointer ml-1"
             >
-              {contactPhone || contactEmail ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+              {contactPhone || contactEmail ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
             </button>
           )}
         </div>
@@ -593,48 +621,54 @@ export default function ProfilePage({
           </button>
           <button
             onClick={() => onNavigate('/settings/profile')}
-            className="flex-1 py-3.5 px-5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/30"
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
             <Pencil className="w-4 h-4" />
-            <span>Update Profile</span>
+            <span>Edit Profile</span>
           </button>
         </div>
-      ) : isRealOwn ? (
+      ) : effectiveIsOwn ? (
         <div className="flex items-center gap-3">
           <button
-            onClick={() => onNavigate('/settings/profile')}
-            className="flex-1 py-3.5 px-5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#0088CC]/30"
-          >
-            <Pencil className="w-4 h-4" />
-            <span>Update Profile</span>
-          </button>
-          <button
-            onClick={() => {
-              setIsPreviewMode(true);
-              showAlert('Preview Mode Active', 'info', 'Viewing your profile as seen by casting directors.');
-            }}
+            onClick={() => setIsPreviewMode(true)}
             className="flex-1 py-3.5 px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
-            <Eye className="w-4 h-4" />
-            <span>Preview Profile</span>
+            <Eye className="w-4 h-4 text-cyan-400" />
+            <span>Preview Mode</span>
+          </button>
+          <button
+            onClick={() => onNavigate('/settings/profile')}
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+          >
+            <Pencil className="w-4 h-4" />
+            <span>Edit Profile</span>
           </button>
         </div>
       ) : (
         <div className="flex items-center gap-3">
           <button
             onClick={handleFollowToggle}
-            className={`flex-1 py-3.5 px-6 rounded-xl font-bold text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg ${
+            className={`flex-1 py-3.5 px-5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md ${
               isFollowing
-                ? 'bg-[#1f1f1f] border border-white/10 text-white hover:bg-[#2a2a2a]'
-                : 'bg-[#0088CC] hover:bg-[#0077B3] text-white shadow-[#0088CC]/30'
+                ? 'bg-[#222] hover:bg-[#2a2a2a] text-white border border-white/15'
+                : 'bg-[#0088CC] hover:bg-[#0077B3] text-white shadow-lg'
             }`}
           >
-            {isFollowing ? <Check className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-            <span>{isFollowing ? 'Following' : 'Follow'}</span>
+            {isFollowing ? (
+              <>
+                <Check className="w-4 h-4 text-green-400" />
+                <span>Following</span>
+              </>
+            ) : (
+              <>
+                <UserPlus className="w-4 h-4" />
+                <span>Follow</span>
+              </>
+            )}
           </button>
           <button
-            onClick={() => onNavigate('messages', profile.uid || (profile as any).id)}
-            className="flex-1 py-3.5 px-6 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-sm transition-all active:scale-98 cursor-pointer shadow-md flex items-center justify-center gap-2"
+            onClick={handleDirectMessage}
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
             <MessageSquare className="w-4 h-4 text-[#0088CC]" />
             <span>Message</span>
@@ -716,7 +750,7 @@ export default function ProfilePage({
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/40 pointer-events-none" />
 
         {/* Floating Top Navigation: Back Button & Share Button */}
-        <div className="absolute top-3 sm:top-5 left-3 sm:left-6 lg:left-10 right-3 sm:right-6 lg:right-10 flex items-center justify-between z-10 pointer-events-auto max-w-[1600px] mx-auto">
+        <div className="absolute top-3 sm:top-5 left-3 sm:left-6 lg:left-10 right-3 sm:right-6 lg:left-10 flex items-center justify-between z-10 pointer-events-auto max-w-[1600px] mx-auto">
           <button
             onClick={() => onNavigate('back')}
             className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0 shadow-lg"
@@ -772,9 +806,9 @@ export default function ProfilePage({
           {/* Right Column (Portfolio, Bio, Media, Experience, Skills) */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-6">
             {/* 2. About Section */}
-            <section className="text-left space-y-2 pt-1">
+            <section className="text-left space-y-2.5 pt-1">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
+                <h3 className="font-apple font-bold text-base sm:text-lg text-white tracking-tight">
                   About
                 </h3>
                 {effectiveIsOwn && (
@@ -783,7 +817,7 @@ export default function ProfilePage({
                       setBioInput(profile.bio || '');
                       setShowAboutModal(true);
                     }}
-                    className="text-[#0088CC] hover:text-[#38c9ff] transition-colors p-1 cursor-pointer"
+                    className="text-cyan-400 hover:text-cyan-300 transition-colors p-1 cursor-pointer"
                     title="Edit About"
                   >
                     <Pencil className="w-3.5 h-3.5" />
@@ -791,7 +825,7 @@ export default function ProfilePage({
                 )}
               </div>
 
-              <div className="bg-[#181818] rounded-xl p-4 shadow-sm">
+              <div className="bg-[#161616] border border-white/5 rounded-2xl p-4 sm:p-5 shadow-sm">
                 <p
                   onClick={() => {
                     if (effectiveIsOwn) {
@@ -799,10 +833,10 @@ export default function ProfilePage({
                       setShowAboutModal(true);
                     }
                   }}
-                  className={`text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-line ${effectiveIsOwn ? 'cursor-pointer hover:text-white' : ''}`}
+                  className={`font-apple text-sm sm:text-[15px] text-neutral-200 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal ${effectiveIsOwn ? 'cursor-pointer hover:text-white' : ''}`}
                 >
-                  {bio ? bio : (
-                    <span className="text-gray-500 italic">
+                  {bio ? renderFormattedBio(bio) : (
+                    <span className="text-neutral-500 italic">
                       {effectiveIsOwn ? 'Add a short bio about yourself...' : 'No bio provided yet.'}
                     </span>
                   )}
@@ -816,7 +850,7 @@ export default function ProfilePage({
             </div>
 
             {/* 3. Media Section */}
-            <section className="text-left space-y-1.5 pt-1">
+            <section className="text-left pt-1">
               <ProfileMedia
                 profile={profile}
                 isOwnProfile={effectiveIsOwn}
@@ -829,7 +863,7 @@ export default function ProfilePage({
             </section>
 
             {/* 4. Experience Section */}
-            <section className="text-left space-y-1.5 pt-1">
+            <section className="text-left pt-1">
               <ProfileExperience
                 profile={profile}
                 isOwnProfile={effectiveIsOwn}
@@ -841,7 +875,7 @@ export default function ProfilePage({
             {/* 5. Skills Section */}
             <section className="text-left space-y-2 pt-1">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
+                <h3 className="font-apple font-bold text-base sm:text-lg text-white tracking-tight">
                   Skills
                 </h3>
                 {effectiveIsOwn && (
@@ -850,9 +884,9 @@ export default function ProfilePage({
                       setEditingSkills(skillsList);
                       setShowSkillsModal(true);
                     }}
-                    className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer"
+                    className="font-apple text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
                   >
-                    {skillsList.length > 0 ? 'Edit' : '+ Add Skills'}
+                    + Edit Skills
                   </button>
                 )}
               </div>

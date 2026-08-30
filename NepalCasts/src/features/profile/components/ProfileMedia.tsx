@@ -117,8 +117,8 @@ export default function ProfileMedia({
       )}
 
       {/* Media Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
+      <div className="flex items-center justify-between pb-1">
+        <h2 className="font-apple text-base sm:text-lg font-bold text-white tracking-tight">
           Media
         </h2>
 
@@ -133,7 +133,7 @@ export default function ProfileMedia({
               }
             }}
             disabled={isUploadingVideo || isUploadingPhotos}
-            className="text-xs font-semibold text-[#0088CC] hover:text-[#38c9ff] transition-colors cursor-pointer flex items-center gap-1.5"
+            className="font-apple text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer flex items-center gap-1.5"
           >
             {isUploadingVideo || isUploadingPhotos ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />

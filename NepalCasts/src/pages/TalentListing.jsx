@@ -180,7 +180,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         try {
             if (isFollowing) {
                 await deleteDoc(followDocRef);
-                await deleteDoc(doc(db, "notifications", notifId)).catch(() => {});
+                await deleteDoc(doc(db, "notifications", notifId)).catch(() => { });
             }
             else {
                 await setDoc(followDocRef, {
@@ -297,7 +297,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                                 initial={{ opacity: 0, y: 8 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: idx * 0.03 }}
-                                                whileHover={{ scale: 1.02 }}
+                                                whileHover={{ scale: 1.03, y: -3 }}
                                                 whileTap={{ scale: 0.98 }}
                                                 onClick={() => {
                                                     setSelectedFilters(prev => ({ ...prev, category: cat.filter }));
@@ -309,19 +309,18 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                                         navigate(`/talents/${cat.filter}`);
                                                     }
                                                 }}
-                                                style={{ backgroundColor: cat.bgColor }}
-                                                className="rounded-2xl p-5 sm:p-8 lg:p-10 aspect-square w-full h-full flex flex-col items-center justify-between text-center cursor-pointer shadow-xl transition-transform border border-black/5"
+                                                className="rounded-3xl p-4 sm:p-6 lg:p-8 aspect-square w-full h-full flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-[#0a0a0a] hover:bg-[#141414] shadow-xl group border-0 gap-2 sm:gap-3"
                                             >
-                                                <div className="flex-1 flex items-center justify-center min-h-0 w-full pt-2">
-                                                    <CategoryCardIcon type={cat.iconType} className="w-16 h-16 sm:w-24 sm:h-24 lg:w-28 lg:h-28 text-black fill-current" />
-                                                </div>
+                                                <CategoryCardIcon
+                                                    type={cat.iconType}
+                                                    color="#ffffff"
+                                                    className="w-18 h-18 sm:w-24 sm:h-24 lg:w-28 lg:h-28 fill-current text-white transition-transform duration-300 group-hover:scale-105"
+                                                />
                                                 <div className="w-full flex flex-col items-center justify-center shrink-0">
-                                                    <div className="min-h-[3rem] sm:min-h-[3.75rem] flex items-center justify-center w-full">
-                                                        <span className="text-black font-black text-base sm:text-2xl lg:text-3xl leading-tight whitespace-pre-line text-center">
-                                                            {cat.label}
-                                                        </span>
-                                                    </div>
-                                                    <span className="text-black/75 font-bold text-xs sm:text-base lg:text-lg mt-1">
+                                                    <span className="font-apple text-white font-bold text-base sm:text-2xl lg:text-3xl leading-tight whitespace-pre-line text-center tracking-tight">
+                                                        {cat.label}
+                                                    </span>
+                                                    <span className="font-apple text-neutral-400 font-normal text-xs sm:text-base lg:text-lg mt-1 tracking-normal">
                                                         ({count} {count === 1 ? 'talent' : 'talents'})
                                                     </span>
                                                 </div>
@@ -458,11 +457,10 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                                 <button
                                                     type="button"
                                                     onClick={(e) => handleToggleFollow(e, talent.id)}
-                                                    className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 border cursor-pointer ${
-                                                        isFollowing
+                                                    className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 border cursor-pointer ${isFollowing
                                                             ? 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
                                                             : 'bg-[#18181b] border-white/20 text-white hover:bg-white/15 hover:border-white/30 shadow-sm'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {isFollowing ? 'Following' : 'Follow'}
                                                 </button>
