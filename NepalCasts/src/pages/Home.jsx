@@ -270,6 +270,45 @@ export default function Home({ onNavigate, user }) {
     .filter(c => c.status !== 'closed' && (c.title || c.project || c.roleName))
     .slice(0, 3);
 
+  // Continuous Typewriter Effect for Hero Slogan
+  const TYPEWRITER_PHRASES = [
+    'Multiple Talents In One Place',
+    'Actors, Models & Creators',
+    'Auditions & Casting Calls',
+    'Nepal’s Creative Network',
+  ];
+  const [typewriterText, setTypewriterText] = useState('');
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentPhrase = TYPEWRITER_PHRASES[phraseIdx % TYPEWRITER_PHRASES.length];
+    let timer;
+
+    if (!isDeleting) {
+      if (typewriterText.length < currentPhrase.length) {
+        timer = setTimeout(() => {
+          setTypewriterText(currentPhrase.slice(0, typewriterText.length + 1));
+        }, 70);
+      } else {
+        timer = setTimeout(() => {
+          setIsDeleting(true);
+        }, 1800);
+      }
+    } else {
+      if (typewriterText.length > 0) {
+        timer = setTimeout(() => {
+          setTypewriterText(currentPhrase.slice(0, typewriterText.length - 1));
+        }, 35);
+      } else {
+        setIsDeleting(false);
+        setPhraseIdx(prev => (prev + 1) % TYPEWRITER_PHRASES.length);
+      }
+    }
+
+    return () => clearTimeout(timer);
+  }, [typewriterText, isDeleting, phraseIdx]);
+
   // Spotlight user rotation for overlaid rectangular portrait card
   const [spotlightProfile, setSpotlightProfile] = useState(null);
   const [spotlightImageError, setSpotlightImageError] = useState(false);
@@ -367,8 +406,19 @@ export default function Home({ onNavigate, user }) {
               <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-black/25 to-transparent pointer-events-none" />
             </div>
 
-            {/* Subtle Slide Indicators */}
-            <div className="absolute top-2.5 right-3 sm:top-3 sm:right-5 z-20 flex items-center gap-1.5 pointer-events-none">
+            {/* Top Right Slogan in One Line with Typewriter Font & Live Typing Animation */}
+            <div className="absolute top-2.5 sm:top-3.5 right-3 sm:right-5 z-20 pointer-events-none flex items-baseline justify-end gap-1.5 sm:gap-2">
+              <span className="font-script text-xl sm:text-2xl lg:text-3xl text-cyan-400 font-normal drop-shadow-[0_2px_8px_rgba(34,211,238,0.7)] leading-none shrink-0">
+                Discover
+              </span>
+              <h1 className="font-mono font-bold text-xs sm:text-sm md:text-base lg:text-lg text-white whitespace-nowrap tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] flex items-center">
+                <span>{typewriterText}</span>
+                <span className="inline-block w-1.5 sm:w-2 h-3.5 sm:h-4 bg-cyan-400 ml-1 animate-pulse" />
+              </h1>
+            </div>
+
+            {/* Subtle Slide Indicators at Bottom Right */}
+            <div className="absolute bottom-2.5 right-3 sm:bottom-3.5 sm:right-5 z-20 flex items-center gap-1.5 pointer-events-none">
               {HERO_BACKGROUND_PHOTOS.map((_, idx) => (
                 <span
                   key={idx}
@@ -380,20 +430,9 @@ export default function Home({ onNavigate, user }) {
               ))}
             </div>
 
-            {/* Right Side Middle Slogan: Cursive Discover + Apple Bold Typography */}
-            <div className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-6 lg:right-10 z-20 pointer-events-none text-right max-w-[55%] sm:max-w-[50%]">
-              <span className="font-script text-3xl sm:text-5xl lg:text-6xl text-cyan-400 font-normal pr-1 inline-block drop-shadow-[0_2px_12px_rgba(34,211,238,0.6)] leading-none tracking-normal">
-                Discover
-              </span>
-              <h1 className="font-apple font-bold text-2xl sm:text-3xl lg:text-4xl xl:text-[42px] text-white leading-[1.05] tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
-                Multiple Talents<br />
-                In One Place
-              </h1>
-            </div>
-
             {/* Overlaid Inset Spotlight Card (Bottom Left, Inverted Rounded Corner Profile) */}
             {currentSpotlightUser && (
-              <div className="absolute bottom-2.5 sm:bottom-3.5 left-3 sm:left-5 z-20 flex items-end">
+              <div className="absolute bottom-2 sm:bottom-3 left-1.5 sm:left-2.5 z-20 flex items-end">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentSpotlightUser?.id || currentSpotlightIdx}
@@ -429,8 +468,6 @@ export default function Home({ onNavigate, user }) {
                           </span>
                         </div>
                       )}
-                      {/* Blue Accent Bar Under Photo */}
-                      <div className="w-full h-1 bg-[#1d61f2] shrink-0" />
                     </div>
 
                     {/* Talent Meta beside photo */}
@@ -457,7 +494,8 @@ export default function Home({ onNavigate, user }) {
             {/* ================= FEATURED TALENTS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
-                <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
+                <span className="relative inline-flex items-center pl-3 pr-3.5 py-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
+                  <span className="absolute inset-y-0 left-0 w-1/2 border-l-2 border-b-2 border-[#0071e3] rounded-bl-xl pointer-events-none" />
                   Featured talents
                 </span>
                 <button
@@ -505,9 +543,10 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= TALENTS BY CATEGORY SECTION ================= */}
-            <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+            <section className="bg-[#141416] rounded-lg border border-white/[0.08] p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
-                <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
+                <span className="relative inline-flex items-center pl-3 pr-3.5 py-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
+                  <span className="absolute inset-y-0 left-0 w-1/2 border-l-2 border-b-2 border-[#0071e3] rounded-bl-xl pointer-events-none" />
                   Talents by category
                 </span>
                 <button
@@ -553,8 +592,9 @@ export default function Home({ onNavigate, user }) {
             {/* ================= CASTING CALLS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
-                <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
-                  Casting calls
+                <span className="relative inline-flex items-center pl-3 pr-3.5 py-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
+                  <span className="absolute inset-y-0 left-0 w-1/2 border-l-2 border-b-2 border-[#0071e3] rounded-bl-xl pointer-events-none" />
+                  Hiring now
                 </span>
                 <button
                   onClick={() => onNavigate('casting')}
@@ -565,24 +605,24 @@ export default function Home({ onNavigate, user }) {
                 </button>
               </div>
 
-              {/* Horizontal Scroll Carousel: Vertical Rectangular Cards in One Row */}
+              {/* Horizontal Scroll Carousel: Borderless Poster Thumbnails with Call Details */}
               <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pt-0.5 pb-1.5 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
                 {activeCastingCalls.length > 0 ? (
-                  activeCastingCalls.slice(0, 6).map((call) => {
+                  activeCastingCalls.slice(0, 8).map((call) => {
                     const thumbnail = getCastingThumbnail(call);
                     return (
                       <div
                         key={call.id}
                         onClick={() => onNavigate('casting-detail', call.id)}
-                        className="shrink-0 w-[155px] sm:w-[190px] flex flex-col p-2.5 sm:p-3 bg-[#141416] hover:bg-[#1c1c20] transition-all rounded-2xl border border-white/5 cursor-pointer group shadow-md"
+                        className="flex flex-col shrink-0 w-36 sm:w-44 md:w-48 cursor-pointer group"
                       >
-                        {/* Top Poster / Thumbnail (Long Vertical Aspect Ratio) */}
-                        <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden bg-[#18181c] border border-white/10 shrink-0 flex items-center justify-center shadow-inner mb-2.5">
+                        {/* Borderless Long Poster Thumbnail */}
+                        <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden bg-black shadow-md group-hover:scale-[1.02] transition-transform duration-300">
                           {thumbnail ? (
                             <img
                               src={thumbnail}
                               alt={call.title || 'Casting'}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-xl"
+                              className="w-full h-full object-cover rounded-xl"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                                 const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
@@ -599,32 +639,26 @@ export default function Home({ onNavigate, user }) {
                               <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
                             </svg>
                           </div>
-                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-sm border border-white/10 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm truncate max-w-[85%]">
+                          {/* Category badge on top left */}
+                          <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-black/80 backdrop-blur-sm text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-white shadow-sm truncate max-w-[85%]">
                             {call.type || call.category || 'Audition'}
                           </div>
+                          {/* Deadline on bottom right */}
+                          {call.deadline && (
+                            <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] sm:text-[10px] font-medium text-amber-400 shadow-sm">
+                              Due {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                            </div>
+                          )}
                         </div>
 
-                        {/* Bottom Info */}
-                        <div className="flex-1 min-w-0 flex flex-col justify-between space-y-1.5 text-left">
-                          <div>
-                            <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
-                              {call.title || call.project || 'Untitled Casting Call'}
-                            </h4>
-                            <p className="text-[11px] sm:text-xs text-gray-400 truncate mt-0.5">
-                              {call.company || call.director || 'Production'} • {call.location || 'Nepal'}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center justify-between pt-1 border-t border-white/5 text-xs">
-                            {call.deadline ? (
-                              <span className="text-[10px] sm:text-[11px] font-medium text-amber-400 truncate">
-                                Due {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                              </span>
-                            ) : <span />}
-                            <span className="shrink-0 font-bold text-xs text-[#1d61f2] group-hover:text-cyan-300 transition-colors flex items-center gap-0.5">
-                              Apply &gt;
-                            </span>
-                          </div>
+                        {/* Details under thumbnail */}
+                        <div className="mt-2 space-y-0.5 text-left px-0.5">
+                          <p className="font-apple text-white font-bold text-xs sm:text-sm truncate w-full tracking-tight group-hover:text-cyan-300 transition-colors">
+                            {call.title || call.project || 'Untitled Casting Call'}
+                          </p>
+                          <p className="font-apple text-slate-400 font-normal text-[11px] sm:text-xs truncate w-full">
+                            {call.company || call.director || 'Production'} • {call.location || 'Nepal'}
+                          </p>
                         </div>
                       </div>
                     );
@@ -646,7 +680,8 @@ export default function Home({ onNavigate, user }) {
             {/* ================= NEW BORN TALENTS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
-                <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
+                <span className="relative inline-flex items-center pl-3 pr-3.5 py-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
+                  <span className="absolute inset-y-0 left-0 w-1/2 border-l-2 border-b-2 border-[#0071e3] rounded-bl-xl pointer-events-none" />
                   New born talents
                 </span>
                 <button
@@ -729,7 +764,8 @@ export default function Home({ onNavigate, user }) {
             {/* ================= TRENDING TALENTS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
-                <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
+                <span className="relative inline-flex items-center pl-3 pr-3.5 py-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
+                  <span className="absolute inset-y-0 left-0 w-1/2 border-l-2 border-b-2 border-[#0071e3] rounded-bl-xl pointer-events-none" />
                   Trending talents
                 </span>
                 <button
