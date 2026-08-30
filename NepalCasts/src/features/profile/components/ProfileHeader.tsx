@@ -95,21 +95,67 @@ export default function ProfileHeader({
 
   const getTalentAge = (p: any) => {
     if (!p) return null;
-    if (p.age) {
-      const parsed = parseInt(p.age, 10);
-      if (!isNaN(parsed) && parsed > 0 && parsed < 120) return parsed;
-    }
-    const rawDob = p.dob || p.dateOfBirth || p.birthDate || p.birthYear || p.birthday;
-    if (rawDob) {
-      if (typeof rawDob === 'number' && rawDob > 1900 && rawDob < new Date().getFullYear()) {
-        return new Date().getFullYear() - rawDob;
+    const directAge =
+      p.age ||
+      p.attributes?.age ||
+      p.specs?.age ||
+      p.physicalSpecs?.age ||
+      p.details?.age ||
+      p.personalDetails?.age ||
+      p.profile?.age;
+
+    if (directAge) {
+      if (typeof directAge === 'number' && directAge > 0 && directAge < 120) return directAge;
+      const match = String(directAge).match(/\d+/);
+      if (match) {
+        const parsed = parseInt(match[0], 10);
+        if (!isNaN(parsed) && parsed > 0 && parsed < 120) return parsed;
       }
-      const dob = new Date(rawDob);
-      if (!isNaN(dob.getTime())) {
+    }
+
+    const rawDob =
+      p.dob ||
+      p.dateOfBirth ||
+      p.birthDate ||
+      p.birth_date ||
+      p.birthdate ||
+      p.birthYear ||
+      p.birth_year ||
+      p.birthday ||
+      p.yearOfBirth ||
+      p.attributes?.dob ||
+      p.attributes?.dateOfBirth ||
+      p.attributes?.birthDate ||
+      p.specs?.dob ||
+      p.physicalSpecs?.dob ||
+      p.details?.dob;
+
+    if (rawDob) {
+      if (typeof rawDob === 'number') {
+        if (rawDob > 1900 && rawDob < new Date().getFullYear()) {
+          return new Date().getFullYear() - rawDob;
+        }
+        if (rawDob > 0 && rawDob < 120) {
+          return rawDob;
+        }
+      }
+
+      let dobDate: Date | null = null;
+      if (typeof rawDob?.toDate === 'function') {
+        dobDate = rawDob.toDate();
+      } else if (typeof rawDob?.toMillis === 'function') {
+        dobDate = new Date(rawDob.toMillis());
+      } else if (rawDob.seconds) {
+        dobDate = new Date(rawDob.seconds * 1000);
+      } else if (typeof rawDob === 'string' || typeof rawDob === 'number') {
+        dobDate = new Date(rawDob);
+      }
+
+      if (dobDate && !isNaN(dobDate.getTime())) {
         const today = new Date();
-        let age = today.getFullYear() - dob.getFullYear();
-        const m = today.getMonth() - dob.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        let age = today.getFullYear() - dobDate.getFullYear();
+        const m = today.getMonth() - dobDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
           age--;
         }
         if (age > 0 && age < 120) return age;
@@ -237,58 +283,64 @@ export default function ProfileHeader({
           </span>
         </div>
 
-        {/* Bio Card (Positioned directly between Model Role and Location/Age/Experience) */}
-        {(bio || isRealOwn) && (
-          <div className="w-full max-w-2xl bg-[#161616] border border-white/5 rounded-2xl p-4 sm:p-5 shadow-sm space-y-2 text-left my-0.5">
-            <div className="flex items-center justify-between">
-              <h3 className="font-apple font-bold text-xs sm:text-sm uppercase tracking-wider text-neutral-400">
-                Bio
-              </h3>
-              {isRealOwn && onEditBio && (
-                <button
-                  type="button"
-                  onClick={onEditBio}
-                  className="text-cyan-400 hover:text-cyan-300 transition-colors p-1 cursor-pointer"
-                  title="Edit Bio"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+        {/* Bio Text (Seamless text with guaranteed inline See more) */}
+        {(bio || isRealOwn) && (() => {
+          const isLongBio = Boolean(bio && (bio.length > 110 || bio.includes('\n')));
+          const bioToShow = isLongBio && !isBioExpanded ? bio!.slice(0, 110).trim() : bio;
 
-            <div
-              onClick={() => {
-                if (isRealOwn && !isBioExpanded && onEditBio) {
-                  onEditBio();
-                }
-              }}
-              className={`font-apple text-sm sm:text-base text-neutral-200 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal text-left ${
-                !isBioExpanded ? 'line-clamp-2' : ''
-              } ${isRealOwn ? 'cursor-pointer hover:text-white' : ''}`}
-            >
-              {bio ? renderFormattedBio(bio) : (
-                <span className="text-neutral-500 italic">
-                  {isRealOwn ? 'Add a short bio about yourself...' : 'No bio provided yet.'}
-                </span>
-              )}
-            </div>
-
-            {bio && (bio.length > 75 || bio.includes('\n')) && (
-              <div className="flex items-center justify-end text-right pt-0.5">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsBioExpanded(!isBioExpanded);
+          return (
+            <div className="w-full max-w-2xl px-0 my-0.5 text-left">
+              <div className="relative text-left w-full">
+                <p
+                  onClick={() => {
+                    if (isRealOwn && !isBioExpanded && onEditBio) {
+                      onEditBio();
+                    }
                   }}
-                  className="font-apple text-xs sm:text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer inline-flex items-center gap-1"
+                  className={`font-apple text-sm sm:text-base text-neutral-300 leading-tight sm:leading-tight whitespace-pre-line tracking-normal text-left ${
+                    isRealOwn ? 'cursor-pointer hover:text-white' : ''
+                  }`}
                 >
-                  {isBioExpanded ? 'See less' : 'See more'}
-                </button>
+                  {bioToShow ? (
+                    <>
+                      {renderFormattedBio(bioToShow)}
+                      {isLongBio && !isBioExpanded ? '... ' : ' '}
+                    </>
+                  ) : (
+                    <span className="text-neutral-500 italic text-xs sm:text-sm">
+                      {isRealOwn ? 'Add a short bio about yourself...' : ''}
+                    </span>
+                  )}
+                  {isLongBio && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsBioExpanded(!isBioExpanded);
+                      }}
+                      className="font-apple text-xs sm:text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer inline-flex items-center gap-0.5 align-baseline"
+                    >
+                      {isBioExpanded ? 'See less' : 'See more'}
+                    </button>
+                  )}
+                  {isRealOwn && onEditBio && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditBio();
+                      }}
+                      className="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition-colors ml-1.5 p-0.5 cursor-pointer align-middle"
+                      title="Edit Bio"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </p>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          );
+        })()}
 
         {/* 3 Meta Info Pills (Location, Age, Experience) */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-2xl pt-1">

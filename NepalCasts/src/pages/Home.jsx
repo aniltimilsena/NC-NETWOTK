@@ -89,21 +89,67 @@ export default function Home({ onNavigate, user }) {
 
   const getTalentAge = (talent) => {
     if (!talent) return null;
-    if (talent.age) {
-      const parsed = parseInt(talent.age, 10);
-      if (!isNaN(parsed) && parsed > 0 && parsed < 120) return parsed;
-    }
-    const rawDob = talent.dob || talent.dateOfBirth || talent.birthDate || talent.birthYear || talent.birthday;
-    if (rawDob) {
-      if (typeof rawDob === 'number' && rawDob > 1900 && rawDob < new Date().getFullYear()) {
-        return new Date().getFullYear() - rawDob;
+    const directAge =
+      talent.age ||
+      talent.attributes?.age ||
+      talent.specs?.age ||
+      talent.physicalSpecs?.age ||
+      talent.details?.age ||
+      talent.personalDetails?.age ||
+      talent.profile?.age;
+
+    if (directAge) {
+      if (typeof directAge === 'number' && directAge > 0 && directAge < 120) return directAge;
+      const match = String(directAge).match(/\d+/);
+      if (match) {
+        const parsed = parseInt(match[0], 10);
+        if (!isNaN(parsed) && parsed > 0 && parsed < 120) return parsed;
       }
-      const dob = new Date(rawDob);
-      if (!isNaN(dob.getTime())) {
+    }
+
+    const rawDob =
+      talent.dob ||
+      talent.dateOfBirth ||
+      talent.birthDate ||
+      talent.birth_date ||
+      talent.birthdate ||
+      talent.birthYear ||
+      talent.birth_year ||
+      talent.birthday ||
+      talent.yearOfBirth ||
+      talent.attributes?.dob ||
+      talent.attributes?.dateOfBirth ||
+      talent.attributes?.birthDate ||
+      talent.specs?.dob ||
+      talent.physicalSpecs?.dob ||
+      talent.details?.dob;
+
+    if (rawDob) {
+      if (typeof rawDob === 'number') {
+        if (rawDob > 1900 && rawDob < new Date().getFullYear()) {
+          return new Date().getFullYear() - rawDob;
+        }
+        if (rawDob > 0 && rawDob < 120) {
+          return rawDob;
+        }
+      }
+
+      let dobDate = null;
+      if (typeof rawDob?.toDate === 'function') {
+        dobDate = rawDob.toDate();
+      } else if (typeof rawDob?.toMillis === 'function') {
+        dobDate = new Date(rawDob.toMillis());
+      } else if (rawDob.seconds) {
+        dobDate = new Date(rawDob.seconds * 1000);
+      } else if (typeof rawDob === 'string' || typeof rawDob === 'number') {
+        dobDate = new Date(rawDob);
+      }
+
+      if (dobDate && !isNaN(dobDate.getTime())) {
         const today = new Date();
-        let age = today.getFullYear() - dob.getFullYear();
-        const m = today.getMonth() - dob.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        let age = today.getFullYear() - dobDate.getFullYear();
+        const m = today.getMonth() - dobDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
           age--;
         }
         if (age > 0 && age < 120) return age;
@@ -116,7 +162,7 @@ export default function Home({ onNavigate, user }) {
     if (!talent) return 'Actor';
     const role = talent.role?.split(',')[0] || talent.category || 'Actor';
     const age = getTalentAge(talent);
-    return age ? `${role} (age-${age})` : role;
+    return age ? `${role} (${age})` : role;
   };
 
   const getTalentFollowersCount = (talent) => {
@@ -140,9 +186,6 @@ export default function Home({ onNavigate, user }) {
 
   const formatTalentName = (name) => {
     if (!name) return 'Talent';
-    if (name.length > 13) {
-      return name.slice(0, 12) + '...';
-    }
     return name;
   };
 
@@ -238,7 +281,7 @@ export default function Home({ onNavigate, user }) {
     if (displayFeaturedList.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentSpotlightIdx((prevIdx) => (prevIdx + 1) % displayFeaturedList.length);
-    }, 5000);
+    }, 2800);
     return () => clearInterval(timer);
   }, [displayFeaturedList.length]);
 
@@ -354,10 +397,10 @@ export default function Home({ onNavigate, user }) {
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentSpotlightUser?.id || currentSpotlightIdx}
-                    initial={{ opacity: 0, x: -12, scale: 0.98 }}
+                    initial={{ opacity: 0, x: -8, scale: 0.97 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
-                    exit={{ opacity: 0, x: 12, scale: 0.98 }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    exit={{ opacity: 0, x: 8, scale: 0.97 }}
+                    transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                     className="flex items-end gap-2.5 sm:gap-3.5 cursor-pointer group"
                     onClick={() => {
                       if (currentSpotlightUser?.id) {
@@ -507,6 +550,99 @@ export default function Home({ onNavigate, user }) {
               </div>
             </section>
 
+            {/* ================= CASTING CALLS SECTION ================= */}
+            <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+              <div className="flex items-center justify-between mb-3">
+                <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
+                  Casting calls
+                </span>
+                <button
+                  onClick={() => onNavigate('casting')}
+                  className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+                >
+                  <span>View all</span>
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+
+              {/* Horizontal Scroll Carousel: Vertical Rectangular Cards in One Row */}
+              <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pt-0.5 pb-1.5 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
+                {activeCastingCalls.length > 0 ? (
+                  activeCastingCalls.slice(0, 6).map((call) => {
+                    const thumbnail = getCastingThumbnail(call);
+                    return (
+                      <div
+                        key={call.id}
+                        onClick={() => onNavigate('casting-detail', call.id)}
+                        className="shrink-0 w-[155px] sm:w-[190px] flex flex-col p-2.5 sm:p-3 bg-[#141416] hover:bg-[#1c1c20] transition-all rounded-2xl border border-white/5 cursor-pointer group shadow-md"
+                      >
+                        {/* Top Poster / Thumbnail (Long Vertical Aspect Ratio) */}
+                        <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden bg-[#18181c] border border-white/10 shrink-0 flex items-center justify-center shadow-inner mb-2.5">
+                          {thumbnail ? (
+                            <img
+                              src={thumbnail}
+                              alt={call.title || 'Casting'}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-xl"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          {/* Default Clapperboard Fallback */}
+                          <div
+                            className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c20] to-[#121214] p-3 text-center"
+                            style={{ display: thumbnail ? 'none' : 'flex' }}
+                          >
+                            <svg className="w-10 h-10 text-white/70 fill-current drop-shadow-sm" viewBox="0 0 24 24">
+                              <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
+                            </svg>
+                          </div>
+                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-sm border border-white/10 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm truncate max-w-[85%]">
+                            {call.type || call.category || 'Audition'}
+                          </div>
+                        </div>
+
+                        {/* Bottom Info */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-between space-y-1.5 text-left">
+                          <div>
+                            <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
+                              {call.title || call.project || 'Untitled Casting Call'}
+                            </h4>
+                            <p className="text-[11px] sm:text-xs text-gray-400 truncate mt-0.5">
+                              {call.company || call.director || 'Production'} • {call.location || 'Nepal'}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1 border-t border-white/5 text-xs">
+                            {call.deadline ? (
+                              <span className="text-[10px] sm:text-[11px] font-medium text-amber-400 truncate">
+                                Due {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                              </span>
+                            ) : <span />}
+                            <span className="shrink-0 font-bold text-xs text-[#1d61f2] group-hover:text-cyan-300 transition-colors flex items-center gap-0.5">
+                              Apply &gt;
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="w-full text-center py-5 bg-[#141416] rounded-xl border border-white/5">
+                    <p className="text-gray-400 text-xs mb-2">No active casting calls at the moment</p>
+                    <button
+                      onClick={() => onNavigate('casting-create')}
+                      className="text-xs bg-[#1d61f2] hover:bg-blue-600 text-white font-bold px-3 py-1.5 rounded-md transition-colors shadow-sm"
+                    >
+                      + Post a Casting Call
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+
             {/* ================= NEW BORN TALENTS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
@@ -586,96 +722,6 @@ export default function Home({ onNavigate, user }) {
                   ))
                 ) : (
                   <div className="text-gray-400 text-xs py-4 text-center">No talents found</div>
-                )}
-              </div>
-            </section>
-
-            {/* ================= CASTING CALLS SECTION ================= */}
-            <section className="my-1.5 px-2 sm:px-3 text-white">
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
-                  Casting calls
-                </span>
-                <button
-                  onClick={() => onNavigate('casting')}
-                  className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
-                >
-                  <span>View all</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-              </div>
-
-              <div className="space-y-2.5 pt-1">
-                {activeCastingCalls.length > 0 ? (
-                  activeCastingCalls.slice(0, 3).map((call) => {
-                    const thumbnail = getCastingThumbnail(call);
-                    return (
-                      <div
-                        key={call.id}
-                        onClick={() => onNavigate('casting-detail', call.id)}
-                        className="p-3 bg-[#141416] hover:bg-[#1c1c20] transition-all rounded-xl border border-white/5 flex items-center justify-between gap-3.5 sm:gap-4 cursor-pointer group shadow-md"
-                      >
-                        {/* Thumbnail Container */}
-                        <div className="relative w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-xl overflow-hidden bg-[#18181c] border border-white/10 shrink-0 flex items-center justify-center shadow-md">
-                          {thumbnail ? (
-                            <img
-                              src={thumbnail}
-                              alt={call.title || 'Casting'}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-xl"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
-                                if (fallback) fallback.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          {/* Default Clapperboard Thumbnail Fallback */}
-                          <div
-                            className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c20] to-[#121214] p-2 text-center"
-                            style={{ display: thumbnail ? 'none' : 'flex' }}
-                          >
-                            <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white/70 fill-current drop-shadow-sm" viewBox="0 0 24 24">
-                              <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
-                            </svg>
-                          </div>
-                        </div>
-
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-200">
-                              {call.type || call.category || 'Audition'}
-                            </span>
-                            {call.deadline && (
-                              <span className="text-[10px] font-medium text-amber-400">
-                                • Deadline: {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                              </span>
-                            )}
-                          </div>
-                          <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
-                            {call.title || call.project || 'Untitled Casting Call'}
-                          </h4>
-                          <p className="text-xs text-gray-400 truncate flex items-center gap-1 font-medium">
-                            <span>{call.company || call.director || 'Production'}</span>
-                            <span>•</span>
-                            <span>{call.location || 'Nepal'}</span>
-                          </p>
-                        </div>
-                        <span className="shrink-0 text-xs font-bold text-[#1d61f2] group-hover:text-cyan-300 transition-colors flex items-center gap-0.5">
-                          Apply &gt;
-                        </span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-5 bg-[#141416] rounded-xl border border-white/5">
-                    <p className="text-gray-400 text-xs mb-2">No active casting calls at the moment</p>
-                    <button
-                      onClick={() => onNavigate('casting-create')}
-                      className="text-xs bg-[#1d61f2] hover:bg-blue-600 text-white font-bold px-3 py-1.5 rounded-md transition-colors shadow-sm"
-                    >
-                      + Post a Casting Call
-                    </button>
-                  </div>
                 )}
               </div>
             </section>
