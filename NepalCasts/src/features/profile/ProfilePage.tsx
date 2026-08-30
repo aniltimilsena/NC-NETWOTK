@@ -667,7 +667,7 @@ export default function ProfilePage({
             )}
           </button>
           <button
-            onClick={handleDirectMessage}
+            onClick={() => onNavigate?.('messages', profile.uid || (profile as any)?.id)}
             className="flex-1 py-3.5 px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
             <MessageSquare className="w-4 h-4 text-[#0088CC]" />
