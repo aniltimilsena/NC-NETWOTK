@@ -522,7 +522,7 @@ export default function Home({ onNavigate, user }) {
             {/* Horizontal Scroll Carousel */}
             <div
               ref={actorsScrollRef}
-              className="flex gap-1.5 sm:gap-2 overflow-x-auto pt-0.5 pb-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+              className="flex gap-1.5 sm:gap-2.5 overflow-x-auto pt-0.5 pb-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
             >
               {!talentsReceived ? (
                 <AvatarScrollSkeleton count={4} />
@@ -531,14 +531,14 @@ export default function Home({ onNavigate, user }) {
                   <div
                     key={talent.id}
                     onClick={() => onNavigate('profile', talent.id)}
-                    className="flex flex-col items-center shrink-0 w-28 sm:w-36 cursor-pointer group"
+                    className="flex flex-col items-center shrink-0 w-[calc((100vw-36px)/2.5)] sm:w-36 cursor-pointer group"
                   >
                     <Avatar
                       userId={talent.id || talent.uid}
                       user={talent}
                       size="none"
                       name={talent.name}
-                      className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover shadow-lg transition-all duration-300 group-hover:scale-105"
+                      className="w-[calc((100vw-44px)/2.5)] h-[calc((100vw-44px)/2.5)] sm:w-36 sm:h-36 rounded-full object-cover shadow-lg transition-all duration-300 group-hover:scale-105"
                     />
                     <p className="text-white font-bold text-xs sm:text-sm text-center mt-2 truncate w-full px-0.5 group-hover:text-cyan-300 transition-colors">
                       {formatTalentName(talent.name)}
