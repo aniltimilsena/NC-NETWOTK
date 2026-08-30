@@ -34,6 +34,8 @@ export default {
         serif: ['"Playfair Display"', 'Georgia', 'serif'],
         lato: ['Lato', 'sans-serif'],
         script: ['"Great Vibes"', '"Alex Brush"', '"Allura"', 'cursive'],
+        apple: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'Inter', 'sans-serif'],
+        inter: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       backdropBlur: {
         xs: '2px',

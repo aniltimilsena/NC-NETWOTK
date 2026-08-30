@@ -370,12 +370,14 @@ export default function Home({ onNavigate, user }) {
 
           {/* Right Side Middle Slogan */}
           <div className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-6 lg:right-8 z-20 pointer-events-none text-right">
-            <h1 className="font-lato font-normal text-2xl sm:text-3xl lg:text-4xl xl:text-[42px] text-white leading-[1.12] tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
-              <span className="font-script font-normal text-3xl sm:text-4xl lg:text-5xl xl:text-[56px] block text-white tracking-normal drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] -mb-1 sm:-mb-2">
+            <h1 className="font-apple text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+              <span className="font-script font-normal text-3xl sm:text-4xl lg:text-5xl xl:text-[56px] block text-white tracking-normal -mb-1 sm:-mb-2">
                 Discover
               </span>
-              Multiple Talents<br />
-              In One Place
+              <span className="font-bold text-2xl sm:text-3xl lg:text-4xl xl:text-[42px] leading-[1.08] tracking-tight block">
+                Multiple Talents<br />
+                In One Place
+              </span>
             </h1>
           </div>
 
@@ -412,7 +414,7 @@ export default function Home({ onNavigate, user }) {
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mb-1 text-white font-black text-base sm:text-lg tracking-tight shadow-inner">
                           {spotlightInitials}
                         </div>
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider truncate w-full px-1">
+                        <span className="font-apple text-[10px] sm:text-xs font-normal text-slate-300 uppercase tracking-wider truncate w-full px-1">
                           {spotlightRole}
                         </span>
                       </div>
@@ -422,14 +424,14 @@ export default function Home({ onNavigate, user }) {
                   </div>
 
                   {/* Talent Meta beside photo */}
-                  <div className="flex flex-col justify-end items-start gap-0.5 min-w-0 pb-0.5 text-left">
-                    <h2 className="text-sm sm:text-lg font-black text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] max-w-[140px] sm:max-w-[200px]">
+                  <div className="flex flex-col justify-end items-start gap-0.5 min-w-0 pb-0.5 text-left font-apple">
+                    <h2 className="text-sm sm:text-lg font-bold text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] max-w-[140px] sm:max-w-[200px] tracking-tight">
                       {spotlightName}
                     </h2>
-                    <p className="text-[11px] sm:text-xs text-gray-200 font-bold capitalize drop-shadow-md truncate">
+                    <p className="text-[11px] sm:text-xs text-slate-300 font-normal capitalize drop-shadow-md truncate tracking-normal">
                       {spotlightRole} {spotlightAge ? `(${spotlightAge})` : ''}
                     </p>
-                    <span className="text-[#1d61f2] group-hover:text-[#38bdf8] text-[11px] sm:text-xs font-bold flex items-center gap-1 transition-colors">
+                    <span className="text-[#38bdf8] group-hover:text-cyan-300 text-[11px] sm:text-xs font-medium flex items-center gap-1 transition-colors">
                       View profile &gt;
                     </span>
                   </div>
@@ -506,8 +508,8 @@ export default function Home({ onNavigate, user }) {
           {/* ================= FEATURED TALENTS SECTION ================= */}
           <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
-                <Crown className="w-3.5 h-3.5 text-amber-300 fill-amber-300 drop-shadow-sm" />
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-[#2997ff] font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
+                <Crown className="w-3.5 h-3.5 text-[#2997ff] fill-[#2997ff]/20" />
                 Featured talents
               </span>
               <button
@@ -540,10 +542,10 @@ export default function Home({ onNavigate, user }) {
                       name={talent.name}
                       className="w-[calc((100vw-44px)/2.5)] h-[calc((100vw-44px)/2.5)] sm:w-36 sm:h-36 rounded-full object-cover shadow-lg transition-all duration-300 group-hover:scale-105"
                     />
-                    <p className="text-white font-bold text-xs sm:text-sm text-center mt-2 truncate w-full px-0.5 group-hover:text-cyan-300 transition-colors">
+                    <p className="font-apple text-white font-bold text-xs sm:text-sm text-center mt-2.5 truncate w-full px-0.5 tracking-tight group-hover:text-cyan-300 transition-colors">
                       {formatTalentName(talent.name)}
                     </p>
-                    <p className="text-[#1d61f2] font-semibold text-[11px] sm:text-xs text-center mt-0.5 truncate w-full px-0.5">
+                    <p className="font-apple text-slate-300 font-normal text-[11px] sm:text-xs text-center mt-0.5 truncate w-full px-0.5 tracking-normal">
                       {getTalentRoleAndAge(talent)}
                     </p>
                   </div>
@@ -557,8 +559,8 @@ export default function Home({ onNavigate, user }) {
           {/* ================= TALENTS BY CATEGORY SECTION ================= */}
           <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
-                <LayoutGrid className="w-3.5 h-3.5 text-white" />
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-[#2997ff] font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
+                <LayoutGrid className="w-3.5 h-3.5 text-[#2997ff]" />
                 Talents by category
               </span>
               <button
@@ -605,8 +607,8 @@ export default function Home({ onNavigate, user }) {
           {/* ================= NEW BORN TALENTS SECTION ================= */}
           <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
-                <Sprout className="w-3.5 h-3.5 text-emerald-300 drop-shadow-sm" />
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-[#2997ff] font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
+                <Sprout className="w-3.5 h-3.5 text-[#2997ff]" />
                 New born talents
               </span>
               <button
@@ -689,8 +691,8 @@ export default function Home({ onNavigate, user }) {
           {/* ================= CASTING CALLS SECTION ================= */}
           <section className="my-1.5 px-2 sm:px-3 text-white">
             <div className="flex items-center justify-between mb-2.5">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
-                <Clapperboard className="w-3.5 h-3.5 text-white" />
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-[#2997ff] font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
+                <Clapperboard className="w-3.5 h-3.5 text-[#2997ff]" />
                 Casting calls
               </span>
               <button
@@ -780,8 +782,8 @@ export default function Home({ onNavigate, user }) {
           {/* ================= TRENDING TALENTS SECTION ================= */}
           <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0088CC] text-white font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-md">
-                <Flame className="w-3.5 h-3.5 text-amber-300 fill-amber-300/40" />
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-black border border-[#0071e3] text-[#2997ff] font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase shadow-sm">
+                <Flame className="w-3.5 h-3.5 text-[#2997ff] fill-[#2997ff]/30" />
                 Trending talents
               </span>
               <button
