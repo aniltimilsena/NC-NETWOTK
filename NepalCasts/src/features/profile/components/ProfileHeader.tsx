@@ -215,7 +215,7 @@ export default function ProfileHeader({
           </div>
 
           {/* Role Pill */}
-          <span className="inline-block px-3 py-0.5 rounded-full bg-white/5 border border-white/10 text-cyan-400 font-apple font-semibold text-xs tracking-wider uppercase">
+          <span className="inline-block px-3 py-0.5 rounded-full bg-white/5 border border-white/10 text-white font-apple font-semibold text-xs tracking-wider uppercase">
             {userRole}
           </span>
         </div>
