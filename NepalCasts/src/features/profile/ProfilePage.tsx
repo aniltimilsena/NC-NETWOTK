@@ -934,11 +934,6 @@ export default function ProfilePage({
                 <p className="text-xs text-gray-500 italic pt-1">No skills listed yet.</p>
               )}
             </section>
-
-            {/* Mobile Action Buttons */}
-            <div className="lg:hidden pt-3">
-              {renderActionButtons()}
-            </div>
           </div>
         </div>
       </div>
