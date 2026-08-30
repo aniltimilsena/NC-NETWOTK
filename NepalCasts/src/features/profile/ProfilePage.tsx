@@ -855,7 +855,7 @@ export default function ProfilePage({
                 </div>
 
                 {bio && (bio.length > 75 || bio.includes('\n')) && (
-                  <div className="flex items-center justify-start text-left pt-0.5">
+                  <div className="flex items-center justify-end text-right pt-0.5">
                     <button
                       type="button"
                       onClick={(e) => {
