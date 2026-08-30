@@ -204,18 +204,18 @@ export default function ProfileHeader({
         </div>
 
         {/* Name + Verified Badge */}
-        <div className="space-y-1.5 flex flex-col items-center">
-          <div className="flex items-center justify-center gap-1.5 flex-wrap">
-            <h2 className="font-apple font-extrabold text-2xl sm:text-3xl text-white tracking-tight">
+        <div className="space-y-2 flex flex-col items-center">
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <h2 className="font-apple font-extrabold text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight">
               {name}
             </h2>
             {profile.verified === true && (
-              <CheckCircle2 className="w-5 h-5 text-[#0088CC] fill-[#0088CC] stroke-black shrink-0" />
+              <CheckCircle2 className="w-6 h-6 text-[#0088CC] fill-[#0088CC] stroke-black shrink-0" />
             )}
           </div>
 
           {/* Role Pill */}
-          <span className="inline-block px-3 py-0.5 rounded-full bg-white/5 border border-white/10 text-white font-apple font-semibold text-xs tracking-wider uppercase">
+          <span className="inline-block px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-white font-apple font-semibold text-xs sm:text-sm tracking-wider uppercase">
             {userRole}
           </span>
         </div>
@@ -223,11 +223,11 @@ export default function ProfileHeader({
         {/* 3 Meta Info Pills (Location, Age, Experience) */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-2xl pt-1">
           {/* Location Pill */}
-          <div className="bg-[#161616] border border-white/5 text-neutral-300 rounded-xl px-2.5 py-2 sm:py-2.5 text-center flex items-center justify-center gap-1.5 shadow-sm font-apple font-medium text-xs sm:text-sm">
-            <MapPin className="w-3.5 h-3.5 text-white shrink-0" />
+          <div className="bg-[#161616] border border-white/5 text-neutral-200 rounded-xl px-3 py-2.5 sm:py-3 text-center flex items-center justify-center gap-2 shadow-sm font-apple font-medium text-xs sm:text-sm md:text-base">
+            <MapPin className="w-4 h-4 text-white shrink-0" />
             <div className="truncate">
               {location.includes('Not added') ? (
-                <span className="text-neutral-400 text-[11px] sm:text-xs">
+                <span className="text-neutral-400 text-xs sm:text-sm">
                   {location.split('\n')[0] || location.split(',')[0]}
                 </span>
               ) : (
@@ -237,20 +237,20 @@ export default function ProfileHeader({
           </div>
 
           {/* Age Pill */}
-          <div className="bg-[#161616] border border-white/5 text-neutral-300 rounded-xl px-2.5 py-2 sm:py-2.5 text-center flex items-center justify-center gap-1.5 shadow-sm font-apple font-medium text-xs sm:text-sm">
-            <UserIcon className="w-3.5 h-3.5 text-white shrink-0" />
+          <div className="bg-[#161616] border border-white/5 text-neutral-200 rounded-xl px-3 py-2.5 sm:py-3 text-center flex items-center justify-center gap-2 shadow-sm font-apple font-medium text-xs sm:text-sm md:text-base">
+            <UserIcon className="w-4 h-4 text-white shrink-0" />
             <div className="truncate">
               {talentAge ? (
                 <span>{talentAge} Years</span>
               ) : (
-                <span className="text-neutral-400 text-[11px] sm:text-xs">Age Not added</span>
+                <span className="text-neutral-400 text-xs sm:text-sm">Age Not added</span>
               )}
             </div>
           </div>
 
           {/* Experience Pill */}
-          <div className="bg-[#161616] border border-white/5 text-neutral-300 rounded-xl px-2.5 py-2 sm:py-2.5 text-center flex items-center justify-center gap-1.5 shadow-sm font-apple font-medium text-xs sm:text-sm">
-            <Briefcase className="w-3.5 h-3.5 text-white shrink-0" />
+          <div className="bg-[#161616] border border-white/5 text-neutral-200 rounded-xl px-3 py-2.5 sm:py-3 text-center flex items-center justify-center gap-2 shadow-sm font-apple font-medium text-xs sm:text-sm md:text-base">
+            <Briefcase className="w-4 h-4 text-white shrink-0" />
             <div className="truncate">
               {experiencesList.length > 0 ? (
                 <span>{experiencesList.length}+ Years Exp.</span>
@@ -264,16 +264,16 @@ export default function ProfileHeader({
         </div>
 
         {/* Followers / Following Box */}
-        <div className="bg-[#161616] border border-white/5 rounded-2xl py-3 px-6 grid grid-cols-2 text-center w-full max-w-2xl my-1 shadow-sm divide-x divide-white/10">
+        <div className="bg-[#161616] border border-white/5 rounded-2xl py-3.5 px-6 grid grid-cols-2 text-center w-full max-w-2xl my-1 shadow-sm divide-x divide-white/10">
           <button
             type="button"
             onClick={() => onFollowClick?.('followers')}
             className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pr-3 py-0.5"
           >
-            <span className="font-apple font-extrabold text-base sm:text-lg text-white leading-none tracking-tight">
+            <span className="font-apple font-extrabold text-lg sm:text-xl md:text-2xl text-white leading-none tracking-tight">
               {followerCount ? (followerCount > 999 ? `${(followerCount / 1000).toFixed(1)}K` : followerCount) : '0'}
             </span>
-            <span className="font-apple text-[10px] sm:text-[11px] text-neutral-400 font-semibold uppercase tracking-wider mt-1">Followers</span>
+            <span className="font-apple text-xs sm:text-sm text-neutral-400 font-semibold uppercase tracking-wider mt-1.5">Followers</span>
           </button>
 
           <button
@@ -281,10 +281,10 @@ export default function ProfileHeader({
             onClick={() => onFollowClick?.('following')}
             className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pl-3 py-0.5"
           >
-            <span className="font-apple font-extrabold text-base sm:text-lg text-white leading-none tracking-tight">
+            <span className="font-apple font-extrabold text-lg sm:text-xl md:text-2xl text-white leading-none tracking-tight">
               {followingCount ? (followingCount > 999 ? `${(followingCount / 1000).toFixed(1)}K` : followingCount) : '0'}
             </span>
-            <span className="font-apple text-[10px] sm:text-[11px] text-neutral-400 font-semibold uppercase tracking-wider mt-1">Following</span>
+            <span className="font-apple text-xs sm:text-sm text-neutral-400 font-semibold uppercase tracking-wider mt-1.5">Following</span>
           </button>
         </div>
       </div>

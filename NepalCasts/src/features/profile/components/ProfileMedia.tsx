@@ -118,7 +118,7 @@ export default function ProfileMedia({
 
       {/* Media Header */}
       <div className="flex items-center justify-between pb-1">
-        <h2 className="font-apple text-base sm:text-lg font-bold text-white tracking-tight">
+        <h2 className="font-apple text-lg sm:text-xl font-bold text-white tracking-tight">
           Media
         </h2>
 
@@ -133,14 +133,16 @@ export default function ProfileMedia({
               }
             }}
             disabled={isUploadingVideo || isUploadingPhotos}
-            className="font-apple text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer flex items-center gap-1.5"
+            className="font-apple text-xs sm:text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer flex items-center gap-1.5"
           >
             {isUploadingVideo || isUploadingPhotos ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Upload className="w-3.5 h-3.5" />
+              <>
+                <Plus className="w-4 h-4" />
+                <span>Upload Media</span>
+              </>
             )}
-            <span>Upload</span>
           </button>
         )}
       </div>

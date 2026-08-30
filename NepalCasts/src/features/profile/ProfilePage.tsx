@@ -503,21 +503,21 @@ export default function ProfilePage({
   };
 
   const renderAttributesCard = () => (
-    <div className="bg-[#161616] border border-white/5 rounded-2xl p-4 sm:p-5 shadow-md space-y-2 text-center">
+    <div className="bg-[#161616] border border-white/5 rounded-2xl p-4 sm:p-6 shadow-md space-y-2.5 text-center">
       <div className="pb-1.5 flex items-center justify-center text-center">
-        <h4 className="font-apple font-bold text-sm sm:text-base text-white tracking-tight text-center">
+        <h4 className="font-apple font-bold text-base sm:text-lg text-white tracking-tight text-center">
           Physical Specs & Contact
         </h4>
       </div>
 
       <div className="divide-y divide-white/10">
         {/* Height Row */}
-        <div className="py-2.5 flex items-center justify-center gap-2.5 text-xs sm:text-sm font-apple">
+        <div className="py-3 flex items-center justify-center gap-2.5 text-sm sm:text-base font-apple">
           <div className="flex items-center gap-1.5 text-neutral-300">
-            <Ruler className="w-4 h-4 text-white" />
-            <span className="font-medium text-neutral-300">Height:</span>
+            <Ruler className="w-4.5 h-4.5 text-white" />
+            <span className="font-semibold text-neutral-200">Height:</span>
           </div>
-          <span className={height ? 'text-white font-semibold' : 'text-neutral-500'}>
+          <span className={height ? 'text-white font-medium' : 'text-neutral-500'}>
             {height ? height : 'Not added'}
           </span>
           {effectiveIsOwn && (
@@ -531,18 +531,18 @@ export default function ProfilePage({
               }}
               className="text-white/70 hover:text-white transition-colors cursor-pointer ml-1"
             >
-              {height ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
+              {height ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             </button>
           )}
         </div>
 
         {/* Weight Row */}
-        <div className="py-2.5 flex items-center justify-center gap-2.5 text-xs sm:text-sm font-apple">
+        <div className="py-3 flex items-center justify-center gap-2.5 text-sm sm:text-base font-apple">
           <div className="flex items-center gap-1.5 text-neutral-300">
-            <Scale className="w-4 h-4 text-white" />
-            <span className="font-medium text-neutral-300">Weight:</span>
+            <Scale className="w-4.5 h-4.5 text-white" />
+            <span className="font-semibold text-neutral-200">Weight:</span>
           </div>
-          <span className={weight ? 'text-white font-semibold' : 'text-neutral-500'}>
+          <span className={weight ? 'text-white font-medium' : 'text-neutral-500'}>
             {weight ? weight : 'Not added'}
           </span>
           {effectiveIsOwn && (
@@ -556,28 +556,28 @@ export default function ProfilePage({
               }}
               className="text-white/70 hover:text-white transition-colors cursor-pointer ml-1"
             >
-              {weight ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
+              {weight ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             </button>
           )}
         </div>
 
         {/* Contacts Row */}
-        <div className="py-2.5 flex items-center justify-center gap-2.5 text-xs sm:text-sm font-apple flex-wrap">
+        <div className="py-3 flex items-center justify-center gap-2.5 text-sm sm:text-base font-apple flex-wrap">
           <div className="flex items-center gap-1.5 text-neutral-300">
-            <Phone className="w-4 h-4 text-white" />
-            <span className="font-medium text-neutral-300">Contacts:</span>
+            <Phone className="w-4.5 h-4.5 text-white" />
+            <span className="font-semibold text-neutral-200">Contacts:</span>
           </div>
           {contactPhone || contactEmail ? (
-            <div className="flex items-center gap-3 text-neutral-200 font-medium text-xs sm:text-sm flex-wrap justify-center">
+            <div className="flex items-center gap-3 text-neutral-200 font-medium text-sm sm:text-base flex-wrap justify-center">
               {contactPhone && (
                 <div className="flex items-center gap-1.5">
-                  <Phone className="w-3 h-3 text-white/80" />
+                  <Phone className="w-3.5 h-3.5 text-white/80" />
                   <span>{contactPhone}</span>
                 </div>
               )}
               {contactEmail && (
                 <div className="flex items-center gap-1.5">
-                  <Mail className="w-3 h-3 text-white/80" />
+                  <Mail className="w-3.5 h-3.5 text-white/80" />
                   <span>{contactEmail}</span>
                 </div>
               )}
@@ -596,7 +596,7 @@ export default function ProfilePage({
               }}
               className="text-white/70 hover:text-white transition-colors cursor-pointer ml-1"
             >
-              {contactPhone || contactEmail ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
+              {contactPhone || contactEmail ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             </button>
           )}
         </div>
@@ -610,16 +610,16 @@ export default function ProfilePage({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsPreviewMode(false)}
-            className="flex-1 py-3.5 px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-sm sm:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
-            <Eye className="w-4 h-4 text-cyan-400" />
+            <Eye className="w-4.5 h-4.5 text-cyan-400" />
             <span>Exit Preview</span>
           </button>
           <button
             onClick={() => onNavigate('/settings/profile')}
-            className="flex-1 py-3.5 px-5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-sm sm:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className="w-4.5 h-4.5" />
             <span>Edit Profile</span>
           </button>
         </div>
@@ -627,16 +627,16 @@ export default function ProfilePage({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsPreviewMode(true)}
-            className="flex-1 py-3.5 px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-sm sm:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
-            <Eye className="w-4 h-4 text-cyan-400" />
+            <Eye className="w-4.5 h-4.5 text-cyan-400" />
             <span>Preview Mode</span>
           </button>
           <button
             onClick={() => onNavigate('/settings/profile')}
-            className="flex-1 py-3.5 px-5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-sm sm:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className="w-4.5 h-4.5" />
             <span>Edit Profile</span>
           </button>
         </div>
@@ -644,7 +644,7 @@ export default function ProfilePage({
         <div className="flex items-center gap-3">
           <button
             onClick={handleFollowToggle}
-            className={`flex-1 py-3.5 px-5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md ${
+            className={`flex-1 py-3.5 px-5 rounded-xl font-bold text-sm sm:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md ${
               isFollowing
                 ? 'bg-[#222] hover:bg-[#2a2a2a] text-white border border-white/15'
                 : 'bg-[#0088CC] hover:bg-[#0077B3] text-white shadow-lg'
@@ -652,21 +652,21 @@ export default function ProfilePage({
           >
             {isFollowing ? (
               <>
-                <Check className="w-4 h-4 text-green-400" />
+                <Check className="w-4.5 h-4.5 text-green-400" />
                 <span>Following</span>
               </>
             ) : (
               <>
-                <UserPlus className="w-4 h-4" />
+                <UserPlus className="w-4.5 h-4.5" />
                 <span>Follow</span>
               </>
             )}
           </button>
           <button
             onClick={() => onNavigate?.('messages', profile.uid || (profile as any)?.id)}
-            className="flex-1 py-3.5 px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+            className="flex-1 py-3.5 px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-sm sm:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
-            <MessageSquare className="w-4 h-4 text-[#0088CC]" />
+            <MessageSquare className="w-4.5 h-4.5 text-[#0088CC]" />
             <span>Message</span>
           </button>
         </div>
@@ -804,7 +804,7 @@ export default function ProfilePage({
             {/* 2. About Section */}
             <section className="text-left space-y-2.5 pt-1">
               <div className="flex items-center justify-between">
-                <h3 className="font-apple font-bold text-base sm:text-lg text-white tracking-tight">
+                <h3 className="font-apple font-bold text-lg sm:text-xl text-white tracking-tight">
                   About
                 </h3>
                 {effectiveIsOwn && (
@@ -816,12 +816,12 @@ export default function ProfilePage({
                     className="text-cyan-400 hover:text-cyan-300 transition-colors p-1 cursor-pointer"
                     title="Edit About"
                   >
-                    <Pencil className="w-3.5 h-3.5" />
+                    <Pencil className="w-4 h-4" />
                   </button>
                 )}
               </div>
 
-              <div className="bg-[#161616] border border-white/5 rounded-2xl p-4 sm:p-5 shadow-sm">
+              <div className="bg-[#161616] border border-white/5 rounded-2xl p-5 sm:p-6 shadow-sm">
                 <p
                   onClick={() => {
                     if (effectiveIsOwn) {
@@ -829,7 +829,7 @@ export default function ProfilePage({
                       setShowAboutModal(true);
                     }
                   }}
-                  className={`font-apple text-sm sm:text-[15px] text-neutral-200 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal ${effectiveIsOwn ? 'cursor-pointer hover:text-white' : ''}`}
+                  className={`font-apple text-base sm:text-[17px] text-neutral-200 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal ${effectiveIsOwn ? 'cursor-pointer hover:text-white' : ''}`}
                 >
                   {bio ? renderFormattedBio(bio) : (
                     <span className="text-neutral-500 italic">
@@ -871,7 +871,7 @@ export default function ProfilePage({
             {/* 5. Skills Section */}
             <section className="text-left space-y-2 pt-1">
               <div className="flex items-center justify-between">
-                <h3 className="font-apple font-bold text-base sm:text-lg text-white tracking-tight">
+                <h3 className="font-apple font-bold text-lg sm:text-xl text-white tracking-tight">
                   Skills
                 </h3>
                 {effectiveIsOwn && (
@@ -880,7 +880,7 @@ export default function ProfilePage({
                       setEditingSkills(skillsList);
                       setShowSkillsModal(true);
                     }}
-                    className="font-apple text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+                    className="font-apple text-xs sm:text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
                   >
                     + Edit Skills
                   </button>

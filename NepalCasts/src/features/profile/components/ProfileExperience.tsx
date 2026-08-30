@@ -59,7 +59,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
     <div className="w-full space-y-2 text-left font-sans">
       {/* Header Bar */}
       <div className="flex items-center justify-between pb-1">
-        <h2 className="font-apple text-base sm:text-lg font-bold text-white tracking-tight">
+        <h2 className="font-apple text-lg sm:text-xl font-bold text-white tracking-tight">
           Experience
         </h2>
 
@@ -67,9 +67,9 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
           <button
             type="button"
             onClick={() => setShowAddForm(true)}
-            className="font-apple text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer flex items-center gap-1"
+            className="font-apple text-xs sm:text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer flex items-center gap-1.5"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             <span>Add Experience</span>
           </button>
         )}
@@ -79,29 +79,29 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
       {isOwnProfile && showAddForm && (
         <form
           onSubmit={handleAddExperience}
-          className="bg-black border border-white/5 rounded-xl p-4 space-y-3 animate-fade-in shadow-md"
+          className="bg-black border border-white/5 rounded-xl p-4 sm:p-5 space-y-3 animate-fade-in shadow-md"
         >
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+            <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">
               Add Work Experience
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <input
               type="text"
               placeholder="Role / Title (e.g. Lead Actor, Model)"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               required
-              className="bg-[#181818] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
+              className="bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
             />
             <input
               type="text"
               placeholder="Production / Company (e.g. Maya Short Film)"
               value={newCompany}
               onChange={(e) => setNewCompany(e.target.value)}
-              className="bg-[#181818] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
+              className="bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
             />
           </div>
 
@@ -110,33 +110,33 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
             placeholder="Year / Period (e.g. 2024, 2021 - 2023)"
             value={newYear}
             onChange={(e) => setNewYear(e.target.value)}
-            className="w-full bg-[#181818] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
+            className="w-full bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors"
           />
 
           <textarea
-            placeholder="Brief description of your role or project..."
+            placeholder="Brief description of your role or notable achievements (optional)"
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
             rows={2}
-            className="w-full bg-[#181818] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#0088CC] resize-none transition-colors"
+            className="w-full bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#0088CC] transition-colors resize-none"
           />
 
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="flex items-center justify-end gap-2 pt-1">
             <button
               type="button"
               onClick={() => setShowAddForm(false)}
-              className="px-3.5 py-1.5 text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="px-4 py-1.5 rounded-xl bg-[#0088CC] hover:bg-[#0077B3] text-white text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-md shadow-[#0088CC]/30"
+              className="px-4 py-1.5 rounded-lg bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm"
             >
               {isSaving ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   <span>Saving...</span>
                 </>
               ) : (
@@ -153,29 +153,29 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
           {experiencesList.map((exp: any, index: number) => (
             <div
               key={index}
-              className="p-3.5 flex items-center justify-between gap-3 text-xs sm:text-sm hover:bg-[#1a1a1a] transition-colors group"
+              className="p-4 flex items-center justify-between gap-3 text-sm sm:text-base hover:bg-[#1a1a1a] transition-colors group"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 truncate">
-                  <span className="font-medium text-gray-200 truncate">
+                  <span className="font-semibold text-gray-100 truncate text-sm sm:text-base">
                     {exp.title || exp.role || 'Production Experience'}
                   </span>
                   {(exp.company || exp.production) && (
-                    <span className="text-gray-400 font-normal truncate">
+                    <span className="text-gray-400 font-normal truncate text-xs sm:text-sm">
                       – “{exp.company || exp.production}”
                     </span>
                   )}
                 </div>
                 {exp.description && (
-                  <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">
+                  <p className="text-xs sm:text-sm text-gray-400 mt-1 line-clamp-2">
                     {exp.description}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2.5 shrink-0">
                 {exp.year && (
-                  <span className="text-gray-400 font-mono text-xs">
+                  <span className="text-gray-400 font-mono text-xs sm:text-sm">
                     {exp.year}
                   </span>
                 )}
@@ -183,10 +183,10 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
                   <button
                     type="button"
                     onClick={() => handleDeleteExperience(index)}
-                    className="p-1 rounded text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                    className="p-1.5 rounded text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
                     title="Delete"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 )}
               </div>
