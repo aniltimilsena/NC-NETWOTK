@@ -7,6 +7,7 @@ import {
   User as UserIcon,
   Briefcase,
   CheckCircle2,
+  Pencil,
 } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
 import ShareSheet from '../../../components/ui/ShareSheet';
@@ -26,6 +27,8 @@ interface ProfileHeaderProps {
   showAlert: (message: string, type?: any, detail?: string, action?: any) => void;
   onFollowClick?: (type: 'followers' | 'following') => void;
   hideTopNav?: boolean;
+  bio?: string;
+  onEditBio?: () => void;
 }
 
 export default function ProfileHeader({
@@ -40,9 +43,23 @@ export default function ProfileHeader({
   showAlert,
   onFollowClick,
   hideTopNav = false,
+  bio,
+  onEditBio,
 }: ProfileHeaderProps) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showShareSheet, setShowShareSheet] = useState(false);
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
+
+  const renderFormattedBio = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-apple font-bold text-white">{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
 
   const isRealOwn =
     isOwnProfile ||
@@ -219,6 +236,59 @@ export default function ProfileHeader({
             {userRole}
           </span>
         </div>
+
+        {/* Bio Card (Positioned directly between Model Role and Location/Age/Experience) */}
+        {(bio || isRealOwn) && (
+          <div className="w-full max-w-2xl bg-[#161616] border border-white/5 rounded-2xl p-4 sm:p-5 shadow-sm space-y-2 text-left my-0.5">
+            <div className="flex items-center justify-between">
+              <h3 className="font-apple font-bold text-xs sm:text-sm uppercase tracking-wider text-neutral-400">
+                Bio
+              </h3>
+              {isRealOwn && onEditBio && (
+                <button
+                  type="button"
+                  onClick={onEditBio}
+                  className="text-cyan-400 hover:text-cyan-300 transition-colors p-1 cursor-pointer"
+                  title="Edit Bio"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <div
+              onClick={() => {
+                if (isRealOwn && !isBioExpanded && onEditBio) {
+                  onEditBio();
+                }
+              }}
+              className={`font-apple text-sm sm:text-base text-neutral-200 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal text-left ${
+                !isBioExpanded ? 'line-clamp-2' : ''
+              } ${isRealOwn ? 'cursor-pointer hover:text-white' : ''}`}
+            >
+              {bio ? renderFormattedBio(bio) : (
+                <span className="text-neutral-500 italic">
+                  {isRealOwn ? 'Add a short bio about yourself...' : 'No bio provided yet.'}
+                </span>
+              )}
+            </div>
+
+            {bio && (bio.length > 75 || bio.includes('\n')) && (
+              <div className="flex items-center justify-end text-right pt-0.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsBioExpanded(!isBioExpanded);
+                  }}
+                  className="font-apple text-xs sm:text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer inline-flex items-center gap-1"
+                >
+                  {isBioExpanded ? 'See less' : 'See more'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 3 Meta Info Pills (Location, Age, Experience) */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-2xl pt-1">

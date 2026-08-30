@@ -774,7 +774,7 @@ export default function ProfilePage({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* Left Column (Desktop Hero & Specs Sidebar) */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-6 lg:sticky lg:top-20">
-            {/* 1. Header (Centered Avatar overlapping cover, 3 Meta Pills, Followers Count Box) */}
+            {/* 1. Header (Centered Avatar overlapping cover, Bio card, 3 Meta Pills, Followers Count Box) */}
             <ProfileHeader
               profile={profile}
               isOwnProfile={effectiveIsOwn}
@@ -787,6 +787,11 @@ export default function ProfilePage({
               showAlert={showAlert}
               onFollowClick={handleFollowModalOpen}
               hideTopNav={true}
+              bio={bio}
+              onEditBio={() => {
+                setBioInput(profile.bio || '');
+                setShowAboutModal(true);
+              }}
             />
 
             {/* Action Buttons (Immediately visible at top on mobile and desktop) */}
@@ -800,65 +805,9 @@ export default function ProfilePage({
             </div>
           </div>
 
-          {/* Right Column (Portfolio, Bio, Media, Experience, Skills) */}
+          {/* Right Column (Portfolio, Media, Experience, Skills) */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-            {/* 2. Bio Section */}
-            <section className="text-left space-y-2.5 pt-1">
-              <div className="flex items-center justify-between">
-                <h3 className="font-apple font-bold text-lg sm:text-xl text-white tracking-tight">
-                  Bio
-                </h3>
-                {effectiveIsOwn && (
-                  <button
-                    onClick={() => {
-                      setBioInput(profile.bio || '');
-                      setShowAboutModal(true);
-                    }}
-                    className="text-cyan-400 hover:text-cyan-300 transition-colors p-1 cursor-pointer"
-                    title="Edit Bio"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-
-              <div className="bg-[#161616] border border-white/5 rounded-2xl p-5 sm:p-6 shadow-sm space-y-2 text-left">
-                <div
-                  onClick={() => {
-                    if (effectiveIsOwn && !isBioExpanded) {
-                      setBioInput(profile.bio || '');
-                      setShowAboutModal(true);
-                    }
-                  }}
-                  className={`font-apple text-base sm:text-[17px] text-neutral-200 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal text-left ${
-                    !isBioExpanded ? 'line-clamp-2' : ''
-                  } ${effectiveIsOwn ? 'cursor-pointer hover:text-white' : ''}`}
-                >
-                  {bio ? renderFormattedBio(bio) : (
-                    <span className="text-neutral-500 italic">
-                      {effectiveIsOwn ? 'Add a short bio about yourself...' : 'No bio provided yet.'}
-                    </span>
-                  )}
-                </div>
-
-                {bio && (bio.length > 75 || bio.includes('\n')) && (
-                  <div className="flex items-center justify-end text-right pt-0.5">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsBioExpanded(!isBioExpanded);
-                      }}
-                      className="font-apple text-xs sm:text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer inline-flex items-center gap-1"
-                    >
-                      {isBioExpanded ? 'See less' : 'See more'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* 3. Media Section */}
+            {/* 2. Media Section */}
             <section className="text-left pt-1">
               <ProfileMedia
                 profile={profile}
