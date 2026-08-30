@@ -224,7 +224,7 @@ export default function ProfileHeader({
         <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-2xl pt-1">
           {/* Location Pill */}
           <div className="bg-[#161616] border border-white/5 text-neutral-300 rounded-xl px-2.5 py-2 sm:py-2.5 text-center flex items-center justify-center gap-1.5 shadow-sm font-apple font-medium text-xs sm:text-sm">
-            <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <MapPin className="w-3.5 h-3.5 text-white shrink-0" />
             <div className="truncate">
               {location.includes('Not added') ? (
                 <span className="text-neutral-400 text-[11px] sm:text-xs">
@@ -238,7 +238,7 @@ export default function ProfileHeader({
 
           {/* Age Pill */}
           <div className="bg-[#161616] border border-white/5 text-neutral-300 rounded-xl px-2.5 py-2 sm:py-2.5 text-center flex items-center justify-center gap-1.5 shadow-sm font-apple font-medium text-xs sm:text-sm">
-            <UserIcon className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <UserIcon className="w-3.5 h-3.5 text-white shrink-0" />
             <div className="truncate">
               {talentAge ? (
                 <span>{talentAge} Years</span>
@@ -250,7 +250,7 @@ export default function ProfileHeader({
 
           {/* Experience Pill */}
           <div className="bg-[#161616] border border-white/5 text-neutral-300 rounded-xl px-2.5 py-2 sm:py-2.5 text-center flex items-center justify-center gap-1.5 shadow-sm font-apple font-medium text-xs sm:text-sm">
-            <Briefcase className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <Briefcase className="w-3.5 h-3.5 text-white shrink-0" />
             <div className="truncate">
               {experiencesList.length > 0 ? (
                 <span>{experiencesList.length}+ Years Exp.</span>

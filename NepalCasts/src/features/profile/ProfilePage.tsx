@@ -513,7 +513,7 @@ export default function ProfilePage({
       {/* Height Row */}
       <div className="py-3 flex items-center justify-between text-xs sm:text-sm font-apple">
         <div className="flex items-center gap-2.5 text-neutral-300">
-          <Ruler className="w-4 h-4 text-cyan-400" />
+          <Ruler className="w-4 h-4 text-white" />
           <span className="font-medium text-neutral-200">Height</span>
         </div>
         <div className="flex items-center gap-2">
@@ -529,7 +529,7 @@ export default function ProfilePage({
                 setEmailInput(profile.email || '');
                 setShowAttributesModal(true);
               }}
-              className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              className="text-white/70 hover:text-white transition-colors cursor-pointer"
             >
               {height ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
             </button>
@@ -540,7 +540,7 @@ export default function ProfilePage({
       {/* Weight Row */}
       <div className="py-3 flex items-center justify-between text-xs sm:text-sm font-apple">
         <div className="flex items-center gap-2.5 text-neutral-300">
-          <Scale className="w-4 h-4 text-cyan-400" />
+          <Scale className="w-4 h-4 text-white" />
           <span className="font-medium text-neutral-200">Weight</span>
         </div>
         <div className="flex items-center gap-2">
@@ -556,7 +556,7 @@ export default function ProfilePage({
                 setEmailInput(profile.email || '');
                 setShowAttributesModal(true);
               }}
-              className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              className="text-white/70 hover:text-white transition-colors cursor-pointer"
             >
               {weight ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
             </button>
@@ -567,7 +567,7 @@ export default function ProfilePage({
       {/* Contacts Row */}
       <div className="py-3 flex items-center justify-between text-xs sm:text-sm font-apple">
         <div className="flex items-center gap-2.5 text-neutral-300 shrink-0">
-          <Phone className="w-4 h-4 text-cyan-400" />
+          <Phone className="w-4 h-4 text-white" />
           <span className="font-medium text-neutral-200">Contacts</span>
         </div>
         <div className="flex items-center gap-2 text-right">
@@ -575,13 +575,13 @@ export default function ProfilePage({
             <div className="flex items-center gap-3 text-neutral-200 font-medium text-xs sm:text-sm flex-wrap justify-end">
               {contactPhone && (
                 <div className="flex items-center gap-1.5">
-                  <Phone className="w-3 h-3 text-neutral-400" />
+                  <Phone className="w-3 h-3 text-white/80" />
                   <span>{contactPhone}</span>
                 </div>
               )}
               {contactEmail && (
                 <div className="flex items-center gap-1.5">
-                  <Mail className="w-3 h-3 text-neutral-400" />
+                  <Mail className="w-3 h-3 text-white/80" />
                   <span>{contactEmail}</span>
                 </div>
               )}
@@ -598,7 +598,7 @@ export default function ProfilePage({
                 setEmailInput(profile.email || '');
                 setShowAttributesModal(true);
               }}
-              className="text-neutral-400 hover:text-white transition-colors cursor-pointer ml-1"
+              className="text-white/70 hover:text-white transition-colors cursor-pointer ml-1"
             >
               {contactPhone || contactEmail ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
             </button>
