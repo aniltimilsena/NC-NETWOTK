@@ -335,44 +335,45 @@ export default function Home({ onNavigate, user }) {
       trendingCalls={castingCalls}
       loading={!talentsReceived}
     >
-      <div className="min-h-screen bg-[#141414] text-white pb-6 font-sans selection:bg-blue-600 selection:text-white space-y-2 sm:space-y-3">
-        {/* ================= HERO SECTION (Flush with top navbar) ================= */}
-        <section className="relative w-full h-[320px] sm:h-[400px] lg:h-[460px] overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5">
+      <div className="min-h-screen bg-[#141414] text-white pt-0 pb-6 font-sans selection:bg-blue-600 selection:text-white">
+        {/* ================= HERO SECTION (Compact, flush with top navbar) ================= */}
+        <section className="relative w-full h-[190px] sm:h-[220px] lg:h-[250px] overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5 m-0 p-0">
           {/* 5 Smoothly Rotating Background Images (Every 4s) */}
           <div className="absolute inset-0 z-0 overflow-hidden">
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence>
               <motion.img
                 key={heroImageIdx}
                 src={HERO_BACKGROUND_PHOTOS[heroImageIdx]}
                 alt="NepalCasts Hero"
-                initial={{ opacity: 0, scale: 1.06 }}
+                initial={{ opacity: 0, scale: 1.05 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1.0] }}
-                className="w-full h-full object-cover object-center absolute inset-0"
+                className="w-full h-full object-cover object-bottom sm:object-center absolute inset-0 m-0 p-0"
               />
             </AnimatePresence>
-            <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/20 to-black/85 pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-black/25 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-black/50 to-transparent pointer-events-none" />
           </div>
 
           {/* Subtle Slide Indicators */}
-          <div className="absolute top-3 right-4 sm:top-4 sm:right-6 z-20 flex items-center gap-1.5 pointer-events-none">
+          <div className="absolute top-2.5 right-3 sm:top-3 sm:right-4 z-20 flex items-center gap-1.5 pointer-events-none">
             {HERO_BACKGROUND_PHOTOS.map((_, idx) => (
               <span
                 key={idx}
                 className={`h-1 rounded-full transition-all duration-500 ${idx === heroImageIdx
-                    ? 'w-5 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]'
-                    : 'w-1.5 bg-white/30'
+                  ? 'w-4 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]'
+                  : 'w-1.5 bg-white/30'
                   }`}
               />
             ))}
           </div>
 
           {/* Right Side Middle Slogan */}
-          <div className="absolute top-1/2 -translate-y-1/2 right-4 sm:right-8 lg:right-12 z-20 pointer-events-none text-right">
-            <h1 className="font-condensed text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-[1.05] tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
-              Discover<br />
+          <div className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-6 lg:right-8 z-20 pointer-events-none text-right">
+            <h1 className="font-lato font-normal text-2xl sm:text-3xl lg:text-4xl xl:text-[42px] text-white leading-[1.12] tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+              <span className="font-script font-normal text-3xl sm:text-4xl lg:text-5xl xl:text-[56px] block text-white tracking-normal drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] -mb-1 sm:-mb-2">
+                Discover
+              </span>
               Multiple Talents<br />
               In One Place
             </h1>
@@ -380,15 +381,15 @@ export default function Home({ onNavigate, user }) {
 
           {/* Overlaid Inset Rectangular Spotlight Card (Bottom Left) */}
           {currentSpotlightUser && (
-            <div className="absolute bottom-3 sm:bottom-5 left-4 sm:left-6 z-20 flex items-end">
+            <div className="absolute bottom-2.5 sm:bottom-3.5 left-3 sm:left-4 z-20 flex items-end">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentSpotlightUser?.id || currentSpotlightIdx}
-                  initial={{ opacity: 0, x: -15, scale: 0.98 }}
+                  initial={{ opacity: 0, x: -12, scale: 0.98 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: 15, scale: 0.98 }}
-                  transition={{ duration: 0.45, ease: 'easeOut' }}
-                  className="flex items-end gap-3 sm:gap-4 cursor-pointer group"
+                  exit={{ opacity: 0, x: 12, scale: 0.98 }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                  className="flex items-end gap-2.5 sm:gap-3 cursor-pointer group"
                   onClick={() => {
                     if (currentSpotlightUser?.id) {
                       onNavigate('profile', currentSpotlightUser.id);
@@ -397,38 +398,38 @@ export default function Home({ onNavigate, user }) {
                     }
                   }}
                 >
-                  {/* Rectangular Portrait Photo Card */}
-                  <div className="relative shrink-0 w-[125px] h-[170px] sm:w-[155px] sm:h-[210px] flex flex-col items-center justify-center overflow-hidden rounded-none shadow-[0_14px_40px_rgba(0,0,0,0.9)] border border-white/20 bg-gradient-to-b from-[#1c2333] to-[#0d121c] group-hover:border-white/40 transition-all">
+                  {/* Diagonal Curved Portrait Photo Card */}
+                  <div className="relative shrink-0 w-[95px] h-[130px] sm:w-[115px] sm:h-[155px] flex flex-col items-center justify-center overflow-hidden rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm shadow-[0_10px_30px_rgba(0,0,0,0.9)] border border-white/20 bg-gradient-to-b from-[#1c2333] to-[#0d121c] group-hover:border-white/40 transition-all">
                     {hasRealPhoto ? (
                       <img
                         src={rawPhoto}
                         alt={spotlightName}
                         onError={() => setSpotlightImageError(true)}
-                        className="w-full h-full object-cover rounded-none transition-transform duration-300 group-hover:scale-105"
+                        className="w-full h-full object-cover rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1e283d] via-[#141b2a] to-[#0a0e17] p-2 text-center select-none rounded-none">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mb-1.5 text-white font-black text-xl sm:text-2xl tracking-tight shadow-inner">
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1e283d] via-[#141b2a] to-[#0a0e17] p-1.5 text-center select-none rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mb-1 text-white font-black text-base sm:text-lg tracking-tight shadow-inner">
                           {spotlightInitials}
                         </div>
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider truncate w-full px-1">
+                        <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider truncate w-full px-1">
                           {spotlightRole}
                         </span>
                       </div>
                     )}
                     {/* Blue Accent Bar Under Photo */}
-                    <div className="w-full h-2 bg-[#1d61f2] shrink-0" />
+                    <div className="w-full h-1.5 bg-[#1d61f2] shrink-0" />
                   </div>
 
                   {/* Talent Meta beside photo */}
-                  <div className="flex flex-col justify-end items-start gap-0.5 sm:gap-1 min-w-0 pb-1 text-left">
-                    <h2 className="text-base sm:text-2xl font-black text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] max-w-[170px] sm:max-w-[260px]">
+                  <div className="flex flex-col justify-end items-start gap-0.5 min-w-0 pb-0.5 text-left">
+                    <h2 className="text-sm sm:text-lg font-black text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] max-w-[140px] sm:max-w-[200px]">
                       {spotlightName}
                     </h2>
-                    <p className="text-xs sm:text-sm text-gray-200 font-bold capitalize drop-shadow-md truncate">
-                      {spotlightRole} {spotlightAge ? `(age-${spotlightAge})` : ''}
+                    <p className="text-[11px] sm:text-xs text-gray-200 font-bold capitalize drop-shadow-md truncate">
+                      {spotlightRole} {spotlightAge ? `(${spotlightAge})` : ''}
                     </p>
-                    <span className="text-[#1d61f2] group-hover:text-[#38bdf8] text-xs sm:text-sm font-bold flex items-center gap-1 transition-colors mt-0.5">
+                    <span className="text-[#1d61f2] group-hover:text-[#38bdf8] text-[11px] sm:text-xs font-bold flex items-center gap-1 transition-colors">
                       View profile &gt;
                     </span>
                   </div>
@@ -521,7 +522,7 @@ export default function Home({ onNavigate, user }) {
             {/* Horizontal Scroll Carousel */}
             <div
               ref={actorsScrollRef}
-              className="flex gap-2.5 sm:gap-3 overflow-x-auto pt-0.5 pb-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+              className="flex gap-1.5 sm:gap-2 overflow-x-auto pt-0.5 pb-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
             >
               {!talentsReceived ? (
                 <AvatarScrollSkeleton count={4} />
@@ -530,19 +531,19 @@ export default function Home({ onNavigate, user }) {
                   <div
                     key={talent.id}
                     onClick={() => onNavigate('profile', talent.id)}
-                    className="flex flex-col items-center shrink-0 w-[100px] sm:w-[125px] cursor-pointer group"
+                    className="flex flex-col items-center shrink-0 w-28 sm:w-36 cursor-pointer group"
                   >
                     <Avatar
                       userId={talent.id || talent.uid}
                       user={talent}
                       size="none"
                       name={talent.name}
-                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-md transition-all duration-300"
+                      className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover shadow-lg transition-all duration-300 group-hover:scale-105"
                     />
-                    <p className="text-white font-bold text-[11px] sm:text-xs text-center mt-1.5 truncate w-full px-0.5">
+                    <p className="text-white font-bold text-xs sm:text-sm text-center mt-2 truncate w-full px-0.5 group-hover:text-cyan-300 transition-colors">
                       {formatTalentName(talent.name)}
                     </p>
-                    <p className="text-[#1d61f2] font-semibold text-[10px] sm:text-[11px] text-center mt-0.5 truncate w-full px-0.5">
+                    <p className="text-[#1d61f2] font-semibold text-[11px] sm:text-xs text-center mt-0.5 truncate w-full px-0.5">
                       {getTalentRoleAndAge(talent)}
                     </p>
                   </div>

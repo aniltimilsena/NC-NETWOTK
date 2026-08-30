@@ -140,7 +140,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
     <header className="sticky top-0 left-0 right-0 z-50 bg-[#141414]">
       <nav className="relative z-30 bg-[#141414]/95 backdrop-blur-md border-b border-white/5">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-20">
+          <div className="flex justify-between items-center h-14 sm:h-16">
 
             <div className="flex items-center gap-4 sm:gap-6">
               {showBack && (<button onClick={onBack} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shrink-0" title="Go Back" aria-label="Go Back">

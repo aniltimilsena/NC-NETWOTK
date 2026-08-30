@@ -32,6 +32,8 @@ export default {
         display: ['"Roboto Condensed"', 'Roboto', 'sans-serif'],
         outfit: ['Outfit', 'sans-serif'],
         serif: ['"Playfair Display"', 'Georgia', 'serif'],
+        lato: ['Lato', 'sans-serif'],
+        script: ['"Great Vibes"', '"Alex Brush"', '"Allura"', 'cursive'],
       },
       backdropBlur: {
         xs: '2px',
