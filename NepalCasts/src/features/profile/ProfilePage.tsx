@@ -888,11 +888,11 @@ export default function ProfilePage({
               </div>
 
               {skillsList.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                <div className="flex flex-wrap gap-2 pt-0.5">
                   {skillsList.map((skill, index) => (
                     <span
                       key={index}
-                      className="bg-[#0088CC] text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm"
+                      className="bg-white text-black text-xs sm:text-sm font-apple font-bold px-3.5 py-1.5 rounded-full shadow-sm select-none"
                     >
                       {skill}
                     </span>
