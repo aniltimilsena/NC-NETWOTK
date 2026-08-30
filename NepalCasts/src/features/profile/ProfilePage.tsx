@@ -99,6 +99,7 @@ export default function ProfilePage({
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [bioInput, setBioInput] = useState('');
   const [isSavingBio, setIsSavingBio] = useState(false);
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
 
   const [showAttributesModal, setShowAttributesModal] = useState(false);
   const [heightInput, setHeightInput] = useState('');
@@ -834,22 +835,37 @@ export default function ProfilePage({
                 )}
               </div>
 
-              <div className="bg-[#161616] border border-white/5 rounded-2xl p-5 sm:p-6 shadow-sm">
-                <p
+              <div className="bg-[#161616] border border-white/5 rounded-2xl p-5 sm:p-6 shadow-sm space-y-2">
+                <div
                   onClick={() => {
-                    if (effectiveIsOwn) {
+                    if (effectiveIsOwn && !isBioExpanded) {
                       setBioInput(profile.bio || '');
                       setShowAboutModal(true);
                     }
                   }}
-                  className={`font-apple text-base sm:text-[17px] text-neutral-200 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal ${effectiveIsOwn ? 'cursor-pointer hover:text-white' : ''}`}
+                  className={`font-apple text-base sm:text-[17px] text-neutral-200 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal ${
+                    !isBioExpanded ? 'line-clamp-2' : ''
+                  } ${effectiveIsOwn ? 'cursor-pointer hover:text-white' : ''}`}
                 >
                   {bio ? renderFormattedBio(bio) : (
                     <span className="text-neutral-500 italic">
                       {effectiveIsOwn ? 'Add a short bio about yourself...' : 'No bio provided yet.'}
                     </span>
                   )}
-                </p>
+                </div>
+
+                {bio && (bio.length > 75 || bio.includes('\n')) && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsBioExpanded(!isBioExpanded);
+                    }}
+                    className="font-apple text-xs sm:text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer inline-flex items-center gap-1 pt-1"
+                  >
+                    {isBioExpanded ? 'See less' : 'See more'}
+                  </button>
+                )}
               </div>
             </section>
 
