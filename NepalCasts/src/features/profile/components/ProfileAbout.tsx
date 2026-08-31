@@ -13,6 +13,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
+import { formatRole } from '../../../utils';
 import type { UserProfile } from '../../../types';
 
 interface ProfileAboutProps {
@@ -33,7 +34,7 @@ export function ProfileSpecsSidebar({ profile, showContact }: ProfileAboutProps)
   const firstName = name.split(' ')[0] || name;
 
   const bio = profile.bio || '';
-  const category = profile.category || (profile as any)?.role || 'Model';
+  const category = formatRole(profile.category || (profile as any)?.role);
   const gender = profile.gender || 'Male';
 
   const languagesRaw: unknown = profile.languages;
@@ -209,7 +210,7 @@ export function ProfileSpecsSidebar({ profile, showContact }: ProfileAboutProps)
                       </span>
                       <a
                         href={`mailto:${profile.email}`}
-                        className="text-xs sm:text-sm text-white font-semibold hover:text-[#0088CC] transition-colors truncate block"
+                        className="text-xs sm:text-sm text-white font-semibold hover:text-[#ffb400] transition-colors truncate block"
                       >
                         {profile.email}
                       </a>
@@ -238,7 +239,7 @@ export function ProfileSpecsSidebar({ profile, showContact }: ProfileAboutProps)
                       </span>
                       <a
                         href={`tel:${profile.phone}`}
-                        className="text-xs sm:text-sm text-white font-semibold hover:text-[#0088CC] transition-colors truncate block"
+                        className="text-xs sm:text-sm text-white font-semibold hover:text-[#ffb400] transition-colors truncate block"
                       >
                         {profile.phone}
                       </a>
@@ -301,7 +302,7 @@ export function ProfileSpecsSidebar({ profile, showContact }: ProfileAboutProps)
                 className="p-2.5 sm:p-3 rounded-xl bg-[#18181D] border border-white/5 hover:border-white/15 transition-all flex items-center justify-between gap-2"
               >
                 <span className="text-xs sm:text-sm font-semibold text-white truncate">{skill.name}</span>
-                <span className="text-[10px] font-bold text-[#0088CC] bg-[#0088CC]/10 border border-[#0088CC]/20 px-2 py-0.5 rounded-md shrink-0 font-mono">
+                <span className="text-[10px] font-bold text-[#ffb400] bg-[#ffb400]/10 border border-[#ffb400]/20 px-2 py-0.5 rounded-md shrink-0 font-mono">
                   {skill.level ?? 85}%
                 </span>
               </div>
@@ -351,7 +352,7 @@ export default function ProfileAbout({ profile, showContact }: ProfileAboutProps
                     <strong className="text-xs sm:text-sm font-semibold text-white">{exp.title || 'Production Role'}</strong>
                     {exp.year && <span className="text-[10px] text-gray-400 font-mono">{exp.year}</span>}
                   </div>
-                  {exp.role && <p className="text-xs text-[#0088CC] font-medium mt-0.5">{exp.role}</p>}
+                  {exp.role && <p className="text-xs text-[#ffb400] font-medium mt-0.5">{exp.role}</p>}
                   {exp.description && <p className="text-xs text-gray-300 mt-0.5 leading-relaxed">{exp.description}</p>}
                 </div>
               </div>

@@ -1,10 +1,10 @@
 export default function Button({ children, variant = 'primary', size = 'md', className = '', onClick = () => { }, type = 'button', loading = false, disabled = false, ...props }) {
     const variants = {
-        primary: 'bg-gradient-to-br from-sky-400 to-sky-600 text-black font-bold hover:from-sky-500 hover:to-sky-700 shadow-[0_4px_20px_rgba(56,189,248,0.25)]',
-        secondary: 'bg-nc-surface border border-sky-400/30 text-sky-400 hover:bg-sky-400/10 hover:border-sky-400/50',
+        primary: 'bg-[#ffb400] hover:bg-[#e6a200] text-black font-extrabold shadow-[0_4px_20px_rgba(255,180,0,0.25)]',
+        secondary: 'bg-nc-surface border border-[#ffb400]/30 text-[#ffb400] hover:bg-[#ffb400]/10 hover:border-[#ffb400]/50',
         ghost: 'text-nc-secondary hover:text-white hover:bg-white/5',
         danger: 'bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30',
-        outline: 'border border-sky-400/30 text-sky-400 hover:bg-sky-400/10 hover:border-sky-400/50',
+        outline: 'border border-[#ffb400]/30 text-[#ffb400] hover:bg-[#ffb400]/10 hover:border-[#ffb400]/50',
     };
     const sizes = {
         sm: 'px-3 py-1.5 text-sm',

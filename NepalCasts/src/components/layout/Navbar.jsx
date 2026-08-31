@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { UserButton } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { ActionSearchBar } from "@/components/ui/ActionSearchBar";
 import Logo from '../ui/Logo';
@@ -12,7 +11,6 @@ import {
   Briefcase,
   MessageSquare,
   Bookmark,
-  User,
   ShieldCheck,
   LifeBuoy,
   LogOut,
@@ -236,62 +234,14 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                   {unreadMessagesCount > 0 && (<span className="absolute top-2 right-2 w-2 h-2 bg-[#00BFFF] rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#00BFFF]" />)}
                 </Link>
 
-                <div className="relative flex items-center">
-                  {/* Clerk UserButton hidden visually but functional for popover */}
-                  <div className="opacity-0 absolute inset-0 z-10">
-                    <UserButton
-                      appearance={{
-                        elements: {
-                          avatarBox: 'w-9 h-9 rounded-full',
-                          userButtonPopoverCard: 'bg-[#181818] border border-white/10 text-white shadow-2xl rounded-xl p-2 w-64',
-                          userButtonPopoverMain: 'space-y-0.5 p-0 bg-transparent',
-                          userPreview: 'p-3 border-b border-white/10 mb-1',
-                          userPreviewMainIdentifier: 'text-white font-bold text-sm',
-                          userPreviewSecondaryIdentifier: 'text-gray-400 text-xs font-medium',
-                          userButtonPopoverActions: 'space-y-0.5 p-0',
-                          userButtonPopoverActionButton: 'w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-transparent hover:bg-white/10 text-white font-medium transition-all text-sm cursor-pointer border-0 shadow-none',
-                          userButtonPopoverActionButtonText: 'text-gray-200 hover:text-white font-semibold text-sm',
-                          userButtonPopoverActionButtonIcon: 'text-white',
-                          userButtonPopoverActionButtonIcon__manageAccount: 'text-white',
-                          userButtonPopoverActionButtonIcon__signOut: 'text-white',
-                          userButtonPopoverFooter: 'hidden',
-                        }
-                      }}
-                    >
-                      <UserButton.MenuItems>
-                        <UserButton.Link
-                          label="View Profile"
-                          labelIcon={
-                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                          }
-                          href={`/profile/${user?.uid}`}
-                        />
-                        <UserButton.Action label="manageAccount" />
-                        <UserButton.Action label="signOut" />
-                      </UserButton.MenuItems>
-                    </UserButton>
-                  </div>
-                  {/* Our custom Avatar as the visible element */}
-                  <div className="pointer-events-none">
-                    <Avatar
-                      userId={user?.uid}
-                      user={user}
-                      src={user?.photoURL || user?.profileImage || user?.image}
-                      name={user?.displayName}
-                      size="sm"
-                      className="w-9 h-9 border border-white/15 hover:border-[#00BFFF] transition-all shadow-md"
-                    />
-                  </div>
-                </div>
 
-              </>) : (<Link to="/signup" className="bg-[#0088CC] hover:bg-[#0077B3] text-white text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-xl font-bold transition-all ml-1 shadow-md active:scale-95 flex items-center justify-center">
+
+              </>) : (<Link to="/signup" className="bg-[#ffb400] hover:bg-[#ffa000] text-black text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-xl font-bold transition-all ml-1 shadow-md active:scale-95 flex items-center justify-center">
                 Join Now
               </Link>)}
 
-              <button className="md:hidden text-white hover:text-cyan-300 p-1 flex items-center justify-center h-10 w-10 active:scale-95 transition-transform" onClick={() => setMenuOpen(!menuOpen)} title="Toggle Menu" aria-label="Toggle Menu">
-                <MenuCloseIcon active={menuOpen} size={34} color="currentColor" />
+              <button className="md:hidden text-white hover:text-white/80 p-1 flex items-center justify-center h-10 w-10 active:scale-95 transition-transform" onClick={() => setMenuOpen(!menuOpen)} title="Toggle Menu" aria-label="Toggle Menu">
+                <MenuCloseIcon active={menuOpen} size={34} color="white" />
               </button>
             </div>
           </div>
@@ -313,12 +263,35 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
 
         {/* === TWITTER/X STYLE MINIMALIST FLOATING NAVIGATION === */}
-        <div className="flex flex-col space-y-1.5 px-3 py-3 flex-1 overflow-y-auto">
+        <div className="flex flex-col space-y-1.5 px-3 py-3 flex-1 overflow-y-auto text-left items-stretch">
+          {/* My Profile (Before Home) */}
+          {isLoggedIn && (
+            <Link
+              to={`/profile/${user?.uid}`}
+              onClick={() => setMenuOpen(false)}
+              className={`group flex items-center justify-start gap-3.5 w-full px-4 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-[0.98] ${
+                pathname.startsWith('/profile')
+                  ? "bg-white/10 text-white font-semibold shadow-sm"
+                  : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <Avatar
+                userId={user?.uid}
+                user={user}
+                src={user?.photoURL || user?.profileImage || user?.image}
+                name={user?.displayName || user?.name}
+                size="none"
+                className="w-5 h-5 rounded-full object-cover shrink-0 border border-white/20"
+              />
+              <span className="text-[16px] tracking-normal">My Profile</span>
+            </Link>
+          )}
+
           {/* Home */}
           <Link
             to="/"
             onClick={() => setMenuOpen(false)}
-            className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
+            className={`group flex items-center justify-start gap-3.5 w-full px-4 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-[0.98] ${
               pathname === '/' || pathname === ''
                 ? "bg-white/10 text-white font-semibold shadow-sm"
                 : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
@@ -329,39 +302,40 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           </Link>
 
           {/* Discover Accordion */}
-          <div className="flex flex-col w-full">
+          <div className="w-full text-left">
             <button
+              type="button"
               onClick={() => setExpandedSection(expandedSection === 'discover' ? null : 'discover')}
-              className={`group flex items-center justify-between w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isDiscoverActive
                   ? "bg-white/10 text-white font-semibold shadow-sm"
                   : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
               }`}
             >
-              <div className="flex items-center gap-3.5">
+              <div className="flex items-center gap-3.5 text-left shrink-0">
                 <Compass className="w-5 h-5 shrink-0" />
                 <span className="text-[16px] tracking-normal">{t('nav_discover')}</span>
               </div>
-              <svg className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'discover' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`w-4 h-4 ml-auto shrink-0 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'discover' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {expandedSection === 'discover' && (
-              <div className="pl-6 pr-2 py-1 space-y-0.5 my-1">
-                <Link to="/discover" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+              <div className="pl-6 pr-2 py-1 space-y-0.5 my-1 text-left w-full">
+                <Link to="/discover" onClick={() => setMenuOpen(false)} className="flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
                   <LayoutGrid className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>Category Grid</span>
                 </Link>
-                <Link to="/talents" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+                <Link to="/talents" onClick={() => setMenuOpen(false)} className="flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
                   <Users className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>{t('nav_talent_directory')}</span>
                 </Link>
-                <Link to="/trending" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+                <Link to="/trending" onClick={() => setMenuOpen(false)} className="flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
                   <Flame className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>{t('nav_trending_now')}</span>
                 </Link>
-                <Link to="/settings" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+                <Link to="/settings" onClick={() => setMenuOpen(false)} className="flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
                   <Settings className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>{t('nav_settings')}</span>
                 </Link>
@@ -370,31 +344,32 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           </div>
 
           {/* Projects Accordion */}
-          <div className="flex flex-col w-full">
+          <div className="w-full text-left">
             <button
+              type="button"
               onClick={() => setExpandedSection(expandedSection === 'projects' ? null : 'projects')}
-              className={`group flex items-center justify-between w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isProjectsActive
                   ? "bg-white/10 text-white font-semibold shadow-sm"
                   : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
               }`}
             >
-              <div className="flex items-center gap-3.5">
+              <div className="flex items-center gap-3.5 text-left shrink-0">
                 <Briefcase className="w-5 h-5 shrink-0" />
                 <span className="text-[16px] tracking-normal">{t('nav_projects')}</span>
               </div>
-              <svg className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'projects' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`w-4 h-4 ml-auto shrink-0 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'projects' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {expandedSection === 'projects' && (
-              <div className="pl-6 pr-2 py-1 space-y-0.5 my-1">
-                <Link to="/casting" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+              <div className="pl-6 pr-2 py-1 space-y-0.5 my-1 text-left w-full">
+                <Link to="/casting" onClick={() => setMenuOpen(false)} className="flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
                   <Clapperboard className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>{t('nav_casting_calls')}</span>
                 </Link>
-                <Link to="/casting/create" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+                <Link to="/casting/create" onClick={() => setMenuOpen(false)} className="flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
                   <PlusCircle className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>{t('nav_post_project')}</span>
                 </Link>
@@ -408,7 +383,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
               <Link
                 to="/messages"
                 onClick={() => setMenuOpen(false)}
-                className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
+                className={`group flex items-center justify-start gap-3.5 w-full px-4 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-[0.98] ${
                   pathname.startsWith('/messages')
                     ? "bg-white/10 text-white font-semibold shadow-sm"
                     : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
@@ -421,7 +396,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
               <Link
                 to="/saved-castings"
                 onClick={() => setMenuOpen(false)}
-                className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
+                className={`group flex items-center justify-start gap-3.5 w-full px-4 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-[0.98] ${
                   pathname.startsWith('/saved')
                     ? "bg-white/10 text-white font-semibold shadow-sm"
                     : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
@@ -430,19 +405,6 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 <Bookmark className="w-5 h-5 shrink-0" />
                 <span className="text-[16px] tracking-normal">Saved Calls</span>
               </Link>
-
-              <Link
-                to={`/profile/${user?.uid}`}
-                onClick={() => setMenuOpen(false)}
-                className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
-                  pathname.startsWith('/profile')
-                    ? "bg-white/10 text-white font-semibold shadow-sm"
-                    : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <User className="w-5 h-5 shrink-0" />
-                <span className="text-[16px] tracking-normal">Profile</span>
-              </Link>
             </>
           )}
 
@@ -450,7 +412,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             <Link
               to="/admin"
               onClick={() => setMenuOpen(false)}
-              className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
+              className={`group flex items-center justify-start gap-3.5 w-full px-4 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-[0.98] ${
                 pathname.startsWith("/admin")
                   ? "bg-white/10 text-white font-semibold shadow-sm"
                   : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
@@ -462,47 +424,48 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           )}
 
           {/* Support Accordion */}
-          <div className="flex flex-col w-full">
+          <div className="w-full text-left">
             <button
+              type="button"
               onClick={() => setExpandedSection(expandedSection === 'support' ? null : 'support')}
-              className={`group flex items-center justify-between w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isSupportActive
                   ? "bg-white/10 text-white font-semibold shadow-sm"
                   : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
               }`}
             >
-              <div className="flex items-center gap-3.5">
+              <div className="flex items-center gap-3.5 text-left shrink-0">
                 <LifeBuoy className="w-5 h-5 shrink-0" />
                 <span className="text-[16px] tracking-normal">Support</span>
               </div>
-              <svg className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'support' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`w-4 h-4 ml-auto shrink-0 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'support' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {expandedSection === 'support' && (
-              <div className="pl-6 pr-2 py-1 space-y-0.5 my-1">
-                <Link to="/about" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/about' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+              <div className="pl-6 pr-2 py-1 space-y-0.5 my-1 text-left w-full">
+                <Link to="/about" onClick={() => setMenuOpen(false)} className={`flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/about' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                   <Info className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>About Us</span>
                 </Link>
-                <Link to="/help" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/help' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                <Link to="/help" onClick={() => setMenuOpen(false)} className={`flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/help' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                   <HelpCircle className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>Help & FAQ</span>
                 </Link>
-                <Link to="/contact" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/contact' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                <Link to="/contact" onClick={() => setMenuOpen(false)} className={`flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/contact' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                   <Mail className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>Contact</span>
                 </Link>
-                <Link to="/trust-safety" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/trust-safety' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                <Link to="/trust-safety" onClick={() => setMenuOpen(false)} className={`flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/trust-safety' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                   <Shield className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>Trust & Safety</span>
                 </Link>
-                <Link to="/privacy" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/privacy' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                <Link to="/privacy" onClick={() => setMenuOpen(false)} className={`flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/privacy' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                   <FileText className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>Privacy Policy</span>
                 </Link>
-                <Link to="/terms" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/terms' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                <Link to="/terms" onClick={() => setMenuOpen(false)} className={`flex items-center justify-start gap-2.5 w-full py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/terms' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                   <Scale className="w-4 h-4 shrink-0 text-gray-400" />
                   <span>Terms of Service</span>
                 </Link>
@@ -516,7 +479,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 onLogout();
                 setMenuOpen(false);
               }}
-              className="group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 text-left font-normal cursor-pointer active:scale-[0.98]"
+              className="group flex items-center justify-start gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 text-left font-normal cursor-pointer active:scale-[0.98]"
             >
               <LogOut className="w-5 h-5 shrink-0" />
               <span className="text-[16px] tracking-normal">Logout</span>
@@ -525,7 +488,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             <Link
               to="/signin"
               onClick={() => setMenuOpen(false)}
-              className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
+              className={`group flex items-center justify-start gap-3.5 w-full px-4 py-2.5 rounded-xl text-left transition-all duration-200 active:scale-[0.98] ${
                 pathname === '/signin'
                   ? "bg-white/10 text-white font-semibold shadow-sm"
                   : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
@@ -544,7 +507,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
     <AnimatePresence>
       {showSearchOverlay && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-start pt-6 px-4 overflow-y-auto">
 
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-gradient-to-r from-[#1877F2]/5 to-transparent blur-[100px] rounded-full pointer-events-none z-0" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-gradient-to-r from-[#ffb400]/5 to-transparent blur-[100px] rounded-full pointer-events-none z-0" />
 
         <div className="w-full max-w-3xl animate-slide-up relative z-10 pb-12">
           <div className="relative z-50">

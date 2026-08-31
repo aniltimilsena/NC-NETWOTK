@@ -206,7 +206,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
             Step {step} of 6
           </span>
           <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-            <div className="h-full bg-[#00BFFF] transition-all duration-500 rounded-full" style={{ width: `${(step / 6) * 100}%` }}/>
+            <div className="h-full bg-[#ffb400] transition-all duration-500 rounded-full" style={{ width: `${(step / 6) * 100}%` }}/>
           </div>
         </div>
 
@@ -224,7 +224,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
           {step === 1 && (<div className="space-y-8 animate-fade-in">
               <div className="space-y-3">
                 <div className="inline-flex items-center justify-center p-3.5 bg-nc-accent/10 rounded-3xl border border-nc-accent/15 mb-2">
-                  <Film className="w-8 h-8 text-[#00BFFF]"/>
+                  <Film className="w-8 h-8 text-[#ffb400]"/>
                 </div>
                 <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
                   Welcome to NepalCasts,<br className="hidden sm:inline"/> {profile?.name || user?.displayName || 'Creative'}!
@@ -238,17 +238,17 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
               <div className="grid grid-cols-1 gap-4 max-w-lg mx-auto text-left pt-2">
                 {[
                 {
-                    icon: <UserCheck className="w-5 h-5 text-[#00BFFF]"/>,
+                    icon: <UserCheck className="w-5 h-5 text-[#ffb400]"/>,
                     title: "Get Discovered",
                     desc: "Showcase your portfolio and highlight your skills directly to casting scouts."
                 },
                 {
-                    icon: <MessageSquare className="w-5 h-5 text-[#00BFFF]"/>,
+                    icon: <MessageSquare className="w-5 h-5 text-[#ffb400]"/>,
                     title: "Direct Messaging",
                     desc: "Communicate directly with directors and production companies."
                 },
                 {
-                    icon: <Video className="w-5 h-5 text-[#00BFFF]"/>,
+                    icon: <Video className="w-5 h-5 text-[#ffb400]"/>,
                     title: "Apply to Auditions",
                     desc: "Apply instantly to certified movie, commercial, and theater casting calls."
                 }
@@ -277,19 +277,19 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
                 {[
                 {
                     id: 'Talent',
-                    icon: <Star className="w-6 h-6 text-[#00BFFF]"/>,
+                    icon: <Star className="w-6 h-6 text-[#ffb400]"/>,
                     title: "I'm a Talent",
                     desc: "Actor, model, dancer, writer, director, or crew looking for castings."
                 },
                 {
                     id: 'Casting',
-                    icon: <Film className="w-6 h-6 text-[#00BFFF]"/>,
+                    icon: <Film className="w-6 h-6 text-[#ffb400]"/>,
                     title: "I'm a Casting Director",
                     desc: "Production house, agent, or crew recruiter looking to hire talent."
                 },
                 {
                     id: 'Fan',
-                    icon: <Heart className="w-6 h-6 text-[#00BFFF]"/>,
+                    icon: <Heart className="w-6 h-6 text-[#ffb400]"/>,
                     title: "I'm a Fan / Viewer",
                     desc: "Explore upcoming castings, follow creators, and support Nepalese cinema."
                 }
@@ -297,9 +297,9 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
                 const isSel = selectedRole === role.id;
                 return (<button key={role.id} onClick={() => setSelectedRole(role.id as any)} className={`w-full p-5 flex gap-4 rounded-3xl items-start text-left transition-all border outline-none
                         ${isSel
-                        ? 'bg-nc-accent/[0.06] border-[#00BFFF] shadow-[0_0_20px_rgba(0,191,255,0.06)]'
+                        ? 'bg-nc-accent/[0.06] border-[#ffb400] shadow-[0_0_20px_rgba(0,191,255,0.06)]'
                         : 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/[0.04]'}`}>
-                      <div className={`p-3 rounded-2xl shrink-0 ${isSel ? 'bg-[#00BFFF]/20' : 'bg-white/5'}`}>
+                      <div className={`p-3 rounded-2xl shrink-0 ${isSel ? 'bg-[#ffb400]/20' : 'bg-white/5'}`}>
                         {role.icon}
                       </div>
                       <div className="space-y-1">
@@ -327,7 +327,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
                 const isSel = selectedCategories.includes(catName);
                 return (<button key={catName} onClick={() => toggleCategory(catName)} className={`p-4 flex flex-col items-center gap-3 rounded-2xl transition-all border outline-none
                         ${isSel
-                        ? 'bg-[#00BFFF]/10 border-[#00BFFF] text-[#00BFFF]'
+                        ? 'bg-[#ffb400]/10 border-[#ffb400] text-[#ffb400]'
                         : 'bg-white/[0.02] border-white/5 text-gray-400 hover:border-white/10'}`}>
                       <div className={`w-12 h-12 flex items-center justify-center rounded-full transition-all`} style={{
                         backgroundColor: isSel ? `${cfg.color}33` : 'rgba(255, 255, 255, 0.05)',
@@ -381,7 +381,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
               </div>
 
               <div className="max-w-md mx-auto space-y-2 pt-2 text-right">
-                <textarea value={bio} onChange={(e) => setBio(e.target.value.slice(0, 300))} placeholder="e.g. Actors based in Kathmandu, with 3+ years of theater experience and a passion for indie films..." rows={4} className="w-full bg-white/[0.02] border border-white/5 rounded-3xl p-5 text-sm text-white placeholder-nc-muted focus:outline-none focus:border-[#00BFFF]/50 focus:bg-white/[0.04] transition-all resize-none text-left"/>
+                <textarea value={bio} onChange={(e) => setBio(e.target.value.slice(0, 300))} placeholder="e.g. Actors based in Kathmandu, with 3+ years of theater experience and a passion for indie films..." rows={4} className="w-full bg-white/[0.02] border border-white/5 rounded-3xl p-5 text-sm text-white placeholder-nc-muted focus:outline-none focus:border-[#ffb400]/50 focus:bg-white/[0.04] transition-all resize-none text-left"/>
                 <span className="text-[10px] font-bold text-nc-muted tracking-wider uppercase">
                   {bio.length} / 300 characters
                 </span>
@@ -415,7 +415,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
 
         
         {step === 6 ? (<div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto items-center justify-center sm:justify-end ml-auto">
-            <button onClick={() => handleSaveAndComplete('home')} className="w-full sm:w-auto px-7 py-3.5 bg-[#00BFFF] hover:bg-[#0099e6] text-[#0A0A0A] text-xs sm:text-sm font-black uppercase tracking-wider rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-lg shadow-[#00BFFF]/20">
+            <button onClick={() => handleSaveAndComplete('home')} className="w-full sm:w-auto px-7 py-3.5 bg-[#ffb400] hover:bg-[#0099e6] text-[#0A0A0A] text-xs sm:text-sm font-black uppercase tracking-wider rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-lg shadow-[#ffb400]/20">
               Explore Talents <ChevronRight className="w-4 h-4 shrink-0"/>
             </button>
             <button onClick={() => handleSaveAndComplete('settings')} className="w-full sm:w-auto px-7 py-3.5 bg-white/5 hover:bg-white/10 text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-2xl transition-all active:scale-95 border border-white/5">
@@ -430,7 +430,7 @@ export default function Onboarding({ user, profile, onNavigate }: OnboardingProp
             <button onClick={handleNext} disabled={step === 2 && !selectedRole} className={`px-7 py-3.5 text-xs sm:text-sm font-black uppercase tracking-wider rounded-2xl transition-all active:scale-95 flex items-center gap-1.5 shadow-md
                 ${step === 2 && !selectedRole
                 ? 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5 shadow-none'
-                : 'bg-[#00BFFF] hover:bg-[#0099e6] text-[#0A0A0A] shadow-[#00BFFF]/10'}`}>
+                : 'bg-[#ffb400] hover:bg-[#0099e6] text-[#0A0A0A] shadow-[#ffb400]/10'}`}>
               Next <ArrowRight className="w-4 h-4 shrink-0"/>
             </button>
           </div>)}

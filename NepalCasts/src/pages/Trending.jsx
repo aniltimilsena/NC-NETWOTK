@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Search, ChevronLeft, SlidersHorizontal } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
-import { collection, onSnapshot, query, doc, deleteDoc, setDoc, addDoc, serverTimestamp, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, deleteDoc, setDoc, serverTimestamp, where } from 'firebase/firestore';
 import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import { CATEGORIES, getCategoryColor, getCategoryConfig, matchesCategory } from '../constants/categories';
+import { formatRole } from '../utils';
 import { cacheManager } from '../utils/cacheManager';
 import { useTranslation } from 'react-i18next';
 import { db } from '../lib/firebase';
@@ -203,8 +204,8 @@ export default function Trending({ onNavigate, user }) {
         </div>
 
         <div className="relative shrink-0">
-          <button onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-sky-400 hover:text-sky-300 transition-colors duration-200 cursor-pointer" aria-label="Category Filter" title="Category Filter">
-            <SlidersHorizontal className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-sky-400" strokeWidth={2} />
+          <button onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-white hover:text-white/80 transition-colors duration-200 cursor-pointer" aria-label="Category Filter" title="Category Filter">
+            <SlidersHorizontal className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-white" strokeWidth={2} />
           </button>
 
           <AnimatePresence>
@@ -216,7 +217,7 @@ export default function Trending({ onNavigate, user }) {
                   setVisibleCount(10);
                   setIsFilterDropdownOpen(false);
                 }} className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${selectedCategory === 'All'
-                  ? 'text-sky-400 bg-sky-400/5'
+                  ? 'text-[#ffb400] bg-[#ffb400]/10'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                   {t('nav_talent_directory')}
                 </button>
@@ -227,7 +228,7 @@ export default function Trending({ onNavigate, user }) {
                     setVisibleCount(10);
                     setIsFilterDropdownOpen(false);
                   }} className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
-                    ? 'text-sky-400 bg-sky-400/5'
+                    ? 'text-[#ffb400] bg-[#ffb400]/10'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                     {getCategoryConfig(cat).label}
                   </button>);
@@ -359,20 +360,16 @@ export default function Trending({ onNavigate, user }) {
                 </div>
 
 
-                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase border" style={{
-                  backgroundColor: '#111',
-                  borderColor: getRankColor(item.pos + 1),
-                  color: getRankColor(item.pos + 1)
-                }}>
+                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase border border-white/20 bg-[#111] text-white shadow-md">
                   #{item.pos + 1}
                 </div>
               </div>
 
               <div className="text-center mb-4 w-full px-2">
-                <h3 className="font-bold text-white text-base tracking-tight truncate max-w-[180px] mx-auto">
+                <h3 className="font-apple font-bold text-white text-base tracking-tight truncate max-w-[180px] mx-auto">
                   {prof.name}
                 </h3>
-                <p className="text-xs text-nc-accent font-medium truncate mt-0.5">
+                <p className="text-xs text-white font-medium truncate mt-0.5">
                   @{prof.username || prof.name?.toLowerCase().replace(/\s+/g, '_') || 'talent'}
                 </p>
               </div>
@@ -384,7 +381,7 @@ export default function Trending({ onNavigate, user }) {
                   <p className="text-xl sm:text-2xl font-black text-white">{Math.max(0, prof.followers || 0)}</p>
                 </div>
 
-                {isNew && (<span className="self-center text-[#0099FF] font-black text-[9px] sm:text-[10px] uppercase tracking-wider">
+                {isNew && (<span className="self-center text-[#ffb400] font-black text-[9px] sm:text-[10px] uppercase tracking-wider">
                   New
                 </span>)}
 
@@ -415,7 +412,7 @@ export default function Trending({ onNavigate, user }) {
                 <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
 
                   <div className="w-10 sm:w-14 flex items-center justify-center relative shrink-0">
-                    <span className="text-2xl sm:text-3xl font-black select-none tracking-tighter" style={{ color: getRankColor(rank) }}>
+                    <span className="text-2xl sm:text-3xl font-black select-none tracking-tighter text-white">
                       #{rank}
                     </span>
                   </div>
@@ -430,22 +427,22 @@ export default function Trending({ onNavigate, user }) {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h3 className="font-extrabold text-white text-sm sm:text-base tracking-tight truncate group-hover:text-[#0099FF] transition-colors">
+                      <h3 className="font-apple font-extrabold text-white text-sm sm:text-base tracking-tight truncate group-hover:text-[#ffb400] transition-colors">
                         {prof.name}
                       </h3>
-                      {isNew && (<span className="shrink-0 text-[#0099FF] font-black text-[9px] sm:text-[10px] uppercase tracking-wider">
+                      {isNew && (<span className="shrink-0 text-[#ffb400] font-black text-[9px] sm:text-[10px] uppercase tracking-wider">
                         New
                       </span>)}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-gray-400">
-                      <span className="text-nc-accent font-semibold">
+                      <span className="text-white font-semibold">
                         @{prof.username || prof.name?.toLowerCase().replace(/\s+/g, '_') || 'talent'}
                       </span>
                       {prof.role && (<>
                         <span className="text-gray-600">·</span>
                         <span className="font-semibold text-gray-300 capitalize">
-                          {prof.role?.split(',')[0]}
+                          {formatRole(prof.role)}
                         </span>
                       </>)}
                       {prof.location && (<>

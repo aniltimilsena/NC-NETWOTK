@@ -19,9 +19,9 @@ export default function SplashScreen() {
             ease: [0.4, 0, 0.2, 1]
         }}>
         
-        <motion.div className="absolute -inset-6 bg-[#00BFFF]/10 rounded-full blur-3xl pointer-events-none" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: [0, 0.8, 0.4], scale: [0.8, 1.2, 1.0] }} transition={{ duration: 2.2, ease: [0.4, 0, 0.2, 1] }}/>
+        <motion.div className="absolute -inset-6 bg-[#ffb400]/10 rounded-full blur-3xl pointer-events-none" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: [0, 0.8, 0.4], scale: [0.8, 1.2, 1.0] }} transition={{ duration: 2.2, ease: [0.4, 0, 0.2, 1] }}/>
 
-        <motion.div className="relative w-44 h-44 drop-shadow-[0_0_35px_rgba(0,191,255,0.25)]" initial={{ opacity: 0, rotate: -5 }} animate={{ opacity: 1, rotate: 0 }} transition={{ duration: 1.5, ease: "easeOut" }}>
+        <motion.div className="relative w-44 h-44 drop-shadow-[0_0_35px_rgba(255,180,0,0.25)]" initial={{ opacity: 0, rotate: -5 }} animate={{ opacity: 1, rotate: 0 }} transition={{ duration: 1.5, ease: "easeOut" }}>
           <LogoIcon className="w-full h-full"/>
         </motion.div>
 

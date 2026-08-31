@@ -63,7 +63,7 @@ export default function SkillsSettings({ profile, onUpdate, showAlert }: SkillsS
         <form onSubmit={handleAddSkill} className="flex flex-col sm:flex-row gap-3 items-end">
           <div className="flex-1 space-y-1.5 w-full text-left">
             <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Skill Name</label>
-            <input type="text" placeholder="e.g. Acting, Dancing, Method Acting, Dialects" value={newSkillName} onChange={(e) => setNewSkillName(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"/>
+            <input type="text" placeholder="e.g. Acting, Dancing, Method Acting, Dialects" value={newSkillName} onChange={(e) => setNewSkillName(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"/>
           </div>
 
           <div className="w-full sm:w-32 space-y-1.5 text-left">
@@ -71,7 +71,7 @@ export default function SkillsSettings({ profile, onUpdate, showAlert }: SkillsS
             <input type="number" min={10} max={100} placeholder="e.g. 80" value={newSkillLevel} onChange={(e) => {
             const val = e.target.value;
             setNewSkillLevel(val === '' ? '' : parseInt(val, 10));
-        }} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"/>
+        }} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"/>
           </div>
 
           <Button type="submit" onClick={handleAddSkill} className="w-auto h-9 px-4 py-1.5 rounded-xl text-xs font-bold shrink-0 self-end">

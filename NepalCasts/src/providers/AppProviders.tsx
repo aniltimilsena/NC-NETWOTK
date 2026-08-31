@@ -213,6 +213,7 @@ export default function AppProviders({ children }: {
                         }, { merge: true });
                     }
                     try {
+                        // eslint-disable-next-line no-secrets/no-secrets
                         const mockFollowerIds = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', 'Mm1B6rYaEebs6ajRyu0EJBrrGwT2', uid]);
                         const followsTargetSnap = await getDocs(query(collection(db, 'follows'), where('followingId', '==', uid)));
                         for (const dSnap of followsTargetSnap.docs) {
@@ -378,7 +379,7 @@ export default function AppProviders({ children }: {
                     Your account is in a 30-day grace period.
                   </p>
                 </div>
-                <button onClick={handleCancelDeletion} className="w-full py-3 bg-[#00BFFF] text-black font-black uppercase text-xs rounded-xl">
+                <button onClick={handleCancelDeletion} className="w-full py-3 bg-[#ffb400] hover:bg-[#ffa000] text-black font-black uppercase text-xs rounded-xl cursor-pointer">
                   Restore Account
                 </button>
               </div>

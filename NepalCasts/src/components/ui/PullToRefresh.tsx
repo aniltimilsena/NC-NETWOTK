@@ -1,6 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, ArrowDown } from 'lucide-react';
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void> | void;
@@ -46,7 +45,9 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
         if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
           try {
             navigator.vibrate(15);
-          } catch (_) {}
+          } catch {
+            // Ignore vibration API errors on unsupported browsers
+          }
         }
         hasTriggeredHapticRef.current = true;
       }
@@ -88,40 +89,25 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
-      {/* Pull / Refresh Floating Pill Indicator */}
+      {/* Pull / Refresh Floating White Circle Indicator */}
       <AnimatePresence>
         {(pullDistance > 0 || isRefreshing) && (
           <motion.div
-            initial={{ opacity: 0, y: -25 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -25 }}
+            initial={{ opacity: 0, y: -20, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.8 }}
             className="fixed top-16 sm:top-20 left-0 right-0 z-50 flex items-center justify-center pointer-events-none px-4"
           >
-            <motion.div
-              animate={{ scale: isRefreshing ? 1 : Math.min(1.05, 0.85 + progress * 0.2) }}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.85)]"
-            >
+            <div className="w-9 h-9 rounded-full bg-black/90 backdrop-blur-md border border-white/15 flex items-center justify-center shadow-[0_4px_24px_rgba(0,0,0,0.8)]">
               {isRefreshing ? (
-                <>
-                  <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
-                  <span className="font-apple text-xs font-semibold text-white tracking-normal">
-                    Updating...
-                  </span>
-                </>
+                <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
               ) : (
-                <>
-                  <motion.div
-                    animate={{ rotate: pullDistance >= PULL_THRESHOLD ? 180 : progress * 180 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <ArrowDown className={`w-3.5 h-3.5 transition-colors ${pullDistance >= PULL_THRESHOLD ? 'text-cyan-400' : 'text-slate-300'}`} />
-                  </motion.div>
-                  <span className="font-apple text-xs font-semibold text-white tracking-normal">
-                    {pullDistance >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull down to refresh'}
-                  </span>
-                </>
+                <motion.div
+                  style={{ rotate: progress * 360 }}
+                  className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white"
+                />
               )}
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

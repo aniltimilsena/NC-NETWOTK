@@ -7,7 +7,7 @@ export interface CategoryConfig {
     bgColor: string;
 }
 export const CATEGORY_META: Omit<CategoryConfig, 'icon'>[] = [
-    { id: 'actor', label: 'Actor / Actress', pluralLabel: 'Actors & Actresses', color: '#72c3be', bgColor: 'rgba(114,195,190,0.15)' },
+    { id: 'actor', label: 'Actor', pluralLabel: 'Actors', color: '#72c3be', bgColor: 'rgba(114,195,190,0.15)' },
     { id: 'director', label: 'Director', pluralLabel: 'Directors', color: '#ff1e1e', bgColor: 'rgba(255,30,30,0.15)' },
     { id: 'writer', label: 'Script Writer', pluralLabel: 'Script Writers', color: '#34d399', bgColor: 'rgba(52,211,153,0.15)' },
     { id: 'dop', label: 'DOP / Cinematographer', pluralLabel: 'Cinematographers', color: '#ffb26b', bgColor: 'rgba(255,178,107,0.15)' },
@@ -19,13 +19,13 @@ export const CATEGORY_META: Omit<CategoryConfig, 'icon'>[] = [
 export const CATEGORIES = CATEGORY_META.map((c) => c.id);
 export const getCategoryColor = (nameOrId: string): string => {
     const found = CATEGORY_META.find((c) => c.id.toLowerCase() === (nameOrId ?? '').toLowerCase());
-    return found?.color ?? '#00BFFF';
+    return found?.color ?? '#ffb400';
 };
 export const getCategoryBgColor = (nameOrId: string): string => {
     const found = CATEGORY_META.find((c) => c.id.toLowerCase() === (nameOrId ?? '').toLowerCase());
-    return found?.bgColor ?? 'rgba(0,191,255,0.10)';
+    return found?.bgColor ?? 'rgba(255,180,0,0.10)';
 };
 export const getCategoryMeta = (nameOrId: string) => {
     const found = CATEGORY_META.find((c) => c.id.toLowerCase() === (nameOrId ?? '').toLowerCase());
-    return found ?? { id: nameOrId, label: nameOrId, color: '#00BFFF', bgColor: 'rgba(0,191,255,0.10)' };
+    return found ?? { id: nameOrId, label: nameOrId, color: '#ffb400', bgColor: 'rgba(255,180,0,0.10)' };
 };

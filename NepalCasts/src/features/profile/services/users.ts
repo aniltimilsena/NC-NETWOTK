@@ -9,6 +9,7 @@ type Talent = {
 };
 
 import { cacheManager } from "../../../utils/cacheManager";
+import { formatRole } from "../../../utils";
 
 const LOCAL_STORAGE_CACHE_KEY = "nc_cached_talents_real";
 
@@ -72,6 +73,8 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
                         if (username) {
                             seen.add(`usr_${username}`);
                         }
+                        t.role = formatRole((t.role || t.category) as string);
+                        t.category = formatRole((t.category || t.role) as string);
                         unique.push(t);
                     }
                     unique.sort((a: any, b: any) => ((a.name || '').localeCompare(b.name || '')));
@@ -114,6 +117,8 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
                         continue;
                     }
                     if (name || t.role || t.category || t.bio) {
+                        t.role = formatRole((t.role || t.category) as string);
+                        t.category = formatRole((t.category || t.role) as string);
                         seen.add(uid);
                         unique.push(t);
                     }

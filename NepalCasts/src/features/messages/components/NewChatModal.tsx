@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Search } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
 import { FollowItemSkeleton } from '../../../components/ui/Skeleton';
+import { formatRole } from '../../../utils';
 import { db } from '../../../lib/firebase';
 import { collection, getDocs, query, limit } from 'firebase/firestore';
 interface UserProfile {
@@ -93,7 +94,7 @@ export default function NewChatModal({ isOpen, onClose, onSelectUser }: NewChatM
                 <Avatar userId={p.uid} src={p.image} name={p.name} size="sm"/>
                 <div className="text-left">
                   <span className="text-sm font-bold text-white block">{p.name || 'User'}</span>
-                  <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{p.role || 'Talent'}</span>
+                  <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{formatRole(p.role)}</span>
                 </div>
               </div>))) : (<p className="text-xs text-gray-400 text-center py-8">No users found.</p>)}
         </div>

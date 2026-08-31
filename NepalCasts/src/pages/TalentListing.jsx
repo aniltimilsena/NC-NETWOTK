@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MoreVertical, Share2, ChevronLeft, SlidersHorizontal } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { db } from '../lib/firebase';
-import { collection, onSnapshot, query, doc, deleteDoc, setDoc, addDoc, serverTimestamp, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, deleteDoc, setDoc, serverTimestamp, where } from 'firebase/firestore';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import Tag from '../components/ui/Tag';
@@ -14,6 +14,7 @@ import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { CATEGORIES, getCategoryConfig, matchesCategory } from '../constants/categories';
 import { HOME_CATEGORY_CARDS, CategoryCardIcon } from '../components/ui/CategoryCards';
 import { cacheManager } from '../utils/cacheManager';
+import { formatRole } from '../utils';
 import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
 /**
  * @param {{ onNavigate?: any, user?: any, initialCategory?: string, initialMode?: string }} props
@@ -359,8 +360,8 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                             </div>
 
                             <div className="relative shrink-0">
-                                <button onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)} className="w-7 h-7 flex items-center justify-center text-sky-400 hover:text-sky-300 transition-colors duration-200 cursor-pointer" aria-label="Sort options" title="Sort options">
-                                    <SlidersHorizontal className="w-[18px] h-[18px] text-sky-400" strokeWidth={2} />
+                                <button onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)} className="w-7 h-7 flex items-center justify-center text-white hover:text-white/80 transition-colors duration-200 cursor-pointer" aria-label="Sort options" title="Sort options">
+                                    <SlidersHorizontal className="w-[18px] h-[18px] text-white" strokeWidth={2} />
                                 </button>
 
                                 <AnimatePresence>
@@ -373,7 +374,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                                     setActiveSort(opt.id);
                                                     setIsSortDropdownOpen(false);
                                                 }} className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
-                                                    ? 'text-sky-400 bg-sky-400/5'
+                                                    ? 'text-[#ffb400] bg-[#ffb400]/10'
                                                     : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                                                     {opt.label}
                                                 </button>);
@@ -438,13 +439,13 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                         <div className="flex items-center gap-4 min-w-0">
                                             <Avatar userId={talent.id || talent.uid} user={talent} src={talentPhoto} size="lg" name={talent.name} className="w-12 h-12 md:w-14 md:h-14 transition-transform group-hover:scale-105 duration-300" />
                                             <div className="min-w-0 text-left">
-                                                <h3 className="font-bold text-white text-base md:text-lg tracking-tight truncate flex items-center gap-1.5 group-hover:text-sky-400 transition-colors duration-300">
+                                                <h3 className="font-apple font-bold text-white text-base md:text-lg tracking-wide truncate flex items-center gap-1.5 group-hover:text-[#ffb400] transition-colors duration-300">
                                                     {talent.name}
                                                     {talent.verified && (<span className="verified-badge shrink-0" title="Verified Talent">✓</span>)}
                                                     {talent.openToWork && (<span className="w-1.5 h-1.5 rounded-full bg-green-500 ring-2 ring-green-500/20" title="Open to Work" />)}
                                                 </h3>
                                                 <p className="text-xs text-gray-500 font-medium mt-0.5">
-                                                    {talent.role || 'Talent'} • {expLevel} Level • {isNew ? 'New' : `Since ${joinYear}`}
+                                                    {formatRole(talent.role)} • {expLevel} Level • {isNew ? 'New' : `Since ${joinYear}`}
                                                 </p>
                                                 <p className="text-xs text-gray-400 mt-1 truncate">
                                                     {talent.location || 'Nepal'}
@@ -474,8 +475,8 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                                         <button onClick={() => {
                                                             setActiveShareTalent(talent);
                                                             setActiveMenuId(null);
-                                                        }} className="w-full px-4 py-2.5 text-left text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-2 transition-colors">
-                                                            <Share2 size={12} className="text-sky-400" />
+                                                        }} className="w-full px-4 py-2.5 text-xs text-gray-300 hover:text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer text-left">
+                                                            <Share2 size={14} className="text-[#ffb400]" />
                                                             Share Profile
                                                         </button>
                                                     </div>
@@ -491,7 +492,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                     {activeShareTalent && (<ShareSheet profile={{
                         id: activeShareTalent.id,
                         name: activeShareTalent.name,
-                        role: activeShareTalent.role || 'Talent',
+                        role: formatRole(activeShareTalent.role),
                         location: activeShareTalent.location || 'Nepal',
                         followers: activeShareTalent.followers || 0,
                         rating: parseFloat(activeShareTalent.rating) || 0,

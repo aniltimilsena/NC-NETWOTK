@@ -8,15 +8,7 @@ import { matchesCategory } from '../constants/categories';
 import { subscribeToProfile } from '../features/profile/services/profile';
 import { AvatarScrollSkeleton } from '../components/ui/Skeleton';
 import PullToRefresh from '../components/ui/PullToRefresh';
-import { Megaphone, Tag, ExternalLink, Flame, Clapperboard, LayoutGrid, ChevronRight, Crown, Sprout } from 'lucide-react';
-
-const HERO_BACKGROUND_PHOTOS = [
-  '/hero-bg.png',
-  '/hero-stage.jpg',
-  'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1920&q=80',
-  'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1920&q=80',
-  'https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=1920&q=80',
-];
+import { ChevronRight } from 'lucide-react';
 
 function getInitials(name) {
   if (!name) return 'NC';
@@ -202,15 +194,15 @@ export default function Home({ onNavigate, user }) {
   };
 
   const getTalentRole = (talent) => {
-    if (!talent) return 'Actor / Actress';
+    if (!talent) return 'Actor';
     const role = talent.role?.split(',')[0] || talent.category;
-    if (!role) return 'Actor / Actress';
-    if (role.toLowerCase() === 'actor' || role.toLowerCase() === 'actress') return 'Actor / Actress';
+    if (!role) return 'Actor';
+    if (role.toLowerCase().includes('actor') || role.toLowerCase().includes('actress')) return 'Actor';
     return role;
   };
 
   const getTalentRoleAndAge = (talent) => {
-    if (!talent) return 'Actor / Actress';
+    if (!talent) return 'Actor';
     const role = getTalentRole(talent);
     const age = getTalentAge(talent);
     return age ? `${role} (${age})` : role;
@@ -404,12 +396,13 @@ export default function Home({ onNavigate, user }) {
 
   const hasRealPhoto = Boolean(rawPhoto && !isMockOrInvalidImage(rawPhoto));
   const spotlightName = spotlightProfile?.name || currentSpotlightUser?.name || 'Talent';
-  const spotlightRole =
+  const rawSpotlightRole =
     spotlightProfile?.role?.split(',')[0] ||
     spotlightProfile?.category ||
     currentSpotlightUser?.role?.split(',')[0] ||
     currentSpotlightUser?.category ||
     'Actor';
+  const spotlightRole = (rawSpotlightRole.toLowerCase().includes('actor') || rawSpotlightRole.toLowerCase().includes('actress')) ? 'Actor' : rawSpotlightRole;
 
   const spotlightAge = getTalentAge(spotlightProfile || currentSpotlightUser);
   const spotlightInitials = getInitials(spotlightName);
@@ -436,7 +429,7 @@ export default function Home({ onNavigate, user }) {
       loading={!talentsReceived}
     >
       <PullToRefresh onRefresh={handleRefresh}>
-        <div className="min-h-screen bg-[#141414] text-white pt-0 pb-6 font-sans selection:bg-blue-600 selection:text-white">
+        <div className="min-h-screen bg-[#141414] text-white pt-0 pb-6 font-sans selection:bg-[#ffb400] selection:text-black">
           {/* ================= HERO SECTION (Compact, flush with top navbar) ================= */}
           <section className="relative w-full h-[190px] sm:h-[220px] lg:h-[250px] overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5 m-0 p-0">
             {/* 5 Smoothly Rotating Background Images (Every 4s) */}
@@ -458,13 +451,11 @@ export default function Home({ onNavigate, user }) {
             </div>
 
             {/* Top Right Slogan in One Line with Typewriter Font & Live Typing Animation */}
-            <div className="absolute top-2.5 sm:top-3.5 right-3 sm:right-5 z-20 pointer-events-none flex items-baseline justify-end gap-1.5 sm:gap-2">
-              <span className="font-script text-xl sm:text-2xl lg:text-3xl text-cyan-400 font-normal drop-shadow-[0_2px_8px_rgba(34,211,238,0.7)] leading-none shrink-0">
-                Discover
-              </span>
-              <h1 className="font-mono font-bold text-xs sm:text-sm md:text-base lg:text-lg text-white whitespace-nowrap tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] flex items-center">
-                <span>{typewriterText}</span>
-                <span className="inline-block w-1.5 sm:w-2 h-3.5 sm:h-4 bg-cyan-400 ml-1 animate-pulse" />
+            <div className="absolute top-2.5 sm:top-3.5 right-3 sm:right-5 z-20 pointer-events-none flex items-center justify-end">
+              <h1 className="font-mono font-bold text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] flex items-center gap-1.5 sm:gap-2">
+                <span className="text-[#ffb400] shrink-0">Discover</span>
+                <span className="text-white">{typewriterText}</span>
+                <span className="inline-block w-1.5 sm:w-2 h-3.5 sm:h-4 bg-[#ffb400] ml-0.5 animate-pulse shrink-0" />
               </h1>
             </div>
 
@@ -490,13 +481,13 @@ export default function Home({ onNavigate, user }) {
                     }}
                   >
                     {/* Portrait Photo Card with Top-Left & Bottom-Right Rounded Corners */}
-                    <div className="relative shrink-0 w-[82px] h-[112px] sm:w-[100px] sm:h-[136px] flex flex-col items-center justify-center overflow-hidden rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm shadow-[0_10px_30px_rgba(0,0,0,0.9)] border border-white/20 bg-gradient-to-b from-[#1c2333] to-[#0d121c] group-hover:border-white/40 transition-all">
+                    <div className="relative shrink-0 w-[82px] h-[112px] sm:w-[100px] sm:h-[136px] flex flex-col items-center justify-center overflow-hidden rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm shadow-[0_10px_30px_rgba(0,0,0,0.9)] border border-white/20 bg-gradient-to-b from-[#1c2333] to-[#0d121c] transition-all">
                       {hasRealPhoto ? (
                         <img
                           src={rawPhoto}
                           alt={spotlightName}
                           onError={() => setSpotlightImageError(true)}
-                          className="w-full h-full object-cover rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm transition-transform duration-300 group-hover:scale-105"
+                          className="w-full h-full object-cover rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm"
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1e283d] via-[#141b2a] to-[#0a0e17] p-1.5 text-center select-none rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm">
@@ -512,13 +503,13 @@ export default function Home({ onNavigate, user }) {
 
                     {/* Talent Meta beside photo */}
                     <div className="flex flex-col justify-end items-start gap-0.5 min-w-0 pb-0.5 text-left font-apple">
-                      <h2 className="text-sm sm:text-lg font-bold text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] max-w-[140px] sm:max-w-[200px] tracking-normal">
+                      <h2 className="font-apple text-sm sm:text-lg font-bold text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] max-w-[140px] sm:max-w-[200px] tracking-normal">
                         {spotlightName}
                       </h2>
                       <p className="text-[11px] sm:text-xs text-slate-300 font-normal capitalize drop-shadow-md truncate tracking-normal">
                         {spotlightRole} {spotlightAge ? `(${spotlightAge})` : ''}
                       </p>
-                      <span className="text-rose-500 group-hover:text-rose-400 text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-colors">
+                      <span className="text-[#ffb400] text-[11px] sm:text-xs font-semibold flex items-center gap-1">
                         View profile &gt;
                       </span>
                     </div>
@@ -535,15 +526,15 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-rose-600 pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
                   Hiring now
                 </span>
                 <button
                   onClick={() => onNavigate('casting')}
-                  className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+                  className="text-gray-300 text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer"
                 >
                   <span>View all</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
@@ -556,10 +547,10 @@ export default function Home({ onNavigate, user }) {
                       <div
                         key={call.id}
                         onClick={() => onNavigate('casting-detail', call.id)}
-                        className="flex flex-col shrink-0 w-[46vw] sm:w-52 md:w-60 cursor-pointer group"
+                        className="flex flex-col shrink-0 w-[46vw] sm:w-52 md:w-60 cursor-pointer"
                       >
                         {/* Borderless Tall Cinematic Poster Thumbnail (Half Mobile Screen Coverage) */}
-                        <div className="relative w-full aspect-[9/14] rounded-t-2xl rounded-b-none overflow-hidden bg-black shadow-md group-hover:scale-[1.02] transition-transform duration-300">
+                        <div className="relative w-full aspect-[9/14] rounded-t-2xl rounded-b-none overflow-hidden bg-black shadow-md">
                           {thumbnail ? (
                             <img
                               src={thumbnail}
@@ -581,13 +572,22 @@ export default function Home({ onNavigate, user }) {
                               <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
                             </svg>
                           </div>
-                          {/* Category badge on top left */}
-                          <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-black/80 backdrop-blur-sm text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-white shadow-sm truncate max-w-[85%]">
-                            {call.type || call.category || 'Audition'}
+                          {/* Category / Roles badge on top left */}
+                          <div
+                            className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-black/80 backdrop-blur-sm text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-white shadow-sm truncate max-w-[85%]"
+                            title={
+                              Array.isArray(call.roles) && call.roles.length > 0
+                                ? call.roles.map(r => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(' • ')
+                                : (call.type || call.category || 'Audition')
+                            }
+                          >
+                            {Array.isArray(call.roles) && call.roles.length > 0
+                              ? call.roles.map(r => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(' • ') || (call.type || call.category || 'Audition')
+                              : (call.type || call.category || 'Audition')}
                           </div>
                           {/* Deadline on bottom right */}
                           {call.deadline && (
-                            <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] sm:text-[10px] font-medium text-rose-400 shadow-sm">
+                            <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] sm:text-[10px] font-medium text-[#ffb400] shadow-sm">
                               Due {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </div>
                           )}
@@ -596,7 +596,7 @@ export default function Home({ onNavigate, user }) {
                         {/* Details under thumbnail with side Apply Now button */}
                         <div className="mt-2.5 flex items-center justify-between gap-2 px-0.5">
                           <div className="min-w-0 flex-1 space-y-0.5 text-left">
-                            <p className="font-apple text-white font-bold text-sm sm:text-base md:text-lg truncate w-full tracking-tight group-hover:text-rose-400 transition-colors">
+                            <p className="font-apple text-white font-bold text-sm sm:text-base md:text-lg truncate w-full tracking-normal">
                               {call.title || call.project || 'Untitled Casting Call'}
                             </p>
                             <p className="font-apple text-slate-300 font-medium text-xs sm:text-sm truncate w-full">
@@ -608,7 +608,7 @@ export default function Home({ onNavigate, user }) {
                               e.stopPropagation();
                               onNavigate('casting-detail', call.id);
                             }}
-                            className="shrink-0 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-md bg-[#E50914] hover:bg-[#ff1e27] text-white font-apple font-bold text-[11px] sm:text-xs leading-snug tracking-wide transition-all shadow-sm shadow-rose-900/30 group-hover:scale-105"
+                            className="shrink-0 px-3.5 py-1 rounded-full bg-[#ffb400] text-black font-bold text-[11px] sm:text-xs tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer"
                           >
                             Apply Now
                           </button>
@@ -621,7 +621,7 @@ export default function Home({ onNavigate, user }) {
                     <p className="text-gray-400 text-xs mb-2">No active casting calls at the moment</p>
                     <button
                       onClick={() => onNavigate('casting-create')}
-                      className="text-xs bg-[#E50914] hover:bg-[#ff1e27] text-white font-bold px-3 py-1.5 rounded-md transition-colors shadow-sm shadow-rose-900/30"
+                      className="text-xs bg-[#ffb400] text-black font-bold px-3 py-1.5 rounded-md shadow-sm shadow-amber-950/20 cursor-pointer"
                     >
                       + Post a Casting Call
                     </button>
@@ -634,15 +634,15 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-rose-600 pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
                   Featured talents
                 </span>
                 <button
                   onClick={() => onNavigate('listing')}
-                  className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+                  className="text-gray-300 text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer"
                 >
                   <span>View all</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
@@ -658,23 +658,23 @@ export default function Home({ onNavigate, user }) {
                     <div
                       key={talent.id}
                       onClick={() => onNavigate('profile', talent.id)}
-                      className="flex flex-col items-center shrink-0 w-[calc((100vw-36px)/2.5)] sm:w-36 cursor-pointer group"
+                      className="flex flex-col items-center shrink-0 w-[calc((100vw-36px)/2.5)] sm:w-36 cursor-pointer"
                     >
                       <Avatar
                         userId={talent.id || talent.uid}
                         user={talent}
                         size="none"
                         name={talent.name}
-                        className="w-[calc((100vw-44px)/2.5)] h-[calc((100vw-44px)/2.5)] sm:w-36 sm:h-36 rounded-full object-cover shadow-lg transition-all duration-300 group-hover:scale-105"
+                        className="w-[calc((100vw-44px)/2.5)] h-[calc((100vw-44px)/2.5)] sm:w-36 sm:h-36 rounded-full object-cover shadow-lg"
                       />
-                      <p className="font-apple text-white font-bold text-xs sm:text-sm text-center mt-2.5 truncate w-full px-0.5 tracking-tight group-hover:text-rose-400 transition-colors">
+                      <p className="font-apple text-white font-bold text-base sm:text-lg md:text-xl text-center mt-2.5 truncate w-full px-0.5 tracking-wide">
                         {formatTalentName(talent.name)}
                       </p>
-                      <p className="font-apple text-rose-400 font-semibold text-[11px] sm:text-xs text-center mt-0.5 truncate w-full px-0.5 tracking-normal">
+                      <p className="font-apple text-[#ffb400] font-semibold text-sm sm:text-base text-center mt-1 truncate w-full px-0.5 tracking-normal">
                         {getTalentRole(talent)}
                       </p>
                       {getTalentAge(talent) ? (
-                        <p className="font-apple text-slate-300 font-normal text-[11px] sm:text-xs text-center mt-0.5 truncate w-full px-0.5 tracking-normal">
+                        <p className="font-apple text-slate-300 font-medium text-sm sm:text-base text-center mt-0.5 truncate w-full px-0.5 tracking-normal">
                           ({getTalentAge(talent)})
                         </p>
                       ) : null}
@@ -690,15 +690,15 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-[#141416] rounded-lg border border-white/[0.08] p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-rose-600 pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
                   Talents by category
                 </span>
                 <button
                   onClick={() => onNavigate('discover')}
-                  className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+                  className="text-gray-300 text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer"
                 >
                   <span>View all</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
@@ -707,27 +707,25 @@ export default function Home({ onNavigate, user }) {
                 {HOME_CATEGORY_CARDS.map((cat) => {
                   const count = getCategoryCount(cat.filter);
                   return (
-                    <motion.div
+                    <div
                       key={cat.id}
-                      whileHover={{ scale: 1.03, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
                       onClick={() => onNavigate('talents', cat.filter)}
-                      className="rounded-2xl p-2.5 sm:p-3.5 aspect-square shrink-0 w-[calc((100vw-48px)/3)] sm:w-32 md:w-36 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-[#0a0a0a] hover:bg-[#141414] shadow-md group border border-white/5 gap-1 sm:gap-1.5"
+                      className="rounded-2xl p-2.5 sm:p-3.5 aspect-square shrink-0 w-[calc((100vw-48px)/3)] sm:w-32 md:w-36 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-[#0a0a0a] shadow-md border border-white/5 gap-1 sm:gap-1.5"
                     >
                       <CategoryCardIcon
                         type={cat.iconType}
                         color="#ffffff"
-                        className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 fill-current text-white transition-transform duration-300 group-hover:scale-105"
+                        className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 fill-current text-white"
                       />
                       <div className="w-full flex flex-col items-center justify-center shrink-0">
-                        <span className="font-apple text-white font-bold text-xs sm:text-sm leading-tight whitespace-pre-line text-center tracking-tight">
+                        <span className="font-apple text-white font-bold text-xs sm:text-sm leading-tight whitespace-pre-line text-center tracking-normal">
                           {cat.label}
                         </span>
                         <span className="font-apple text-neutral-400 font-normal text-[10px] sm:text-xs mt-0.5 tracking-normal">
                           ({count} {count === 1 ? 'talent' : 'talents'})
                         </span>
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>
@@ -737,15 +735,15 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-rose-600 pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
                   New born talents
                 </span>
                 <button
                   onClick={() => onNavigate('listing')}
-                  className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+                  className="text-gray-300 text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer"
                 >
                   <span>View all</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
@@ -769,7 +767,7 @@ export default function Home({ onNavigate, user }) {
                     <div
                       key={talent.id || idx}
                       onClick={() => onNavigate('profile', talent.id)}
-                      className="flex items-center gap-3 sm:gap-4 py-1 cursor-pointer group"
+                      className="flex items-center gap-3 sm:gap-4 py-1 cursor-pointer"
                     >
                       {/* Rank Number */}
                       <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
@@ -788,10 +786,10 @@ export default function Home({ onNavigate, user }) {
                       {/* Metadata Lines & Talent Details */}
                       <div className="flex-1 min-w-0 space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm sm:text-base font-bold text-white truncate group-hover:text-rose-400 transition-colors">
+                          <p className="font-apple text-sm sm:text-base font-bold text-white truncate tracking-wide">
                             {talent.name}
                           </p>
-                          <span className="text-xs text-rose-400 font-semibold shrink-0">
+                          <span className="text-xs text-[#ffb400] font-semibold shrink-0">
                             {getTalentRoleAndAge(talent)}
                           </span>
                         </div>
@@ -821,15 +819,15 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-rose-600 pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
                   Trending talents
                 </span>
                 <button
                   onClick={() => onNavigate('trending')}
-                  className="text-gray-400 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 transition-all group cursor-pointer"
+                  className="text-gray-300 text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer"
                 >
                   <span>View all</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
@@ -853,10 +851,10 @@ export default function Home({ onNavigate, user }) {
                     <div
                       key={talent.id || idx}
                       onClick={() => onNavigate('profile', talent.id)}
-                      className="flex items-center gap-3 sm:gap-4 py-1 cursor-pointer group"
+                      className="flex items-center gap-3 sm:gap-4 py-1 cursor-pointer"
                     >
-                      {/* Rank Number with podium colors */}
-                      <span className={`text-xl sm:text-2xl font-black w-5 text-center shrink-0 ${idx === 0 ? 'text-rose-500' : idx === 1 ? 'text-gray-300' : idx === 2 ? 'text-rose-700' : 'text-white'}`}>
+                      {/* Rank Number */}
+                      <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
                         {idx + 1}
                       </span>
 
@@ -872,10 +870,10 @@ export default function Home({ onNavigate, user }) {
                       {/* Metadata Lines & Talent Details */}
                       <div className="flex-1 min-w-0 space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm sm:text-base font-bold text-white truncate group-hover:text-rose-400 transition-colors">
+                          <p className="font-apple text-sm sm:text-base font-bold text-white truncate tracking-wide">
                             {talent.name}
                           </p>
-                          <span className="text-xs text-rose-400 font-semibold shrink-0">
+                          <span className="text-xs text-[#ffb400] font-semibold shrink-0">
                             {getTalentRoleAndAge(talent)}
                           </span>
                         </div>
@@ -913,23 +911,23 @@ export default function Home({ onNavigate, user }) {
               </h3>
               <ul className="space-y-2.5 text-xs sm:text-sm text-gray-300 leading-relaxed max-w-xl mx-auto font-medium">
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 font-black text-base leading-none mt-0.5">•</span>
+                  <span className="text-[#ffb400] font-black text-base leading-none mt-0.5">•</span>
                   <span>Connect Nepal&apos;s finest actors, directors, writers, and film technicians with leading casting agencies.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 font-black text-base leading-none mt-0.5">•</span>
+                  <span className="text-[#ffb400] font-black text-base leading-none mt-0.5">•</span>
                   <span>Provide a unified platform for talent discovery and casting opportunities across Nepal.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 font-black text-base leading-none mt-0.5">•</span>
+                  <span className="text-[#ffb400] font-black text-base leading-none mt-0.5">•</span>
                   <span>Empower emerging artists by giving them visibility to global production houses.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 font-black text-base leading-none mt-0.5">•</span>
+                  <span className="text-[#ffb400] font-black text-base leading-none mt-0.5">•</span>
                   <span>Simplify the casting process for producers, directors, and agencies.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-rose-500 font-black text-base leading-none mt-0.5">•</span>
+                  <span className="text-[#ffb400] font-black text-base leading-none mt-0.5">•</span>
                   <span>Build a strong community that supports and grows Nepal&apos;s entertainment industry.</span>
                 </li>
               </ul>

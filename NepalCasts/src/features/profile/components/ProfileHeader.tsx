@@ -13,6 +13,7 @@ import { Avatar } from '../../../components/ui';
 import ShareSheet from '../../../components/ui/ShareSheet';
 import { updateProfileData, uploadProfileMedia } from '../../../services';
 import { CurrentUser } from '../../../utils/CurrentUser';
+import { formatRole } from '../../../utils';
 import type { UserProfile } from '../../../types';
 
 interface ProfileHeaderProps {
@@ -80,10 +81,7 @@ export default function ProfileHeader({
     (Array.isArray((profile as any)?.categories) ? (profile as any).categories[0] : null) ||
     (isRealOwn ? CurrentUser.role : null);
 
-  const userRole =
-    extractedRole && extractedRole.toLowerCase() !== 'user' && extractedRole.toLowerCase() !== 'talent'
-      ? extractedRole
-      : 'Actor';
+  const userRole = formatRole(extractedRole);
 
   const formatTalentLocation = (p: any) => {
     const rawLoc = (p?.location || p?.city || p?.district || p?.address || '').trim();
@@ -257,10 +255,10 @@ export default function ProfileHeader({
               />
               <label
                 htmlFor="avatar-photo-upload"
-                className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 w-9 h-9 sm:w-10 sm:h-10 bg-black/80 hover:bg-black/95 backdrop-blur-md rounded-full border border-white/25 flex items-center justify-center text-white cursor-pointer shadow-xl transition-all active:scale-90"
+                className="absolute bottom-1.5 right-1.5 sm:bottom-2.5 sm:right-2.5 p-1 text-white hover:text-white/80 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-all hover:scale-110 active:scale-90 z-10"
                 title="Change Profile Photo"
               >
-                <Camera className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white" />
+                <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </label>
             </>
           )}
@@ -273,7 +271,7 @@ export default function ProfileHeader({
               {name}
             </h2>
             {profile.verified === true && (
-              <CheckCircle2 className="w-6 h-6 text-[#0088CC] fill-[#0088CC] stroke-black shrink-0" />
+              <CheckCircle2 className="w-6 h-6 text-[#ffb400] fill-[#ffb400] stroke-black shrink-0" />
             )}
           </div>
 
@@ -285,8 +283,9 @@ export default function ProfileHeader({
 
         {/* Bio Text (Seamless text with guaranteed inline See more) */}
         {(bio || isRealOwn) && (() => {
-          const isLongBio = Boolean(bio && (bio.length > 110 || bio.includes('\n')));
-          const bioToShow = isLongBio && !isBioExpanded ? bio!.slice(0, 110).trim() : bio;
+          const firstLine = bio ? bio.split('\n')[0] : '';
+          const isLongBio = Boolean(bio && (bio.length > 70 || bio.includes('\n')));
+          const bioToShow = isLongBio && !isBioExpanded ? (firstLine.length > 70 ? firstLine.slice(0, 70).trim() : firstLine) : bio;
 
           return (
             <div className="w-full max-w-2xl px-0 my-0.5 text-left">
@@ -318,7 +317,7 @@ export default function ProfileHeader({
                         e.stopPropagation();
                         setIsBioExpanded(!isBioExpanded);
                       }}
-                      className="font-apple text-xs sm:text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer inline-flex items-center gap-0.5 align-baseline"
+                      className="font-apple text-xs sm:text-sm font-semibold text-[#ffb400] hover:text-amber-300 transition-colors cursor-pointer inline-flex items-center gap-0.5 align-baseline"
                     >
                       {isBioExpanded ? 'See less' : 'See more'}
                     </button>
@@ -330,10 +329,10 @@ export default function ProfileHeader({
                         e.stopPropagation();
                         onEditBio();
                       }}
-                      className="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition-colors ml-1.5 p-0.5 cursor-pointer align-middle"
+                      className="inline-flex items-center text-white hover:text-white/80 transition-colors ml-1.5 p-0.5 cursor-pointer align-middle"
                       title="Edit Bio"
                     >
-                      <Pencil className="w-3.5 h-3.5" />
+                      <Pencil className="w-3.5 h-3.5 text-white" />
                     </button>
                   )}
                 </p>
@@ -375,38 +374,40 @@ export default function ProfileHeader({
             <Briefcase className="w-4 h-4 text-white shrink-0" />
             <div className="truncate">
               {experiencesList.length > 0 ? (
-                <span>{experiencesList.length}+ Years Exp.</span>
+                <span>{experiencesList.length} {experiencesList.length === 1 ? 'Project' : 'Projects'}</span>
               ) : (profile as any)?.experienceYears ? (
                 <span>{(profile as any).experienceYears}+ Years Exp.</span>
+              ) : typeof (profile as any)?.experience === 'string' && (profile as any).experience.trim() ? (
+                <span>{(profile as any).experience}</span>
               ) : (
-                <span>1+ Years Exp.</span>
+                <span className="text-neutral-400 text-xs sm:text-sm">Fresher</span>
               )}
             </div>
           </div>
         </div>
 
         {/* Followers / Following Box */}
-        <div className="bg-[#161616] border border-white/5 rounded-2xl py-3.5 px-6 grid grid-cols-2 text-center w-full max-w-2xl my-1 shadow-sm divide-x divide-white/10">
+        <div className="bg-[#161616] border border-white/5 rounded-xl py-2 sm:py-2.5 px-4 sm:px-6 grid grid-cols-2 text-center w-full max-w-2xl my-0.5 shadow-sm divide-x divide-white/10">
           <button
             type="button"
             onClick={() => onFollowClick?.('followers')}
-            className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pr-3 py-0.5"
+            className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pr-2 py-0"
           >
-            <span className="font-apple font-extrabold text-lg sm:text-xl md:text-2xl text-white leading-none tracking-tight">
+            <span className="font-apple font-bold text-base sm:text-lg md:text-xl text-white leading-tight tracking-tight">
               {followerCount ? (followerCount > 999 ? `${(followerCount / 1000).toFixed(1)}K` : followerCount) : '0'}
             </span>
-            <span className="font-apple text-xs sm:text-sm text-neutral-400 font-semibold uppercase tracking-wider mt-1.5">Followers</span>
+            <span className="font-apple text-[10px] sm:text-[11px] text-neutral-400 font-semibold uppercase tracking-wider mt-0.5">Followers</span>
           </button>
 
           <button
             type="button"
             onClick={() => onFollowClick?.('following')}
-            className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pl-3 py-0.5"
+            className="flex flex-col items-center justify-center hover:opacity-80 transition-opacity cursor-pointer pl-2 py-0"
           >
-            <span className="font-apple font-extrabold text-lg sm:text-xl md:text-2xl text-white leading-none tracking-tight">
+            <span className="font-apple font-bold text-base sm:text-lg md:text-xl text-white leading-tight tracking-tight">
               {followingCount ? (followingCount > 999 ? `${(followingCount / 1000).toFixed(1)}K` : followingCount) : '0'}
             </span>
-            <span className="font-apple text-xs sm:text-sm text-neutral-400 font-semibold uppercase tracking-wider mt-1.5">Following</span>
+            <span className="font-apple text-[10px] sm:text-[11px] text-neutral-400 font-semibold uppercase tracking-wider mt-0.5">Following</span>
           </button>
         </div>
       </div>

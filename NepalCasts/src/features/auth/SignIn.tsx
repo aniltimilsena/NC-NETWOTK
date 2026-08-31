@@ -162,7 +162,7 @@ export default function SignIn(_props: SignInProps) {
                         <label htmlFor="email" className="text-xs sm:text-sm font-medium text-gray-300">
                             Email address
                         </label>
-                        <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
+                        <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#ffb400] focus-within:ring-1 focus-within:ring-[#ffb400] transition-all min-h-[48px]">
                             <input
                                 id="email"
                                 type="email"
@@ -181,7 +181,7 @@ export default function SignIn(_props: SignInProps) {
                         <label htmlFor="password" className="text-xs sm:text-sm font-medium text-gray-300">
                             Password
                         </label>
-                        <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
+                        <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#ffb400] focus-within:ring-1 focus-within:ring-[#ffb400] transition-all min-h-[48px]">
                             <input
                                 id="password"
                                 type={showPassword ? 'text' : 'password'}
@@ -211,17 +211,17 @@ export default function SignIn(_props: SignInProps) {
                             aria-pressed={rememberMe}
                         >
                             <div className={`w-4 h-4 min-w-[16px] min-h-[16px] max-w-[16px] max-h-[16px] shrink-0 rounded flex items-center justify-center transition-colors duration-150 border ${rememberMe
-                                ? 'bg-[#0088CC] border-[#0088CC]'
+                                ? 'bg-[#ffb400] border-[#ffb400]'
                                 : 'bg-[#181818] border-white/20 group-hover:border-white/40'
                                 }`}>
-                                {rememberMe && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                                {rememberMe && <Check className="w-3 h-3 text-black" strokeWidth={3} />}
                             </div>
                             <span className="text-xs text-gray-400 font-medium group-hover:text-white transition-colors">Remember me</span>
                         </button>
                         <button
                             onClick={() => navigate('/forgot-password')}
                             type="button"
-                            className="text-xs text-[#00BFFF] hover:underline font-semibold transition-colors cursor-pointer border-0 bg-transparent p-0"
+                            className="text-xs text-[#ffb400] hover:underline font-semibold transition-colors cursor-pointer border-0 bg-transparent p-0"
                         >
                             Forgot password?
                         </button>
@@ -231,7 +231,7 @@ export default function SignIn(_props: SignInProps) {
                     <button
                         type="submit"
                         disabled={loading || !email || !password}
-                        className="w-full py-3.5 rounded-xl bg-[#0088CC] hover:bg-[#0077b3] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all mt-3 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[48px] flex items-center justify-center gap-2"
+                        className="w-full py-3.5 rounded-xl bg-[#ffb400] hover:bg-[#ffa000] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold text-sm tracking-wide transition-all mt-3 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[48px] flex items-center justify-center gap-2"
                     >
                         {loading ? (
                             <>
@@ -250,7 +250,7 @@ export default function SignIn(_props: SignInProps) {
                             href="/terms"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[#00BFFF] hover:underline font-medium"
+                            className="text-[#ffb400] hover:underline font-medium"
                         >
                             Terms of Service
                         </a>{' '}
@@ -259,7 +259,7 @@ export default function SignIn(_props: SignInProps) {
                             href="/privacy"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[#00BFFF] hover:underline font-medium"
+                            className="text-[#ffb400] hover:underline font-medium"
                         >
                             Privacy Policy
                         </a>.
@@ -272,7 +272,7 @@ export default function SignIn(_props: SignInProps) {
                     <button
                         onClick={() => navigate('/signup')}
                         type="button"
-                        className="text-[#00BFFF] hover:underline font-semibold cursor-pointer"
+                        className="text-[#ffb400] hover:underline font-semibold cursor-pointer"
                     >
                         Sign up
                     </button>

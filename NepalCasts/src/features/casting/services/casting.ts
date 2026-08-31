@@ -82,10 +82,24 @@ export const dispatchTargetedAuditionAlerts = async (callId: string, callData: a
         const targetLocation = callData.location;
 
         const queries = [];
-        if (targetType) {
-            queries.push(query(collection(db, COLLECTIONS.USERS), where("role", "==", targetType)));
-            queries.push(query(collection(db, COLLECTIONS.USERS), where("category", "==", targetType)));
+        const roleNames: string[] = [];
+        if (Array.isArray(callData.roles)) {
+            callData.roles.forEach((r: any) => {
+                const name = typeof r === 'string' ? r : r?.name;
+                if (name && name.trim() && !roleNames.includes(name.trim())) {
+                    roleNames.push(name.trim());
+                }
+            });
         }
+        if (targetType && !roleNames.includes(targetType)) {
+            roleNames.push(targetType);
+        }
+
+        roleNames.forEach((roleName) => {
+            queries.push(query(collection(db, COLLECTIONS.USERS), where("role", "==", roleName)));
+            queries.push(query(collection(db, COLLECTIONS.USERS), where("category", "==", roleName)));
+        });
+
         if (targetLocation) {
             queries.push(query(collection(db, COLLECTIONS.USERS), where("location", "==", targetLocation)));
         }

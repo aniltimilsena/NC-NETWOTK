@@ -3,7 +3,6 @@ import { Plus, X, Upload, ChevronLeft } from 'lucide-react';
 import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
 import { createCastingCall, uploadProfileMedia } from '../../services';
-import { CATEGORIES, getCategoryConfig } from '../../constants/categories';
 import { collection, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -47,7 +46,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
 
   const [form, setForm] = useState({
     title: '',
-    type: 'Actor / Actress',
+    type: 'Actor',
     category: 'Nepali Feature Film',
     location: '',
     description: '',
@@ -67,11 +66,11 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
       if (onNavigate) onNavigate('signin');
       return;
     }
-    if (!form.title || !form.type || !form.location || !form.budget || !form.deadline) {
+    if (!form.title || !form.category || !form.location || !form.budget || !form.deadline) {
       showAlert?.(
         'Missing Information',
         'error',
-        'Please fill in all required details, including budget/paying range and deadline.'
+        'Please fill in all required details: Title, Category, Location, Budget, and Deadline.'
       );
       setStep(1);
       return;
@@ -116,9 +115,14 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
           .filter(Boolean);
         requirementList.push(...customReqs);
       }
+      const validRoles = form.roles.filter(r => r.name && r.name.trim());
+      const rolesSummary = validRoles.map(r => r.name.trim()).join(' • ');
+
       const callData = {
         ...form,
         id: castingId,
+        roles: validRoles.length > 0 ? validRoles : form.roles,
+        type: rolesSummary || form.category || 'Performer',
         thumbnail: thumbnailUrl,
         horizontalThumbnail: horizontalUrl,
         bannerUrl: horizontalUrl,
@@ -151,11 +155,11 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
 
   const handleNext = () => {
     if (step === 1) {
-      if (!form.title || !form.type || !form.location || !form.budget || !form.deadline) {
+      if (!form.title || !form.category || !form.location || !form.budget || !form.deadline) {
         showAlert?.(
           'Required Fields',
           'error',
-          'Please fill in all required fields: Title, Type, Location, Budget, and Deadline.'
+          'Please fill in all required fields: Title, Category, Location, Budget, and Deadline.'
         );
         return;
       }
@@ -212,7 +216,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 }}
                 disabled={s.id > step}
                 className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                  s.id < step ? 'bg-[#00BFFF]' : s.id === step ? 'bg-white' : 'bg-white/10'
+                  s.id < step ? 'bg-[#ffb400]' : s.id === step ? 'bg-white' : 'bg-white/10'
                 }`}
               />
             ))}
@@ -232,7 +236,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                   s.id === step
                     ? 'bg-white text-black shadow-md'
                     : s.id < step
-                    ? 'bg-[#00BFFF]/10 text-[#00BFFF] border border-[#00BFFF]/20'
+                    ? 'bg-[#ffb400]/10 text-[#ffb400] border border-[#ffb400]/20'
                     : 'bg-[#111] border border-white/5 text-gray-500 cursor-not-allowed'
                 }`}
                 disabled={s.id > step}
@@ -241,7 +245,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 <span>{s.title}</span>
               </button>
               {idx < STEPS.length - 1 && (
-                <div className={`w-8 h-[1px] ${s.id < step ? 'bg-[#00BFFF]' : 'bg-white/5'}`} />
+                <div className={`w-8 h-[1px] ${s.id < step ? 'bg-[#ffb400]' : 'bg-white/5'}`} />
               )}
             </div>
           ))}
@@ -254,111 +258,56 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
               <h2 className="text-lg font-black text-white uppercase tracking-wider">Project Information</h2>
 
               <div className="space-y-5">
-                {/* Horizontal & Vertical Thumbnail Uploads */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                      Horizontal Banner / Thumbnail (16:9 Landscape)
-                    </label>
-                    <p className="text-xs text-gray-500 mb-3">
-                      Shown on the Casting Call Detail page header.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4 items-start">
-                      <div className="w-full sm:w-56 aspect-[16/9] bg-[#1a1a1a] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative group hover:border-[#00BFFF] transition-all cursor-pointer">
-                        {horizontalThumbnailPreview || form.horizontalThumbnail ? (
-                          <>
-                            <img
-                              src={horizontalThumbnailPreview || form.horizontalThumbnail}
-                              alt="Horizontal thumbnail preview"
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setForm({ ...form, horizontalThumbnail: '' });
-                                setHorizontalThumbnailFile(null);
-                                setHorizontalThumbnailPreview('');
-                              }}
-                              className="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors"
-                            >
-                              <X size={14} />
-                            </button>
-                          </>
-                        ) : (
-                          <div className="text-center p-3">
-                            <Upload className="w-6 h-6 text-gray-500 mx-auto mb-1.5 group-hover:text-[#00BFFF] transition-colors" />
-                            <p className="text-[9px] text-gray-400 font-bold tracking-widest uppercase">Upload Horizontal Banner</p>
-                            <p className="text-[8px] text-gray-600 mt-0.5">16:9 Widescreen</p>
-                          </div>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setHorizontalThumbnailFile(file);
-                              setHorizontalThumbnailPreview(URL.createObjectURL(file));
-                              setForm({ ...form, horizontalThumbnail: 'has-file' });
-                            }
-                          }}
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                      Vertical Poster Thumbnail (Portrait)
-                    </label>
-                    <p className="text-xs text-gray-500 mb-3">
-                      Shown on Home Page & casting carousels.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4 items-start">
-                      <div className="w-32 aspect-[9/14] bg-[#1a1a1a] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative group hover:border-[#00BFFF] transition-all cursor-pointer">
-                        {thumbnailPreview || form.thumbnail ? (
-                          <>
-                            <img
-                              src={thumbnailPreview || form.thumbnail}
-                              alt="Poster preview"
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setForm({ ...form, thumbnail: '' });
-                                setThumbnailFile(null);
-                                setThumbnailPreview('');
-                              }}
-                              className="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors"
-                            >
-                              <X size={14} />
-                            </button>
-                          </>
-                        ) : (
-                          <div className="text-center p-3">
-                            <Upload className="w-6 h-6 text-gray-500 mx-auto mb-1.5 group-hover:text-[#00BFFF] transition-colors" />
-                            <p className="text-[9px] text-gray-400 font-bold tracking-widest uppercase">Upload Poster</p>
-                            <p className="text-[8px] text-gray-600 mt-0.5">Tall Portrait</p>
-                          </div>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setThumbnailFile(file);
-                              setThumbnailPreview(URL.createObjectURL(file));
-                              setForm({ ...form, thumbnail: 'has-file' });
-                            }
-                          }}
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                        />
-                      </div>
+                {/* 9:16 Vertical Poster Thumbnail Upload */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                    Poster / Thumbnail (9:16 Portrait)
+                  </label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Shown across the platform (Home, Casting Feed, and Detail view).
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 items-start">
+                    <div className="w-36 sm:w-40 aspect-[9/16] bg-[#1a1a1a] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative group hover:border-[#ffb400] transition-all cursor-pointer">
+                      {thumbnailPreview || form.thumbnail ? (
+                        <>
+                          <img
+                            src={thumbnailPreview || form.thumbnail}
+                            alt="Poster preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setForm({ ...form, thumbnail: '', horizontalThumbnail: '' });
+                              setThumbnailFile(null);
+                              setThumbnailPreview('');
+                            }}
+                            className="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full hover:bg-red-500 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </>
+                      ) : (
+                        <div className="text-center p-3">
+                          <Upload className="w-6 h-6 text-gray-500 mx-auto mb-1.5 group-hover:text-[#ffb400] transition-colors" />
+                          <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Upload Poster</p>
+                          <p className="text-[8px] text-gray-600 mt-0.5">9:16 Vertical</p>
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setThumbnailFile(file);
+                            setThumbnailPreview(URL.createObjectURL(file));
+                            setForm({ ...form, thumbnail: 'has-file', horizontalThumbnail: 'has-file' });
+                          }
+                        }}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
                     </div>
                   </div>
                 </div>
@@ -372,97 +321,51 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                     type="text"
                     value={form.title}
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    placeholder="e.g. The Lost City"
-                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
+                    placeholder="The Lost City"
+                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
                   />
                 </div>
 
-                {/* Talent Type & Category */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="min-w-0 w-full">
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
-                      Target Talent Type *
-                    </label>
-                    <select
-                      value={isOtherType ? 'Other' : form.type}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'Other') {
-                          setIsOtherType(true);
-                          setForm({ ...form, type: customType.trim() || 'Other' });
-                        } else {
-                          setIsOtherType(false);
-                          setForm({ ...form, type: val });
-                        }
-                      }}
-                      className="w-full max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-3 py-2.5 text-white text-sm font-bold cursor-pointer"
-                    >
-                      {CATEGORIES.map((catId) => {
-                        const cfg = getCategoryConfig(catId);
-                        return (
-                          <option key={catId} value={cfg.label} className="bg-[#111]">
-                            {cfg.label}
-                          </option>
-                        );
-                      })}
-                      <option value="Other" className="bg-[#111]">Other</option>
-                    </select>
+                {/* Project Category */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                    Project Category *
+                  </label>
+                  <select
+                    value={isOtherCategory ? 'Other' : form.category}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'Other') {
+                        setIsOtherCategory(true);
+                        setForm({ ...form, category: customCategory.trim() || 'Other' });
+                      } else {
+                        setIsOtherCategory(false);
+                        setForm({ ...form, category: val });
+                      }
+                    }}
+                    className="w-full max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-3.5 py-3 text-white text-sm font-bold cursor-pointer"
+                  >
+                    {CATEGORY_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt} className="bg-[#111]">
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
 
-                    {isOtherType && (
-                      <input
-                        type="text"
-                        value={customType}
-                        onChange={(e) => {
-                          const text = e.target.value;
-                          setCustomType(text);
-                          setForm({ ...form, type: text });
-                        }}
-                        placeholder="Type custom talent type..."
-                        className="w-full mt-2 bg-[#1a1a1a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2.5 text-white text-sm font-medium outline-none placeholder-gray-500"
-                        autoFocus
-                      />
-                    )}
-                  </div>
-                  <div className="min-w-0 w-full">
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
-                      Project Category *
-                    </label>
-                    <select
-                      value={isOtherCategory ? 'Other' : form.category}
+                  {isOtherCategory && (
+                    <input
+                      type="text"
+                      value={customCategory}
                       onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'Other') {
-                          setIsOtherCategory(true);
-                          setForm({ ...form, category: customCategory.trim() || 'Other' });
-                        } else {
-                          setIsOtherCategory(false);
-                          setForm({ ...form, category: val });
-                        }
+                        const text = e.target.value;
+                        setCustomCategory(text);
+                        setForm({ ...form, category: text });
                       }}
-                      className="w-full max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-3 py-2.5 text-white text-sm font-bold cursor-pointer"
-                    >
-                      {CATEGORY_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt} className="bg-[#111]">
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-
-                    {isOtherCategory && (
-                      <input
-                        type="text"
-                        value={customCategory}
-                        onChange={(e) => {
-                          const text = e.target.value;
-                          setCustomCategory(text);
-                          setForm({ ...form, category: text });
-                        }}
-                        placeholder="Type custom project category..."
-                        className="w-full mt-2 bg-[#1a1a1a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2.5 text-white text-sm font-medium outline-none placeholder-gray-500"
-                        autoFocus
-                      />
-                    )}
-                  </div>
+                      placeholder="Type custom project category..."
+                      className="w-full mt-2 bg-[#1a1a1a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2.5 text-white text-sm font-medium outline-none placeholder-gray-500"
+                      autoFocus
+                    />
+                  )}
                 </div>
 
                 {/* Location */}
@@ -474,8 +377,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                     type="text"
                     value={form.location}
                     onChange={(e) => setForm({ ...form, location: e.target.value })}
-                    placeholder="e.g. Kathmandu, Lalitpur, or Pokhara"
-                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
+                    placeholder="Kathmandu, Lalitpur, or Pokhara"
+                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
                   />
                 </div>
 
@@ -489,8 +392,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                       type="text"
                       value={form.budget}
                       onChange={(e) => setForm({ ...form, budget: e.target.value })}
-                      placeholder="e.g. Rs. 10,000 / Day or Competitive"
-                      className="block w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-3 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium"
+                      placeholder="Rs. 10,000 / Day or Competitive"
+                      className="block w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-3 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium"
                     />
                   </div>
                   <div className="min-w-0 w-full overflow-hidden">
@@ -509,7 +412,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                         }
                       }}
                       style={{ colorScheme: 'dark', boxSizing: 'border-box' }}
-                      className="block w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-2 sm:px-3 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium cursor-pointer overflow-hidden"
+                      className="block w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-2 sm:px-3 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium cursor-pointer overflow-hidden"
                     />
                   </div>
                 </div>
@@ -523,8 +426,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                     type="text"
                     value={form.contactInfo}
                     onChange={(e) => setForm({ ...form, contactInfo: e.target.value })}
-                    placeholder="e.g. auditions@productioncompany.com or +977 98..."
-                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
+                    placeholder="auditions@productioncompany.com or +977 98..."
+                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
                   />
                 </div>
 
@@ -538,7 +441,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                     placeholder="Describe the storyline, timeline of shoot, and other key details..."
                     rows={4}
-                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium resize-none"
+                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium resize-none"
                   />
                 </div>
               </div>
@@ -577,8 +480,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                           r[idx].name = e.target.value;
                           setForm({ ...form, roles: r });
                         }}
-                        placeholder="e.g. Lead Actor"
-                        className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#00BFFF] text-xs font-semibold"
+                        placeholder="Lead Actor"
+                        className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#ffb400] text-xs font-semibold"
                       />
                     </div>
                     <div>
@@ -593,8 +496,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                           r[idx].ageRange = e.target.value;
                           setForm({ ...form, roles: r });
                         }}
-                        placeholder="e.g. 20-30 years"
-                        className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#00BFFF] text-xs font-semibold"
+                        placeholder="20-30 years"
+                        className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#ffb400] text-xs font-semibold"
                       />
                     </div>
                   </div>
@@ -610,9 +513,9 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                         r[idx].description = e.target.value;
                         setForm({ ...form, roles: r });
                       }}
-                      placeholder="e.g. Energetic character with athletic build..."
+                      placeholder="Energetic character with athletic build..."
                       rows={2}
-                      className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#00BFFF] text-xs font-semibold resize-none"
+                      className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#ffb400] text-xs font-semibold resize-none"
                     />
                   </div>
                 </div>
@@ -626,7 +529,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                     roles: [...form.roles, { name: '', ageRange: '', description: '', pay: 'Paid' }],
                   })
                 }
-                className="w-full py-3 rounded-2xl border border-dashed border-white/10 hover:border-[#00BFFF] text-gray-400 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full py-3 rounded-2xl border border-dashed border-white/10 hover:border-[#ffb400] text-gray-400 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <Plus size={16} />
                 <span>Add Another Role</span>
@@ -660,7 +563,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                           requirements: { ...form.requirements, [req.id]: e.target.checked },
                         })
                       }
-                      className="w-4 h-4 rounded accent-[#00BFFF]"
+                      className="w-4 h-4 rounded accent-[#ffb400]"
                     />
                     <span className="text-xs font-semibold text-white">{req.label}</span>
                   </label>
@@ -674,9 +577,9 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 <textarea
                   value={form.otherRequirements}
                   onChange={(e) => setForm({ ...form, otherRequirements: e.target.value })}
-                  placeholder="e.g. Must speak fluent Newari&#10;Must have motorcycle license"
+                  placeholder="Must speak fluent Newari&#10;Must have motorcycle license"
                   rows={4}
-                  className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#00BFFF] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium resize-none"
+                  className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium resize-none"
                 />
               </div>
             </div>
@@ -692,7 +595,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
               <div className="bg-[#1a1a1a] border border-white/5 rounded-2xl p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-white/5 pb-3">
                   <h3 className="font-bold text-white text-lg">{form.title}</h3>
-                  <span className="px-3 py-1 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-xs font-black uppercase">
+                  <span className="text-[#ffb400] text-xs font-black uppercase tracking-wider">
                     {form.category}
                   </span>
                 </div>
@@ -727,7 +630,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
               <Button
                 type="button"
                 onClick={handleNext}
-                className="bg-[#00BFFF] text-black hover:bg-[#0099e6] rounded-xl text-xs font-bold uppercase tracking-wider px-6 py-2.5"
+                className="bg-[#ffb400] text-black hover:bg-[#ffa000] rounded-xl text-xs font-bold uppercase tracking-wider px-6 py-2.5 cursor-pointer"
               >
                 Next Step
               </Button>
@@ -737,7 +640,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 onClick={handlePublish}
                 loading={isLoading}
                 disabled={isLoading}
-                className="bg-gradient-to-r from-[#00BFFF] to-sky-600 text-black font-extrabold text-xs uppercase tracking-wider px-8 py-3 rounded-xl shadow-lg shadow-sky-500/20"
+                className="bg-gradient-to-r from-[#ffb400] to-amber-500 text-black font-extrabold text-xs uppercase tracking-wider px-8 py-3 rounded-xl shadow-lg shadow-amber-500/20 cursor-pointer"
               >
                 Publish Casting Call
               </Button>

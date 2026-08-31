@@ -51,7 +51,7 @@
   "view_details": "View Details",
 
   "categories": {
-    "actor": "Actor / Actress",
+    "actor": "Actor",
     "director": "Director",
     "writer": "Script Writer",
     "dop": "DOP / Cinematographer",
@@ -88,7 +88,7 @@
   "home": {
     "heroTitle": "Featured Talent Spotlight",
     "viewProfile": "View profile",
-    "actorSection": "Actor & Actress",
+    "actorSection": "Actors",
     "browseCategories": "Browse by Category",
     "castingCalls": "Casting Calls & Auditions",
     "loadingTalents": "Loading talents...",

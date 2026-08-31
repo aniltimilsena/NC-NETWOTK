@@ -14,7 +14,7 @@ interface SignUpProps {
 }
 
 const ROLES = [
-    { value: 'Actor / Actress', label: 'Actor / Actress' },
+    { value: 'Actor', label: 'Actor' },
     { value: 'Director', label: 'Director' },
     { value: 'Script Writer', label: 'Script Writer' },
     { value: 'DOP / Cinematographer', label: 'DOP / Cinematographer' },
@@ -29,7 +29,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
     const { isLoaded, signUp, setActive } = useSignUp();
 
     const [fullName, setFullName] = useState('');
-    const [role, setRole] = useState('Actor / Actress');
+    const [role, setRole] = useState('Actor');
     const [emailAddress, setEmailAddress] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -227,7 +227,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                                 <label htmlFor="fullName" className="text-xs sm:text-sm font-medium text-gray-300">
                                     Full name
                                 </label>
-                                <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
+                                <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#ffb400] focus-within:ring-1 focus-within:ring-[#ffb400] transition-all min-h-[48px]">
                                     <input
                                         id="fullName"
                                         type="text"
@@ -246,7 +246,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                                 <label htmlFor="role" className="text-xs sm:text-sm font-medium text-gray-300">
                                     Select role
                                 </label>
-                                <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
+                                <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#ffb400] focus-within:ring-1 focus-within:ring-[#ffb400] transition-all min-h-[48px]">
                                     <select
                                         id="role"
                                         value={role}
@@ -269,7 +269,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                                 <label htmlFor="emailAddress" className="text-xs sm:text-sm font-medium text-gray-300">
                                     Email address
                                 </label>
-                                <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
+                                <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#ffb400] focus-within:ring-1 focus-within:ring-[#ffb400] transition-all min-h-[48px]">
                                     <input
                                         id="emailAddress"
                                         type="email"
@@ -289,7 +289,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                                 <label htmlFor="password" className="text-xs sm:text-sm font-medium text-gray-300">
                                     Password
                                 </label>
-                                <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
+                                <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#ffb400] focus-within:ring-1 focus-within:ring-[#ffb400] transition-all min-h-[48px]">
                                     <input
                                         id="password"
                                         type={showPassword ? 'text' : 'password'}
@@ -315,7 +315,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                                 <label htmlFor="confirmPassword" className="text-xs sm:text-sm font-medium text-gray-300">
                                     Confirm password
                                 </label>
-                                <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[48px]">
+                                <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#ffb400] focus-within:ring-1 focus-within:ring-[#ffb400] transition-all min-h-[48px]">
                                     <input
                                         id="confirmPassword"
                                         type={showConfirmPassword ? 'text' : 'password'}
@@ -343,11 +343,11 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                             >
                                 <div
                                     className={`mt-0.5 w-4 h-4 min-w-[16px] min-h-[16px] max-w-[16px] max-h-[16px] rounded flex items-center justify-center transition-colors shrink-0 border ${agreeTerms
-                                        ? 'bg-[#0088CC] border-[#0088CC]'
+                                        ? 'bg-[#ffb400] border-[#ffb400]'
                                         : 'bg-[#181818] border-white/20 group-hover:border-white/40'
                                     }`}
                                 >
-                                    {agreeTerms && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                                    {agreeTerms && <Check className="w-3 h-3 text-black" strokeWidth={3} />}
                                 </div>
                                 <span className="text-xs text-gray-400 leading-relaxed">
                                     I agree to the{' '}
@@ -355,7 +355,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                                         href="/terms"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-[#00BFFF] hover:underline font-medium"
+                                        className="text-[#ffb400] hover:underline font-medium"
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         Terms of Service
@@ -365,7 +365,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                                         href="/privacy"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-[#00BFFF] hover:underline font-medium"
+                                        className="text-[#ffb400] hover:underline font-medium"
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         Privacy Policy
@@ -377,7 +377,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                             <button
                                 type="submit"
                                 disabled={loading || !fullName || !emailAddress || !password || !confirmPassword || !agreeTerms}
-                                className="w-full py-3.5 rounded-xl bg-[#0088CC] hover:bg-[#0077b3] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all mt-3 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[48px] flex items-center justify-center gap-2"
+                                className="w-full py-3.5 rounded-xl bg-[#ffb400] hover:bg-[#ffa000] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold text-sm tracking-wide transition-all mt-3 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[48px] flex items-center justify-center gap-2"
                             >
                                 {loading ? (
                                     <>
@@ -397,7 +397,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                             <label htmlFor="code" className="text-sm font-semibold text-white">
                                 Verification Code
                             </label>
-                            <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#00BFFF] focus-within:ring-1 focus-within:ring-[#00BFFF] transition-all min-h-[52px]">
+                            <div className="relative w-full flex items-center bg-[#181818] border border-white/10 rounded-xl focus-within:border-[#ffb400] focus-within:ring-1 focus-within:ring-[#ffb400] transition-all min-h-[52px]">
                                 <input
                                     id="code"
                                     type="text"
@@ -413,7 +413,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                         <button
                             type="submit"
                             disabled={loading || !code}
-                            className="w-full py-4 rounded-xl bg-[#0088CC] hover:bg-[#0077b3] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all mt-2 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[52px] flex items-center justify-center gap-2"
+                            className="w-full py-4 rounded-xl bg-[#ffb400] hover:bg-[#ffa000] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold text-sm tracking-wide transition-all mt-2 cursor-pointer border-0 shadow-lg active:scale-[0.99] min-h-[52px] flex items-center justify-center gap-2"
                         >
                             {loading ? (
                                 <>
@@ -433,7 +433,7 @@ export default function SignUp({ onNavigate, showAlert }: SignUpProps) {
                     <button
                         onClick={() => navigate('/signin')}
                         type="button"
-                        className="text-[#00BFFF] hover:underline font-semibold cursor-pointer"
+                        className="text-[#ffb400] hover:underline font-semibold cursor-pointer"
                     >
                         Sign in
                     </button>

@@ -39,7 +39,7 @@ export default function Contact() {
             <span>Direct Communication</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-sans font-black tracking-tight text-white leading-tight">
-            Get in <span className="text-[#00BFFF]">Touch</span>
+            Get in <span className="text-[#ffb400]">Touch</span>
           </h1>
           <p className="text-gray-400 text-sm sm:text-base lg:text-lg max-w-lg mx-auto leading-relaxed">
             Have questions about casting calls, account verification, or partnerships? Reach out to our team anytime.
@@ -59,7 +59,7 @@ export default function Contact() {
                   <info.icon className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="text-sm font-bold text-white">{info.title}</h3>
-                <p className="text-sm font-bold text-[#00BFFF]">{info.detail}</p>
+                <p className="text-sm font-bold text-[#ffb400]">{info.detail}</p>
                 <p className="text-xs text-gray-400">{info.sub}</p>
               </div>
             ))}
@@ -97,7 +97,7 @@ export default function Contact() {
                       placeholder="e.g. Aarav Sharma"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-[#141414] text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#00BFFF]"
+                      className="w-full px-4 py-3 rounded-xl bg-[#141414] text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#ffb400]"
                     />
                   </div>
                   <div className="space-y-2">
@@ -108,7 +108,7 @@ export default function Contact() {
                       placeholder="name@example.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-[#141414] text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#00BFFF]"
+                      className="w-full px-4 py-3 rounded-xl bg-[#141414] text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#ffb400]"
                     />
                   </div>
                 </div>
@@ -121,7 +121,7 @@ export default function Contact() {
                     placeholder="e.g. Director Account Verification"
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-[#141414] text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#00BFFF]"
+                    className="w-full px-4 py-3 rounded-xl bg-[#141414] text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#ffb400]"
                   />
                 </div>
 
@@ -133,15 +133,15 @@ export default function Contact() {
                     placeholder="Describe your inquiry in detail..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-[#141414] text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#00BFFF] resize-none"
+                    className="w-full px-4 py-3 rounded-xl bg-[#141414] text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#ffb400] resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#0088CC] hover:bg-[#0077b3] text-white font-bold text-xs uppercase tracking-wider transition-all inline-flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-95"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#ffb400] hover:bg-[#ffa000] text-black font-bold text-xs uppercase tracking-wider transition-all inline-flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-95"
                 >
-                  <Send className="w-4 h-4 text-white" />
+                  <Send className="w-4 h-4 text-black" />
                   <span>Send Message</span>
                 </button>
               </form>

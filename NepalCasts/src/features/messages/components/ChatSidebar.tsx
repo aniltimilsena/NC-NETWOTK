@@ -172,7 +172,7 @@ export default function ChatSidebar({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search messages..."
-            className="w-full bg-[#18181c] border border-white/5 rounded-xl pl-10 pr-9 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#00BFFF]/50 focus:border-[#00BFFF]/50 transition-all"
+            className="w-full bg-[#18181c] border border-white/5 rounded-xl pl-10 pr-9 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#ffb400]/50 focus:border-[#ffb400]/50 transition-all"
           />
           {query && (
             <button
@@ -194,7 +194,7 @@ export default function ChatSidebar({
                 onClick={() => setActiveFilter(tab.id)}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-[#00BFFF] text-[#0A0A0A] shadow-sm shadow-[#00BFFF]/20'
+                    ? 'bg-[#ffb400] text-[#0A0A0A] shadow-sm shadow-[#ffb400]/20'
                     : 'bg-[#18181c] text-gray-400 hover:text-white border border-white/5'
                 }`}
               >
@@ -261,14 +261,14 @@ export default function ChatSidebar({
                     {timeString && (
                       <span
                         className={`text-xs font-medium whitespace-nowrap leading-none ${
-                          unreadCount > 0 ? 'text-[#00BFFF] font-semibold' : 'text-gray-500'
+                          unreadCount > 0 ? 'text-[#ffb400] font-semibold' : 'text-gray-500'
                         }`}
                       >
                         {timeString}
                       </span>
                     )}
                     {unreadCount > 0 && (
-                      <span className="min-w-[18px] h-4.5 px-1.5 rounded-full bg-[#00BFFF] text-black font-extrabold text-[10px] flex items-center justify-center shadow-sm shadow-[#00BFFF]/30 leading-none">
+                      <span className="min-w-[18px] h-4.5 px-1.5 rounded-full bg-[#ffb400] text-black font-extrabold text-[10px] flex items-center justify-center shadow-sm shadow-[#ffb400]/30 leading-none">
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </span>
                     )}

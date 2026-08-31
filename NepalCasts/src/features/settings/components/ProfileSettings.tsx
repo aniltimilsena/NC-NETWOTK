@@ -138,13 +138,13 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
           
           <div className="space-y-1.5 text-left">
             <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Full Name</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"/>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"/>
           </div>
 
           
           <div className="space-y-1.5 text-left">
             <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Location</label>
-            <input type="text" value={location} placeholder="e.g. Kathmandu, Nepal" onChange={(e) => setLocation(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"/>
+            <input type="text" value={location} placeholder="e.g. Kathmandu, Nepal" onChange={(e) => setLocation(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"/>
           </div>
 
           
@@ -156,7 +156,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
                 setCategory(e.target.value);
                 setRole(e.target.value);
               }}
-              className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all appearance-none cursor-pointer"
+              className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all appearance-none cursor-pointer"
             >
               <option value="" disabled>Select Specialty</option>
               {CATEGORIES.map(opt => {
@@ -172,7 +172,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
           
           <div className="space-y-1.5 text-left">
             <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Gender</label>
-            <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all appearance-none cursor-pointer">
+            <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all appearance-none cursor-pointer">
               <option value="" disabled>Select Gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -184,7 +184,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
 
         <div className="space-y-1.5 text-left">
           <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Bio</label>
-          <textarea rows={4} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Write a short summary about your professional background, acting range, and interests..." className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all resize-none"/>
+          <textarea rows={4} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Write a short summary about your professional background, acting range, and interests..." className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all resize-none"/>
         </div>
       </div>
 
@@ -197,19 +197,19 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="space-y-1.5 text-left">
             <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Height</label>
-            <input type="text" value={height} placeholder={"e.g. 5'10 ft"} onChange={(e) => setHeight(e.target.value)} onBlur={handleHeightBlur} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
+            <input type="text" value={height} placeholder={"e.g. 5'10 ft"} onChange={(e) => setHeight(e.target.value)} onBlur={handleHeightBlur} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
           </div>
           <div className="space-y-1.5 text-left">
             <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Weight</label>
-            <input type="text" value={weight} placeholder="e.g. 70 kg" onChange={(e) => setWeight(e.target.value)} onBlur={handleWeightBlur} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
+            <input type="text" value={weight} placeholder="e.g. 70 kg" onChange={(e) => setWeight(e.target.value)} onBlur={handleWeightBlur} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
           </div>
           <div className="space-y-1.5 text-left">
             <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Eye Color</label>
-            <input type="text" value={eyeColor} placeholder="e.g. Brown" onChange={(e) => setEyeColor(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
+            <input type="text" value={eyeColor} placeholder="e.g. Brown" onChange={(e) => setEyeColor(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
           </div>
           <div className="space-y-1.5 text-left">
             <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Hair Color</label>
-            <input type="text" value={hairColor} placeholder="e.g. Black" onChange={(e) => setHairColor(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
+            <input type="text" value={hairColor} placeholder="e.g. Black" onChange={(e) => setHairColor(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
           </div>
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
             Allow casting directors and verified actors to view your contact information (email/phone).
           </p>
         </div>
-        <button type="button" onClick={() => setShowContactInfo(!showContactInfo)} className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none ${showContactInfo ? 'bg-[#00BFFF]' : 'bg-white/10'}`}>
+        <button type="button" onClick={() => setShowContactInfo(!showContactInfo)} className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none cursor-pointer ${showContactInfo ? 'bg-[#ffb400]' : 'bg-white/10'}`}>
           <div className={`w-4 h-4 rounded-full bg-black transition-transform duration-300 ${showContactInfo ? 'translate-x-6' : 'translate-x-0'}`}/>
         </button>
       </div>

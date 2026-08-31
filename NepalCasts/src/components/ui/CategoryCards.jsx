@@ -4,7 +4,7 @@ export const HOME_CATEGORY_CARDS = [
   {
     id: 'actor',
     filter: 'actor',
-    label: 'Actor/\nActress',
+    label: 'Actor',
     bgColor: '#000000',
     accentColor: '#ffffff',
     borderColor: 'rgba(255, 255, 255, 0.12)',

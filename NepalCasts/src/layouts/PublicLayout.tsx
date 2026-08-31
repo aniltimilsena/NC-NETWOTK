@@ -1,7 +1,6 @@
 import React, { Suspense } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
 interface PublicLayoutProps {
     user: any;
     isAdmin: boolean;

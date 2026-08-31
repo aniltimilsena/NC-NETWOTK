@@ -241,6 +241,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
     useEffect(() => {
         if (!targetUid) return;
         const qFollowers = query(collection(db, "follows"), where("followingId", "==", targetUid));
+        // eslint-disable-next-line no-secrets/no-secrets
         const mockFollowerUids = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', 'Mm1B6rYaEebs6ajRyu0EJBrrGwT2', targetUid]);
         const unsubFollowers = onSnapshot(qFollowers, (snap) => {
             const validDocs = snap.docs.filter(d => {

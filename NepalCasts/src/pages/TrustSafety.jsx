@@ -33,7 +33,7 @@ export default function TrustSafety() {
             <span>Verified Industry Safety</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-sans font-black tracking-tight text-white leading-tight">
-            Trust & Safety <span className="text-[#00BFFF]">Center</span>
+            Trust & Safety <span className="text-[#ffb400]">Center</span>
           </h1>
           <p className="text-gray-400 text-sm sm:text-base lg:text-lg leading-relaxed">
             Your safety and professional dignity are our highest priorities. We enforce strict manual vetting standards to guarantee an authentic, scam-free casting ecosystem across Nepal.
@@ -91,7 +91,7 @@ export default function TrustSafety() {
             ].map((item, idx) => (
               <div key={idx} className="bg-[#141414] rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-4 hover:bg-[#111111] transition-colors shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-[#00BFFF] font-mono tracking-wider">{item.step}</span>
+                  <span className="text-xs font-black text-[#ffb400] font-mono tracking-wider">{item.step}</span>
                   <item.icon className="w-5 h-5 text-white" />
                 </div>
                 <div className="space-y-1.5">
@@ -138,7 +138,7 @@ export default function TrustSafety() {
                 title: 'Keep Chats On-Platform',
                 desc: 'Use NepalCasts encrypted messages. Fraudulent actors attempt to immediately switch to WhatsApp or Telegram to avoid audit trails.',
                 badge: 'In-App Protection',
-                badgeColor: 'text-[#00BFFF] bg-[#00BFFF]/15',
+                badgeColor: 'text-[#ffb400] bg-[#ffb400]/15',
               },
               {
                 icon: Lock,
@@ -193,7 +193,7 @@ export default function TrustSafety() {
           </div>
           <a
             href="mailto:safety@nepalcasts.com"
-            className="px-6 py-3 bg-[#0088CC] hover:bg-[#0077b3] text-white font-bold rounded-xl text-xs sm:text-sm transition-all shadow-md active:scale-95 shrink-0"
+            className="px-6 py-3 bg-[#ffb400] hover:bg-[#ffa000] text-black font-bold rounded-xl text-xs sm:text-sm transition-all shadow-md active:scale-95 shrink-0"
           >
             Contact Safety Team
           </a>

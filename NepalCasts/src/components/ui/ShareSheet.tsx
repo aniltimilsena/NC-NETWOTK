@@ -302,104 +302,100 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
             renderTalentDetails(false);
         }
     };
-    return (<div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-      
-      <div onClick={onClose} className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"/>
 
-      
-      <div className="relative w-full sm:max-w-[360px] bg-[#0F0F13]/95 border-t sm:border border-[#1A1F2D] rounded-t-[1.75rem] sm:rounded-[1.75rem] shadow-2xl p-5 sm:p-6 backdrop-blur-xl z-10 transform translate-y-0 transition-transform duration-300 ease-out flex flex-col max-h-[92vh] sm:max-h-none overflow-y-auto">
-        
-        
-        <div className="w-10 h-1 bg-white/10 rounded-full mx-auto mb-4 sm:hidden shrink-0"/>
+    return (
+        <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+            <div onClick={onClose} className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" />
 
-        
-        <div className="flex items-center justify-between mb-5 shrink-0">
-          <div>
-            <h3 className="text-base font-bold text-white tracking-tight">Share Profile</h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">Share {profile.name}'s talent profile</p>
-          </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#181C26] hover:bg-[#222736] flex items-center justify-center text-gray-400 hover:text-white border border-[#212738]/40 transition-colors active:scale-90" aria-label="Close">
-            <X size={14}/>
-          </button>
+            <div className="relative w-full sm:max-w-[360px] bg-[#0F0F13]/95 border-t sm:border border-[#1A1F2D] rounded-t-[1.75rem] sm:rounded-[1.75rem] shadow-2xl p-5 sm:p-6 backdrop-blur-xl z-10 transform translate-y-0 transition-transform duration-300 ease-out flex flex-col max-h-[92vh] sm:max-h-none overflow-y-auto">
+                <div className="w-10 h-1 bg-white/10 rounded-full mx-auto mb-4 sm:hidden shrink-0" />
+
+                <div className="flex items-center justify-between mb-5 shrink-0">
+                    <div>
+                        <h3 className="text-base font-bold text-white tracking-tight">Share Profile</h3>
+                        <p className="text-[11px] text-gray-500 mt-0.5">Share {profile.name}'s talent profile</p>
+                    </div>
+                    <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#181C26] hover:bg-[#222736] flex items-center justify-center text-gray-400 hover:text-white border border-[#212738]/40 transition-colors active:scale-90" aria-label="Close">
+                        <X size={14} />
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2.5 mb-2 shrink-0">
+                    {/* Copy Link */}
+                    <button onClick={handleCopyLink} className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#151821] hover:bg-[#1C202E] border border-white/[0.03] hover:border-white/[0.08] transition-all group text-left active:scale-[0.99]">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-[#ffb400]/10 flex items-center justify-center text-[#ffb400] group-hover:scale-105 transition-transform">
+                                <Copy size={16} />
+                            </div>
+                            <div>
+                                <span className="block text-xs font-bold text-white">Copy Link</span>
+                                <span className="block text-[10px] text-gray-500 mt-0.5">Copy profile URL to clipboard</span>
+                            </div>
+                        </div>
+                        <span className="text-[10px] text-[#ffb400] font-semibold bg-[#ffb400]/5 px-2 py-0.5 rounded-md border border-[#ffb400]/10 opacity-0 group-hover:opacity-100 transition-opacity">Copy</span>
+                    </button>
+
+                    {/* WhatsApp */}
+                    <button onClick={handleWhatsAppShare} className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#151821] hover:bg-[#1C202E] border border-white/[0.03] hover:border-white/[0.08] transition-all group text-left active:scale-[0.99]">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform">
+                                <MessageCircle size={16} />
+                            </div>
+                            <div>
+                                <span className="block text-xs font-bold text-white">Share on WhatsApp</span>
+                                <span className="block text-[10px] text-gray-500 mt-0.5">Send directly to chats</span>
+                            </div>
+                        </div>
+                    </button>
+
+                    {/* Instagram */}
+                    <button onClick={handleInstagramShare} className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#151821] hover:bg-[#1C202E] border border-white/[0.03] hover:border-white/[0.08] transition-all group text-left active:scale-[0.99]">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-400 group-hover:scale-105 transition-transform">
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                                </svg>
+                            </div>
+                            <div>
+                                <span className="block text-xs font-bold text-white">Share on Instagram</span>
+                                <span className="block text-[10px] text-gray-500 mt-0.5">Post to story or DM</span>
+                            </div>
+                        </div>
+                    </button>
+
+                    {/* Facebook */}
+                    <button onClick={handleFacebookShare} className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#151821] hover:bg-[#1C202E] border border-white/[0.03] hover:border-white/[0.08] transition-all group text-left active:scale-[0.99]">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <span className="block text-xs font-bold text-white">Share on Facebook</span>
+                                <span className="block text-[10px] text-gray-500 mt-0.5">Share to feed or groups</span>
+                            </div>
+                        </div>
+                    </button>
+
+                    {/* Download Story Card */}
+                    <button onClick={handleDownloadCard} disabled={isDownloading} className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-all group text-left active:scale-[0.99] ${isDownloading
+                        ? 'bg-[#151821]/50 border-white/[0.01] opacity-60 cursor-not-allowed'
+                        : 'bg-[#151821] hover:bg-[#1C202E] border-white/[0.03] hover:border-white/[0.08]'}`}>
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-400 group-hover:scale-105 transition-transform">
+                                {isDownloading ? (<div className="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />) : (<Download size={16} />)}
+                            </div>
+                            <div>
+                                <span className="block text-xs font-bold text-white">Download Profile Card</span>
+                                <span className="block text-[10px] text-gray-500 mt-0.5">Generate and save story image</span>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
         </div>
-
-        
-        <div className="grid grid-cols-1 gap-2.5 mb-2 shrink-0">
-          
-          
-          <button onClick={handleCopyLink} className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#151821] hover:bg-[#1C202E] border border-white/[0.03] hover:border-white/[0.08] transition-all group text-left active:scale-[0.99]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center text-sky-400 group-hover:scale-105 transition-transform">
-                <Copy size={16}/>
-              </div>
-              <div>
-                <span className="block text-xs font-bold text-white">Copy Link</span>
-                <span className="block text-[10px] text-gray-500 mt-0.5">Copy profile URL to clipboard</span>
-              </div>
-            </div>
-            <span className="text-[10px] text-[#0099FF] font-semibold bg-sky-500/5 px-2 py-0.5 rounded-md border border-sky-500/10 opacity-0 group-hover:opacity-100 transition-opacity">Copy</span>
-          </button>
-          
-          
-          <button onClick={handleWhatsAppShare} className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#151821] hover:bg-[#1C202E] border border-white/[0.03] hover:border-white/[0.08] transition-all group text-left active:scale-[0.99]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform">
-                <MessageCircle size={16}/>
-              </div>
-              <div>
-                <span className="block text-xs font-bold text-white">Share on WhatsApp</span>
-                <span className="block text-[10px] text-gray-500 mt-0.5">Send directly to chats</span>
-              </div>
-            </div>
-          </button>
-
-          
-          <button onClick={handleInstagramShare} className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#151821] hover:bg-[#1C202E] border border-white/[0.03] hover:border-white/[0.08] transition-all group text-left active:scale-[0.99]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-400 group-hover:scale-105 transition-transform">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                </svg>
-              </div>
-              <div>
-                <span className="block text-xs font-bold text-white">Share on Instagram</span>
-                <span className="block text-[10px] text-gray-500 mt-0.5">Post to story or DM</span>
-              </div>
-            </div>
-          </button>
-
-          
-          <button onClick={handleFacebookShare} className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#151821] hover:bg-[#1C202E] border border-white/[0.03] hover:border-white/[0.08] transition-all group text-left active:scale-[0.99]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                </svg>
-              </div>
-              <div>
-                <span className="block text-xs font-bold text-white">Share on Facebook</span>
-                <span className="block text-[10px] text-gray-500 mt-0.5">Share to feed or groups</span>
-              </div>
-            </div>
-          </button>
-
-          
-          <button onClick={handleDownloadCard} disabled={isDownloading} className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-all group text-left active:scale-[0.99] ${isDownloading
-            ? 'bg-[#151821]/50 border-white/[0.01] opacity-60 cursor-not-allowed'
-            : 'bg-[#151821] hover:bg-[#1C202E] border-white/[0.03] hover:border-white/[0.08]'}`}>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-400 group-hover:scale-105 transition-transform">
-                {isDownloading ? (<div className="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"/>) : (<Download size={16}/>)}
-              </div>
-              <div>
-                <span className="block text-xs font-bold text-white">Download Profile Card</span>
-                <span className="block text-[10px] text-gray-500 mt-0.5">Generate and save story image</span>
-              </div>
-            </div>
-          </button>
-         </div>
-      </div>
-    </div>);
+    );
 }

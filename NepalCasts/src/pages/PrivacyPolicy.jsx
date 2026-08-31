@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
-import { Shield, ChevronLeft, Lock } from 'lucide-react';
+import { ChevronLeft, Lock } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export default function PrivacyPolicy() {
             <span>Data Protection & Privacy</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-sans font-black tracking-tight text-white leading-tight">
-            Privacy <span className="text-[#00BFFF]">Policy</span>
+            Privacy <span className="text-[#ffb400]">Policy</span>
           </h1>
           <p className="text-gray-400 text-sm sm:text-base lg:text-lg max-w-lg mx-auto leading-relaxed">
             Your privacy and creative intellectual property are strictly safeguarded at NepalCasts.
@@ -71,7 +71,7 @@ export default function PrivacyPolicy() {
           <section className="space-y-3">
             <h2 className="text-lg sm:text-xl font-bold text-white">5. Contact & Inquiries</h2>
             <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
-              If you have any questions regarding this privacy policy or wish to request data removal, contact us at <span className="text-[#00BFFF] font-semibold">safety@nepalcasts.com</span>.
+              If you have any questions regarding this privacy policy or wish to request data removal, contact us at <span className="text-[#ffb400] font-semibold">safety@nepalcasts.com</span>.
             </p>
           </section>
         </div>

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
+import { formatRole } from '../../../utils';
 import { FollowItemSkeleton } from '../../../components/ui/Skeleton';
 interface FollowItem {
     id: string;
@@ -78,7 +79,7 @@ export default function FollowModal({ type, isOpen, onClose, list, loading, onNa
                       <Avatar userId={userItem.id} src={userItem.image} name={userItem.name} size="sm"/>
                       <div>
                         <span className="text-sm font-bold text-gray-100 block">{userItem.name}</span>
-                        <span className="text-[10px] text-nc-muted font-semibold uppercase tracking-wider">{userItem.role}</span>
+                        <span className="text-[10px] text-nc-muted font-semibold uppercase tracking-wider">{formatRole(userItem.role)}</span>
                       </div>
                     </div>
                   </div>);

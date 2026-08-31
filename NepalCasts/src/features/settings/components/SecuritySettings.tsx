@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Shield, Lock, Trash2, Smartphone, Monitor } from 'lucide-react';
 import { Button, Avatar } from '../../../components/ui';
+import { formatRole } from '../../../utils';
 import { auth } from '../../../lib/firebase';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import type { ServiceResult } from '../../../types';
@@ -98,7 +99,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                             placeholder="Enter current password"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
+                            className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
                         />
                     </div>
 
@@ -110,7 +111,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                                 placeholder="Enter new password (min. 6 chars)"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
+                                className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
                             />
                         </div>
 
@@ -121,7 +122,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                                 placeholder="Confirm new password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full bg-[#16161a] border border-white/10 focus:border-[#00BFFF] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
+                                className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
                             />
                         </div>
                     </div>
@@ -149,7 +150,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                                     <Avatar userId={u.uid} src={u.image} name={u.name} size="sm" />
                                     <div className="text-left">
                                         <span className="text-xs font-bold text-white block">{u.name}</span>
-                                        <span className="text-[9px] text-nc-muted uppercase tracking-wider font-bold">{u.role}</span>
+                                        <span className="text-[9px] text-nc-muted uppercase tracking-wider font-bold">{formatRole(u.role)}</span>
                                     </div>
                                 </div>
                                 <Button size="sm" variant="outline" onClick={() => handleUnblock(u.uid)} className="h-8 text-xs rounded-xl px-3">

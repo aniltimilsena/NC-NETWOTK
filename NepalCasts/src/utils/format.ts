@@ -16,3 +16,12 @@ export const formatMessagePreview = (text: string | null | undefined): string =>
     }
     return text;
 };
+
+export const formatRole = (role: string | null | undefined): string => {
+    if (!role) return 'Actor';
+    const trimmed = String(role).trim();
+    const lower = trimmed.toLowerCase();
+    if (lower === 'user' || lower === 'talent') return 'Actor';
+    if (lower.includes('actor') || lower.includes('actress')) return 'Actor';
+    return trimmed;
+};

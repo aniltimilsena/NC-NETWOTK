@@ -54,7 +54,7 @@ export default function ServerError() {
 
           <Link
             to="/"
-            className="inline-flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-[#00BFFF] text-black font-extrabold text-sm rounded-2xl hover:brightness-110 transition-all cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-[#ffb400] hover:bg-[#ffa000] text-black font-extrabold text-sm rounded-2xl hover:brightness-110 transition-all cursor-pointer"
           >
             <ArrowLeft size={16} strokeWidth={2.5} />
             <span>Back to Home</span>

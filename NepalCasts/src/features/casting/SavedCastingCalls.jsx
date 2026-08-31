@@ -219,7 +219,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
           {/* Empty State */}
           {!loading && savedCalls.length === 0 && (
             <div className="py-16 text-center space-y-5 bg-black rounded-xl border border-white/10 p-6 sm:p-10">
-              <div className="w-16 h-16 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 flex items-center justify-center mx-auto shadow-xl">
+              <div className="w-16 h-16 rounded-full bg-[#ffb400]/10 border border-[#ffb400]/20 text-[#ffb400] flex items-center justify-center mx-auto shadow-xl">
                 <BookmarkX className="w-8 h-8" />
               </div>
               <div className="space-y-1.5">
@@ -287,7 +287,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                       <div className="space-y-1 sm:space-y-1.5">
                         {/* Top Row: Category Tag & Delete action */}
                         <div className="flex items-center justify-between gap-2">
-                          <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#0a1f33] border border-cyan-500/25 text-cyan-300 font-bold text-[9px] sm:text-[10px] tracking-wider uppercase truncate">
+                          <span className="text-[#ffb400] font-bold text-[10px] sm:text-[11px] tracking-wider uppercase truncate">
                             {categoryTag}
                           </span>
 
@@ -322,7 +322,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                         </p>
 
                         {/* Salary / Compensation */}
-                        <p className="text-xs sm:text-sm font-bold text-[#38bdf8] pt-0.5 truncate">
+                        <p className="text-xs sm:text-sm font-bold text-[#ffb400] pt-0.5 truncate">
                           Salary: {call.budget || call.salary || 'NPR Negotiable'}
                         </p>
                       </div>
@@ -338,8 +338,8 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                         {/* Right Status Badge */}
                         <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-md text-[9px] sm:text-xs font-black tracking-wider uppercase border ${
                           deadlineBadge.isClosed
-                            ? 'bg-[#0e2138] border-cyan-500/20 text-cyan-400'
-                            : 'bg-[#0e2a47] border-cyan-500/30 text-cyan-300'
+                            ? 'bg-[#222] border-white/10 text-gray-400'
+                            : 'bg-[#ffb400]/15 border-[#ffb400]/30 text-[#ffb400]'
                         }`}>
                           {deadlineBadge.label}
                         </span>
@@ -353,7 +353,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                 <div className="flex justify-center pt-3 pb-6">
                   <button
                     onClick={() => setVisibleLimit(prev => prev + 20)}
-                    className="px-6 py-2.5 rounded-full bg-[#0e2a47] hover:bg-[#143e67] border border-cyan-500/30 text-xs font-bold uppercase tracking-wider text-cyan-300 transition-all cursor-pointer shadow-md"
+                    className="px-6 py-2.5 rounded-full bg-[#1c1c1c] hover:bg-[#282828] border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer shadow-md"
                   >
                     Load More
                   </button>

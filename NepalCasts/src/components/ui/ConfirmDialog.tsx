@@ -83,7 +83,7 @@ export default function ConfirmDialog({
         switch (type) {
             case 'danger':
                 return (
-                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-red-500/15 text-red-400 border border-red-500/30 shadow-[0_0_24px_rgba(239,68,68,0.2)]">
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-red-50 text-red-600 border border-red-200 shadow-sm">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
@@ -91,7 +91,7 @@ export default function ConfirmDialog({
                 );
             case 'warning':
                 return (
-                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-[0_0_24px_rgba(245,158,11,0.2)]">
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-amber-50 text-amber-600 border border-amber-200 shadow-sm">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
@@ -99,8 +99,8 @@ export default function ConfirmDialog({
                 );
             case 'success':
                 return (
-                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_24px_rgba(16,185,129,0.25)]">
-                        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-amber-50 text-[#ffb400] border border-amber-200 shadow-sm">
+                        <svg className="w-7 h-7 text-[#ffb400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
@@ -108,8 +108,8 @@ export default function ConfirmDialog({
             case 'info':
             default:
                 return (
-                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-[#00BFFF]/15 text-[#00BFFF] border border-[#00BFFF]/30 shadow-[0_0_24px_rgba(0,191,255,0.2)]">
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-amber-50 text-[#ffb400] border border-amber-200 shadow-sm">
+                        <svg className="w-6 h-6 text-[#ffb400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -120,14 +120,14 @@ export default function ConfirmDialog({
     const getConfirmButtonClasses = () => {
         switch (type) {
             case 'danger':
-                return 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-lg shadow-red-600/25 border border-red-500/30';
+                return 'bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/20';
             case 'warning':
-                return 'bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black shadow-lg shadow-amber-400/25 border border-amber-400/30';
+                return 'bg-[#ffb400] hover:bg-[#ffa000] text-black shadow-md shadow-[#ffb400]/20';
             case 'success':
-                return 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black shadow-lg shadow-emerald-500/25 border border-emerald-400/30';
+                return 'bg-[#ffb400] hover:bg-[#ffa000] text-black shadow-md shadow-[#ffb400]/20 font-bold';
             case 'info':
             default:
-                return 'bg-[#00BFFF] hover:bg-[#0099e6] text-black shadow-lg shadow-[#00BFFF]/25 border border-[#00BFFF]/30';
+                return 'bg-[#ffb400] hover:bg-[#ffa000] text-black shadow-md shadow-[#ffb400]/20';
         }
     };
 
@@ -166,15 +166,15 @@ export default function ConfirmDialog({
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.94, y: 8 }}
                         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                        className="relative w-full max-w-[340px] sm:max-w-[360px] bg-[#181818] border border-white/10 backdrop-blur-2xl rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] p-6 sm:p-7 text-center"
+                        className="relative w-full max-w-[340px] sm:max-w-[360px] bg-white border border-gray-100 shadow-2xl rounded-3xl overflow-hidden p-6 sm:p-7 text-center"
                     >
                         {getIcon()}
 
-                        <h3 id="confirm-title" className="text-lg font-black text-white text-center mb-1.5 tracking-tight">
+                        <h3 id="confirm-title" className="text-xl font-extrabold text-gray-900 text-center mb-1.5 tracking-tight">
                             {title}
                         </h3>
 
-                        <p id="confirm-description" className="text-gray-300 text-xs sm:text-sm text-center leading-relaxed mb-6 font-medium">
+                        <p id="confirm-description" className="text-gray-600 text-xs sm:text-sm text-center leading-relaxed mb-6 font-medium">
                             {description}
                         </p>
 
@@ -183,7 +183,7 @@ export default function ConfirmDialog({
                                 <button
                                     disabled={isLoading}
                                     onClick={onClose}
-                                    className="flex-1 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs font-bold uppercase tracking-wider transition-all border border-white/10 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                    className="flex-1 py-3 px-4 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold uppercase tracking-wider transition-all border border-gray-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                 >
                                     {cancelText}
                                 </button>
@@ -192,7 +192,7 @@ export default function ConfirmDialog({
                             <button
                                 disabled={isLoading}
                                 onClick={handleConfirmClick}
-                                className={`${showCancel ? 'flex-1' : 'w-full'} py-2.5 px-5 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${getConfirmButtonClasses()}`}
+                                className={`${showCancel ? 'flex-1' : 'w-full'} py-3 px-5 rounded-2xl text-xs font-extrabold uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${getConfirmButtonClasses()}`}
                             >
                                 {isLoading ? (
                                     <>

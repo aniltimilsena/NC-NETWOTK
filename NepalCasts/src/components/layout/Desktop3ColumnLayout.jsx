@@ -7,6 +7,7 @@ import Avatar from '../ui/Avatar';
 import { getAvatar } from '../../utils/avatars';
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
+import { formatRole } from '../../utils';
 import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, collection, query, where } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { AuthService } from '../../services/AuthService';
@@ -74,8 +75,8 @@ function FollowBtn({ targetUid }) {
       onClick={handleToggle}
       disabled={loading}
       className={`flex-shrink-0 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold border transition-all cursor-pointer active:scale-[0.96] flex items-center gap-1 ${following
-        ? 'bg-white/10 border-white/20 text-white hover:bg-white/15'
-        : 'bg-white/[0.06] border-white/10 hover:bg-white/10 text-white'
+        ? 'bg-white/10 border-white/20 text-white'
+        : 'bg-white/[0.06] border-white/10 text-white'
         } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
     >
       {following ? 'Following' : 'Follow'}
@@ -208,6 +209,7 @@ export default function Desktop3ColumnLayout({
     // Real-time Followers count for logged-in user
     const qFollowers = query(collection(db, 'follows'), where('followingId', '==', uid));
     const unsubFollowers = onSnapshot(qFollowers, (snap) => {
+      // eslint-disable-next-line no-secrets/no-secrets
       const mockUids = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', 'Mm1B6rYaEebs6ajRyu0EJBrrGwT2', uid]);
       const valid = snap.docs.filter(d => d.data().followerId && !mockUids.has(d.data().followerId));
       setRealFollowers(valid.length);
@@ -239,12 +241,13 @@ export default function Desktop3ColumnLayout({
     user?.email?.split('@')[0] ||
     'Talent Member';
 
-  const realRole =
+  const realRole = formatRole(
     profileData?.role ||
     profileData?.category ||
     user?.role ||
     user?.category ||
-    'Actor / Model';
+    'Actor'
+  );
 
   const realImage =
     profileData?.image ||
@@ -315,7 +318,7 @@ export default function Desktop3ColumnLayout({
             <div className="px-1 pt-1">
               <div
                 onClick={() => setShowSearchOverlay(true)}
-                className="relative flex items-center bg-[#242526] rounded-full px-4 py-2 border border-white/5 hover:border-white/10 transition-all cursor-pointer"
+                className="relative flex items-center bg-[#242526] rounded-full px-4 py-2 border border-white/5 transition-all cursor-pointer"
               >
                 <input
                   type="text"
@@ -382,7 +385,7 @@ export default function Desktop3ColumnLayout({
                   <p className="text-gray-400 text-xs leading-relaxed">Connect with top directors and casting opportunities in Nepal.</p>
                   <Link
                     to="/signin"
-                    className="w-full py-2.5 bg-[#0088CC] hover:bg-[#0077B3] text-white font-bold rounded-xl text-sm transition-all cursor-pointer shadow-md active:scale-[0.98] text-center block"
+                    className="w-full py-2.5 bg-[#ffb400] text-black font-bold rounded-xl text-sm transition-all cursor-pointer shadow-md active:scale-[0.98] text-center block"
                   >
                     Sign In / Register
                   </Link>
@@ -395,6 +398,27 @@ export default function Desktop3ColumnLayout({
                 <div>
                   <div className="px-4 pt-1 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">Discover</div>
                   <div className="space-y-0.5">
+                    {user && (
+                      <Link
+                        to={`/profile/${user?.uid}`}
+                        className={`flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                          pathname.startsWith('/profile')
+                            ? "text-white font-medium bg-white/5"
+                            : "text-gray-400 font-normal"
+                        }`}
+                      >
+                        <Avatar
+                          userId={user?.uid}
+                          user={user}
+                          src={user?.photoURL || user?.profileImage || user?.image}
+                          name={user?.displayName || user?.name}
+                          size="none"
+                          className="w-5 h-5 rounded-full object-cover mr-3.5 shrink-0 border border-white/20"
+                        />
+                        <span className="text-[16px] tracking-tight">My Profile</span>
+                      </Link>
+                    )}
+
                     {[
                       { name: "Home", path: "/", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
                       { name: "Discover", path: "/discover", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z" /> },
@@ -408,13 +432,13 @@ export default function Desktop3ColumnLayout({
                         <Link
                           key={i}
                           to={item.path}
-                          className={`group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                          className={`flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
                             isActive
                               ? "text-white font-medium"
-                              : "text-gray-400 font-normal hover:text-white"
+                              : "text-gray-400 font-normal"
                           }`}
                         >
-                          <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             {item.icon}
                           </svg>
                           <span className="text-[16px] tracking-tight">{item.name}</span>
@@ -439,13 +463,13 @@ export default function Desktop3ColumnLayout({
                         <Link
                           key={i}
                           to={item.path}
-                          className={`group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                          className={`flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
                             isActive
                               ? "text-white font-medium"
-                              : "text-gray-400 font-normal hover:text-white"
+                              : "text-gray-400 font-normal"
                           }`}
                         >
-                          <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             {item.icon}
                           </svg>
                           <span className="text-[16px] tracking-tight">{item.name}</span>
@@ -463,20 +487,19 @@ export default function Desktop3ColumnLayout({
                       {[
                         { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
                         { name: "Saved Calls", path: "/saved", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /> },
-                        { name: "Profile", path: `/profile/${user?.uid}`, icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> }
                       ].map((item, i) => {
                         const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/'));
                         return (
                           <Link
                             key={i}
                             to={item.path}
-                            className={`group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                            className={`flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
                               isActive
                                 ? "text-white font-medium"
-                                : "text-gray-400 font-normal hover:text-white"
+                                : "text-gray-400 font-normal"
                             }`}
                           >
-                            <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               {item.icon}
                             </svg>
                             <span className="text-[16px] tracking-tight">{item.name}</span>
@@ -540,13 +563,13 @@ export default function Desktop3ColumnLayout({
                         <Link
                           key={item.path}
                           to={item.path}
-                          className={`group flex items-center w-full px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                          className={`flex items-center w-full px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.98] ${
                             isActive
                               ? "text-white font-medium bg-white/5"
-                              : "text-gray-400 font-normal hover:text-white hover:bg-white/[0.03]"
+                              : "text-gray-400 font-normal"
                           }`}
                         >
-                          <svg className={`w-4 h-4 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className={`w-4 h-4 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             {item.icon}
                           </svg>
                           <span className="text-[15px] tracking-tight">{item.name}</span>
@@ -557,13 +580,13 @@ export default function Desktop3ColumnLayout({
                     {isAdmin && (
                       <Link
                         to="/admin"
-                        className={`group flex items-center w-full px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                        className={`flex items-center w-full px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.98] ${
                           pathname.startsWith("/admin")
                             ? "text-white font-medium bg-white/5"
-                            : "text-gray-400 font-normal hover:text-white hover:bg-white/[0.03]"
+                            : "text-gray-400 font-normal"
                         }`}
                       >
-                        <svg className={`w-4 h-4 mr-3.5 shrink-0 transition-all duration-200 ${pathname.startsWith("/admin") ? "text-white scale-105" : "text-gray-400 group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className={`w-4 h-4 mr-3.5 shrink-0 transition-all duration-200 ${pathname.startsWith("/admin") ? "text-white scale-105" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                         <span className="text-[15px] tracking-tight">Admin Panel</span>
@@ -577,9 +600,9 @@ export default function Desktop3ColumnLayout({
                     <button
                       type="button"
                       onClick={onLogout || (() => AuthService.signOut())}
-                      className="group flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 text-gray-400 hover:text-rose-400 font-normal cursor-pointer active:scale-[0.98]"
+                      className="flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 text-gray-400 font-normal cursor-pointer active:scale-[0.98]"
                     >
-                      <svg className="w-5 h-5 mr-3.5 shrink-0 transition-colors group-hover:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 mr-3.5 shrink-0 transition-colors text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
                       <span className="text-[16px] tracking-tight">Logout</span>
@@ -663,7 +686,7 @@ export default function Desktop3ColumnLayout({
                     <button
                       type="button"
                       onClick={() => onNavigate?.('talent')}
-                      className="text-xs font-normal text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
+                      className="text-xs font-normal text-[#ffb400] cursor-pointer flex items-center gap-0.5"
                     >
                       View all <ChevronRight className="w-3.5 h-3.5" />
                     </button>
@@ -675,7 +698,7 @@ export default function Desktop3ColumnLayout({
                       safeFeatured.slice(0, 3).map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center gap-4 group"
+                          className="flex items-center gap-4"
                         >
                           <div
                             onClick={() => onNavigate?.('profile', item.id)}
@@ -690,12 +713,12 @@ export default function Desktop3ColumnLayout({
                           <div className="min-w-0 flex-1">
                             <h5
                               onClick={() => onNavigate?.('profile', item.id)}
-                              className="text-white text-base font-bold truncate cursor-pointer group-hover:text-[#00BFFF] transition-colors"
+                              className="text-white text-base font-bold truncate cursor-pointer"
                             >
                               {item.name || 'Talent'}
                             </h5>
                             <p className="text-gray-400 text-xs font-normal truncate mt-0.5">
-                              {item.role || item.category || 'Talent'}
+                              {formatRole(item.role || item.category || 'Talent')}
                               {item.location && <span> · {item.location}</span>}
                             </p>
                           </div>
@@ -717,7 +740,7 @@ export default function Desktop3ColumnLayout({
                     <button
                       type="button"
                       onClick={() => onNavigate?.('casting')}
-                      className="text-xs font-normal text-[#00BFFF] hover:underline cursor-pointer flex items-center gap-0.5"
+                      className="text-xs font-normal text-[#ffb400] cursor-pointer flex items-center gap-0.5"
                     >
                       View all <ChevronRight className="w-3.5 h-3.5" />
                     </button>
@@ -731,14 +754,14 @@ export default function Desktop3ColumnLayout({
                         <div
                           key={call.id}
                           onClick={() => onNavigate?.('casting-detail', call.id)}
-                          className="relative h-32 rounded-2xl overflow-hidden hover:scale-[1.02] hover:border-white/20 transition-all cursor-pointer group shadow-xl border border-white/5 flex flex-col justify-end p-4"
+                          className="relative h-32 rounded-2xl overflow-hidden cursor-pointer shadow-xl border border-white/5 flex flex-col justify-end p-4"
                         >
                           {/* Background Image */}
                           <div className="absolute inset-0 select-none pointer-events-none">
                             <img
                               src={(call.thumbnail && call.thumbnail !== 'has-file') ? call.thumbnail : (call.thumbnailUrl || call.mediaUrl || '/movie-banner.png')}
                               alt={call.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              className="w-full h-full object-cover"
                               onError={(e) => {
                                 e.currentTarget.onerror = null;
                                 e.currentTarget.src = '/movie-banner.png';
@@ -750,7 +773,7 @@ export default function Desktop3ColumnLayout({
 
                           {/* Text info */}
                           <div className="relative z-10 space-y-1">
-                            <h5 className="text-white text-base font-black group-hover:text-[#00BFFF] transition-colors truncate uppercase tracking-wider">
+                            <h5 className="text-white text-base font-black truncate uppercase tracking-wider">
                               {call.title}
                             </h5>
                             <div className="flex items-center justify-between text-xs text-gray-300 font-bold">

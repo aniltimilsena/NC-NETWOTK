@@ -51,7 +51,7 @@
   "view_details": "विवरण हेर्नुहोस्",
 
   "categories": {
-    "actor": "अभिनेता / अभिनेत्री",
+    "actor": "अभिनेता",
     "director": "निर्देशक",
     "writer": "स्क्रिप्ट लेखक",
     "dop": "छायाकार (DOP)",
@@ -88,7 +88,7 @@
   "home": {
     "heroTitle": "विशेष कलाकार हाइलाइट",
     "viewProfile": "प्रोफाइल हेर्नुहोस्",
-    "actorSection": "अभिनेता तथा अभिनेत्री",
+    "actorSection": "अभिनेताहरू",
     "browseCategories": "विधा अनुसार खोज्नुहोस्",
     "castingCalls": "कास्टिङ कल र अडिसनहरू",
     "loadingTalents": "कलाकारहरू लोड हुँदैछन्...",
