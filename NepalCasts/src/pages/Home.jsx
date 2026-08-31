@@ -535,8 +535,8 @@ export default function Home({ onNavigate, user }) {
             {/* ================= CASTING CALLS / HIRING NOW SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
-                <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
+                <span className="relative inline-flex items-center pb-1.5 text-white font-apple font-extrabold text-sm sm:text-base md:text-lg tracking-wider uppercase select-none">
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3px] border-[#ffb400] pointer-events-none" />
                   Hiring now
                 </span>
                 <button
@@ -643,8 +643,8 @@ export default function Home({ onNavigate, user }) {
             {/* ================= FEATURED TALENTS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
-                <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
+                <span className="relative inline-flex items-center pb-1.5 text-white font-apple font-extrabold text-sm sm:text-base md:text-lg tracking-wider uppercase select-none">
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3px] border-[#ffb400] pointer-events-none" />
                   Featured talents
                 </span>
                 <button
@@ -699,8 +699,8 @@ export default function Home({ onNavigate, user }) {
             {/* ================= TALENTS BY CATEGORY SECTION ================= */}
             <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0">
               <div className="flex items-center justify-between mb-3">
-                <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
+                <span className="relative inline-flex items-center pb-1.5 text-white font-apple font-extrabold text-sm sm:text-base md:text-lg tracking-wider uppercase select-none">
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3px] border-[#ffb400] pointer-events-none" />
                   Talents by category
                 </span>
                 <button
@@ -744,8 +744,8 @@ export default function Home({ onNavigate, user }) {
             {/* ================= NEW BORN TALENTS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
-                <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
+                <span className="relative inline-flex items-center pb-1.5 text-white font-apple font-extrabold text-sm sm:text-base md:text-lg tracking-wider uppercase select-none">
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3px] border-[#ffb400] pointer-events-none" />
                   New born talents
                 </span>
                 <button
@@ -828,8 +828,8 @@ export default function Home({ onNavigate, user }) {
             {/* ================= TRENDING TALENTS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
-                <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
+                <span className="relative inline-flex items-center pb-1.5 text-white font-apple font-extrabold text-sm sm:text-base md:text-lg tracking-wider uppercase select-none">
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3px] border-[#ffb400] pointer-events-none" />
                   Trending talents
                 </span>
                 <button
@@ -917,8 +917,8 @@ export default function Home({ onNavigate, user }) {
             {/* ================= OUR GOALS SECTION ================= */}
             <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0 space-y-2.5">
               <div className="flex items-center justify-between mb-2">
-                <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
+                <span className="relative inline-flex items-center pb-1.5 text-white font-apple font-extrabold text-sm sm:text-base md:text-lg tracking-wider uppercase select-none">
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3px] border-[#ffb400] pointer-events-none" />
                   Our Goals
                 </span>
               </div>
