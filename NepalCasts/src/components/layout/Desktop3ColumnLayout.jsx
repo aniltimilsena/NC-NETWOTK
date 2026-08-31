@@ -690,7 +690,7 @@ export default function Desktop3ColumnLayout({
                     <button
                       type="button"
                       onClick={() => onNavigate?.('talent')}
-                      className="text-xs font-normal text-[#ffb400] cursor-pointer flex items-center gap-0.5"
+                      className="text-xs font-normal text-gray-300 hover:text-white transition-colors cursor-pointer flex items-center gap-0.5"
                     >
                       View all <ChevronRight className="w-3.5 h-3.5" />
                     </button>
@@ -744,7 +744,7 @@ export default function Desktop3ColumnLayout({
                     <button
                       type="button"
                       onClick={() => onNavigate?.('casting')}
-                      className="text-xs font-normal text-[#ffb400] cursor-pointer flex items-center gap-0.5"
+                      className="text-xs font-normal text-gray-300 hover:text-white transition-colors cursor-pointer flex items-center gap-0.5"
                     >
                       View all <ChevronRight className="w-3.5 h-3.5" />
                     </button>
