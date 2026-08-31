@@ -1,7 +1,8 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Route, useParams, useLocation } from 'react-router-dom';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-const Settings = lazy(() => import('../features/settings/SettingsPage'));
+const Settings = lazyWithRetry(() => import('../features/settings/SettingsPage'));
 
 const SettingsWrapper = ({ onNavigate, user, showToast, showAlert }: any) => {
   const { tab } = useParams();

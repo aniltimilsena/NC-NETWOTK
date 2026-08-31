@@ -1,9 +1,10 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Route, useParams } from 'react-router-dom';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-const CastingCall = lazy(() => import('../features/casting/CastingCall'));
-const CastingDetail = lazy(() => import('../features/casting/CastingCallDetail'));
-const CastingCallCreate = lazy(() => import('../features/casting/CastingCallCreate'));
+const CastingCall = lazyWithRetry(() => import('../features/casting/CastingCall'));
+const CastingDetail = lazyWithRetry(() => import('../features/casting/CastingCallDetail'));
+const CastingCallCreate = lazyWithRetry(() => import('../features/casting/CastingCallCreate'));
 
 const CastingDetailWrapper = ({ onNavigate, user, showAlert }: any) => {
   const params = useParams();

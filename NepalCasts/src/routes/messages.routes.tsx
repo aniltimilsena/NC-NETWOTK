@@ -1,7 +1,8 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Route, useParams } from 'react-router-dom';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-const Messages = lazy(() => import('../features/messages/MessagesPage'));
+const Messages = lazyWithRetry(() => import('../features/messages/MessagesPage'));
 
 interface MessagesRouteProps {
   user?: any;

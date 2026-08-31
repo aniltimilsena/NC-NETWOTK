@@ -1,7 +1,8 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Route, useParams } from 'react-router-dom';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-const ApplicationsPage = lazy(() => import('../features/casting/ApplicationsPage'));
+const ApplicationsPage = lazyWithRetry(() => import('../features/casting/ApplicationsPage'));
 
 const ApplicationsWrapper = ({ onNavigate, user }: any) => {
   const { filter } = useParams();

@@ -1,7 +1,8 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Route, useParams } from 'react-router-dom';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-const CallPage = lazy(() => import('../features/call/CallPage'));
+const CallPage = lazyWithRetry(() => import('../features/call/CallPage'));
 
 const CallWrapper = () => {
   const { callId } = useParams();

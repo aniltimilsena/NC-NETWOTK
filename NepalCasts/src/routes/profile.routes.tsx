@@ -1,10 +1,10 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Route, useParams, Navigate } from 'react-router-dom';
 import { CurrentUser } from '../utils/CurrentUser';
-// RouteLoader removed to prevent generic skeleton flash
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-const Profile = lazy(() => import('../features/profile/ProfilePage'));
-const ProfileCreate = lazy(() => import('../features/profile/ProfileCreate'));
+const Profile = lazyWithRetry(() => import('../features/profile/ProfilePage'));
+const ProfileCreate = lazyWithRetry(() => import('../features/profile/ProfileCreate'));
 
 const ProfileWrapper = ({ onNavigate, user, isAdmin, showAlert, authReady, defaultTab }: any) => {
   const { id, tab } = useParams();

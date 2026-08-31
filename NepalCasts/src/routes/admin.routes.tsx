@@ -1,14 +1,15 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Route } from 'react-router-dom';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-const AdminOverview = lazy(() => import('../features/admin/AdminOverview'));
-const AdminUsers = lazy(() => import('../features/admin/AdminUsers'));
-const AdminAnalytics = lazy(() => import('../features/admin/AdminAnalytics'));
-const AdminContent = lazy(() => import('../features/admin/AdminContent'));
-const AdminCasting = lazy(() => import('../features/admin/AdminCasting'));
-const AdminMessages = lazy(() => import('../features/admin/AdminMessages'));
-const AdminModeration = lazy(() => import('../features/admin/AdminModeration'));
-const AdminSettings = lazy(() => import('../features/admin/AdminSettings'));
+const AdminOverview = lazyWithRetry(() => import('../features/admin/AdminOverview'));
+const AdminUsers = lazyWithRetry(() => import('../features/admin/AdminUsers'));
+const AdminAnalytics = lazyWithRetry(() => import('../features/admin/AdminAnalytics'));
+const AdminContent = lazyWithRetry(() => import('../features/admin/AdminContent'));
+const AdminCasting = lazyWithRetry(() => import('../features/admin/AdminCasting'));
+const AdminMessages = lazyWithRetry(() => import('../features/admin/AdminMessages'));
+const AdminModeration = lazyWithRetry(() => import('../features/admin/AdminModeration'));
+const AdminSettings = lazyWithRetry(() => import('../features/admin/AdminSettings'));
 
 export const AdminRoutes = () => (
   <>

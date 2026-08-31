@@ -1,7 +1,8 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Route, useParams } from 'react-router-dom';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-const Notifications = lazy(() => import('../features/notifications/Notifications'));
+const Notifications = lazyWithRetry(() => import('../features/notifications/Notifications'));
 
 const NotificationsWrapper = ({ onNavigate, user }: any) => {
   const { filter } = useParams();

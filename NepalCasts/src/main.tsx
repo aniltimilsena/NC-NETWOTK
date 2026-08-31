@@ -45,16 +45,27 @@ const MissingClerkKeyScreen = () => (
 );
 
 initErrorTracking();
-window.addEventListener('vite:preloadError', () => {
-    try {
+
+// Auto-reload gracefully when a new deployment invalidates cached chunk hashes
+window.addEventListener('vite:preloadError', (event: any) => {
+    event.preventDefault?.();
+    const lastReloaded = sessionStorage.getItem("vite_reload_time");
+    const now = Date.now();
+    if (!lastReloaded || now - parseInt(lastReloaded, 10) > 10000) {
+        sessionStorage.setItem("vite_reload_time", now.toString());
+        window.location.reload();
+    }
+});
+
+window.addEventListener('error', (event: ErrorEvent) => {
+    const msg = event?.message || '';
+    if (msg.includes('Failed to fetch dynamically imported module') || msg.includes('Importing a module script failed')) {
         const lastReloaded = sessionStorage.getItem("vite_reload_time");
         const now = Date.now();
-        if (!lastReloaded || now - parseInt(lastReloaded, 10) > 15000) {
+        if (!lastReloaded || now - parseInt(lastReloaded, 10) > 10000) {
             sessionStorage.setItem("vite_reload_time", now.toString());
             window.location.reload();
         }
-    } catch (_e) {
-        // Ignore storage blocked or unavailable errors
     }
 });
 

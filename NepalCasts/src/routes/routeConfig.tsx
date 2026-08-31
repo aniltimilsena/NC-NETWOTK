@@ -18,21 +18,22 @@ import { SavedRoutes } from './saved.routes';
 import { CallsRoutes } from './calls.routes';
 import { ApplicationsRoutes } from './applications.routes';
 import { CurrentUser } from '../utils/CurrentUser';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
 import SignIn from '../features/auth/SignIn';
 import SignUp from '../features/auth/SignUp';
 import ForgotPassword from '../features/auth/ForgotPassword';
 
-const Home = lazy(() => import('../pages/Home'));
-const About = lazy(() => import('../pages/About'));
-const Contact = lazy(() => import('../pages/Contact'));
-const Help = lazy(() => import('../pages/Help'));
-const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('../pages/TermsOfService'));
-const TrustSafety = lazy(() => import('../pages/TrustSafety'));
-const NotFound = lazy(() => import('../pages/NotFound'));
-const Forbidden = lazy(() => import('../pages/Forbidden'));
-const ServerError = lazy(() => import('../pages/ServerError'));
+const Home = lazyWithRetry(() => import('../pages/Home'));
+const About = lazyWithRetry(() => import('../pages/About'));
+const Contact = lazyWithRetry(() => import('../pages/Contact'));
+const Help = lazyWithRetry(() => import('../pages/Help'));
+const PrivacyPolicy = lazyWithRetry(() => import('../pages/PrivacyPolicy'));
+const TermsOfService = lazyWithRetry(() => import('../pages/TermsOfService'));
+const TrustSafety = lazyWithRetry(() => import('../pages/TrustSafety'));
+const NotFound = lazyWithRetry(() => import('../pages/NotFound'));
+const Forbidden = lazyWithRetry(() => import('../pages/Forbidden'));
+const ServerError = lazyWithRetry(() => import('../pages/ServerError'));
 
 const ProtectedRoute = ({ user, authReady, children }: any) => {
   const location = useLocation();

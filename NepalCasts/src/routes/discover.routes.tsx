@@ -1,9 +1,10 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Route, useParams } from 'react-router-dom';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-const TalentListing = lazy(() => import('../pages/TalentListing'));
-const CastingCall = lazy(() => import('../features/casting/CastingCall'));
-const Trending = lazy(() => import('../pages/Trending'));
+const TalentListing = lazyWithRetry(() => import('../pages/TalentListing'));
+const CastingCall = lazyWithRetry(() => import('../features/casting/CastingCall'));
+const Trending = lazyWithRetry(() => import('../pages/Trending'));
 
 const DiscoverWrapper = ({ onNavigate, user }: any) => {
   const { category } = useParams();

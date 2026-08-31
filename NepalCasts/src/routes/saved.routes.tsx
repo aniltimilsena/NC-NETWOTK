@@ -1,7 +1,8 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Route, useParams, Navigate } from 'react-router-dom';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-const SavedCastingCalls = lazy(() => import('../features/casting/SavedCastingCalls'));
+const SavedCastingCalls = lazyWithRetry(() => import('../features/casting/SavedCastingCalls'));
 
 interface SavedRoutesProps {
   user?: any;
