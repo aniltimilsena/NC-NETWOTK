@@ -30,9 +30,9 @@ export function SuccessIcon({ active, size = 40, color = "currentColor", classNa
 export function MenuCloseIcon({ active, size = 40, color = "currentColor", className, duration = 3000 }: StateIconProps) {
     const open = useAutoToggle(duration, active);
     return (<svg viewBox="0 0 40 40" fill="none" className={cn("", className)} style={{ width: size, height: size }}>
-      <motion.line x1="10" x2="30" stroke={color} strokeWidth={2.5} strokeLinecap="round" initial={{ y1: 12, y2: 12, rotate: 0 }} animate={open ? { y1: 20, y2: 20, rotate: 45 } : { y1: 12, y2: 12, rotate: 0 }} transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }} style={{ transformOrigin: "20px 20px" }}/>
-      <motion.line x1="10" y1="20" x2="30" y2="20" stroke={color} strokeWidth={2.5} strokeLinecap="round" initial={{ opacity: 1, scaleX: 1 }} animate={open ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }} transition={{ duration: 0.2 }} style={{ transformOrigin: "20px 20px" }}/>
-      <motion.line x1="10" x2="30" stroke={color} strokeWidth={2.5} strokeLinecap="round" initial={{ y1: 28, y2: 28, rotate: 0 }} animate={open ? { y1: 20, y2: 20, rotate: -45 } : { y1: 28, y2: 28, rotate: 0 }} transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }} style={{ transformOrigin: "20px 20px" }}/>
+      <motion.line x1="5" x2="35" stroke={color} strokeWidth={3} strokeLinecap="round" initial={{ y1: 10, y2: 10, rotate: 0 }} animate={open ? { y1: 20, y2: 20, rotate: 45 } : { y1: 10, y2: 10, rotate: 0 }} transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }} style={{ transformOrigin: "20px 20px" }}/>
+      <motion.line x1="5" y1="20" x2="35" y2="20" stroke={color} strokeWidth={3} strokeLinecap="round" initial={{ opacity: 1, scaleX: 1 }} animate={open ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }} transition={{ duration: 0.2 }} style={{ transformOrigin: "20px 20px" }}/>
+      <motion.line x1="5" x2="35" stroke={color} strokeWidth={3} strokeLinecap="round" initial={{ y1: 30, y2: 30, rotate: 0 }} animate={open ? { y1: 20, y2: 20, rotate: -45 } : { y1: 30, y2: 30, rotate: 0 }} transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }} style={{ transformOrigin: "20px 20px" }}/>
     </svg>);
 }
 export function PlayPauseIcon({ active, size = 40, color = "currentColor", className, duration = 2400 }: StateIconProps) {

@@ -426,7 +426,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         <head>
           <title>${call.title} - Candidate Roster</title>
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; color: #0f172a; font-size: 11px; }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 24px; color: #0f172a; font-size: 11px; }
             table { width: 100%; border-collapse: collapse; margin-top: 16px; }
             th { background: #0f172a; color: #fff; padding: 8px 10px; text-align: left; font-size: 10px; }
             td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }

@@ -6,6 +6,30 @@ import { ActionSearchBar } from "@/components/ui/ActionSearchBar";
 import Logo from '../ui/Logo';
 import Avatar from '../ui/Avatar';
 import { NotificationIcon, MenuCloseIcon, SendIcon } from "@/components/ui/AnimatedStateIcons";
+import {
+  Home,
+  Compass,
+  Briefcase,
+  MessageSquare,
+  Bookmark,
+  User,
+  ShieldCheck,
+  LifeBuoy,
+  LogOut,
+  LogIn,
+  LayoutGrid,
+  Users,
+  Flame,
+  Settings,
+  Clapperboard,
+  PlusCircle,
+  Info,
+  HelpCircle,
+  Mail,
+  Shield,
+  FileText,
+  Scale
+} from "lucide-react";
 import { db } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
@@ -266,8 +290,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 Join Now
               </Link>)}
 
-              <button className="md:hidden text-nc-secondary hover:text-white p-2 flex items-center justify-center h-10 w-10" onClick={() => setMenuOpen(!menuOpen)} title="Toggle Menu" aria-label="Toggle Menu">
-                <MenuCloseIcon active={menuOpen} size={28} color="currentColor" />
+              <button className="md:hidden text-white hover:text-cyan-300 p-1 flex items-center justify-center h-10 w-10 active:scale-95 transition-transform" onClick={() => setMenuOpen(!menuOpen)} title="Toggle Menu" aria-label="Toggle Menu">
+                <MenuCloseIcon active={menuOpen} size={34} color="currentColor" />
               </button>
             </div>
           </div>
@@ -281,50 +305,66 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onClick={() => setMenuOpen(false)}></div>
 
 
-      <div className="relative w-[280px] h-full bg-[#0d0d0d] border-l border-[#2A2A2A] flex flex-col overflow-y-auto shadow-2xl z-10 animate-slide-in-right">
+      <div className="relative w-[280px] h-full bg-[#0d0d0d] border-0 flex flex-col overflow-y-auto shadow-2xl z-10 animate-slide-in-right">
 
-        <div className="px-6 py-2.5 border-b border-white/5" onClick={() => setMenuOpen(false)}>
+        <div className="px-6 py-2.5" onClick={() => setMenuOpen(false)}>
           <Logo size="sm" className="!mx-0" />
         </div>
 
 
         {/* === TWITTER/X STYLE MINIMALIST FLOATING NAVIGATION === */}
-        <div className="flex flex-col space-y-1 px-3 py-3 flex-1 overflow-y-auto">
+        <div className="flex flex-col space-y-1.5 px-3 py-3 flex-1 overflow-y-auto">
           {/* Home */}
           <Link
             to="/"
             onClick={() => setMenuOpen(false)}
-            className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+            className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
               pathname === '/' || pathname === ''
-                ? "text-white font-medium"
-                : "text-gray-400 font-normal hover:text-white"
+                ? "bg-white/10 text-white font-semibold shadow-sm"
+                : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
             }`}
           >
-            <span className="text-[17px] tracking-tight">{t('nav_home')}</span>
+            <Home className="w-5 h-5 shrink-0" />
+            <span className="text-[16px] tracking-normal">{t('nav_home')}</span>
           </Link>
 
-          {/* Discover Accordion (Reference Image Style) */}
+          {/* Discover Accordion */}
           <div className="flex flex-col w-full">
             <button
               onClick={() => setExpandedSection(expandedSection === 'discover' ? null : 'discover')}
-              className={`group flex items-center justify-start gap-1.5 w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group flex items-center justify-between w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isDiscoverActive
-                  ? "text-white font-medium"
-                  : "text-gray-400 font-normal hover:text-white"
+                  ? "bg-white/10 text-white font-semibold shadow-sm"
+                  : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
               }`}
             >
-              <span className="text-[17px] tracking-tight">{t('nav_discover')}</span>
+              <div className="flex items-center gap-3.5">
+                <Compass className="w-5 h-5 shrink-0" />
+                <span className="text-[16px] tracking-normal">{t('nav_discover')}</span>
+              </div>
               <svg className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'discover' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {expandedSection === 'discover' && (
-              <div className="pl-6 pr-3 py-1 space-y-1 my-1">
-                <Link to="/discover" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">Category Grid</Link>
-                <Link to="/talents" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">{t('nav_talent_directory')}</Link>
-                <Link to="/trending" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">{t('nav_trending_now')}</Link>
-                <Link to="/settings" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">{t('nav_settings')}</Link>
+              <div className="pl-6 pr-2 py-1 space-y-0.5 my-1">
+                <Link to="/discover" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+                  <LayoutGrid className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>Category Grid</span>
+                </Link>
+                <Link to="/talents" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+                  <Users className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>{t('nav_talent_directory')}</span>
+                </Link>
+                <Link to="/trending" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+                  <Flame className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>{t('nav_trending_now')}</span>
+                </Link>
+                <Link to="/settings" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+                  <Settings className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>{t('nav_settings')}</span>
+                </Link>
               </div>
             )}
           </div>
@@ -333,22 +373,31 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           <div className="flex flex-col w-full">
             <button
               onClick={() => setExpandedSection(expandedSection === 'projects' ? null : 'projects')}
-              className={`group flex items-center justify-start gap-1.5 w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group flex items-center justify-between w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isProjectsActive
-                  ? "text-white font-medium"
-                  : "text-gray-400 font-normal hover:text-white"
+                  ? "bg-white/10 text-white font-semibold shadow-sm"
+                  : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
               }`}
             >
-              <span className="text-[17px] tracking-tight">{t('nav_projects')}</span>
+              <div className="flex items-center gap-3.5">
+                <Briefcase className="w-5 h-5 shrink-0" />
+                <span className="text-[16px] tracking-normal">{t('nav_projects')}</span>
+              </div>
               <svg className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'projects' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {expandedSection === 'projects' && (
-              <div className="pl-6 pr-3 py-1 space-y-1 my-1">
-                <Link to="/casting" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">{t('nav_casting_calls')}</Link>
-                <Link to="/casting/create" onClick={() => setMenuOpen(false)} className="block py-2 px-3 text-sm font-normal text-gray-400 hover:text-white transition-colors text-left">{t('nav_post_project')}</Link>
+              <div className="pl-6 pr-2 py-1 space-y-0.5 my-1">
+                <Link to="/casting" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+                  <Clapperboard className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>{t('nav_casting_calls')}</span>
+                </Link>
+                <Link to="/casting/create" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal text-gray-400 hover:text-white hover:bg-white/5 transition-colors text-left">
+                  <PlusCircle className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>{t('nav_post_project')}</span>
+                </Link>
               </div>
             )}
           </div>
@@ -359,37 +408,40 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
               <Link
                 to="/messages"
                 onClick={() => setMenuOpen(false)}
-                className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+                className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
                   pathname.startsWith('/messages')
-                    ? "text-white font-medium"
-                    : "text-gray-400 font-normal hover:text-white"
+                    ? "bg-white/10 text-white font-semibold shadow-sm"
+                    : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
                 }`}
               >
-                <span className="text-[17px] tracking-tight">Messages</span>
+                <MessageSquare className="w-5 h-5 shrink-0" />
+                <span className="text-[16px] tracking-normal">Messages</span>
               </Link>
 
               <Link
                 to="/saved-castings"
                 onClick={() => setMenuOpen(false)}
-                className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+                className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
                   pathname.startsWith('/saved')
-                    ? "text-white font-medium"
-                    : "text-gray-400 font-normal hover:text-white"
+                    ? "bg-white/10 text-white font-semibold shadow-sm"
+                    : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
                 }`}
               >
-                <span className="text-[17px] tracking-tight">Saved Calls</span>
+                <Bookmark className="w-5 h-5 shrink-0" />
+                <span className="text-[16px] tracking-normal">Saved Calls</span>
               </Link>
 
               <Link
                 to={`/profile/${user?.uid}`}
                 onClick={() => setMenuOpen(false)}
-                className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+                className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
                   pathname.startsWith('/profile')
-                    ? "text-white font-medium"
-                    : "text-gray-400 font-normal hover:text-white"
+                    ? "bg-white/10 text-white font-semibold shadow-sm"
+                    : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
                 }`}
               >
-                <span className="text-[17px] tracking-tight">Profile</span>
+                <User className="w-5 h-5 shrink-0" />
+                <span className="text-[16px] tracking-normal">Profile</span>
               </Link>
             </>
           )}
@@ -398,13 +450,14 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             <Link
               to="/admin"
               onClick={() => setMenuOpen(false)}
-              className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+              className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
                 pathname.startsWith("/admin")
-                  ? "text-white font-medium"
-                  : "text-gray-400 font-normal hover:text-white"
+                  ? "bg-white/10 text-white font-semibold shadow-sm"
+                  : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
               }`}
             >
-              <span className="text-[17px] tracking-tight">Admin Panel</span>
+              <ShieldCheck className="w-5 h-5 shrink-0" />
+              <span className="text-[16px] tracking-normal">Admin Panel</span>
             </Link>
           )}
 
@@ -412,26 +465,47 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           <div className="flex flex-col w-full">
             <button
               onClick={() => setExpandedSection(expandedSection === 'support' ? null : 'support')}
-              className={`group flex items-center justify-start gap-1.5 w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+              className={`group flex items-center justify-between w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                 isSupportActive
-                  ? "text-white font-medium"
-                  : "text-gray-400 font-normal hover:text-white"
+                  ? "bg-white/10 text-white font-semibold shadow-sm"
+                  : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
               }`}
             >
-              <span className="text-[17px] tracking-tight">Support</span>
+              <div className="flex items-center gap-3.5">
+                <LifeBuoy className="w-5 h-5 shrink-0" />
+                <span className="text-[16px] tracking-normal">Support</span>
+              </div>
               <svg className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform duration-200 ${expandedSection === 'support' ? 'rotate-180 text-white' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {expandedSection === 'support' && (
-              <div className="pl-6 pr-3 py-1 space-y-1 my-1">
-                <Link to="/about" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/about' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>About Us</Link>
-                <Link to="/help" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/help' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>Help & FAQ</Link>
-                <Link to="/contact" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/contact' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>Contact</Link>
-                <Link to="/trust-safety" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/trust-safety' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>Trust & Safety</Link>
-                <Link to="/privacy" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/privacy' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>Privacy Policy</Link>
-                <Link to="/terms" onClick={() => setMenuOpen(false)} className={`block py-2 px-3 text-sm font-normal transition-colors text-left ${pathname === '/terms' ? 'text-white font-medium' : 'text-gray-400 hover:text-white'}`}>Terms of Service</Link>
+              <div className="pl-6 pr-2 py-1 space-y-0.5 my-1">
+                <Link to="/about" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/about' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                  <Info className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>About Us</span>
+                </Link>
+                <Link to="/help" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/help' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                  <HelpCircle className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>Help & FAQ</span>
+                </Link>
+                <Link to="/contact" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/contact' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                  <Mail className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>Contact</span>
+                </Link>
+                <Link to="/trust-safety" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/trust-safety' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                  <Shield className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>Trust & Safety</span>
+                </Link>
+                <Link to="/privacy" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/privacy' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                  <FileText className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>Privacy Policy</span>
+                </Link>
+                <Link to="/terms" onClick={() => setMenuOpen(false)} className={`flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm font-normal transition-colors text-left ${pathname === '/terms' ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                  <Scale className="w-4 h-4 shrink-0 text-gray-400" />
+                  <span>Terms of Service</span>
+                </Link>
               </div>
             )}
           </div>
@@ -442,21 +516,23 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                 onLogout();
                 setMenuOpen(false);
               }}
-              className="group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 text-gray-400 hover:text-rose-400 text-left font-normal cursor-pointer active:scale-[0.98]"
+              className="group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 text-left font-normal cursor-pointer active:scale-[0.98]"
             >
-              <span className="text-[17px] tracking-tight">Logout</span>
+              <LogOut className="w-5 h-5 shrink-0" />
+              <span className="text-[16px] tracking-normal">Logout</span>
             </button>
           ) : (
             <Link
               to="/signin"
               onClick={() => setMenuOpen(false)}
-              className={`group flex items-center justify-start w-full px-4 py-2.5 transition-all duration-200 active:scale-[0.98] ${
+              className={`group flex items-center gap-3.5 w-full px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-[0.98] ${
                 pathname === '/signin'
-                  ? "text-white font-medium"
-                  : "text-gray-400 font-normal hover:text-white"
+                  ? "bg-white/10 text-white font-semibold shadow-sm"
+                  : "text-gray-400 font-normal hover:bg-white/5 hover:text-white"
               }`}
             >
-              <span className="text-[17px] tracking-tight">Sign In</span>
+              <LogIn className="w-5 h-5 shrink-0" />
+              <span className="text-[16px] tracking-normal">Sign In</span>
             </Link>
           )}
         </div>
