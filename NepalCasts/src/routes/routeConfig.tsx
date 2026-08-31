@@ -1,4 +1,4 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Route, Routes, Navigate, useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
 import PublicLayout from '../layouts/PublicLayout';
@@ -95,7 +95,7 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
         <Route path="/" element={<Home onNavigate={onNavigate} user={user} />} />
         {DiscoverRoutes({ onNavigate, user, isAdmin })}
         {ProfileRoutes({ onNavigate, user, isAdmin, showAlert, authReady })}
-        {CastingRoutes({ onNavigate, user, isAdmin, showAlert })}
+        {CastingRoutes({ onNavigate, user, isAdmin, showAlert, authReady })}
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/help" element={<Help />} />

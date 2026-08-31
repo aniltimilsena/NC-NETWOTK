@@ -12,6 +12,7 @@ import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, collection, query,
 import { useTranslation } from 'react-i18next';
 import { AuthService } from '../../services/AuthService';
 import { FollowItemSkeleton, SidebarWidgetSkeleton } from '../ui/Skeleton';
+import Footer from './Footer';
 
 // Inline follow button that mirrors ProfileHeader's style and uses Firestore
 function FollowBtn({ targetUid }) {
@@ -622,8 +623,11 @@ export default function Desktop3ColumnLayout({
           </aside>
 
           {/* CENTER MAIN CONTENT */}
-          <main className={`col-span-12 ${isHomePage ? 'xl:col-span-6' : 'xl:col-span-9'} min-w-0 pt-0 pb-3 lg:h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] lg:overflow-y-auto scrollbar-hide`}>
-            {children}
+          <main className={`col-span-12 lg:col-span-8 ${isHomePage ? 'xl:col-span-6' : 'xl:col-span-9'} min-w-0 pt-0 pb-3 h-auto lg:h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] lg:overflow-y-auto flex flex-col justify-between`}>
+            <div className="flex-1 min-w-0">
+              {children}
+            </div>
+            <Footer />
           </main>
 
           {/* RIGHT SIDEBAR (Desktop Only: Home Page Only) */}

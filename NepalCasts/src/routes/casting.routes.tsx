@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, useParams } from 'react-router-dom';
+import { Route, useParams, Navigate } from 'react-router-dom';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 
 const CastingCall = lazyWithRetry(() => import('../features/casting/CastingCall'));
@@ -22,16 +22,24 @@ const CastingDetailWrapper = ({ onNavigate, user, showAlert }: any) => {
   );
 };
 
-export const CastingRoutes = ({ onNavigate, user, isAdmin, showAlert }: any) => (
+export const CastingRoutes = ({ onNavigate, user, isAdmin, showAlert, authReady }: any) => (
   <>
-    {/* Public Casting Routes */}
+    {/* Public Casting Directory & Detail Routes */}
     <Route
       path="/casting"
       element={<CastingCall onNavigate={onNavigate} user={user} isAdmin={isAdmin} />}
     />
     <Route
       path="/casting/create"
-      element={<CastingCallCreate onNavigate={onNavigate} user={user} showAlert={showAlert} />}
+      element={
+        !authReady ? (
+          <div className="min-h-screen bg-[#070709]" />
+        ) : user ? (
+          <CastingCallCreate onNavigate={onNavigate} user={user} showAlert={showAlert} />
+        ) : (
+          <Navigate to="/signin?redirect_url=/casting/create" replace />
+        )
+      }
     />
     <Route
       path="/casting/:id"
@@ -42,14 +50,30 @@ export const CastingRoutes = ({ onNavigate, user, isAdmin, showAlert }: any) => 
       element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} />}
     />
 
-    {/* Casting Management Routes (/my-casting/*) */}
+    {/* Protected Casting Management Routes */}
     <Route
       path="/my-casting"
-      element={<CastingCall onNavigate={onNavigate} user={user} isAdmin={isAdmin} filter="my-calls" />}
+      element={
+        !authReady ? (
+          <div className="min-h-screen bg-[#070709]" />
+        ) : user ? (
+          <CastingCall onNavigate={onNavigate} user={user} isAdmin={isAdmin} filter="my-calls" />
+        ) : (
+          <Navigate to="/signin?redirect_url=/my-casting" replace />
+        )
+      }
     />
     <Route
       path="/my-casting/create"
-      element={<CastingCallCreate onNavigate={onNavigate} user={user} showAlert={showAlert} />}
+      element={
+        !authReady ? (
+          <div className="min-h-screen bg-[#070709]" />
+        ) : user ? (
+          <CastingCallCreate onNavigate={onNavigate} user={user} showAlert={showAlert} />
+        ) : (
+          <Navigate to="/signin?redirect_url=/casting/create" replace />
+        )
+      }
     />
     <Route
       path="/my-casting/:castingId"
@@ -61,3 +85,4 @@ export const CastingRoutes = ({ onNavigate, user, isAdmin, showAlert }: any) => 
     />
   </>
 );
+

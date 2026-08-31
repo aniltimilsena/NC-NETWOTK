@@ -187,7 +187,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
   return (
     <Desktop3ColumnLayout user={currentUser} onNavigate={onNavigate} activeNav="saved-castings" trendingCalls={savedCalls}>
       <div className="min-h-screen bg-[#141414] text-white relative font-sans pb-12">
-        <SEO title="Saved Casting Calls | NepalCasts" description="View and manage your bookmarked casting opportunities." />
+        <SEO title="Saved Calls | NepalCasts" description="View and manage your bookmarked casting opportunities." />
 
         <div className="max-w-4xl mx-auto px-3 sm:px-6 w-full pt-4 space-y-4">
           
@@ -202,7 +202,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                 <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
               </button>
               <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
-                Saved Casting Calls
+                Saved Calls
               </h1>
             </div>
 
@@ -223,13 +223,13 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                 <BookmarkX className="w-8 h-8" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-lg sm:text-xl font-bold text-white">No Saved Casting Calls Yet</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-white">No Saved Calls Yet</h3>
                 <p className="text-xs sm:text-sm text-gray-400 max-w-sm mx-auto leading-relaxed">
                   Bookmark interesting auditions while browsing to revisit and apply later.
                 </p>
               </div>
               <Button onClick={handleBrowse} variant="primary" size="lg" className="rounded-xl font-bold px-6 text-xs uppercase tracking-wider">
-                Browse Active Casting Calls
+                Browse Active Calls
               </Button>
             </div>
           )}

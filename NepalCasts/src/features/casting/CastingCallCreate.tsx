@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, X, Upload, ChevronLeft } from 'lucide-react';
 import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
@@ -32,6 +32,14 @@ interface CastingCallCreateProps {
 }
 
 export default function CastingCallCreate({ onNavigate, user, showAlert }: CastingCallCreateProps) {
+  useEffect(() => {
+    if (!user) {
+      showAlert?.('Sign In Required', 'info', 'Please sign in to publish a casting call.');
+      if (onNavigate) {
+        onNavigate('signin');
+      }
+    }
+  }, [user, onNavigate, showAlert]);
   const [castingId] = useState(() => doc(collection(db, 'casting_calls')).id);
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);

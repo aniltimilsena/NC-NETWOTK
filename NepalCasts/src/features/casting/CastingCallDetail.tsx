@@ -20,7 +20,6 @@ import {
   Film,
   Users,
   ListChecks,
-  Paperclip,
   ExternalLink,
   FileText,
   Mail,

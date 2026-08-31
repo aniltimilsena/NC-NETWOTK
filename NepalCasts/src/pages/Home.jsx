@@ -439,7 +439,7 @@ export default function Home({ onNavigate, user }) {
       loading={!talentsReceived}
     >
       <PullToRefresh onRefresh={handleRefresh}>
-        <div className="min-h-screen bg-[#141414] text-white pt-0 pb-6 font-sans selection:bg-[#ffb400] selection:text-black">
+        <div className="min-h-screen bg-[#141414] text-white pt-0 pb-1 font-sans selection:bg-[#ffb400] selection:text-black">
           {/* ================= HERO SECTION (Compact, flush with top navbar) ================= */}
           <section className="relative w-full h-[190px] sm:h-[220px] lg:h-[250px] overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5 m-0 p-0">
             {/* 5 Smoothly Rotating Background Images (Every 4s) */}
@@ -628,7 +628,7 @@ export default function Home({ onNavigate, user }) {
                   })
                 ) : (
                   <div className="w-full text-center py-5 bg-[#141416] rounded-xl border border-white/5">
-                    <p className="text-gray-400 text-xs mb-2">No active casting calls at the moment</p>
+                    <p className="text-gray-400 text-xs mb-2">No active calls at the moment</p>
                     <button
                       onClick={() => onNavigate('casting-create')}
                       className="text-xs bg-[#ffb400] text-black font-bold px-3 py-1.5 rounded-md shadow-sm shadow-amber-950/20 cursor-pointer"
@@ -697,7 +697,7 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= TALENTS BY CATEGORY SECTION ================= */}
-            <section className="bg-[#141416] rounded-lg border border-white/[0.08] p-3.5 sm:p-4 text-white shadow-md">
+            <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
                   <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
@@ -915,31 +915,28 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= OUR GOALS SECTION ================= */}
-            <section className="my-2 mb-4 px-3 sm:px-4 text-white">
-              <h3 className="text-base sm:text-lg font-black text-white tracking-wide mb-3 text-center">
-                Our goals
-              </h3>
-              <ul className="space-y-2.5 text-xs sm:text-sm text-gray-300 leading-relaxed max-w-xl mx-auto font-medium">
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#ffb400] font-black text-base leading-none mt-0.5">•</span>
-                  <span>Connect Nepal&apos;s finest actors, directors, writers, and film technicians with leading casting agencies.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#ffb400] font-black text-base leading-none mt-0.5">•</span>
-                  <span>Provide a unified platform for talent discovery and casting opportunities across Nepal.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#ffb400] font-black text-base leading-none mt-0.5">•</span>
-                  <span>Empower emerging artists by giving them visibility to global production houses.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#ffb400] font-black text-base leading-none mt-0.5">•</span>
-                  <span>Simplify the casting process for producers, directors, and agencies.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#ffb400] font-black text-base leading-none mt-0.5">•</span>
-                  <span>Build a strong community that supports and grows Nepal&apos;s entertainment industry.</span>
-                </li>
+            <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0 space-y-2.5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="relative inline-flex items-center pb-1 text-white font-apple font-bold text-[11px] sm:text-xs tracking-wider uppercase select-none">
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-2 border-[#ffb400] pointer-events-none" />
+                  Our Goals
+                </span>
+              </div>
+              <ul className="space-y-3 text-left">
+                {[
+                  "Connect Nepal's finest actors, directors, writers, and film technicians with leading casting agencies.",
+                  "Provide a unified platform for talent discovery and casting opportunities across Nepal.",
+                  "Empower emerging artists by giving them visibility to global production houses.",
+                  "Simplify the casting process for producers, directors, and agencies.",
+                  "Build a strong community that supports and grows Nepal's entertainment industry."
+                ].map((goal, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <span className="text-[#ffb400] font-black text-sm leading-none mt-1 select-none shrink-0">•</span>
+                    <span className="text-xs sm:text-sm text-gray-300 leading-relaxed font-medium">
+                      {goal}
+                    </span>
+                  </li>
+                ))}
               </ul>
             </section>
           </div>
