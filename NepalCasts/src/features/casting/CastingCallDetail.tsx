@@ -24,7 +24,10 @@ import {
   ExternalLink,
   FileText,
   Mail,
-  Phone
+  Phone,
+  Eye,
+  Download,
+  X
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import SEO from '../../components/SEO';
@@ -123,6 +126,8 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   const [selfTapeUrl, setSelfTapeUrl] = useState('');
   const [coverNote, setCoverNote] = useState('');
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [previewPdfName, setPreviewPdfName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [pipelineFilter, setPipelineFilter] = useState('all');
@@ -770,43 +775,75 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 </div>
               </div>
 
-              {/* Portfolio / Work Samples */}
+              {/* Portfolio / Resume (PDF Only) */}
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-semibold text-gray-300">
-                  Portfolio / Work Samples
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-300">
+                    Portfolio / Resume (PDF only)
+                  </label>
+                  <span className="text-[10px] text-[#ffb400] font-bold uppercase tracking-wider bg-[#ffb400]/10 px-2 py-0.5 rounded-full border border-[#ffb400]/20">
+                    PDF Only
+                  </span>
+                </div>
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border border-dashed border-white/15 hover:border-white/30 rounded-xl bg-[#16161b]/50 p-6 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all hover:bg-[#16161b]/80 group"
+                  className={`border border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all ${
+                    attachedFile 
+                      ? 'border-[#ffb400]/50 bg-[#ffb400]/5' 
+                      : 'border-white/15 hover:border-white/30 bg-[#16161b]/50 hover:bg-[#16161b]/80'
+                  }`}
                 >
                   <input
                     type="file"
                     ref={fileInputRef}
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
-                        setAttachedFile(e.target.files[0]);
+                        const picked = e.target.files[0];
+                        if (picked.type === 'application/pdf' || picked.name.toLowerCase().endsWith('.pdf')) {
+                          setAttachedFile(picked);
+                        } else {
+                          showAlert?.('Only PDF files (.pdf) are accepted for portfolio submission.', 'warning');
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }
                       }
                     }}
                     className="hidden"
-                    accept=".pdf,.doc,.docx,.zip,.png,.jpg,.jpeg"
+                    accept=".pdf,application/pdf"
                   />
-                  <Upload className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
-                  <div>
-                    {attachedFile ? (
-                      <p className="text-xs font-bold text-[#ffb400] truncate max-w-xs">
-                        ✓ {attachedFile.name}
+                  {attachedFile ? (
+                    <div className="flex flex-col items-center gap-1.5">
+                      <FileText className="w-8 h-8 text-[#ffb400]" />
+                      <p className="text-xs font-bold text-white truncate max-w-xs">
+                        {attachedFile.name}
                       </p>
-                    ) : (
-                      <>
+                      <p className="text-[11px] text-[#ffb400] font-medium">
+                        {(attachedFile.size / (1024 * 1024)).toFixed(2)} MB • PDF Ready to submit
+                      </p>
+                      <button
+                        type="button"
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          setAttachedFile(null);
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                        className="mt-1 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-[10px] text-gray-200 cursor-pointer transition-all"
+                      >
+                        Remove / Replace PDF
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 text-gray-400" />
+                      <div>
                         <p className="text-xs sm:text-sm font-semibold text-gray-200">
-                          Upload files (PDF, DOC, ZIP)
+                          Upload your Portfolio / Resume (.pdf)
                         </p>
                         <p className="text-[11px] text-gray-500 mt-0.5">
-                          or drag and drop
+                          PDF files only (max 20MB)
                         </p>
-                      </>
-                    )}
-                  </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -1368,19 +1405,32 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
                         return (
                           <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                            {/* File Attachment / Document */}
+                            {/* PDF Attachment / Document */}
                             {directFileUrl ? (
-                              <a
-                                href={directFileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ffb400]/10 border border-[#ffb400]/25 text-[10px] text-white font-semibold active:scale-95 transition-all cursor-pointer shadow-sm"
-                                title="Click to open attachment"
-                              >
-                                <Paperclip className="w-3 h-3 text-[#ffb400]" />
-                                <span className="truncate max-w-[150px]">{app.fileName || 'Attachment'}</span>
-                                <ExternalLink className="w-3 h-3 text-[#ffb400]" />
-                              </a>
+                              <div className="inline-flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPreviewPdfUrl(directFileUrl);
+                                    setPreviewPdfName(app.fileName || `${app.userName || 'Applicant'}_Portfolio.pdf`);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ffb400]/15 border border-[#ffb400]/30 text-[10px] text-[#ffb400] font-bold active:scale-95 transition-all cursor-pointer shadow-sm"
+                                  title="Click to view PDF portfolio"
+                                >
+                                  <FileText className="w-3.5 h-3.5 text-[#ffb400]" />
+                                  <span className="truncate max-w-[130px]">{app.fileName || 'Portfolio.pdf'}</span>
+                                  <Eye className="w-3 h-3 text-[#ffb400]" />
+                                </button>
+                                <a
+                                  href={directFileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-gray-400 hover:text-white transition-colors"
+                                  title="Open in new tab"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              </div>
                             ) : app.fileName ? (
                               <span
                                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 font-medium"
@@ -1447,6 +1497,52 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               <Trash2 className="w-3.5 h-3.5 text-black" />
               <span>{deleting ? 'Deleting...' : 'Delete'}</span>
             </button>
+          </div>
+        )}
+
+        {/* In-App PDF Portfolio Viewer Modal */}
+        {previewPdfUrl && (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
+            <div className="bg-[#18181c] border border-white/10 rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/40">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <FileText className="w-4 h-4 text-[#ffb400] shrink-0" />
+                  <span className="text-xs sm:text-sm font-bold text-white truncate">
+                    {previewPdfName || 'Applicant Portfolio PDF'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={previewPdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Open in New Tab</span>
+                  </a>
+                  <button
+                    onClick={() => {
+                      setPreviewPdfUrl(null);
+                      setPreviewPdfName(null);
+                    }}
+                    className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-300 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* PDF Preview Frame */}
+              <div className="flex-1 bg-[#101014] relative">
+                <iframe
+                  src={previewPdfUrl.includes('google.com') ? previewPdfUrl : `https://docs.google.com/viewer?url=${encodeURIComponent(previewPdfUrl)}&embedded=true`}
+                  className="w-full h-full border-0"
+                  title="PDF Viewer"
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>

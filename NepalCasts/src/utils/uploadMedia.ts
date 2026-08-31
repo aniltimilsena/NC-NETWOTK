@@ -18,7 +18,8 @@ export const uploadMedia = async (file: File, folder: string, onProgress?: (prog
     const token = await AuthService.getIdToken().catch(() => null);
 
     const isVideo = file.type.startsWith('video/') || Boolean(file.name.match(/\.(mp4|mov|webm|mkv|avi|m4v|3gp)$/i));
-    const resourceType = isVideo ? 'video' : 'auto';
+    const isPdf = file.type === 'application/pdf' || Boolean(file.name.match(/\.pdf$/i));
+    const resourceType = isVideo ? 'video' : isPdf ? 'raw' : 'auto';
     const isChat = folder === 'chat';
 
     if (!isChat && typeof window !== 'undefined') {
