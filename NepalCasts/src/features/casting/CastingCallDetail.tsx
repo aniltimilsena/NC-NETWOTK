@@ -1324,16 +1324,20 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-[10px] text-gray-500">{app.appliedAtFormatted}</span>
                         <div className="flex items-center gap-1.5">
-                          {['shortlisted', 'accepted', 'rejected'].map((st) => (
+                          {[
+                            { id: 'shortlisted', label: 'Shortlist' },
+                            { id: 'accepted', label: 'Accept' },
+                            { id: 'rejected', label: 'Reject' },
+                          ].map((st) => (
                             <button
-                              key={st}
-                              onClick={() => handleUpdateAppStatus(app.id, st)}
-                              className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase transition-all cursor-pointer ${app.status === st
+                              key={st.id}
+                              onClick={() => handleUpdateAppStatus(app.id, st.id)}
+                              className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase transition-all cursor-pointer ${app.status === st.id
                                   ? 'bg-[#ffb400] text-black border border-[#ffb400]'
                                   : 'bg-white/5 text-gray-400 border border-white/10'
                                 }`}
                             >
-                              {st}
+                              {st.label}
                             </button>
                           ))}
                         </div>
