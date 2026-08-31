@@ -933,8 +933,8 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 lg:gap-5 items-start">
                      {/* Left Column: Poster + Quick Actions + Production Card */}
             <div className="lg:col-span-5 space-y-2">
-              {/* Hero Banner with Badge & Bookmark (9:16 Aspect Ratio) */}
-              <div className="relative w-full aspect-[9/16] max-h-[75vh] mx-auto rounded-2xl overflow-hidden bg-[#111111] shadow-xl">
+              {/* Hero Banner with Badge & Bookmark */}
+              <div className="relative w-full aspect-[4/5] sm:aspect-[4/5] max-h-[460px] mx-auto rounded-2xl overflow-hidden bg-[#111111] shadow-xl">
                 {bannerImage ? (
                   <img
                     src={bannerImage}
@@ -1039,10 +1039,21 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               </div>
 
               {/* Primary Call to Action Button */}
-              <div className="pt-0.5">
+              <div className="pt-0.5 space-y-2">
                 {isCreator ? (
-                  <div className="w-full py-3 px-4 rounded-xl bg-black border border-white/10 text-center text-xs font-bold text-gray-300">
-                    You created this casting call ({apps.length} {apps.length === 1 ? 'applicant' : 'applicants'})
+                  <div className="space-y-2">
+                    <div className="w-full py-3 px-4 rounded-xl bg-black border border-white/10 text-center text-xs font-bold text-gray-300">
+                      You created this casting call ({apps.length} {apps.length === 1 ? 'applicant' : 'applicants'})
+                    </div>
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-gray-400 hover:text-red-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                      title="Delete Casting Call"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{deleting ? 'Deleting...' : 'Delete Casting Call'}</span>
+                    </button>
                   </div>
                 ) : applied ? (
                   <div className="flex items-center gap-2.5 sm:gap-3 w-full">
@@ -1294,238 +1305,225 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 </div>
               </div>
 
+              {/* Applications Received Section for Creator */}
+              {isCreator && (
+                <div className="bg-black border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4 text-left shadow-2xl">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                      <Inbox className="w-4 h-4 text-[#ffb400]" />
+                      <span>Applications Received ({apps.length})</span>
+                    </h3>
+                    <button
+                      onClick={handlePrintRoster}
+                      className="text-[#ffb400] text-xs font-bold flex items-center gap-1 cursor-pointer hover:underline"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Print</span>
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                    {[
+                      { 
+                        id: 'all', 
+                        label: `All (${apps.filter(a => {
+                          const st = (a.status || 'pending').toLowerCase();
+                          return st !== 'shortlisted' && st !== 'accepted';
+                        }).length})` 
+                      },
+                      { 
+                        id: 'shortlisted', 
+                        label: `Shortlisted (${apps.filter(a => (a.status || '').toLowerCase() === 'shortlisted').length})` 
+                      },
+                      { 
+                        id: 'accepted', 
+                        label: `Accepted (${apps.filter(a => (a.status || '').toLowerCase() === 'accepted').length})` 
+                      },
+                      { 
+                        id: 'rejected', 
+                        label: `Rejected (${apps.filter(a => (a.status || '').toLowerCase() === 'rejected').length})` 
+                      },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setPipelineFilter(tab.id)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${pipelineFilter === tab.id
+                            ? 'bg-[#ffb400] text-black shadow-sm shadow-[#ffb400]/20'
+                            : 'bg-[#18181c] text-gray-400 border border-white/5'
+                          }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {loadingApps ? (
+                    <div className="py-8 text-center text-xs text-gray-500">Loading applicants...</div>
+                  ) : apps.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
+                      No applications received yet.
+                    </div>
+                  ) : apps.filter((a) => {
+                      const st = (a.status || 'pending').toLowerCase();
+                      if (pipelineFilter === 'all') {
+                        return st !== 'shortlisted' && st !== 'accepted';
+                      }
+                      return st === pipelineFilter;
+                    }).length === 0 ? (
+                    <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
+                      No applicants in this category.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-white/5 space-y-3">
+                      {apps
+                        .filter((a) => {
+                          const st = (a.status || 'pending').toLowerCase();
+                          if (pipelineFilter === 'all') {
+                            return st !== 'shortlisted' && st !== 'accepted';
+                          }
+                          return st === pipelineFilter;
+                        })
+                        .map((app) => (
+                          <div key={app.id} className="pt-3 space-y-2 text-xs">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2.5">
+                                <Avatar userId={app.userId} src={app.userPhoto} name={app.userName} size="sm" />
+                                <div>
+                                  <span className="font-bold text-white block">{app.userName}</span>
+                                  <span className="text-[11px] text-[#ffb400]">{app.roleName || 'General Role'}</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => onNavigate('profile', app.userId)}
+                                className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 cursor-pointer"
+                              >
+                                Profile
+                              </button>
+                            </div>
+
+                            {/* Applicant Contact Details */}
+                            {(app.userEmail || app.contactEmail || app.userPhone || app.contactPhone || app.phone) && (
+                              <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[10px]">
+                                {(app.contactEmail || app.userEmail) && (
+                                  <a
+                                    href={`mailto:${app.contactEmail || app.userEmail}`}
+                                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
+                                    title="Click to email applicant"
+                                  >
+                                    <Mail className="w-3 h-3 text-[#ffb400]" />
+                                    <span>{app.contactEmail || app.userEmail}</span>
+                                  </a>
+                                )}
+                                {(app.contactPhone || app.userPhone || app.phone) && (
+                                  <a
+                                    href={`tel:${app.contactPhone || app.userPhone || app.phone}`}
+                                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
+                                    title="Click to call applicant"
+                                  >
+                                    <Phone className="w-3 h-3 text-emerald-400" />
+                                    <span>{app.contactPhone || app.userPhone || app.phone}</span>
+                                  </a>
+                                )}
+                              </div>
+                            )}
+
+                            {app.coverNote && (
+                              <p className="text-gray-300 italic bg-white/[0.04] p-2.5 rounded-xl text-[11px] leading-relaxed border border-white/5">
+                                "{app.coverNote}"
+                              </p>
+                            )}
+
+                            {/* Portfolio & Audition Media Attachments */}
+                            {(app.fileUrl || app.attachmentUrl || app.fileName || app.selfTapeUrl || app.portfolioUrl) && (() => {
+                              const directFileUrl = app.fileUrl || app.attachmentUrl || (app.selfTapeUrl?.match(/\.(jpeg|jpg|png|webp|gif|pdf|doc|docx|mp4|mov|mkv)$/i) || app.selfTapeUrl?.includes('cloudinary') || app.selfTapeUrl?.includes('firebasestorage') ? app.selfTapeUrl : null);
+                              const reelUrl = (app.selfTapeUrl || app.portfolioUrl) && app.selfTapeUrl !== directFileUrl && app.portfolioUrl !== directFileUrl ? (app.selfTapeUrl || app.portfolioUrl) : null;
+
+                              return (
+                                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                  {/* PDF Attachment / Document */}
+                                  {directFileUrl ? (
+                                    <div className="inline-flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setPreviewPdfUrl(directFileUrl);
+                                          setPreviewPdfName(app.fileName || `${app.userName || 'Applicant'}_Portfolio.pdf`);
+                                        }}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ffb400]/15 border border-[#ffb400]/30 text-[10px] text-[#ffb400] font-bold active:scale-95 transition-all cursor-pointer shadow-sm"
+                                        title="Click to view PDF portfolio"
+                                      >
+                                        <FileText className="w-3.5 h-3.5 text-[#ffb400]" />
+                                        <span className="truncate max-w-[130px]">{app.fileName || 'Portfolio.pdf'}</span>
+                                        <Eye className="w-3 h-3 text-[#ffb400]" />
+                                      </button>
+                                      <a
+                                        href={directFileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-1 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-gray-400 hover:text-white transition-colors"
+                                        title="Open in new tab"
+                                      >
+                                        <ExternalLink className="w-3 h-3" />
+                                      </a>
+                                    </div>
+                                  ) : app.fileName ? (
+                                    <span
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 font-medium"
+                                      title="File name submitted by applicant"
+                                    >
+                                      <FileText className="w-3 h-3 text-[#ffb400]" />
+                                      <span className="truncate max-w-[150px]">{app.fileName}</span>
+                                    </span>
+                                  ) : null}
+
+                                  {/* Video Reel / Self Tape Link */}
+                                  {reelUrl && (
+                                    <a
+                                      href={reelUrl.startsWith('http') ? reelUrl : `https://${reelUrl}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-200 font-semibold active:scale-95 transition-all cursor-pointer"
+                                    >
+                                      <Video className="w-3 h-3 text-[#ffb400]" />
+                                      <span className="truncate max-w-[150px]">Reel / Link</span>
+                                      <ExternalLink className="w-3 h-3 text-gray-400" />
+                                    </a>
+                                  )}
+                                </div>
+                              );
+                            })()}
+
+                            <div className="flex items-center justify-between pt-1">
+                              <span className="text-[10px] text-gray-500">{app.appliedAtFormatted}</span>
+                              <div className="flex items-center gap-1.5">
+                                {[
+                                  { id: 'shortlisted', label: 'Shortlist' },
+                                  { id: 'accepted', label: 'Accept' },
+                                  { id: 'rejected', label: 'Reject' },
+                                ].map((st) => (
+                                  <button
+                                    key={st.id}
+                                    onClick={() => handleUpdateAppStatus(app.id, st.id)}
+                                    className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase transition-all cursor-pointer ${app.status === st.id
+                                        ? 'bg-[#ffb400] text-black border border-[#ffb400]'
+                                        : 'bg-white/5 text-gray-400 border border-white/10'
+                                      }`}
+                                  >
+                                    {st.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
         </div>
-
-        {isCreator && (
-          <div className="bg-black border border-white/5 rounded-3xl p-4 sm:p-6 space-y-4 text-left shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                <Inbox className="w-4 h-4 text-white" />
-                <span>Applications Received ({apps.length})</span>
-              </h3>
-              <button
-                onClick={handlePrintRoster}
-                className="text-[#ffb400] text-xs font-bold flex items-center gap-1 cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-              {[
-                { 
-                  id: 'all', 
-                  label: `All (${apps.filter(a => {
-                    const st = (a.status || 'pending').toLowerCase();
-                    return st !== 'shortlisted' && st !== 'accepted';
-                  }).length})` 
-                },
-                { 
-                  id: 'shortlisted', 
-                  label: `Shortlisted (${apps.filter(a => (a.status || '').toLowerCase() === 'shortlisted').length})` 
-                },
-                { 
-                  id: 'accepted', 
-                  label: `Accepted (${apps.filter(a => (a.status || '').toLowerCase() === 'accepted').length})` 
-                },
-                { 
-                  id: 'rejected', 
-                  label: `Rejected (${apps.filter(a => (a.status || '').toLowerCase() === 'rejected').length})` 
-                },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setPipelineFilter(tab.id)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${pipelineFilter === tab.id
-                      ? 'bg-[#ffb400] text-black shadow-sm shadow-[#ffb400]/20'
-                      : 'bg-[#18181c] text-gray-400 border border-white/5'
-                    }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {loadingApps ? (
-              <div className="py-8 text-center text-xs text-gray-500">Loading applicants...</div>
-            ) : apps.length === 0 ? (
-              <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
-                No applications received yet.
-              </div>
-            ) : apps.filter((a) => {
-                const st = (a.status || 'pending').toLowerCase();
-                if (pipelineFilter === 'all') {
-                  return st !== 'shortlisted' && st !== 'accepted';
-                }
-                return st === pipelineFilter;
-              }).length === 0 ? (
-              <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
-                No applicants in this category.
-              </div>
-            ) : (
-              <div className="divide-y divide-white/5 space-y-3">
-                {apps
-                  .filter((a) => {
-                    const st = (a.status || 'pending').toLowerCase();
-                    if (pipelineFilter === 'all') {
-                      return st !== 'shortlisted' && st !== 'accepted';
-                    }
-                    return st === pipelineFilter;
-                  })
-                  .map((app) => (
-                    <div key={app.id} className="pt-3 space-y-2 text-xs">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <Avatar userId={app.userId} src={app.userPhoto} name={app.userName} size="sm" />
-                          <div>
-                            <span className="font-bold text-white block">{app.userName}</span>
-                            <span className="text-[11px] text-[#ffb400]">{app.roleName || 'General Role'}</span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => onNavigate('profile', app.userId)}
-                          className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 cursor-pointer"
-                        >
-                          Profile
-                        </button>
-                      </div>
-
-                      {/* Applicant Contact Details */}
-                      {(app.userEmail || app.contactEmail || app.userPhone || app.contactPhone || app.phone) && (
-                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[10px]">
-                          {(app.contactEmail || app.userEmail) && (
-                            <a
-                              href={`mailto:${app.contactEmail || app.userEmail}`}
-                              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
-                              title="Click to email applicant"
-                            >
-                              <Mail className="w-3 h-3 text-[#ffb400]" />
-                              <span>{app.contactEmail || app.userEmail}</span>
-                            </a>
-                          )}
-                          {(app.contactPhone || app.userPhone || app.phone) && (
-                            <a
-                              href={`tel:${app.contactPhone || app.userPhone || app.phone}`}
-                              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
-                              title="Click to call applicant"
-                            >
-                              <Phone className="w-3 h-3 text-emerald-400" />
-                              <span>{app.contactPhone || app.userPhone || app.phone}</span>
-                            </a>
-                          )}
-                        </div>
-                      )}
-
-                      {app.coverNote && (
-                        <p className="text-gray-300 italic bg-white/[0.04] p-2.5 rounded-xl text-[11px] leading-relaxed border border-white/5">
-                          "{app.coverNote}"
-                        </p>
-                      )}
-
-                      {/* Portfolio & Audition Media Attachments */}
-                      {(app.fileUrl || app.attachmentUrl || app.fileName || app.selfTapeUrl || app.portfolioUrl) && (() => {
-                        const directFileUrl = app.fileUrl || app.attachmentUrl || (app.selfTapeUrl?.match(/\.(jpeg|jpg|png|webp|gif|pdf|doc|docx|mp4|mov|mkv)$/i) || app.selfTapeUrl?.includes('cloudinary') || app.selfTapeUrl?.includes('firebasestorage') ? app.selfTapeUrl : null);
-                        const reelUrl = (app.selfTapeUrl || app.portfolioUrl) && app.selfTapeUrl !== directFileUrl && app.portfolioUrl !== directFileUrl ? (app.selfTapeUrl || app.portfolioUrl) : null;
-
-                        return (
-                          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                            {/* PDF Attachment / Document */}
-                            {directFileUrl ? (
-                              <div className="inline-flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setPreviewPdfUrl(directFileUrl);
-                                    setPreviewPdfName(app.fileName || `${app.userName || 'Applicant'}_Portfolio.pdf`);
-                                  }}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ffb400]/15 border border-[#ffb400]/30 text-[10px] text-[#ffb400] font-bold active:scale-95 transition-all cursor-pointer shadow-sm"
-                                  title="Click to view PDF portfolio"
-                                >
-                                  <FileText className="w-3.5 h-3.5 text-[#ffb400]" />
-                                  <span className="truncate max-w-[130px]">{app.fileName || 'Portfolio.pdf'}</span>
-                                  <Eye className="w-3 h-3 text-[#ffb400]" />
-                                </button>
-                                <a
-                                  href={directFileUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="p-1 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-gray-400 hover:text-white transition-colors"
-                                  title="Open in new tab"
-                                >
-                                  <ExternalLink className="w-3 h-3" />
-                                </a>
-                              </div>
-                            ) : app.fileName ? (
-                              <span
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 font-medium"
-                                title="File name submitted by applicant"
-                              >
-                                <FileText className="w-3 h-3 text-[#ffb400]" />
-                                <span className="truncate max-w-[150px]">{app.fileName}</span>
-                              </span>
-                            ) : null}
-
-                            {/* Video Reel / Self Tape Link */}
-                            {reelUrl && (
-                              <a
-                                href={reelUrl.startsWith('http') ? reelUrl : `https://${reelUrl}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-200 font-semibold active:scale-95 transition-all cursor-pointer"
-                              >
-                                <Video className="w-3 h-3 text-[#ffb400]" />
-                                <span className="truncate max-w-[150px]">Reel / Link</span>
-                                <ExternalLink className="w-3 h-3 text-gray-400" />
-                              </a>
-                            )}
-                          </div>
-                        );
-                      })()}
-
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-[10px] text-gray-500">{app.appliedAtFormatted}</span>
-                        <div className="flex items-center gap-1.5">
-                          {[
-                            { id: 'shortlisted', label: 'Shortlist' },
-                            { id: 'accepted', label: 'Accept' },
-                            { id: 'rejected', label: 'Reject' },
-                          ].map((st) => (
-                            <button
-                              key={st.id}
-                              onClick={() => handleUpdateAppStatus(app.id, st.id)}
-                              className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase transition-all cursor-pointer ${app.status === st.id
-                                  ? 'bg-[#ffb400] text-black border border-[#ffb400]'
-                                  : 'bg-white/5 text-gray-400 border border-white/10'
-                                }`}
-                            >
-                              {st.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {isCreator && (
-          <div className="flex justify-end pt-3 pb-6">
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="px-4 py-1.5 rounded-full bg-[#ffb400] text-black text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
-              title="Delete Casting Call"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-black" />
-              <span>{deleting ? 'Deleting...' : 'Delete'}</span>
-            </button>
-          </div>
-        )}
 
         {/* In-App PDF Portfolio Viewer Modal */}
         {previewPdfUrl && (
