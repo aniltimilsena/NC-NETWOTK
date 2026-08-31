@@ -1316,11 +1316,25 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
               {[
-                { id: 'all', label: `All (${apps.length})` },
-                { id: 'pending', label: 'Pending' },
-                { id: 'shortlisted', label: 'Shortlisted' },
-                { id: 'accepted', label: 'Cast' },
-                { id: 'rejected', label: 'Rejected' },
+                { 
+                  id: 'all', 
+                  label: `All (${apps.filter(a => {
+                    const st = (a.status || 'pending').toLowerCase();
+                    return st !== 'shortlisted' && st !== 'accepted';
+                  }).length})` 
+                },
+                { 
+                  id: 'shortlisted', 
+                  label: `Shortlisted (${apps.filter(a => (a.status || '').toLowerCase() === 'shortlisted').length})` 
+                },
+                { 
+                  id: 'accepted', 
+                  label: `Accepted (${apps.filter(a => (a.status || '').toLowerCase() === 'accepted').length})` 
+                },
+                { 
+                  id: 'rejected', 
+                  label: `Rejected (${apps.filter(a => (a.status || '').toLowerCase() === 'rejected').length})` 
+                },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1341,12 +1355,25 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
                 No applications received yet.
               </div>
+            ) : apps.filter((a) => {
+                const st = (a.status || 'pending').toLowerCase();
+                if (pipelineFilter === 'all') {
+                  return st !== 'shortlisted' && st !== 'accepted';
+                }
+                return st === pipelineFilter;
+              }).length === 0 ? (
+              <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
+                No applicants in this category.
+              </div>
             ) : (
               <div className="divide-y divide-white/5 space-y-3">
                 {apps
                   .filter((a) => {
-                    if (pipelineFilter === 'all') return true;
-                    return (a.status || 'pending').toLowerCase() === pipelineFilter;
+                    const st = (a.status || 'pending').toLowerCase();
+                    if (pipelineFilter === 'all') {
+                      return st !== 'shortlisted' && st !== 'accepted';
+                    }
+                    return st === pipelineFilter;
                   })
                   .map((app) => (
                     <div key={app.id} className="pt-3 space-y-2 text-xs">
