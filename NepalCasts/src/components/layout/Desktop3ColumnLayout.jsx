@@ -782,7 +782,7 @@ export default function Desktop3ColumnLayout({
                             </h5>
                             <div className="flex items-center justify-between text-xs text-gray-300 font-bold">
                               <span className="bg-white/10 px-2 py-0.5 rounded text-[10px] tracking-wide uppercase">{call.type || 'General'}</span>
-                              <span className="text-[#00BFFF] font-black capitalize tracking-wide">{call.location || 'Nepal'}</span>
+                              <span className="text-[#ffb400] font-black capitalize tracking-wide">{call.location || 'Nepal'}</span>
                             </div>
                           </div>
                         </div>
