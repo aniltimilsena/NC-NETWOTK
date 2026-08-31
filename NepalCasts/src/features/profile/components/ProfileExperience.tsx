@@ -206,7 +206,10 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
             <p className="text-[10px] text-gray-500 mt-0.5">Share your work experience...</p>
           </div>
         ) : (
-          <p className="text-xs text-gray-500 italic pt-1">No experience listed yet.</p>
+          <div className="rounded-xl border border-white/5 bg-black/40 py-8 px-4 flex flex-col items-center justify-center text-center space-y-1">
+            <p className="text-xs sm:text-sm text-neutral-400 font-medium">No experience listed yet</p>
+            <p className="text-[11px] sm:text-xs text-neutral-500">Past productions, roles, and project credits will appear here.</p>
+          </div>
         )
       ) : null}
     </div>

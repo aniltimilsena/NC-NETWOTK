@@ -664,7 +664,7 @@ export default function ProfilePage({
   );
 
   return (
-    <div className="min-h-screen bg-[#141414] pb-28 sm:pb-36 text-white font-sans">
+    <div className="min-h-screen bg-[#141414] pb-28 sm:pb-32 lg:pb-12 text-white font-sans">
       <SEO
         title={`${profile.name || 'Talent'} | NepalCasts Profile`}
         description={profile.bio || `View ${profile.name || 'this talent'}'s portfolio, auditions, and experience on NepalCasts.`}
@@ -738,7 +738,7 @@ export default function ProfilePage({
         {/* Main Content Grid: 1 column on mobile, 2 columns on PC / Desktop */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* Left Column (Desktop Hero & Specs Sidebar) */}
-          <div className="lg:col-span-5 xl:col-span-4 space-y-6 lg:sticky lg:top-20">
+          <div className="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-20">
             {/* 1. Header (Centered Avatar overlapping cover, Bio card, 3 Meta Pills, Followers Count Box) */}
             <ProfileHeader
               profile={profile}
@@ -759,6 +759,11 @@ export default function ProfilePage({
               }}
             />
 
+            {/* Desktop Action Buttons (Directly embedded in Left Sidebar on Laptop/Desktop) */}
+            <div className="hidden lg:block pt-1">
+              {renderActionButtons()}
+            </div>
+
             {/* Desktop Attributes & Contacts */}
             <div className="hidden lg:block">
               {renderAttributesCard()}
@@ -766,9 +771,9 @@ export default function ProfilePage({
           </div>
 
           {/* Right Column (Portfolio, Media, Experience, Skills) */}
-          <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-            {/* 2. Media Section */}
-            <section className="text-left pt-1">
+          <div className="lg:col-span-8 xl:col-span-8 space-y-6">
+            {/* 2. Media Section Card */}
+            <div className="bg-[#161616] border border-white/5 rounded-2xl p-5 sm:p-6 shadow-md text-left">
               <ProfileMedia
                 profile={profile}
                 isOwnProfile={effectiveIsOwn}
@@ -778,25 +783,25 @@ export default function ProfilePage({
                 onDeleteIntroVideo={handleDeleteIntroVideo}
                 onNavigate={() => setShowMediaModal(true)}
               />
-            </section>
+            </div>
 
             {/* Attributes Box (mobile only) */}
             <div className="lg:hidden">
               {renderAttributesCard()}
             </div>
 
-            {/* 4. Experience Section */}
-            <section className="text-left pt-1">
+            {/* 4. Experience Section Card */}
+            <div className="bg-[#161616] border border-white/5 rounded-2xl p-5 sm:p-6 shadow-md text-left">
               <ProfileExperience
                 profile={profile}
                 isOwnProfile={effectiveIsOwn}
                 showAlert={showAlert}
                 onNavigate={() => setShowExperienceModal(true)}
               />
-            </section>
+            </div>
 
-            {/* 5. Skills Section */}
-            <section className="text-left space-y-2 pt-1">
+            {/* 5. Skills Section Card */}
+            <div className="bg-[#161616] border border-white/5 rounded-2xl p-5 sm:p-6 shadow-md text-left space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-apple font-bold text-lg sm:text-xl text-white tracking-tight">
                   Skills
@@ -840,9 +845,12 @@ export default function ProfilePage({
                   <p className="text-[10px] text-gray-500 mt-0.5">Add skills you are good at...</p>
                 </div>
               ) : (
-                <p className="text-xs text-gray-500 italic pt-1">No skills listed yet.</p>
+                <div className="rounded-xl border border-white/5 bg-black/40 py-6 px-4 flex flex-col items-center justify-center text-center space-y-1">
+                  <p className="text-xs sm:text-sm text-neutral-400 font-medium">No skills listed yet</p>
+                  <p className="text-[11px] sm:text-xs text-neutral-500">Skills and specializations will appear here.</p>
+                </div>
               )}
-            </section>
+            </div>
           </div>
         </div>
       </div>
@@ -1246,8 +1254,8 @@ export default function ProfilePage({
         </div>
       )}
 
-      {/* Floating Action Bar (Always visible while scrolling) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 p-3 sm:p-4 bg-[#141414]/90 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_35px_rgba(0,0,0,0.9)]">
+      {/* Floating Action Bar (Mobile Only: hidden on laptop/desktop since embedded in sidebar) */}
+      <div className="block lg:hidden fixed bottom-0 left-0 right-0 z-40 p-3 sm:p-4 bg-[#141414]/90 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_35px_rgba(0,0,0,0.9)]">
         <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl mx-auto">
           {renderActionButtons()}
         </div>
