@@ -22,7 +22,9 @@ import {
   ListChecks,
   Paperclip,
   ExternalLink,
-  FileText
+  FileText,
+  Mail,
+  Phone
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import SEO from '../../components/SEO';
@@ -116,6 +118,8 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   const [isApplyView, setIsApplyView] = useState(activeTab === 'apply');
   const [selectedRole, setSelectedRole] = useState('');
+  const [contactEmail, setContactEmail] = useState(user?.email || '');
+  const [contactPhone, setContactPhone] = useState(user?.phone || user?.phoneNumber || '');
   const [selfTapeUrl, setSelfTapeUrl] = useState('');
   const [coverNote, setCoverNote] = useState('');
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
@@ -352,7 +356,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         castingId: call.id,
         castingTitle: call.title,
         userId: user.uid,
-        userEmail: user.email,
+        userEmail: contactEmail.trim() || user.email,
+        contactEmail: contactEmail.trim() || user.email,
+        userPhone: contactPhone.trim(),
+        contactPhone: contactPhone.trim(),
+        phone: contactPhone.trim(),
         userName: user.displayName || 'Anonymous Actor',
         userPhoto: user.photoURL || '',
         roleName: roleApplied,
@@ -529,7 +537,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         (a: any, i: number) => `
         <tr>
           <td style="text-align: center; font-weight: bold; color: #64748b;">${i + 1}</td>
-          <td><strong>${a.userName || 'Unnamed'}</strong><br/><span style="color:#64748b; font-size: 10px;">${a.userEmail || ''}</span></td>
+          <td><strong>${a.userName || 'Unnamed'}</strong><br/><span style="color:#64748b; font-size: 10px;">${a.contactEmail || a.userEmail || ''}${a.contactPhone || a.userPhone || a.phone ? ` • ${a.contactPhone || a.userPhone || a.phone}` : ''}</span></td>
           <td><span style="font-weight: 700; color: #0284c7;">${a.roleName || 'General Role'}</span></td>
           <td style="text-align: center;"><span style="display: inline-block; padding: 2px 6px; border-radius: 4px; font-weight: 800; font-size: 9px; text-transform: uppercase; background: #e2e8f0;">${a.status || 'pending'}</span></td>
           <td>${a.coverNote ? `<div><em>"${a.coverNote}"</em></div>` : ''}${a.selfTapeUrl ? `<div><a href="${a.selfTapeUrl}">Video Reel Link</a></div>` : ''}</td>
@@ -708,6 +716,39 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   </div>
                 </div>
               ) : null}
+
+              {/* Contact Information */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-300 flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-[#ffb400]" />
+                    <span>Contact Email *</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="your.email@example.com"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#ffb400]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-300 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-[#ffb400]" />
+                    <span>Contact Phone / WhatsApp *</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="+977 98XXXXXXXX"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#ffb400]"
+                  />
+                </div>
+              </div>
 
               {/* Cover Letter */}
               <div className="space-y-1.5">
@@ -1287,6 +1328,32 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                           Profile
                         </button>
                       </div>
+
+                      {/* Applicant Contact Details */}
+                      {(app.userEmail || app.contactEmail || app.userPhone || app.contactPhone || app.phone) && (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[10px]">
+                          {(app.contactEmail || app.userEmail) && (
+                            <a
+                              href={`mailto:${app.contactEmail || app.userEmail}`}
+                              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
+                              title="Click to email applicant"
+                            >
+                              <Mail className="w-3 h-3 text-[#ffb400]" />
+                              <span>{app.contactEmail || app.userEmail}</span>
+                            </a>
+                          )}
+                          {(app.contactPhone || app.userPhone || app.phone) && (
+                            <a
+                              href={`tel:${app.contactPhone || app.userPhone || app.phone}`}
+                              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
+                              title="Click to call applicant"
+                            >
+                              <Phone className="w-3 h-3 text-emerald-400" />
+                              <span>{app.contactPhone || app.userPhone || app.phone}</span>
+                            </a>
+                          )}
+                        </div>
+                      )}
 
                       {app.coverNote && (
                         <p className="text-gray-300 italic bg-white/[0.04] p-2.5 rounded-xl text-[11px] leading-relaxed border border-white/5">
