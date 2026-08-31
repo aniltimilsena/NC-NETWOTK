@@ -78,7 +78,8 @@
 
   "sidebar": {
     "featuredTalent": "Featured Talent",
-    "activeCastingCalls": "Active Casting Calls",
+    "activeCastingCalls": "Active Calls",
+    "activeCalls": "Active Calls",
     "viewAll": "View All",
     "openToWork": "Open to Work",
     "promoteCasting": "Promote Your Casting",

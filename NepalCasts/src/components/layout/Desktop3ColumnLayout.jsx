@@ -14,6 +14,17 @@ import { AuthService } from '../../services/AuthService';
 import { FollowItemSkeleton, SidebarWidgetSkeleton } from '../ui/Skeleton';
 import Footer from './Footer';
 
+const getCallThumbnail = (call) => {
+  if (!call) return null;
+  const raw = call.thumbnail || call.thumbnailUrl || call.posterUrl || call.poster || call.image || call.coverImage || call.mediaUrl || call.media?.[0]?.url || call.photoURL || null;
+  if (!raw || typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (trimmed === '' || trimmed === 'has-file' || trimmed.includes('default-') || trimmed.includes('placeholder') || trimmed.includes('movie-banner')) {
+    return null;
+  }
+  return trimmed;
+};
+
 // Inline follow button that mirrors ProfileHeader's style and uses Firestore
 function FollowBtn({ targetUid }) {
   const [following, setFollowing] = useState(false);
@@ -739,7 +750,7 @@ export default function Desktop3ColumnLayout({
                 <div className="space-y-3 px-2">
                   <div className="flex items-center justify-between px-1 pt-1">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">
-                      {t('sidebar.activeCastingCalls')}
+                      {t('sidebar.activeCalls', 'Active Calls')}
                     </h4>
                     <button
                       type="button"
@@ -754,39 +765,54 @@ export default function Desktop3ColumnLayout({
                     {isCallsLoading ? (
                       <SidebarWidgetSkeleton count={3} type="casting" />
                     ) : (
-                      safeTrending.slice(0, 3).map((call) => (
-                        <div
-                          key={call.id}
-                          onClick={() => onNavigate?.('casting-detail', call.id)}
-                          className="relative h-32 rounded-2xl overflow-hidden cursor-pointer shadow-xl border border-white/5 flex flex-col justify-end p-4"
-                        >
-                          {/* Background Image */}
-                          <div className="absolute inset-0 select-none pointer-events-none">
-                            <img
-                              src={(call.thumbnail && call.thumbnail !== 'has-file') ? call.thumbnail : (call.thumbnailUrl || call.mediaUrl || '/movie-banner.png')}
-                              alt={call.title}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.onerror = null;
-                                e.currentTarget.src = '/movie-banner.png';
-                              }}
-                            />
-                            {/* Dark Glassy Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/40" />
-                          </div>
+                      safeTrending.slice(0, 3).map((call) => {
+                        const thumb = getCallThumbnail(call);
+                        return (
+                          <div
+                            key={call.id}
+                            onClick={() => onNavigate?.('casting-detail', call.id)}
+                            className="relative h-32 rounded-2xl overflow-hidden cursor-pointer shadow-xl border border-white/5 flex flex-col justify-end p-4 bg-[#0a0a0c]"
+                          >
+                            {/* Background Image / Default Clapperboard Thumbnail */}
+                            <div className="absolute inset-0 select-none pointer-events-none flex items-center justify-center overflow-hidden">
+                              {thumb ? (
+                                <img
+                                  src={thumb}
+                                  alt={call.title}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
+                                    if (fallback) fallback.style.display = 'flex';
+                                  }}
+                                />
+                              ) : null}
+                              {/* Default Clapperboard Thumbnail Fallback (No mock photo) */}
+                              <div
+                                className="default-clapper-thumb absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c22] via-[#121316] to-[#08080a] p-3 text-center"
+                                style={{ display: thumb ? 'none' : 'flex' }}
+                              >
+                                <svg className="w-10 h-10 text-white/30 fill-current mb-3 drop-shadow-sm" viewBox="0 0 24 24">
+                                  <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
+                                </svg>
+                              </div>
+                              {/* Dark Glassy Overlay */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-transparent" />
+                            </div>
 
-                          {/* Text info */}
-                          <div className="relative z-10 space-y-1">
-                            <h5 className="text-white text-base font-black truncate uppercase tracking-wider">
-                              {call.title}
-                            </h5>
-                            <div className="flex items-center justify-between text-xs text-gray-300 font-bold">
-                              <span className="bg-white/10 px-2 py-0.5 rounded text-[10px] tracking-wide uppercase">{call.type || 'General'}</span>
-                              <span className="text-[#ffb400] font-black capitalize tracking-wide">{call.location || 'Nepal'}</span>
+                            {/* Text info */}
+                            <div className="relative z-10 space-y-1">
+                              <h5 className="text-white text-base font-black truncate uppercase tracking-wider">
+                                {call.title}
+                              </h5>
+                              <div className="flex items-center justify-between text-xs text-gray-300 font-bold">
+                                <span className="bg-white/10 px-2 py-0.5 rounded text-[10px] tracking-wide uppercase">{call.type || 'General'}</span>
+                                <span className="text-[#ffb400] font-black capitalize tracking-wide">{call.location || 'Nepal'}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>
