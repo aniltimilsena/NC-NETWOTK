@@ -10,6 +10,16 @@ import { AvatarScrollSkeleton } from '../components/ui/Skeleton';
 import PullToRefresh from '../components/ui/PullToRefresh';
 import { ChevronRight } from 'lucide-react';
 
+/* eslint-disable no-secrets/no-secrets */
+const HERO_BACKGROUND_PHOTOS = [
+  '/hero-bg.png',
+  '/hero-stage.jpg',
+  'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=1920&q=80',
+];
+/* eslint-enable no-secrets/no-secrets */
+
 function getInitials(name) {
   if (!name) return 'NC';
   const parts = name.trim().split(/\s+/).filter(Boolean);
