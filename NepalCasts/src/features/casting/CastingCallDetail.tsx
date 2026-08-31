@@ -1284,42 +1284,51 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                       )}
 
                       {/* Portfolio & Audition Media Attachments */}
-                      {(app.fileUrl || app.attachmentUrl || app.fileName || app.selfTapeUrl || app.portfolioUrl) && (
-                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                          {/* File Attachment / Document */}
-                          {(app.fileUrl || app.attachmentUrl) ? (
-                            <a
-                              href={app.fileUrl || app.attachmentUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-white font-medium active:scale-95 transition-all"
-                            >
-                              <Paperclip className="w-3 h-3 text-[#ffb400]" />
-                              <span className="truncate max-w-[150px]">{app.fileName || 'Portfolio Attachment'}</span>
-                              <ExternalLink className="w-3 h-3 text-gray-400" />
-                            </a>
-                          ) : app.fileName ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 font-medium">
-                              <FileText className="w-3 h-3 text-[#ffb400]" />
-                              <span className="truncate max-w-[150px]">{app.fileName}</span>
-                            </span>
-                          ) : null}
+                      {(app.fileUrl || app.attachmentUrl || app.fileName || app.selfTapeUrl || app.portfolioUrl) && (() => {
+                        const directFileUrl = app.fileUrl || app.attachmentUrl || (app.selfTapeUrl?.match(/\.(jpeg|jpg|png|webp|gif|pdf|doc|docx|mp4|mov|mkv)$/i) || app.selfTapeUrl?.includes('cloudinary') || app.selfTapeUrl?.includes('firebasestorage') ? app.selfTapeUrl : null);
+                        const reelUrl = (app.selfTapeUrl || app.portfolioUrl) && app.selfTapeUrl !== directFileUrl && app.portfolioUrl !== directFileUrl ? (app.selfTapeUrl || app.portfolioUrl) : null;
 
-                          {/* Video Reel / Self Tape Link */}
-                          {(app.selfTapeUrl || app.portfolioUrl) && (app.selfTapeUrl !== app.fileUrl && app.portfolioUrl !== app.fileUrl) && (
-                            <a
-                              href={app.selfTapeUrl?.startsWith('http') ? app.selfTapeUrl : `https://${app.selfTapeUrl || app.portfolioUrl}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ffb400]/10 border border-[#ffb400]/25 text-[10px] text-[#ffb400] font-semibold active:scale-95 transition-all"
-                            >
-                              <Video className="w-3 h-3 text-[#ffb400]" />
-                              <span className="truncate max-w-[150px]">Reel / Portfolio Link</span>
-                              <ExternalLink className="w-3 h-3 text-[#ffb400]" />
-                            </a>
-                          )}
-                        </div>
-                      )}
+                        return (
+                          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                            {/* File Attachment / Document */}
+                            {directFileUrl ? (
+                              <a
+                                href={directFileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ffb400]/10 border border-[#ffb400]/25 text-[10px] text-white font-semibold active:scale-95 transition-all cursor-pointer shadow-sm"
+                                title="Click to open attachment"
+                              >
+                                <Paperclip className="w-3 h-3 text-[#ffb400]" />
+                                <span className="truncate max-w-[150px]">{app.fileName || 'Attachment'}</span>
+                                <ExternalLink className="w-3 h-3 text-[#ffb400]" />
+                              </a>
+                            ) : app.fileName ? (
+                              <span
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 font-medium"
+                                title="File name submitted by applicant"
+                              >
+                                <FileText className="w-3 h-3 text-[#ffb400]" />
+                                <span className="truncate max-w-[150px]">{app.fileName}</span>
+                              </span>
+                            ) : null}
+
+                            {/* Video Reel / Self Tape Link */}
+                            {reelUrl && (
+                              <a
+                                href={reelUrl.startsWith('http') ? reelUrl : `https://${reelUrl}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-200 font-semibold active:scale-95 transition-all cursor-pointer"
+                              >
+                                <Video className="w-3 h-3 text-[#ffb400]" />
+                                <span className="truncate max-w-[150px]">Reel / Link</span>
+                                <ExternalLink className="w-3 h-3 text-gray-400" />
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-[10px] text-gray-500">{app.appliedAtFormatted}</span>
