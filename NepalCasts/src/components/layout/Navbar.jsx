@@ -181,18 +181,35 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  <div className="absolute top-full left-0 mt-1 w-44 rounded-2xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
-                    <Link to="/discover" className="w-full text-left block px-4 py-2 text-xs font-normal text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">Category Grid</Link>
-                    <Link to="/talents" className="w-full text-left block px-4 py-2 text-xs font-normal text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">{t('nav_talent_directory')}</Link>
-                    <Link to="/trending" className="w-full text-left block px-4 py-2 text-xs font-normal text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">{t('nav_trending_now')}</Link>
-                    <Link to="/settings" className="w-full text-left block px-4 py-2 text-xs font-normal text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">{t('nav_settings')}</Link>
-                    {isAdmin && (<>
-                      <div className="mx-2 my-1 border-t border-white/5"></div>
-                      <Link to="/admin" className="w-full text-left block px-4 py-2 text-[9px] uppercase tracking-widest font-normal text-admin-primary hover:text-white hover:bg-admin-primary/20 transition-all flex items-center justify-between group/admin">
-                        <span>{t('nav_admin')}</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-admin-primary shadow-[0_0_8px_#38bdf8] group-hover/admin:scale-125 transition-transform"></span>
-                      </Link>
-                    </>)}
+                  <div className="absolute top-full left-0 mt-2 w-60 rounded-2xl bg-[#0f1015]/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] p-2 space-y-1">
+                    <Link to="/discover" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                      <LayoutGrid className="w-4 h-4 text-[#ffb400] shrink-0" />
+                      <span>Category Grid</span>
+                    </Link>
+                    <Link to="/talents" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                      <Users className="w-4 h-4 text-[#ffb400] shrink-0" />
+                      <span>{t('nav_talent_directory')}</span>
+                    </Link>
+                    <Link to="/trending" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                      <Flame className="w-4 h-4 text-[#ffb400] shrink-0" />
+                      <span>{t('nav_trending_now')}</span>
+                    </Link>
+                    <Link to="/settings" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                      <Settings className="w-4 h-4 text-gray-400 shrink-0" />
+                      <span>{t('nav_settings')}</span>
+                    </Link>
+                    {isAdmin && (
+                      <>
+                        <div className="mx-2 my-1 border-t border-white/10" />
+                        <Link to="/admin" className="w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold text-admin-primary hover:text-white hover:bg-admin-primary/20 transition-all group/admin">
+                          <span className="flex items-center gap-3">
+                            <ShieldCheck className="w-4 h-4 text-admin-primary shrink-0" />
+                            <span>{t('nav_admin')}</span>
+                          </span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-admin-primary shadow-[0_0_8px_#38bdf8] group-hover/admin:scale-125 transition-transform" />
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -203,9 +220,15 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  <div className="absolute top-full left-0 mt-1 w-44 rounded-2xl bg-[#0A0A0A]/95 backdrop-blur-md border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] py-2">
-                    <Link to="/casting" className="w-full text-left block px-4 py-2 text-xs font-normal text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">{t('nav_casting_calls')}</Link>
-                    <Link to="/casting/create" className="w-full text-left block px-4 py-2 text-xs font-normal text-[#AAA] hover:text-white hover:bg-white/5 transition-colors">{t('nav_post_project')}</Link>
+                  <div className="absolute top-full left-0 mt-2 w-60 rounded-2xl bg-[#0f1015]/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] p-2 space-y-1">
+                    <Link to="/casting" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                      <Clapperboard className="w-4 h-4 text-[#ffb400] shrink-0" />
+                      <span>{t('nav_casting_calls')}</span>
+                    </Link>
+                    <Link to="/casting/create" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                      <PlusCircle className="w-4 h-4 text-[#ffb400] shrink-0" />
+                      <span>{t('nav_post_project')}</span>
+                    </Link>
                   </div>
                 </div>
               </div>
