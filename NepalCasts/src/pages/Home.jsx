@@ -720,15 +720,15 @@ export default function Home({ onNavigate, user }) {
                     <div
                       key={cat.id}
                       onClick={() => onNavigate('talents', cat.filter)}
-                      className="rounded-2xl p-4 sm:p-5 aspect-square shrink-0 w-36 sm:w-44 md:w-48 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-[#0a0a0a] shadow-lg border border-white/5 gap-2 sm:gap-3 hover:border-white/20 active:scale-[0.98]"
+                      className="rounded-2xl p-4 sm:p-6 aspect-square shrink-0 w-44 sm:w-48 md:w-52 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-[#0a0a0a] shadow-lg border border-white/5 gap-2.5 sm:gap-3.5 hover:border-white/20 active:scale-[0.98]"
                     >
                       <CategoryCardIcon
                         type={cat.iconType}
                         color="#ffffff"
-                        className="w-12 h-12 sm:w-16 sm:h-16 lg:w-18 lg:h-18 fill-current text-white shrink-0"
+                        className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 fill-current text-white shrink-0"
                       />
                       <div className="w-full flex flex-col items-center justify-center shrink-0">
-                        <span className="font-apple text-white font-bold text-sm sm:text-base md:text-lg leading-tight whitespace-pre-line text-center tracking-normal">
+                        <span className="font-apple text-white font-bold text-base sm:text-lg md:text-xl leading-tight whitespace-pre-line text-center tracking-normal">
                           {cat.label}
                         </span>
                         <span className="font-apple text-neutral-400 font-medium text-xs sm:text-sm mt-1 tracking-normal">
