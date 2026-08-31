@@ -469,6 +469,16 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       const appItem = apps.find((a: any) => a.id === appId);
       if (appItem && appItem.userId && appItem.userId !== user?.uid) {
         const notifId = `${user?.uid}_${appId}_${newStatus}_status`;
+        const sender = user?.displayName || 'Casting Director';
+        let statusMsg = `${sender} updated your application for "${call.title}"`;
+        if (newStatus === 'shortlisted') {
+          statusMsg = `${sender} shortlisted your application for "${call.title}"`;
+        } else if (newStatus === 'accepted') {
+          statusMsg = `${sender} accepted your application for "${call.title}"`;
+        } else if (newStatus === 'rejected') {
+          statusMsg = `${sender} updated your application status for "${call.title}"`;
+        }
+
         await setDoc(
           doc(db, 'notifications', notifId),
           {
@@ -476,13 +486,14 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
             recipientId: appItem.userId,
             receiverId: appItem.userId,
             senderId: user?.uid,
-            senderName: user?.displayName || 'Casting Director',
+            senderName: sender,
             senderAvatar: user?.photoURL || '',
-            type: 'casting',
-            notificationType: 'casting',
+            type: 'casting_status',
+            notificationType: 'casting_status',
+            status: newStatus,
             title: call.title || 'Casting Application',
-            body: `Your application for "${call.title}" has been marked as: ${newStatus.toUpperCase()}`,
-            message: `Your application for "${call.title}" has been marked as: ${newStatus.toUpperCase()}`,
+            body: statusMsg,
+            message: statusMsg,
             targetUrl: `/casting/${call.id}`,
             link: `/casting/${call.id}`,
             castingId: call.id,

@@ -23,23 +23,52 @@ const getNotificationDetails = (notif) => {
             </span>),
         };
     }
-    if (type === 'casting' || title.includes('casting') || title.includes('application') || body.includes('casting') || body.includes('applied')) {
-        let displayElement = (<span>
-            New casting call matches your profile
-        </span>);
-        if (body.includes('applied to') || body.includes('application')) {
-            const cleanBody = notif.body || notif.message || '';
-            const actionText = cleanBody.startsWith(senderName)
-                ? cleanBody.substring(senderName.length)
-                : ` applied to your casting call: "${notif.title || ''}"`;
+    if (type === 'casting' || type === 'casting_status' || type === 'casting_application' || title.includes('casting') || title.includes('application') || body.includes('casting') || body.includes('applied') || body.includes('shortlisted') || body.includes('accepted') || body.includes('rejected')) {
+        let displayElement;
+        const cleanBody = notif.body || notif.message || '';
+        const callTitle = notif.title || 'Casting Call';
+        
+        if (body.includes('shortlisted') || notif.status === 'shortlisted') {
             displayElement = (<span>
                 <span className="font-bold text-white mr-1">{senderName}</span>
-                {actionText}
+                shortlisted your application for <span className="text-[#ffb400] font-semibold">"{callTitle}"</span>
+            </span>);
+        } else if (body.includes('accepted') || notif.status === 'accepted') {
+            displayElement = (<span>
+                <span className="font-bold text-white mr-1">{senderName}</span>
+                accepted your application for <span className="text-emerald-400 font-semibold">"{callTitle}"</span>
+            </span>);
+        } else if (body.includes('rejected') || notif.status === 'rejected') {
+            displayElement = (<span>
+                <span className="font-bold text-white mr-1">{senderName}</span>
+                updated your application status for <span className="text-gray-300 font-semibold">"{callTitle}"</span>
+            </span>);
+        } else if (body.includes('applied to') || body.includes('applied')) {
+            const roleInfo = notif.roleName ? ` for role "${notif.roleName}"` : '';
+            displayElement = (<span>
+                <span className="font-bold text-white mr-1">{senderName}</span>
+                applied to your casting call: <span className="text-[#ffb400] font-semibold">"{callTitle}"</span>{roleInfo}
+            </span>);
+        } else if (cleanBody) {
+            displayElement = (<span>
+                {cleanBody.startsWith(senderName) ? (
+                    <>
+                        <span className="font-bold text-white mr-1">{senderName}</span>
+                        {cleanBody.substring(senderName.length)}
+                    </>
+                ) : (
+                    <span>{cleanBody}</span>
+                )}
+            </span>);
+        } else {
+            displayElement = (<span>
+                New casting update for <span className="text-[#ffb400]">"{callTitle}"</span>
             </span>);
         }
+
         return {
             type: 'casting',
-            themeColor: 'white',
+            themeColor: body.includes('shortlisted') ? 'amber' : body.includes('accepted') ? 'emerald' : 'white',
             iconName: 'casting',
             text: displayElement,
         };
