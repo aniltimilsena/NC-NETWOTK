@@ -183,19 +183,19 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                   </button>
                   <div className="absolute top-full left-0 mt-2 w-60 rounded-2xl bg-[#0f1015]/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] p-2 space-y-1">
                     <Link to="/discover" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
-                      <LayoutGrid className="w-4 h-4 text-[#ffb400] shrink-0" />
+                      <LayoutGrid className="w-4 h-4 text-white shrink-0" />
                       <span>Category Grid</span>
                     </Link>
                     <Link to="/talents" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
-                      <Users className="w-4 h-4 text-[#ffb400] shrink-0" />
+                      <Users className="w-4 h-4 text-white shrink-0" />
                       <span>{t('nav_talent_directory')}</span>
                     </Link>
                     <Link to="/trending" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
-                      <Flame className="w-4 h-4 text-[#ffb400] shrink-0" />
+                      <Flame className="w-4 h-4 text-white shrink-0" />
                       <span>{t('nav_trending_now')}</span>
                     </Link>
                     <Link to="/settings" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
-                      <Settings className="w-4 h-4 text-gray-400 shrink-0" />
+                      <Settings className="w-4 h-4 text-white shrink-0" />
                       <span>{t('nav_settings')}</span>
                     </Link>
                     {isAdmin && (
@@ -222,11 +222,11 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                   </button>
                   <div className="absolute top-full left-0 mt-2 w-60 rounded-2xl bg-[#0f1015]/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] p-2 space-y-1">
                     <Link to="/casting" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
-                      <Clapperboard className="w-4 h-4 text-[#ffb400] shrink-0" />
+                      <Clapperboard className="w-4 h-4 text-white shrink-0" />
                       <span>{t('nav_casting_calls')}</span>
                     </Link>
                     <Link to="/casting/create" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
-                      <PlusCircle className="w-4 h-4 text-[#ffb400] shrink-0" />
+                      <PlusCircle className="w-4 h-4 text-white shrink-0" />
                       <span>{t('nav_post_project')}</span>
                     </Link>
                   </div>
