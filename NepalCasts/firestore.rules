@@ -58,6 +58,49 @@ service cloud.firestore {
       allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
+    match /saved_calls/{saveId} {
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /calls/{callId} {
+      allow read: if isSignedIn() && (
+        resource == null ||
+        resource.data.callerId == request.auth.uid ||
+        resource.data.calleeId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.callerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow update: if isSignedIn() && (
+        resource.data.callerId == request.auth.uid ||
+        resource.data.calleeId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid ||
+        request.resource.data.callerId == request.auth.uid ||
+        request.resource.data.calleeId == request.auth.uid ||
+        request.resource.data.receiverId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.callerId == request.auth.uid ||
+        resource.data.calleeId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid ||
+        isAdmin()
+      );
+
+      match /callerCandidates/{candId} {
+        allow read, write: if isSignedIn();
+      }
+
+      match /calleeCandidates/{candId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
     match /conversations/{convId} {
       allow read: if isSignedIn() && (resource == null || request.auth.uid in resource.data.participants || isAdmin());
       allow create: if isSignedIn() && (request.resource.data.participants != null && request.auth.uid in request.resource.data.participants);
