@@ -713,25 +713,25 @@ export default function Home({ onNavigate, user }) {
               </div>
 
               {/* Horizontal Scroll Carousel: All Category Cards */}
-              <div className="flex gap-2 sm:gap-3 overflow-x-auto pt-0.5 pb-1.5 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
+              <div className="flex gap-3 sm:gap-4 overflow-x-auto pt-1 pb-2 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
                 {HOME_CATEGORY_CARDS.map((cat) => {
                   const count = getCategoryCount(cat.filter);
                   return (
                     <div
                       key={cat.id}
                       onClick={() => onNavigate('talents', cat.filter)}
-                      className="rounded-2xl p-2.5 sm:p-3.5 aspect-square shrink-0 w-[calc((100vw-48px)/3)] sm:w-32 md:w-36 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-[#0a0a0a] shadow-md border border-white/5 gap-1 sm:gap-1.5"
+                      className="rounded-2xl p-4 sm:p-5 aspect-square shrink-0 w-36 sm:w-44 md:w-48 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-[#0a0a0a] shadow-lg border border-white/5 gap-2 sm:gap-3 hover:border-white/20 active:scale-[0.98]"
                     >
                       <CategoryCardIcon
                         type={cat.iconType}
                         color="#ffffff"
-                        className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 fill-current text-white"
+                        className="w-12 h-12 sm:w-16 sm:h-16 lg:w-18 lg:h-18 fill-current text-white shrink-0"
                       />
                       <div className="w-full flex flex-col items-center justify-center shrink-0">
-                        <span className="font-apple text-white font-bold text-xs sm:text-sm leading-tight whitespace-pre-line text-center tracking-normal">
+                        <span className="font-apple text-white font-bold text-sm sm:text-base md:text-lg leading-tight whitespace-pre-line text-center tracking-normal">
                           {cat.label}
                         </span>
-                        <span className="font-apple text-neutral-400 font-normal text-[10px] sm:text-xs mt-0.5 tracking-normal">
+                        <span className="font-apple text-neutral-400 font-medium text-xs sm:text-sm mt-1 tracking-normal">
                           ({count} {count === 1 ? 'talent' : 'talents'})
                         </span>
                       </div>
