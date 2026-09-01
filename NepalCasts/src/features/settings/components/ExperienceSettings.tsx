@@ -101,7 +101,7 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
 
         {experienceList.length > 0 ? (<div className="space-y-3">
             {experienceList.map((item, idx) => (<div key={idx} className="flex gap-4 p-4 bg-white/5 border border-white/5 rounded-xl items-start">
-                <div className="w-10 h-10 rounded-xl bg-[#522C69]/10 border border-[#522C69]/20 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#522C69]/10 flex items-center justify-center shrink-0">
                   <Briefcase className="w-5 h-5 text-white"/>
                 </div>
                 <div className="flex-1 space-y-1 text-left min-w-0">

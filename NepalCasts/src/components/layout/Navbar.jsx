@@ -35,6 +35,17 @@ import { cacheManager } from '@/utils/cacheManager';
 export default function Navbar({ onNavigate, onBack = () => { }, showBack = false, isAdmin = false, user = null, onLogout = () => { } }) {
   const isLoggedIn = !!user;
   const { pathname } = useLocation();
+  const isHome = pathname === '/' || pathname === '';
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const resolveLegacyPath = (page, param = null) => {
@@ -159,8 +170,16 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
     });
   }, [user?.uid]);
   return (<>
-    <header className="sticky top-0 left-0 right-0 z-50 bg-[#141414]">
-      <nav className="relative z-30 bg-[#141414]/95 backdrop-blur-md border-b border-white/5">
+    <header className={`z-50 transition-all duration-300 ${
+      isHome
+        ? 'absolute top-0 left-0 right-0 bg-transparent'
+        : 'relative bg-[#141414] border-b border-white/5'
+    }`}>
+      <nav className={`relative z-30 transition-all duration-300 ${
+        isHome
+          ? 'bg-gradient-to-b from-black/85 via-black/40 to-transparent'
+          : 'bg-transparent'
+      }`}>
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
 
@@ -259,7 +278,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
 
 
-              </>) : (<Link to="/signup" className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-xl font-bold transition-all ml-1 shadow-md active:scale-95 flex items-center justify-center">
+              </>) : (<Link to="/signup" className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-xl font-bold transition-all ml-1 shadow-md active:scale-95 flex items-center justify-center">
                 Join Now
               </Link>)}
 

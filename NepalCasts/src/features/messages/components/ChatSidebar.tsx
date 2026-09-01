@@ -268,7 +268,7 @@ export default function ChatSidebar({
                       </span>
                     )}
                     {unreadCount > 0 && (
-                      <span className="min-w-[18px] h-4.5 px-1.5 rounded-full bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white font-extrabold text-[10px] flex items-center justify-center shadow-sm shadow-[#522C69]/30 leading-none">
+                      <span className="min-w-[18px] h-4.5 px-1.5 rounded-full bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-extrabold text-[10px] flex items-center justify-center shadow-sm shadow-[#522C69]/30 leading-none">
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </span>
                     )}

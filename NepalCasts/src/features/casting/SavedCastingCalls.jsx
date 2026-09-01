@@ -219,7 +219,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
           {/* Empty State */}
           {!loading && savedCalls.length === 0 && (
             <div className="py-16 text-center space-y-5 bg-black rounded-xl border border-white/10 p-6 sm:p-10">
-              <div className="w-16 h-16 rounded-full bg-[#522C69]/10 border border-[#522C69]/20 text-[#522C69] flex items-center justify-center mx-auto shadow-xl">
+              <div className="w-16 h-16 rounded-full bg-[#522C69]/10 text-[#522C69] flex items-center justify-center mx-auto shadow-xl">
                 <BookmarkX className="w-8 h-8" />
               </div>
               <div className="space-y-1.5">

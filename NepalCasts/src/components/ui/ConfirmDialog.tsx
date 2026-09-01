@@ -122,12 +122,12 @@ export default function ConfirmDialog({
             case 'danger':
                 return 'bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/20';
             case 'warning':
-                return 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm shadow-md shadow-[#522C69]/20';
+                return 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm shadow-md shadow-[#522C69]/20';
             case 'success':
-                return 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm shadow-md shadow-[#522C69]/20 font-bold';
+                return 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm shadow-md shadow-[#522C69]/20 font-bold';
             case 'info':
             default:
-                return 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm shadow-md shadow-[#522C69]/20';
+                return 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm shadow-md shadow-[#522C69]/20';
         }
     };
 

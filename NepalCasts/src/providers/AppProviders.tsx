@@ -377,7 +377,7 @@ export default function AppProviders({ children }: {
                     Your account is in a 30-day grace period.
                   </p>
                 </div>
-                <button onClick={handleCancelDeletion} className="w-full py-3 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-black uppercase text-xs rounded-xl cursor-pointer">
+                <button onClick={handleCancelDeletion} className="w-full py-3 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-black uppercase text-xs rounded-xl cursor-pointer">
                   Restore Account
                 </button>
               </div>

@@ -359,7 +359,7 @@ export default function Avatar(props: AvatarProps) {
 
               {/* Header Icon & Text */}
               <div className="flex flex-col items-center gap-2 mb-4 pt-0.5">
-                <div className="w-11 h-11 rounded-xl bg-[#522C69]/10 border border-[#522C69]/20 flex items-center justify-center text-[#522C69] shadow-[0_0_15px_rgba(255,180,0,0.15)]">
+                <div className="w-11 h-11 rounded-xl bg-[#522C69]/10 flex items-center justify-center text-[#522C69] shadow-[0_0_15px_rgba(255,180,0,0.15)]">
                   <Camera className="w-5.5 h-5.5" strokeWidth={1.75} />
                 </div>
                 <div>
@@ -378,7 +378,7 @@ export default function Avatar(props: AvatarProps) {
                     setShowOptionsModal(false);
                     fileInputRef.current?.click();
                   }}
-                  className="w-full py-2.5 px-3 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-extrabold rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 shadow-[0_3px_15px_rgba(255,180,0,0.25)] hover:shadow-[0_4px_20px_rgba(255,180,0,0.35)]"
+                  className="w-full py-2.5 px-3 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-extrabold rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 shadow-[0_3px_15px_rgba(255,180,0,0.25)] hover:shadow-[0_4px_20px_rgba(255,180,0,0.35)]"
                 >
                   <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Upload New Photo</span>

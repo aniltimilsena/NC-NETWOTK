@@ -302,7 +302,7 @@ export function ProfileSpecsSidebar({ profile, showContact }: ProfileAboutProps)
                 className="p-2.5 sm:p-3 rounded-xl bg-[#18181D] border border-white/5 hover:border-white/15 transition-all flex items-center justify-between gap-2"
               >
                 <span className="text-xs sm:text-sm font-semibold text-white truncate">{skill.name}</span>
-                <span className="text-[10px] font-bold text-[#522C69] bg-[#522C69]/10 border border-[#522C69]/20 px-2 py-0.5 rounded-md shrink-0 font-mono">
+                <span className="text-[10px] font-bold text-[#522C69] bg-[#522C69]/10 px-2 py-0.5 rounded-md shrink-0 font-mono">
                   {skill.level ?? 85}%
                 </span>
               </div>

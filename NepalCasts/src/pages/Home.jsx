@@ -440,8 +440,8 @@ export default function Home({ onNavigate, user }) {
     >
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="min-h-screen bg-[#141414] text-white pt-0 pb-1 font-sans selection:bg-[#522C69] selection:text-black">
-          {/* ================= HERO SECTION (Compact, flush with top navbar) ================= */}
-          <section className="relative w-full h-[190px] sm:h-[220px] lg:h-[250px] overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5 m-0 p-0">
+          {/* ================= HERO SECTION (Overlayed under top navbar) ================= */}
+          <section className="relative w-full h-[250px] sm:h-[280px] lg:h-[310px] pt-14 sm:pt-16 overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5 m-0 p-0">
             {/* 5 Smoothly Rotating Background Images (Every 4s) */}
             <div className="absolute inset-0 z-0 overflow-hidden">
               <AnimatePresence mode="popLayout">
@@ -456,12 +456,12 @@ export default function Home({ onNavigate, user }) {
                   className="w-full h-full object-cover object-center absolute inset-0"
                 />
               </AnimatePresence>
-              <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/20 to-black/85 pointer-events-none" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-black/25 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/85 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-black/30 to-transparent pointer-events-none" />
             </div>
 
             {/* Top Right Slogan in One Line with Typewriter Font & Live Typing Animation */}
-            <div className="absolute top-2.5 sm:top-3.5 right-3 sm:right-5 z-20 pointer-events-none flex items-center justify-end">
+            <div className="absolute top-16 sm:top-18 right-3 sm:right-5 z-20 pointer-events-none flex items-center justify-end">
               <h1 className="font-mono font-bold text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] flex items-center gap-1.5 sm:gap-2">
                 <span className="text-[#522C69] shrink-0">Discover</span>
                 <span className="text-white">{typewriterText}</span>
@@ -513,13 +513,13 @@ export default function Home({ onNavigate, user }) {
 
                     {/* Talent Meta beside photo */}
                     <div className="flex flex-col justify-end items-start gap-0.5 min-w-0 pb-0.5 text-left font-apple">
-                      <h2 className="font-apple text-sm sm:text-lg font-bold text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] max-w-[140px] sm:max-w-[200px] tracking-normal">
+                      <h2 className="font-apple text-base sm:text-xl font-bold text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] max-w-[140px] sm:max-w-[200px] tracking-normal">
                         {spotlightName}
                       </h2>
-                      <p className="text-[11px] sm:text-xs text-slate-300 font-normal capitalize drop-shadow-md truncate tracking-normal">
+                      <p className="text-xs sm:text-sm text-slate-300 font-normal capitalize drop-shadow-md truncate tracking-normal">
                         {spotlightRole} {spotlightAge ? `(${spotlightAge})` : ''}
                       </p>
-                      <span className="text-[#522C69] text-[11px] sm:text-xs font-semibold flex items-center gap-1">
+                      <span className="text-[#522C69] text-xs sm:text-sm font-semibold flex items-center gap-1">
                         View profile &gt;
                       </span>
                     </div>
@@ -536,17 +536,17 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
+                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
                     <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
                     Hiring now
                   </span>
-                  <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                  <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
                     Discover active auditions and verified casting calls across Nepal
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigate('casting')}
-                  className="text-gray-300 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
+                  className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -589,7 +589,7 @@ export default function Home({ onNavigate, user }) {
                           </div>
                           {/* Category / Roles badge on top left */}
                           <div
-                            className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-black/80 backdrop-blur-sm text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-white shadow-sm truncate max-w-[85%]"
+                            className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-black/80 backdrop-blur-sm text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-sm truncate max-w-[85%]"
                             title={
                               Array.isArray(call.roles) && call.roles.length > 0
                                 ? call.roles.map(r => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(' • ')
@@ -602,7 +602,7 @@ export default function Home({ onNavigate, user }) {
                           </div>
                           {/* Deadline on bottom right */}
                           {call.deadline && (
-                            <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] sm:text-[10px] font-medium text-[#522C69] shadow-sm">
+                            <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[11px] sm:text-xs font-medium text-[#522C69] shadow-sm">
                               Due {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </div>
                           )}
@@ -611,10 +611,10 @@ export default function Home({ onNavigate, user }) {
                         {/* Details under thumbnail with side Apply Now button */}
                         <div className="mt-2.5 flex items-center justify-between gap-2 px-0.5">
                           <div className="min-w-0 flex-1 space-y-0.5 text-left">
-                            <p className="font-apple text-white font-bold text-sm sm:text-base md:text-lg truncate w-full tracking-normal">
+                            <p className="font-apple text-white font-bold text-base sm:text-lg md:text-xl truncate w-full tracking-normal">
                               {call.title || call.project || 'Untitled Casting Call'}
                             </p>
-                            <p className="font-apple text-slate-300 font-medium text-xs sm:text-sm truncate w-full">
+                            <p className="font-apple text-slate-300 font-medium text-sm sm:text-base truncate w-full">
                               {call.company || call.director || 'Production'} • {call.location || 'Nepal'}
                             </p>
                           </div>
@@ -623,7 +623,7 @@ export default function Home({ onNavigate, user }) {
                               e.stopPropagation();
                               onNavigate('casting-detail', call.id);
                             }}
-                            className="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white font-bold text-xs sm:text-sm tracking-wide transition-all shadow-md active:scale-95 cursor-pointer"
+                            className="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold text-xs sm:text-sm tracking-wide transition-all shadow-md active:scale-95 cursor-pointer"
                           >
                             Apply Now
                           </button>
@@ -633,10 +633,10 @@ export default function Home({ onNavigate, user }) {
                   })
                 ) : (
                   <div className="w-full text-center py-5 bg-[#141416] rounded-xl border border-white/5">
-                    <p className="text-gray-400 text-xs mb-2">No active calls at the moment</p>
+                    <p className="text-gray-400 text-sm mb-2">No active calls at the moment</p>
                     <button
                       onClick={() => onNavigate('casting-create')}
-                      className="text-xs bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white font-bold px-3 py-1.5 rounded-md shadow-sm shadow-amber-950/20 cursor-pointer"
+                      className="text-sm bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold px-4 py-2 rounded-md shadow-sm shadow-amber-950/20 cursor-pointer"
                     >
                       + Post a Casting Call
                     </button>
@@ -649,17 +649,17 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
+                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
                     <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
                     Featured talents
                   </span>
-                  <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                  <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
                     Handpicked verified actors, models, and industry professionals
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigate('listing')}
-                  className="text-gray-300 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
+                  className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -687,21 +687,21 @@ export default function Home({ onNavigate, user }) {
                         name={talent.name}
                         className="w-[calc((100vw-44px)/2.5)] h-[calc((100vw-44px)/2.5)] sm:w-36 sm:h-36 rounded-full object-cover shadow-lg"
                       />
-                      <p className="font-apple text-white font-bold text-base sm:text-lg md:text-xl text-center mt-2.5 truncate w-full px-0.5 tracking-wide">
+                      <p className="font-apple text-white font-bold text-lg sm:text-xl md:text-2xl text-center mt-2.5 truncate w-full px-0.5 tracking-wide">
                         {formatTalentName(talent.name)}
                       </p>
-                      <p className="font-apple text-[#522C69] font-semibold text-sm sm:text-base text-center mt-1 truncate w-full px-0.5 tracking-normal">
+                      <p className="font-apple text-[#522C69] font-semibold text-base sm:text-lg text-center mt-1 truncate w-full px-0.5 tracking-normal">
                         {getTalentRole(talent)}
                       </p>
                       {getTalentAge(talent) ? (
-                        <p className="font-apple text-slate-300 font-medium text-sm sm:text-base text-center mt-0.5 truncate w-full px-0.5 tracking-normal">
+                        <p className="font-apple text-slate-300 font-medium text-base sm:text-lg text-center mt-0.5 truncate w-full px-0.5 tracking-normal">
                           ({getTalentAge(talent)})
                         </p>
                       ) : null}
                     </div>
                   ))
                 ) : (
-                  <div className="text-gray-400 text-xs py-4">No talents found</div>
+                  <div className="text-gray-400 text-sm py-4">No talents found</div>
                 )}
               </div>
             </section>
@@ -710,17 +710,17 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
+                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
                     <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
                     Talents by category
                   </span>
-                  <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                  <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
                     Explore skilled professionals across every creative discipline
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigate('discover')}
-                  className="text-gray-300 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
+                  className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -743,10 +743,10 @@ export default function Home({ onNavigate, user }) {
                         className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 fill-current text-white shrink-0"
                       />
                       <div className="w-full flex flex-col items-center justify-center shrink-0">
-                        <span className="font-apple text-white font-bold text-base sm:text-lg md:text-xl leading-tight whitespace-pre-line text-center tracking-normal">
+                        <span className="font-apple text-white font-bold text-lg sm:text-xl md:text-2xl leading-tight whitespace-pre-line text-center tracking-normal">
                           {cat.label}
                         </span>
-                        <span className="font-apple text-neutral-400 font-medium text-xs sm:text-sm mt-1 tracking-normal">
+                        <span className="font-apple text-neutral-400 font-medium text-sm sm:text-base mt-1 tracking-normal">
                           ({count} {count === 1 ? 'talent' : 'talents'})
                         </span>
                       </div>
@@ -760,17 +760,17 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
+                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
                     <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
                     Recently joined
                   </span>
-                  <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                  <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
                     New artists and emerging creators who recently joined NepalCasts
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigate('listing')}
-                  className="text-gray-300 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
+                  className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -782,7 +782,7 @@ export default function Home({ onNavigate, user }) {
                 {!talentsReceived ? (
                   [1, 2, 3, 4, 5].map((num) => (
                     <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
-                      <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
+                      <span className="text-2xl sm:text-3xl font-black text-white w-6 text-center shrink-0">
                         {num}
                       </span>
                       <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 shrink-0 animate-pulse" />
@@ -797,10 +797,10 @@ export default function Home({ onNavigate, user }) {
                     <div
                       key={talent.id || idx}
                       onClick={() => onNavigate('profile', talent.id)}
-                      className="flex items-center gap-3 sm:gap-4 py-1 cursor-pointer"
+                      className="flex items-center gap-3 sm:gap-4 py-1.5 cursor-pointer"
                     >
                       {/* Rank Number */}
-                      <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
+                      <span className="text-2xl sm:text-3xl font-black text-white w-6 text-center shrink-0">
                         {idx + 1}
                       </span>
 
@@ -814,23 +814,23 @@ export default function Home({ onNavigate, user }) {
                       />
 
                       {/* Metadata Lines & Talent Details */}
-                      <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between">
-                          <p className="font-apple text-sm sm:text-base font-bold text-white truncate tracking-wide">
+                          <p className="font-apple text-base sm:text-lg md:text-xl font-bold text-white truncate tracking-wide">
                             {talent.name}
                           </p>
-                          <span className="text-xs text-[#522C69] font-semibold shrink-0">
+                          <span className="text-sm sm:text-base text-[#522C69] font-semibold shrink-0">
                             {getTalentRoleAndAge(talent)}
                           </span>
                         </div>
 
                         {/* Username & Location */}
-                        <p className="text-xs text-gray-400 truncate">
+                        <p className="text-sm text-gray-400 truncate">
                           @{talent.username || talent.name?.toLowerCase().replace(/\s+/g, '')}
                         </p>
                         {formatTalentLocation(talent) && (
-                          <p className="text-xs text-gray-500 truncate flex items-center gap-1">
-                            <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <p className="text-sm text-gray-500 truncate flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                             </svg>
                             {formatTalentLocation(talent)}
@@ -840,7 +840,7 @@ export default function Home({ onNavigate, user }) {
                     </div>
                   ))
                 ) : (
-                  <div className="text-gray-400 text-xs py-4 text-center">No talents found</div>
+                  <div className="text-gray-400 text-sm py-4 text-center">No talents found</div>
                 )}
               </div>
             </section>
@@ -849,17 +849,17 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
+                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
                     <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
                     Trending talents
                   </span>
-                  <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                  <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
                     Popular profiles gaining the most attention from directors and producers
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigate('trending')}
-                  className="text-gray-300 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
+                  className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -871,7 +871,7 @@ export default function Home({ onNavigate, user }) {
                 {!talentsReceived ? (
                   [1, 2, 3, 4, 5].map((num) => (
                     <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
-                      <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
+                      <span className="text-2xl sm:text-3xl font-black text-white w-6 text-center shrink-0">
                         {num}
                       </span>
                       <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 shrink-0 animate-pulse" />
@@ -886,10 +886,10 @@ export default function Home({ onNavigate, user }) {
                     <div
                       key={talent.id || idx}
                       onClick={() => onNavigate('profile', talent.id)}
-                      className="flex items-center gap-3 sm:gap-4 py-1 cursor-pointer"
+                      className="flex items-center gap-3 sm:gap-4 py-1.5 cursor-pointer"
                     >
                       {/* Rank Number */}
-                      <span className="text-xl sm:text-2xl font-black text-white w-5 text-center shrink-0">
+                      <span className="text-2xl sm:text-3xl font-black text-white w-6 text-center shrink-0">
                         {idx + 1}
                       </span>
 
@@ -903,28 +903,28 @@ export default function Home({ onNavigate, user }) {
                       />
 
                       {/* Metadata Lines & Talent Details */}
-                      <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between">
-                          <p className="font-apple text-sm sm:text-base font-bold text-white truncate tracking-wide">
+                          <p className="font-apple text-base sm:text-lg md:text-xl font-bold text-white truncate tracking-wide">
                             {talent.name}
                           </p>
-                          <span className="text-xs text-[#522C69] font-semibold shrink-0">
+                          <span className="text-sm sm:text-base text-[#522C69] font-semibold shrink-0">
                             {getTalentRoleAndAge(talent)}
                           </span>
                         </div>
 
                         {/* Username & Location / Followers */}
-                        <div className="flex items-center justify-between text-xs text-gray-400">
+                        <div className="flex items-center justify-between text-sm text-gray-400">
                           <p className="truncate">
                             @{talent.username || talent.name?.toLowerCase().replace(/\s+/g, '')}
                           </p>
-                          <span className="text-gray-400 font-medium text-[11px] shrink-0">
+                          <span className="text-gray-400 font-medium text-xs sm:text-sm shrink-0">
                             {getTalentFollowersCount(talent)} {getTalentFollowersCount(talent) === 1 ? 'follower' : 'followers'}
                           </span>
                         </div>
                         {formatTalentLocation(talent) && (
-                          <p className="text-xs text-gray-500 truncate flex items-center gap-1">
-                            <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <p className="text-sm text-gray-500 truncate flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                             </svg>
                             {formatTalentLocation(talent)}
@@ -934,7 +934,7 @@ export default function Home({ onNavigate, user }) {
                     </div>
                   ))
                 ) : (
-                  <div className="text-gray-400 text-xs py-4 text-center">No trending talents found</div>
+                  <div className="text-gray-400 text-sm py-4 text-center">No trending talents found</div>
                 )}
               </div>
             </section>
@@ -942,11 +942,11 @@ export default function Home({ onNavigate, user }) {
             {/* ================= OUR GOALS SECTION ================= */}
             <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0 space-y-2.5">
               <div className="space-y-1 mb-2">
-                <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
+                <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
                   <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
                   Our Goals
                 </span>
-                <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
                   Building Nepal's most transparent and accessible entertainment network
                 </p>
               </div>
@@ -959,8 +959,8 @@ export default function Home({ onNavigate, user }) {
                   "Build a strong community that supports and grows Nepal's entertainment industry."
                 ].map((goal, idx) => (
                   <li key={idx} className="flex items-start gap-3">
-                    <span className="text-[#522C69] font-black text-sm leading-none mt-1 select-none shrink-0">•</span>
-                    <span className="text-xs sm:text-sm text-gray-300 leading-relaxed font-medium">
+                    <span className="text-[#522C69] font-black text-base leading-none mt-1 select-none shrink-0">•</span>
+                    <span className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium">
                       {goal}
                     </span>
                   </li>

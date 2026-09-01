@@ -463,7 +463,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
             {canPostCall && (
               <button
                 onClick={() => onNavigate('casting-create')}
-                className="hidden sm:inline-flex items-center gap-1.5 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm text-xs font-bold uppercase px-3.5 py-2 rounded-lg transition-all cursor-pointer shadow-sm active:scale-95"
+                className="hidden sm:inline-flex items-center gap-1.5 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm text-xs font-bold uppercase px-3.5 py-2 rounded-lg transition-all cursor-pointer shadow-sm active:scale-95"
               >
                 <Plus size={14} strokeWidth={3} />
                 Post Call
@@ -637,7 +637,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
                 {canPostCall && (
                   <button
                     onClick={() => onNavigate('casting-create')}
-                    className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm px-5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all shadow-md active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
+                    className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm px-5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all shadow-md active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <Plus size={14} strokeWidth={3} />
                     Post a Call

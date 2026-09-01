@@ -214,7 +214,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
               </p>
               <button
                 onClick={() => (onNavigate ? onNavigate('casting') : navigate('/casting'))}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all cursor-pointer shadow-md active:scale-95"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all cursor-pointer shadow-md active:scale-95"
               >
                 Browse Casting Calls
               </button>

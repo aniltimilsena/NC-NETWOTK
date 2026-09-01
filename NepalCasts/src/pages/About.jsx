@@ -93,7 +93,7 @@ export default function About() {
           <div className="flex justify-center gap-4 pt-2">
             <button
               onClick={() => navigate('/talents')}
-              className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-bold text-xs uppercase tracking-wider transition-all inline-flex items-center gap-2 shadow-md cursor-pointer active:scale-95"
+              className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold text-xs uppercase tracking-wider transition-all inline-flex items-center gap-2 shadow-md cursor-pointer active:scale-95"
             >
               <span>Explore Talents</span>
               <ArrowRight className="w-4 h-4 text-black" />

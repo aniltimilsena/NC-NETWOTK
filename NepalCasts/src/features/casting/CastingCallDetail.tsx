@@ -607,7 +607,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           <p className="text-gray-400 text-xs mb-6">This casting call may have been removed or closed.</p>
           <button
             onClick={() => onNavigate('casting')}
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-bold text-xs uppercase tracking-wider cursor-pointer"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold text-xs uppercase tracking-wider cursor-pointer"
           >
             Back to Casting Calls
           </button>
@@ -780,7 +780,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   <label className="text-xs sm:text-sm font-semibold text-gray-300">
                     Portfolio / Resume (PDF only)
                   </label>
-                  <span className="text-[10px] text-[#522C69] font-bold uppercase tracking-wider bg-[#522C69]/10 px-2 py-0.5 rounded-full border border-[#522C69]/20">
+                  <span className="text-[10px] text-[#522C69] font-bold uppercase tracking-wider bg-[#522C69]/10 px-2 py-0.5 rounded-full">
                     PDF Only
                   </span>
                 </div>
@@ -1095,7 +1095,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   <button
                     onClick={openApplyModal}
                     disabled={applying}
-                    className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 transition-all active:scale-[0.98] cursor-pointer"
+                    className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 transition-all active:scale-[0.98] cursor-pointer"
                   >
                     <Clapperboard className="w-4 h-4" />
                     <span>{applying ? 'Submitting...' : 'Apply for Audition'}</span>
@@ -1347,7 +1347,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                         key={tab.id}
                         onClick={() => setPipelineFilter(tab.id)}
                         className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${pipelineFilter === tab.id
-                            ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm shadow-[#522C69]/20'
+                            ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm shadow-[#522C69]/20'
                             : 'bg-[#18181c] text-gray-400 border border-white/5'
                           }`}
                       >
@@ -1448,7 +1448,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                           setPreviewPdfUrl(directFileUrl);
                                           setPreviewPdfName(app.fileName || `${app.userName || 'Applicant'}_Portfolio.pdf`);
                                         }}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#522C69]/15 border border-[#522C69]/30 text-[10px] text-[#522C69] font-bold active:scale-95 transition-all cursor-pointer shadow-sm"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#522C69]/15 text-[10px] text-[#522C69] font-bold active:scale-95 transition-all cursor-pointer shadow-sm"
                                         title="Click to view PDF portfolio"
                                       >
                                         <FileText className="w-3.5 h-3.5 text-white" />
@@ -1504,7 +1504,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                     key={st.id}
                                     onClick={() => handleUpdateAppStatus(app.id, st.id)}
                                     className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase transition-all cursor-pointer ${app.status === st.id
-                                        ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white border border-[#522C69]'
+                                        ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border border-[#522C69]'
                                         : 'bg-white/5 text-gray-400 border border-white/10'
                                       }`}
                                   >

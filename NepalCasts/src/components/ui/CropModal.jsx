@@ -58,7 +58,7 @@ export default function CropModal({ imageSrc, isCircular, onConfirm, onClose }) 
                     </button>
                     <button 
                         onClick={handleSave} 
-                        className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-bold text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-[#522C69]/20 cursor-pointer"
+                        className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-[#522C69]/20 cursor-pointer"
                     >
                         Confirm
                     </button>

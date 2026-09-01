@@ -83,14 +83,14 @@ export default function CallPage({ initialCallId, filter }: CallPageProps = {}) 
 
             <div className="relative z-10 p-1.5 rounded-full bg-gradient-to-b from-[#522C69]/40 to-white/10 shadow-2xl">
               {targetPhoto ? (<Avatar userId={targetId} src={targetPhoto} name={targetName} size="none" className="w-28 h-28 sm:w-32 sm:h-32 text-3xl rounded-full border-4 border-[#0A0A0F] shadow-inner"/>) : (<div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-[#0A0A0F] flex items-center justify-center border-4 border-[#0A0A0F]">
-                  <div className="w-16 h-16 rounded-2xl bg-[#522C69]/10 border border-[#522C69]/30 flex items-center justify-center shadow-[0_0_20px_rgba(0,191,255,0.25)]">
+                  <div className="w-16 h-16 rounded-2xl bg-[#522C69]/10 flex items-center justify-center shadow-[0_0_20px_rgba(0,191,255,0.25)]">
                     <Users className="w-8 h-8 text-white"/>
                   </div>
                 </div>)}
             </div>
 
             
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A0A0F] border border-[#522C69]/40 shadow-lg">
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A0A0F] shadow-lg">
               <Radio className="w-3.5 h-3.5 text-white animate-pulse"/>
               <span className="text-[#522C69] text-[10px] font-extrabold uppercase tracking-widest">
                 {isCallConnected ? 'Live' : 'Audio'}
