@@ -618,7 +618,7 @@ export default function Home({ onNavigate, user }) {
                               e.stopPropagation();
                               onNavigate('casting-detail', call.id);
                             }}
-                            className="shrink-0 px-3.5 py-1 rounded-full bg-[#522C69] text-white font-bold text-[11px] sm:text-xs tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer"
+                            className="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white font-bold text-xs sm:text-sm tracking-wide transition-all shadow-md active:scale-95 cursor-pointer"
                           >
                             Apply Now
                           </button>
@@ -631,7 +631,7 @@ export default function Home({ onNavigate, user }) {
                     <p className="text-gray-400 text-xs mb-2">No active calls at the moment</p>
                     <button
                       onClick={() => onNavigate('casting-create')}
-                      className="text-xs bg-[#522C69] text-white font-bold px-3 py-1.5 rounded-md shadow-sm shadow-amber-950/20 cursor-pointer"
+                      className="text-xs bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white font-bold px-3 py-1.5 rounded-md shadow-sm shadow-amber-950/20 cursor-pointer"
                     >
                       + Post a Casting Call
                     </button>

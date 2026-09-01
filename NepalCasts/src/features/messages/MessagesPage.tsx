@@ -175,7 +175,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
         <p className="text-gray-400 text-sm max-w-xs mb-6">
           Please log in to check your messages.
         </p>
-        <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-[#522C69] hover:bg-[#663782] text-white font-bold rounded-xl cursor-pointer">
+        <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-bold rounded-xl cursor-pointer">
           Sign In
         </button>
       </div>);

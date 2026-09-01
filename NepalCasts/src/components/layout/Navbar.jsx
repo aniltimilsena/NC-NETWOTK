@@ -259,7 +259,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
 
 
-              </>) : (<Link to="/signup" className="bg-[#522C69] hover:bg-[#663782] text-white text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-xl font-bold transition-all ml-1 shadow-md active:scale-95 flex items-center justify-center">
+              </>) : (<Link to="/signup" className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-xl font-bold transition-all ml-1 shadow-md active:scale-95 flex items-center justify-center">
                 Join Now
               </Link>)}
 

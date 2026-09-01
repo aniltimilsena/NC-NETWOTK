@@ -221,7 +221,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                       <div className={`text-sm text-left ${isMediaMsg
                         ? `p-0 bg-[#181818] shadow-sm ${cornerRadius} overflow-hidden`
                         : isMe
-                          ? `px-3.5 py-2 bg-[#522C69] text-white font-medium shadow-sm ${cornerRadius}`
+                          ? `px-3.5 py-2 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white font-medium shadow-sm ${cornerRadius}`
                           : `px-3.5 py-2 bg-[#222222] text-gray-200 shadow-sm ${cornerRadius}`}`}>
                         {isImage ? (
                           <div className="overflow-hidden rounded-xl aspect-square w-52 sm:w-64 max-w-full">

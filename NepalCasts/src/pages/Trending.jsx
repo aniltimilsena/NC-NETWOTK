@@ -385,7 +385,7 @@ export default function Trending({ onNavigate, user }) {
                   New
                 </span>)}
 
-                <button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`w-full py-2 rounded-full text-xs font-bold transition-all border cursor-pointer active:scale-95 ${isFollowing
+                <button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`w-full py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer active:scale-95 ${isFollowing
                   ? 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
                   : 'bg-[#18181b] border-white/20 text-white hover:bg-white/15 hover:border-white/30 shadow-sm'}`}>
                   {isFollowing ? 'Following' : 'Follow'}
@@ -457,7 +457,7 @@ export default function Trending({ onNavigate, user }) {
                 </div>
 
                 <div className="flex items-center gap-4 sm:gap-6 shrink-0">
-                  {prof.id !== activeUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`px-5 py-2 sm:px-6 sm:py-2 rounded-full text-xs font-bold transition-all border cursor-pointer active:scale-95 ${isFollowing
+                  {prof.id !== activeUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`px-5 py-2 sm:px-6 sm:py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer active:scale-95 ${isFollowing
                     ? 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
                     : 'bg-[#18181b] border-white/20 text-white hover:bg-white/15 hover:border-white/30 shadow-sm'}`}>
                     {isFollowing ? 'Following' : 'Follow'}

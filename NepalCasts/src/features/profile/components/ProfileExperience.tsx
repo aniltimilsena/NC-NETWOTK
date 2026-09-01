@@ -132,7 +132,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
             <button
               type="submit"
               disabled={isSaving}
-              className="px-4 py-1.5 rounded-lg bg-[#522C69] hover:bg-[#663782] text-white font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm"
             >
               {isSaving ? (
                 <>

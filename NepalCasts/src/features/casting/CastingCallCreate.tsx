@@ -638,7 +638,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
               <Button
                 type="button"
                 onClick={handleNext}
-                className="bg-[#522C69] text-white hover:bg-[#663782] rounded-xl text-xs font-bold uppercase tracking-wider px-6 py-2.5 cursor-pointer"
+                className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white hover:bg-[#663782] rounded-xl text-xs font-bold uppercase tracking-wider px-6 py-2.5 cursor-pointer"
               >
                 Next Step
               </Button>

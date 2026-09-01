@@ -397,7 +397,7 @@ export default function Desktop3ColumnLayout({
                   <p className="text-gray-400 text-xs leading-relaxed">Connect with top directors and casting opportunities in Nepal.</p>
                   <Link
                     to="/signin"
-                    className="w-full py-2.5 bg-[#522C69] text-white font-bold rounded-xl text-sm transition-all cursor-pointer shadow-md active:scale-[0.98] text-center block"
+                    className="w-full py-2.5 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white font-bold rounded-xl text-sm transition-all cursor-pointer shadow-md active:scale-[0.98] text-center block"
                   >
                     Sign In / Register
                   </Link>

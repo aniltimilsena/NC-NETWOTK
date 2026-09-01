@@ -458,7 +458,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                                 <button
                                                     type="button"
                                                     onClick={(e) => handleToggleFollow(e, talent.id)}
-                                                    className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 border cursor-pointer ${isFollowing
+                                                    className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 border cursor-pointer ${isFollowing
                                                             ? 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
                                                             : 'bg-[#18181b] border-white/20 text-white hover:bg-white/15 hover:border-white/30 shadow-sm'
                                                         }`}

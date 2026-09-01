@@ -447,7 +447,7 @@ export default function ProfilePage({
         <p className="text-gray-400 text-sm max-w-xs mb-6">
           The profile you are looking for does not exist or has been deleted.
         </p>
-        <button onClick={() => onNavigate('home')} className="px-6 py-2.5 bg-[#522C69] hover:bg-[#663782] text-white font-bold rounded-xl cursor-pointer">
+        <button onClick={() => onNavigate('home')} className="px-6 py-2.5 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-bold rounded-xl cursor-pointer">
           Go Back Home
         </button>
       </div>
@@ -616,7 +616,7 @@ export default function ProfilePage({
           </button>
           <button
             onClick={() => onNavigate('/settings/profile')}
-            className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+            className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
             <Pencil className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             <span>Edit Profile</span>
@@ -633,7 +633,7 @@ export default function ProfilePage({
           </button>
           <button
             onClick={() => onNavigate('/settings/profile')}
-            className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+            className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
           >
             <Pencil className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             <span>Edit Profile</span>
@@ -646,7 +646,7 @@ export default function ProfilePage({
             className={`flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl font-extrabold text-sm sm:text-base md:text-lg transition-all active:scale-98 cursor-pointer flex items-center justify-center shadow-md ${
               isFollowing
                 ? 'bg-[#222] hover:bg-[#2a2a2a] text-white border border-white/15'
-                : 'bg-[#522C69] hover:bg-[#663782] text-white shadow-lg'
+                : 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm shadow-lg'
             }`}
           >
             <span>{isFollowing ? 'Following' : 'Follow'}</span>
@@ -890,7 +890,7 @@ export default function ProfilePage({
                     onClick={() => toggleSkillTag(skill)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[#522C69] text-white font-bold shadow-md'
+                        ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white font-bold shadow-md'
                         : 'bg-[#121212] text-gray-300 border border-white/10 hover:border-white/20'
                     }`}
                   >
@@ -937,7 +937,7 @@ export default function ProfilePage({
                 type="button"
                 onClick={handleSaveSkills}
                 disabled={isSavingSkills}
-                className="px-6 py-2 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isSavingSkills ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                 <span>Save Skills</span>
@@ -1032,7 +1032,7 @@ export default function ProfilePage({
                 <button
                   type="submit"
                   disabled={isSavingExp}
-                  className="px-6 py-2 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {isSavingExp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                   <span>Save Experience</span>
@@ -1148,7 +1148,7 @@ export default function ProfilePage({
                 type="button"
                 onClick={handleSaveBio}
                 disabled={isSavingBio}
-                className="px-6 py-2 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isSavingBio ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                 <span>Save Bio</span>
@@ -1244,7 +1244,7 @@ export default function ProfilePage({
                 type="button"
                 onClick={handleSaveAttributes}
                 disabled={isSavingAttributes}
-                className="px-6 py-2 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isSavingAttributes ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                 <span>Save Info</span>

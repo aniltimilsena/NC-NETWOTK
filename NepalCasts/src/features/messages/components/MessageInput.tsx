@@ -160,7 +160,7 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
                     disabled={!hasContent || uploading}
                     className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center font-black transition-all shrink-0 active:scale-95 ${
                         hasContent
-                            ? 'bg-[#522C69] text-white hover:bg-[#663782] shadow-sm cursor-pointer'
+                            ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white hover:bg-[#663782] shadow-sm cursor-pointer'
                             : 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
                     }`}
                     title="Send message"

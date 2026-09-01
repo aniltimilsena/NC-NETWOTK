@@ -214,7 +214,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
               </p>
               <button
                 onClick={() => (onNavigate ? onNavigate('casting') : navigate('/casting'))}
-                className="px-6 py-2.5 rounded-full bg-[#522C69] hover:bg-[#663782] text-white font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all cursor-pointer shadow-md active:scale-95"
               >
                 Browse Casting Calls
               </button>
@@ -321,7 +321,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                 <div className="flex justify-center mt-6 py-2">
                   <button
                     onClick={() => setVisibleLimit(prev => prev + 20)}
-                    className="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer"
+                    className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer shadow-sm active:scale-95"
                   >
                     Load More
                   </button>

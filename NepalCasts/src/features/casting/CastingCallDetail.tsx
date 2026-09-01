@@ -607,7 +607,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           <p className="text-gray-400 text-xs mb-6">This casting call may have been removed or closed.</p>
           <button
             onClick={() => onNavigate('casting')}
-            className="px-6 py-2.5 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm font-bold text-xs uppercase tracking-wider cursor-pointer"
           >
             Back to Casting Calls
           </button>
@@ -1057,7 +1057,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 ) : applied ? (
                   <div className="flex items-center gap-2.5 sm:gap-3 w-full">
                     <div
-                      className={`flex-1 py-3 px-4 rounded-full text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border shadow-sm ${
+                      className={`flex-1 py-3 px-4 rounded-xl text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border shadow-sm ${
                         applicationStatus === 'accepted'
                           ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                           : applicationStatus === 'rejected'
@@ -1078,7 +1078,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                       <button
                         onClick={handleCancelApplication}
                         disabled={cancelling}
-                        className="py-3 px-4 sm:px-5 rounded-full border border-white/30 bg-white/10 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50"
+                        className="py-3 px-4 sm:px-5 rounded-xl border border-white/30 bg-white/10 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50"
                       >
                         {cancelling ? 'Withdrawing...' : 'Withdraw Application'}
                       </button>
@@ -1095,7 +1095,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   <button
                     onClick={openApplyModal}
                     disabled={applying}
-                    className="w-full py-3.5 px-6 rounded-xl bg-[#522C69] text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 transition-all active:scale-[0.98] cursor-pointer"
+                    className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 transition-all active:scale-[0.98] cursor-pointer"
                   >
                     <Clapperboard className="w-4 h-4" />
                     <span>{applying ? 'Submitting...' : 'Apply for Audition'}</span>
@@ -1347,7 +1347,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                         key={tab.id}
                         onClick={() => setPipelineFilter(tab.id)}
                         className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${pipelineFilter === tab.id
-                            ? 'bg-[#522C69] text-white shadow-sm shadow-[#522C69]/20'
+                            ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white shadow-sm shadow-[#522C69]/20'
                             : 'bg-[#18181c] text-gray-400 border border-white/5'
                           }`}
                       >
@@ -1504,7 +1504,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                     key={st.id}
                                     onClick={() => handleUpdateAppStatus(app.id, st.id)}
                                     className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase transition-all cursor-pointer ${app.status === st.id
-                                        ? 'bg-[#522C69] text-white border border-[#522C69]'
+                                        ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 border border-[#522C69]/40 text-white border border-[#522C69]'
                                         : 'bg-white/5 text-gray-400 border border-white/10'
                                       }`}
                                   >
