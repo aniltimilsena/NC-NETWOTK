@@ -12,11 +12,11 @@ import { ChevronRight } from 'lucide-react';
 
 /* eslint-disable no-secrets/no-secrets */
 const HERO_BACKGROUND_PHOTOS = [
-  '/hero-bg.png',
-  '/hero-stage.jpg',
+  'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1920&q=80',
   'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1920&q=80',
-  'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1920&q=80',
-  'https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=1920&q=80',
 ];
 /* eslint-enable no-secrets/no-secrets */
 
@@ -453,7 +453,7 @@ export default function Home({ onNavigate, user }) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1.0] }}
-                  className="w-full h-full object-cover object-center absolute inset-0"
+                  className="w-full h-full object-cover object-center absolute inset-0 grayscale contrast-110"
                 />
               </AnimatePresence>
               <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/85 pointer-events-none" />
