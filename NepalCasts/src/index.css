@@ -518,7 +518,8 @@ html.font-size-large {
   display: inline-block;
   width: 3px;
   height: 20px;
-  background-color: #522C69;
+  background: linear-gradient(to bottom, #522C69, rgba(82, 44, 105, 0.2));
+  border-radius: 2px;
   margin-right: 8px;
   vertical-align: middle;
 }

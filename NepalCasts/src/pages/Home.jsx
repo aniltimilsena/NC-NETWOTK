@@ -534,14 +534,19 @@ export default function Home({ onNavigate, user }) {
 
             {/* ================= CASTING CALLS / HIRING NOW SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-              <div className="flex items-center justify-between mb-3">
-                <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
-                  Hiring now
-                </span>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="space-y-1">
+                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
+                    <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
+                    Hiring now
+                  </span>
+                  <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                    Discover active auditions and verified casting calls across Nepal
+                  </p>
+                </div>
                 <button
                   onClick={() => onNavigate('casting')}
-                  className="text-gray-300 text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer"
+                  className="text-gray-300 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -642,14 +647,19 @@ export default function Home({ onNavigate, user }) {
 
             {/* ================= FEATURED TALENTS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-              <div className="flex items-center justify-between mb-3">
-                <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
-                  Featured talents
-                </span>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="space-y-1">
+                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
+                    <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
+                    Featured talents
+                  </span>
+                  <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                    Handpicked verified actors, models, and industry professionals
+                  </p>
+                </div>
                 <button
                   onClick={() => onNavigate('listing')}
-                  className="text-gray-300 text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer"
+                  className="text-gray-300 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -698,14 +708,19 @@ export default function Home({ onNavigate, user }) {
 
             {/* ================= TALENTS BY CATEGORY SECTION ================= */}
             <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0">
-              <div className="flex items-center justify-between mb-3">
-                <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
-                  Talents by category
-                </span>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="space-y-1">
+                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
+                    <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
+                    Talents by category
+                  </span>
+                  <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                    Explore skilled professionals across every creative discipline
+                  </p>
+                </div>
                 <button
                   onClick={() => onNavigate('discover')}
-                  className="text-gray-300 text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer"
+                  className="text-gray-300 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -743,14 +758,19 @@ export default function Home({ onNavigate, user }) {
 
             {/* ================= RECENTLY JOINED TALENTS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-              <div className="flex items-center justify-between mb-3">
-                <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
-                  Recently joined
-                </span>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="space-y-1">
+                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
+                    <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
+                    Recently joined
+                  </span>
+                  <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                    New artists and emerging creators who recently joined NepalCasts
+                  </p>
+                </div>
                 <button
                   onClick={() => onNavigate('listing')}
-                  className="text-gray-300 text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer"
+                  className="text-gray-300 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -827,14 +847,19 @@ export default function Home({ onNavigate, user }) {
 
             {/* ================= TRENDING TALENTS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-              <div className="flex items-center justify-between mb-3">
-                <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
-                  Trending talents
-                </span>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="space-y-1">
+                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
+                    <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
+                    Trending talents
+                  </span>
+                  <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                    Popular profiles gaining the most attention from directors and producers
+                  </p>
+                </div>
                 <button
                   onClick={() => onNavigate('trending')}
-                  className="text-gray-300 text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer"
+                  className="text-gray-300 hover:text-white text-xs sm:text-sm font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -916,11 +941,14 @@ export default function Home({ onNavigate, user }) {
 
             {/* ================= OUR GOALS SECTION ================= */}
             <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0 space-y-2.5">
-              <div className="flex items-center justify-between mb-2">
+              <div className="space-y-1 mb-2">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
                   Our Goals
                 </span>
+                <p className="text-[11px] sm:text-xs text-gray-400 font-normal">
+                  Building Nepal's most transparent and accessible entertainment network
+                </p>
               </div>
               <ul className="space-y-3 text-left">
                 {[
