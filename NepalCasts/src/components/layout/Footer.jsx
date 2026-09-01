@@ -16,7 +16,7 @@ export default function Footer() {
       {/* Brand Logo */}
       <div className="flex items-center justify-center gap-1.5">
         <span className="text-sm font-black text-white tracking-widest uppercase font-apple">
-          NEPAL<span className="text-[#ffb400]">CASTS</span>
+          NEPALCASTS
         </span>
       </div>
 
