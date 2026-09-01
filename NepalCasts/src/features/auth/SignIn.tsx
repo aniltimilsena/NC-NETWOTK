@@ -84,9 +84,9 @@ export default function SignIn(_props: SignInProps) {
             <SEO title="Log in | NepalCasts" description="Log in to NepalCasts to continue." noindex />
 
             {/* Left Side: Auth Form */}
-            <div className="w-full lg:w-[48%] xl:w-[42%] flex flex-col items-center justify-between p-6 sm:p-10 lg:p-12 min-h-screen overflow-y-auto">
+            <div className="w-full lg:w-[48%] xl:w-[42%] flex flex-col items-center justify-start lg:justify-between p-6 sm:p-10 lg:p-12 min-h-screen overflow-y-auto">
                 {/* Top Nav / Back */}
-                <div className="w-full max-w-[400px] flex items-center justify-between mb-4">
+                <div className="w-full max-w-[400px] flex items-center justify-start mb-4 sm:mb-6">
                     <button
                         onClick={handleBack}
                         type="button"
@@ -96,14 +96,10 @@ export default function SignIn(_props: SignInProps) {
                     >
                         <ChevronLeft className="w-5 h-5" strokeWidth={2} />
                     </button>
-                    <div className="lg:hidden flex items-center gap-2">
-                        <img src="/logo.png" alt="NepalCasts" className="w-6 h-6 object-contain" />
-                        <span className="font-bold text-sm text-white">NepalCasts</span>
-                    </div>
                 </div>
 
                 {/* Form Container */}
-                <div className="w-full max-w-[400px] flex flex-col my-auto py-4">
+                <div className="w-full max-w-[400px] flex flex-col my-0 lg:my-auto py-1 sm:py-4">
                     {/* Header */}
                     <div className="text-left mb-8">
                         <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-2">
