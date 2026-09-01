@@ -1,22 +1,27 @@
 import React, { Component, type ErrorInfo, type ReactNode } from "react";
-import Button from "./ui/Button";
+import NotFound from "../pages/NotFound";
+
 interface Props {
     children?: ReactNode;
 }
+
 interface State {
     hasError: boolean;
     error: Error | null;
     showDetails: boolean;
 }
+
 export default class ErrorBoundary extends Component<Props, State> {
     public state: State = {
         hasError: false,
         error: null,
         showDetails: false,
     };
+
     public static getDerivedStateFromError(error: Error): State {
         return { hasError: true, error, showDetails: false };
     }
+
     public componentDidMount() {
         const url = new URL(window.location.href);
         if (url.searchParams.has('reload')) {
@@ -24,6 +29,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             window.history.replaceState({}, '', url.pathname + url.search);
         }
     }
+
     public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
         const errorMsg = error?.message || "";
         const isChunkLoadFailed = errorMsg.includes("Failed to fetch dynamically imported module") ||
@@ -37,8 +43,7 @@ export default class ErrorBoundary extends Component<Props, State> {
         let localVersion = 'dev';
         try {
             localVersion = __BUILD_VERSION__;
-        }
-        catch (_e) {
+        } catch (_e) {
             // Build version unavailable
         }
         if (import.meta.env.DEV) {
@@ -69,6 +74,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             }
         }
     }
+
     private async logError(error: Error, errorInfo: ErrorInfo): Promise<void> {
         try {
             const { AuthService } = await import("../services/AuthService");
@@ -90,32 +96,38 @@ export default class ErrorBoundary extends Component<Props, State> {
                     userId: AuthService.getUserId() || 'anonymous',
                 }),
             });
-        }
-        catch (_e) {
+        } catch (_e) {
             // Ignore error logging failure
         }
     }
+
     public componentDidUpdate(prevProps: Props) {
         if (this.state.hasError && prevProps.children !== this.props.children) {
             this.setState({ hasError: false, error: null, showDetails: false });
         }
     }
+
     private handleReload = () => {
         sessionStorage.clear();
         const url = new URL(window.location.href);
         url.searchParams.set('reload', Date.now().toString());
         window.location.href = url.toString();
     };
+
     private handleGoBack = () => {
         sessionStorage.clear();
         this.setState({ hasError: false, error: null, showDetails: false });
         window.history.back();
     };
-    private toggleDetails = () => {
-        this.setState(prev => ({ showDetails: !prev.showDetails }));
-    };
+
     public render() {
         if (this.state.hasError) {
+            // In production, display ONLY the plain 404 error page
+            if (!import.meta.env.DEV) {
+                return <NotFound />;
+            }
+
+            // In development, show developer diagnostics view
             const errorMsg = this.state.error?.message || "";
             const isChunkLoadFailed = errorMsg.includes("Failed to fetch dynamically imported module") ||
                 errorMsg.includes("Importing a module script failed") ||
@@ -123,84 +135,47 @@ export default class ErrorBoundary extends Component<Props, State> {
             let localVersion = 'dev';
             try {
                 localVersion = __BUILD_VERSION__;
-            }
-            catch (_e) {
+            } catch (_e) {
                 // Build version unavailable
             }
-            return (<div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-6 text-center relative overflow-hidden">
-          
-          <div className="absolute -top-10 -left-10 w-48 h-48 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"/>
-          <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"/>
-          
-          <div className="max-w-md w-full bg-[#111118]/80 backdrop-blur-xl border border-white/5 rounded-3xl p-8 shadow-2xl space-y-6 relative z-10">
-            {isChunkLoadFailed ? (<>
-                <div className="w-16 h-16 rounded-2xl bg-sky-500/10 text-sky-400 flex items-center justify-center mx-auto mb-4 border border-sky-500/20 animate-pulse">
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3.582"/>
-                  </svg>
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-black text-white tracking-tight">Update Required</h2>
-                  <p className="text-nc-secondary text-sm leading-relaxed">
-                    A new version of NepalCasts has been deployed. A reload is required to fetch the latest application components and settings.
-                  </p>
-                </div>
-              </>) : (<>
-                <div className="w-16 h-16 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center mx-auto mb-4 border border-red-500/20">
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                  </svg>
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-black text-white tracking-tight">Application Error</h2>
-                  <p className="text-nc-secondary text-sm leading-relaxed">
-                    NepalCasts experienced an unexpected runtime crash. Try reloading the page or returning to the previous screen.
-                  </p>
-                </div>
-              </>)}
 
-            
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button variant="secondary" size="md" onClick={this.handleGoBack} className="flex-1 rounded-2xl font-bold py-3">
-                Go Back
-              </Button>
-              <Button variant="primary" size="md" onClick={this.handleReload} className="flex-1 rounded-2xl font-bold py-3">
-                {isChunkLoadFailed ? "Update & Reload" : "Reload Page"}
-              </Button>
-            </div>
-
-            
-            {(<div className="pt-4 border-t border-white/5">
-                <button type="button" onClick={this.toggleDetails} className="text-xs text-nc-secondary hover:text-white transition-colors flex items-center gap-1 mx-auto font-medium focus:outline-none">
-                  <span>{this.state.showDetails ? "Hide" : "Show"} diagnostics</span>
-                  <svg className={`w-3.5 h-3.5 transform transition-transform ${this.state.showDetails ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </button>
-
-                {this.state.showDetails && (<div className="text-left mt-4 p-4 rounded-2xl bg-black/45 text-nc-secondary font-mono text-[10px] space-y-2 overflow-x-auto max-h-48 border border-white/5 scrollbar-thin">
-                    <div className="flex justify-between border-b border-white/5 pb-1">
-                      <span className="text-white/40 uppercase font-black text-[8px] tracking-wider">Route</span>
-                      <span className="text-white/80">{window.location.pathname}</span>
+            return (
+                <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-6 text-center relative overflow-hidden font-sans">
+                    <div className="max-w-md w-full bg-[#111118] border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4 relative z-10 text-left">
+                        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                            <span className="text-xs font-mono font-bold uppercase tracking-wider text-red-400">Dev Error Boundary</span>
+                            <span className="text-[10px] text-gray-500 font-mono">DEV ONLY</span>
+                        </div>
+                        <h2 className="text-base font-bold text-white tracking-tight">
+                            {isChunkLoadFailed ? "Chunk Load Error" : "Runtime Crash"}
+                        </h2>
+                        <p className="text-gray-400 text-xs leading-relaxed">
+                            {errorMsg || "An uncaught runtime error occurred in development."}
+                        </p>
+                        <div className="flex gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={this.handleGoBack}
+                                className="flex-1 py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium transition-colors cursor-pointer"
+                            >
+                                Go Back
+                            </button>
+                            <button
+                                type="button"
+                                onClick={this.handleReload}
+                                className="flex-1 py-2 px-3 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition-colors cursor-pointer"
+                            >
+                                Reload
+                            </button>
+                        </div>
+                        {this.state.error && (
+                            <div className="mt-3 p-3 rounded-xl bg-black/80 border border-white/5 font-mono text-[10px] text-red-300 max-h-48 overflow-auto whitespace-pre-wrap">
+                                {this.state.error.stack || this.state.error.toString()}
+                            </div>
+                        )}
                     </div>
-                    <div className="flex justify-between border-b border-white/5 pb-1">
-                      <span className="text-white/40 uppercase font-black text-[8px] tracking-wider">Version</span>
-                      <span className="text-white/80">{localVersion}</span>
-                    </div>
-                    <div className="flex flex-col border-b border-white/5 pb-1">
-                      <span className="text-white/40 uppercase font-black text-[8px] tracking-wider mb-1">User Agent</span>
-                      <span className="text-white/80 break-all leading-normal">{navigator.userAgent}</span>
-                    </div>
-                    {this.state.error && (<div className="flex flex-col pt-1">
-                        <span className="text-white/40 uppercase font-black text-[8px] tracking-wider mb-1">Error Trace</span>
-                        <span className="text-red-400/90 whitespace-pre-wrap leading-normal break-all font-mono text-[10px]">
-                          {this.state.error.stack || this.state.error.toString()}
-                        </span>
-                      </div>)}
-                  </div>)}
-              </div>)}
-          </div>
-        </div>);
+                </div>
+            );
         }
         return this.props.children;
     }

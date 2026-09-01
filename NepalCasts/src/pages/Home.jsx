@@ -536,7 +536,7 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3.5px] border-[#ffb400] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
                   Hiring now
                 </span>
                 <button
@@ -644,7 +644,7 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3.5px] border-[#ffb400] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
                   Featured talents
                 </span>
                 <button
@@ -700,7 +700,7 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3.5px] border-[#ffb400] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
                   Talents by category
                 </span>
                 <button
@@ -741,12 +741,12 @@ export default function Home({ onNavigate, user }) {
               </div>
             </section>
 
-            {/* ================= NEW BORN TALENTS SECTION ================= */}
+            {/* ================= RECENTLY JOINED TALENTS SECTION ================= */}
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3.5px] border-[#ffb400] pointer-events-none" />
-                  New born talents
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
+                  Recently joined
                 </span>
                 <button
                   onClick={() => onNavigate('listing')}
@@ -829,7 +829,7 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3.5px] border-[#ffb400] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
                   Trending talents
                 </span>
                 <button
@@ -918,7 +918,7 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0 space-y-2.5">
               <div className="flex items-center justify-between mb-2">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[3.5px] border-[#ffb400] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
                   Our Goals
                 </span>
               </div>

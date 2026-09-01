@@ -1,71 +1,49 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
-import { motion } from 'framer-motion';
-import { Film, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 export default function NotFound() {
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#060608] text-white flex flex-col items-center justify-center px-4 relative overflow-hidden select-none">
-      <Helmet>
-        <title>404 — Screen Not Found | NepalCasts</title>
-      </Helmet>
+    <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center px-4 font-sans select-none">
+      <SEO title="404 — Page Not Found | NepalCasts" description="This page could not be found." noindex />
 
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-[#ffb400]/5 rounded-full blur-[120px] pointer-events-none"/>
+      <div className="flex flex-col items-center text-center max-w-md">
+        <h1 className="text-7xl sm:text-8xl font-black tracking-tight text-white mb-3">
+          404
+        </h1>
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 tracking-tight">
+          Page not found
+        </h2>
+        <p className="text-sm text-[#9ca3af] leading-normal font-normal mb-8 max-w-xs">
+          The page you are looking for doesn’t exist or has been moved.
+        </p>
 
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"/>
-
-      <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-md bg-white/[0.01] border border-white/5 rounded-[2.5rem] p-8 sm:p-12 backdrop-blur-2xl shadow-2xl text-center space-y-8 relative overflow-hidden"
-      >
-        <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#ffb400] to-transparent"/>
-
-        <div className="flex justify-center">
-          <motion.div
-            animate={{ rotate: [0, -8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-            className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#ffb400] shadow-inner"
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleBack}
+            type="button"
+            className="px-5 py-2.5 rounded-xl bg-[#18181b] hover:bg-[#222226] border border-[#27272a] text-gray-300 hover:text-white font-medium text-sm transition-all cursor-pointer active:scale-95"
           >
-            <Film size={32} strokeWidth={1.5}/>
-          </motion.div>
-        </div>
-
-        <div className="relative">
-          <h1 className="text-8xl font-black text-white/[0.03] tracking-widest leading-none select-none">
-            404
-          </h1>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <motion.span
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="text-4xl font-extrabold text-white tracking-normal uppercase bg-gradient-to-r from-white via-white to-amber-300 bg-clip-text text-transparent"
-            >
-              Cut!
-            </motion.span>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Scene/Screen Not Found</h2>
-          <p className="text-xs sm:text-sm text-nc-secondary leading-relaxed max-w-xs mx-auto">
-            The page you are looking for has been moved, deleted, or does not exist in our production script.
-          </p>
-        </div>
-
-        <div className="pt-2">
+            Go back
+          </button>
           <Link
             to="/"
-            className="inline-flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-[#ffb400] hover:bg-[#ffa000] text-black font-extrabold text-sm rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-[0_0_20px_rgba(255,180,0,0.2)] hover:shadow-[0_0_35px_rgba(255,180,0,0.4)] cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-white hover:bg-gray-200 text-black font-semibold text-sm transition-all cursor-pointer active:scale-95 shadow-sm"
           >
-            <ArrowLeft size={16} strokeWidth={2.5}/>
-            <span>Return to Script</span>
+            Go home
           </Link>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

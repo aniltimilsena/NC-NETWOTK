@@ -57,12 +57,12 @@ describe('Authentication - SignIn Page', () => {
         localStorage.clear();
     });
 
-    it('renders the Clerk SignIn component and layout elements', () => {
+    it('renders the SignIn form and layout elements', () => {
         render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
 
-        expect(screen.getByText('Remember me')).toBeInTheDocument();
+        expect(screen.getByText(/Terms of Service/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /forgot password\?/i })).toBeInTheDocument();
-        expect(screen.getByText('Continue with Google')).toBeInTheDocument();
+        expect(screen.getByText(/Log in with Google/i)).toBeInTheDocument();
     });
 
     it('navigates to forgot password page when clicking Forgot Password', () => {

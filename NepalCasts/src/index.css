@@ -21,20 +21,18 @@
     padding: 0;
     background-color: #050508;
     color: #D1D5DB;
-    font-family: 'Figtree', -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
-    line-height: 1.6;
-    letter-spacing: 0.03em;
+    font-family: 'Inter', 'Figtree', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     overscroll-behavior-y: contain;
   }
 
-  p, span, a, button, input, textarea, select, label {
-    letter-spacing: 0.04em;
-  }
-
   h1, h2, h3, h4, h5, h6 {
-    letter-spacing: 0.035em;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
   }
 
   /* Cinematic Studio Dark Workspace Utility Classes */
@@ -51,22 +49,14 @@
     box-shadow: 0 0 25px rgba(250, 204, 21, 0.08);
   }
 
-  /* Softened off-white contrast for headings and names to prevent eye glare and flashiness */
+  /* High clarity typography headings */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    color: #e2e8f0;
-  }
-
-  .text-white {
-    color: #e2e8f0;
-  }
-
-  .text-gray-100 {
-    color: #cbd5e1;
+    color: #ffffff;
   }
 
   ::-webkit-scrollbar {

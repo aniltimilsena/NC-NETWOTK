@@ -136,9 +136,11 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
       </Route>
 
       {/* Error Pages */}
-      <Route path="/403" element={<Forbidden />} />
+      <Route path="/402" element={<NotFound />} />
+      <Route path="/403" element={<NotFound />} />
       <Route path="/404" element={<NotFound />} />
-      <Route path="/500" element={<ServerError />} />
+      <Route path="/405" element={<NotFound />} />
+      <Route path="/500" element={<NotFound />} />
 
       {/* Fallback 404 Route */}
       <Route path="*" element={<NotFound />} />
