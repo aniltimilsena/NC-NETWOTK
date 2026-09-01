@@ -8,7 +8,7 @@ import { matchesCategory } from '../constants/categories';
 import { subscribeToProfile } from '../features/profile/services/profile';
 import { AvatarScrollSkeleton } from '../components/ui/Skeleton';
 import PullToRefresh from '../components/ui/PullToRefresh';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Pin } from 'lucide-react';
 
 /* eslint-disable no-secrets/no-secrets */
 const HERO_BACKGROUND_PHOTOS = [
@@ -463,7 +463,7 @@ export default function Home({ onNavigate, user }) {
             {/* Top Right Slogan in One Line with Typewriter Font & Live Typing Animation */}
             <div className="absolute top-16 sm:top-18 right-3 sm:right-5 z-20 pointer-events-none flex items-center justify-end">
               <h1 className="font-mono font-bold text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] flex items-center gap-1.5 sm:gap-2">
-                <span className="text-[#522C69] shrink-0">Discover</span>
+                <span className="text-white shrink-0">Discover</span>
                 <span className="text-white">{typewriterText}</span>
                 <span className="inline-block w-1.5 sm:w-2 h-3.5 sm:h-4 bg-[#522C69] ml-0.5 animate-pulse shrink-0" />
               </h1>
@@ -587,18 +587,20 @@ export default function Home({ onNavigate, user }) {
                               <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
                             </svg>
                           </div>
-                          {/* Category / Roles badge on top left */}
+                          {/* Category / Roles tag - Watermark Translucent Hanging Style */}
                           <div
-                            className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-black/80 backdrop-blur-sm text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-sm truncate max-w-[85%]"
+                            className="absolute top-0 left-3 sm:left-4 z-10 px-3.5 pt-1.5 pb-2 rounded-b-xl bg-gradient-to-b from-[#522C69]/45 via-[#522C69]/20 to-transparent backdrop-blur-[2px] flex items-center justify-center max-w-[85%] border-0 outline-none select-none"
                             title={
                               Array.isArray(call.roles) && call.roles.length > 0
                                 ? call.roles.map(r => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(' • ')
                                 : (call.type || call.category || 'Audition')
                             }
                           >
-                            {Array.isArray(call.roles) && call.roles.length > 0
-                              ? call.roles.map(r => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(' • ') || (call.type || call.category || 'Audition')
-                              : (call.type || call.category || 'Audition')}
+                            <span className="text-white font-black text-xs sm:text-sm uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] truncate">
+                              {Array.isArray(call.roles) && call.roles.length > 0
+                                ? call.roles.map(r => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(' • ') || (call.type || call.category || 'Audition')
+                                : (call.type || call.category || 'Audition')}
+                            </span>
                           </div>
                           {/* Deadline on bottom right */}
                           {call.deadline && (

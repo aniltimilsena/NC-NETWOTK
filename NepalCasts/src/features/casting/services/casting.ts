@@ -153,42 +153,45 @@ export const dispatchTargetedAuditionAlerts = async (callId: string, callData: a
 
 export const createCastingCall = async (callData: any) => {
     try {
-        const currentUserUid = AuthService.getUserId();
+        const currentUserUid = AuthService.getUserId() || callData.creatorId || callData.createdBy;
         if (!currentUserUid) {
             return { id: null, error: "Authentication required" };
         }
-        const response = await apiClient.post<{
-            id: string;
-        }>("/casting", callData, { timeout: 2000 });
-        const createdId = response.data?.id || callData.id;
-        if (createdId) {
-            dispatchTargetedAuditionAlerts(createdId, callData);
-        }
-        return { id: createdId || null, error: null };
-    }
-    catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Failed to create casting call";
-        console.warn("Backend createCastingCall failed, attempting client-side fallback write:", message);
+
+        let createdId: string | null = null;
         try {
-            const currentUserUid = AuthService.getUserId();
-            if (!currentUserUid) {
-                return { id: null, error: "Authentication required" };
-            }
+            const response = await apiClient.post<{
+                id: string;
+            }>("/casting", callData, { timeout: 3000 });
+            createdId = response.data?.id || callData.id;
+        } catch (backendError) {
+            console.warn("Backend /casting endpoint unavailable, writing to Firestore directly:", backendError);
+        }
+
+        if (!createdId) {
             const { id, ...dataToSave } = callData;
             const finalId = id || doc(collection(db, COLLECTIONS.CASTING_CALLS)).id;
             await setDoc(doc(db, COLLECTIONS.CASTING_CALLS, finalId), {
                 ...dataToSave,
+                id: finalId,
                 createdAt: serverTimestamp(),
                 createdBy: currentUserUid,
-                status: dataToSave.status || "Open",
+                creatorId: currentUserUid,
+                status: dataToSave.status || "active",
             });
-            dispatchTargetedAuditionAlerts(finalId, callData);
-            return { id: finalId, error: null };
+            createdId = finalId;
         }
-        catch (clientError: any) {
-            console.error("Client fallback createCastingCall error:", clientError.message);
-            return { id: null, error: clientError.message || "Failed to create casting call on client" };
+
+        if (createdId) {
+            dispatchTargetedAuditionAlerts(createdId, callData).catch((err) => {
+                console.warn("Background audition alerts dispatch failed:", err);
+            });
         }
+        return { id: createdId, error: null };
+    }
+    catch (clientError: any) {
+        console.error("Client createCastingCall error:", clientError);
+        return { id: null, error: clientError.message || "Failed to create casting call" };
     }
 };
 export const deleteCastingCallAdmin = async (id: string) => {

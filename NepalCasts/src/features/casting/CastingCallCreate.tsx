@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Upload, ChevronLeft } from 'lucide-react';
+import { Plus, X, Upload, ChevronLeft, RotateCcw } from 'lucide-react';
 import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
 import { createCastingCall, uploadProfileMedia } from '../../services';
@@ -25,6 +25,8 @@ const CATEGORY_OPTIONS = [
   'Other',
 ];
 
+const DRAFT_STORAGE_KEY = 'nepalcasts_casting_call_draft';
+
 interface CastingCallCreateProps {
   onNavigate?: (page: string, param?: any) => void;
   user?: any;
@@ -40,19 +42,34 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
       }
     }
   }, [user, onNavigate, showAlert]);
-  const [castingId] = useState(() => doc(collection(db, 'casting_calls')).id);
-  const [step, setStep] = useState(1);
+
+  const loadSavedDraft = () => {
+    try {
+      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn('Failed to load casting draft:', e);
+    }
+    return null;
+  };
+
+  const initialDraft = loadSavedDraft();
+
+  const [castingId] = useState(() => initialDraft?.castingId || doc(collection(db, 'casting_calls')).id);
+  const [step, setStep] = useState(() => initialDraft?.step || 1);
   const [isLoading, setIsLoading] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState('');
+  const [thumbnailPreview, setThumbnailPreview] = useState(() => initialDraft?.thumbnailPreview || initialDraft?.form?.thumbnail || '');
   const [horizontalThumbnailFile, setHorizontalThumbnailFile] = useState<File | null>(null);
-  const [horizontalThumbnailPreview, setHorizontalThumbnailPreview] = useState('');
-  const [isOtherType, setIsOtherType] = useState(false);
-  const [customType, setCustomType] = useState('');
-  const [isOtherCategory, setIsOtherCategory] = useState(false);
-  const [customCategory, setCustomCategory] = useState('');
+  const [horizontalThumbnailPreview, setHorizontalThumbnailPreview] = useState(() => initialDraft?.horizontalThumbnailPreview || initialDraft?.form?.horizontalThumbnail || '');
+  const [isOtherType, setIsOtherType] = useState(() => Boolean(initialDraft?.isOtherType));
+  const [customType, setCustomType] = useState(() => initialDraft?.customType || '');
+  const [isOtherCategory, setIsOtherCategory] = useState(() => Boolean(initialDraft?.isOtherCategory));
+  const [customCategory, setCustomCategory] = useState(() => initialDraft?.customCategory || '');
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState(() => initialDraft?.form || {
     title: '',
     type: 'Actor',
     category: 'Nepali Feature Film',
@@ -67,6 +84,70 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
     requirements: { wardrobe: false, travel: false, headshot: false },
     otherRequirements: '',
   });
+
+  // Auto-save form draft whenever values change
+  useEffect(() => {
+    const hasMeaningfulData =
+      form.title ||
+      form.location ||
+      form.description ||
+      form.budget ||
+      form.deadline ||
+      (form.roles && form.roles.some((r: any) => r?.name && r.name.trim()));
+
+    if (hasMeaningfulData) {
+      try {
+        const draftData = {
+          castingId,
+          form,
+          step,
+          isOtherType,
+          customType,
+          isOtherCategory,
+          customCategory,
+          thumbnailPreview: thumbnailPreview && thumbnailPreview.startsWith('http') ? thumbnailPreview : '',
+          horizontalThumbnailPreview: horizontalThumbnailPreview && horizontalThumbnailPreview.startsWith('http') ? horizontalThumbnailPreview : '',
+          savedAt: new Date().toISOString(),
+        };
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
+      } catch (e) {
+        // ignore quota errors
+      }
+    }
+  }, [castingId, form, step, isOtherType, customType, isOtherCategory, customCategory, thumbnailPreview, horizontalThumbnailPreview]);
+
+  const handleClearDraft = () => {
+    try {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      setForm({
+        title: '',
+        type: 'Actor',
+        category: 'Nepali Feature Film',
+        location: '',
+        description: '',
+        thumbnail: '',
+        horizontalThumbnail: '',
+        budget: '',
+        deadline: '',
+        contactInfo: '',
+        roles: [{ name: '', ageRange: '', description: '', pay: 'Paid' }],
+        requirements: { wardrobe: false, travel: false, headshot: false },
+        otherRequirements: '',
+      });
+      setStep(1);
+      setThumbnailFile(null);
+      setThumbnailPreview('');
+      setHorizontalThumbnailFile(null);
+      setHorizontalThumbnailPreview('');
+      setIsOtherType(false);
+      setCustomType('');
+      setIsOtherCategory(false);
+      setCustomCategory('');
+      showAlert?.('Draft Cleared', 'info', 'Form has been reset to start fresh.');
+    } catch (e) {
+      // ignore
+    }
+  };
 
   const handlePublish = async () => {
     if (!user) {
@@ -149,6 +230,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
       if (result.error) {
         showAlert?.('Publication Failed', 'error', result.error);
       } else {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
         showAlert?.('Success!', 'success', 'Your casting call has been published to the network.');
         if (onNavigate) onNavigate('casting');
       }
@@ -186,21 +268,31 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
     <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-12 font-sans">
       <div className="max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-8 w-full overflow-hidden">
         {/* Header */}
-        <div className="relative mb-6 sm:mb-8 flex items-center justify-between sm:block">
+        <div className="relative mb-6 sm:mb-8 flex items-center justify-between">
           <button
             type="button"
             onClick={() => onNavigate && onNavigate('back')}
-            className="sm:absolute sm:left-0 sm:top-1/2 sm:-translate-y-1/2 w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
             title="Go Back"
             aria-label="Go Back"
           >
             <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
           </button>
 
-          <div className="flex-1 text-center pr-6 sm:pr-0">
+          <div className="flex-1 text-center px-3">
             <h1 className="text-xl sm:text-4xl font-black text-white tracking-tight">Post a Casting Call</h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Find the perfect talent for your next production</p>
           </div>
+
+          <button
+            type="button"
+            onClick={handleClearDraft}
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-white/10 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0 flex items-center justify-center"
+            title="Reset Form Draft"
+            aria-label="Reset Form Draft"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Mobile Step Indicator */}
