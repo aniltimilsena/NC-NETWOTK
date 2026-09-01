@@ -30,10 +30,10 @@ export default function ToastNotification({ message, type, onClose }: ToastProps
         },
         info: {
             icon: Info,
-            color: 'text-[#ffb400]',
-            bg: 'bg-[#ffb400]/10',
-            border: 'border-[#ffb400]/20',
-            shadow: 'shadow-[#ffb400]/10',
+            color: 'text-[#522C69]',
+            bg: 'bg-[#522C69]/10',
+            border: 'border-[#522C69]/20',
+            shadow: 'shadow-[#522C69]/10',
             title: 'Information'
         },
         error: {

@@ -99,7 +99,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                             placeholder="Enter current password"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
+                            className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
                         />
                     </div>
 
@@ -111,7 +111,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                                 placeholder="Enter new password (min. 6 chars)"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
+                                className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
                             />
                         </div>
 
@@ -122,7 +122,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                                 placeholder="Confirm new password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
+                                className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
                             />
                         </div>
                     </div>

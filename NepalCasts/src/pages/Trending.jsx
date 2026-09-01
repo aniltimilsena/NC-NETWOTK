@@ -179,7 +179,7 @@ export default function Trending({ onNavigate, user }) {
   ];
   const getRankColor = (rank) => {
     if (rank === 1)
-      return '#FFD700';
+      return '#522C69';
     if (rank === 2)
       return '#C0C0C0';
     if (rank === 3)
@@ -217,7 +217,7 @@ export default function Trending({ onNavigate, user }) {
                   setVisibleCount(10);
                   setIsFilterDropdownOpen(false);
                 }} className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${selectedCategory === 'All'
-                  ? 'text-[#ffb400] bg-[#ffb400]/10'
+                  ? 'text-[#522C69] bg-[#522C69]/10'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                   {t('nav_talent_directory')}
                 </button>
@@ -228,7 +228,7 @@ export default function Trending({ onNavigate, user }) {
                     setVisibleCount(10);
                     setIsFilterDropdownOpen(false);
                   }} className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
-                    ? 'text-[#ffb400] bg-[#ffb400]/10'
+                    ? 'text-[#522C69] bg-[#522C69]/10'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                     {getCategoryConfig(cat).label}
                   </button>);
@@ -278,7 +278,7 @@ export default function Trending({ onNavigate, user }) {
 
 
           <div className="flex-1 flex flex-col items-center">
-            <Crown className="w-8 h-8 text-yellow-400/20 mb-2 fill-yellow-400/5 animate-pulse" />
+            <Crown className="w-8 h-8 text-white/20 mb-2 fill-yellow-400/5 animate-pulse" />
             <div className="w-32 h-32 rounded-full skeleton border-2 border-yellow-400/10 mb-6" />
             <div className="h-5 skeleton w-28 mb-2" />
             <div className="h-3.5 skeleton w-20 mb-4" />
@@ -346,7 +346,7 @@ export default function Trending({ onNavigate, user }) {
               <div className="relative mb-6">
 
                 {item.pos === 0 && (<div className="absolute -top-7 left-1/2 -translate-x-1/2 z-10 animate-bounce">
-                  <Crown className="w-8 h-8 text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)] fill-yellow-400" />
+                  <Crown className="w-8 h-8 text-white drop-shadow-[0_0_10px_rgba(250,204,21,0.5)] fill-yellow-400" />
                 </div>)}
 
                 <div className={`p-1.5 rounded-full border-2 bg-black/40 ${item.pos === 0 ? 'border-yellow-400' : item.pos === 1 ? 'border-slate-300' : 'border-amber-700'} relative`}>
@@ -381,7 +381,7 @@ export default function Trending({ onNavigate, user }) {
                   <p className="text-xl sm:text-2xl font-black text-white">{Math.max(0, prof.followers || 0)}</p>
                 </div>
 
-                {isNew && (<span className="self-center text-[#ffb400] font-black text-[9px] sm:text-[10px] uppercase tracking-wider">
+                {isNew && (<span className="self-center text-[#522C69] font-black text-[9px] sm:text-[10px] uppercase tracking-wider">
                   New
                 </span>)}
 
@@ -427,10 +427,10 @@ export default function Trending({ onNavigate, user }) {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h3 className="font-apple font-extrabold text-white text-sm sm:text-base tracking-tight truncate group-hover:text-[#ffb400] transition-colors">
+                      <h3 className="font-apple font-extrabold text-white text-sm sm:text-base tracking-tight truncate group-hover:text-[#522C69] transition-colors">
                         {prof.name}
                       </h3>
-                      {isNew && (<span className="shrink-0 text-[#ffb400] font-black text-[9px] sm:text-[10px] uppercase tracking-wider">
+                      {isNew && (<span className="shrink-0 text-[#522C69] font-black text-[9px] sm:text-[10px] uppercase tracking-wider">
                         New
                       </span>)}
                     </div>

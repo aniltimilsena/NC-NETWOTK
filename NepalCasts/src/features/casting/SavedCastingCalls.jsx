@@ -219,7 +219,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
           {/* Empty State */}
           {!loading && savedCalls.length === 0 && (
             <div className="py-16 text-center space-y-5 bg-black rounded-xl border border-white/10 p-6 sm:p-10">
-              <div className="w-16 h-16 rounded-full bg-[#ffb400]/10 border border-[#ffb400]/20 text-[#ffb400] flex items-center justify-center mx-auto shadow-xl">
+              <div className="w-16 h-16 rounded-full bg-[#522C69]/10 border border-[#522C69]/20 text-[#522C69] flex items-center justify-center mx-auto shadow-xl">
                 <BookmarkX className="w-8 h-8" />
               </div>
               <div className="space-y-1.5">
@@ -287,7 +287,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                       <div className="space-y-1 sm:space-y-1.5">
                         {/* Top Row: Category Tag & Delete action */}
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[#ffb400] font-bold text-[10px] sm:text-[11px] tracking-wider uppercase truncate">
+                          <span className="text-[#522C69] font-bold text-[10px] sm:text-[11px] tracking-wider uppercase truncate">
                             {categoryTag}
                           </span>
 
@@ -322,7 +322,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                         </p>
 
                         {/* Salary / Compensation */}
-                        <p className="text-xs sm:text-sm font-bold text-[#ffb400] pt-0.5 truncate">
+                        <p className="text-xs sm:text-sm font-bold text-[#522C69] pt-0.5 truncate">
                           Salary: {call.budget || call.salary || 'NPR Negotiable'}
                         </p>
                       </div>
@@ -339,7 +339,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                         <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-md text-[9px] sm:text-xs font-black tracking-wider uppercase border ${
                           deadlineBadge.isClosed
                             ? 'bg-[#222] border-white/10 text-gray-400'
-                            : 'bg-[#ffb400]/15 border-[#ffb400]/30 text-[#ffb400]'
+                            : 'bg-[#522C69]/15 border-[#522C69]/30 text-[#522C69]'
                         }`}>
                           {deadlineBadge.label}
                         </span>

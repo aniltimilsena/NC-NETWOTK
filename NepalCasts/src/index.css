@@ -45,8 +45,8 @@
   }
 
   .studio-card-gold {
-    border-color: rgba(250, 204, 21, 0.25) !important;
-    box-shadow: 0 0 25px rgba(250, 204, 21, 0.08);
+    border-color: rgba(82, 44, 105, 0.45) !important;
+    box-shadow: 0 0 25px rgba(82, 44, 105, 0.2);
   }
 
   /* High clarity typography headings */
@@ -518,7 +518,7 @@ html.font-size-large {
   display: inline-block;
   width: 3px;
   height: 20px;
-  background-color: #FFD700;
+  background-color: #522C69;
   margin-right: 8px;
   vertical-align: middle;
 }
@@ -548,8 +548,8 @@ html.font-size-large {
   width: 16px;
   height: 16px;
   aspect-ratio: 1 / 1;
-  background-color: #ffb400;
-  color: #0A0A0A;
+  background-color: #522C69;
+  color: #ffffff;
   font-size: 9px;
   font-weight: 900;
   border-radius: 9999px;
@@ -651,12 +651,12 @@ body.font-devanagari * {
 }
 
 .badge-premium-shimmer {
-  background: linear-gradient(110deg, #d97706 0%, #f59e0b 25%, #fef08a 50%, #f59e0b 75%, #d97706 100%) !important;
+  background: linear-gradient(110deg, #321b40 0%, #522C69 25%, #764197 50%, #522C69 75%, #321b40 100%) !important;
   background-size: 200% 100% !important;
   animation: gold-shimmer 3s infinite linear !important;
-  border: 1px solid rgba(254, 240, 138, 0.8) !important;
-  box-shadow: 0 0 14px rgba(245, 158, 11, 0.5), 0 0 4px rgba(254, 240, 138, 0.4) !important;
-  color: #090d16 !important;
+  border: 1px solid rgba(118, 65, 151, 0.8) !important;
+  box-shadow: 0 0 14px rgba(82, 44, 105, 0.5), 0 0 4px rgba(118, 65, 151, 0.4) !important;
+  color: #ffffff !important;
 }
 
 /* Verified Blue Seal Utility */

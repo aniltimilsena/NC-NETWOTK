@@ -19,13 +19,13 @@ export const CATEGORY_META: Omit<CategoryConfig, 'icon'>[] = [
 export const CATEGORIES = CATEGORY_META.map((c) => c.id);
 export const getCategoryColor = (nameOrId: string): string => {
     const found = CATEGORY_META.find((c) => c.id.toLowerCase() === (nameOrId ?? '').toLowerCase());
-    return found?.color ?? '#ffb400';
+    return found?.color ?? '#522C69';
 };
 export const getCategoryBgColor = (nameOrId: string): string => {
     const found = CATEGORY_META.find((c) => c.id.toLowerCase() === (nameOrId ?? '').toLowerCase());
-    return found?.bgColor ?? 'rgba(255,180,0,0.10)';
+    return found?.bgColor ?? 'rgba(82, 44, 105,0.20)';
 };
 export const getCategoryMeta = (nameOrId: string) => {
     const found = CATEGORY_META.find((c) => c.id.toLowerCase() === (nameOrId ?? '').toLowerCase());
-    return found ?? { id: nameOrId, label: nameOrId, color: '#ffb400', bgColor: 'rgba(255,180,0,0.10)' };
+    return found ?? { id: nameOrId, label: nameOrId, color: '#522C69', bgColor: 'rgba(82, 44, 105,0.20)' };
 };

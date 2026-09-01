@@ -68,23 +68,23 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5 text-left">
               <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Project Title</label>
-              <input type="text" placeholder="e.g. Kathmandu Dreams Film" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
+              <input type="text" placeholder="e.g. Kathmandu Dreams Film" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
             </div>
 
             <div className="space-y-1.5 text-left">
               <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Your Role</label>
-              <input type="text" placeholder="e.g. Lead Actor, Supporting, Cameraman" value={role} onChange={(e) => setRole(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
+              <input type="text" placeholder="e.g. Lead Actor, Supporting, Cameraman" value={role} onChange={(e) => setRole(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
             </div>
 
             <div className="space-y-1.5 text-left">
               <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Year / Period</label>
-              <input type="text" placeholder="e.g. 2024" value={year} onChange={(e) => setYear(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
+              <input type="text" placeholder="e.g. 2024" value={year} onChange={(e) => setYear(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
             </div>
           </div>
 
           <div className="space-y-1.5 text-left">
             <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Description</label>
-            <textarea rows={3} placeholder="Detail your responsibilities, working crew, or specific awards received..." value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none resize-none"/>
+            <textarea rows={3} placeholder="Detail your responsibilities, working crew, or specific awards received..." value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none resize-none"/>
           </div>
 
           <div className="flex justify-end">
@@ -101,15 +101,15 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
 
         {experienceList.length > 0 ? (<div className="space-y-3">
             {experienceList.map((item, idx) => (<div key={idx} className="flex gap-4 p-4 bg-white/5 border border-white/5 rounded-xl items-start">
-                <div className="w-10 h-10 rounded-xl bg-[#ffb400]/10 border border-[#ffb400]/20 flex items-center justify-center shrink-0">
-                  <Briefcase className="w-5 h-5 text-[#ffb400]"/>
+                <div className="w-10 h-10 rounded-xl bg-[#522C69]/10 border border-[#522C69]/20 flex items-center justify-center shrink-0">
+                  <Briefcase className="w-5 h-5 text-white"/>
                 </div>
                 <div className="flex-1 space-y-1 text-left min-w-0">
                   <div className="flex justify-between items-start gap-4">
                     <h3 className="text-sm font-bold text-white truncate">{item.title}</h3>
                     <span className="text-[10px] text-nc-muted font-bold whitespace-nowrap">{item.year}</span>
                   </div>
-                  <span className="text-xs text-[#ffb400] font-semibold block uppercase tracking-wider">
+                  <span className="text-xs text-[#522C69] font-semibold block uppercase tracking-wider">
                     {item.role}
                   </span>
                   {item.description && (<p className="text-xs text-nc-muted leading-relaxed mt-2">{item.description}</p>)}

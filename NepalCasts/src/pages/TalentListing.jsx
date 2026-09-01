@@ -374,7 +374,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                                     setActiveSort(opt.id);
                                                     setIsSortDropdownOpen(false);
                                                 }} className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
-                                                    ? 'text-[#ffb400] bg-[#ffb400]/10'
+                                                    ? 'text-[#522C69] bg-[#522C69]/10'
                                                     : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                                                     {opt.label}
                                                 </button>);
@@ -439,7 +439,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                         <div className="flex items-center gap-4 min-w-0">
                                             <Avatar userId={talent.id || talent.uid} user={talent} src={talentPhoto} size="lg" name={talent.name} className="w-12 h-12 md:w-14 md:h-14 transition-transform group-hover:scale-105 duration-300" />
                                             <div className="min-w-0 text-left">
-                                                <h3 className="font-apple font-bold text-white text-base md:text-lg tracking-wide truncate flex items-center gap-1.5 group-hover:text-[#ffb400] transition-colors duration-300">
+                                                <h3 className="font-apple font-bold text-white text-base md:text-lg tracking-wide truncate flex items-center gap-1.5 group-hover:text-[#522C69] transition-colors duration-300">
                                                     {talent.name}
                                                     {talent.verified && (<span className="verified-badge shrink-0" title="Verified Talent">✓</span>)}
                                                     {talent.openToWork && (<span className="w-1.5 h-1.5 rounded-full bg-green-500 ring-2 ring-green-500/20" title="Open to Work" />)}
@@ -476,7 +476,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                                             setActiveShareTalent(talent);
                                                             setActiveMenuId(null);
                                                         }} className="w-full px-4 py-2.5 text-xs text-gray-300 hover:text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer text-left">
-                                                            <Share2 size={14} className="text-[#ffb400]" />
+                                                            <Share2 size={14} className="text-white" />
                                                             Share Profile
                                                         </button>
                                                     </div>

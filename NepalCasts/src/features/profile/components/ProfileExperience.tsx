@@ -67,7 +67,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
           <button
             type="button"
             onClick={() => setShowAddForm(true)}
-            className="font-apple text-xs sm:text-sm font-semibold text-[#ffb400] hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5"
+            className="font-apple text-xs sm:text-sm font-semibold text-[#522C69] hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
             <span>Add Experience</span>
@@ -94,14 +94,14 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               required
-              className="bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#ffb400] transition-colors"
+              className="bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69] transition-colors"
             />
             <input
               type="text"
               placeholder="Production / Company (e.g. Maya Short Film)"
               value={newCompany}
               onChange={(e) => setNewCompany(e.target.value)}
-              className="bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#ffb400] transition-colors"
+              className="bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69] transition-colors"
             />
           </div>
 
@@ -110,7 +110,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
             placeholder="Year / Period (e.g. 2024, 2021 - 2023)"
             value={newYear}
             onChange={(e) => setNewYear(e.target.value)}
-            className="w-full bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#ffb400] transition-colors"
+            className="w-full bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69] transition-colors"
           />
 
           <textarea
@@ -118,7 +118,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
             rows={2}
-            className="w-full bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#ffb400] transition-colors resize-none"
+            className="w-full bg-[#181818] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69] transition-colors resize-none"
           />
 
           <div className="flex items-center justify-end gap-2 pt-1">
@@ -132,7 +132,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
             <button
               type="submit"
               disabled={isSaving}
-              className="px-4 py-1.5 rounded-lg bg-[#ffb400] hover:bg-[#ffa000] text-black font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-1.5 rounded-lg bg-[#522C69] hover:bg-[#663782] text-white font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm"
             >
               {isSaving ? (
                 <>
@@ -199,7 +199,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
             onClick={() => (onNavigate ? onNavigate('/settings/experience') : setShowAddForm(true))}
             className="border border-dashed border-white/10 bg-black rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-white/20 transition-colors group"
           >
-            <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#ffb400] mb-1" />
+            <Plus className="w-4 h-4 text-gray-400 group-hover:text-white mb-1" />
             <span className="text-xs font-semibold text-gray-400 group-hover:text-white">
               Add Experience
             </span>

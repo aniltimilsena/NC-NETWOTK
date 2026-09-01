@@ -32,7 +32,7 @@ function LanguageSettings({ showAlert }: { showAlert: (msg: string, type?: any) 
         <div className="bg-[#111] border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6">
             <div>
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Globe className="w-6 h-6 text-[#ffb400]" />
+                    <Globe className="w-6 h-6 text-white" />
                     <span>Language & Regional Preference</span>
                 </h3>
                 <p className="text-gray-400 text-sm mt-1">
@@ -49,7 +49,7 @@ function LanguageSettings({ showAlert }: { showAlert: (msg: string, type?: any) 
                             onClick={() => handleSelect(lang.code)}
                             className={`flex flex-col items-start p-5 rounded-2xl border text-left transition-all cursor-pointer ${
                                 isSelected
-                                    ? 'bg-[#ffb400]/10 border-[#ffb400] text-white shadow-lg'
+                                    ? 'bg-[#522C69]/10 border-[#522C69] text-white shadow-lg'
                                     : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20'
                             }`}
                         >
@@ -57,7 +57,7 @@ function LanguageSettings({ showAlert }: { showAlert: (msg: string, type?: any) 
                             <span className="font-bold text-base text-white">{lang.label}</span>
                             <span className="text-xs text-gray-400 mt-1">{lang.desc}</span>
                             {isSelected && (
-                                <span className="mt-3 text-xs font-extrabold text-[#ffb400] bg-[#ffb400]/20 px-2.5 py-1 rounded-full">
+                                <span className="mt-3 text-xs font-extrabold text-[#522C69] bg-[#522C69]/20 px-2.5 py-1 rounded-full">
                                     ✓ Active
                                 </span>
                             )}
@@ -162,7 +162,7 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
                 <p className="text-nc-muted text-sm max-w-xs mb-6">
                     Please log in to manage your account settings.
                 </p>
-                <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-[#ffb400] hover:bg-[#ffa000] text-black font-bold rounded-2xl cursor-pointer">
+                <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-[#522C69] hover:bg-[#663782] text-white font-bold rounded-2xl cursor-pointer">
                     Sign In
                 </button>
             </div>

@@ -259,7 +259,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
 
 
-              </>) : (<Link to="/signup" className="bg-[#ffb400] hover:bg-[#ffa000] text-black text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-xl font-bold transition-all ml-1 shadow-md active:scale-95 flex items-center justify-center">
+              </>) : (<Link to="/signup" className="bg-[#522C69] hover:bg-[#663782] text-white text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-xl font-bold transition-all ml-1 shadow-md active:scale-95 flex items-center justify-center">
                 Join Now
               </Link>)}
 
@@ -530,7 +530,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
     <AnimatePresence>
       {showSearchOverlay && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-start pt-6 px-4 overflow-y-auto">
 
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-gradient-to-r from-[#ffb400]/5 to-transparent blur-[100px] rounded-full pointer-events-none z-0" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-gradient-to-r from-[#522C69]/5 to-transparent blur-[100px] rounded-full pointer-events-none z-0" />
 
         <div className="w-full max-w-3xl animate-slide-up relative z-10 pb-12">
           <div className="relative z-50">

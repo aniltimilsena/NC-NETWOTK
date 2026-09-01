@@ -32,7 +32,7 @@ export default function About() {
             <span>Nepal's Premier Film & Talent Network</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-sans font-black tracking-tight text-white leading-tight">
-            Empowering the Future of <span className="text-[#ffb400]">Nepali Cinema</span>
+            Empowering the Future of <span className="text-[#522C69]">Nepali Cinema</span>
           </h1>
           <p className="text-gray-400 text-sm sm:text-base lg:text-lg max-w-2xl mx-auto leading-relaxed">
             NepalCasts bridges the gap between verified talent and visionary filmmakers. We provide a modern, transparent, and scam-free ecosystem for auditions, talent discovery, and production collaboration.
@@ -93,7 +93,7 @@ export default function About() {
           <div className="flex justify-center gap-4 pt-2">
             <button
               onClick={() => navigate('/talents')}
-              className="px-6 py-3.5 rounded-xl bg-[#ffb400] hover:bg-[#ffa000] text-black font-bold text-xs uppercase tracking-wider transition-all inline-flex items-center gap-2 shadow-md cursor-pointer active:scale-95"
+              className="px-6 py-3.5 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white font-bold text-xs uppercase tracking-wider transition-all inline-flex items-center gap-2 shadow-md cursor-pointer active:scale-95"
             >
               <span>Explore Talents</span>
               <ArrowRight className="w-4 h-4 text-black" />

@@ -31,7 +31,7 @@ const getNotificationDetails = (notif) => {
         if (body.includes('shortlisted') || notif.status === 'shortlisted') {
             displayElement = (<span>
                 <span className="font-bold text-white mr-1">{senderName}</span>
-                shortlisted your application for <span className="text-[#ffb400] font-semibold">"{callTitle}"</span>
+                shortlisted your application for <span className="text-[#522C69] font-semibold">"{callTitle}"</span>
             </span>);
         } else if (body.includes('accepted') || notif.status === 'accepted') {
             displayElement = (<span>
@@ -47,7 +47,7 @@ const getNotificationDetails = (notif) => {
             const roleInfo = notif.roleName ? ` for role "${notif.roleName}"` : '';
             displayElement = (<span>
                 <span className="font-bold text-white mr-1">{senderName}</span>
-                applied to your casting call: <span className="text-[#ffb400] font-semibold">"{callTitle}"</span>{roleInfo}
+                applied to your casting call: <span className="text-[#522C69] font-semibold">"{callTitle}"</span>{roleInfo}
             </span>);
         } else if (cleanBody) {
             displayElement = (<span>
@@ -62,7 +62,7 @@ const getNotificationDetails = (notif) => {
             </span>);
         } else {
             displayElement = (<span>
-                New casting update for <span className="text-[#ffb400]">"{callTitle}"</span>
+                New casting update for <span className="text-[#522C69]">"{callTitle}"</span>
             </span>);
         }
 
@@ -202,7 +202,7 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
     };
     const cardBgClass = notif.read
         ? 'bg-transparent hover:bg-white/[0.02]'
-        : 'bg-[#ffb400]/[0.03] hover:bg-[#ffb400]/[0.06]';
+        : 'bg-[#522C69]/[0.03] hover:bg-[#522C69]/[0.06]';
     return (<div className="relative w-full">
         <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={endPress} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={handleMouseLeave} onClick={handleCardClick} className={`relative z-10 py-4 md:py-5 px-2 sm:px-4 md:px-6 cursor-pointer transition-colors duration-200 flex items-center gap-4 md:gap-6 select-none ${cardBgClass} w-full`}>
 
@@ -218,7 +218,7 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
                 {(notif.type === 'follow' || notif.notificationType === 'follow') && notif.senderId && (<div className="mt-2">
                     {followingIds.has(notif.senderId) ? (<button disabled className="px-3 py-1 md:px-5 md:py-2 rounded-xl bg-white/5 border border-white/10 text-gray-500 text-xs md:text-sm font-bold uppercase tracking-wider cursor-not-allowed">
                         Following
-                    </button>) : (<button onClick={(e) => handleFollowBack(e, notif.senderId)} className="px-3 py-1 md:px-5 md:py-2 rounded-xl bg-[#ffb400] hover:bg-[#ffa000] text-black text-xs md:text-sm font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer">
+                    </button>) : (<button onClick={(e) => handleFollowBack(e, notif.senderId)} className="px-3 py-1 md:px-5 md:py-2 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white text-xs md:text-sm font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer">
                         Follow Back
                     </button>)}
                 </div>)}
@@ -234,8 +234,8 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
                     e.stopPropagation();
                     markAsRead(notif.id);
                 }} className="group/btn relative w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors" title="Mark as read">
-                    <span className="absolute w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#ffb400] group-hover/btn:opacity-0 transition-opacity" />
-                    <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#ffb400] opacity-0 group-hover/btn:opacity-100 transition-opacity shrink-0" />
+                    <span className="absolute w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#522C69] group-hover/btn:opacity-0 transition-opacity" />
+                    <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-white opacity-0 group-hover/btn:opacity-100 transition-opacity shrink-0" />
                 </button>)}
             </div>
         </div>
@@ -538,7 +538,7 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
                 </div>
                 <div className="flex items-center">
                     <button onClick={handleMarkAllRead} disabled={unreadCount === 0} className={`text-xs sm:text-sm md:text-base font-bold transition-colors px-3 md:px-4 py-1.5 md:py-2 rounded-lg ${unreadCount > 0
-                        ? 'text-[#ffb400] hover:text-amber-300 hover:bg-white/5 cursor-pointer'
+                        ? 'text-[#522C69] hover:text-amber-300 hover:bg-white/5 cursor-pointer'
                         : 'text-gray-600 cursor-not-allowed'}`}>
                         Mark all read
                     </button>
@@ -555,14 +555,14 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
                             key={f.id}
                             onClick={() => setFilter(f.id)}
                             className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${isActive
-                                ? 'bg-[#ffb400] text-[#0A0A0A] shadow-sm shadow-[#ffb400]/20'
+                                ? 'bg-[#522C69] text-[#0A0A0A] shadow-sm shadow-[#522C69]/20'
                                 : 'bg-[#18181c] text-gray-400 hover:text-white border border-white/5'
                                 }`}
                         >
                             <span className="flex items-center gap-1.5">
                                 {f.label}
                                 {f.id === 'unread' && unreadCount > 0 && (
-                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-black/20 text-black' : 'bg-[#ffb400]/20 text-[#ffb400]'}`}>
+                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-black/20 text-black' : 'bg-[#522C69]/20 text-[#522C69]'}`}>
                                         {unreadCount}
                                     </span>
                                 )}

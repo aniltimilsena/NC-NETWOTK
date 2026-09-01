@@ -136,12 +136,12 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
 
             {uploading && (
                 <div className="space-y-1">
-                    <div className="flex justify-between items-center text-[10px] text-[#ffb400] font-bold">
+                    <div className="flex justify-between items-center text-[10px] text-[#522C69] font-bold">
                         <span>Uploading attachment...</span>
                         <span>{uploadProgress}%</span>
                     </div>
                     <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#ffb400] transition-all duration-300 rounded-full" style={{ width: `${uploadProgress}%` }} />
+                        <div className="h-full bg-[#522C69] transition-all duration-300 rounded-full" style={{ width: `${uploadProgress}%` }} />
                     </div>
                 </div>
             )}
@@ -160,7 +160,7 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
                     disabled={!hasContent || uploading}
                     className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center font-black transition-all shrink-0 active:scale-95 ${
                         hasContent
-                            ? 'bg-[#ffb400] text-black hover:bg-[#ffa000] shadow-sm cursor-pointer'
+                            ? 'bg-[#522C69] text-white hover:bg-[#663782] shadow-sm cursor-pointer'
                             : 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
                     }`}
                     title="Send message"

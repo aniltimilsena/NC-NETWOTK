@@ -169,7 +169,7 @@ export default function SignIn(_props: SignInProps) {
                                 <button
                                     type="button"
                                     onClick={() => navigate('/forgot-password')}
-                                    className="text-sm text-[#ffb400] hover:text-[#ffa000] hover:underline transition-colors cursor-pointer bg-transparent border-0 p-0 font-medium"
+                                    className="text-sm text-[#522C69] hover:text-[#663782] hover:underline transition-colors cursor-pointer bg-transparent border-0 p-0 font-medium"
                                 >
                                     Forgot password?
                                 </button>
@@ -201,7 +201,7 @@ export default function SignIn(_props: SignInProps) {
                         >
                             <div
                                 className={`mt-0.5 w-4 h-4 min-w-[16px] min-h-[16px] max-w-[16px] max-h-[16px] rounded flex items-center justify-center transition-colors shrink-0 border ${agreeTerms
-                                    ? 'bg-[#ffb400] border-[#ffb400]'
+                                    ? 'bg-[#522C69] border-[#522C69]'
                                     : 'bg-[#121214] border-white/20 group-hover:border-white/40'
                                 }`}
                             >
@@ -213,7 +213,7 @@ export default function SignIn(_props: SignInProps) {
                                     href="/terms"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-[#ffb400] hover:text-[#ffa000] underline font-medium"
+                                    className="text-[#522C69] hover:text-[#663782] underline font-medium"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     Terms of Service
@@ -223,7 +223,7 @@ export default function SignIn(_props: SignInProps) {
                                     href="/privacy"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-[#ffb400] hover:text-[#ffa000] underline font-medium"
+                                    className="text-[#522C69] hover:text-[#663782] underline font-medium"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     Privacy Policy
@@ -254,7 +254,7 @@ export default function SignIn(_props: SignInProps) {
                         <button
                             onClick={() => navigate('/signup')}
                             type="button"
-                            className="text-[#ffb400] hover:text-[#ffa000] underline cursor-pointer font-medium bg-transparent border-0 p-0"
+                            className="text-[#522C69] hover:text-[#663782] underline cursor-pointer font-medium bg-transparent border-0 p-0"
                         >
                             Sign up
                         </button>
@@ -270,7 +270,7 @@ export default function SignIn(_props: SignInProps) {
             {/* Right Side: Cinematic Showcase Panel (Laptops & Desktops) */}
             <div className="hidden lg:flex flex-1 relative bg-[#08080a] flex-col justify-between p-12 xl:p-16 overflow-hidden">
                 {/* Ambient Glows */}
-                <div className="absolute top-1/4 right-1/4 w-[450px] h-[450px] bg-[#ffb400]/8 rounded-full blur-[140px] pointer-events-none" />
+                <div className="absolute top-1/4 right-1/4 w-[450px] h-[450px] bg-[#522C69]/8 rounded-full blur-[140px] pointer-events-none" />
                 <div className="absolute bottom-10 left-10 w-[350px] h-[350px] bg-sky-500/5 rounded-full blur-[120px] pointer-events-none" />
 
                 {/* Top Brand Bar */}

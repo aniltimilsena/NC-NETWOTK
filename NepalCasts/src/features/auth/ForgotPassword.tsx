@@ -211,7 +211,7 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                                         type="button"
                                         onClick={handleResendCode}
                                         disabled={loading}
-                                        className="text-sm text-[#ffb400] hover:text-[#ffa000] hover:underline cursor-pointer font-medium bg-transparent border-0 p-0"
+                                        className="text-sm text-[#522C69] hover:text-[#663782] hover:underline cursor-pointer font-medium bg-transparent border-0 p-0"
                                     >
                                         Resend code
                                     </button>
@@ -300,7 +300,7 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
                         <button
                             onClick={() => navigate('/signin')}
                             type="button"
-                            className="text-[#ffb400] hover:text-[#ffa000] underline cursor-pointer font-medium bg-transparent border-0 p-0"
+                            className="text-[#522C69] hover:text-[#663782] underline cursor-pointer font-medium bg-transparent border-0 p-0"
                         >
                             Log in
                         </button>
@@ -316,7 +316,7 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
             {/* Right Side: Cinematic Showcase Panel (Laptops & Desktops) */}
             <div className="hidden lg:flex flex-1 relative bg-[#08080a] flex-col justify-between p-12 xl:p-16 overflow-hidden">
                 {/* Ambient Glows */}
-                <div className="absolute top-1/4 right-1/4 w-[450px] h-[450px] bg-[#ffb400]/8 rounded-full blur-[140px] pointer-events-none" />
+                <div className="absolute top-1/4 right-1/4 w-[450px] h-[450px] bg-[#522C69]/8 rounded-full blur-[140px] pointer-events-none" />
                 <div className="absolute bottom-10 left-10 w-[350px] h-[350px] bg-purple-500/5 rounded-full blur-[120px] pointer-events-none" />
 
                 {/* Top Brand Bar */}

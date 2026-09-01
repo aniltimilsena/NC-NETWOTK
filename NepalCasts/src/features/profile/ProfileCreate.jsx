@@ -260,7 +260,7 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                                 s[idx].level = Number(e.target.value);
                                                 setForm({ ...form, skills: s });
                                             }}
-                                            className="w-full accent-[#ffb400]"
+                                            className="w-full accent-[#522C69]"
                                         />
                                     </div>
                                 </div>

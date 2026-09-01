@@ -56,7 +56,7 @@ export default function Help() {
             <span>Support & Guidance</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-sans font-black tracking-tight text-white leading-tight">
-            Help & <span className="text-[#ffb400]">FAQ Center</span>
+            Help & <span className="text-[#522C69]">FAQ Center</span>
           </h1>
           <p className="text-gray-400 text-sm sm:text-base lg:text-lg max-w-lg mx-auto leading-relaxed">
             Everything you need to know about using NepalCasts for talent discovery, portfolios, and auditions.
@@ -94,7 +94,7 @@ export default function Help() {
                   className="w-full px-5 sm:px-6 py-4 sm:py-5 text-left font-bold text-sm sm:text-base text-white flex justify-between items-center gap-4 hover:bg-white/[0.02] cursor-pointer"
                 >
                   <span className="text-left flex-1">{faq.q}</span>
-                  <ChevronDown className={`w-5 h-5 text-white shrink-0 ml-auto transition-transform ${activeFaq === index ? 'rotate-180 text-[#ffb400]' : ''}`} />
+                  <ChevronDown className={`w-5 h-5 text-white shrink-0 ml-auto transition-transform ${activeFaq === index ? 'rotate-180 text-[#522C69]' : ''}`} />
                 </button>
                 {activeFaq === index && (
                   <div className="px-5 sm:px-6 pb-5 text-xs sm:text-sm text-gray-400 text-left leading-relaxed border-t border-white/5 pt-4">
@@ -114,7 +114,7 @@ export default function Help() {
           </div>
           <button
             onClick={() => navigate('/contact')}
-            className="px-6 py-3 rounded-xl bg-[#ffb400] hover:bg-[#ffa000] text-black font-bold text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 shrink-0 cursor-pointer"
+            className="px-6 py-3 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 shrink-0 cursor-pointer"
           >
             Contact Support
           </button>

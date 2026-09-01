@@ -324,7 +324,7 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
                     {/* Copy Link */}
                     <button onClick={handleCopyLink} className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#151821] hover:bg-[#1C202E] border border-white/[0.03] hover:border-white/[0.08] transition-all group text-left active:scale-[0.99]">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-[#ffb400]/10 flex items-center justify-center text-[#ffb400] group-hover:scale-105 transition-transform">
+                            <div className="w-8 h-8 rounded-lg bg-[#522C69]/10 flex items-center justify-center text-[#522C69] group-hover:scale-105 transition-transform">
                                 <Copy size={16} />
                             </div>
                             <div>
@@ -332,7 +332,7 @@ export default function ShareSheet({ profile, onClose }: ShareSheetProps) {
                                 <span className="block text-[10px] text-gray-500 mt-0.5">Copy profile URL to clipboard</span>
                             </div>
                         </div>
-                        <span className="text-[10px] text-[#ffb400] font-semibold bg-[#ffb400]/5 px-2 py-0.5 rounded-md border border-[#ffb400]/10 opacity-0 group-hover:opacity-100 transition-opacity">Copy</span>
+                        <span className="text-[10px] text-[#522C69] font-semibold bg-[#522C69]/5 px-2 py-0.5 rounded-md border border-[#522C69]/10 opacity-0 group-hover:opacity-100 transition-opacity">Copy</span>
                     </button>
 
                     {/* WhatsApp */}

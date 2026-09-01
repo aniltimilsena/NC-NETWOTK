@@ -49,7 +49,7 @@ export default function NotificationSettings({ profile, onUpdate, showAlert }: N
                 Receive emails for matching casting calls, DM alerts, and updates.
               </p>
             </div>
-            <button type="button" onClick={() => setEmailNotifications(!emailNotifications)} className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none cursor-pointer ${emailNotifications ? 'bg-[#ffb400]' : 'bg-white/10'}`}>
+            <button type="button" onClick={() => setEmailNotifications(!emailNotifications)} className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none cursor-pointer ${emailNotifications ? 'bg-[#522C69]' : 'bg-white/10'}`}>
               <div className={`w-4 h-4 rounded-full bg-black transition-transform duration-300 ${emailNotifications ? 'translate-x-6' : 'translate-x-0'}`}/>
             </button>
           </div>
@@ -62,7 +62,7 @@ export default function NotificationSettings({ profile, onUpdate, showAlert }: N
                 Receive browser push alerts for messages and call invites.
               </p>
             </div>
-            <button type="button" onClick={() => setPushNotifications(!pushNotifications)} className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none cursor-pointer ${pushNotifications ? 'bg-[#ffb400]' : 'bg-white/10'}`}>
+            <button type="button" onClick={() => setPushNotifications(!pushNotifications)} className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none cursor-pointer ${pushNotifications ? 'bg-[#522C69]' : 'bg-white/10'}`}>
               <div className={`w-4 h-4 rounded-full bg-black transition-transform duration-300 ${pushNotifications ? 'translate-x-6' : 'translate-x-0'}`}/>
             </button>
           </div>

@@ -317,7 +317,7 @@ export default function Avatar(props: AvatarProps) {
               <div className="relative w-12 h-12 flex items-center justify-center">
                 <svg className="absolute w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                   <path className="text-white/10" strokeWidth="2.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                  <path className="text-[#ffb400] transition-all duration-300" strokeDasharray={`${progress}, 100`} strokeWidth="2.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <path className="text-[#522C69] transition-all duration-300" strokeDasharray={`${progress}, 100`} strokeWidth="2.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
                 </svg>
                 <span className="text-[10px] text-white font-extrabold tracking-tighter">
                   {progress}%
@@ -355,11 +355,11 @@ export default function Avatar(props: AvatarProps) {
               className="relative bg-[#0D0D12]/95 border border-white/10 rounded-2xl p-5 w-full max-w-[270px] shadow-[0_0_40px_rgba(0,0,0,0.9)] text-center overflow-hidden"
             >
               {/* Subtle top accent gradient */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#ffb400] to-transparent opacity-60" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#522C69] to-transparent opacity-60" />
 
               {/* Header Icon & Text */}
               <div className="flex flex-col items-center gap-2 mb-4 pt-0.5">
-                <div className="w-11 h-11 rounded-xl bg-[#ffb400]/10 border border-[#ffb400]/20 flex items-center justify-center text-[#ffb400] shadow-[0_0_15px_rgba(255,180,0,0.15)]">
+                <div className="w-11 h-11 rounded-xl bg-[#522C69]/10 border border-[#522C69]/20 flex items-center justify-center text-[#522C69] shadow-[0_0_15px_rgba(255,180,0,0.15)]">
                   <Camera className="w-5.5 h-5.5" strokeWidth={1.75} />
                 </div>
                 <div>
@@ -378,7 +378,7 @@ export default function Avatar(props: AvatarProps) {
                     setShowOptionsModal(false);
                     fileInputRef.current?.click();
                   }}
-                  className="w-full py-2.5 px-3 bg-[#ffb400] hover:bg-[#ffa000] text-black font-extrabold rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 shadow-[0_3px_15px_rgba(255,180,0,0.25)] hover:shadow-[0_4px_20px_rgba(255,180,0,0.35)]"
+                  className="w-full py-2.5 px-3 bg-[#522C69] hover:bg-[#663782] text-white font-extrabold rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 shadow-[0_3px_15px_rgba(255,180,0,0.25)] hover:shadow-[0_4px_20px_rgba(255,180,0,0.35)]"
                 >
                   <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Upload New Photo</span>

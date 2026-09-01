@@ -224,7 +224,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 }}
                 disabled={s.id > step}
                 className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                  s.id < step ? 'bg-[#ffb400]' : s.id === step ? 'bg-white' : 'bg-white/10'
+                  s.id < step ? 'bg-[#522C69]' : s.id === step ? 'bg-white' : 'bg-white/10'
                 }`}
               />
             ))}
@@ -244,7 +244,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                   s.id === step
                     ? 'bg-white text-black shadow-md'
                     : s.id < step
-                    ? 'bg-[#ffb400]/10 text-[#ffb400] border border-[#ffb400]/20'
+                    ? 'bg-[#522C69]/10 text-[#522C69] border border-[#522C69]/20'
                     : 'bg-[#111] border border-white/5 text-gray-500 cursor-not-allowed'
                 }`}
                 disabled={s.id > step}
@@ -253,7 +253,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 <span>{s.title}</span>
               </button>
               {idx < STEPS.length - 1 && (
-                <div className={`w-8 h-[1px] ${s.id < step ? 'bg-[#ffb400]' : 'bg-white/5'}`} />
+                <div className={`w-8 h-[1px] ${s.id < step ? 'bg-[#522C69]' : 'bg-white/5'}`} />
               )}
             </div>
           ))}
@@ -275,7 +275,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                     Shown across the platform (Home, Casting Feed, and Detail view).
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 items-start">
-                    <div className="w-36 sm:w-40 aspect-[9/16] bg-[#1a1a1a] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative group hover:border-[#ffb400] transition-all cursor-pointer">
+                    <div className="w-36 sm:w-40 aspect-[9/16] bg-[#1a1a1a] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative group hover:border-[#522C69] transition-all cursor-pointer">
                       {thumbnailPreview || form.thumbnail ? (
                         <>
                           <img
@@ -298,7 +298,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                         </>
                       ) : (
                         <div className="text-center p-3">
-                          <Upload className="w-6 h-6 text-gray-500 mx-auto mb-1.5 group-hover:text-[#ffb400] transition-colors" />
+                          <Upload className="w-6 h-6 text-gray-500 mx-auto mb-1.5 group-hover:text-white transition-colors" />
                           <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Upload Poster</p>
                           <p className="text-[8px] text-gray-600 mt-0.5">9:16 Vertical</p>
                         </div>
@@ -330,7 +330,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                     value={form.title}
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
                     placeholder="The Lost City"
-                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
+                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#522C69] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
                   />
                 </div>
 
@@ -351,7 +351,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                         setForm({ ...form, category: val });
                       }
                     }}
-                    className="w-full max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-3.5 py-3 text-white text-sm font-bold cursor-pointer"
+                    className="w-full max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#522C69] rounded-xl px-3.5 py-3 text-white text-sm font-bold cursor-pointer"
                   >
                     {CATEGORY_OPTIONS.map((opt) => (
                       <option key={opt} value={opt} className="bg-[#111]">
@@ -370,7 +370,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                         setForm({ ...form, category: text });
                       }}
                       placeholder="Type custom project category..."
-                      className="w-full mt-2 bg-[#1a1a1a] border border-white/10 focus:border-[#ffb400] rounded-xl px-3.5 py-2.5 text-white text-sm font-medium outline-none placeholder-gray-500"
+                      className="w-full mt-2 bg-[#1a1a1a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2.5 text-white text-sm font-medium outline-none placeholder-gray-500"
                       autoFocus
                     />
                   )}
@@ -386,7 +386,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                     value={form.location}
                     onChange={(e) => setForm({ ...form, location: e.target.value })}
                     placeholder="Kathmandu, Lalitpur, or Pokhara"
-                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
+                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#522C69] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
                   />
                 </div>
 
@@ -401,7 +401,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                       value={form.budget}
                       onChange={(e) => setForm({ ...form, budget: e.target.value })}
                       placeholder="Rs. 10,000 / Day or Competitive"
-                      className="block w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-3 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium"
+                      className="block w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#522C69] rounded-xl px-3 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium"
                     />
                   </div>
                   <div className="min-w-0 w-full overflow-hidden">
@@ -420,7 +420,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                         }
                       }}
                       style={{ colorScheme: 'dark', boxSizing: 'border-box' }}
-                      className="block w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-2 sm:px-3 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium cursor-pointer overflow-hidden"
+                      className="block w-full min-w-0 max-w-full box-border bg-[#1a1a1a] border border-white/5 focus:border-[#522C69] rounded-xl px-2 sm:px-3 py-2.5 text-white placeholder-gray-500 outline-none text-xs sm:text-sm font-medium cursor-pointer overflow-hidden"
                     />
                   </div>
                 </div>
@@ -435,7 +435,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                     value={form.contactInfo}
                     onChange={(e) => setForm({ ...form, contactInfo: e.target.value })}
                     placeholder="auditions@productioncompany.com or +977 98..."
-                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
+                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#522C69] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium"
                   />
                 </div>
 
@@ -449,7 +449,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                     placeholder="Describe the storyline, timeline of shoot, and other key details..."
                     rows={4}
-                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium resize-none"
+                    className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#522C69] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium resize-none"
                   />
                 </div>
               </div>
@@ -489,7 +489,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                           setForm({ ...form, roles: r });
                         }}
                         placeholder="Lead Actor"
-                        className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#ffb400] text-xs font-semibold"
+                        className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#522C69] text-xs font-semibold"
                       />
                     </div>
                     <div>
@@ -505,7 +505,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                           setForm({ ...form, roles: r });
                         }}
                         placeholder="20-30 years"
-                        className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#ffb400] text-xs font-semibold"
+                        className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#522C69] text-xs font-semibold"
                       />
                     </div>
                   </div>
@@ -523,7 +523,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                       }}
                       placeholder="Energetic character with athletic build..."
                       rows={2}
-                      className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#ffb400] text-xs font-semibold resize-none"
+                      className="w-full bg-[#111] border border-white/5 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:border-[#522C69] text-xs font-semibold resize-none"
                     />
                   </div>
                 </div>
@@ -537,7 +537,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                     roles: [...form.roles, { name: '', ageRange: '', description: '', pay: 'Paid' }],
                   })
                 }
-                className="w-full py-3 rounded-2xl border border-dashed border-white/10 hover:border-[#ffb400] text-gray-400 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full py-3 rounded-2xl border border-dashed border-white/10 hover:border-[#522C69] text-gray-400 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <Plus size={16} />
                 <span>Add Another Role</span>
@@ -571,7 +571,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                           requirements: { ...form.requirements, [req.id]: e.target.checked },
                         })
                       }
-                      className="w-4 h-4 rounded accent-[#ffb400]"
+                      className="w-4 h-4 rounded accent-[#522C69]"
                     />
                     <span className="text-xs font-semibold text-white">{req.label}</span>
                   </label>
@@ -587,7 +587,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                   onChange={(e) => setForm({ ...form, otherRequirements: e.target.value })}
                   placeholder="Must speak fluent Newari&#10;Must have motorcycle license"
                   rows={4}
-                  className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#ffb400] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium resize-none"
+                  className="w-full bg-[#1a1a1a] border border-white/5 focus:border-[#522C69] rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none text-sm font-medium resize-none"
                 />
               </div>
             </div>
@@ -603,7 +603,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
               <div className="bg-[#1a1a1a] border border-white/5 rounded-2xl p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-white/5 pb-3">
                   <h3 className="font-bold text-white text-lg">{form.title}</h3>
-                  <span className="text-[#ffb400] text-xs font-black uppercase tracking-wider">
+                  <span className="text-[#522C69] text-xs font-black uppercase tracking-wider">
                     {form.category}
                   </span>
                 </div>
@@ -638,7 +638,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
               <Button
                 type="button"
                 onClick={handleNext}
-                className="bg-[#ffb400] text-black hover:bg-[#ffa000] rounded-xl text-xs font-bold uppercase tracking-wider px-6 py-2.5 cursor-pointer"
+                className="bg-[#522C69] text-white hover:bg-[#663782] rounded-xl text-xs font-bold uppercase tracking-wider px-6 py-2.5 cursor-pointer"
               >
                 Next Step
               </Button>
@@ -648,7 +648,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 onClick={handlePublish}
                 loading={isLoading}
                 disabled={isLoading}
-                className="bg-gradient-to-r from-[#ffb400] to-amber-500 text-black font-extrabold text-xs uppercase tracking-wider px-8 py-3 rounded-xl shadow-lg shadow-amber-500/20 cursor-pointer"
+                className="bg-gradient-to-r from-[#522C69] to-amber-500 text-black font-extrabold text-xs uppercase tracking-wider px-8 py-3 rounded-xl shadow-lg shadow-amber-500/20 cursor-pointer"
               >
                 Publish Casting Call
               </Button>

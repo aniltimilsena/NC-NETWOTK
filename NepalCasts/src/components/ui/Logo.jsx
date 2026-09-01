@@ -10,7 +10,7 @@ const Logo = ({ size = 'md', className = '', showText = true }) => {
     const s = sizes[size] || sizes.md;
     return (<Link to="/" className={`flex items-center ${showText ? 'gap-2.5' : ''} group/logo w-fit mx-auto ${className}`}>
       <LogoIcon className={`${s.box} transition-transform group-hover/logo:scale-110`}/>
-      {showText && (<span className={`${s.font} font-black text-white tracking-wider group-hover/logo:text-[#D4AF37] transition-colors`}>
+      {showText && (<span className={`${s.font} font-black text-white tracking-wider group-hover/logo:text-[#522C69] transition-colors`}>
           NepalCasts
         </span>)}
     </Link>);

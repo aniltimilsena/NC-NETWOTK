@@ -133,7 +133,7 @@ export default function ProfileMedia({
               }
             }}
             disabled={isUploadingVideo || isUploadingPhotos}
-            className="font-apple text-xs sm:text-sm font-semibold text-[#ffb400] hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5"
+            className="font-apple text-xs sm:text-sm font-semibold text-[#522C69] hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5"
           >
             {isUploadingVideo || isUploadingPhotos ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -222,7 +222,7 @@ export default function ProfileMedia({
           }}
           className="border border-dashed border-white/10 bg-black rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-white/20 transition-colors group"
         >
-          <Plus className="w-4 h-4 text-gray-400 group-hover:text-[#ffb400] mb-1" />
+          <Plus className="w-4 h-4 text-gray-400 group-hover:text-white mb-1" />
           <span className="text-xs font-semibold text-gray-400 group-hover:text-white">
             Add Media
           </span>

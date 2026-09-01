@@ -439,7 +439,7 @@ export default function Home({ onNavigate, user }) {
       loading={!talentsReceived}
     >
       <PullToRefresh onRefresh={handleRefresh}>
-        <div className="min-h-screen bg-[#141414] text-white pt-0 pb-1 font-sans selection:bg-[#ffb400] selection:text-black">
+        <div className="min-h-screen bg-[#141414] text-white pt-0 pb-1 font-sans selection:bg-[#522C69] selection:text-black">
           {/* ================= HERO SECTION (Compact, flush with top navbar) ================= */}
           <section className="relative w-full h-[190px] sm:h-[220px] lg:h-[250px] overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5 m-0 p-0">
             {/* 5 Smoothly Rotating Background Images (Every 4s) */}
@@ -463,9 +463,9 @@ export default function Home({ onNavigate, user }) {
             {/* Top Right Slogan in One Line with Typewriter Font & Live Typing Animation */}
             <div className="absolute top-2.5 sm:top-3.5 right-3 sm:right-5 z-20 pointer-events-none flex items-center justify-end">
               <h1 className="font-mono font-bold text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] flex items-center gap-1.5 sm:gap-2">
-                <span className="text-[#ffb400] shrink-0">Discover</span>
+                <span className="text-[#522C69] shrink-0">Discover</span>
                 <span className="text-white">{typewriterText}</span>
-                <span className="inline-block w-1.5 sm:w-2 h-3.5 sm:h-4 bg-[#ffb400] ml-0.5 animate-pulse shrink-0" />
+                <span className="inline-block w-1.5 sm:w-2 h-3.5 sm:h-4 bg-[#522C69] ml-0.5 animate-pulse shrink-0" />
               </h1>
             </div>
 
@@ -519,7 +519,7 @@ export default function Home({ onNavigate, user }) {
                       <p className="text-[11px] sm:text-xs text-slate-300 font-normal capitalize drop-shadow-md truncate tracking-normal">
                         {spotlightRole} {spotlightAge ? `(${spotlightAge})` : ''}
                       </p>
-                      <span className="text-[#ffb400] text-[11px] sm:text-xs font-semibold flex items-center gap-1">
+                      <span className="text-[#522C69] text-[11px] sm:text-xs font-semibold flex items-center gap-1">
                         View profile &gt;
                       </span>
                     </div>
@@ -536,7 +536,7 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
                   Hiring now
                 </span>
                 <button
@@ -597,7 +597,7 @@ export default function Home({ onNavigate, user }) {
                           </div>
                           {/* Deadline on bottom right */}
                           {call.deadline && (
-                            <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] sm:text-[10px] font-medium text-[#ffb400] shadow-sm">
+                            <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] sm:text-[10px] font-medium text-[#522C69] shadow-sm">
                               Due {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </div>
                           )}
@@ -618,7 +618,7 @@ export default function Home({ onNavigate, user }) {
                               e.stopPropagation();
                               onNavigate('casting-detail', call.id);
                             }}
-                            className="shrink-0 px-3.5 py-1 rounded-full bg-[#ffb400] text-black font-bold text-[11px] sm:text-xs tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer"
+                            className="shrink-0 px-3.5 py-1 rounded-full bg-[#522C69] text-white font-bold text-[11px] sm:text-xs tracking-wide transition-all shadow-sm active:scale-95 cursor-pointer"
                           >
                             Apply Now
                           </button>
@@ -631,7 +631,7 @@ export default function Home({ onNavigate, user }) {
                     <p className="text-gray-400 text-xs mb-2">No active calls at the moment</p>
                     <button
                       onClick={() => onNavigate('casting-create')}
-                      className="text-xs bg-[#ffb400] text-black font-bold px-3 py-1.5 rounded-md shadow-sm shadow-amber-950/20 cursor-pointer"
+                      className="text-xs bg-[#522C69] text-white font-bold px-3 py-1.5 rounded-md shadow-sm shadow-amber-950/20 cursor-pointer"
                     >
                       + Post a Casting Call
                     </button>
@@ -644,7 +644,7 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
                   Featured talents
                 </span>
                 <button
@@ -680,7 +680,7 @@ export default function Home({ onNavigate, user }) {
                       <p className="font-apple text-white font-bold text-base sm:text-lg md:text-xl text-center mt-2.5 truncate w-full px-0.5 tracking-wide">
                         {formatTalentName(talent.name)}
                       </p>
-                      <p className="font-apple text-[#ffb400] font-semibold text-sm sm:text-base text-center mt-1 truncate w-full px-0.5 tracking-normal">
+                      <p className="font-apple text-[#522C69] font-semibold text-sm sm:text-base text-center mt-1 truncate w-full px-0.5 tracking-normal">
                         {getTalentRole(talent)}
                       </p>
                       {getTalentAge(talent) ? (
@@ -700,7 +700,7 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
                   Talents by category
                 </span>
                 <button
@@ -745,7 +745,7 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
                   Recently joined
                 </span>
                 <button
@@ -799,7 +799,7 @@ export default function Home({ onNavigate, user }) {
                           <p className="font-apple text-sm sm:text-base font-bold text-white truncate tracking-wide">
                             {talent.name}
                           </p>
-                          <span className="text-xs text-[#ffb400] font-semibold shrink-0">
+                          <span className="text-xs text-[#522C69] font-semibold shrink-0">
                             {getTalentRoleAndAge(talent)}
                           </span>
                         </div>
@@ -829,7 +829,7 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-lg border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-center justify-between mb-3">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
                   Trending talents
                 </span>
                 <button
@@ -883,7 +883,7 @@ export default function Home({ onNavigate, user }) {
                           <p className="font-apple text-sm sm:text-base font-bold text-white truncate tracking-wide">
                             {talent.name}
                           </p>
-                          <span className="text-xs text-[#ffb400] font-semibold shrink-0">
+                          <span className="text-xs text-[#522C69] font-semibold shrink-0">
                             {getTalentRoleAndAge(talent)}
                           </span>
                         </div>
@@ -918,7 +918,7 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0 space-y-2.5">
               <div className="flex items-center justify-between mb-2">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-base sm:text-lg md:text-xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#ffb400] pointer-events-none" />
+                  <span className="absolute bottom-0 left-0 w-1/2 border-b-[1.5px] border-[#522C69] pointer-events-none" />
                   Our Goals
                 </span>
               </div>
@@ -931,7 +931,7 @@ export default function Home({ onNavigate, user }) {
                   "Build a strong community that supports and grows Nepal's entertainment industry."
                 ].map((goal, idx) => (
                   <li key={idx} className="flex items-start gap-3">
-                    <span className="text-[#ffb400] font-black text-sm leading-none mt-1 select-none shrink-0">•</span>
+                    <span className="text-[#522C69] font-black text-sm leading-none mt-1 select-none shrink-0">•</span>
                     <span className="text-xs sm:text-sm text-gray-300 leading-relaxed font-medium">
                       {goal}
                     </span>

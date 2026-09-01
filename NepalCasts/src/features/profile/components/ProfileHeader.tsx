@@ -271,7 +271,7 @@ export default function ProfileHeader({
               {name}
             </h2>
             {profile.verified === true && (
-              <CheckCircle2 className="w-6 h-6 text-[#ffb400] fill-[#ffb400] stroke-black shrink-0" />
+              <CheckCircle2 className="w-6 h-6 text-white fill-[#522C69] stroke-black shrink-0" />
             )}
           </div>
 
@@ -317,7 +317,7 @@ export default function ProfileHeader({
                         e.stopPropagation();
                         setIsBioExpanded(!isBioExpanded);
                       }}
-                      className="font-apple text-xs sm:text-sm font-semibold text-[#ffb400] hover:text-amber-300 transition-colors cursor-pointer inline-flex items-center gap-0.5 align-baseline"
+                      className="font-apple text-xs sm:text-sm font-semibold text-[#522C69] hover:text-amber-300 transition-colors cursor-pointer inline-flex items-center gap-0.5 align-baseline"
                     >
                       {isBioExpanded ? 'See less' : 'See more'}
                     </button>

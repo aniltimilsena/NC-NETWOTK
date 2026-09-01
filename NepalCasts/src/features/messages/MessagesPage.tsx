@@ -175,7 +175,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
         <p className="text-gray-400 text-sm max-w-xs mb-6">
           Please log in to check your messages.
         </p>
-        <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-[#ffb400] hover:bg-[#ffa000] text-black font-bold rounded-xl cursor-pointer">
+        <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-[#522C69] hover:bg-[#663782] text-white font-bold rounded-xl cursor-pointer">
           Sign In
         </button>
       </div>);
@@ -209,7 +209,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
               
               <div className="p-4 pt-6 md:p-4 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Pin className="w-5 h-5 text-[#ffb400]"/>
+                  <Pin className="w-5 h-5 text-white"/>
                   <h3 className="text-lg font-bold text-white">Pinned Messages</h3>
                 </div>
                 <button onClick={() => setShowPinnedDrawer(false)} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all cursor-pointer flex shrink-0 items-center justify-center" title="Close Drawer">
@@ -223,7 +223,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
                 const isMsgMe = msg.senderId === user.uid;
                 const senderName = isMsgMe ? 'You' : (activeChat.name || 'User');
                 const senderAvatar = isMsgMe ? (user.photoURL || '') : (activeChat.avatar || '');
-                return (<div key={msg.id} className="bg-white/5 border border-white/5 rounded-2xl p-3.5 space-y-2 relative group hover:border-[#ffb400]/20 transition-all text-left">
+                return (<div key={msg.id} className="bg-white/5 border border-white/5 rounded-2xl p-3.5 space-y-2 relative group hover:border-[#522C69]/20 transition-all text-left">
                         <div className="flex items-center gap-2">
                           <Avatar userId={msg.senderId} src={senderAvatar} name={senderName} size="xs" className="w-6 h-6"/>
                           <div className="flex-1 min-w-0">
@@ -231,7 +231,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
                           </div>
                         </div>
                         <div className="text-xs text-gray-300 break-words line-clamp-4">
-                          {msg.type === 'image' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/image/upload/') || msg.text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i))) ? (<span className="italic text-nc-muted"> Sent a photo</span>) : msg.type === 'video' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/video/upload/') || msg.text.match(/\.(mp4|webm|ogg|mov)/i))) ? (<span className="italic text-nc-muted"> Sent a video</span>) : msg.type === 'file' || (msg.text && msg.text.startsWith('http') && msg.text.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|zip|rar)/i)) ? (<span className="italic text-[#ffb400]"> Document File</span>) : (msg.text)}
+                          {msg.type === 'image' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/image/upload/') || msg.text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i))) ? (<span className="italic text-nc-muted"> Sent a photo</span>) : msg.type === 'video' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/video/upload/') || msg.text.match(/\.(mp4|webm|ogg|mov)/i))) ? (<span className="italic text-nc-muted"> Sent a video</span>) : msg.type === 'file' || (msg.text && msg.text.startsWith('http') && msg.text.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|zip|rar)/i)) ? (<span className="italic text-[#522C69]"> Document File</span>) : (msg.text)}
                         </div>
                       </div>);
             })) : (<div className="h-full flex flex-col items-center justify-center text-center p-6 text-nc-muted space-y-3">

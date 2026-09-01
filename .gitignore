@@ -40,3 +40,4 @@ service-account*.json
 .idea/
 .DS_Store
 Thumbs.db
+strix_runs/

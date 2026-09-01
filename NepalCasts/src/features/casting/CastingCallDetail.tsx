@@ -593,7 +593,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     return (
       <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting">
         <div className="min-h-screen bg-[#141414] text-white p-4 sm:p-6 flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-2 border-[#ffb400]/30 border-t-[#ffb400] animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-[#522C69]/30 border-t-[#522C69] animate-spin" />
         </div>
       </Desktop3ColumnLayout>
     );
@@ -607,7 +607,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           <p className="text-gray-400 text-xs mb-6">This casting call may have been removed or closed.</p>
           <button
             onClick={() => onNavigate('casting')}
-            className="px-6 py-2.5 rounded-xl bg-[#ffb400] hover:bg-[#ffa000] text-black font-bold text-xs uppercase tracking-wider cursor-pointer"
+            className="px-6 py-2.5 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
           >
             Back to Casting Calls
           </button>
@@ -657,7 +657,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 <span className="uppercase text-xs font-extrabold text-white tracking-wider block">
                   {selectedRole || primaryRole}
                 </span>
-                <h2 className="text-base sm:text-lg font-bold text-[#ffb400] lowercase truncate">
+                <h2 className="text-base sm:text-lg font-bold text-[#522C69] lowercase truncate">
                   {call.title}
                 </h2>
                 <p className="text-xs text-amber-400 font-medium">
@@ -688,12 +688,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                           onClick={() => setSelectedRole(r.name)}
                           className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer flex flex-col gap-1 ${
                             isSelected
-                              ? 'bg-[#ffb400]/15 border-[#ffb400] text-white shadow-sm'
+                              ? 'bg-[#522C69]/15 border-[#522C69] text-white shadow-sm'
                               : 'bg-[#18181c] border-white/10 text-gray-300 hover:border-white/20'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className={`text-xs sm:text-sm font-bold ${isSelected ? 'text-[#ffb400]' : 'text-white'}`}>
+                            <span className={`text-xs sm:text-sm font-bold ${isSelected ? 'text-[#522C69]' : 'text-white'}`}>
                               {r.name}
                             </span>
                             {r.ageRange && (
@@ -725,7 +725,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs sm:text-sm font-semibold text-gray-300 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-[#ffb400]" />
+                    <Mail className="w-3.5 h-3.5 text-white" />
                     <span>Contact Email *</span>
                   </label>
                   <input
@@ -734,13 +734,13 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                     placeholder="your.email@example.com"
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
-                    className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#ffb400]"
+                    className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs sm:text-sm font-semibold text-gray-300 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-[#ffb400]" />
+                    <Phone className="w-3.5 h-3.5 text-white" />
                     <span>Contact Phone / WhatsApp *</span>
                   </label>
                   <input
@@ -749,7 +749,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                     placeholder="+977 98XXXXXXXX"
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
-                    className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#ffb400]"
+                    className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
                   />
                 </div>
               </div>
@@ -766,7 +766,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                     placeholder="Tell us why you are the right fit for this role..."
                     value={coverNote}
                     onChange={(e) => setCoverNote(e.target.value)}
-                    className="w-full bg-[#16161b] border border-white/10 rounded-xl p-3.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#ffb400] resize-none pb-7 leading-relaxed"
+                    className="w-full bg-[#16161b] border border-white/10 rounded-xl p-3.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69] resize-none pb-7 leading-relaxed"
                   />
                   <span className="absolute bottom-2.5 right-3 text-[11px] text-gray-500 font-medium select-none">
                     {coverNote.length}/500
@@ -780,7 +780,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   <label className="text-xs sm:text-sm font-semibold text-gray-300">
                     Portfolio / Resume (PDF only)
                   </label>
-                  <span className="text-[10px] text-[#ffb400] font-bold uppercase tracking-wider bg-[#ffb400]/10 px-2 py-0.5 rounded-full border border-[#ffb400]/20">
+                  <span className="text-[10px] text-[#522C69] font-bold uppercase tracking-wider bg-[#522C69]/10 px-2 py-0.5 rounded-full border border-[#522C69]/20">
                     PDF Only
                   </span>
                 </div>
@@ -788,7 +788,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   onClick={() => fileInputRef.current?.click()}
                   className={`border border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all ${
                     attachedFile 
-                      ? 'border-[#ffb400]/50 bg-[#ffb400]/5' 
+                      ? 'border-[#522C69]/50 bg-[#522C69]/5' 
                       : 'border-white/15 hover:border-white/30 bg-[#16161b]/50 hover:bg-[#16161b]/80'
                   }`}
                 >
@@ -811,11 +811,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   />
                   {attachedFile ? (
                     <div className="flex flex-col items-center gap-1.5">
-                      <FileText className="w-8 h-8 text-[#ffb400]" />
+                      <FileText className="w-8 h-8 text-white" />
                       <p className="text-xs font-bold text-white truncate max-w-xs">
                         {attachedFile.name}
                       </p>
-                      <p className="text-[11px] text-[#ffb400] font-medium">
+                      <p className="text-[11px] text-[#522C69] font-medium">
                         {(attachedFile.size / (1024 * 1024)).toFixed(2)} MB • PDF Ready to submit
                       </p>
                       <button
@@ -856,7 +856,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   placeholder="https://yourportfolio.com"
                   value={selfTapeUrl}
                   onChange={(e) => setSelfTapeUrl(e.target.value)}
-                  className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#ffb400]"
+                  className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
                 />
               </div>
 
@@ -866,7 +866,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   type="submit"
                   loading={applying}
                   disabled={applying}
-                  className="w-full bg-[#ffb400] hover:bg-[#e6a200] text-black font-extrabold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 cursor-pointer transition-all active:scale-[0.98]"
+                  className="w-full bg-[#522C69] hover:bg-[#e6a200] text-black font-extrabold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 cursor-pointer transition-all active:scale-[0.98]"
                 >
                   <Inbox className="w-4 h-4" />
                   <span>Submit Application</span>
@@ -962,7 +962,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   <span className="uppercase tracking-wider text-white font-extrabold truncate max-w-[55%]">
                     {allRolesLabel}
                   </span>
-                  <span className="text-[#ffb400] font-semibold shrink-0">
+                  <span className="text-[#522C69] font-semibold shrink-0">
                     Deadline: {shortDeadline}
                   </span>
                 </div>
@@ -983,7 +983,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   onClick={handleToggleSave}
                   className="w-full py-2.5 px-3 rounded-xl bg-black border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
                 >
-                  <Bookmark className={`w-3.5 h-3.5 ${saved ? 'fill-[#ffb400] text-[#ffb400]' : 'text-gray-400'}`} />
+                  <Bookmark className={`w-3.5 h-3.5 ${saved ? 'fill-[#522C69] text-[#522C69]' : 'text-gray-400'}`} />
                   <span>{saved ? 'Saved' : 'Save'}</span>
                 </button>
               </div>
@@ -1095,7 +1095,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   <button
                     onClick={openApplyModal}
                     disabled={applying}
-                    className="w-full py-3.5 px-6 rounded-xl bg-[#ffb400] text-black font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 transition-all active:scale-[0.98] cursor-pointer"
+                    className="w-full py-3.5 px-6 rounded-xl bg-[#522C69] text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 transition-all active:scale-[0.98] cursor-pointer"
                   >
                     <Clapperboard className="w-4 h-4" />
                     <span>{applying ? 'Submitting...' : 'Apply for Audition'}</span>
@@ -1109,12 +1109,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               
               {/* Category Badges & Title */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between gap-2 text-xs text-[#ffb400] font-bold w-full">
+                <div className="flex items-center justify-between gap-2 text-xs text-[#522C69] font-bold w-full">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="uppercase tracking-wider font-extrabold truncate">
                       {call.category || 'Short Film'}
                     </span>
-                    <span className="text-[#ffb400]/40 select-none">•</span>
+                    <span className="text-[#522C69]/40 select-none">•</span>
                     <span className="flex items-center gap-1 truncate">
                       <MapPin className="w-3.5 h-3.5 text-white shrink-0" />
                       <span className="truncate">{call.location || 'Kathmandu, Nepal'}</span>
@@ -1122,7 +1122,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   </div>
 
                   <span className="flex items-center gap-1.5 shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#ffb400] animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#522C69] animate-pulse" />
                     <span>Active Casting</span>
                   </span>
                 </div>
@@ -1132,7 +1132,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 </h2>
 
                 <p className="text-xs sm:text-sm text-gray-400 font-medium">
-                  Posted by <span className="text-white font-semibold">{call.production || call.creatorName || 'Production House'}</span> • Deadline: <span className="text-[#ffb400] font-semibold">{fullDeadline}</span>
+                  Posted by <span className="text-white font-semibold">{call.production || call.creatorName || 'Production House'}</span> • Deadline: <span className="text-[#522C69] font-semibold">{fullDeadline}</span>
                 </p>
               </div>
 
@@ -1211,7 +1211,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                             {role.name || `Role ${idx + 1}`}
                           </h4>
                           {role.ageRange && (
-                            <span className="text-[11px] font-bold text-[#ffb400]">
+                            <span className="text-[11px] font-bold text-[#522C69]">
                               {role.ageRange}
                             </span>
                           )}
@@ -1232,7 +1232,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                               setSelectedRole(role.name);
                               setIsApplyView(true);
                             }}
-                            className="pt-1 text-[#ffb400] text-xs font-bold flex items-center gap-1 cursor-pointer"
+                            className="pt-1 text-[#522C69] text-xs font-bold flex items-center gap-1 cursor-pointer"
                           >
                             <span>Audition for {role.name} →</span>
                           </button>
@@ -1273,7 +1273,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5">
                   <div className="p-2.5 bg-[#0a0a0a] border border-white/5 rounded-xl space-y-1">
-                    <div className="w-5 h-5 rounded-full bg-[#ffb400]/20 text-[#ffb400] text-xs font-black flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-full bg-[#522C69]/20 text-[#522C69] text-xs font-black flex items-center justify-center">
                       1
                     </div>
                     <h5 className="text-xs font-bold text-white">Apply Online</h5>
@@ -1283,7 +1283,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   </div>
 
                   <div className="p-2.5 bg-[#0a0a0a] border border-white/5 rounded-xl space-y-1">
-                    <div className="w-5 h-5 rounded-full bg-[#ffb400]/20 text-[#ffb400] text-xs font-black flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-full bg-[#522C69]/20 text-[#522C69] text-xs font-black flex items-center justify-center">
                       2
                     </div>
                     <h5 className="text-xs font-bold text-white">Director Review</h5>
@@ -1293,7 +1293,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   </div>
 
                   <div className="p-2.5 bg-[#0a0a0a] border border-white/5 rounded-xl space-y-1">
-                    <div className="w-5 h-5 rounded-full bg-[#ffb400]/20 text-[#ffb400] text-xs font-black flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-full bg-[#522C69]/20 text-[#522C69] text-xs font-black flex items-center justify-center">
                       3
                     </div>
                     <h5 className="text-xs font-bold text-white">Callback & Role</h5>
@@ -1309,12 +1309,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 <div className="bg-black border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4 text-left shadow-2xl">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                      <Inbox className="w-4 h-4 text-[#ffb400]" />
+                      <Inbox className="w-4 h-4 text-white" />
                       <span>Applications Received ({apps.length})</span>
                     </h3>
                     <button
                       onClick={handlePrintRoster}
-                      className="text-[#ffb400] text-xs font-bold flex items-center gap-1 cursor-pointer hover:underline"
+                      className="text-[#522C69] text-xs font-bold flex items-center gap-1 cursor-pointer hover:underline"
                     >
                       <Printer className="w-3.5 h-3.5" />
                       <span>Print</span>
@@ -1347,7 +1347,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                         key={tab.id}
                         onClick={() => setPipelineFilter(tab.id)}
                         className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${pipelineFilter === tab.id
-                            ? 'bg-[#ffb400] text-black shadow-sm shadow-[#ffb400]/20'
+                            ? 'bg-[#522C69] text-white shadow-sm shadow-[#522C69]/20'
                             : 'bg-[#18181c] text-gray-400 border border-white/5'
                           }`}
                       >
@@ -1389,7 +1389,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                 <Avatar userId={app.userId} src={app.userPhoto} name={app.userName} size="sm" />
                                 <div>
                                   <span className="font-bold text-white block">{app.userName}</span>
-                                  <span className="text-[11px] text-[#ffb400]">{app.roleName || 'General Role'}</span>
+                                  <span className="text-[11px] text-[#522C69]">{app.roleName || 'General Role'}</span>
                                 </div>
                               </div>
                               <button
@@ -1409,7 +1409,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                     className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
                                     title="Click to email applicant"
                                   >
-                                    <Mail className="w-3 h-3 text-[#ffb400]" />
+                                    <Mail className="w-3 h-3 text-white" />
                                     <span>{app.contactEmail || app.userEmail}</span>
                                   </a>
                                 )}
@@ -1448,12 +1448,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                           setPreviewPdfUrl(directFileUrl);
                                           setPreviewPdfName(app.fileName || `${app.userName || 'Applicant'}_Portfolio.pdf`);
                                         }}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ffb400]/15 border border-[#ffb400]/30 text-[10px] text-[#ffb400] font-bold active:scale-95 transition-all cursor-pointer shadow-sm"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#522C69]/15 border border-[#522C69]/30 text-[10px] text-[#522C69] font-bold active:scale-95 transition-all cursor-pointer shadow-sm"
                                         title="Click to view PDF portfolio"
                                       >
-                                        <FileText className="w-3.5 h-3.5 text-[#ffb400]" />
+                                        <FileText className="w-3.5 h-3.5 text-white" />
                                         <span className="truncate max-w-[130px]">{app.fileName || 'Portfolio.pdf'}</span>
-                                        <Eye className="w-3 h-3 text-[#ffb400]" />
+                                        <Eye className="w-3 h-3 text-white" />
                                       </button>
                                       <a
                                         href={directFileUrl}
@@ -1470,7 +1470,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 font-medium"
                                       title="File name submitted by applicant"
                                     >
-                                      <FileText className="w-3 h-3 text-[#ffb400]" />
+                                      <FileText className="w-3 h-3 text-white" />
                                       <span className="truncate max-w-[150px]">{app.fileName}</span>
                                     </span>
                                   ) : null}
@@ -1483,7 +1483,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                       rel="noopener noreferrer"
                                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-200 font-semibold active:scale-95 transition-all cursor-pointer"
                                     >
-                                      <Video className="w-3 h-3 text-[#ffb400]" />
+                                      <Video className="w-3 h-3 text-white" />
                                       <span className="truncate max-w-[150px]">Reel / Link</span>
                                       <ExternalLink className="w-3 h-3 text-gray-400" />
                                     </a>
@@ -1504,7 +1504,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                     key={st.id}
                                     onClick={() => handleUpdateAppStatus(app.id, st.id)}
                                     className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase transition-all cursor-pointer ${app.status === st.id
-                                        ? 'bg-[#ffb400] text-black border border-[#ffb400]'
+                                        ? 'bg-[#522C69] text-white border border-[#522C69]'
                                         : 'bg-white/5 text-gray-400 border border-white/10'
                                       }`}
                                   >
@@ -1531,7 +1531,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/40">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <FileText className="w-4 h-4 text-[#ffb400] shrink-0" />
+                  <FileText className="w-4 h-4 text-white shrink-0" />
                   <span className="text-xs sm:text-sm font-bold text-white truncate">
                     {previewPdfName || 'Applicant Portfolio PDF'}
                   </span>

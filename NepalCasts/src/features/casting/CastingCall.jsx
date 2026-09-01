@@ -137,7 +137,7 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
         <div className="space-y-1 sm:space-y-1.5">
           {/* Top Row: Category Tag & Bookmark */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[#ffb400] font-bold text-[10px] sm:text-[11px] tracking-wider uppercase truncate">
+            <span className="text-[#522C69] font-bold text-[10px] sm:text-[11px] tracking-wider uppercase truncate">
               {categoryTag}
             </span>
 
@@ -168,7 +168,7 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
           </p>
 
           {/* Salary / Compensation */}
-          <p className="text-xs sm:text-sm font-bold text-[#ffb400] pt-0.5 truncate">
+          <p className="text-xs sm:text-sm font-bold text-[#522C69] pt-0.5 truncate">
             Salary: {call.budget || call.salary || 'NPR Negotiable'}
           </p>
         </div>
@@ -185,7 +185,7 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
           <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-md text-[9px] sm:text-xs font-black tracking-wider uppercase border ${
             deadlineBadge.isClosed
               ? 'bg-[#222] border-white/10 text-gray-400'
-              : 'bg-[#ffb400]/15 border-[#ffb400]/30 text-[#ffb400]'
+              : 'bg-[#522C69]/15 border-[#522C69]/30 text-[#522C69]'
           }`}>
             {deadlineBadge.label}
           </span>
@@ -463,7 +463,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
             {canPostCall && (
               <button
                 onClick={() => onNavigate('casting-create')}
-                className="hidden sm:inline-flex items-center gap-1.5 bg-[#ffb400] hover:bg-[#ffa000] text-black text-xs font-bold uppercase px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm"
+                className="hidden sm:inline-flex items-center gap-1.5 bg-[#522C69] hover:bg-[#663782] text-white text-xs font-bold uppercase px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-sm"
               >
                 <Plus size={14} strokeWidth={3} />
                 Post Call
@@ -526,7 +526,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
                             setIsSortOpen(false);
                           }}
                           className={`w-full text-left px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
-                              ? 'text-[#ffb400] bg-[#ffb400]/10'
+                              ? 'text-[#522C69] bg-[#522C69]/10'
                               : 'text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                         >
@@ -582,7 +582,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
                             setIsSortOpen(false);
                           }}
                           className={`w-full text-left px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
-                              ? 'text-[#ffb400] bg-[#ffb400]/10'
+                              ? 'text-[#522C69] bg-[#522C69]/10'
                               : 'text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                         >
@@ -606,7 +606,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
                   onClick={() => setSelectedCategoryTab(tab)}
                   className={`relative py-1.5 text-xs sm:text-sm whitespace-nowrap transition-colors cursor-pointer ${
                     isActive
-                      ? 'text-[#ffb400] font-extrabold'
+                      ? 'text-[#522C69] font-extrabold'
                       : 'text-gray-400 hover:text-white font-medium'
                   }`}
                 >
@@ -614,7 +614,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
                   {isActive && (
                     <motion.div
                       layoutId="activeCategoryIndicator"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#ffb400] shadow-[0_0_8px_rgba(255,180,0,0.8)]"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#522C69] shadow-[0_0_8px_rgba(255,180,0,0.8)]"
                       transition={{ duration: 0.2 }}
                     />
                   )}
@@ -637,7 +637,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
                 {canPostCall && (
                   <button
                     onClick={() => onNavigate('casting-create')}
-                    className="bg-[#ffb400] hover:bg-[#e6a200] text-black px-5 py-2.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-all shadow-md active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
+                    className="bg-[#522C69] hover:bg-[#e6a200] text-black px-5 py-2.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-all shadow-md active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <Plus size={14} strokeWidth={3} />
                     Post a Call

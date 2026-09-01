@@ -25,7 +25,7 @@ export default function AdminSidebar({ activeTab: _activeTab, onNavigate: _onNav
               <span className="text-[9px] text-admin-primary font-black uppercase tracking-[0.3em] mt-1">Dashboard</span>
             </div>
           </div>)}
-        {isCollapsed && (<div className="w-10 h-10 rounded-xl bg-gradient-to-br from-admin-primary to-[#ffb400] flex items-center justify-center font-black text-black text-xl mx-auto shadow-lg shadow-admin-primary/20">N</div>)}
+        {isCollapsed && (<div className="w-10 h-10 rounded-xl bg-gradient-to-br from-admin-primary to-[#522C69] flex items-center justify-center font-black text-black text-xl mx-auto shadow-lg shadow-admin-primary/20">N</div>)}
       </div>
 
       <nav className="flex-1 px-3 space-y-1 mt-4">

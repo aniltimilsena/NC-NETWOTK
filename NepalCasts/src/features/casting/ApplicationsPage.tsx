@@ -190,7 +190,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                     navigate(tab.path);
                   }}
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${isActive
-                      ? 'bg-[#ffb400] text-[#0A0A0A] shadow-sm shadow-[#ffb400]/20'
+                      ? 'bg-[#522C69] text-[#0A0A0A] shadow-sm shadow-[#522C69]/20'
                       : 'bg-[#18181c] text-gray-400 hover:text-white border border-white/5'
                     }`}
                 >
@@ -214,7 +214,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
               </p>
               <button
                 onClick={() => (onNavigate ? onNavigate('casting') : navigate('/casting'))}
-                className="px-6 py-2.5 rounded-full bg-[#ffb400] hover:bg-[#ffa000] text-black font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-full bg-[#522C69] hover:bg-[#663782] text-white font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all cursor-pointer"
               >
                 Browse Casting Calls
               </button>
@@ -279,7 +279,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                               ? onNavigate('casting-detail', app.castingId)
                               : navigate(`/casting/${app.castingId}`)
                           }
-                          className="font-bold text-white text-base truncate hover:text-[#ffb400] cursor-pointer transition-colors"
+                          className="font-bold text-white text-base truncate hover:text-[#522C69] cursor-pointer transition-colors"
                         >
                           {title}
                         </h3>
@@ -311,7 +311,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                         className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
                       >
                         <span>View Details</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-[#ffb400]" />
+                        <ArrowRight className="w-3.5 h-3.5 text-white" />
                       </button>
                     </div>
                   </div>

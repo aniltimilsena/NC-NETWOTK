@@ -32,7 +32,7 @@ export default function TermsOfService() {
             <span>Platform Agreement</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-sans font-black tracking-tight text-white leading-tight">
-            Terms of <span className="text-[#ffb400]">Service</span>
+            Terms of <span className="text-[#522C69]">Service</span>
           </h1>
           <p className="text-gray-400 text-sm sm:text-base lg:text-lg max-w-lg mx-auto leading-relaxed">
             Please review the rules and guidelines governing your participation in the NepalCasts network.

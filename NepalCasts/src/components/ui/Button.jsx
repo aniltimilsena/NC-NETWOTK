@@ -1,10 +1,10 @@
 export default function Button({ children, variant = 'primary', size = 'md', className = '', onClick = () => { }, type = 'button', loading = false, disabled = false, ...props }) {
     const variants = {
-        primary: 'bg-[#ffb400] hover:bg-[#e6a200] text-black font-extrabold shadow-[0_4px_20px_rgba(255,180,0,0.25)]',
-        secondary: 'bg-nc-surface border border-[#ffb400]/30 text-[#ffb400] hover:bg-[#ffb400]/10 hover:border-[#ffb400]/50',
+        primary: 'bg-[#522C69] hover:bg-[#e6a200] text-black font-extrabold shadow-[0_4px_20px_rgba(255,180,0,0.25)]',
+        secondary: 'bg-nc-surface border border-[#522C69]/30 text-[#522C69] hover:bg-[#522C69]/10 hover:border-[#522C69]/50',
         ghost: 'text-nc-secondary hover:text-white hover:bg-white/5',
         danger: 'bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30',
-        outline: 'border border-[#ffb400]/30 text-[#ffb400] hover:bg-[#ffb400]/10 hover:border-[#ffb400]/50',
+        outline: 'border border-[#522C69]/30 text-[#522C69] hover:bg-[#522C69]/10 hover:border-[#522C69]/50',
     };
     const sizes = {
         sm: 'px-3 py-1.5 text-sm',

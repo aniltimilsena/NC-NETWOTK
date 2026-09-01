@@ -12,7 +12,6 @@ import { CallProvider } from '../context/CallContext';
 import { initOneSignal, oneSignalInitialized } from '../utils/oneSignal';
 import OneSignal from 'react-onesignal';
 import SplashScreen from '../components/SplashScreen';
-const Onboarding = lazy(() => import('../components/Onboarding'));
 const CallingOverlay = lazy(() => import('../features/call/components/CallingOverlay'));
 const IncomingCallPopup = lazy(() => import('../features/call/components/IncomingCallPopup'));
 import { AnimatePresence } from 'framer-motion';
@@ -367,7 +366,6 @@ export default function AppProviders({ children }: {
         deleteAvatar
     }), [enrichedUser, isAdmin, authReady, showAlert, showToast, handleLogout, updateAvatar, deleteAvatar]);
 
-    const showOnboarding = authReady && !!user && !!userProfile && userProfile.onboarded !== true;
     return (<PermissionProvider>
       <CallProvider user={enrichedUser}>
         <AppContext.Provider value={appContextValue}>
@@ -379,14 +377,13 @@ export default function AppProviders({ children }: {
                     Your account is in a 30-day grace period.
                   </p>
                 </div>
-                <button onClick={handleCancelDeletion} className="w-full py-3 bg-[#ffb400] hover:bg-[#ffa000] text-black font-black uppercase text-xs rounded-xl cursor-pointer">
+                <button onClick={handleCancelDeletion} className="w-full py-3 bg-[#522C69] hover:bg-[#663782] text-white font-black uppercase text-xs rounded-xl cursor-pointer">
                   Restore Account
                 </button>
               </div>
             </div>)}
           <AnimatePresence>
             {!minSplashTimeElapsed && !authReady && <SplashScreen />}
-            {showOnboarding && (<Suspense fallback={null}><Onboarding user={enrichedUser} profile={userProfile} onNavigate={() => { }}/></Suspense>)}
           </AnimatePresence>
 
           <div className="min-h-screen bg-[#0A0A0F] flex flex-col">

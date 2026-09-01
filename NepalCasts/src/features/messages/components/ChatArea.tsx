@@ -123,7 +123,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
           <div className="text-left">
             <span className="text-sm sm:text-base font-extrabold text-white block leading-tight">{chat?.name}</span>
             <span className="text-[11px] block tracking-wide font-medium mt-0.5">
-              {isTyping ? <span className="text-[#ffb400] animate-pulse">Typing...</span> : isOnline ? <span className="text-emerald-400">Online</span> : <span className="text-gray-500">Offline</span>}
+              {isTyping ? <span className="text-[#522C69] animate-pulse">Typing...</span> : isOnline ? <span className="text-emerald-400">Online</span> : <span className="text-gray-500">Offline</span>}
             </span>
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
             <Phone className="w-5 h-5" strokeWidth={1.8}/>
           </button>
           {onTogglePinnedDrawer && (<button onClick={onTogglePinnedDrawer} title="View Pinned Messages" className={`p-2 transition-colors cursor-pointer active:scale-95 ${isPinnedDrawerOpen
-                ? 'text-[#ffb400]'
+                ? 'text-[#522C69]'
                 : 'text-gray-300 hover:text-white'}`}>
               <Pin className="w-5 h-5" strokeWidth={1.8}/>
             </button>)}
@@ -208,7 +208,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
 
                 
                 <div className="flex flex-col min-w-0">
-                  {msg.replyTo && (<div className="bg-white/5 border-l-2 border-[#ffb400] p-2 rounded-xl text-[10px] text-gray-400 mb-1 max-w-[240px] truncate text-left">
+                  {msg.replyTo && (<div className="bg-white/5 border-l-2 border-[#522C69] p-2 rounded-xl text-[10px] text-gray-400 mb-1 max-w-[240px] truncate text-left">
                       {msg.replyTo.text}
                     </div>)}
 
@@ -221,7 +221,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                       <div className={`text-sm text-left ${isMediaMsg
                         ? `p-0 bg-[#181818] shadow-sm ${cornerRadius} overflow-hidden`
                         : isMe
-                          ? `px-3.5 py-2 bg-[#ffb400] text-black font-medium shadow-sm ${cornerRadius}`
+                          ? `px-3.5 py-2 bg-[#522C69] text-white font-medium shadow-sm ${cornerRadius}`
                           : `px-3.5 py-2 bg-[#222222] text-gray-200 shadow-sm ${cornerRadius}`}`}>
                         {isImage ? (
                           <div className="overflow-hidden rounded-xl aspect-square w-52 sm:w-64 max-w-full">
@@ -255,14 +255,14 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
 
                   
                   {showTimestamp && (<div className={`flex items-center gap-1.5 mt-1 text-[9px] text-nc-muted ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    {msg.isPinned && <Pin className="w-2.5 h-2.5 text-[#ffb400] shrink-0"/>}
+                    {msg.isPinned && <Pin className="w-2.5 h-2.5 text-white shrink-0"/>}
                     <span>{msg.hasPendingWrites ? 'Sending...' : formatMessageTime(msg.createdAt)}</span>
-                    {isMe && (msg.hasPendingWrites ? (<Clock className="w-3 h-3 text-nc-muted animate-pulse"/>) : (<Check className="w-3 h-3 text-[#ffb400]"/>))}
+                    {isMe && (msg.hasPendingWrites ? (<Clock className="w-3 h-3 text-nc-muted animate-pulse"/>) : (<Check className="w-3 h-3 text-white"/>))}
                   </div>)}
                 </div>
 
                 <div className="self-center opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0">
-                  {onPinMessage && (<button onClick={() => onPinMessage(msg.id)} className={`p-1.5 hover:bg-white/5 rounded-lg transition-colors cursor-pointer ${msg.isPinned ? 'text-[#ffb400]' : 'text-nc-muted hover:text-[#ffb400]'}`} title={msg.isPinned ? 'Unpin Message' : 'Pin Message'}>
+                  {onPinMessage && (<button onClick={() => onPinMessage(msg.id)} className={`p-1.5 hover:bg-white/5 rounded-lg transition-colors cursor-pointer ${msg.isPinned ? 'text-[#522C69]' : 'text-nc-muted hover:text-[#522C69]'}`} title={msg.isPinned ? 'Unpin Message' : 'Pin Message'}>
                       {msg.isPinned
                         ? <PinOff className="w-3.5 h-3.5"/>
                         : <Pin className="w-3.5 h-3.5"/>}

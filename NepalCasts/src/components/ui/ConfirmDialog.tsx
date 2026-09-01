@@ -99,8 +99,8 @@ export default function ConfirmDialog({
                 );
             case 'success':
                 return (
-                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-amber-50 text-[#ffb400] border border-amber-200 shadow-sm">
-                        <svg className="w-7 h-7 text-[#ffb400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-amber-50 text-[#522C69] border border-amber-200 shadow-sm">
+                        <svg className="w-7 h-7 text-[#522C69]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
@@ -108,8 +108,8 @@ export default function ConfirmDialog({
             case 'info':
             default:
                 return (
-                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-amber-50 text-[#ffb400] border border-amber-200 shadow-sm">
-                        <svg className="w-6 h-6 text-[#ffb400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center bg-amber-50 text-[#522C69] border border-amber-200 shadow-sm">
+                        <svg className="w-6 h-6 text-[#522C69]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -122,12 +122,12 @@ export default function ConfirmDialog({
             case 'danger':
                 return 'bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/20';
             case 'warning':
-                return 'bg-[#ffb400] hover:bg-[#ffa000] text-black shadow-md shadow-[#ffb400]/20';
+                return 'bg-[#522C69] hover:bg-[#663782] text-white shadow-md shadow-[#522C69]/20';
             case 'success':
-                return 'bg-[#ffb400] hover:bg-[#ffa000] text-black shadow-md shadow-[#ffb400]/20 font-bold';
+                return 'bg-[#522C69] hover:bg-[#663782] text-white shadow-md shadow-[#522C69]/20 font-bold';
             case 'info':
             default:
-                return 'bg-[#ffb400] hover:bg-[#ffa000] text-black shadow-md shadow-[#ffb400]/20';
+                return 'bg-[#522C69] hover:bg-[#663782] text-white shadow-md shadow-[#522C69]/20';
         }
     };
 
