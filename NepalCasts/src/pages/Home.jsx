@@ -499,17 +499,17 @@ export default function Home({ onNavigate, user }) {
                     }}
                   >
                     {/* Portrait Photo Card with Top-Left & Bottom-Right Rounded Corners */}
-                    <div className="relative shrink-0 w-[82px] h-[112px] sm:w-[100px] sm:h-[136px] flex flex-col items-center justify-center overflow-hidden rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm shadow-[0_10px_30px_rgba(0,0,0,0.9)] border border-white/10 bg-[#16161C] transition-all">
+                    <div className="relative shrink-0 w-[82px] h-[112px] sm:w-[100px] sm:h-[136px] flex flex-col items-center justify-center overflow-hidden rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm shadow-[0_10px_30px_rgba(0,0,0,0.9)] border-0 bg-[#16161C] transition-all">
                       {hasRealPhoto ? (
                         <img
                           src={rawPhoto}
                           alt={spotlightName}
                           onError={() => setSpotlightImageError(true)}
-                          className="w-full h-full object-cover rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm"
+                          className="w-full h-full object-cover rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm border-0"
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1C1C24] to-[#121216] p-1.5 text-center select-none rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm">
-                          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-1 text-white font-black text-sm sm:text-base tracking-tight shadow-inner">
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1C1C24] to-[#121216] p-1.5 text-center select-none rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm border-0">
+                          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/5 border-0 flex items-center justify-center mb-1 text-white font-black text-sm sm:text-base tracking-tight shadow-inner">
                             {spotlightInitials}
                           </div>
                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate w-full px-0.5">
