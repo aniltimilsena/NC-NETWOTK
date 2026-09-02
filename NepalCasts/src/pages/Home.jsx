@@ -30,13 +30,16 @@ function getInitials(name) {
 
 function isMockOrInvalidImage(url) {
   if (!url || typeof url !== 'string' || url.trim() === '') return true;
+  const lower = url.toLowerCase();
   if (
-    url.includes('hero-talent') ||
-    url.includes('default-avatar') ||
-    url.includes('default-male') ||
-    url.includes('default-female') ||
-    url.includes('achyut') ||
-    url.startsWith('data:image/svg+xml')
+    lower.includes('hero-talent') ||
+    lower.includes('default-avatar') ||
+    lower.includes('default-male') ||
+    lower.includes('default-female') ||
+    lower.includes('achyut') ||
+    lower.includes('img.clerk.com') ||
+    lower.includes('clerk.dev') ||
+    lower.startsWith('data:image/svg+xml')
   ) {
     return true;
   }
@@ -492,7 +495,7 @@ export default function Home({ onNavigate, user }) {
                     }}
                   >
                     {/* Portrait Photo Card with Top-Left & Bottom-Right Rounded Corners */}
-                    <div className="relative shrink-0 w-[82px] h-[112px] sm:w-[100px] sm:h-[136px] flex flex-col items-center justify-center overflow-hidden rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm shadow-[0_10px_30px_rgba(0,0,0,0.9)] border border-white/20 bg-gradient-to-b from-[#1c2333] to-[#0d121c] transition-all">
+                    <div className="relative shrink-0 w-[82px] h-[112px] sm:w-[100px] sm:h-[136px] flex flex-col items-center justify-center overflow-hidden rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm shadow-[0_10px_30px_rgba(0,0,0,0.9)] border border-white/10 bg-[#16161C] transition-all">
                       {hasRealPhoto ? (
                         <img
                           src={rawPhoto}
@@ -501,8 +504,8 @@ export default function Home({ onNavigate, user }) {
                           className="w-full h-full object-cover rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm"
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1e283d] via-[#141b2a] to-[#0a0e17] p-1.5 text-center select-none rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm">
-                          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mb-1 text-white font-black text-sm sm:text-base tracking-tight shadow-inner">
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1C1C24] to-[#121216] p-1.5 text-center select-none rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm">
+                          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-1 text-white font-black text-sm sm:text-base tracking-tight shadow-inner">
                             {spotlightInitials}
                           </div>
                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate w-full px-0.5">
