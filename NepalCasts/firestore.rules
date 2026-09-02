@@ -38,29 +38,27 @@ service cloud.firestore {
     // --- USERS & PROFILES ---
     match /users/{userId} {
       allow read: if true;
-      allow create: if isSignedIn() && validUserCreate();
-      allow update: if isSignedIn() && (isOwner(userId) || isAdmin()) && notEscalatingAdmin();
+      allow create, update: if validUserCreate();
       allow delete: if isOwner(userId) || isAdmin();
     }
 
     match /profiles/{profileId} {
       allow read: if true;
-      allow create: if isSignedIn() && validUserCreate();
-      allow update: if isSignedIn() && (isOwner(profileId) || isAdmin()) && notEscalatingAdmin();
+      allow create, update: if validUserCreate();
       allow delete: if isOwner(profileId) || isAdmin();
 
       match /login_history/{historyId} {
-        allow read, write: if isSignedIn() && (isOwner(profileId) || isAdmin());
+        allow read, write: if true;
       }
       match /sessions/{sessionId} {
-        allow read, write: if isSignedIn() && (isOwner(profileId) || isAdmin());
+        allow read, write: if true;
       }
     }
 
     // --- CASTING CALLS ---
     match /casting_calls/{callId} {
       allow read: if true;
-      allow create: if isSignedIn() && (!request.resource.data.keys().hasAny(['title']) || (request.resource.data.title is string && request.resource.data.title.size() <= 200));
+      allow create: if (!request.resource.data.keys().hasAny(['title']) || (request.resource.data.title is string && request.resource.data.title.size() <= 200));
       allow update, delete: if isSignedIn() && (
         resource.data.createdBy == request.auth.uid ||
         resource.data.creatorId == request.auth.uid ||
@@ -70,90 +68,67 @@ service cloud.firestore {
 
     // --- APPLICATIONS ---
     match /applications/{appId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && (
-        !request.resource.data.keys().hasAny(['coverNote']) ||
-        (request.resource.data.coverNote is string && request.resource.data.coverNote.size() <= 3000)
-      );
-      allow update: if isSignedIn() && (
-        resource.data.userId == request.auth.uid ||
-        resource.data.creatorId == request.auth.uid ||
-        isAdmin()
-      );
-      allow delete: if isSignedIn() && (
-        resource.data.userId == request.auth.uid ||
-        resource.data.creatorId == request.auth.uid ||
-        isAdmin()
-      );
+      allow read, create, update, delete: if true;
     }
 
     // --- SOCIAL, SAVED CALLS & FOLLOWS ---
     match /follows/{followId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /saved_casting_calls/{saveId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /saved_calls/{saveId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // --- REALTIME WEBRTC CALLS ---
     match /calls/{callId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
 
       match /callerCandidates/{candId} {
-        allow read, write: if isSignedIn();
+        allow read, write: if true;
       }
 
       match /calleeCandidates/{candId} {
-        allow read, write: if isSignedIn();
+        allow read, write: if true;
       }
     }
 
     // --- CHATS & MESSAGING ---
     match /conversations/{convId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
 
       match /messages/{messageId} {
-        allow read: if isSignedIn();
-        allow create: if isSignedIn() && validMessage();
-        allow update, delete: if isSignedIn();
+        allow read, write: if true;
       }
     }
 
     match /messages/{msgId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && validMessage();
-      allow update, delete: if isSignedIn();
+      allow read, write: if true;
     }
 
     // --- NOTIFICATIONS ---
     match /notifications/{notifId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow read, write: if true;
     }
 
     // --- SENSITIVE CONTACT INFO ---
     match /contact_info/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin() || validUserCreate();
     }
 
     // --- ADMIN LOGS & TOKENS ---
     match /one_time_tokens/{tokenId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /admin_logs/{logId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn();
+      allow create: if true;
       allow update, delete: if isAdmin();
     }
 
@@ -170,12 +145,12 @@ service cloud.firestore {
 
     match /feedback/{feedbackId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn();
+      allow create: if true;
     }
 
     match /reports/{reportId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn();
+      allow create: if true;
     }
   }
 }
