@@ -21,12 +21,23 @@ export default class ErrorBoundary extends Component<Props, State> {
         return { hasError: true, error, showDetails: false };
     }
 
+    private handleOnline = () => {
+        if (this.state.hasError) {
+            this.handleReload();
+        }
+    };
+
     public componentDidMount() {
         const url = new URL(window.location.href);
         if (url.searchParams.has('reload')) {
             url.searchParams.delete('reload');
             window.history.replaceState({}, '', url.pathname + url.search);
         }
+        window.addEventListener('online', this.handleOnline);
+    }
+
+    public componentWillUnmount() {
+        window.removeEventListener('online', this.handleOnline);
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
@@ -57,46 +68,21 @@ export default class ErrorBoundary extends Component<Props, State> {
             });
         }
         this.logError(error, errorInfo);
-        if (isChunkLoadFailed) {
-            try {
-                const lastReloaded = sessionStorage.getItem("chunk_fail_reload_time");
-                const now = Date.now();
-                if (!lastReloaded || now - parseInt(lastReloaded, 10) > 15000) {
-                    sessionStorage.setItem("chunk_fail_reload_time", now.toString());
-                    console.warn("Dynamic import failure detected in ErrorBoundary. Auto-reloading page with cache-busting...");
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('reload', Date.now().toString());
-                    window.location.href = url.toString();
-                }
-            } catch (_err) {
-                // Storage blocked or unavailable
-            }
-        }
     }
 
-    private async logError(error: Error, errorInfo: ErrorInfo): Promise<void> {
+    private logError(error: Error, errorInfo: ErrorInfo): void {
         try {
-            const { AuthService } = await import("../services/AuthService");
-            const token = await AuthService.getIdToken().catch(() => null);
-            await fetch('/api/errors/log', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token || ''}`,
-                },
-                body: JSON.stringify({
-                    type: 'react_crash',
-                    message: error.message,
-                    stack: error.stack,
-                    componentStack: errorInfo.componentStack,
-                    url: window.location.href,
-                    userAgent: navigator.userAgent,
-                    timestamp: new Date().toISOString(),
-                    userId: AuthService.getUserId() || 'anonymous',
-                }),
-            });
+            const errorReport = {
+                message: error?.message || "Unknown error",
+                stack: error?.stack || "No stack",
+                componentStack: errorInfo?.componentStack || "No component stack",
+                timestamp: new Date().toISOString(),
+                url: window.location.href,
+                userAgent: navigator.userAgent
+            };
+            sessionStorage.setItem("nc_last_crash", JSON.stringify(errorReport));
         } catch (_e) {
-            // Ignore error logging failure
+            // Ignore storage failures
         }
     }
 
@@ -121,17 +107,37 @@ export default class ErrorBoundary extends Component<Props, State> {
 
     public render() {
         if (this.state.hasError) {
+            const errorMsg = this.state.error?.message || "";
+            const isChunkLoadFailed = errorMsg.includes("Failed to fetch dynamically imported module") ||
+                errorMsg.includes("Importing a module script failed") ||
+                errorMsg.includes("error loading dynamically imported module");
+            const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
             // In production, display clean styled fallback error page
             if (!import.meta.env.DEV) {
                 return (
                     <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center px-4 font-sans select-none">
-                        <div className="flex flex-col items-center text-center max-w-md">
-                            <h1 className="text-6xl sm:text-7xl font-black tracking-tight text-white mb-3">500</h1>
-                            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 tracking-tight">Something went wrong</h2>
-                            <p className="text-sm text-[#9ca3af] leading-normal font-normal mb-8 max-w-xs">An unexpected error occurred. Please reload the page to continue.</p>
-                            <div className="flex items-center gap-3">
-                                <button onClick={this.handleReload} type="button" className="px-5 py-2.5 rounded-xl bg-white hover:bg-gray-200 text-black font-semibold text-sm transition-all cursor-pointer active:scale-95 shadow-sm">Reload Page</button>
-                                <a href="/" className="px-5 py-2.5 rounded-xl bg-[#18181b] hover:bg-[#222226] border border-[#27272a] text-gray-300 hover:text-white font-medium text-sm transition-all cursor-pointer active:scale-95">Go home</a>
+                        <div className="flex flex-col items-center text-center max-w-md space-y-3">
+                            <h1 className="text-6xl sm:text-7xl font-black tracking-tight text-white">
+                                {isOffline ? "📶" : isChunkLoadFailed ? "⚡" : "500"}
+                            </h1>
+                            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                                {isOffline ? "You are offline" : isChunkLoadFailed ? "Update Available" : "Something went wrong"}
+                            </h2>
+                            <p className="text-sm text-[#9ca3af] leading-relaxed max-w-xs pb-4">
+                                {isOffline
+                                    ? "Please check your internet connection to continue using NepalCasts."
+                                    : isChunkLoadFailed
+                                    ? "A newer version of NepalCasts is available. Reloading will fetch the latest update."
+                                    : "An unexpected error occurred. Please reload the page to continue."}
+                            </p>
+                            <div className="flex items-center gap-3 w-full justify-center">
+                                <button onClick={this.handleReload} type="button" className="px-5 py-2.5 rounded-xl bg-white hover:bg-gray-200 text-black font-semibold text-sm transition-all cursor-pointer active:scale-95 shadow-sm">
+                                    {isChunkLoadFailed ? "Update & Reload" : "Reload Page"}
+                                </button>
+                                <a href="/" className="px-5 py-2.5 rounded-xl bg-[#18181b] hover:bg-[#222226] border border-[#27272a] text-gray-300 hover:text-white font-medium text-sm transition-all cursor-pointer active:scale-95">
+                                    Go Home
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -139,10 +145,6 @@ export default class ErrorBoundary extends Component<Props, State> {
             }
 
             // In development, show developer diagnostics view
-            const errorMsg = this.state.error?.message || "";
-            const isChunkLoadFailed = errorMsg.includes("Failed to fetch dynamically imported module") ||
-                errorMsg.includes("Importing a module script failed") ||
-                errorMsg.includes("error loading dynamically imported module");
             let localVersion = 'dev';
             try {
                 localVersion = __BUILD_VERSION__;
