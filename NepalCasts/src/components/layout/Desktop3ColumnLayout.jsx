@@ -321,8 +321,8 @@ export default function Desktop3ColumnLayout({
 
   return (
     <div className="w-full">
-      <div className="max-w-[1600px] mx-auto px-0 sm:px-1 lg:px-2 pt-0 pb-0">
-        <div className="grid grid-cols-12 gap-2 lg:gap-3">
+      <div className="max-w-[1600px] mx-auto px-0 pt-0 pb-0">
+        <div className="grid grid-cols-12 gap-0 lg:gap-3">
 
           {/* LEFT SIDEBAR (Desktop: lg+) */}
           <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-14 sm:top-16 pt-0 pb-3 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] overflow-y-auto scrollbar-hide space-y-2">

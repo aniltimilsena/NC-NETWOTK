@@ -56,9 +56,9 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
             setSubmitting(false);
         }
     };
-    return (<div className="space-y-6">
+    return (<div className="space-y-1.5 sm:space-y-3">
       
-      <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-4 sm:p-5 space-y-4">
+      <div className="bg-[#0E0E0E] border-0 sm:border sm:border-white/5 rounded-none sm:rounded-xl p-4 sm:p-5 space-y-4">
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <Briefcase className="w-4 h-4 text-white"/>
           Add Professional Experience
@@ -96,7 +96,7 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
       </div>
 
       
-      <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-4 sm:p-5 space-y-4">
+      <div className="bg-[#0E0E0E] border-0 sm:border sm:border-white/5 rounded-none sm:rounded-xl p-4 sm:p-5 space-y-4">
         <h2 className="text-base font-bold text-white">Work History</h2>
 
         {experienceList.length > 0 ? (<div className="space-y-3">

@@ -180,7 +180,7 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
 
     return (
         <div className="min-h-screen bg-nc-dark pb-6">
-            <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 pt-6 flex items-center gap-4">
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 pt-4 sm:pt-6 flex items-center gap-4">
                 <button onClick={handleBack} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all active:scale-95 shrink-0 cursor-pointer" aria-label="Back">
                     <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
                 </button>
@@ -190,7 +190,7 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
                 </h1>
             </div>
 
-            <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 mt-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="max-w-[1600px] mx-auto px-0 sm:px-8 lg:px-12 mt-4 sm:mt-8 grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-8">
                 <div className={`md:col-span-1 space-y-1 flex flex-col items-stretch justify-start text-left ${currentMobileView === 'menu' ? 'block' : 'hidden md:block'}`}>
                     {tabsConfig.map((tab) => {
                         const Icon = tab.icon;

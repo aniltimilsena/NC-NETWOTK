@@ -52,11 +52,12 @@ export default function SkillsSettings({ profile, onUpdate, showAlert }: SkillsS
             setSubmitting(false);
         }
     };
-    return (<div className="space-y-6">
+    return (<div className="space-y-1.5 sm:space-y-3">
       
-      <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-4 sm:p-5 space-y-4">
+      {/* Add Skills Section */}
+      <div className="bg-[#0E0E0E] border-0 sm:border sm:border-white/5 rounded-none sm:rounded-xl p-4 sm:p-5 space-y-4">
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <Award className="w-4 h-4 text-white"/>
+          <Award className="w-4 h-4 text-white" />
           Add Professional Skills
         </h2>
 
@@ -81,7 +82,7 @@ export default function SkillsSettings({ profile, onUpdate, showAlert }: SkillsS
       </div>
 
       
-      <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-4 sm:p-5 space-y-4">
+      <div className="bg-[#0E0E0E] border-0 sm:border sm:border-white/5 rounded-none sm:rounded-xl p-4 sm:p-5 space-y-4">
         <h2 className="text-base font-bold text-white">Your Skills</h2>
 
         {skills.length > 0 ? (
