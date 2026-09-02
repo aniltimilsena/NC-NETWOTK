@@ -282,10 +282,12 @@ export default function ProfileHeader({
 
           {/* Role Pill & Admin Badge */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
-            <span className="inline-block px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-white font-apple font-semibold text-xs sm:text-sm tracking-wider uppercase">
-              {userRole}
-            </span>
-            {(profile.isAdmin === true || (profile as any)?.role?.toLowerCase() === 'admin') && (
+            {userRole && userRole.toLowerCase() !== 'admin' && (
+              <span className="inline-block px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-white font-apple font-semibold text-xs sm:text-sm tracking-wider uppercase">
+                {userRole}
+              </span>
+            )}
+            {(profile.isAdmin === true || (profile as any)?.role?.toLowerCase() === 'admin' || userRole.toLowerCase() === 'admin') && (
               <button
                 type="button"
                 onClick={() => onNavigate?.('/admin')}
