@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { db } from '../../lib/firebase';
 import { collection, query, where, limit, doc, updateDoc, deleteDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import Avatar from '../../components/ui/Avatar';

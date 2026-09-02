@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { LogoIcon } from './ui/Logo';
 export default function SplashScreen() {
     return (

@@ -8,7 +8,7 @@ import { notifyProfileUpdated } from '../../features/profile/services/users';
 import { CurrentUser } from '../../utils/CurrentUser';
 import { cacheManager } from '../../utils/cacheManager';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, Trash2 } from 'lucide-react';
 
 import ConfirmDialog from './ConfirmDialog';

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import Avatar from '../components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';

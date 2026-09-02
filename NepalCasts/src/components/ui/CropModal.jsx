@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 
 export default function CropModal({ imageSrc, isCircular, onConfirm, onClose }) {
     const imgRef = useRef(null);

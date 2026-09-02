@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 export default function PermissionModal({ isOpen, onClose, onGrant, type = 'media' }) {
     const configs = {
         media: {

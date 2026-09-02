@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { CheckCircle, LogOut, Info, AlertCircle } from 'lucide-react';
 import { useEffect } from 'react';
 interface ToastProps {

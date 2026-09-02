@@ -1,6 +1,6 @@
 import * as React from "react";
 import { UploadCloud, X, CheckCircle2, Trash2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "./ShadcnButton";
 import { Progress } from "@/components/ui/progress";

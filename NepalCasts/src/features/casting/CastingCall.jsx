@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import {
   Bookmark,
   MapPin, Plus, Search, AlertCircle, Clock, SlidersHorizontal, ChevronLeft

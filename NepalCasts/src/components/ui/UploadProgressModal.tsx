@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 
 interface UploadState {
     isUploading: boolean;

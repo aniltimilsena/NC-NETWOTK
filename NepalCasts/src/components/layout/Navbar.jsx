@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { ActionSearchBar } from "@/components/ui/ActionSearchBar";
 import Logo from '../ui/Logo';
 import Avatar from '../ui/Avatar';

@@ -16,7 +16,7 @@ import OneSignal from 'react-onesignal';
 import SplashScreen from '../components/SplashScreen';
 const CallingOverlay = lazy(() => import('../features/call/components/CallingOverlay'));
 const IncomingCallPopup = lazy(() => import('../features/call/components/IncomingCallPopup'));
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, LazyMotion, domAnimation } from 'framer-motion';
 
 export interface AppContextType {
     user: any;
@@ -438,30 +438,32 @@ export default function AppProviders({ children }: {
     return (<PermissionProvider>
       <CallProvider user={enrichedUser}>
         <AppContext.Provider value={appContextValue}>
-          {user && userProfile?.deletionScheduled === true && (<div className="fixed inset-0 z-[99999] bg-[#0A0A0A]/95 backdrop-blur-md flex items-center justify-center p-6">
-              <div className="max-w-md w-full bg-[#111] border border-white/5 rounded-3xl p-8 text-center space-y-6">
-                <div className="space-y-2">
-                  <h2 className="text-xl font-bold text-white">Account Scheduled for Deletion</h2>
-                  <p className="text-gray-400 text-xs">
-                    Your account is in a 30-day grace period.
-                  </p>
+          <LazyMotion features={domAnimation} strict={false}>
+            {user && userProfile?.deletionScheduled === true && (<div className="fixed inset-0 z-[99999] bg-[#0A0A0A]/95 backdrop-blur-md flex items-center justify-center p-6">
+                <div className="max-w-md w-full bg-[#111] border border-white/5 rounded-3xl p-8 text-center space-y-6">
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-bold text-white">Account Scheduled for Deletion</h2>
+                    <p className="text-gray-400 text-xs">
+                      Your account is in a 30-day grace period.
+                    </p>
+                  </div>
+                  <button onClick={handleCancelDeletion} className="w-full py-3 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-black uppercase text-xs rounded-xl cursor-pointer">
+                    Restore Account
+                  </button>
                 </div>
-                <button onClick={handleCancelDeletion} className="w-full py-3 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-black uppercase text-xs rounded-xl cursor-pointer">
-                  Restore Account
-                </button>
-              </div>
-            </div>)}
-          <AnimatePresence>
-            {!minSplashTimeElapsed && !authReady && <SplashScreen />}
-          </AnimatePresence>
+              </div>)}
+            <AnimatePresence>
+              {!minSplashTimeElapsed && !authReady && <SplashScreen />}
+            </AnimatePresence>
 
-          <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
-            {children}
-            <Suspense fallback={null}>
-              <CallingOverlay />
-              <IncomingCallPopup />
-            </Suspense>
-          </div>
+            <div className="min-h-screen bg-[#0A0A0F] flex flex-col">
+              {children}
+              <Suspense fallback={null}>
+                <CallingOverlay />
+                <IncomingCallPopup />
+              </Suspense>
+            </div>
+          </LazyMotion>
         </AppContext.Provider>
       </CallProvider>
     </PermissionProvider>);

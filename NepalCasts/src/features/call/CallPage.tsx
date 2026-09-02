@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { PhoneOff, Mic, MicOff, Volume2, VolumeX, Users, ArrowLeft, ShieldCheck, Sparkles, Radio } from 'lucide-react';
 import { useCall } from '../../context/CallContext';
 import Avatar from '../../components/ui/Avatar';

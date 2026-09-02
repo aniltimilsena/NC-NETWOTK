@@ -9,7 +9,7 @@ import { useCall } from '../../context/CallContext';
 import { deleteMessage, deleteConversation, pinMessage } from './services/messaging';
 import type { Message } from '../../types';
 import { Pin, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { Avatar } from '../../components/ui';
 interface MessagesPageProps {
     onNavigate: (page: string, param?: any) => void;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, AlertCircle, Info, LogOut, X } from 'lucide-react';
 export type AlertType = 'success' | 'error' | 'info' | 'logout';
 export interface AlertPayload {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useCall } from '../../../context/CallContext';
 import { getProfile } from '../../../services';
 import Avatar from '../../../components/ui/Avatar';
