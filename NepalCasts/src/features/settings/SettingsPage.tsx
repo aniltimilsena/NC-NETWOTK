@@ -190,7 +190,7 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
                 </h1>
             </div>
 
-            <div className="max-w-[1600px] mx-auto px-2 sm:px-8 lg:px-12 mt-4 sm:mt-8 grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-8">
+            <div className="max-w-[1600px] mx-auto px-0 sm:px-8 lg:px-12 mt-4 sm:mt-8 grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-8">
                 <div className={`md:col-span-1 space-y-1 flex flex-col items-stretch justify-start text-left ${currentMobileView === 'menu' ? 'block' : 'hidden md:block'}`}>
                     {tabsConfig.map((tab) => {
                         const Icon = tab.icon;

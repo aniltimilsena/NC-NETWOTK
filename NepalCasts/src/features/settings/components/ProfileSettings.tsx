@@ -120,7 +120,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
     return (<form onSubmit={handleSubmit} className="space-y-1.5 sm:space-y-3">
       
       {/* Photo Section */}
-      <div className="bg-[#0E0E0E] border-0 sm:border sm:border-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-5 items-center">
+      <div className="bg-[#0E0E0E] border-0 rounded-none sm:rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-5 items-center">
         <Avatar src={profile.image || profile.photoURL || CurrentUser.imageUrl || null} gender={profile.gender || ''} name={name} size="lg" editable={true} userId={profile.uid} onUploadSuccess={(url: string) => onUpdate({ image: url, photoURL: url })} showAlert={showAlert}/>
         <div className="text-center sm:text-left space-y-1">
           <h3 className="text-base font-bold text-white">Profile Photo</h3>
@@ -128,7 +128,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
       </div>
 
       {/* Info Form Section */}
-      <div className="bg-[#0E0E0E] border-0 sm:border sm:border-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-4">
+      <div className="bg-[#0E0E0E] border-0 rounded-none sm:rounded-2xl p-4 sm:p-5 space-y-4">
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <User className="w-4 h-4 text-white"/>
           Basic Profile Information
@@ -189,7 +189,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
       </div>
 
       {/* Physical Appearance Section */}
-      <div className="bg-[#0E0E0E] border-0 rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-4">
+      <div className="bg-[#0E0E0E] border-0 rounded-none sm:rounded-2xl p-4 sm:p-5 space-y-4">
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <User className="w-4 h-4 text-white"/>
           Physical Appearance
@@ -215,7 +215,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
       </div>
 
       {/* Visibility Section */}
-      <div className="bg-[#0E0E0E] border-0 rounded-xl sm:rounded-2xl p-4 sm:p-5 flex justify-between items-center">
+      <div className="bg-[#0E0E0E] border-0 rounded-none sm:rounded-2xl p-4 sm:p-5 flex justify-between items-center">
         <div className="text-left space-y-1">
           <h3 className="text-sm font-bold text-white">Show Contact Info</h3>
           <p className="text-xs text-nc-muted leading-relaxed">
