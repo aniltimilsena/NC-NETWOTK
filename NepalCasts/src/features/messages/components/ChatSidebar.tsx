@@ -82,6 +82,15 @@ export default function ChatSidebar({
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [query]);
+
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPressActive = useRef(false);
 
@@ -111,35 +120,40 @@ export default function ChatSidebar({
     }
   };
 
-  const filteredConversations = conversations.filter((c) => {
-    const nameMatch = (c.name || '').toLowerCase().includes(query.toLowerCase());
-    const msgMatch = (c.lastMessage || '').toLowerCase().includes(query.toLowerCase());
-    const roleMatch = (c.roleName || '').toLowerCase().includes(query.toLowerCase());
-    const titleMatch = (c.castingTitle || '').toLowerCase().includes(query.toLowerCase());
-    if (query && !nameMatch && !msgMatch && !roleMatch && !titleMatch) {
-      return false;
-    }
+  const filteredConversations = React.useMemo(() => {
+    const q = debouncedQuery.toLowerCase().trim();
+    return conversations.filter((c) => {
+      if (q) {
+        const nameMatch = (c.name || '').toLowerCase().includes(q);
+        const msgMatch = (c.lastMessage || '').toLowerCase().includes(q);
+        const roleMatch = (c.roleName || '').toLowerCase().includes(q);
+        const titleMatch = (c.castingTitle || '').toLowerCase().includes(q);
+        if (!nameMatch && !msgMatch && !roleMatch && !titleMatch) {
+          return false;
+        }
+      }
 
-    const unreadCount = c.unreadCounts?.[currentUser?.uid] || 0;
-    const isUnread = unreadCount > 0 || c.unread === true;
-    const isApp = Boolean(
-      c.isApplication ||
-      c.applicationId ||
-      c.castingId ||
-      c.type === 'application' ||
-      c.id?.startsWith('app_') ||
-      c.name?.toLowerCase().includes('casting') ||
-      c.lastMessage?.toLowerCase().includes('application')
-    );
+      const unreadCount = c.unreadCounts?.[currentUser?.uid] || 0;
+      const isUnread = unreadCount > 0 || c.unread === true;
+      const isApp = Boolean(
+        c.isApplication ||
+        c.applicationId ||
+        c.castingId ||
+        c.type === 'application' ||
+        c.id?.startsWith('app_') ||
+        c.name?.toLowerCase().includes('casting') ||
+        c.lastMessage?.toLowerCase().includes('application')
+      );
 
-    if (activeFilter === 'unread') {
-      return isUnread;
-    }
-    if (activeFilter === 'applications') {
-      return isApp;
-    }
-    return true;
-  });
+      if (activeFilter === 'unread') {
+        return isUnread;
+      }
+      if (activeFilter === 'applications') {
+        return isApp;
+      }
+      return true;
+    });
+  }, [conversations, debouncedQuery, activeFilter, currentUser?.uid]);
 
   const appCount = conversations.filter(c => c.isApplication || c.applicationId || c.castingId || c.type === 'application' || c.id?.startsWith('app_')).length;
 

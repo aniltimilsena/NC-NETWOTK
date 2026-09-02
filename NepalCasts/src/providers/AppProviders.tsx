@@ -143,8 +143,25 @@ export default function AppProviders({ children }: {
         return () => window.removeEventListener('nc-alert', handleCustomAlert);
     }, [showAlert]);
     useEffect(() => {
-        const timer = setTimeout(() => initOneSignal(), 1000);
-        return () => clearTimeout(timer);
+        let idleHandle: any = null;
+        let timeoutHandle: any = null;
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+            idleHandle = (window as any).requestIdleCallback(() => {
+                initOneSignal();
+            }, { timeout: 3000 });
+        } else {
+            timeoutHandle = setTimeout(() => {
+                initOneSignal();
+            }, 2500);
+        }
+        return () => {
+            if (idleHandle && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+                (window as any).cancelIdleCallback(idleHandle);
+            }
+            if (timeoutHandle) {
+                clearTimeout(timeoutHandle);
+            }
+        };
     }, []);
     useEffect(() => {
         if (isLoaded && isSignedIn && clerkUser) {

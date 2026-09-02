@@ -74,6 +74,40 @@
     contain-intrinsic-size: 0 60px;
   }
 
+  /* Progressive Shimmer & Blur-Up Image Loading */
+  .img-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    background-size: 200% 100%;
+    animation: ncShimmer 1.8s infinite ease-in-out;
+  }
+
+  @keyframes ncShimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .smooth-image {
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease;
+    will-change: opacity, filter;
+  }
+
+  .smooth-image:not(.loaded) {
+    opacity: 0.85;
+  }
+
+  .smooth-image.loaded {
+    opacity: 1;
+  }
+
   ::-webkit-scrollbar {
     width: 6px;
   }

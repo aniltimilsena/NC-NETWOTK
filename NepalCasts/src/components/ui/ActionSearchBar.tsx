@@ -31,6 +31,14 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
 }) {
     const { t } = useTranslation();
     const [query, setQuery] = useState("");
+    const [debouncedQuery, setDebouncedQuery] = useState("");
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedQuery(query);
+        }, 150);
+        return () => clearTimeout(timer);
+    }, [query]);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [isFocused, setIsFocused] = useState(false);
@@ -156,7 +164,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
             }
         }
     }, [hasLoaded, allProfiles, history.length]);
-    const normalized = query.trim().toLowerCase();
+    const normalized = debouncedQuery.trim().toLowerCase();
     const profiles = useMemo(() => {
         const historyProfileUids = history
             .filter(h => h.type === 'profile')

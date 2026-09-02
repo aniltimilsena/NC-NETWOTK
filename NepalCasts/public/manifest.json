@@ -1,0 +1,24 @@
+{
+  "name": "NepalCasts — Talent Discovery Platform",
+  "short_name": "NepalCasts",
+  "description": "Nepal's premier film, television, and modeling talent discovery platform.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#050508",
+  "theme_color": "#050508",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
