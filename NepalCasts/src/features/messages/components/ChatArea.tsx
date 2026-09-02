@@ -50,36 +50,37 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isLongPressActive = useRef(false);
     const isInitialMount = useRef(true);
-    const otherParticipantId = chat?.participants?.find((p: string) => p !== currentUser?.uid) || chat?.otherParticipantId;
+    const otherParticipantId = chat?.participants?.find((p: string) => p !== currentUser?.uid) || chat?.otherParticipantId || chat?.id;
     const isTyping = otherParticipantId ? typingUsers?.[otherParticipantId] === true : false;
     const [isOnline, setIsOnline] = useState<boolean>(chat?.online === true || chat?.isOnline === true);
+
     useEffect(() => {
         setIsOnline(chat?.online === true || chat?.isOnline === true);
-        if (!otherParticipantId)
-            return;
+        if (!otherParticipantId) return;
+
+        const checkPresence = (data: any) => {
+            if (!data) return;
+            if (typeof data.isOnline === 'boolean') {
+                setIsOnline(data.isOnline);
+            } else if (typeof data.online === 'boolean') {
+                setIsOnline(data.online);
+            }
+        };
+
         const unsubUser = onSnapshot(doc(db, 'users', otherParticipantId), (snap) => {
-            if (snap.exists()) {
-                const data = snap.data();
-                if (typeof data.isOnline === 'boolean')
-                    setIsOnline(data.isOnline);
-                else if (typeof data.online === 'boolean')
-                    setIsOnline(data.online);
-            }
-        }, () => { });
+            if (snap.exists()) checkPresence(snap.data());
+        }, () => {});
+
         const unsubProfile = onSnapshot(doc(db, 'profiles', otherParticipantId), (snap) => {
-            if (snap.exists()) {
-                const data = snap.data();
-                if (typeof data.isOnline === 'boolean')
-                    setIsOnline(data.isOnline);
-                else if (typeof data.online === 'boolean')
-                    setIsOnline(data.online);
-            }
-        }, () => { });
+            if (snap.exists()) checkPresence(snap.data());
+        }, () => {});
+
         return () => {
             unsubUser();
             unsubProfile();
         };
     }, [otherParticipantId, chat?.online, chat?.isOnline]);
+
     const startMessagePress = (msg: Message) => {
         isLongPressActive.current = false;
         longPressTimer.current = setTimeout(() => {
@@ -90,6 +91,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
             setActiveActionMessage(msg);
         }, 1000);
     };
+
     const endMessagePress = () => {
         if (longPressTimer.current) {
             clearTimeout(longPressTimer.current);
@@ -99,6 +101,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
             isLongPressActive.current = false;
         }, 50);
     };
+
     useEffect(() => {
         if (containerRef.current) {
             const behavior = isInitialMount.current ? 'auto' : 'smooth';
@@ -109,9 +112,11 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
             isInitialMount.current = false;
         }
     }, [messages.length, typingUsers, chat?.id]);
+
     useEffect(() => {
         isInitialMount.current = true;
     }, [chat?.id]);
+
     return (<div className="flex flex-col h-full bg-[#141414]">
       
       <div className="px-5 py-3.5 border-b border-white/5 flex items-center justify-between bg-[#141414]">
@@ -121,9 +126,21 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
           </button>
           <Avatar userId={otherParticipantId} src={chat?.avatar} name={chat?.name} size="md" className="w-10 h-10 sm:w-11 sm:h-11 shrink-0" showStatus={true} status={isOnline ? 'online' : 'offline'}/>
           <div className="text-left">
-            <span className="text-sm sm:text-base font-extrabold text-white block leading-tight">{chat?.name}</span>
+            <span className="text-sm sm:text-base font-extrabold text-white block leading-tight truncate max-w-[180px] sm:max-w-[280px]">{chat?.name}</span>
             <span className="text-[11px] block tracking-wide font-medium mt-0.5">
-              {isTyping ? <span className="text-[#522C69] animate-pulse">Typing...</span> : isOnline ? <span className="text-emerald-400">Online</span> : <span className="text-gray-500">Offline</span>}
+              {isTyping ? (
+                <span className="text-[#522C69] animate-pulse font-semibold">Typing...</span>
+              ) : isOnline ? (
+                <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                  Online
+                </span>
+              ) : (
+                <span className="text-gray-400 font-medium flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-500 inline-block" />
+                  Offline
+                </span>
+              )}
             </span>
           </div>
         </div>

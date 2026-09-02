@@ -264,6 +264,48 @@ export default function AppProviders({ children }: {
             setUserProfile(null);
             return;
         }
+        const uid = user.uid;
+
+        // 1. Live presence management
+        const setPresence = async (online: boolean) => {
+            try {
+                const presenceData = {
+                    isOnline: online,
+                    online: online,
+                    lastSeen: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                };
+                await setDoc(doc(db, 'users', uid), presenceData, { merge: true }).catch(() => {});
+                await setDoc(doc(db, 'profiles', uid), presenceData, { merge: true }).catch(() => {});
+            } catch (err) {
+                // Ignore presence update errors
+            }
+        };
+
+        setPresence(true);
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                setPresence(true);
+            } else {
+                setPresence(false);
+            }
+        };
+
+        const handleBeforeUnload = () => {
+            setPresence(false);
+        };
+
+        const heartbeat = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                setPresence(true);
+            }
+        }, 45000);
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // 2. Profile snapshot listener
         const unsub = onSnapshot(doc(db, 'profiles', user.uid), async (snap) => {
             if (snap.exists()) {
                 const data = snap.data();
@@ -282,7 +324,14 @@ export default function AppProviders({ children }: {
                 }
             }
         });
-        return () => unsub();
+
+        return () => {
+            clearInterval(heartbeat);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            setPresence(false);
+            unsub();
+        };
     }, [user?.uid, showAlert]);
 
     const updateAvatar = useCallback(async (newUrl: string | null) => {

@@ -245,6 +245,7 @@ export default function ChatSidebar({
                     src={c.avatar}
                     name={c.name}
                     size="md"
+                    showStatus={true}
                     className="!w-12 !h-12 md:!w-13 md:!h-13 shrink-0 rounded-full"
                   />
                   <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
