@@ -158,6 +158,7 @@ export default function Trending({ onNavigate, user }) {
   };
   const rankedProfiles = profiles
     .filter(p => {
+      if (p.deactivated === true || p.isAdmin === true || p.role?.toLowerCase() === 'admin' || p.email?.toLowerCase() === 'aniltimilsena53@gmail.com') return false;
       const pName = p.name || p.displayName || p.fullName || p.username;
       if (!pName || pName.trim() === '') return false;
       if (selectedCategory !== 'All') {

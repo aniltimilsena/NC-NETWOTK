@@ -280,7 +280,11 @@ export default function Home({ onNavigate, user }) {
   }, []);
 
   const activeTalentsList = talents
-    .filter(t => !t.deactivated && (t.name || t.displayName || t.fullName || t.username))
+    .filter(t => {
+      if (t.deactivated || t.isAdmin === true || t.role?.toLowerCase() === 'admin' || t.email?.toLowerCase() === 'aniltimilsena53@gmail.com') return false;
+      const tName = t.name || t.displayName || t.fullName || t.username;
+      return Boolean(tName);
+    })
     .reduce((acc, current) => {
       const currentName = current.name || current.displayName || current.fullName || current.username;
       const isDuplicate = acc.some(item =>

@@ -118,8 +118,8 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
         const unsubscribe = subscribeToTalents((data) => {
             const currentUid = AuthService.getUserId();
             const loaded = data
-                .filter((p) => !currentUid || p.id !== currentUid)
-                .map((p) => ({
+                .filter((p: any) => (!currentUid || p.id !== currentUid) && !p.isAdmin && (p.role as string)?.toLowerCase() !== 'admin' && (p.email as string)?.toLowerCase() !== 'aniltimilsena53@gmail.com')
+                .map((p: any) => ({
                 uid: p.id,
                 name: ((p.name || p.displayName || p.fullName) as string) || "Unknown User",
                 role: (p.role as string) || "Talent",

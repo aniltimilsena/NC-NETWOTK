@@ -215,7 +215,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
     const filteredTalents = talents
         .filter(t => {
             const talentName = t.name || t.displayName || t.fullName || t.username;
-            if (t.deactivated === true || !talentName || talentName.trim() === '')
+            if (t.deactivated === true || t.isAdmin === true || t.role?.toLowerCase() === 'admin' || t.email?.toLowerCase() === 'aniltimilsena53@gmail.com' || !talentName || talentName.trim() === '')
                 return false;
             const matchesSearch = !searchQuery ||
                 talentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
