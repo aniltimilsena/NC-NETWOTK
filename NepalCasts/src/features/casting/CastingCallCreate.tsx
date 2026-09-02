@@ -731,7 +731,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
               <Button
                 type="button"
                 onClick={handleNext}
-                className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white rounded-xl text-xs font-bold uppercase tracking-wider px-6 py-2.5 cursor-pointer border border-white/5 shadow-md active:scale-95"
+                className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white rounded-xl text-xs font-bold uppercase tracking-wider px-6 py-2.5 cursor-pointer shadow-md active:scale-95 border-0"
               >
                 Next Step
               </Button>
@@ -741,7 +741,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 onClick={handlePublish}
                 loading={isLoading}
                 disabled={isLoading}
-                className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-extrabold text-xs uppercase tracking-wider px-8 py-3 rounded-xl shadow-md border border-white/5 active:scale-95 cursor-pointer"
+                className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-extrabold text-xs uppercase tracking-wider px-8 py-3 rounded-xl shadow-md border-0 active:scale-95 cursor-pointer"
               >
                 Publish Casting Call
               </Button>

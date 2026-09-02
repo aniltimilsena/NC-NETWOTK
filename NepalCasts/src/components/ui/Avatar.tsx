@@ -371,7 +371,7 @@ export default function Avatar(props: AvatarProps) {
                     setShowOptionsModal(false);
                     fileInputRef.current?.click();
                   }}
-                  className="w-full py-2.5 px-3 bg-gradient-to-r from-[#522C69] to-[#663782] hover:from-[#663782] hover:to-[#7a429c] text-white shadow-md font-bold rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-white/10"
+                  className="w-full py-2.5 px-3 bg-gradient-to-r from-[#522C69] to-[#663782] hover:from-[#663782] hover:to-[#7a429c] text-white shadow-md font-bold rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border-0 outline-none"
                 >
                   <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Upload New Photo</span>
