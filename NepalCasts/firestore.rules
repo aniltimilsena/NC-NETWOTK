@@ -14,64 +14,51 @@ service cloud.firestore {
       return isSignedIn() && (
         request.auth.token.admin == true ||
         request.auth.token.email == 'aniltimilsena53@gmail.com' ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin' ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == 'aniltimilsena53@gmail.com' ||
-        get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.isAdmin == true ||
-        get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'Admin' ||
-        get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.email == 'aniltimilsena53@gmail.com'
+        request.auth.uid == 'aniltimilsena53@gmail.com'
       );
     }
-    
-    function isNotModifyingAdminFields() {
-      return resource == null || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'verified', 'premium', 'banned', 'banReason']);
-    }
 
+    // --- USERS & PROFILES ---
     match /users/{userId} {
       allow read: if true;
-      allow create, update: if isSignedIn() || true;
-      allow delete: if isSignedIn() || isAdmin() || true;
+      allow create, update: if true;
+      allow delete: if isSignedIn() || isAdmin();
     }
 
     match /profiles/{profileId} {
       allow read: if true;
-      allow create, update: if isSignedIn() || isOwner(profileId) || true;
-      allow delete: if isSignedIn() || isAdmin() || true;
-    }
-
-    match /casting_calls/{callId} {
-      allow read: if true;
-      allow create: if isSignedIn() || request.resource.data.creatorId != null || request.resource.data.createdBy != null;
-      allow update, delete: if isAdmin() || (isSignedIn() && (resource.data.creatorId == request.auth.uid || resource.data.createdBy == request.auth.uid)) || request.resource.data.creatorId != null || resource.data.creatorId != null;
-    }
-
-    match /applications/{appId} {
-      allow create: if isSignedIn() || request.resource.data.userId != null;
-      allow read: if true;
-      allow update: if isSignedIn() || request.resource.data.creatorId != null || isAdmin();
+      allow create, update: if true;
       allow delete: if isSignedIn() || isAdmin();
     }
 
-    match /follows/{followId} {
+    // --- CASTING CALLS ---
+    match /casting_calls/{callId} {
       allow read: if true;
-      allow create, update: if isSignedIn() || request.resource.data.followerId != null;
-      allow delete: if isSignedIn() || true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+
+    // --- APPLICATIONS ---
+    match /applications/{appId} {
+      allow read, write: if true;
+    }
+
+    // --- SOCIAL & FOLLOWS ---
+    match /follows/{followId} {
+      allow read, write: if true;
     }
 
     match /saved_casting_calls/{saveId} {
-      allow read: if true;
-      allow create, update: if isSignedIn() || request.resource.data.userId != null;
-      allow delete: if isSignedIn() || true;
+      allow read, write: if true;
     }
 
     match /saved_calls/{saveId} {
-      allow read: if true;
-      allow create, update: if isSignedIn() || request.resource.data.userId != null;
-      allow delete: if isSignedIn() || true;
+      allow read, write: if true;
     }
 
+    // --- REALTIME WEBRTC CALLS ---
     match /calls/{callId} {
-      allow read, write: if isSignedIn() || true;
+      allow read, write: if true;
 
       match /callerCandidates/{candId} {
         allow read, write: if true;
@@ -82,46 +69,45 @@ service cloud.firestore {
       }
     }
 
+    // --- CHATS & MESSAGING (Nested & Root) ---
     match /conversations/{convId} {
-      allow read: if true;
-      allow create, update: if isSignedIn() || request.resource.data.participants != null;
-      allow delete: if isSignedIn() || true;
+      allow read, write: if true;
 
       match /messages/{messageId} {
-        allow read: if true;
-        allow create, update: if isSignedIn() || request.resource.data.senderId != null;
-        allow delete: if isSignedIn() || true;
+        allow read, write: if true;
+      }
+
+      match /{document=**} {
+        allow read, write: if true;
       }
     }
 
     match /messages/{msgId} {
-      allow read: if true;
-      allow create, update: if isSignedIn() || request.resource.data.senderId != null;
-      allow delete: if isSignedIn() || true;
+      allow read, write: if true;
     }
 
+    // --- NOTIFICATIONS ---
     match /notifications/{notifId} {
-      allow read: if true;
-      allow create, update: if isSignedIn() || request.resource.data.userId != null || request.resource.data.recipientId != null;
-      allow delete: if isSignedIn() || true;
+      allow read, write: if true;
     }
 
+    // --- SENSITIVE CONTACT INFO ---
     match /contact_info/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(userId) || isAdmin();
+      allow read, write: if true;
     }
 
+    // --- ADMIN LOGS & TOKENS ---
     match /one_time_tokens/{tokenId} {
-      allow read, write: if isAdmin();
+      allow read, write: if true;
     }
 
     match /admin_logs/{logId} {
-      allow read, write: if isAdmin();
+      allow read, write: if true;
     }
 
+    // --- CATCH-ALL FALLBACK ---
     match /{document=**} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
   }
 }
