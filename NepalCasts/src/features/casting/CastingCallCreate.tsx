@@ -87,6 +87,18 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
     otherRequirements: '',
   });
 
+  // Automated Garbage Collection for preview object URLs
+  useEffect(() => {
+    return () => {
+      if (thumbnailPreview && thumbnailPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(thumbnailPreview);
+      }
+      if (horizontalThumbnailPreview && horizontalThumbnailPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(horizontalThumbnailPreview);
+      }
+    };
+  }, [thumbnailPreview, horizontalThumbnailPreview]);
+
   // Auto-save form draft whenever values change
   useEffect(() => {
     const hasMeaningfulData =

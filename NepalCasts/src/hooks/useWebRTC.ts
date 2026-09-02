@@ -78,7 +78,12 @@ export function useWebRTC(): UseWebRTCReturn {
             });
             localStreamRef.current = null;
         }
-        remoteStreamRef.current = null;
+        if (remoteStreamRef.current) {
+            remoteStreamRef.current.getTracks().forEach((t) => {
+                t.stop();
+            });
+            remoteStreamRef.current = null;
+        }
         remoteDescriptionSetRef.current = false;
         setLocalStream(null);
         setRemoteStream(null);
