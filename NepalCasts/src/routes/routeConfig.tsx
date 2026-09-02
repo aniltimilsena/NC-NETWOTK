@@ -36,7 +36,7 @@ const Forbidden = lazyWithRetry(() => import('../pages/Forbidden'));
 const ServerError = lazyWithRetry(() => import('../pages/ServerError'));
 
 import { db } from '../lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 const ProtectedRoute = ({ user, authReady, children }: any) => {
   const location = useLocation();
@@ -73,15 +73,6 @@ const AdminRoute = ({ user, isAdmin, authReady, children }: any) => {
         if (profileSnap.exists() && (profileSnap.data()?.isAdmin === true || profileSnap.data()?.role?.toLowerCase() === 'admin')) {
           if (isMounted) setIsLiveAdmin(true);
           return;
-        }
-        if (user.email) {
-          const emailUsersSnap = await getDocs(query(collection(db, 'users'), where('email', '==', user.email)));
-          for (const d of emailUsersSnap.docs) {
-            if (d.data()?.isAdmin === true || d.data()?.role?.toLowerCase() === 'admin') {
-              if (isMounted) setIsLiveAdmin(true);
-              return;
-            }
-          }
         }
       } catch (e) {
         console.warn("Admin check failed in route:", e);
