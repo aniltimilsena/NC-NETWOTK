@@ -9,6 +9,10 @@
       "destination": "/api/send-notification"
     },
     {
+      "source": "/api/errors/log",
+      "destination": "/api/errors-log"
+    },
+    {
       "source": "/api/data-requests/:requestId/approve",
       "destination": "/api/data-requests-approve?requestId=:requestId"
     },

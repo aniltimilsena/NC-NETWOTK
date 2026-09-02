@@ -1,7 +1,8 @@
-const targetUrl = process.env.SERVER_URL || 'http://localhost:5000/api';
+const targetUrl = process.env.SERVER_URL || null;
 export default async function handler(req, res) {
-    if (!process.env.SERVER_URL) {
-        console.warn('SERVER_URL environment variable is not configured. Falling back to localhost.');
+    if (!targetUrl) {
+        // Return clean JSON instead of crashing proxy
+        return res.status(200).json({ status: 'ok', proxy: 'offline', message: 'Backend server not configured' });
     }
     
     // Extract path and prevent path traversal attacks
