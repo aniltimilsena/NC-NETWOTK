@@ -37,39 +37,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
   const { pathname } = useLocation();
   const isHome = pathname === '/' || pathname === '';
   const [scrolled, setScrolled] = useState(false);
-  const [liveIsAdmin, setLiveIsAdmin] = useState(isAdmin || user?.isAdmin === true);
-
-  useEffect(() => {
-    setLiveIsAdmin(isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin');
-  }, [isAdmin, user]);
-
-  useEffect(() => {
-    if (!user?.uid) return;
-    const unsubUser = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
-      if (docSnap.exists()) {
-        const d = docSnap.data();
-        if (d.isAdmin === true || d.role?.toLowerCase() === 'admin') {
-          setLiveIsAdmin(true);
-        }
-      }
-    }, () => {});
-
-    const unsubProfile = onSnapshot(doc(db, 'profiles', user.uid), (docSnap) => {
-      if (docSnap.exists()) {
-        const d = docSnap.data();
-        if (d.isAdmin === true || d.role?.toLowerCase() === 'admin') {
-          setLiveIsAdmin(true);
-        }
-      }
-    }, () => {});
-
-    return () => {
-      unsubUser();
-      unsubProfile();
-    };
-  }, [user?.uid]);
-
-  const effectiveIsAdmin = Boolean(liveIsAdmin || isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin');
+  const effectiveIsAdmin = Boolean(isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin');
 
   useEffect(() => {
     const handleScroll = () => {

@@ -20,6 +20,7 @@ import { AnimatePresence } from 'framer-motion';
 
 export interface AppContextType {
     user: any;
+    userProfile: any;
     isAdmin: boolean;
     authReady: boolean;
     showAlert: (message: string, type?: any, detail?: string, onAction?: () => void) => void;
@@ -424,6 +425,7 @@ export default function AppProviders({ children }: {
 
     const appContextValue = React.useMemo(() => ({
         user: enrichedUser,
+        userProfile,
         isAdmin,
         authReady,
         showAlert,
@@ -431,7 +433,7 @@ export default function AppProviders({ children }: {
         handleLogout,
         updateAvatar,
         deleteAvatar
-    }), [enrichedUser, isAdmin, authReady, showAlert, showToast, handleLogout, updateAvatar, deleteAvatar]);
+    }), [enrichedUser, userProfile, isAdmin, authReady, showAlert, showToast, handleLogout, updateAvatar, deleteAvatar]);
 
     return (<PermissionProvider>
       <CallProvider user={enrichedUser}>

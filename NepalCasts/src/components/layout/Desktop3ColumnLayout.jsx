@@ -193,31 +193,10 @@ export default function Desktop3ColumnLayout({
 
   useEffect(() => {
     if (!uid) {
-      setProfileData(null);
       setRealFollowers(0);
       setRealFollowing(0);
       return;
     }
-
-    let unsubUser = null;
-
-    const unsubProfile = onSnapshot(doc(db, 'profiles', uid), (snap) => {
-      if (snap.exists()) {
-        setProfileData(snap.data());
-        if (unsubUser) {
-          unsubUser();
-          unsubUser = null;
-        }
-      } else {
-        if (!unsubUser) {
-          unsubUser = onSnapshot(doc(db, 'users', uid), (userSnap) => {
-            if (userSnap.exists()) {
-              setProfileData(userSnap.data());
-            }
-          });
-        }
-      }
-    });
 
     // Real-time Followers count for logged-in user
     const qFollowers = query(collection(db, 'follows'), where('followingId', '==', uid));
@@ -236,14 +215,10 @@ export default function Desktop3ColumnLayout({
     }, () => setRealFollowing(0));
 
     return () => {
-      unsubProfile();
-      if (unsubUser) {
-        unsubUser();
-      }
       unsubFollowers();
       unsubFollowing();
     };
-  }, [uid, profileData?.uid, profileData?.id, profileData?.username]);
+  }, [uid]);
 
   const realName =
     profileData?.name ||
