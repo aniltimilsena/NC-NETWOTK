@@ -28,6 +28,15 @@ export function getOptimizedImageUrl(url?: string | null, options: ImageOptimiza
   return url.replace('/upload/', `/upload/${transformString}/`);
 }
 
+export function getImageSrcSet(url?: string | null, widths: number[] = [400, 800, 1200]): string {
+  if (!url || typeof url !== 'string' || !url.includes('res.cloudinary.com')) {
+    return '';
+  }
+  return widths
+    .map((w) => `${getOptimizedImageUrl(url, { width: w, quality: 'auto', format: 'auto' })} ${w}w`)
+    .join(', ');
+}
+
 export const saveImageDirectly = async (url: string, filename = 'nepalcasts-photo.jpg') => {
   if (!url) return;
   try {

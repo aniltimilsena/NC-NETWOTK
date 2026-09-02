@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 import { CastingCallSkeleton } from '../../components/ui/Skeleton';
+import { getOptimizedImageUrl, getImageSrcSet } from '../../utils/media';
 
 const formatDeadlineDate = (deadlineStr) => {
   if (!deadlineStr) return 'No deadline';
@@ -101,11 +102,15 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
       className="bg-black rounded-2xl border border-white/5 overflow-hidden cursor-pointer flex flex-row shadow-xl"
     >
       {/* Full-Bleed Poster Thumbnail (No empty black padding around it) */}
-      <div className="w-28 sm:w-40 md:w-44 self-stretch relative shrink-0 bg-[#121212] overflow-hidden flex items-center justify-center">
+      <div className="w-28 sm:w-40 md:w-44 aspect-[9/13] self-stretch relative shrink-0 bg-[#121212] overflow-hidden flex items-center justify-center">
         {bannerImage ? (
           <img
-            src={bannerImage}
-            alt={call.title}
+            src={getOptimizedImageUrl(bannerImage, { width: 400, quality: 'auto', format: 'auto' })}
+            srcSet={getImageSrcSet(bannerImage, [240, 400, 600])}
+            sizes="(max-width: 640px) 112px, 176px"
+            alt={call.title || 'Casting Call'}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover"
             onError={(e) => {
               e.currentTarget.style.display = 'none';

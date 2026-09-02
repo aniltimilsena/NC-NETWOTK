@@ -9,6 +9,7 @@ import { subscribeToProfile } from '../features/profile/services/profile';
 import { AvatarScrollSkeleton } from '../components/ui/Skeleton';
 import PullToRefresh from '../components/ui/PullToRefresh';
 import { ChevronRight, Pin } from 'lucide-react';
+import { getOptimizedImageUrl, getImageSrcSet } from '../utils/media';
 
 /* eslint-disable no-secrets/no-secrets */
 const HERO_BACKGROUND_PHOTOS = [
@@ -502,8 +503,12 @@ export default function Home({ onNavigate, user }) {
                     <div className="relative shrink-0 w-[82px] h-[112px] sm:w-[100px] sm:h-[136px] flex flex-col items-center justify-center overflow-hidden rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm shadow-[0_10px_30px_rgba(0,0,0,0.9)] border-0 bg-[#16161C] transition-all">
                       {hasRealPhoto ? (
                         <img
-                          src={rawPhoto}
+                          src={getOptimizedImageUrl(rawPhoto, { width: 300, quality: 'auto', format: 'auto' })}
+                          srcSet={getImageSrcSet(rawPhoto, [200, 320, 480])}
+                          sizes="(max-width: 640px) 100px, 136px"
                           alt={spotlightName}
+                          loading="lazy"
+                          decoding="async"
                           onError={() => setSpotlightImageError(true)}
                           className="w-full h-full object-cover rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm border-0"
                         />
@@ -576,8 +581,12 @@ export default function Home({ onNavigate, user }) {
                         <div className="relative w-full aspect-[9/14] rounded-t-2xl rounded-b-none overflow-hidden bg-black shadow-md">
                           {thumbnail ? (
                             <img
-                              src={thumbnail}
+                              src={getOptimizedImageUrl(thumbnail, { width: 480, quality: 'auto', format: 'auto' })}
+                              srcSet={getImageSrcSet(thumbnail, [320, 480, 720])}
+                              sizes="(max-width: 640px) 46vw, 240px"
                               alt={call.title || 'Casting'}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-cover rounded-t-2xl rounded-b-none"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
