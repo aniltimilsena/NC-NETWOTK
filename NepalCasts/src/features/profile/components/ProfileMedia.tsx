@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Plus, Play, Loader2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
+import { getOptimizedImageUrl } from '../../../utils/media';
 import type { UserProfile } from '../../../types';
 
 interface ProfileMediaProps {
@@ -191,8 +192,10 @@ export default function ProfileMedia({
               className="relative shrink-0 w-40 sm:w-52 md:w-60 lg:w-64 xl:w-72 aspect-[3/4] rounded-xl overflow-hidden border border-white/10 bg-black group cursor-pointer shadow-lg"
             >
               <img
-                src={url}
+                src={getOptimizedImageUrl(url, { width: 600, quality: 'auto', format: 'auto' })}
                 alt={`Portfolio ${index + 1}`}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
               {isOwnProfile && (

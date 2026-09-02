@@ -71,8 +71,20 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/firebase/')) {
-            return 'vendor-firebase';
+          if (id.includes('@firebase/firestore') || id.includes('firebase/firestore')) {
+            return 'vendor-firebase-firestore';
+          }
+          if (id.includes('@firebase/storage') || id.includes('firebase/storage')) {
+            return 'vendor-firebase-storage';
+          }
+          if (id.includes('@firebase/auth') || id.includes('firebase/auth')) {
+            return 'vendor-firebase-auth';
+          }
+          if (id.includes('@firebase/functions') || id.includes('firebase/functions')) {
+            return 'vendor-firebase-functions';
+          }
+          if (id.includes('firebase')) {
+            return 'vendor-firebase-core';
           }
           if (id.includes('node_modules/lucide-react/')) {
             return 'vendor-lucide';

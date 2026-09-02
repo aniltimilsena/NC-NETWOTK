@@ -20,9 +20,9 @@ import { ApplicationsRoutes } from './applications.routes';
 import { CurrentUser } from '../utils/CurrentUser';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-import SignIn from '../features/auth/SignIn';
-import SignUp from '../features/auth/SignUp';
-import ForgotPassword from '../features/auth/ForgotPassword';
+const SignIn = lazyWithRetry(() => import('../features/auth/SignIn'));
+const SignUp = lazyWithRetry(() => import('../features/auth/SignUp'));
+const ForgotPassword = lazyWithRetry(() => import('../features/auth/ForgotPassword'));
 
 const Home = lazyWithRetry(() => import('../pages/Home'));
 const About = lazyWithRetry(() => import('../pages/About'));
