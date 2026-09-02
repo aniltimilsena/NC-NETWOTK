@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { Shield, Lock, Trash2, Smartphone, Monitor } from 'lucide-react';
+import { Shield, Lock, Trash2, Smartphone, Monitor, AlertTriangle, X } from 'lucide-react';
 import { Button, Avatar } from '../../../components/ui';
 import { formatRole } from '../../../utils';
 import { auth } from '../../../lib/firebase';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import type { ServiceResult } from '../../../types';
+import { deleteAccount } from '../../profile/services/profile';
+import { useClerk, useUser } from '@clerk/clerk-react';
+import { AuthService } from '../../../services/AuthService';
+import { CurrentUser } from '../../../utils/CurrentUser';
 
 interface SecuritySettingsProps {
     sessions: any[];
@@ -12,13 +16,65 @@ interface SecuritySettingsProps {
     onRevokeSession: (sessionId: string) => Promise<ServiceResult>;
     onUnblockUser: (targetId: string) => Promise<ServiceResult>;
     showAlert: (message: string, type?: any, detail?: string) => void;
+    user?: any;
+    onNavigate?: (page: string, param?: any) => void;
 }
 
-export default function SecuritySettings({ sessions, blockedUsers, onRevokeSession, onUnblockUser, showAlert }: SecuritySettingsProps) {
+export default function SecuritySettings({ sessions, blockedUsers, onRevokeSession, onUnblockUser, showAlert, user, onNavigate }: SecuritySettingsProps) {
+    const { signOut } = useClerk();
+    const { user: clerkUser } = useUser();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [changingPassword, setChangingPassword] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deletingAccount, setDeletingAccount] = useState(false);
+    const [confirmText, setConfirmText] = useState('');
+
+    const targetUid = user?.uid || user?.id || clerkUser?.id || AuthService.getUserId() || CurrentUser.id;
+
+    const handleDeleteAccount = async () => {
+        if (!targetUid) {
+            showAlert('No active user account found to delete.', 'error');
+            return;
+        }
+        if (confirmText.trim().toUpperCase() !== 'DELETE') {
+            showAlert('Please type "DELETE" to confirm account deletion.', 'error');
+            return;
+        }
+
+        setDeletingAccount(true);
+        try {
+            const res = await deleteAccount(targetUid);
+            if (!res.success) {
+                showAlert(res.error || 'Failed to delete account from database.', 'error');
+                setDeletingAccount(false);
+                return;
+            }
+
+            try {
+                if (clerkUser) {
+                    await clerkUser.delete().catch(() => {});
+                }
+            } catch (cErr) {
+                console.warn("Clerk user delete non-fatal warning:", cErr);
+            }
+
+            showAlert('Your account has been permanently deleted.', 'info');
+            setShowDeleteModal(false);
+            
+            await signOut().catch(() => {});
+            if (onNavigate) {
+                onNavigate('/');
+            } else {
+                window.location.href = '/';
+            }
+        } catch (err: any) {
+            console.error("Delete account error:", err);
+            showAlert(err.message || 'An error occurred while deleting your account.', 'error');
+            setDeletingAccount(false);
+        }
+    };
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -36,13 +92,13 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
         }
         setChangingPassword(true);
         try {
-            const user = auth.currentUser;
-            if (user && user.email) {
+            const firebaseUser = auth.currentUser;
+            if (firebaseUser && firebaseUser.email) {
                 if (currentPassword) {
-                    const credential = EmailAuthProvider.credential(user.email, currentPassword);
-                    await reauthenticateWithCredential(user, credential);
+                    const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+                    await reauthenticateWithCredential(firebaseUser, credential);
                 }
-                await updatePassword(user, newPassword);
+                await updatePassword(firebaseUser, newPassword);
                 showAlert('Password updated successfully!', 'success');
                 setCurrentPassword('');
                 setNewPassword('');
@@ -214,6 +270,106 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                     )}
                 </div>
             </div>
+
+            {/* Danger Zone: Delete Account */}
+            <div className="bg-[#180A0A] border border-red-500/20 rounded-xl p-4 sm:p-5 space-y-4 text-left">
+                <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                    <h2 className="text-lg font-bold text-red-400">Danger Zone</h2>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                    Permanently delete your personal profile and account. This will completely remove your profile data, portfolio, media, and contact information from the NepalCasts database. You can only delete your own account, and this action cannot be undone.
+                </p>
+                <div className="pt-1">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setConfirmText('');
+                            setShowDeleteModal(true);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete My Account</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Delete Account Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-[#141414] border border-red-500/30 rounded-2xl max-w-md w-full p-6 text-left shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5 text-red-400">
+                                <div className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+                                    <AlertTriangle className="w-5 h-5 text-red-400" />
+                                </div>
+                                <h3 className="text-lg font-bold text-white">Delete Account</h3>
+                            </div>
+                            <button
+                                onClick={() => !deletingAccount && setShowDeleteModal(false)}
+                                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 text-xs text-gray-300 leading-relaxed">
+                            <p>
+                                Are you sure you want to permanently delete your account? This action is <strong className="text-red-400">irreversible</strong>.
+                            </p>
+                            <ul className="list-disc pl-5 space-y-1 text-gray-400">
+                                <li>Your profile will be removed from all talent directories and search.</li>
+                                <li>Your uploaded media and portfolio will be permanently deleted from the database.</li>
+                                <li>You will be immediately logged out.</li>
+                            </ul>
+                        </div>
+
+                        <div className="space-y-2 text-left">
+                            <label className="text-[11px] font-bold text-gray-300 uppercase tracking-wider block">
+                                Type <span className="text-red-400 font-mono">DELETE</span> to confirm:
+                            </label>
+                            <input
+                                type="text"
+                                value={confirmText}
+                                onChange={(e) => setConfirmText(e.target.value)}
+                                placeholder="DELETE"
+                                disabled={deletingAccount}
+                                className="w-full bg-black/50 border border-white/15 focus:border-red-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/20 outline-none font-mono transition-all"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                disabled={deletingAccount}
+                                onClick={() => setShowDeleteModal(false)}
+                                className="px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors cursor-pointer disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                disabled={deletingAccount || confirmText.trim().toUpperCase() !== 'DELETE'}
+                                onClick={handleDeleteAccount}
+                                className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-500 transition-all shadow-lg shadow-red-600/30 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                {deletingAccount ? (
+                                    <>
+                                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span>Deleting...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                        <span>Permanently Delete</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

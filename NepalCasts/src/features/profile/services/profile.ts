@@ -1,8 +1,8 @@
 import { db } from "../../../lib/firebase";
 import { AuthService } from "../../../services/AuthService";
 import { CurrentUser } from "../../../utils/CurrentUser";
-import { notifyProfileUpdated } from "./users";
-import { doc, onSnapshot, setDoc, serverTimestamp, } from "firebase/firestore";
+import { notifyProfileUpdated, getSavedRealTalents, saveRealTalents } from "./users";
+import { doc, onSnapshot, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import { uploadFile } from "../../../services/storage";
 import { COLLECTIONS } from "../../../constants/collections";
@@ -15,20 +15,22 @@ type ProfileResponse = {
 };
 import { cacheManager } from "../../../utils/cacheManager";
 export const getProfile = async (uid: string): Promise<ProfileResponse> => {
-    return cacheManager.fetchWithCache(`profile_${uid}`, async () => {
-        try {
-            const snap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, uid));
-            if (snap.exists()) {
-                return { data: { uid, ...snap.data() } as ProfileData, error: null };
-            }
-            return { data: null, error: null };
+    try {
+        const snap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, uid));
+        if (snap.exists()) {
+            return { data: { uid, ...snap.data() } as ProfileData, error: null };
         }
-        catch (error: unknown) {
-            const message = error instanceof Error ? error.message : "Failed to fetch profile";
-            console.error("Error fetching profile:", message);
-            return { data: null, error: message };
+        const userSnap = await rateLimitedGet(doc(db, COLLECTIONS.USERS, uid));
+        if (userSnap.exists()) {
+            return { data: { uid, ...userSnap.data() } as ProfileData, error: null };
         }
-    }, 10 * 60 * 1000);
+        return { data: null, error: null };
+    }
+    catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Failed to fetch profile";
+        console.error("Error fetching profile:", message);
+        return { data: null, error: message };
+    }
 };
 export const updateProfileData = async (uid: string, data: ProfileData): Promise<{
     success: boolean;
@@ -50,9 +52,16 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
             ...profileDataOnly
         } = cleanData as any;
         const userRef = doc(db, COLLECTIONS.USERS, uid);
-        const userUpdate: Record<string, any> = { updatedAt: serverTimestamp() };
+        const userUpdate: Record<string, any> = { 
+            uid,
+            id: uid,
+            updatedAt: serverTimestamp() 
+        };
+        if (cleanData.email !== undefined) userUpdate.email = cleanData.email;
+        if (cleanData.createdAt !== undefined) userUpdate.createdAt = cleanData.createdAt;
         if (cleanData.name !== undefined) {
             userUpdate.name = cleanData.name;
+            userUpdate.displayName = cleanData.displayName || cleanData.name;
             CurrentUser.setName(cleanData.name as string);
         }
         if (cleanData.role !== undefined) {
@@ -92,6 +101,11 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
         if (nameToUse && !profileDataOnly.name) {
             profileDataOnly.name = nameToUse;
         }
+        if (!profileDataOnly.displayName && nameToUse) {
+            profileDataOnly.displayName = nameToUse;
+        }
+        profileDataOnly.uid = uid;
+        profileDataOnly.id = uid;
         await setDoc(profileRef, {
             ...profileDataOnly,
             updatedAt: serverTimestamp()
@@ -182,3 +196,42 @@ export const uploadProfileMedia = async (uid: string, file: File, onProgress?: (
         return null;
     }
 };
+
+export const deleteAccount = async (uid: string): Promise<{ success: boolean; error: string | null }> => {
+    try {
+        const currentUserUid = AuthService.getUserId() || CurrentUser.id;
+        if (!currentUserUid || (currentUserUid !== uid && !uid.includes(currentUserUid))) {
+            return { success: false, error: "Unauthorized: You can only delete your own account." };
+        }
+
+        const profileRef = doc(db, COLLECTIONS.PROFILES, uid);
+        const userRef = doc(db, COLLECTIONS.USERS, uid);
+        const contactRef = doc(db, "contact_info", uid);
+
+        await Promise.allSettled([
+            deleteDoc(profileRef),
+            deleteDoc(userRef),
+            deleteDoc(contactRef)
+        ]);
+
+        const saved = getSavedRealTalents();
+        const updated = saved.filter((t: any) => (t.uid || t.id) !== uid);
+        saveRealTalents(updated);
+        cacheManager.reemit("talents_list_all", updated);
+        cacheManager.invalidateCache(`profile_${uid}`);
+        cacheManager.invalidateCache(`profile_sub_${uid}`);
+        cacheManager.invalidateCache(`user_doc_${uid}`);
+        cacheManager.invalidateCache("talents_list_all");
+
+        CurrentUser.setName(null);
+        CurrentUser.setImageUrl(null);
+        CurrentUser.setProfileInfo('user');
+
+        return { success: true, error: null };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to delete account";
+        console.error("Account deletion error:", message);
+        return { success: false, error: message };
+    }
+};
+

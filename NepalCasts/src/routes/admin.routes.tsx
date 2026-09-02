@@ -13,14 +13,14 @@ const AdminSettings = lazyWithRetry(() => import('../features/admin/AdminSetting
 
 export const AdminRoutes = () => (
   <>
-    <Route path="/admin" element={<AdminOverview />} />
-    <Route path="/admin/users" element={<AdminUsers />} />
-    <Route path="/admin/analytics" element={<AdminAnalytics />} />
-    <Route path="/admin/reports" element={<AdminAnalytics />} />
-    <Route path="/admin/content" element={<AdminContent />} />
-    <Route path="/admin/casting" element={<AdminCasting />} />
-    <Route path="/admin/messages" element={<AdminMessages />} />
-    <Route path="/admin/moderation" element={<AdminModeration />} />
-    <Route path="/admin/settings" element={<AdminSettings />} />
+    <Route index element={<AdminOverview />} />
+    <Route path="users" element={<AdminUsers />} />
+    <Route path="analytics" element={<AdminAnalytics />} />
+    <Route path="reports" element={<AdminAnalytics />} />
+    <Route path="content" element={<AdminContent />} />
+    <Route path="casting" element={<AdminCasting />} />
+    <Route path="messages" element={<AdminMessages />} />
+    <Route path="moderation" element={<AdminModeration />} />
+    <Route path="settings" element={<AdminSettings />} />
   </>
 );

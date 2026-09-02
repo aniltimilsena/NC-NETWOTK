@@ -50,6 +50,9 @@ export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToa
             case 'casting-detail':
                 navigate(param ? `/casting/${param}` : '/casting');
                 break;
+            case 'casting-apply':
+                navigate(param ? `/casting/${param}/apply` : '/casting');
+                break;
             case 'signin':
                 navigate('/signin');
                 break;

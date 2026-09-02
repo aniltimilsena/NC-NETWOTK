@@ -6,10 +6,10 @@ const CastingCall = lazyWithRetry(() => import('../features/casting/CastingCall'
 const CastingDetail = lazyWithRetry(() => import('../features/casting/CastingCallDetail'));
 const CastingCallCreate = lazyWithRetry(() => import('../features/casting/CastingCallCreate'));
 
-const CastingDetailWrapper = ({ onNavigate, user, showAlert }: any) => {
+const CastingDetailWrapper = ({ onNavigate, user, showAlert, defaultTab }: any) => {
   const params = useParams();
   const castingId = params.castingId || params.id;
-  const activeSubView = params.sub || params.action;
+  const activeSubView = defaultTab || params.sub || params.action;
 
   return (
     <CastingDetail
@@ -40,6 +40,22 @@ export const CastingRoutes = ({ onNavigate, user, isAdmin, showAlert, authReady 
           <Navigate to="/signin?redirect_url=/casting/create" replace />
         )
       }
+    />
+    <Route
+      path="/casting/:id/apply"
+      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} defaultTab="apply" />}
+    />
+    <Route
+      path="/casting/:id/apply-for-casting"
+      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} defaultTab="apply" />}
+    />
+    <Route
+      path="/apply/casting/:id"
+      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} defaultTab="apply" />}
+    />
+    <Route
+      path="/apply-casting/:id"
+      element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} defaultTab="apply" />}
     />
     <Route
       path="/casting/:id"

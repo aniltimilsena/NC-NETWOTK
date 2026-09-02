@@ -1,5 +1,5 @@
 import { db } from "../../../lib/firebase";
-import { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, limit, serverTimestamp, getDocs, type Unsubscribe, } from "firebase/firestore";
+import { collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, limit, serverTimestamp, getDocs, type Unsubscribe, } from "firebase/firestore";
 import { COLLECTIONS } from "../../../constants/collections";
 import { logger } from "../../../utils/logger";
 import type { CallDoc, CallStatus } from "../types/call";
@@ -217,6 +217,14 @@ export const logCallOutcomeToFirestore = async (params: {
         else {
             const newConvoRef = await addDoc(collection(db, COLLECTIONS.CONVERSATIONS), {
                 participants: sorted,
+                participantNames: {
+                    [callerId]: call.callerName || "",
+                    [receiverId]: call.calleeName || call.receiverName || ""
+                },
+                participantAvatars: {
+                    [callerId]: call.callerPhoto || call.callerAvatar || "",
+                    [receiverId]: call.calleePhoto || call.receiverAvatar || ""
+                },
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 lastMessage: "",
@@ -272,11 +280,15 @@ export const logCallOutcomeToFirestore = async (params: {
             receiverId,
             createdAt: serverTimestamp(),
         });
-        await updateDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId), {
+        await setDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId), {
             lastMessage: messageText,
             lastSenderId: "system",
             updatedAt: serverTimestamp(),
-        });
+            ...(call.callerName && call.callerName !== "User" ? { [`participantNames.${callerId}`]: call.callerName } : {}),
+            ...(call.calleeName && call.calleeName !== "User" ? { [`participantNames.${receiverId}`]: call.calleeName } : {}),
+            ...(call.callerPhoto ? { [`participantAvatars.${callerId}`]: call.callerPhoto } : {}),
+            ...(call.calleePhoto ? { [`participantAvatars.${receiverId}`]: call.calleePhoto } : {})
+        }, { merge: true });
         logger.log(`[CallLog] Firestore write success. Message ID: ${msgRef.id}`);
     }
     catch (err) {

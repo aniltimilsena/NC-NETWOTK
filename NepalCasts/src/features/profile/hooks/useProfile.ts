@@ -102,6 +102,31 @@ export function useProfile(profileId: string | null, currentUser: any) {
                     return;
                 }
 
+                // 3b. Name / DisplayName / Production matching
+                const nameQueries = [
+                    query(collection(db, "profiles"), where("displayName", "==", profileId)),
+                    query(collection(db, "profiles"), where("name", "==", profileId)),
+                    query(collection(db, "users"), where("displayName", "==", profileId)),
+                    query(collection(db, "users"), where("name", "==", profileId)),
+                    query(collection(db, "profiles"), where("production", "==", profileId)),
+                ];
+                for (const nq of nameQueries) {
+                    try {
+                        const nSnap = await getDocs(nq);
+                        if (!nSnap.empty) {
+                            const docData = nSnap.docs[0].data();
+                            const realUid = docData.uid || docData.userId || nSnap.docs[0].id;
+                            if (isMounted) {
+                                setResolvedUid(realUid);
+                                setResolvingUid(false);
+                            }
+                            return;
+                        }
+                    } catch (_e) {
+                        // ignore query error
+                    }
+                }
+
                 // 4. Local cache check
                 try {
                     const savedStr = typeof window !== 'undefined' ? localStorage.getItem("nc_cached_talents_real") : null;
@@ -266,10 +291,10 @@ export function useProfile(profileId: string | null, currentUser: any) {
                 snap.docs.forEach((d) => {
                     const data = d.data();
                     if (mockFollowerUids.has(data.followerId)) {
-                        deleteDoc(doc(db, "follows", d.id)).catch(() => {});
+                        deleteDoc(doc(db, "follows", d.id)).catch(() => { });
                     }
                 });
-            }).catch(() => {});
+            }).catch(() => { });
         }
 
         return () => {
@@ -296,13 +321,13 @@ export function useProfile(profileId: string | null, currentUser: any) {
             const docsData = snap.docs.map(d => ({ id: d.id, castingId: d.data().castingId }));
             const castingIds = docsData.map(item => item.castingId).filter(Boolean);
             const uniqueCastingIds = Array.from(new Set(castingIds));
-            
+
             const existingIds = new Set<string>();
             const chunks = [];
             for (let i = 0; i < uniqueCastingIds.length; i += 30) {
                 chunks.push(uniqueCastingIds.slice(i, i + 30));
             }
-            
+
             await Promise.all(chunks.map(async (chunk) => {
                 try {
                     const chunkQuery = query(collection(db, 'casting_calls'), where(documentId(), 'in', chunk));
@@ -314,7 +339,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
                     console.warn("Failed to check casting call existence batch:", err);
                 }
             }));
-            
+
             let activeCount = 0;
             for (const item of docsData) {
                 if (existingIds.has(item.castingId)) {
@@ -378,12 +403,17 @@ export function useProfile(profileId: string | null, currentUser: any) {
         return () => unsub();
     }, [targetUid, currentUser]);
 
-    const resolvedName = (profile?.name && profile.name !== 'Discovery Talent' ? profile.name : null) ||
+    const resolvedName = (profile?.name && profile.name !== 'Discovery Talent' && profile.name !== 'Talent User' ? profile.name : null) ||
         (profile as any)?.displayName ||
         (profile as any)?.fullName ||
+        (profile as any)?.production ||
+        (profile as any)?.productionHouse ||
+        (profile as any)?.username ||
         (isOwnProfile && currentUser?.displayName ? currentUser.displayName : null) ||
+        (profile?.email ? profile.email.split('@')[0] : null) ||
+        (isOwnProfile && currentUser?.email ? currentUser.email.split('@')[0] : null) ||
         profile?.name ||
-        (isOwnProfile && currentUser?.email ? currentUser.email.split('@')[0] : 'Discovery Talent');
+        'Artist Profile';
 
     const effectiveProfile = profile ? {
         ...profile,
@@ -393,7 +423,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
     } : (isOwnProfile && currentUser?.uid ? {
         uid: currentUser.uid,
         id: currentUser.uid,
-        name: currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Discovery Talent'),
+        name: currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Artist Profile'),
         email: currentUser.email || '',
         photoURL: currentUser.photoURL || '',
         role: currentUser.role || 'Actor',

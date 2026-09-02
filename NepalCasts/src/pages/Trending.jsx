@@ -158,7 +158,8 @@ export default function Trending({ onNavigate, user }) {
   };
   const rankedProfiles = profiles
     .filter(p => {
-      if (!p.name || p.name.trim() === '') return false;
+      const pName = p.name || p.displayName || p.fullName || p.username;
+      if (!pName || pName.trim() === '') return false;
       if (selectedCategory !== 'All') {
         if (!matchesCategory(p, selectedCategory))
           return false;

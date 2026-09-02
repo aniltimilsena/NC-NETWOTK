@@ -121,10 +121,10 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
                 .filter((p) => !currentUid || p.id !== currentUid)
                 .map((p) => ({
                 uid: p.id,
-                name: (p.name as string) || "Unknown User",
+                name: ((p.name || p.displayName || p.fullName) as string) || "Unknown User",
                 role: (p.role as string) || "Talent",
                 location: p.location as string | undefined,
-                image: (p.image || p.photoURL) as string | undefined,
+                image: (p.image || p.photoURL || p.profileImage) as string | undefined,
                 gender: p.gender as string | undefined,
                 verified: !!p.verified,
             }));

@@ -335,6 +335,16 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
                 const res = await getProfile(id);
                 if (res.data) {
                     profilesMap.set(id, res.data);
+                } else {
+                    const uSnap = await getDoc(doc(db, COLLECTIONS.USERS, id));
+                    if (uSnap.exists()) {
+                        profilesMap.set(id, uSnap.data());
+                    } else {
+                        const pSnap = await getDoc(doc(db, COLLECTIONS.PROFILES, id));
+                        if (pSnap.exists()) {
+                            profilesMap.set(id, pSnap.data());
+                        }
+                    }
                 }
             } catch (err) {
                 console.warn(`Failed to fetch profile ${id}:`, err);
@@ -352,25 +362,36 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
             const otherParticipantId = participants.find((p: string) => p !== uid);
             if (!otherParticipantId) return;
 
-            let participantInfo: any = {
-                name: "User",
-                avatar: "",
-                gender: "unknown",
-                online: false,
-                lastActive: null,
-                lastSeen: null,
-            };
             const pData = profilesMap.get(otherParticipantId);
-            if (pData) {
-                participantInfo = {
-                    name: pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || pData.displayName || "User",
-                    avatar: pData.image || "",
-                    gender: pData.gender || "unknown",
-                    online: pData.online || false,
-                    lastActive: pData.lastActive || null,
-                    lastSeen: pData.lastSeen || null,
-                };
-            }
+            const resolvedName = pData?.displayName ||
+                pData?.name ||
+                pData?.fullName ||
+                [pData?.firstName, pData?.lastName].filter(Boolean).join(' ') ||
+                pData?.username ||
+                (pData?.email ? pData.email.split('@')[0] : '') ||
+                data.participantNames?.[otherParticipantId] ||
+                data.participantDetails?.[otherParticipantId]?.name ||
+                data.participantDetails?.[otherParticipantId]?.displayName ||
+                (data.callerId === otherParticipantId ? data.callerName : data.calleeName) ||
+                "User";
+
+            const resolvedAvatar = pData?.image ||
+                pData?.photoURL ||
+                pData?.profileImage ||
+                data.participantAvatars?.[otherParticipantId] ||
+                data.participantDetails?.[otherParticipantId]?.avatar ||
+                data.participantDetails?.[otherParticipantId]?.photoURL ||
+                (data.callerId === otherParticipantId ? data.callerPhoto : data.calleePhoto) ||
+                "";
+
+            let participantInfo: any = {
+                name: resolvedName,
+                avatar: resolvedAvatar,
+                gender: pData?.gender || "unknown",
+                online: pData?.online || false,
+                lastActive: pData?.lastActive || null,
+                lastSeen: pData?.lastSeen || null,
+            };
 
             let isUnreadForMe = false;
             const lastSender = data.lastSenderId;

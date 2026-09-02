@@ -8,6 +8,7 @@ import {
   Briefcase,
   CheckCircle2,
   Pencil,
+  ShieldCheck,
 } from 'lucide-react';
 import { Avatar } from '../../../components/ui';
 import ShareSheet from '../../../components/ui/ShareSheet';
@@ -67,9 +68,13 @@ export default function ProfileHeader({
     Boolean(CurrentUser.id && (profile?.uid === CurrentUser.id || (profile as any)?.id === CurrentUser.id));
 
   const name =
-    profile?.name ||
+    (profile?.name && profile.name !== 'Artist Profile' && profile.name !== 'Discovery Talent' ? profile.name : null) ||
     (profile as any)?.displayName ||
     (profile as any)?.fullName ||
+    (profile as any)?.production ||
+    (profile as any)?.creatorName ||
+    (profile as any)?.username ||
+    profile?.name ||
     (isRealOwn ? 'Your Name' : 'Talent');
 
   const extractedRole =
@@ -275,10 +280,24 @@ export default function ProfileHeader({
             )}
           </div>
 
-          {/* Role Pill */}
-          <span className="inline-block px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-white font-apple font-semibold text-xs sm:text-sm tracking-wider uppercase">
-            {userRole}
-          </span>
+          {/* Role Pill & Admin Badge */}
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            <span className="inline-block px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-white font-apple font-semibold text-xs sm:text-sm tracking-wider uppercase">
+              {userRole}
+            </span>
+            {(profile.isAdmin === true || (profile as any)?.role?.toLowerCase() === 'admin') && (
+              <button
+                type="button"
+                onClick={() => onNavigate?.('/admin')}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 font-apple font-semibold text-xs sm:text-sm tracking-wider uppercase transition-colors cursor-pointer active:scale-95"
+                title="Admin"
+                aria-label="Admin"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-red-400/80" />
+                <span>Admin</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Bio Text (Seamless text with guaranteed inline See more) */}
@@ -296,9 +315,8 @@ export default function ProfileHeader({
                       onEditBio();
                     }
                   }}
-                  className={`font-apple text-sm sm:text-base text-neutral-300 leading-tight sm:leading-tight whitespace-pre-line tracking-normal text-left ${
-                    isRealOwn ? 'cursor-pointer hover:text-white' : ''
-                  }`}
+                  className={`font-apple text-sm sm:text-base text-neutral-300 leading-tight sm:leading-tight whitespace-pre-line tracking-normal text-left ${isRealOwn ? 'cursor-pointer hover:text-white' : ''
+                    }`}
                 >
                   {bioToShow ? (
                     <>

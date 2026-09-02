@@ -42,6 +42,9 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
             case 'casting-detail':
                 navigate(param ? `/casting/${param}` : '/casting');
                 break;
+            case 'casting-apply':
+                navigate(param ? `/casting/${param}/apply` : '/casting');
+                break;
             case 'signin':
                 navigate('/signin');
                 break;

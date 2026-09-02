@@ -221,7 +221,7 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
                     {activeTab === 'about' && (<ProfileSettings profile={activeProfile} onUpdate={updateProfileSettings} showAlert={showAlert} />)}
                     {activeTab === 'skills' && (<SkillsSettings profile={activeProfile} onUpdate={updateProfileSettings} showAlert={showAlert} />)}
                     {activeTab === 'experience' && (<ExperienceSettings profile={activeProfile} onUpdate={updateProfileSettings} showAlert={showAlert} />)}
-                    {activeTab === 'password' && (<SecuritySettings sessions={sessions} blockedUsers={blockedUsersList} onRevokeSession={revokeSession} onUnblockUser={unblockUserAction} showAlert={showAlert} />)}
+                    {activeTab === 'password' && (<SecuritySettings sessions={sessions} blockedUsers={blockedUsersList} onRevokeSession={revokeSession} onUnblockUser={unblockUserAction} showAlert={showAlert} user={user} onNavigate={onNavigate} />)}
                     {activeTab === 'notifications' && (<NotificationSettings profile={activeProfile} onUpdate={updateProfileSettings} showAlert={showAlert} />)}
                     {activeTab === 'language' && (<LanguageSettings showAlert={showAlert} />)}
                 </div>

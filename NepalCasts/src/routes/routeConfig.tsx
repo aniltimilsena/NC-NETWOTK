@@ -35,6 +35,9 @@ const NotFound = lazyWithRetry(() => import('../pages/NotFound'));
 const Forbidden = lazyWithRetry(() => import('../pages/Forbidden'));
 const ServerError = lazyWithRetry(() => import('../pages/ServerError'));
 
+import { db } from '../lib/firebase';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+
 const ProtectedRoute = ({ user, authReady, children }: any) => {
   const location = useLocation();
   if (!authReady) return <div className="min-h-screen bg-[#070709]" />;
@@ -42,8 +45,56 @@ const ProtectedRoute = ({ user, authReady, children }: any) => {
 };
 
 const AdminRoute = ({ user, isAdmin, authReady, children }: any) => {
-  if (!authReady) return <div className="min-h-screen bg-[#070709]" />;
-  return user && isAdmin ? (children || <Outlet />) : <Navigate to="/" replace />;
+  const [isLiveAdmin, setIsLiveAdmin] = React.useState<boolean>(
+    Boolean(isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin' || (user?.email && user.email.toLowerCase() === 'aniltimilsena53@gmail.com'))
+  );
+  const [checking, setChecking] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    if (isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin' || (user?.email && user.email.toLowerCase() === 'aniltimilsena53@gmail.com')) {
+      setIsLiveAdmin(true);
+      setChecking(false);
+      return;
+    }
+    if (!user?.uid) {
+      if (authReady) setChecking(false);
+      return;
+    }
+
+    let isMounted = true;
+    (async () => {
+      try {
+        const userSnap = await getDoc(doc(db, 'users', user.uid));
+        if (userSnap.exists() && (userSnap.data()?.isAdmin === true || userSnap.data()?.role?.toLowerCase() === 'admin')) {
+          if (isMounted) setIsLiveAdmin(true);
+          return;
+        }
+        const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
+        if (profileSnap.exists() && (profileSnap.data()?.isAdmin === true || profileSnap.data()?.role?.toLowerCase() === 'admin')) {
+          if (isMounted) setIsLiveAdmin(true);
+          return;
+        }
+        if (user.email) {
+          const emailUsersSnap = await getDocs(query(collection(db, 'users'), where('email', '==', user.email)));
+          for (const d of emailUsersSnap.docs) {
+            if (d.data()?.isAdmin === true || d.data()?.role?.toLowerCase() === 'admin') {
+              if (isMounted) setIsLiveAdmin(true);
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Admin check failed in route:", e);
+      } finally {
+        if (isMounted) setChecking(false);
+      }
+    })();
+
+    return () => { isMounted = false; };
+  }, [user, isAdmin, authReady]);
+
+  if (!authReady || checking) return <div className="min-h-screen bg-[#070709]" />;
+  return user && isLiveAdmin ? (children || <Outlet />) : <Navigate to="/" replace />;
 };
 
 export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAlert, showToast }: any) {
@@ -51,10 +102,10 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
 
   const onNavigate = (page: string, param?: any) => {
     if (page === 'back') {
-      if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
+      if (window.history.length > 1) {
         navigate(-1);
       } else {
-        navigate('/');
+        navigate('/casting');
       }
       return;
     }
@@ -63,6 +114,10 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
       return;
     }
     let targetPage = page;
+    if (page === 'casting-apply') {
+      navigate(param ? `/casting/${param}/apply` : '/casting');
+      return;
+    }
     if (page === 'casting-detail') targetPage = 'casting';
     if (page === 'listing' || page === 'talent' || page === 'talents') targetPage = 'talents';
     if (page === 'saved-casting' || page === 'saved-castings') targetPage = 'saved-castings';
@@ -129,7 +184,7 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
       </Route>
 
       {/* Admin Routes with Admin Layout */}
-      <Route path="/" element={<AdminRoute user={user} isAdmin={isAdmin} authReady={authReady} />}>
+      <Route path="/admin/*" element={<AdminRoute user={user} isAdmin={isAdmin} authReady={authReady} />}>
         <Route element={<AdminLayout showToast={showToast} />}>
           {AdminRoutes()}
         </Route>

@@ -26,8 +26,12 @@ import {
   Phone,
   Eye,
   Download,
-  X
+  X,
+  User,
+  Star,
+  Coins,
 } from 'lucide-react';
+import Logo from '../../components/ui/Logo';
 import Button from '../../components/ui/Button';
 import SEO from '../../components/SEO';
 import { InlineAlert } from '../../components/ui/AlertBanner';
@@ -53,36 +57,41 @@ import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 
 const isMockOrInvalidImage = (url: string | null | undefined) => {
   if (!url || typeof url !== 'string') return true;
-  const lower = url.toLowerCase();
-  return (
-    url === 'has-file' ||
-    lower.includes('placeholder') ||
-    lower.includes('dummy') ||
-    lower.includes('sample') ||
-    lower.includes('fake') ||
-    lower.includes('test') ||
-    lower.includes('movie-banner.png') ||
-    lower.includes('movie-banner.webp') ||
-    lower.includes('images.unsplash.com') ||
-    lower.includes('via.placeholder.com')
-  );
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === 'has-file' || trimmed.toLowerCase() === 'undefined' || trimmed.toLowerCase() === 'null') return true;
+  return false;
 };
 
 const getCastingThumbnail = (call: any) => {
   if (!call) return null;
-  const raw =
-    call.horizontalThumbnail ||
-    call.bannerUrl ||
-    call.bannerImage ||
-    call.coverImage ||
-    call.thumbnail ||
-    call.image ||
-    call.posterUrl ||
-    call.poster ||
-    call.media?.[0]?.url ||
-    call.photoURL ||
-    null;
-  return raw && !isMockOrInvalidImage(raw) ? raw : null;
+  const candidates = [
+    call.horizontalThumbnail,
+    call.bannerUrl,
+    call.bannerImage,
+    call.coverImage,
+    call.cover,
+    call.banner,
+    call.thumbnail,
+    call.verticalPoster,
+    call.posterUrl,
+    call.poster,
+    call.imageUrl,
+    call.image,
+    call.media?.[0]?.url,
+    call.media?.[0],
+    call.photos?.[0]?.url,
+    call.photos?.[0],
+    call.photoURL,
+    call.fileUrl,
+    call.attachmentUrl
+  ];
+
+  for (const raw of candidates) {
+    if (typeof raw === 'string' && raw.trim() && !isMockOrInvalidImage(raw)) {
+      return raw.trim();
+    }
+  }
+  return null;
 };
 
 const formatDeadline = (dl?: string) => {
@@ -118,10 +127,23 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
   const [directorProfile, setDirectorProfile] = useState<any>(null);
 
-  const [isApplyView, setIsApplyView] = useState(activeTab === 'apply');
+  const [isApplyView, setIsApplyView] = useState(
+    activeTab === 'apply' || activeTab === 'apply-for-casting'
+  );
+
+  useEffect(() => {
+    if (activeTab === 'apply' || activeTab === 'apply-for-casting') {
+      setIsApplyView(true);
+    }
+  }, [activeTab]);
+
   const [selectedRole, setSelectedRole] = useState('');
+  const [fullName, setFullName] = useState(user?.displayName || '');
   const [contactEmail, setContactEmail] = useState(user?.email || '');
   const [contactPhone, setContactPhone] = useState(user?.phone || user?.phoneNumber || '');
+  const [applicantAge, setApplicantAge] = useState('');
+  const [applicantGender, setApplicantGender] = useState('Male');
+  const [applicantExperience, setApplicantExperience] = useState('');
   const [selfTapeUrl, setSelfTapeUrl] = useState('');
   const [coverNote, setCoverNote] = useState('');
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
@@ -130,6 +152,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [pipelineFilter, setPipelineFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
 
   const [confirmConfig, setConfirmConfig] = useState<any>({
     isOpen: false,
@@ -160,9 +183,6 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         if (snap.exists()) {
           const data: any = { id: snap.id, ...snap.data() };
           setCall(data);
-          if (data.roles && data.roles.length > 0 && !selectedRole) {
-            setSelectedRole(data.roles[0].name || 'General Performer Role');
-          }
         }
         setLoading(false);
       },
@@ -175,15 +195,16 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   }, [castingId]);
 
   useEffect(() => {
-    if (!call?.creatorId) return;
-    getProfile(call.creatorId)
+    const creatorUid = call?.creatorId || call?.createdBy || call?.userId;
+    if (!creatorUid) return;
+    getProfile(creatorUid)
       .then((res) => {
         if (res.data) {
           setDirectorProfile(res.data);
         }
       })
       .catch((err) => console.warn(err));
-  }, [call?.creatorId]);
+  }, [call?.creatorId, call?.createdBy, call?.userId]);
 
   useEffect(() => {
     if (!castingId || !user?.uid) {
@@ -321,16 +342,26 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     }
   };
 
-  const openApplyModal = () => {
+  const openApplyModal = (roleName?: string) => {
     if (!user) {
-      onNavigate('signin');
+      onNavigate ? onNavigate('signin') : (window.location.href = `/signin?redirect_url=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
     if (applied || applying) return;
-    if (call?.roles && call.roles.length > 0 && !selectedRole) {
-      setSelectedRole(call.roles[0]?.name || '');
+    if (roleName) {
+      setSelectedRole(roleName);
     }
     setIsApplyView(true);
+    if (typeof window !== 'undefined' && window.history && call?.id) {
+      window.history.pushState(null, '', `/casting/${call.id}/apply`);
+    }
+  };
+
+  const handleCloseApplyView = () => {
+    setIsApplyView(false);
+    if (typeof window !== 'undefined' && window.history && call?.id) {
+      window.history.pushState(null, '', `/casting/${call.id}`);
+    }
   };
 
   const handleConfirmSubmitApplication = async (e: React.FormEvent) => {
@@ -341,7 +372,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     try {
       const creatorId = call.creatorId || call.createdBy || '';
       const roleApplied = selectedRole || call.roles?.[0]?.name || call.category || 'General Role';
-      
+
       let fileUrl = null;
       let fileName = null;
       if (attachedFile) {
@@ -360,12 +391,16 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         castingId: call.id,
         castingTitle: call.title,
         userId: user.uid,
+        userName: fullName.trim() || user.displayName || 'Anonymous Actor',
+        fullName: fullName.trim() || user.displayName || 'Anonymous Actor',
         userEmail: contactEmail.trim() || user.email,
         contactEmail: contactEmail.trim() || user.email,
         userPhone: contactPhone.trim(),
         contactPhone: contactPhone.trim(),
         phone: contactPhone.trim(),
-        userName: user.displayName || 'Anonymous Actor',
+        age: applicantAge.trim(),
+        gender: applicantGender,
+        experience: applicantExperience,
         userPhoto: user.photoURL || '',
         roleName: roleApplied,
         selfTapeUrl: selfTapeUrl.trim(),
@@ -582,12 +617,54 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   const bannerImage = getCastingThumbnail(call);
   const allRoles = (call?.roles && Array.isArray(call.roles) && call.roles.length > 0)
-    ? call.roles.filter((r: any) => r && r.name && r.name.trim())
-    : (call?.type || call?.category ? [{ name: call.type || call.category, ageRange: '', description: '' }] : []);
+    ? call.roles
+      .filter((r: any) => r && (typeof r === 'string' ? r.trim() : (r.name && r.name.trim())))
+      .map((r: any) => (typeof r === 'string' ? { name: r, ageRange: call?.ageRange || '', description: '', pay: call?.compensation || 'Paid', gender: call?.gender || '' } : r))
+    : (call?.type || call?.category ? [{ name: call.type || call.category, ageRange: call?.ageRange || '', description: call?.description || '', pay: call?.compensation || 'Paid', gender: call?.gender || '' }] : []);
   const allRolesLabel = allRoles.map((r: any) => r.name).join(', ') || call?.category || 'Performer';
   const primaryRole = allRolesLabel;
   const shortDeadline = formatShortDeadline(call?.deadline);
   const fullDeadline = formatDeadline(call?.deadline);
+
+  const formatPostedDate = (createdAt: any) => {
+    if (!createdAt) return '2 days ago';
+    let date: Date;
+    if (createdAt?.toDate) date = createdAt.toDate();
+    else if (createdAt?.seconds) date = new Date(createdAt.seconds * 1000);
+    else date = new Date(createdAt);
+
+    if (isNaN(date.getTime())) return '2 days ago';
+    const diffDays = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0) return 'today';
+    if (diffDays === 1) return '1 day ago';
+    if (diffDays < 30) return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const postedTimeAgo = formatPostedDate(call?.createdAt);
+  const primaryRoleObj = allRoles.length > 0 ? allRoles[0] : null;
+  const displayGender = call?.gender || primaryRoleObj?.gender || 'Male';
+  const displayAge = call?.ageRange || primaryRoleObj?.ageRange || '20 – 30';
+  const displayLocation = call?.location || 'Kathmandu';
+  const displayExperience = call?.experienceLevel || call?.experience || 'Preferred';
+  const displayCompensation = call?.compensation || call?.budget || call?.compensationType || 'NPR 15,000 – 25,000';
+
+  let requirementsList: string[] = [];
+  if (Array.isArray(call?.requirements) && call.requirements.length > 0) {
+    requirementsList = call.requirements;
+  } else if (typeof call?.requirements === 'string' && call.requirements.trim()) {
+    requirementsList = call.requirements.split(/\r?\n/).map((s: string) => s.replace(/^[•\-\*]\s*/, '').trim()).filter(Boolean);
+  } else if (Array.isArray(primaryRoleObj?.requirements) && primaryRoleObj.requirements.length > 0) {
+    requirementsList = primaryRoleObj.requirements;
+  }
+  if (requirementsList.length === 0) {
+    requirementsList = [
+      'Good Nepali speaking ability',
+      'Comfortable in front of camera',
+      'Available for filming dates',
+      'Previous acting experience is a plus'
+    ];
+  }
 
   if (loading) {
     return (
@@ -606,7 +683,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           <h2 className="text-xl font-bold text-white mb-2">Casting Call Not Found</h2>
           <p className="text-gray-400 text-xs mb-6">This casting call may have been removed or closed.</p>
           <button
-            onClick={() => onNavigate('casting')}
+            onClick={() => onNavigate ? onNavigate('back') : (window.history.length > 1 ? window.history.back() : window.location.assign('/casting'))}
             className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold text-xs uppercase tracking-wider cursor-pointer"
           >
             Back to Casting Calls
@@ -626,188 +703,333 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           />
 
           <div className="w-full max-w-xl mx-auto px-4 sm:px-6 py-4 space-y-6 text-left">
-            {/* Top Header: ← Apply for Casting */}
-            <div className="flex items-center gap-3">
+            {/* Top Header: ← Back Arrow + Heading */}
+            <div className="flex items-center gap-3 py-1">
               <button
                 type="button"
-                onClick={() => setIsApplyView(false)}
-                className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
+                onClick={handleCloseApplyView}
+                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
                 title="Back"
                 aria-label="Back"
               >
-                <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+                <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5} />
               </button>
-              <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">
-                Apply for Casting
+              <h1 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">
+                Apply for Casting Call
               </h1>
             </div>
 
-            {/* Casting Call Preview Card (Header Card from screenshot) */}
-            <div className="bg-[#18181c] border border-white/5 rounded-2xl p-3.5 sm:p-4 flex items-center gap-3.5 shadow-lg">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-black/60 shrink-0 border border-white/5">
-                {bannerImage ? (
-                  <img src={bannerImage} alt={call.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-[#1a1f2e] to-[#0d0d12]">
-                    <Clapperboard className="w-6 h-6 text-white/50" />
-                  </div>
-                )}
-              </div>
-              <div className="space-y-1 min-w-0 flex-1">
-                <span className="uppercase text-xs font-extrabold text-white tracking-wider block">
-                  {selectedRole || primaryRole}
+            {/* Title & Metadata Section */}
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+                {selectedRole ? `${selectedRole} – ${call.title}` : call.title}
+              </h1>
+
+              {/* Sub-metadata row with White Icons */}
+              <div className="flex items-center gap-4 text-xs sm:text-sm text-neutral-400 font-medium flex-wrap pt-1">
+                <span className="flex items-center gap-1.5 text-neutral-300">
+                  <Clapperboard className="w-4 h-4 text-white" />
+                  <span>{call.category || 'Short Film'}</span>
                 </span>
-                <h2 className="text-base sm:text-lg font-bold text-[#522C69] lowercase truncate">
-                  {call.title}
-                </h2>
-                <p className="text-xs text-amber-400 font-medium">
-                  Deadline: {fullDeadline}
-                </p>
+                <span className="flex items-center gap-1.5 text-neutral-300">
+                  <MapPin className="w-4 h-4 text-white" />
+                  <span>{call.location || 'Kathmandu, Nepal'}</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-neutral-300">
+                  <Calendar className="w-4 h-4 text-white" />
+                  <span>Audition: {shortDeadline}</span>
+                </span>
               </div>
+
+              <p className="text-xs sm:text-sm text-neutral-400 pt-2 font-normal">
+                Please fill out the form below to apply for this casting call.
+              </p>
             </div>
 
             {/* Application Form */}
-            <form onSubmit={handleConfirmSubmitApplication} className="space-y-5">
-              <div className="space-y-1">
-                <h3 className="text-base sm:text-lg font-bold text-white">Your Application</h3>
-              </div>
-
-              {/* Role Selection */}
+            <form onSubmit={handleConfirmSubmitApplication} className="space-y-6 pt-1">
+              {/* Role Selection / Role Information Section */}
               {allRoles.length > 1 ? (
-                <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-semibold text-gray-300 block">
-                    Select Role to Apply For *
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="space-y-3 p-4 rounded-2xl bg-[#18181c] border border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs sm:text-sm font-bold text-white block">
+                        Select Role to Apply For <span className="text-red-400">*</span>
+                      </label>
+                      <p className="text-[11px] text-neutral-400">
+                        This casting call has {allRoles.length} open roles. Select the role you are auditioning for:
+                      </p>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#522C69]/30 border border-[#522C69]/50 text-[#ba7fd6] text-[11px] font-bold shrink-0">
+                      {allRoles.length} Roles
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2.5 pt-1">
                     {allRoles.map((r: any, idx: number) => {
                       const isSelected = selectedRole === r.name;
+                      const roleAge = r.ageRange || r.age;
+                      const rolePay = r.pay || r.compensation;
+                      const roleGender = r.gender;
+                      const roleDesc = r.description;
+
                       return (
-                        <button
+                        <div
                           key={idx}
-                          type="button"
                           onClick={() => setSelectedRole(r.name)}
-                          className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer flex flex-col gap-1 ${
-                            isSelected
-                              ? 'bg-[#522C69]/15 border-[#522C69] text-white shadow-sm'
-                              : 'bg-[#18181c] border-white/10 text-gray-300 hover:border-white/20'
-                          }`}
+                          className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer space-y-2 select-none ${isSelected
+                            ? 'bg-[#522C69]/20 border-[#ba7fd6] ring-1 ring-[#ba7fd6]/40 text-white shadow-md'
+                            : 'bg-black/30 border-white/10 text-gray-300 hover:border-white/20 hover:bg-black/50'
+                            }`}
                         >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className={`text-xs sm:text-sm font-bold ${isSelected ? 'text-[#522C69]' : 'text-white'}`}>
-                              {r.name}
-                            </span>
-                            {r.ageRange && (
-                              <span className="text-[10px] text-amber-300/80 font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/10">
-                                {r.ageRange}
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div
+                                className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all shrink-0 ${isSelected ? 'border-[#ba7fd6] bg-transparent' : 'border-neutral-500 bg-transparent'
+                                  }`}
+                              >
+                                {isSelected && <div className="w-2 h-2 rounded-full bg-[#ba7fd6]" />}
+                              </div>
+                              <span className={`text-sm font-bold truncate ${isSelected ? 'text-[#ba7fd6]' : 'text-white'}`}>
+                                {r.name}
                               </span>
-                            )}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                              {rolePay && (
+                                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                  {rolePay}
+                                </span>
+                              )}
+                              {roleAge && (
+                                <span className="text-[10px] text-neutral-300 font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                                  {roleAge}
+                                </span>
+                              )}
+                              {roleGender && (
+                                <span className="text-[10px] text-neutral-300 font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                                  {roleGender}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          {r.description && (
-                            <span className="text-[11px] text-gray-400 line-clamp-2">
-                              {r.description}
-                            </span>
+
+                          {roleDesc && (
+                            <p className="text-xs text-neutral-300 leading-relaxed pl-6">
+                              {roleDesc}
+                            </p>
                           )}
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
                 </div>
               ) : allRoles.length === 1 ? (
-                <div className="space-y-1">
-                  <span className="text-xs text-gray-400 font-semibold block">Applying For Role:</span>
-                  <div className="px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-xs sm:text-sm inline-block">
-                    {allRoles[0].name} {allRoles[0].ageRange ? `(${allRoles[0].ageRange})` : ''}
+                <div className="p-4 rounded-2xl bg-[#18181c] border border-white/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Role Applied For</span>
+                    {allRoles[0].pay && (
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        {allRoles[0].pay}
+                      </span>
+                    )}
                   </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-white">{allRoles[0].name}</h3>
+                    {allRoles[0].ageRange && (
+                      <span className="text-xs text-neutral-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
+                        {allRoles[0].ageRange}
+                      </span>
+                    )}
+                    {allRoles[0].gender && (
+                      <span className="text-xs text-neutral-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
+                        {allRoles[0].gender}
+                      </span>
+                    )}
+                  </div>
+                  {allRoles[0].description && (
+                    <p className="text-xs text-neutral-300 leading-relaxed pt-1">
+                      {allRoles[0].description}
+                    </p>
+                  )}
                 </div>
               ) : null}
 
-              {/* Contact Information */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs sm:text-sm font-semibold text-gray-300 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-white" />
-                    <span>Contact Email *</span>
-                  </label>
+              {/* Role Applying For Input Section */}
+              <div className="space-y-1.5">
+                <label className="text-xs sm:text-sm font-bold text-white block">
+                  Role Applying For <span className="text-red-400">*</span>
+                </label>
+                <p className="text-[11px] text-neutral-400">Type or specify the role you are auditioning for.</p>
+                <input
+                  type="text"
+                  required
+                  placeholder="Lead Actor, Supporting Cast, Extra"
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] transition-colors"
+                />
+              </div>
+
+              {/* 1. Full Name */}
+              <div className="space-y-1.5">
+                <label className="text-xs sm:text-sm font-bold text-white block">
+                  1. Full Name <span className="text-red-400">*</span>
+                </label>
+                <p className="text-[11px] text-neutral-400">Enter your full name.</p>
+                <input
+                  type="text"
+                  required
+                  placeholder="Your name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] transition-colors"
+                />
+              </div>
+
+              {/* 2. Email Address */}
+              <div className="space-y-1.5">
+                <label className="text-xs sm:text-sm font-bold text-white block">
+                  2. Email Address <span className="text-red-400">*</span>
+                </label>
+                <p className="text-[11px] text-neutral-400">Enter your active email address.</p>
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 pointer-events-none text-white flex items-center">
+                    <Mail className="w-4 h-4 text-white" />
+                  </div>
                   <input
                     type="email"
                     required
-                    placeholder="your.email@example.com"
+                    placeholder="yourname@gmail.com"
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
-                    className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
+                    className="w-full bg-[#18181c] border border-white/10 rounded-xl pl-8.5 pr-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] transition-colors"
                   />
                 </div>
+              </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs sm:text-sm font-semibold text-gray-300 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-white" />
-                    <span>Contact Phone / WhatsApp *</span>
-                  </label>
+              {/* 3. Phone Number */}
+              <div className="space-y-1.5">
+                <label className="text-xs sm:text-sm font-bold text-white block">
+                  3. Phone Number <span className="text-red-400">*</span>
+                </label>
+                <p className="text-[11px] text-neutral-400">Enter your phone number.</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-[#18181c] border border-white/10 rounded-xl px-3 py-3 text-xs sm:text-sm text-white shrink-0 select-none">
+                    <img
+                      src="https://flagcdn.com/w40/np.png"
+                      srcSet="https://flagcdn.com/w80/np.png 2x"
+                      alt="Nepal Flag"
+                      className="w-4 h-5 object-contain shrink-0"
+                    />
+                    <span className="font-semibold">+977</span>
+                  </div>
                   <input
                     type="tel"
                     required
-                    placeholder="+977 98XXXXXXXX"
+                    placeholder="98XXXXXXXX"
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
-                    className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
+                    className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] transition-colors"
                   />
                 </div>
               </div>
 
-              {/* Cover Letter */}
+              {/* 4. Age */}
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-semibold text-gray-300">
-                  Cover Letter
+                <label className="text-xs sm:text-sm font-bold text-white block">
+                  4. Age <span className="text-red-400">*</span>
                 </label>
-                <div className="relative">
-                  <textarea
-                    rows={5}
-                    maxLength={500}
-                    placeholder="Tell us why you are the right fit for this role..."
-                    value={coverNote}
-                    onChange={(e) => setCoverNote(e.target.value)}
-                    className="w-full bg-[#16161b] border border-white/10 rounded-xl p-3.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69] resize-none pb-7 leading-relaxed"
-                  />
-                  <span className="absolute bottom-2.5 right-3 text-[11px] text-gray-500 font-medium select-none">
-                    {coverNote.length}/500
-                  </span>
+                <p className="text-[11px] text-neutral-400">Enter your age.</p>
+                <input
+                  type="number"
+                  min="1"
+                  max="120"
+                  required
+                  placeholder="e.g. 24"
+                  value={applicantAge}
+                  onChange={(e) => setApplicantAge(e.target.value)}
+                  className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] transition-colors"
+                />
+              </div>
+
+              {/* 5. Gender */}
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-bold text-white block">
+                  5. Gender <span className="text-red-400">*</span>
+                </label>
+                <p className="text-[11px] text-neutral-400">Select your gender.</p>
+                <div className="space-y-2.5 pt-1">
+                  {['Male', 'Female', 'Other'].map((g) => {
+                    const isSelected = applicantGender === g;
+                    return (
+                      <div
+                        key={g}
+                        onClick={() => setApplicantGender(g)}
+                        className="flex items-center gap-3 text-xs sm:text-sm text-neutral-300 cursor-pointer select-none group w-fit"
+                      >
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'border-white bg-transparent' : 'border-neutral-500 bg-transparent group-hover:border-neutral-400'}`}>
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                        <span className={isSelected ? 'text-white font-medium' : 'text-neutral-400'}>{g}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Portfolio / Resume (PDF Only) */}
+              {/* 6. Experience */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs sm:text-sm font-semibold text-gray-300">
-                    Portfolio / Resume (PDF only)
-                  </label>
-                  <span className="text-[10px] text-[#522C69] font-bold uppercase tracking-wider bg-[#522C69]/10 px-2 py-0.5 rounded-full">
-                    PDF Only
-                  </span>
+                <label className="text-xs sm:text-sm font-bold text-white block">
+                  6. Experience <span className="text-red-400">*</span>
+                </label>
+                <p className="text-[11px] text-neutral-400">Select your experience level.</p>
+                <div className="relative">
+                  <select
+                    required
+                    value={applicantExperience}
+                    onChange={(e) => setApplicantExperience(e.target.value)}
+                    className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-white outline-none focus:border-[#522C69] transition-colors appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled className="bg-[#18181c] text-neutral-500">Select experience</option>
+                    <option value="Fresher / Beginner" className="bg-[#18181c] text-white">Fresher / Beginner</option>
+                    <option value="1 - 2 Years" className="bg-[#18181c] text-white">1 - 2 Years</option>
+                    <option value="3 - 5 Years" className="bg-[#18181c] text-white">3 - 5 Years</option>
+                    <option value="5+ Years" className="bg-[#18181c] text-white">5+ Years</option>
+                    <option value="Professional / Lead Actor" className="bg-[#18181c] text-white">Professional / Lead Actor</option>
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
+              </div>
+
+              {/* 7. Portfolio / Showreel (Optional) */}
+              <div className="space-y-1.5">
+                <label className="text-xs sm:text-sm font-bold text-white block">
+                  7. Portfolio / Showreel (Optional)
+                </label>
+                <p className="text-[11px] text-neutral-400">Upload your portfolio, showreel or any acting sample.</p>
+
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className={`border border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all ${
-                    attachedFile 
-                      ? 'border-[#522C69]/50 bg-[#522C69]/5' 
-                      : 'border-white/15 hover:border-white/30 bg-[#16161b]/50 hover:bg-[#16161b]/80'
-                  }`}
+                  className={`border border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all ${attachedFile
+                    ? 'border-[#522C69]/50 bg-[#522C69]/5'
+                    : 'border-white/15 hover:border-white/30 bg-[#18181c]/60 hover:bg-[#18181c]'
+                    }`}
                 >
                   <input
                     type="file"
                     ref={fileInputRef}
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
-                        const picked = e.target.files[0];
-                        if (picked.type === 'application/pdf' || picked.name.toLowerCase().endsWith('.pdf')) {
-                          setAttachedFile(picked);
-                        } else {
-                          showAlert?.('Only PDF files (.pdf) are accepted for portfolio submission.', 'warning');
-                          if (fileInputRef.current) fileInputRef.current.value = '';
-                        }
+                        setAttachedFile(e.target.files[0]);
                       }
                     }}
                     className="hidden"
-                    accept=".pdf,application/pdf"
+                    accept=".pdf,.mp4,.mov,.png,.jpg,.jpeg,video/*,application/pdf"
                   />
                   {attachedFile ? (
                     <div className="flex flex-col items-center gap-1.5">
@@ -816,7 +1038,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                         {attachedFile.name}
                       </p>
                       <p className="text-[11px] text-[#522C69] font-medium">
-                        {(attachedFile.size / (1024 * 1024)).toFixed(2)} MB • PDF Ready to submit
+                        {(attachedFile.size / (1024 * 1024)).toFixed(2)} MB • File ready to upload
                       </p>
                       <button
                         type="button"
@@ -827,50 +1049,61 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                         }}
                         className="mt-1 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-[10px] text-gray-200 cursor-pointer transition-all"
                       >
-                        Remove / Replace PDF
+                        Remove / Replace
                       </button>
                     </div>
                   ) : (
                     <>
-                      <Upload className="w-6 h-6 text-gray-400" />
+                      <Upload className="w-6 h-6 text-white" />
                       <div>
-                        <p className="text-xs sm:text-sm font-semibold text-gray-200">
-                          Upload your Portfolio / Resume (.pdf)
+                        <p className="text-xs sm:text-sm font-medium text-neutral-200">
+                          Click to upload or drag and drop
                         </p>
-                        <p className="text-[11px] text-gray-500 mt-0.5">
-                          PDF files only (max 20MB)
+                        <p className="text-[11px] text-neutral-500 mt-0.5">
+                          PDF, MP4, MOV or Link (Max 50MB)
                         </p>
                       </div>
                     </>
                   )}
                 </div>
+
+                {/* Optional URL input for showreel link */}
+                <div className="pt-1">
+                  <input
+                    type="url"
+                    placeholder="Or paste video showreel / portfolio link (e.g. YouTube, Vimeo, Drive)"
+                    value={selfTapeUrl}
+                    onChange={(e) => setSelfTapeUrl(e.target.value)}
+                    className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-neutral-500 outline-none focus:border-[#522C69]"
+                  />
+                </div>
               </div>
 
-              {/* Additional Links (Optional) */}
+              {/* 8. Additional Information (Optional) */}
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-semibold text-gray-300">
-                  Additional Links (Optional)
+                <label className="text-xs sm:text-sm font-bold text-white block">
+                  8. Additional Information (Optional)
                 </label>
-                <input
-                  type="url"
-                  placeholder="https://yourportfolio.com"
-                  value={selfTapeUrl}
-                  onChange={(e) => setSelfTapeUrl(e.target.value)}
-                  className="w-full bg-[#16161b] border border-white/10 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
+                <p className="text-[11px] text-neutral-400">Anything else you would like to share.</p>
+                <textarea
+                  rows={4}
+                  maxLength={500}
+                  placeholder="Write here..."
+                  value={coverNote}
+                  onChange={(e) => setCoverNote(e.target.value)}
+                  className="w-full bg-[#18181c] border border-white/10 rounded-xl p-4 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] resize-none leading-relaxed"
                 />
               </div>
 
-              {/* Submit Application Button */}
-              <div className="pt-2">
-                <Button
+              {/* Submit Button */}
+              <div className="pt-2 pb-6">
+                <button
                   type="submit"
-                  loading={applying}
                   disabled={applying}
-                  className="w-full bg-[#522C69] hover:bg-[#e6a200] text-black font-extrabold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 cursor-pointer transition-all active:scale-[0.98]"
+                  className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold text-base flex items-center justify-center gap-2 shadow-xl transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
                 >
-                  <Inbox className="w-4 h-4" />
-                  <span>Submit Application</span>
-                </Button>
+                  <span>{applying ? 'Submitting Application...' : 'Submit Application'}</span>
+                </button>
               </div>
             </form>
           </div>
@@ -882,645 +1115,666 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   return (
     <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting">
       <div className="min-h-screen bg-[#141414] text-white pb-24 font-sans select-none">
-      <SEO
-        title={`${call.title} | NepalCasts Casting Call`}
-        description={call.description}
-        image={bannerImage || undefined}
-        url={`${typeof window !== 'undefined' ? window.location.origin : 'https://nepalcasts.com'}/casting/${castingId}`}
-      />
+        <SEO
+          title={`${call.title} | NepalCasts Casting Call`}
+          description={call.description}
+          image={bannerImage || undefined}
+          url={`${typeof window !== 'undefined' ? window.location.origin : 'https://nepalcasts.com'}/casting/${castingId}`}
+        />
 
-      <ConfirmDialog
-        isOpen={confirmConfig.isOpen}
-        title={confirmConfig.title}
-        description={confirmConfig.description}
-        confirmText={confirmConfig.confirmText}
-        cancelText={confirmConfig.cancelText}
-        type={confirmConfig.type}
-        onConfirm={confirmConfig.onConfirm}
-        onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
-      />
+        <ConfirmDialog
+          isOpen={confirmConfig.isOpen}
+          title={confirmConfig.title}
+          description={confirmConfig.description}
+          confirmText={confirmConfig.confirmText}
+          cancelText={confirmConfig.cancelText}
+          type={confirmConfig.type}
+          onConfirm={confirmConfig.onConfirm}
+          onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
+        />
 
-      <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-3 space-y-3">
-        {/* Top Header */}
-        <div className="flex items-center justify-between py-1">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => onNavigate('casting')}
-              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
-              title="Back"
-              aria-label="Back"
-            >
-              <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
-            </button>
-            <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">
-              Casting Call
-            </h1>
-          </div>
-        </div>
-
-        {applyAlert.type && (
-          <InlineAlert
-            type={applyAlert.type as any}
-            message={applyAlert.message || ''}
-            detail={applyAlert.detail}
-            onDismiss={() => setApplyAlert({ type: null, message: null, detail: null })}
-          />
-        )}
-
-        {/* Main Card Container with Rich 2-Column Responsive Layout */}
-        <div className="w-full space-y-3.5 text-left">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 lg:gap-5 items-start">
-                     {/* Left Column: Poster + Quick Actions + Production Card */}
-            <div className="lg:col-span-5 space-y-2">
-              {/* Hero Banner with Badge & Bookmark */}
-              <div className="relative w-full aspect-[4/5] sm:aspect-[4/5] max-h-[460px] mx-auto rounded-2xl overflow-hidden bg-[#111111] shadow-xl">
-                {bannerImage ? (
-                  <img
-                    src={bannerImage}
-                    alt={call.title}
-                    className="w-full h-full object-cover"
-                    onError={(e: any) => {
-                      e.currentTarget.style.display = 'none';
-                      const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-banner');
-                      if (fallback) (fallback as HTMLElement).style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-
-                <div
-                  className="default-clapper-banner w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1a1f2e] to-[#0d0d12] p-4 text-center"
-                  style={{ display: bannerImage ? 'none' : 'flex' }}
-                >
-                  <Clapperboard className="w-16 h-16 text-white/50" />
-                </div>
-
-                {/* Gradient Overlay for bottom text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30 pointer-events-none" />
-
-                {/* Tag on bottom of image: ROLES • Deadline */}
-                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs font-bold text-white drop-shadow-md bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-                  <span className="uppercase tracking-wider text-white font-extrabold truncate max-w-[55%]">
-                    {allRolesLabel}
-                  </span>
-                  <span className="text-[#522C69] font-semibold shrink-0">
-                    Deadline: {shortDeadline}
-                  </span>
-                </div>
-              </div>
-
-              {/* Action Buttons: Share & Save */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="w-full py-2.5 px-3 rounded-xl bg-black border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
-                >
-                  <Share2 className="w-3.5 h-3.5 text-white" />
-                  <span>Share</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleToggleSave}
-                  className="w-full py-2.5 px-3 rounded-xl bg-black border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
-                >
-                  <Bookmark className={`w-3.5 h-3.5 ${saved ? 'fill-[#522C69] text-[#522C69]' : 'text-gray-400'}`} />
-                  <span>{saved ? 'Saved' : 'Save'}</span>
-                </button>
-              </div>
-
-              {/* Production / Casting Director Card */}
-              <div className="bg-black border border-white/10 rounded-2xl p-3.5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                    Production Team
-                  </span>
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    <ShieldCheck className="w-3 h-3" />
-                    Verified
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Avatar
-                    userId={call.creatorId || call.createdBy}
-                    src={directorProfile?.photoURL || call.creatorPhoto}
-                    name={call.production || directorProfile?.displayName || call.creatorName || 'Production'}
-                    size="md"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-white text-sm truncate">
-                      {call.production || directorProfile?.displayName || call.creatorName || 'Independent Production'}
-                    </h4>
-                    <p className="text-xs text-gray-400 truncate">
-                      {directorProfile?.role || 'Casting Director'} • {call.location || 'Nepal'}
-                    </p>
-                  </div>
-                </div>
-
-                {call.creatorId && (
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('profile', call.creatorId)}
-                    className="w-full py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-white transition-all cursor-pointer text-center block"
-                  >
-                    View Director Profile
-                  </button>
-                )}
-
-                {call.contactInfo && (
-                  <div className="pt-2 border-t border-white/5 text-xs text-gray-400 space-y-1">
-                    <span className="font-semibold text-gray-300 block">Contact Info:</span>
-                    <p className="text-gray-300 font-mono text-[11px] bg-black/40 p-2 rounded-lg break-all">
-                      {call.contactInfo}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Primary Call to Action Button */}
-              <div className="pt-0.5 space-y-2">
-                {isCreator ? (
-                  <div className="space-y-2">
-                    <div className="w-full py-3 px-4 rounded-xl bg-black border border-white/10 text-center text-xs font-bold text-gray-300">
-                      You created this casting call ({apps.length} {apps.length === 1 ? 'applicant' : 'applicants'})
-                    </div>
-                    <button
-                      onClick={handleDelete}
-                      disabled={deleting}
-                      className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-gray-400 hover:text-red-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
-                      title="Delete Casting Call"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>{deleting ? 'Deleting...' : 'Delete Casting Call'}</span>
-                    </button>
-                  </div>
-                ) : applied ? (
-                  <div className="flex items-center gap-2.5 sm:gap-3 w-full">
-                    <div
-                      className={`flex-1 py-3 px-4 rounded-xl text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border shadow-sm ${
-                        applicationStatus === 'accepted'
-                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                          : applicationStatus === 'rejected'
-                            ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                            : 'bg-white text-black border-white'
-                      }`}
-                    >
-                      <CheckCircle2 className="w-4 h-4 shrink-0" />
-                      <span className="truncate">
-                        {applicationStatus === 'accepted'
-                          ? 'Application Accepted'
-                          : applicationStatus === 'rejected'
-                            ? 'Application Rejected'
-                            : 'Applied (Pending Review)'}
-                      </span>
-                    </div>
-                    {applicationStatus === 'pending' && applicationId && (
-                      <button
-                        onClick={handleCancelApplication}
-                        disabled={cancelling}
-                        className="py-3 px-4 sm:px-5 rounded-xl border border-white/30 bg-white/10 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50"
-                      >
-                        {cancelling ? 'Withdrawing...' : 'Withdraw Application'}
-                      </button>
-                    )}
-                  </div>
-                ) : isExpired ? (
-                  <button
-                    disabled
-                    className="w-full py-3.5 px-6 rounded-xl bg-white/5 border border-white/10 text-gray-500 font-bold text-sm text-center cursor-not-allowed"
-                  >
-                    Audition Closed
-                  </button>
-                ) : (
-                  <button
-                    onClick={openApplyModal}
-                    disabled={applying}
-                    className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-950/20 transition-all active:scale-[0.98] cursor-pointer"
-                  >
-                    <Clapperboard className="w-4 h-4" />
-                    <span>{applying ? 'Submitting...' : 'Apply for Audition'}</span>
-                  </button>
-                )}
-              </div>
+        <div className="w-full max-w-2xl mx-auto px-3.5 sm:px-6 py-2 space-y-4 text-left">
+          {/* Top Header Bar: Back + Title | Share + Save */}
+          <div className="flex items-center justify-between py-0.5">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={() => onNavigate ? onNavigate('back') : (window.history.length > 1 ? window.history.back() : window.location.assign('/casting'))}
+                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
+                title="Back"
+                aria-label="Back"
+              >
+                <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5} />
+              </button>
+              <h1 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">
+                Casting Call Details
+              </h1>
             </div>
 
-            {/* Right Column: Project Info + Highlights + Roles + Requirements + Timeline */}
-            <div className="lg:col-span-7 space-y-2">
-              
-              {/* Category Badges & Title */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between gap-2 text-xs text-[#522C69] font-bold w-full">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="uppercase tracking-wider font-extrabold truncate">
-                      {call.category || 'Short Film'}
-                    </span>
-                    <span className="text-[#522C69]/40 select-none">•</span>
-                    <span className="flex items-center gap-1 truncate">
-                      <MapPin className="w-3.5 h-3.5 text-white shrink-0" />
-                      <span className="truncate">{call.location || 'Kathmandu, Nepal'}</span>
-                    </span>
-                  </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer"
+                title="Share"
+                aria-label="Share"
+              >
+                <Share2 className="w-4 h-4 text-white" />
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleSave}
+                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer"
+                title="Save"
+                aria-label="Save"
+              >
+                <Bookmark className={`w-4 h-4 ${saved ? 'fill-[#522C69] text-[#522C69]' : 'text-white'}`} />
+              </button>
+            </div>
+          </div>
 
-                  <span className="flex items-center gap-1.5 shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#522C69] animate-pulse" />
-                    <span>Active Casting</span>
+          {applyAlert.type && (
+            <InlineAlert
+              type={applyAlert.type as any}
+              message={applyAlert.message || ''}
+              detail={applyAlert.detail}
+              onDismiss={() => setApplyAlert({ type: null, message: null, detail: null })}
+            />
+          )}
+
+          {/* Casting Call Thumbnail Banner (Uncropped & Full Poster View) */}
+          <div className="relative w-full max-w-[280px] sm:max-w-[320px] mx-auto rounded-2xl overflow-hidden bg-[#0a0a0c] border border-white/10 shadow-2xl -mt-1 flex items-center justify-center">
+            {bannerImage ? (
+              <>
+                {/* Ambient blurred backdrop */}
+                <div
+                  className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110 pointer-events-none"
+                  style={{ backgroundImage: `url(${bannerImage})` }}
+                />
+                <img
+                  src={bannerImage}
+                  alt={call.title}
+                  className="relative z-10 w-full h-auto max-h-[380px] object-contain mx-auto block"
+                  onError={(e: any) => {
+                    e.currentTarget.style.display = 'none';
+                    const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-banner');
+                    if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                  }}
+                />
+              </>
+            ) : null}
+
+            <div
+              className="default-clapper-banner w-full h-40 flex flex-col items-center justify-center bg-gradient-to-b from-[#1a1f2e] to-[#0d0d12] p-4 text-center"
+              style={{ display: bannerImage ? 'none' : 'flex' }}
+            >
+              <Clapperboard className="w-10 h-10 text-white/40 mb-1.5" />
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{call.category || 'Casting Call'}</span>
+            </div>
+
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none z-10" />
+          </div>
+
+          {/* Category Tag Pill */}
+          <div>
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-white font-apple font-semibold text-xs tracking-wider">
+              <span>🎬</span>
+              <span>{call.category || 'Short Film'}</span>
+            </span>
+          </div>
+
+          {/* Title and Location/Date Meta */}
+          <div className="space-y-2.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+              {call.title}
+            </h1>
+
+            <div className="flex items-center gap-4 text-xs sm:text-sm text-neutral-400 font-medium flex-wrap">
+              <span className="flex items-center gap-1.5 text-neutral-300">
+                <MapPin className="w-4 h-4 text-white" />
+                <span>{call.location || 'Kathmandu, Nepal'}</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-neutral-300">
+                <Calendar className="w-4 h-4 text-white" />
+                <span>Posted {postedTimeAgo}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Section 1: About the Role */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center gap-3">
+              <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">About the Role</h2>
+              <div className="h-[1px] bg-white/10 flex-1" />
+            </div>
+            <p className="text-neutral-300 text-sm sm:text-base leading-relaxed whitespace-pre-line font-normal">
+              {call.description || `We are looking for talent for the role in ${call.title}.`}
+            </p>
+          </div>
+
+          {/* Section: Roles Available */}
+          {allRoles.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">Roles Available</h2>
+                  <span className="px-2 py-0.5 rounded-full bg-[#522C69]/30 border border-[#522C69]/50 text-[#ba7fd6] text-xs font-bold">
+                    {allRoles.length} {allRoles.length === 1 ? 'Role' : 'Roles'}
                   </span>
                 </div>
-
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
-                  {call.title}
-                </h2>
-
-                <p className="text-xs sm:text-sm text-gray-400 font-medium">
-                  Posted by <span className="text-white font-semibold">{call.production || call.creatorName || 'Production House'}</span> • Deadline: <span className="text-[#522C69] font-semibold">{fullDeadline}</span>
-                </p>
+                <div className="h-[1px] bg-white/10 flex-1" />
               </div>
 
-              {/* Key Info Highlights Grid (4 Modern Tiles) */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="bg-black border border-white/10 rounded-2xl p-3 space-y-0.5">
-                  <div className="flex items-center gap-1.5 text-gray-400 text-xs">
-                    <ShoppingBag className="w-3.5 h-3.5 text-white" />
-                    <span>Budget</span>
-                  </div>
-                  <p className="text-xs sm:text-sm font-bold text-white truncate">
-                    {call.budget || 'Negotiable'}
-                  </p>
-                </div>
+              <div className="grid grid-cols-1 gap-3 pt-1">
+                {allRoles.map((role: any, idx: number) => {
+                  const roleName = role.name || role.roleName || `Role ${idx + 1}`;
+                  const roleAge = role.ageRange || role.age;
+                  const rolePay = role.pay || role.compensation;
+                  const roleGender = role.gender;
+                  const roleDesc = role.description;
 
-                <div className="bg-black border border-white/10 rounded-2xl p-3 space-y-0.5">
-                  <div className="flex items-center gap-1.5 text-gray-400 text-xs">
-                    <Calendar className="w-3.5 h-3.5 text-white" />
-                    <span>Deadline</span>
-                  </div>
-                  <p className="text-xs sm:text-sm font-bold text-white truncate">
-                    {shortDeadline}
-                  </p>
-                </div>
-
-                <div className="bg-black border border-white/10 rounded-2xl p-3 space-y-0.5">
-                  <div className="flex items-center gap-1.5 text-gray-400 text-xs">
-                    <Briefcase className="w-3.5 h-3.5 text-white" />
-                    <span>Compensation</span>
-                  </div>
-                  <p className="text-xs sm:text-sm font-bold text-white truncate">
-                    {call.compensationType || 'Paid Role'}
-                  </p>
-                </div>
-
-                <div className="bg-black border border-white/10 rounded-2xl p-3 space-y-0.5">
-                  <div className="flex items-center gap-1.5 text-gray-400 text-xs">
-                    <Globe className="w-3.5 h-3.5 text-white" />
-                    <span>Language</span>
-                  </div>
-                  <p className="text-xs sm:text-sm font-bold text-white truncate">
-                    {call.language || 'Nepali'}
-                  </p>
-                </div>
-              </div>
-
-              {/* About the Project (Synopsis) */}
-              <div className="bg-black border border-white/10 rounded-2xl p-3.5 space-y-1.5">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <Film className="w-4 h-4 text-white" />
-                  <span>About the Project</span>
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-line font-normal">
-                  {call.description || 'We are looking for passionate talent to join this creative project.'}
-                </p>
-              </div>
-
-              {/* Open / Available Roles Cards List */}
-              {allRoles.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      <Users className="w-4 h-4 text-white" />
-                      <span>Available Roles ({allRoles.length})</span>
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {allRoles.map((role: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className="p-3 rounded-2xl bg-black border border-white/10 space-y-1.5 transition-all"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <h4 className="font-bold text-white text-sm sm:text-base">
-                            {role.name || `Role ${idx + 1}`}
-                          </h4>
-                          {role.ageRange && (
-                            <span className="text-[11px] font-bold text-[#522C69]">
-                              {role.ageRange}
-                            </span>
-                          )}
-                        </div>
-                        {role.description ? (
-                          <p className="text-xs text-gray-400 leading-relaxed font-normal">
-                            {role.description}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-gray-500 italic">
-                            No specific character description provided.
-                          </p>
-                        )}
-                        {!isCreator && !applied && !isExpired && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedRole(role.name);
-                              setIsApplyView(true);
-                            }}
-                            className="pt-1 text-[#522C69] text-xs font-bold flex items-center gap-1 cursor-pointer"
-                          >
-                            <span>Audition for {role.name} →</span>
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Audition Requirements & Criteria */}
-              {call.requirements && Array.isArray(call.requirements) && call.requirements.length > 0 && (
-                <div className="bg-black border border-white/10 rounded-2xl p-3.5 space-y-2">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <ListChecks className="w-4 h-4 text-white" />
-                    <span>Audition Requirements</span>
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {call.requirements.map((req: string, idx: number) => (
-                      <div
-                        key={idx}
-                        className="flex items-start gap-2 bg-[#0a0a0a] border border-white/5 p-2 rounded-xl"
-                      >
-                        <Check className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                        <span className="text-xs text-gray-300 font-medium leading-tight">
-                          {req}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* How Audition Works (3-Step Timeline) */}
-              <div className="bg-black border border-white/10 rounded-2xl p-3.5 space-y-2">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Audition Process & Timeline
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5">
-                  <div className="p-2.5 bg-[#0a0a0a] border border-white/5 rounded-xl space-y-1">
-                    <div className="w-5 h-5 rounded-full bg-[#522C69]/20 text-[#522C69] text-xs font-black flex items-center justify-center">
-                      1
-                    </div>
-                    <h5 className="text-xs font-bold text-white">Apply Online</h5>
-                    <p className="text-[11px] text-gray-400 leading-snug">
-                      Submit your NepalCasts profile and cover note.
-                    </p>
-                  </div>
-
-                  <div className="p-2.5 bg-[#0a0a0a] border border-white/5 rounded-xl space-y-1">
-                    <div className="w-5 h-5 rounded-full bg-[#522C69]/20 text-[#522C69] text-xs font-black flex items-center justify-center">
-                      2
-                    </div>
-                    <h5 className="text-xs font-bold text-white">Director Review</h5>
-                    <p className="text-[11px] text-gray-400 leading-snug">
-                      The casting team reviews applications & reels.
-                    </p>
-                  </div>
-
-                  <div className="p-2.5 bg-[#0a0a0a] border border-white/5 rounded-xl space-y-1">
-                    <div className="w-5 h-5 rounded-full bg-[#522C69]/20 text-[#522C69] text-xs font-black flex items-center justify-center">
-                      3
-                    </div>
-                    <h5 className="text-xs font-bold text-white">Callback & Role</h5>
-                    <p className="text-[11px] text-gray-400 leading-snug">
-                      Shortlisted candidates receive callback notifications.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Applications Received Section for Creator */}
-              {isCreator && (
-                <div className="bg-black border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4 text-left shadow-2xl">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                      <Inbox className="w-4 h-4 text-white" />
-                      <span>Applications Received ({apps.length})</span>
-                    </h3>
-                    <button
-                      onClick={handlePrintRoster}
-                      className="text-[#522C69] text-xs font-bold flex items-center gap-1 cursor-pointer hover:underline"
+                  return (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-all space-y-2.5 text-left"
                     >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>Print</span>
-                    </button>
-                  </div>
+                      <div className="flex items-start justify-between gap-3 flex-wrap sm:flex-nowrap">
+                        <div className="space-y-1.5 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-base font-bold text-white tracking-tight">
+                              {roleName}
+                            </h3>
+                            {rolePay && (
+                              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                {rolePay}
+                              </span>
+                            )}
+                          </div>
 
-                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-                    {[
-                      { 
-                        id: 'all', 
-                        label: `All (${apps.filter(a => {
-                          const st = (a.status || 'pending').toLowerCase();
-                          return st !== 'shortlisted' && st !== 'accepted';
-                        }).length})` 
-                      },
-                      { 
-                        id: 'shortlisted', 
-                        label: `Shortlisted (${apps.filter(a => (a.status || '').toLowerCase() === 'shortlisted').length})` 
-                      },
-                      { 
-                        id: 'accepted', 
-                        label: `Accepted (${apps.filter(a => (a.status || '').toLowerCase() === 'accepted').length})` 
-                      },
-                      { 
-                        id: 'rejected', 
-                        label: `Rejected (${apps.filter(a => (a.status || '').toLowerCase() === 'rejected').length})` 
-                      },
-                    ].map((tab) => (
+                          {/* Role Tags */}
+                          <div className="flex items-center gap-2 flex-wrap text-xs text-neutral-400">
+                            {roleAge && (
+                              <span className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-md text-neutral-300 text-xs">
+                                <Calendar className="w-3.5 h-3.5 text-white" />
+                                <span>{roleAge}</span>
+                              </span>
+                            )}
+                            {roleGender && (
+                              <span className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-md text-neutral-300 text-xs">
+                                <User className="w-3.5 h-3.5 text-white" />
+                                <span>{roleGender}</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {roleDesc && (
+                        <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed font-normal bg-black/25 p-3 rounded-xl border border-white/5">
+                          {roleDesc}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Section 2: Role Details */}
+          <div className="space-y-3.5 pt-2">
+            <div className="flex items-center gap-3">
+              <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">Role Details</h2>
+              <div className="h-[1px] bg-white/10 flex-1" />
+            </div>
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between text-sm sm:text-base">
+                <span className="flex items-center gap-2.5 text-neutral-400">
+                  <User className="w-4 h-4 text-white" />
+                  <span>Gender</span>
+                </span>
+                <span className="font-semibold text-white">{displayGender}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm sm:text-base">
+                <span className="flex items-center gap-2.5 text-neutral-400">
+                  <Calendar className="w-4 h-4 text-white" />
+                  <span>Age</span>
+                </span>
+                <span className="font-semibold text-white">{displayAge}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm sm:text-base">
+                <span className="flex items-center gap-2.5 text-neutral-400">
+                  <MapPin className="w-4 h-4 text-white" />
+                  <span>Location</span>
+                </span>
+                <span className="font-semibold text-white">{displayLocation}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm sm:text-base">
+                <span className="flex items-center gap-2.5 text-neutral-400">
+                  <Star className="w-4 h-4 text-white" />
+                  <span>Experience</span>
+                </span>
+                <span className="font-semibold text-white">{displayExperience}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm sm:text-base">
+                <span className="flex items-center gap-2.5 text-neutral-400">
+                  <Coins className="w-4 h-4 text-white" />
+                  <span>Compensation</span>
+                </span>
+                <span className="font-semibold text-white">{displayCompensation}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Requirements */}
+          {requirementsList.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center gap-3">
+                <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">Requirements</h2>
+                <div className="h-[1px] bg-white/10 flex-1" />
+              </div>
+              <ul className="space-y-2 text-sm sm:text-base text-neutral-300 pt-1">
+                {requirementsList.map((req: string, idx: number) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/80 shrink-0 mt-2" />
+                    <span>{req}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Section 4: Audition */}
+          <div className="space-y-3.5 pt-2">
+            <div className="flex items-center gap-3">
+              <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">Audition</h2>
+              <div className="h-[1px] bg-white/10 flex-1" />
+            </div>
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between text-sm sm:text-base">
+                <span className="flex items-center gap-2.5 text-neutral-400">
+                  <Calendar className="w-4 h-4 text-white" />
+                  <span>Audition</span>
+                </span>
+                <span className="font-semibold text-white">{fullDeadline}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm sm:text-base">
+                <span className="flex items-center gap-2.5 text-neutral-400">
+                  <MapPin className="w-4 h-4 text-white" />
+                  <span>Location</span>
+                </span>
+                <span className="font-semibold text-white">{call.auditionLocation || call.location || 'Kathmandu'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 5: Posted by */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center gap-3">
+              <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">Posted by</h2>
+              <div className="h-[1px] bg-white/10 flex-1" />
+            </div>
+            <div className="flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <Avatar
+                  userId={call.creatorId || call.createdBy || call.userId}
+                  src={directorProfile?.photoURL || directorProfile?.image || call.creatorPhoto}
+                  name={call.production || directorProfile?.displayName || directorProfile?.name || call.creatorName || 'Production'}
+                  size="md"
+                />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-bold text-white text-base truncate">
+                      {call.production || directorProfile?.displayName || directorProfile?.name || call.creatorName || 'Production House'}
+                    </h4>
+                    <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0" style={{ width: '15px', height: '15px' }} title="Verified Production">
+                      <Check className="w-2.5 h-2.5 text-[#060709]" strokeWidth={3.5} />
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-400 truncate">
+                    {directorProfile?.role || 'Film Production House'}
+                  </p>
+                </div>
+              </div>
+
+              {(call.creatorId || call.createdBy || call.userId) && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate('profile', call.creatorId || call.createdBy || call.userId)}
+                  className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-white transition-all cursor-pointer whitespace-nowrap"
+                >
+                  View Profile
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Applications Received Section for Creator */}
+          {isCreator && (
+            <div className="bg-black border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4 text-left shadow-2xl mt-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                  <Inbox className="w-4 h-4 text-white" />
+                  <span>Applications Received ({apps.length})</span>
+                </h3>
+                <button
+                  onClick={handlePrintRoster}
+                  className="text-[#522C69] text-xs font-bold flex items-center gap-1 cursor-pointer hover:underline"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                {[
+                  {
+                    id: 'all',
+                    label: `All (${apps.filter(a => {
+                      const st = (a.status || 'pending').toLowerCase();
+                      return st !== 'shortlisted' && st !== 'accepted';
+                    }).length})`
+                  },
+                  {
+                    id: 'shortlisted',
+                    label: `Shortlisted (${apps.filter(a => (a.status || '').toLowerCase() === 'shortlisted').length})`
+                  },
+                  {
+                    id: 'accepted',
+                    label: `Accepted (${apps.filter(a => (a.status || '').toLowerCase() === 'accepted').length})`
+                  },
+                  {
+                    id: 'rejected',
+                    label: `Rejected (${apps.filter(a => (a.status || '').toLowerCase() === 'rejected').length})`
+                  },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setPipelineFilter(tab.id)}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${pipelineFilter === tab.id
+                      ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm shadow-[#522C69]/20'
+                      : 'bg-[#18181c] text-gray-400 border border-white/5'
+                      }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Multi-Role Filter if 2 or more roles */}
+              {allRoles.length > 1 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 border-t border-white/5 pt-2">
+                  <span className="text-[11px] font-semibold text-neutral-400 whitespace-nowrap pr-1">Filter Role:</span>
+                  <button
+                    type="button"
+                    onClick={() => setRoleFilter('all')}
+                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all ${roleFilter === 'all'
+                      ? 'bg-white text-black font-bold'
+                      : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'
+                      }`}
+                  >
+                    All Roles ({apps.length})
+                  </button>
+                  {allRoles.map((r: any, i: number) => {
+                    const count = apps.filter((a) => (a.roleName || '').toLowerCase() === r.name.toLowerCase()).length;
+                    return (
                       <button
-                        key={tab.id}
-                        onClick={() => setPipelineFilter(tab.id)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${pipelineFilter === tab.id
-                            ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm shadow-[#522C69]/20'
-                            : 'bg-[#18181c] text-gray-400 border border-white/5'
+                        key={i}
+                        type="button"
+                        onClick={() => setRoleFilter(r.name)}
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all whitespace-nowrap ${roleFilter.toLowerCase() === r.name.toLowerCase()
+                          ? 'bg-[#522C69] text-white font-bold border border-[#ba7fd6]'
+                          : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'
                           }`}
                       >
-                        {tab.label}
+                        {r.name} ({count})
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
+                </div>
+              )}
 
-                  {loadingApps ? (
-                    <div className="py-8 text-center text-xs text-gray-500">Loading applicants...</div>
-                  ) : apps.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
-                      No applications received yet.
-                    </div>
-                  ) : apps.filter((a) => {
+              {loadingApps ? (
+                <div className="py-8 text-center text-xs text-gray-500">Loading applicants...</div>
+              ) : apps.length === 0 ? (
+                <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
+                  No applications received yet.
+                </div>
+              ) : apps
+                .filter((a) => {
+                  const st = (a.status || 'pending').toLowerCase();
+                  if (pipelineFilter === 'all') {
+                    return st !== 'shortlisted' && st !== 'accepted';
+                  }
+                  return st === pipelineFilter;
+                })
+                .filter((a) => {
+                  if (roleFilter === 'all') return true;
+                  return (a.roleName || '').toLowerCase() === roleFilter.toLowerCase();
+                }).length === 0 ? (
+                <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
+                  No applicants in this category.
+                </div>
+              ) : (
+                <div className="divide-y divide-white/5 space-y-3">
+                  {apps
+                    .filter((a) => {
                       const st = (a.status || 'pending').toLowerCase();
                       if (pipelineFilter === 'all') {
                         return st !== 'shortlisted' && st !== 'accepted';
                       }
                       return st === pipelineFilter;
-                    }).length === 0 ? (
-                    <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
-                      No applicants in this category.
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-white/5 space-y-3">
-                      {apps
-                        .filter((a) => {
-                          const st = (a.status || 'pending').toLowerCase();
-                          if (pipelineFilter === 'all') {
-                            return st !== 'shortlisted' && st !== 'accepted';
-                          }
-                          return st === pipelineFilter;
-                        })
-                        .map((app) => (
-                          <div key={app.id} className="pt-3 space-y-2 text-xs">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2.5">
-                                <Avatar userId={app.userId} src={app.userPhoto} name={app.userName} size="sm" />
-                                <div>
-                                  <span className="font-bold text-white block">{app.userName}</span>
-                                  <span className="text-[11px] text-[#522C69]">{app.roleName || 'General Role'}</span>
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => onNavigate('profile', app.userId)}
-                                className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 cursor-pointer"
-                              >
-                                Profile
-                              </button>
-                            </div>
-
-                            {/* Applicant Contact Details */}
-                            {(app.userEmail || app.contactEmail || app.userPhone || app.contactPhone || app.phone) && (
-                              <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[10px]">
-                                {(app.contactEmail || app.userEmail) && (
-                                  <a
-                                    href={`mailto:${app.contactEmail || app.userEmail}`}
-                                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
-                                    title="Click to email applicant"
-                                  >
-                                    <Mail className="w-3 h-3 text-white" />
-                                    <span>{app.contactEmail || app.userEmail}</span>
-                                  </a>
-                                )}
-                                {(app.contactPhone || app.userPhone || app.phone) && (
-                                  <a
-                                    href={`tel:${app.contactPhone || app.userPhone || app.phone}`}
-                                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
-                                    title="Click to call applicant"
-                                  >
-                                    <Phone className="w-3 h-3 text-emerald-400" />
-                                    <span>{app.contactPhone || app.userPhone || app.phone}</span>
-                                  </a>
-                                )}
-                              </div>
-                            )}
-
-                            {app.coverNote && (
-                              <p className="text-gray-300 italic bg-white/[0.04] p-2.5 rounded-xl text-[11px] leading-relaxed border border-white/5">
-                                "{app.coverNote}"
-                              </p>
-                            )}
-
-                            {/* Portfolio & Audition Media Attachments */}
-                            {(app.fileUrl || app.attachmentUrl || app.fileName || app.selfTapeUrl || app.portfolioUrl) && (() => {
-                              const directFileUrl = app.fileUrl || app.attachmentUrl || (app.selfTapeUrl?.match(/\.(jpeg|jpg|png|webp|gif|pdf|doc|docx|mp4|mov|mkv)$/i) || app.selfTapeUrl?.includes('cloudinary') || app.selfTapeUrl?.includes('firebasestorage') ? app.selfTapeUrl : null);
-                              const reelUrl = (app.selfTapeUrl || app.portfolioUrl) && app.selfTapeUrl !== directFileUrl && app.portfolioUrl !== directFileUrl ? (app.selfTapeUrl || app.portfolioUrl) : null;
-
-                              return (
-                                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                                  {/* PDF Attachment / Document */}
-                                  {directFileUrl ? (
-                                    <div className="inline-flex items-center gap-1">
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setPreviewPdfUrl(directFileUrl);
-                                          setPreviewPdfName(app.fileName || `${app.userName || 'Applicant'}_Portfolio.pdf`);
-                                        }}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#522C69]/15 text-[10px] text-[#522C69] font-bold active:scale-95 transition-all cursor-pointer shadow-sm"
-                                        title="Click to view PDF portfolio"
-                                      >
-                                        <FileText className="w-3.5 h-3.5 text-white" />
-                                        <span className="truncate max-w-[130px]">{app.fileName || 'Portfolio.pdf'}</span>
-                                        <Eye className="w-3 h-3 text-white" />
-                                      </button>
-                                      <a
-                                        href={directFileUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="p-1 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-gray-400 hover:text-white transition-colors"
-                                        title="Open in new tab"
-                                      >
-                                        <ExternalLink className="w-3 h-3" />
-                                      </a>
-                                    </div>
-                                  ) : app.fileName ? (
-                                    <span
-                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 font-medium"
-                                      title="File name submitted by applicant"
-                                    >
-                                      <FileText className="w-3 h-3 text-white" />
-                                      <span className="truncate max-w-[150px]">{app.fileName}</span>
-                                    </span>
-                                  ) : null}
-
-                                  {/* Video Reel / Self Tape Link */}
-                                  {reelUrl && (
-                                    <a
-                                      href={reelUrl.startsWith('http') ? reelUrl : `https://${reelUrl}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-200 font-semibold active:scale-95 transition-all cursor-pointer"
-                                    >
-                                      <Video className="w-3 h-3 text-white" />
-                                      <span className="truncate max-w-[150px]">Reel / Link</span>
-                                      <ExternalLink className="w-3 h-3 text-gray-400" />
-                                    </a>
-                                  )}
-                                </div>
-                              );
-                            })()}
-
-                            <div className="flex items-center justify-between pt-1">
-                              <span className="text-[10px] text-gray-500">{app.appliedAtFormatted}</span>
-                              <div className="flex items-center gap-1.5">
-                                {[
-                                  { id: 'shortlisted', label: 'Shortlist' },
-                                  { id: 'accepted', label: 'Accept' },
-                                  { id: 'rejected', label: 'Reject' },
-                                ].map((st) => (
-                                  <button
-                                    key={st.id}
-                                    onClick={() => handleUpdateAppStatus(app.id, st.id)}
-                                    className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase transition-all cursor-pointer ${app.status === st.id
-                                        ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border border-[#522C69]'
-                                        : 'bg-white/5 text-gray-400 border border-white/10'
-                                      }`}
-                                  >
-                                    {st.label}
-                                  </button>
-                                ))}
+                    })
+                    .filter((a) => {
+                      if (roleFilter === 'all') return true;
+                      return (a.roleName || '').toLowerCase() === roleFilter.toLowerCase();
+                    })
+                    .map((app) => (
+                      <div key={app.id} className="pt-3 space-y-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <Avatar userId={app.userId} src={app.userPhoto} name={app.userName} size="sm" />
+                            <div>
+                              <span className="font-bold text-white block">{app.userName}</span>
+                              <div className="flex items-center gap-1.5 pt-0.5">
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#522C69]/30 border border-[#522C69]/50 text-[#ba7fd6] font-semibold">
+                                  {app.roleName || 'General Role'}
+                                </span>
                               </div>
                             </div>
                           </div>
-                        ))}
-                    </div>
-                  )}
+                          <button
+                            onClick={() => onNavigate('profile', app.userId)}
+                            className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 cursor-pointer"
+                          >
+                            Profile
+                          </button>
+                        </div>
+
+                        {/* Applicant Contact Details */}
+                        {(app.userEmail || app.contactEmail || app.userPhone || app.contactPhone || app.phone) && (
+                          <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[10px]">
+                            {(app.contactEmail || app.userEmail) && (
+                              <a
+                                href={`mailto:${app.contactEmail || app.userEmail}`}
+                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
+                                title="Click to email applicant"
+                              >
+                                <Mail className="w-3 h-3 text-white" />
+                                <span>{app.contactEmail || app.userEmail}</span>
+                              </a>
+                            )}
+                            {(app.contactPhone || app.userPhone || app.phone) && (
+                              <a
+                                href={`tel:${app.contactPhone || app.userPhone || app.phone}`}
+                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
+                                title="Click to call applicant"
+                              >
+                                <Phone className="w-3 h-3 text-emerald-400" />
+                                <span>{app.contactPhone || app.userPhone || app.phone}</span>
+                              </a>
+                            )}
+                          </div>
+                        )}
+
+                        {app.coverNote && (
+                          <p className="text-gray-300 italic bg-white/[0.04] p-2.5 rounded-xl text-[11px] leading-relaxed border border-white/5">
+                            "{app.coverNote}"
+                          </p>
+                        )}
+
+                        {/* Applicant Media & PDF Portfolio Attachments */}
+                        {(() => {
+                          const directFileUrl = app.portfolioUrl || app.fileUrl || app.resumeUrl || app.attachmentUrl || null;
+                          const reelUrl = app.videoReel || app.reelUrl || app.videoUrl || app.showreel || null;
+                          const isPdf = Boolean(directFileUrl && (directFileUrl.toLowerCase().includes('.pdf') || directFileUrl.includes('/pdf/') || app.fileType?.includes('pdf')));
+
+                          if (!directFileUrl && !reelUrl) return null;
+
+                          return (
+                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                              {directFileUrl ? (
+                                <div className="inline-flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPreviewPdfUrl(directFileUrl);
+                                      setPreviewPdfName(app.fileName || `${app.userName || 'Applicant'}_Portfolio.pdf`);
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#522C69]/15 text-[10px] text-[#522C69] font-bold active:scale-95 transition-all cursor-pointer shadow-sm"
+                                    title="Click to view PDF portfolio"
+                                  >
+                                    <FileText className="w-3.5 h-3.5 text-white" />
+                                    <span className="truncate max-w-[130px]">{app.fileName || 'Portfolio.pdf'}</span>
+                                    <Eye className="w-3 h-3 text-white" />
+                                  </button>
+                                  <a
+                                    href={directFileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-gray-400 hover:text-white transition-colors"
+                                    title="Open in new tab"
+                                  >
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                </div>
+                              ) : app.fileName ? (
+                                <span
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 font-medium"
+                                  title="File name submitted by applicant"
+                                >
+                                  <FileText className="w-3 h-3 text-white" />
+                                  <span className="truncate max-w-[150px]">{app.fileName}</span>
+                                </span>
+                              ) : null}
+
+                              {/* Video Reel / Self Tape Link */}
+                              {reelUrl && (
+                                <a
+                                  href={reelUrl.startsWith('http') ? reelUrl : `https://${reelUrl}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-200 font-semibold active:scale-95 transition-all cursor-pointer"
+                                >
+                                  <Video className="w-3 h-3 text-white" />
+                                  <span className="truncate max-w-[150px]">Reel / Link</span>
+                                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-[10px] text-gray-500">{app.appliedAtFormatted}</span>
+                          <div className="flex items-center gap-1.5">
+                            {[
+                              { id: 'shortlisted', label: 'Shortlist' },
+                              { id: 'accepted', label: 'Accept' },
+                              { id: 'rejected', label: 'Reject' },
+                            ].map((st) => (
+                              <button
+                                key={st.id}
+                                onClick={() => handleUpdateAppStatus(app.id, st.id)}
+                                className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase transition-all cursor-pointer ${app.status === st.id
+                                  ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border border-[#522C69]'
+                                  : 'bg-white/5 text-gray-400 border border-white/10'
+                                  }`}
+                              >
+                                {st.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               )}
-
             </div>
+          )}
+
+          {/* Primary Call to Action Button */}
+          <div className="pt-3 pb-8">
+            {isCreator ? (
+              <div className="space-y-2">
+                <div className="w-full py-3.5 px-4 rounded-2xl bg-white/5 border border-white/10 text-center text-xs font-bold text-gray-300">
+                  You created this casting call ({apps.length} {apps.length === 1 ? 'applicant' : 'applicants'})
+                </div>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="w-full py-2.5 px-3 rounded-xl bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-gray-400 hover:text-red-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                  title="Delete Casting Call"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>{deleting ? 'Deleting...' : 'Delete Casting Call'}</span>
+                </button>
+              </div>
+            ) : applied ? (
+              <div className="flex items-center gap-2.5 sm:gap-3 w-full">
+                <div
+                  className={`flex-1 py-4 px-4 rounded-2xl text-center font-bold text-sm flex items-center justify-center gap-2 border shadow-sm ${applicationStatus === 'accepted'
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    : applicationStatus === 'rejected'
+                      ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                      : 'bg-white text-black border-white'
+                    }`}
+                >
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span className="truncate">
+                    {applicationStatus === 'accepted'
+                      ? 'Application Accepted'
+                      : applicationStatus === 'rejected'
+                        ? 'Application Rejected'
+                        : 'Applied (Pending Review)'}
+                  </span>
+                </div>
+                {applicationStatus === 'pending' && applicationId && (
+                  <button
+                    onClick={handleCancelApplication}
+                    disabled={cancelling}
+                    className="py-4 px-5 rounded-2xl border border-white/30 bg-white/10 text-white text-sm font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50"
+                  >
+                    {cancelling ? 'Withdrawing...' : 'Withdraw Application'}
+                  </button>
+                )}
+              </div>
+            ) : isExpired ? (
+              <button
+                disabled
+                className="w-full py-4 px-6 rounded-2xl bg-white/5 border border-white/10 text-gray-500 font-bold text-base text-center cursor-not-allowed"
+              >
+                Audition Closed
+              </button>
+            ) : (
+              <button
+                onClick={() => openApplyModal()}
+                disabled={applying}
+                className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold text-base sm:text-lg flex items-center justify-center gap-2 shadow-xl transition-all active:scale-[0.98] cursor-pointer"
+              >
+                <span>{applying ? 'Submitting...' : 'Apply for Casting'}</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -1569,7 +1823,6 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
             </div>
           </div>
         )}
-      </div>
       </div>
     </Desktop3ColumnLayout>
   );

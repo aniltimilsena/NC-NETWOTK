@@ -214,10 +214,11 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
     };
     const filteredTalents = talents
         .filter(t => {
-            if (t.deactivated === true || !t.name || t.name.trim() === '')
+            const talentName = t.name || t.displayName || t.fullName || t.username;
+            if (t.deactivated === true || !talentName || talentName.trim() === '')
                 return false;
             const matchesSearch = !searchQuery ||
-                t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                talentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 t.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 t.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 t.location?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -231,6 +232,20 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                 return false;
             return true;
         })
+        .reduce((acc, current) => {
+            const currentName = (current.name || current.displayName || current.fullName || '').trim().toLowerCase();
+            const currentEmail = (current.email || '').trim().toLowerCase();
+            const isDuplicate = acc.some(item => {
+                if (item.id === current.id || item.uid === current.uid) return true;
+                if (currentEmail && item.email && item.email.trim().toLowerCase() === currentEmail) return true;
+                if (currentName && currentName !== 'talent user' && item.name && item.name.trim().toLowerCase() === currentName) return true;
+                return false;
+            });
+            if (!isDuplicate) {
+                acc.push(current);
+            }
+            return acc;
+        }, [])
         .sort((a, b) => {
             if (activeSort === 'followers')
                 return (b.followers || 0) - (a.followers || 0);

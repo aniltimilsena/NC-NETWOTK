@@ -26,6 +26,7 @@ import {
   Image as ImageIcon,
   ChevronLeft,
   Share2,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface ProfilePageProps {
@@ -278,12 +279,12 @@ export default function ProfilePage({
         setProfile((prev: any) =>
           prev
             ? {
-                ...prev,
-                introVideo: url,
-                introVideoUrl: url,
-                showreel: url,
-                showreelUrl: url,
-              }
+              ...prev,
+              introVideo: url,
+              introVideoUrl: url,
+              showreel: url,
+              showreelUrl: url,
+            }
             : prev
         );
         await updateProfileData(uidToUse, {
@@ -309,12 +310,12 @@ export default function ProfilePage({
       setProfile((prev: any) =>
         prev
           ? {
-              ...prev,
-              introVideo: null,
-              introVideoUrl: null,
-              showreel: null,
-              showreelUrl: null,
-            }
+            ...prev,
+            introVideo: null,
+            introVideoUrl: null,
+            showreel: null,
+            showreelUrl: null,
+          }
           : prev
       );
       await updateProfileData(uidToUse, {
@@ -455,7 +456,7 @@ export default function ProfilePage({
   }
 
   const bio = profile.bio || '';
-  
+
   const formatPhysicalSpec = (val: any, unit: string) => {
     if (val === null || val === undefined) return null;
     const str = String(val).trim();
@@ -475,8 +476,8 @@ export default function ProfilePage({
   const skillsList: string[] = Array.isArray(rawSkills)
     ? rawSkills.map((s) => (typeof s === 'string' ? s : s?.name || '')).filter(Boolean)
     : typeof rawSkills === 'string' && rawSkills.trim() !== ''
-    ? rawSkills.split(',').map((s: string) => s.trim()).filter(Boolean)
-    : [];
+      ? rawSkills.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : [];
 
   const coverUrl =
     profile?.coverImage ||
@@ -623,31 +624,42 @@ export default function ProfilePage({
           </button>
         </div>
       ) : effectiveIsOwn ? (
-        <div className="flex items-center gap-2.5 sm:gap-3 w-full">
-          <button
-            onClick={() => setIsPreviewMode(true)}
-            className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
-          >
-            <Eye className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
-            <span>Preview Mode</span>
-          </button>
-          <button
-            onClick={() => onNavigate('/settings/profile')}
-            className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
-          >
-            <Pencil className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-            <span>Edit Profile</span>
-          </button>
+        <div className="space-y-2.5 w-full">
+          <div className="flex items-center gap-2.5 sm:gap-3 w-full">
+            <button
+              onClick={() => setIsPreviewMode(true)}
+              className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+            >
+              <Eye className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
+              <span>Preview Mode</span>
+            </button>
+            <button
+              onClick={() => onNavigate('/settings/profile')}
+              className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+            >
+              <Pencil className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              <span>Edit Profile</span>
+            </button>
+          </div>
+          {(isAdmin || (profile as any)?.isAdmin === true || (profile as any)?.role?.toLowerCase() === 'admin') && (
+            <button
+              type="button"
+              onClick={() => onNavigate('/admin')}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-red-600/25 via-red-500/15 to-red-600/20 hover:from-red-600/35 hover:to-red-500/25 border border-red-500/35 text-red-200 hover:text-white font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+            >
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 shrink-0" />
+              <span>Admin Panel</span>
+            </button>
+          )}
         </div>
       ) : (
         <div className="flex items-center gap-2.5 sm:gap-3 w-full">
           <button
             onClick={handleFollowToggle}
-            className={`flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl font-extrabold text-sm sm:text-base md:text-lg transition-all active:scale-98 cursor-pointer flex items-center justify-center shadow-md ${
-              isFollowing
-                ? 'bg-[#222] hover:bg-[#2a2a2a] text-white border border-white/15'
-                : 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm shadow-lg'
-            }`}
+            className={`flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl font-extrabold text-sm sm:text-base md:text-lg transition-all active:scale-98 cursor-pointer flex items-center justify-center shadow-md ${isFollowing
+              ? 'bg-[#222] hover:bg-[#2a2a2a] text-white border border-white/15'
+              : 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm shadow-lg'
+              }`}
           >
             <span>{isFollowing ? 'Following' : 'Follow'}</span>
           </button>
@@ -888,11 +900,10 @@ export default function ProfilePage({
                     key={skill}
                     type="button"
                     onClick={() => toggleSkillTag(skill)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold shadow-md'
-                        : 'bg-[#121212] text-gray-300 border border-white/10 hover:border-white/20'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${isSelected
+                      ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold shadow-md'
+                      : 'bg-[#121212] text-gray-300 border border-white/10 hover:border-white/20'
+                      }`}
                   >
                     {isSelected ? `✓ ${skill}` : `+ ${skill}`}
                   </button>

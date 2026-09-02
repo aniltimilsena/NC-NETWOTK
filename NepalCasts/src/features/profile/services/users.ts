@@ -13,7 +13,7 @@ import { formatRole } from "../../../utils";
 
 const LOCAL_STORAGE_CACHE_KEY = "nc_cached_talents_real";
 
-const getSavedRealTalents = (): Talent[] => {
+export const getSavedRealTalents = (): Talent[] => {
     try {
         const stored = localStorage.getItem(LOCAL_STORAGE_CACHE_KEY);
         if (stored) {
@@ -39,7 +39,7 @@ const getSavedRealTalents = (): Talent[] => {
     return [];
 };
 
-const saveRealTalents = (talents: Talent[]) => {
+export const saveRealTalents = (talents: Talent[]) => {
     try {
         if (Array.isArray(talents) && talents.length > 0) {
             localStorage.setItem(LOCAL_STORAGE_CACHE_KEY, JSON.stringify(talents));
@@ -98,28 +98,40 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
                     ...docSnap.data(),
                 })) as any[];
 
-                // Sort so complete records with names come first
+                // Sort so most complete profiles come first (has photo, has cover, has bio, has experience)
                 rawMapped.sort((a, b) => {
-                    const aHasName = Boolean(a.name && a.name.trim() !== '' && a.name !== 'Talent User' && a.name !== 'Discovery Talent');
-                    const bHasName = Boolean(b.name && b.name.trim() !== '' && b.name !== 'Talent User' && b.name !== 'Discovery Talent');
-                    if (aHasName && !bHasName) return -1;
-                    if (!aHasName && bHasName) return 1;
-                    return 0;
+                    const aScore = (a.image || a.photoURL ? 10 : 0) + (a.coverImage ? 5 : 0) + (a.bio ? 3 : 0) + (Array.isArray(a.experience) ? a.experience.length : 0);
+                    const bScore = (b.image || b.photoURL ? 10 : 0) + (b.coverImage ? 5 : 0) + (b.bio ? 3 : 0) + (Array.isArray(b.experience) ? b.experience.length : 0);
+                    return bScore - aScore;
                 });
 
-                const seen = new Set<string>();
+                const seenUids = new Set<string>();
+                const seenEmails = new Set<string>();
+                const seenNames = new Set<string>();
                 const unique: Talent[] = [];
 
                 for (const t of rawMapped) {
                     const uid = (t.uid || t.id || '') as string;
-                    const name = (t.name || t.displayName || '').trim();
-                    if (!uid || seen.has(uid)) {
+                    const name = (t.name || t.displayName || t.fullName || '').trim();
+                    const email = (t.email || '').toLowerCase().trim();
+                    const normName = name.toLowerCase();
+
+                    if (!uid || seenUids.has(uid)) {
                         continue;
                     }
+                    if (email && seenEmails.has(email)) {
+                        continue;
+                    }
+                    if (normName && normName !== 'talent user' && normName !== 'discovery talent' && seenNames.has(normName)) {
+                        continue;
+                    }
+
                     if (name || t.role || t.category || t.bio) {
                         t.role = formatRole((t.role || t.category) as string);
                         t.category = formatRole((t.category || t.role) as string);
-                        seen.add(uid);
+                        seenUids.add(uid);
+                        if (email) seenEmails.add(email);
+                        if (normName) seenNames.add(normName);
                         unique.push(t);
                     }
                 }
@@ -150,7 +162,38 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
                 return unique;
             };
 
-            let lastDocs: any[] = [];
+            let profilesDocs: any[] = [];
+            let usersDocs: any[] = [];
+
+            const mergeAndEmit = () => {
+                const combinedMap = new Map<string, any>();
+                for (const d of usersDocs) {
+                    const data = typeof d.data === 'function' ? d.data() : d;
+                    const id = d.id || data.uid || data.id;
+                    if (id) {
+                        combinedMap.set(id, { id, uid: id, ...data });
+                    }
+                }
+                for (const d of profilesDocs) {
+                    const data = typeof d.data === 'function' ? d.data() : d;
+                    const id = d.id || data.uid || data.id;
+                    if (id) {
+                        const existing = combinedMap.get(id) || {};
+                        combinedMap.set(id, { ...existing, ...data, id, uid: id });
+                    }
+                }
+                const mergedDocs = Array.from(combinedMap.values()).map(item => ({
+                    id: item.id,
+                    data: () => item
+                }));
+
+                const talents = processSnapshotDocs(mergedDocs);
+                if (talents.length > 0) {
+                    saveRealTalents(talents);
+                    pooledCb(talents, null);
+                }
+            };
+
             const followsQuery = query(collection(db, COLLECTIONS.FOLLOWS));
             const unsubFollows = onSnapshot(followsQuery, (followsSnap) => {
                 const fMap: Record<string, number> = {};
@@ -166,43 +209,29 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
                 });
                 followsCountsMap = fMap;
                 followingCountsMap = ingMap;
-                if (lastDocs.length > 0) {
-                    const updatedTalents = processSnapshotDocs(lastDocs);
-                    saveRealTalents(updatedTalents);
-                    pooledCb(updatedTalents, null);
-                }
+                mergeAndEmit();
             }, () => {});
 
-            const q = query(collection(db, COLLECTIONS.PROFILES));
-            const unsub = onSnapshot(q, (snapshot) => {
-                lastDocs = snapshot.docs;
-                const talents = processSnapshotDocs(snapshot.docs);
-                if (talents.length > 0) {
-                    saveRealTalents(talents);
-                    pooledCb(talents, null);
-                } else {
-                    fetchFromApiFallback().then((success) => {
-                        if (!success) pooledCb(saved, null);
-                    });
-                }
+            const qProfiles = query(collection(db, COLLECTIONS.PROFILES));
+            const unsubProfiles = onSnapshot(qProfiles, (snapshot) => {
+                profilesDocs = snapshot.docs;
+                mergeAndEmit();
             }, (_error) => {
-                getDocs(q).then((snapshot) => {
-                    lastDocs = snapshot.docs;
-                    const talents = processSnapshotDocs(snapshot.docs);
-                    if (talents.length > 0) {
-                        saveRealTalents(talents);
-                        pooledCb(talents, null);
-                    } else {
-                        fetchFromApiFallback().then((success) => {
-                            if (!success) pooledCb(saved, null);
-                        });
-                    }
-                }).catch(async (fetchError) => {
-                    const success = await fetchFromApiFallback();
-                    if (!success) {
-                        pooledCb(saved, fetchError);
-                    }
-                });
+                getDocs(qProfiles).then((snapshot) => {
+                    profilesDocs = snapshot.docs;
+                    mergeAndEmit();
+                }).catch(() => {});
+            });
+
+            const qUsers = query(collection(db, COLLECTIONS.USERS));
+            const unsubUsers = onSnapshot(qUsers, (snapshot) => {
+                usersDocs = snapshot.docs;
+                mergeAndEmit();
+            }, (_error) => {
+                getDocs(qUsers).then((snapshot) => {
+                    usersDocs = snapshot.docs;
+                    mergeAndEmit();
+                }).catch(() => {});
             });
 
         const handleProfileUpdateEvent = (e: Event) => {
@@ -237,7 +266,8 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
                 window.removeEventListener('nc-profile-updated', handleProfileUpdateEvent);
             }
             unsubFollows();
-            unsub();
+            unsubProfiles();
+            unsubUsers();
         };
     }, (data) => callback(data));
 };
@@ -252,8 +282,11 @@ export const notifyProfileUpdated = (uid: string, imageUrl?: string, updatedData
     }
     
     const saved = getSavedRealTalents();
-    if (saved.length > 0) {
-        const updated = saved.map(t => {
+    const exists = saved.some(t => ((t.uid || t.id) === uid));
+    
+    let updated: Talent[];
+    if (exists) {
+        updated = saved.map(t => {
             const tUid = (t.uid || t.id) as string;
             if (tUid === uid) {
                 return {
@@ -264,11 +297,36 @@ export const notifyProfileUpdated = (uid: string, imageUrl?: string, updatedData
             }
             return t;
         });
-        saveRealTalents(updated);
-        cacheManager.reemit("talents_list_all", updated);
     } else {
-        cacheManager.invalidateCache("talents_list_all");
+        const newTalent: Talent = {
+            id: uid,
+            uid: uid,
+            name: updatedData?.name || updatedData?.displayName || 'User',
+            displayName: updatedData?.displayName || updatedData?.name,
+            role: formatRole((updatedData?.role || updatedData?.category || 'Actor') as string),
+            category: formatRole((updatedData?.category || updatedData?.role || 'Actor') as string),
+            image: imageUrl || updatedData?.photoURL || '',
+            photoURL: imageUrl || updatedData?.photoURL || '',
+            profileImage: imageUrl || updatedData?.photoURL || '',
+            location: updatedData?.location || 'Kathmandu',
+            bio: updatedData?.bio || '',
+            skills: Array.isArray(updatedData?.skills) ? updatedData.skills : ['Actor'],
+            experience: Array.isArray(updatedData?.experience) ? updatedData.experience : [],
+            followers: typeof updatedData?.followers === 'number' ? updatedData.followers : 0,
+            following: typeof updatedData?.following === 'number' ? updatedData.following : 0,
+            rating: typeof updatedData?.rating === 'number' ? updatedData.rating : 5,
+            reviews: typeof updatedData?.reviews === 'number' ? updatedData.reviews : 0,
+            status: 'active',
+            deactivated: false,
+            onboarded: true,
+            createdAt: updatedData?.createdAt || Date.now(),
+            joinedAt: updatedData?.joinedAt || Date.now(),
+            ...(updatedData || {})
+        };
+        updated = [newTalent, ...saved];
     }
+    saveRealTalents(updated);
+    cacheManager.reemit("talents_list_all", updated);
     cacheManager.invalidateCache(`profile_${uid}`);
     cacheManager.invalidateCache(`profile_sub_${uid}`);
 };

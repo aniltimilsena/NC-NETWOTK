@@ -277,14 +277,15 @@ export default function Home({ onNavigate, user }) {
   }, []);
 
   const activeTalentsList = talents
-    .filter(t => !t.deactivated && t.name)
+    .filter(t => !t.deactivated && (t.name || t.displayName || t.fullName || t.username))
     .reduce((acc, current) => {
+      const currentName = current.name || current.displayName || current.fullName || current.username;
       const isDuplicate = acc.some(item =>
         item.id === current.id ||
-        (item.name && item.name.trim().toLowerCase() === current.name?.trim().toLowerCase())
+        (item.name && currentName && item.name.trim().toLowerCase() === currentName.trim().toLowerCase())
       );
       if (!isDuplicate) {
-        acc.push(current);
+        acc.push({ ...current, name: currentName });
       }
       return acc;
     }, []);
@@ -623,7 +624,7 @@ export default function Home({ onNavigate, user }) {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              onNavigate('casting-detail', call.id);
+                              onNavigate('casting-apply', call.id);
                             }}
                             className="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold text-xs sm:text-sm tracking-wide transition-all shadow-md active:scale-95 cursor-pointer"
                           >
@@ -942,32 +943,16 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= OUR GOALS SECTION ================= */}
-            <section className="bg-[#131418] rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0 space-y-2.5">
-              <div className="space-y-1 mb-2">
+            <section className="bg-[#131418] rounded-lg p-3.5 sm:p-5 text-white shadow-md border-0 space-y-3 text-left">
+              <div className="space-y-1">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
                   <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
                   Our Goals
                 </span>
-                <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
-                  Building Nepal's most transparent and accessible entertainment network
-                </p>
               </div>
-              <ul className="space-y-3 text-left">
-                {[
-                  "Connect Nepal's finest actors, directors, writers, and film technicians with leading casting agencies.",
-                  "Provide a unified platform for talent discovery and casting opportunities across Nepal.",
-                  "Empower emerging artists by giving them visibility to global production houses.",
-                  "Simplify the casting process for producers, directors, and agencies.",
-                  "Build a strong community that supports and grows Nepal's entertainment industry."
-                ].map((goal, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <span className="text-[#522C69] font-black text-base leading-none mt-1 select-none shrink-0">•</span>
-                    <span className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium">
-                      {goal}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-normal">
+                Building Nepal's most transparent and accessible entertainment network. We connect Nepal's finest actors, directors, writers, and film technicians with leading casting agencies, providing a unified platform for talent discovery and casting opportunities across Nepal. By empowering emerging artists with visibility to global production houses and simplifying the casting process for producers, directors, and agencies, we aim to build a strong community that supports and grows Nepal's entertainment industry.
+              </p>
             </section>
           </div>
         </div>

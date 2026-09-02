@@ -136,11 +136,12 @@ export default function Desktop3ColumnLayout({
 
         const allActive = data
           .filter(t => {
-            if (t.deactivated || !t.name) return false;
+            const tName = t.name || t.displayName || t.fullName || t.username;
+            if (t.deactivated || !tName) return false;
             const isSelf = Boolean(
               (myUid && (t.id === myUid || t.uid === myUid)) ||
               (myEmail && t.email && t.email.toLowerCase().trim() === myEmail) ||
-              (myName && t.name && t.name.toLowerCase().trim() === myName)
+              (myName && tName && tName.toLowerCase().trim() === myName)
             );
             return !isSelf;
           })
@@ -518,6 +519,28 @@ export default function Desktop3ColumnLayout({
                           </Link>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ADMIN GROUP */}
+                {(profileData?.isAdmin === true || profileData?.role?.toLowerCase() === 'admin' || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin') && (
+                  <div>
+                    <div className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-red-400 select-none">Administration</div>
+                    <div className="space-y-0.5">
+                      <Link
+                        to="/admin"
+                        className={`flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
+                          pathname.startsWith('/admin')
+                            ? "bg-red-500/20 text-red-300 font-bold border border-red-500/30"
+                            : "text-red-400/80 hover:text-white hover:bg-red-500/10 font-normal"
+                        }`}
+                      >
+                        <svg className="w-5 h-5 mr-3.5 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span className="text-[16px] tracking-tight">Admin Panel</span>
+                      </Link>
                     </div>
                   </div>
                 )}

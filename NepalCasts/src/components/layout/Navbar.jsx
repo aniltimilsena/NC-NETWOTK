@@ -29,7 +29,7 @@ import {
   Scale
 } from "lucide-react";
 import { db } from '../../lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { cacheManager } from '@/utils/cacheManager';
 export default function Navbar({ onNavigate, onBack = () => { }, showBack = false, isAdmin = false, user = null, onLogout = () => { } }) {
@@ -37,6 +37,39 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
   const { pathname } = useLocation();
   const isHome = pathname === '/' || pathname === '';
   const [scrolled, setScrolled] = useState(false);
+  const [liveIsAdmin, setLiveIsAdmin] = useState(isAdmin || user?.isAdmin === true);
+
+  useEffect(() => {
+    setLiveIsAdmin(isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin');
+  }, [isAdmin, user]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsubUser = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+      if (docSnap.exists()) {
+        const d = docSnap.data();
+        if (d.isAdmin === true || d.role?.toLowerCase() === 'admin') {
+          setLiveIsAdmin(true);
+        }
+      }
+    }, () => {});
+
+    const unsubProfile = onSnapshot(doc(db, 'profiles', user.uid), (docSnap) => {
+      if (docSnap.exists()) {
+        const d = docSnap.data();
+        if (d.isAdmin === true || d.role?.toLowerCase() === 'admin') {
+          setLiveIsAdmin(true);
+        }
+      }
+    }, () => {});
+
+    return () => {
+      unsubUser();
+      unsubProfile();
+    };
+  }, [user?.uid]);
+
+  const effectiveIsAdmin = Boolean(liveIsAdmin || isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,6 +88,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
       case 'profile': return param ? `/profile/${param}` : '/talents';
       case 'casting': return '/casting';
       case 'casting-detail': return `/casting/${param}`;
+      case 'casting-apply': return `/casting/${param}/apply`;
       case 'signin': return '/signin';
       case 'signup': return '/signup';
       case 'profile-create': return '/profile/create';
@@ -170,16 +204,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
     });
   }, [user?.uid]);
   return (<>
-    <header className={`z-50 transition-all duration-300 ${
-      isHome
-        ? 'absolute top-0 left-0 right-0 bg-transparent'
-        : 'relative bg-[#141414] border-b border-white/5'
-    }`}>
-      <nav className={`relative z-30 transition-all duration-300 ${
-        isHome
-          ? 'bg-gradient-to-b from-black/85 via-black/40 to-transparent'
-          : 'bg-transparent'
-      }`}>
+    <header className="sticky top-0 z-50 transition-all duration-300 bg-[#0d0d0f]/95 backdrop-blur-xl border-b border-white/5 shadow-sm">
+      <nav className="relative z-30 bg-transparent">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
 
@@ -217,7 +243,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                       <Settings className="w-4 h-4 text-white shrink-0" />
                       <span>{t('nav_settings')}</span>
                     </Link>
-                    {isAdmin && (
+                    {effectiveIsAdmin && (
                       <>
                         <div className="mx-2 my-1 border-t border-white/10" />
                         <Link to="/admin" className="w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold text-admin-primary hover:text-white hover:bg-admin-primary/20 transition-all group/admin">
@@ -250,6 +276,20 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                     </Link>
                   </div>
                 </div>
+
+                {effectiveIsAdmin && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors ${
+                      pathname.startsWith('/admin')
+                        ? 'bg-red-500/15 text-red-300 border border-red-500/30'
+                        : 'bg-red-500/10 text-red-300/90 hover:bg-red-500/20 hover:text-white border border-red-500/20'
+                    }`}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-red-400/80" />
+                    <span>Admin</span>
+                  </Link>
+                )}
               </div>
             </div>
 
@@ -266,6 +306,19 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
 
               {isLoggedIn ? (<>
+
+                {effectiveIsAdmin && (
+                  <Link
+                    to="/admin"
+                    className={`p-2 relative transition-colors ${
+                      pathname.startsWith('/admin') ? 'text-red-300' : 'text-red-400 hover:text-red-300'
+                    }`}
+                    title="Admin Dashboard"
+                    aria-label="Admin Dashboard"
+                  >
+                    <ShieldCheck className="w-5 h-5" />
+                  </Link>
+                )}
 
                 <Link to="/notifications" className={`text-nc-secondary hover:text-white p-2 relative transition-colors ${isActionActive('notifications') ? 'text-white' : ''}`} aria-label="Notifications">
                   <NotificationIcon size={24} color="currentColor" active={false} />
@@ -450,7 +503,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
             </>
           )}
 
-          {isAdmin && (
+          {effectiveIsAdmin && (
             <Link
               to="/admin"
               onClick={() => setMenuOpen(false)}

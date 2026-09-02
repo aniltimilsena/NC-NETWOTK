@@ -200,12 +200,12 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
       if (form.otherRequirements && form.otherRequirements.trim()) {
         const customReqs = form.otherRequirements
           .split('\n')
-          .map((r) => r.trim())
+          .map((r: string) => r.trim())
           .filter(Boolean);
         requirementList.push(...customReqs);
       }
-      const validRoles = form.roles.filter(r => r.name && r.name.trim());
-      const rolesSummary = validRoles.map(r => r.name.trim()).join(' • ');
+      const validRoles = form.roles.filter((r: any) => r.name && r.name.trim());
+      const rolesSummary = validRoles.map((r: any) => r.name.trim()).join(' • ');
 
       const callData = {
         ...form,
@@ -255,13 +255,13 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
       }
     }
     if (step === 2) {
-      const hasValidRole = form.roles.some((r) => r.name && r.name.trim());
+      const hasValidRole = form.roles.some((r: any) => r.name && r.name.trim());
       if (!hasValidRole) {
         showAlert?.('Role Required', 'error', 'Please enter at least one role name for this casting.');
         return;
       }
     }
-    setStep((s) => s + 1);
+    setStep((s: number) => s + 1);
   };
 
   return (
@@ -315,9 +315,8 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                   if (s.id < step) setStep(s.id);
                 }}
                 disabled={s.id > step}
-                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                  s.id < step ? 'bg-[#522C69]' : s.id === step ? 'bg-white' : 'bg-white/10'
-                }`}
+                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${s.id < step ? 'bg-[#522C69]' : s.id === step ? 'bg-white' : 'bg-white/10'
+                  }`}
               />
             ))}
           </div>
@@ -332,13 +331,12 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 onClick={() => {
                   if (s.id < step) setStep(s.id);
                 }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                  s.id === step
-                    ? 'bg-white text-black shadow-md'
-                    : s.id < step
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${s.id === step
+                  ? 'bg-white text-black shadow-md'
+                  : s.id < step
                     ? 'bg-[#522C69]/10 text-[#522C69]'
                     : 'bg-[#111] border border-white/5 text-gray-500 cursor-not-allowed'
-                }`}
+                  }`}
                 disabled={s.id > step}
               >
                 <span>{s.id < step ? '✓' : s.id}</span>
@@ -555,12 +553,12 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 <p className="text-xs text-gray-500 mt-1 font-medium">Add character names, age requirements, and descriptions</p>
               </div>
 
-              {form.roles.map((role, idx) => (
+              {form.roles.map((role: any, idx: number) => (
                 <div key={idx} className="bg-[#1a1a1a] border border-white/5 rounded-2xl p-5 space-y-4 relative">
                   {idx > 0 && (
                     <button
                       type="button"
-                      onClick={() => setForm({ ...form, roles: form.roles.filter((_, i) => i !== idx) })}
+                      onClick={() => setForm({ ...form, roles: form.roles.filter((_: any, i: number) => i !== idx) })}
                       className="absolute top-4 right-4 text-red-400 hover:text-red-300 text-xs font-bold uppercase tracking-wider cursor-pointer"
                     >
                       Remove
@@ -719,7 +717,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
             {step > 1 ? (
               <button
                 type="button"
-                onClick={() => setStep((s) => s - 1)}
+                onClick={() => setStep((s: number) => s - 1)}
                 className="px-5 py-2.5 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white cursor-pointer"
               >
                 Back
