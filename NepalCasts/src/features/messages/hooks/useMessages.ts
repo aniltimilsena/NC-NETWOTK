@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, query, where, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { subscribeToConversations, subscribeToMessages, sendMessage, createConversation, markConversationAsRead } from '../services/messaging';
 import { getProfile } from '../../profile/services/profile';
@@ -7,6 +7,9 @@ import type { Message, ServiceResult } from '../../../types';
 import { subscribeToCallHistory } from '../../../services';
 
 export function useMessages(currentUser: any, initialUserId: string | null) {
+    const [rawConversations, setRawConversations] = useState<any[]>([]);
+    const [receivedApps, setReceivedApps] = useState<any[]>([]);
+    const [sentApps, setSentApps] = useState<any[]>([]);
     const [conversations, setConversations] = useState<any[]>([]);
     const [activeChatId, setActiveChatId] = useState<string | null>(null);
     const [syntheticChat, setSyntheticChat] = useState<any | null>(null);
@@ -27,17 +30,162 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         setActiveChatId(id);
     }, []);
 
+    // 1. Subscribe to regular conversations
     useEffect(() => {
         if (!currentUser?.uid) {
             setLoading(false);
             return;
         }
         const unsub = subscribeToConversations(currentUser.uid, (list) => {
-            setConversations(list);
+            setRawConversations(list);
             setLoading(false);
         });
         return () => unsub();
     }, [currentUser?.uid]);
+
+    // 2. Subscribe to received applications (where current user is the casting creator)
+    useEffect(() => {
+        if (!currentUser?.uid) return;
+        const q = query(
+            collection(db, 'applications'),
+            where('creatorId', '==', currentUser.uid)
+        );
+        const unsub = onSnapshot(q, (snap) => {
+            const apps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            setReceivedApps(apps);
+        }, (err) => {
+            console.warn('Received applications subscription error:', err);
+        });
+        return () => unsub();
+    }, [currentUser?.uid]);
+
+    // 3. Subscribe to sent applications (where current user is the applicant)
+    useEffect(() => {
+        if (!currentUser?.uid) return;
+        const q = query(
+            collection(db, 'applications'),
+            where('userId', '==', currentUser.uid)
+        );
+        const unsub = onSnapshot(q, (snap) => {
+            const apps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            setSentApps(apps);
+        }, (err) => {
+            console.warn('Sent applications subscription error:', err);
+        });
+        return () => unsub();
+    }, [currentUser?.uid]);
+
+    // 4. Combine conversations and casting call applications without duplicates
+    useEffect(() => {
+        const convosByParticipant = new Map<string, any>();
+
+        // 1. Process regular conversations
+        rawConversations.forEach(c => {
+            const otherId = c.otherParticipantId || c.participants?.find((p: string) => p !== currentUser?.uid);
+            if (otherId) {
+                convosByParticipant.set(otherId, { ...c });
+            } else if (c.id) {
+                convosByParticipant.set(c.id, { ...c });
+            }
+        });
+
+        // 2. Merge received casting applications (as Creator)
+        receivedApps.forEach(app => {
+            const otherId = app.userId;
+            if (!otherId) return;
+            const existing = convosByParticipant.get(otherId);
+            if (existing) {
+                // Enrich existing conversation with application details
+                existing.isApplication = true;
+                existing.applicationId = app.id;
+                existing.castingId = app.castingId;
+                existing.castingTitle = app.castingTitle || existing.castingTitle;
+                existing.roleName = app.roleName || existing.roleName;
+                existing.status = app.status || existing.status;
+                existing.coverNote = app.coverNote || existing.coverNote;
+                existing.selfTapeUrl = app.selfTapeUrl || existing.selfTapeUrl;
+                existing.attachmentUrl = app.attachmentUrl || app.fileUrl || existing.attachmentUrl;
+                if (!existing.avatar && app.userPhoto) {
+                    existing.avatar = app.userPhoto;
+                }
+                if (!existing.name || existing.name === 'User') {
+                    existing.name = app.userName || app.fullName || existing.name;
+                }
+            } else {
+                // If no direct conversation exists yet with this applicant, create application thread
+                convosByParticipant.set(otherId, {
+                    id: `app_${app.id}`,
+                    applicationId: app.id,
+                    isApplication: true,
+                    type: 'application',
+                    castingId: app.castingId,
+                    castingTitle: app.castingTitle || 'Casting Call',
+                    roleName: app.roleName || 'Audition Role',
+                    status: app.status || 'pending',
+                    name: app.userName || app.fullName || 'Audition Applicant',
+                    avatar: app.userPhoto || '',
+                    otherParticipantId: app.userId,
+                    participants: [app.userId, currentUser?.uid].filter(Boolean),
+                    lastMessage: `Application for "${app.roleName || 'Role'}" • Status: ${(app.status || 'pending').toUpperCase()}`,
+                    lastMessageAt: app.appliedAt || app.createdAt || null,
+                    updatedAt: app.appliedAt || app.createdAt || null,
+                    unread: app.status === 'pending',
+                    unreadCounts: {
+                        [currentUser?.uid]: app.status === 'pending' ? 1 : 0
+                    },
+                    coverNote: app.coverNote || '',
+                    selfTapeUrl: app.selfTapeUrl || '',
+                    attachmentUrl: app.attachmentUrl || app.fileUrl || '',
+                });
+            }
+        });
+
+        // 3. Merge sent casting applications (as Applicant)
+        sentApps.forEach(app => {
+            const otherId = app.creatorId;
+            if (!otherId) return;
+            const existing = convosByParticipant.get(otherId);
+            if (existing) {
+                existing.isApplication = true;
+                existing.applicationId = app.id;
+                existing.castingId = app.castingId;
+                existing.castingTitle = app.castingTitle || existing.castingTitle;
+                existing.roleName = app.roleName || existing.roleName;
+                existing.status = app.status || existing.status;
+            } else {
+                convosByParticipant.set(otherId, {
+                    id: `app_${app.id}`,
+                    applicationId: app.id,
+                    isApplication: true,
+                    type: 'application',
+                    castingId: app.castingId,
+                    castingTitle: app.castingTitle || 'Casting Call',
+                    roleName: app.roleName || 'Audition Role',
+                    status: app.status || 'pending',
+                    name: app.castingTitle ? `${app.castingTitle} (${app.roleName || 'Audition'})` : 'Casting Application',
+                    avatar: '',
+                    otherParticipantId: app.creatorId,
+                    participants: [app.creatorId, currentUser?.uid].filter(Boolean),
+                    lastMessage: `Applied for "${app.roleName || 'Role'}" • Status: ${(app.status || 'pending').toUpperCase()}`,
+                    lastMessageAt: app.appliedAt || app.createdAt || null,
+                    updatedAt: app.appliedAt || app.createdAt || null,
+                    unread: false,
+                    coverNote: app.coverNote || '',
+                    selfTapeUrl: app.selfTapeUrl || '',
+                    attachmentUrl: app.attachmentUrl || app.fileUrl || '',
+                });
+            }
+        });
+
+        const combined = Array.from(convosByParticipant.values());
+        combined.sort((a, b) => {
+            const timeA = a.lastMessageAt?.toMillis?.() || (a.lastMessageAt?.seconds ? a.lastMessageAt.seconds * 1000 : new Date(a.lastMessageAt || 0).getTime()) || 0;
+            const timeB = b.lastMessageAt?.toMillis?.() || (b.lastMessageAt?.seconds ? b.lastMessageAt.seconds * 1000 : new Date(b.lastMessageAt || 0).getTime()) || 0;
+            return timeB - timeA;
+        });
+
+        setConversations(combined);
+    }, [rawConversations, receivedApps, sentApps, currentUser?.uid]);
 
     useEffect(() => {
         if (userClosedChatRef.current) return;
@@ -83,6 +231,24 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             return;
         }
         const unsubMessages = subscribeToMessages(activeChatId, (list) => {
+            if (list.length === 0) {
+                const activeApp = [...receivedApps, ...sentApps].find(a => `app_${a.id}` === activeChatId || a.id === activeChatId);
+                if (activeApp) {
+                    const fallbackAppMsg: Message = {
+                        id: `app_init_${activeApp.id}`,
+                        senderId: activeApp.userId,
+                        text: `Audition Application for role: "${activeApp.roleName || 'General'}" on "${activeApp.castingTitle || 'Casting Call'}"${activeApp.coverNote ? `\n\nCover Note: "${activeApp.coverNote}"` : ''}`,
+                        fileUrl: activeApp.attachmentUrl || activeApp.fileUrl || activeApp.selfTapeUrl || null,
+                        attachmentUrl: activeApp.attachmentUrl || activeApp.fileUrl || null,
+                        selfTapeUrl: activeApp.selfTapeUrl || null,
+                        type: activeApp.selfTapeUrl ? 'video' : 'text',
+                        createdAt: activeApp.appliedAt || activeApp.createdAt || new Date(),
+                        read: true,
+                    } as any;
+                    setMessages([fallbackAppMsg]);
+                    return;
+                }
+            }
             setMessages(list as Message[]);
             markConversationAsRead(activeChatId, currentUser.uid).catch(console.warn);
         });
@@ -98,7 +264,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             unsubMessages();
             unsubTyping();
         };
-    }, [activeChatId, currentUser?.uid]);
+    }, [activeChatId, currentUser?.uid, receivedApps, sentApps]);
 
     useEffect(() => {
         if (!currentUser?.uid || !initialUserId) return;
@@ -165,7 +331,29 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
 
     const dispatchMessage = useCallback(async (text: string, replyTo: any = null, type: 'text' | 'image' | 'video' = 'text'): Promise<ServiceResult> => {
         let targetConvoId = activeChatId;
-        if (!targetConvoId && initialUserId) {
+        const activeConvo = conversations.find(c => c.id === targetConvoId);
+
+        if (targetConvoId?.startsWith('app_') && activeConvo) {
+            // Ensure conversation doc exists in Firestore for application thread
+            try {
+                await setDoc(doc(db, 'conversations', targetConvoId), {
+                    participants: activeConvo.participants || [currentUser.uid, activeConvo.otherParticipantId],
+                    type: 'application',
+                    isApplication: true,
+                    applicationId: activeConvo.applicationId || targetConvoId.replace('app_', ''),
+                    castingId: activeConvo.castingId || null,
+                    castingTitle: activeConvo.castingTitle || null,
+                    roleName: activeConvo.roleName || null,
+                    lastMessage: text,
+                    lastMessageAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    lastSenderId: currentUser.uid,
+                    unread: true,
+                }, { merge: true });
+            } catch (convoInitErr) {
+                console.warn('Could not initialize application conversation doc:', convoInitErr);
+            }
+        } else if (!targetConvoId && initialUserId) {
             const res = await createConversation([currentUser.uid, initialUserId], undefined, currentUser.uid);
             if (res.id) {
                 targetConvoId = res.id;
@@ -176,7 +364,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             return { success: false, error: 'No active chat thread' };
         }
         return sendMessage(targetConvoId, currentUser.uid, text, false, replyTo, type);
-    }, [activeChatId, initialUserId, currentUser?.uid]);
+    }, [activeChatId, initialUserId, currentUser?.uid, conversations]);
 
     const activeChat = activeChatId ? (conversations.find(c => c.id === activeChatId || c.otherParticipantId === activeChatId) || syntheticChat) : null;
 

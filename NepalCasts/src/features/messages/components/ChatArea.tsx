@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import { PhoneOff, VideoOff, Phone, Video, Check, Trash2, ChevronLeft, X, Pin, PinOff, Clock, Copy, Download, Share2 } from 'lucide-react';
+import { PhoneOff, VideoOff, Phone, Video, Check, Trash2, ChevronLeft, X, Pin, PinOff, Clock, Copy, Download, Share2, ExternalLink, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar } from '../../../components/ui';
 import { saveImageDirectly } from '../../../utils/media';
@@ -103,63 +103,134 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
     };
 
     useEffect(() => {
-        if (containerRef.current) {
-            const behavior = isInitialMount.current ? 'auto' : 'smooth';
-            containerRef.current.scrollTo({
-                top: containerRef.current.scrollHeight,
-                behavior
-            });
+        if (isInitialMount.current) {
             isInitialMount.current = false;
+            if (containerRef.current) {
+                containerRef.current.scrollTop = containerRef.current.scrollHeight;
+            }
+        } else {
+            if (containerRef.current) {
+                containerRef.current.scrollTo({
+                    top: containerRef.current.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
         }
-    }, [messages.length, typingUsers, chat?.id]);
+    }, [messages.length]);
 
     useEffect(() => {
         isInitialMount.current = true;
     }, [chat?.id]);
 
-    return (<div className="flex flex-col h-full bg-[#141414]">
-      
-      <div className="px-5 py-3.5 border-b border-white/5 flex items-center justify-between bg-[#141414]">
-        <div className="flex items-center gap-3">
-          <button onClick={onBack} className="md:hidden w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shrink-0 shadow-sm active:scale-95 cursor-pointer" title="Back to Inbox" aria-label="Back to Inbox">
-            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5}/>
-          </button>
-          <Avatar userId={otherParticipantId} src={chat?.avatar} name={chat?.name} size="md" className="w-10 h-10 sm:w-11 sm:h-11 shrink-0" showStatus={true} status={isOnline ? 'online' : 'offline'}/>
-          <div className="text-left">
-            <span className="text-sm sm:text-base font-extrabold text-white block leading-tight truncate max-w-[180px] sm:max-w-[280px]">{chat?.name}</span>
-            <span className="text-[11px] block tracking-wide font-medium mt-0.5">
-              {isTyping ? (
-                <span className="text-[#522C69] animate-pulse font-semibold">Typing...</span>
-              ) : isOnline ? (
-                <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                  Online
-                </span>
-              ) : (
-                <span className="text-gray-400 font-medium flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-gray-500 inline-block" />
-                  Offline
-                </span>
-              )}
-            </span>
-          </div>
-        </div>
+    const isAppChat = Boolean(
+        chat?.isApplication ||
+        chat?.applicationId ||
+        chat?.castingId ||
+        chat?.type === 'application' ||
+        chat?.id?.startsWith('app_')
+    );
 
-        
-        <div className="flex items-center gap-1 sm:gap-2">
-          <button onClick={() => onInitiateCall('audio')} title="Start Voice Call" className="p-2 text-gray-300 hover:text-white transition-colors cursor-pointer active:scale-95">
-            <Phone className="w-5 h-5" strokeWidth={1.8}/>
-          </button>
-          {onTogglePinnedDrawer && (<button onClick={onTogglePinnedDrawer} title="View Pinned Messages" className={`p-2 transition-colors cursor-pointer active:scale-95 ${isPinnedDrawerOpen
-                ? 'text-[#522C69]'
-                : 'text-gray-300 hover:text-white'}`}>
-              <Pin className="w-5 h-5" strokeWidth={1.8}/>
-            </button>)}
-        </div>
-      </div>
+    return (
+        <div className="flex-1 flex flex-col h-full bg-[#141414] overflow-hidden select-none">
+            {/* Top Chat Header */}
+            <div className="px-4 sm:px-6 py-3.5 border-b border-white/5 bg-[#0d0d0f] flex items-center justify-between z-10 shrink-0">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={onBack}
+                        className="md:hidden p-1.5 -ml-1 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        title="Back"
+                        aria-label="Back"
+                    >
+                        <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+                    </button>
+                    <Avatar
+                        userId={otherParticipantId}
+                        src={chat?.avatar}
+                        name={chat?.name}
+                        size="md"
+                        showStatus={true}
+                        className="!w-12 !h-12 sm:!w-13 sm:!h-13 shrink-0 rounded-full"
+                    />
+                    <div className="text-left flex flex-col justify-center">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base font-bold text-white leading-tight">
+                                {chat?.name || 'User'}
+                            </span>
+                            {isAppChat && (
+                                <span className="text-[9px] font-bold text-purple-300 bg-[#522C69]/30 border border-[#522C69]/40 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
+                                    {chat?.roleName || 'Audition'}
+                                </span>
+                            )}
+                        </div>
+                        <span className="text-[11px] block tracking-wide font-medium mt-0.5">
+                            {isTyping ? (
+                                <span className="text-[#522C69] animate-pulse font-semibold">Typing...</span>
+                            ) : isOnline ? (
+                                <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                                    Online
+                                </span>
+                            ) : (
+                                <span className="text-gray-400 font-medium flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-500 inline-block" />
+                                    Offline
+                                </span>
+                            )}
+                        </span>
+                    </div>
+                </div>
 
-      
-      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-1 no-scrollbar bg-[#141414] flex flex-col">
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <button onClick={() => onInitiateCall('audio')} title="Start Voice Call" className="p-2 text-gray-300 hover:text-white transition-colors cursor-pointer active:scale-95">
+                        <Phone className="w-5 h-5" strokeWidth={1.8} />
+                    </button>
+                    {onTogglePinnedDrawer && (
+                        <button onClick={onTogglePinnedDrawer} title="View Pinned Messages" className={`p-2 transition-colors cursor-pointer active:scale-95 ${isPinnedDrawerOpen ? 'text-[#522C69]' : 'text-gray-300 hover:text-white'}`}>
+                            <Pin className="w-5 h-5" strokeWidth={1.8} />
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Application Detail Header Banner */}
+            {isAppChat && (chat?.castingTitle || chat?.roleName) && (
+                <div className="px-4 py-2.5 bg-[#522C69]/15 border-b border-[#522C69]/30 flex items-center justify-between gap-3 text-left">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-[#522C69]/30 flex items-center justify-center shrink-0 text-purple-300">
+                            <FileText className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-white truncate">
+                                    {chat.castingTitle || 'Casting Call'}
+                                </span>
+                                {chat.status && (
+                                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                        {chat.status}
+                                    </span>
+                                )}
+                            </div>
+                            <span className="text-[10px] text-gray-400 block truncate">
+                                Applied Role: <span className="text-purple-300 font-semibold">{chat.roleName || 'Audition'}</span>
+                            </span>
+                        </div>
+                    </div>
+                    {chat.castingId && (
+                        <a
+                            href={`/casting/${chat.castingId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-purple-300 hover:text-white bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-lg border border-white/10 shrink-0 transition-all"
+                        >
+                            <span>View Call</span>
+                            <ExternalLink className="w-3 h-3" />
+                        </a>
+                    )}
+                </div>
+            )}
+
+            {/* Messages Scroll Area */}
+            <div ref={containerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-1 no-scrollbar bg-[#141414] flex flex-col">
         {messages.length > 0 ? (messages.map((msg, index) => {
             const isMe = msg.senderId === currentUser?.uid;
             const isSystemMsg = msg.senderId === 'system' || msg.isSystem || (typeof msg.text === 'string' && (msg.text.includes('call •') || msg.text.includes('Call •')));
@@ -209,7 +280,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
             const marginClass = (isGroupedWithPrev || isGroupedWithNext) ? 'my-0.5' : 'my-2.5';
             const showAvatar = !isMe && !isGroupedWithNext;
             const showTimestamp = !isGroupedWithNext || msg.isPinned || msg.hasPendingWrites;
-            return (<div key={msg.id} className={`group flex items-end gap-2 max-w-[85%] sm:max-w-[75%] ${marginClass} ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`} onTouchStart={() => startMessagePress(msg)} onTouchEnd={endMessagePress} onTouchMove={endMessagePress} onMouseDown={(e) => {
+            return (<div key={msg.id} className={`group flex items-end gap-2.5 max-w-[85%] sm:max-w-[75%] ${marginClass} ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`} onTouchStart={() => startMessagePress(msg)} onTouchEnd={endMessagePress} onTouchMove={endMessagePress} onMouseDown={(e) => {
                     if (e.button !== 0)
                         return;
                     startMessagePress(msg);
@@ -217,9 +288,9 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                 
                 {!isMe && (<div className="shrink-0 mb-0.5">
                     {showAvatar ? (
-                        <Avatar userId={otherParticipantId} src={chat.avatar} name={chat.name} size="sm"/>
+                        <Avatar userId={otherParticipantId} src={chat.avatar} name={chat.name} size="md" className="!w-10 !h-10 shrink-0 rounded-full"/>
                     ) : (
-                        <div className="w-8 h-8 shrink-0"/>
+                        <div className="w-10 h-10 shrink-0"/>
                     )}
                   </div>)}
 
@@ -230,42 +301,103 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                     </div>)}
 
                   {(() => {
-                    const isImage = msg.type === 'image' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/image/upload/') || msg.text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i)));
-                    const isVideo = msg.type === 'video' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/video/upload/') || msg.text.match(/\.(mp4|webm|ogg|mov)/i)));
-                    const isMediaMsg = Boolean(isImage || isVideo);
+                    const rawText = msg.text || '';
+                    const urlMatches = rawText.match(/https?:\/\/[^\s]+/g) || [];
+                    const allMediaUrls = [...urlMatches];
+                    if ((msg as any).fileUrl && !allMediaUrls.includes((msg as any).fileUrl)) allMediaUrls.push((msg as any).fileUrl);
+                    if ((msg as any).attachmentUrl && !allMediaUrls.includes((msg as any).attachmentUrl)) allMediaUrls.push((msg as any).attachmentUrl);
+                    if ((msg as any).selfTapeUrl && !allMediaUrls.includes((msg as any).selfTapeUrl)) allMediaUrls.push((msg as any).selfTapeUrl);
+
+                    // Clean text by stripping out raw URLs and labels
+                    let cleanedText = rawText;
+                    urlMatches.forEach(u => {
+                      cleanedText = cleanedText.replace(u, '');
+                    });
+                    cleanedText = cleanedText
+                      .replace(/Attached File:?/gi, '')
+                      .replace(/Video Reel:?/gi, '')
+                      .replace(/Attachment:?/gi, '')
+                      .replace(/File:?/gi, '')
+                      .trim();
+
+                    const isOnlyImage = msg.type === 'image' || (allMediaUrls.length === 1 && !cleanedText && (allMediaUrls[0].includes('/image/upload/') || allMediaUrls[0].match(/\.(jpeg|jpg|gif|png|webp|svg)/i)));
+                    const isOnlyVideo = msg.type === 'video' || (allMediaUrls.length === 1 && !cleanedText && (allMediaUrls[0].includes('/video/upload/') || allMediaUrls[0].match(/\.(mp4|webm|ogg|mov)/i)));
+                    const isMediaOnly = isOnlyImage || isOnlyVideo;
 
                     return (
-                      <div className={`text-sm text-left ${isMediaMsg
+                      <div className={`text-sm text-left ${isMediaOnly
                         ? `p-0 bg-[#181818] shadow-sm ${cornerRadius} overflow-hidden`
                         : isMe
-                          ? `px-3.5 py-2 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-medium shadow-sm ${cornerRadius}`
-                          : `px-3.5 py-2 bg-[#222222] text-gray-200 shadow-sm ${cornerRadius}`}`}>
-                        {isImage ? (
-                          <div className="overflow-hidden rounded-xl aspect-square w-52 sm:w-64 max-w-full">
-                            <img src={msg.text} alt="Sent photo" className="w-full h-full object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity" onClick={(e) => {
-                              if (isLongPressActive.current) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                return;
+                          ? `px-3.5 py-2.5 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-medium shadow-sm ${cornerRadius}`
+                          : `px-3.5 py-2.5 bg-[#222222] text-gray-200 shadow-sm ${cornerRadius}`}`}>
+                        
+                        {/* Display Text Content */}
+                        {cleanedText && (
+                          <p className="whitespace-pre-wrap leading-relaxed select-text font-normal">{cleanedText}</p>
+                        )}
+
+                        {/* Display Attached Media or Files */}
+                        {allMediaUrls.length > 0 && (
+                          <div className={`space-y-2 ${cleanedText ? 'mt-2.5 pt-2 border-t border-white/10' : ''}`}>
+                            {allMediaUrls.map((mediaUrl, mIdx) => {
+                              const isImg = mediaUrl.includes('/image/upload/') || mediaUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)/i) || msg.type === 'image';
+                              const isVid = mediaUrl.includes('/video/upload/') || mediaUrl.match(/\.(mp4|webm|ogg|mov)/i) || msg.type === 'video';
+
+                              if (isImg) {
+                                return (
+                                  <div key={mIdx} className="overflow-hidden rounded-xl aspect-square w-52 sm:w-64 max-w-full">
+                                    <img
+                                      src={mediaUrl}
+                                      alt="Attachment"
+                                      className="w-full h-full object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
+                                      onClick={(e) => {
+                                        if (isLongPressActive.current) {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          return;
+                                        }
+                                        setLightboxUrl(mediaUrl);
+                                      }}
+                                    />
+                                  </div>
+                                );
                               }
-                              setLightboxUrl(msg.text);
-                            }}/>
+
+                              if (isVid) {
+                                return (
+                                  <div key={mIdx} className="overflow-hidden rounded-xl max-w-full sm:max-w-[320px] bg-black/40 border border-white/10">
+                                    <video
+                                      src={mediaUrl}
+                                      controls
+                                      playsInline
+                                      className="w-full max-h-[280px] rounded-xl object-contain"
+                                    />
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <a
+                                  key={mIdx}
+                                  href={mediaUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-all max-w-full truncate"
+                                  onClick={(e) => {
+                                    if (isLongPressActive.current) {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                    }
+                                  }}
+                                >
+                                  <FileText className="w-3.5 h-3.5 text-purple-300 shrink-0" />
+                                  <span className="truncate">View Attached File</span>
+                                  <ExternalLink className="w-3 h-3 text-gray-400 shrink-0 ml-1" />
+                                </a>
+                              );
+                            })}
                           </div>
-                        ) : isVideo ? (
-                          <div className="overflow-hidden rounded-xl">
-                            <video src={msg.text} controls className="max-w-full sm:max-w-[280px] max-h-[280px] rounded-xl object-cover"/>
-                          </div>
-                        ) : msg.type === 'file' || (msg.text && msg.text.startsWith('http') && msg.text.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|zip|rar)/i)) ? (<div className="flex items-center gap-2">
-                            <span>📄</span>
-                            <a href={msg.text} target="_blank" rel="noopener noreferrer" className={`hover:underline font-bold break-all ${isMe ? 'text-black' : 'text-sky-400'}`} onClick={(e) => {
-                            if (isLongPressActive.current) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                            }
-                        }}>
-                              Document File
-                            </a>
-                          </div>) : (msg.text)}
+                        )}
                       </div>
                     );
                   })()}

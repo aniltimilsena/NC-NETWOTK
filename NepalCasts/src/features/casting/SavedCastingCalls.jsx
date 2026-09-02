@@ -189,10 +189,10 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
       <div className="min-h-screen bg-[#141414] text-white relative font-sans pb-12">
         <SEO title="Saved Calls | NepalCasts" description="View and manage your bookmarked casting opportunities." />
 
-        <div className="max-w-4xl mx-auto px-3 sm:px-6 w-full pt-4 space-y-4">
+        <div className="max-w-4xl mx-auto px-0 sm:px-6 w-full pt-4 space-y-4">
           
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between px-3 sm:px-0">
             <div className="flex items-center gap-3">
               <button
                 onClick={handleBack}
@@ -218,7 +218,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
 
           {/* Empty State */}
           {!loading && savedCalls.length === 0 && (
-            <div className="py-16 text-center space-y-5 bg-black rounded-xl border border-white/10 p-6 sm:p-10">
+            <div className="py-16 text-center space-y-5 bg-black rounded-xl border border-white/10 p-6 sm:p-10 mx-3 sm:mx-0">
               <div className="w-16 h-16 rounded-full bg-[#522C69]/10 text-[#522C69] flex items-center justify-center mx-auto shadow-xl">
                 <BookmarkX className="w-8 h-8" />
               </div>
@@ -254,7 +254,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                   <div
                     key={call.saveId}
                     onClick={() => handleViewDetails(call.castingId)}
-                    className="bg-black rounded-xl border border-white/5 overflow-hidden cursor-pointer flex flex-row shadow-xl"
+                    className="bg-black rounded-2xl border border-white/5 overflow-hidden cursor-pointer flex flex-row shadow-xl"
                   >
                     {/* Full-Bleed Poster Thumbnail (No empty black padding around it) */}
                     <div className="w-28 sm:w-40 md:w-44 self-stretch relative shrink-0 bg-[#121212] overflow-hidden flex items-center justify-center">

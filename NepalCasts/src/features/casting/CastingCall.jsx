@@ -98,7 +98,7 @@ const CastingCallItem = memo(({ call, isSaved, isApplied, onNavigate, toggleSave
   return (
     <div
       onClick={() => onNavigate('casting-detail', call.id)}
-      className="bg-black rounded-xl border border-white/5 overflow-hidden cursor-pointer flex flex-row shadow-xl"
+      className="bg-black rounded-2xl border border-white/5 overflow-hidden cursor-pointer flex flex-row shadow-xl"
     >
       {/* Full-Bleed Poster Thumbnail (No empty black padding around it) */}
       <div className="w-28 sm:w-40 md:w-44 self-stretch relative shrink-0 bg-[#121212] overflow-hidden flex items-center justify-center">
@@ -442,10 +442,10 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
         />
 
         {/* Main Feed Container */}
-        <div className="max-w-4xl mx-auto px-3 sm:px-6 w-full pt-4 space-y-4">
+        <div className="max-w-4xl mx-auto px-0 sm:px-6 w-full pt-4 space-y-4">
 
           {/* PAGE TITLE */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between px-3 sm:px-0">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => onNavigate('back')}
@@ -472,7 +472,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
           </div>
 
           {/* SEARCH BAR & FILTER TOGGLE */}
-          <div className="relative flex items-center w-full">
+          <div className="relative flex items-center w-full px-3 sm:px-0">
             <Search className="absolute left-4 w-4 h-4 text-white pointer-events-none" />
             <input
               ref={searchInputRef}
@@ -597,7 +597,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
           </div>
 
           {/* CATEGORY TABS (HORIZONTAL SCROLL) */}
-          <div className="flex items-center gap-6 overflow-x-auto pb-1 border-b border-white/10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          <div className="flex items-center gap-6 overflow-x-auto pb-1 px-3 sm:px-0 border-b border-white/10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {CATEGORY_TABS.map((tab) => {
               const isActive = selectedCategoryTab === tab;
               return (

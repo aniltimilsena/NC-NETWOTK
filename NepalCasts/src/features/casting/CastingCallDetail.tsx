@@ -448,7 +448,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       // Notify the creator of the casting call
       if (creatorId && creatorId !== user.uid) {
         const notifId = `${user.uid}_${call.id}_${appDocRef.id}_application`;
-        const actorName = user.displayName || 'An actor';
+        const actorName = fullName.trim() || user.displayName || 'An actor';
         await setDoc(
           doc(db, 'notifications', notifId),
           {
@@ -476,6 +476,66 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         ).catch((notifErr) => {
           console.warn('Could not dispatch application notification to creator:', notifErr);
         });
+
+        // Also create conversation thread in messaging under Applications
+        try {
+          const convoId = `app_${appDocRef.id}`;
+          const applicationMsgText = `Audition Application for "${roleApplied}" on "${call.title || 'Casting Call'}"${coverNote.trim() ? `\n\nCover Note: "${coverNote.trim()}"` : ''}`;
+          
+          await setDoc(
+            doc(db, 'conversations', convoId),
+            {
+              participants: [user.uid, creatorId],
+              type: 'application',
+              isApplication: true,
+              applicationId: appDocRef.id,
+              castingId: call.id,
+              castingTitle: call.title || 'Casting Call',
+              roleName: roleApplied,
+              applicantId: user.uid,
+              creatorId: creatorId,
+              lastMessage: `Applied for "${roleApplied}" on ${call.title || 'Casting Call'}`,
+              lastMessageAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+              lastSenderId: user.uid,
+              unread: true,
+              unreadCounts: {
+                [creatorId]: 1,
+                [user.uid]: 0,
+              },
+              readBy: {
+                [creatorId]: false,
+                [user.uid]: true,
+              },
+              participantNames: {
+                [user.uid]: actorName,
+                [creatorId]: call.creatorName || call.company || 'Casting Director',
+              },
+              participantAvatars: {
+                [user.uid]: user.photoURL || '',
+                [creatorId]: call.creatorAvatar || '',
+              },
+              createdAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+          await addDoc(collection(db, 'conversations', convoId, 'messages'), {
+            senderId: user.uid,
+            text: applicationMsgText,
+            fileUrl: fileUrl || selfTapeUrl.trim() || null,
+            attachmentUrl: fileUrl || null,
+            selfTapeUrl: selfTapeUrl.trim() || null,
+            type: selfTapeUrl.trim() || (fileUrl && fileUrl.match(/\.(mp4|webm|mov|ogg)/i)) ? 'video' : (fileUrl && fileUrl.match(/\.(jpg|jpeg|png|webp|gif)/i) ? 'image' : 'text'),
+            isSystem: false,
+            reactions: {},
+            read: false,
+            delivered: true,
+            createdAt: serverTimestamp(),
+          });
+        } catch (msgErr) {
+          console.warn('Could not auto-create application conversation:', msgErr);
+        }
       }
 
       setApplied(true);

@@ -27,6 +27,16 @@ const formatLastMessage = (text?: string) => {
   if (text.startsWith('http')) {
     return 'Sent a file';
   }
+  if (text.includes('https://') || text.includes('http://')) {
+    const cleaned = text
+      .replace(/https?:\/\/[^\s]+/g, '')
+      .replace(/Attached File:?/gi, '')
+      .replace(/Video Reel:?/gi, '')
+      .replace(/Attachment:?/gi, '')
+      .trim();
+    if (cleaned) return cleaned;
+    return 'Sent an attachment';
+  }
   if (text.includes('call •') || text.includes('Call •')) {
     return text;
   }
@@ -58,7 +68,7 @@ const formatChatTime = (timestamp?: any) => {
   }
 };
 
-type FilterType = 'all' | 'unread' | 'connections' | 'applications';
+type FilterType = 'all' | 'unread' | 'applications';
 
 export default function ChatSidebar({
   conversations,
@@ -104,7 +114,9 @@ export default function ChatSidebar({
   const filteredConversations = conversations.filter((c) => {
     const nameMatch = (c.name || '').toLowerCase().includes(query.toLowerCase());
     const msgMatch = (c.lastMessage || '').toLowerCase().includes(query.toLowerCase());
-    if (query && !nameMatch && !msgMatch) {
+    const roleMatch = (c.roleName || '').toLowerCase().includes(query.toLowerCase());
+    const titleMatch = (c.castingTitle || '').toLowerCase().includes(query.toLowerCase());
+    if (query && !nameMatch && !msgMatch && !roleMatch && !titleMatch) {
       return false;
     }
 
@@ -112,8 +124,10 @@ export default function ChatSidebar({
     const isUnread = unreadCount > 0 || c.unread === true;
     const isApp = Boolean(
       c.isApplication ||
+      c.applicationId ||
       c.castingId ||
       c.type === 'application' ||
+      c.id?.startsWith('app_') ||
       c.name?.toLowerCase().includes('casting') ||
       c.lastMessage?.toLowerCase().includes('application')
     );
@@ -121,20 +135,18 @@ export default function ChatSidebar({
     if (activeFilter === 'unread') {
       return isUnread;
     }
-    if (activeFilter === 'connections') {
-      return !isApp;
-    }
     if (activeFilter === 'applications') {
       return isApp;
     }
     return true;
   });
 
-  const filterTabs: { id: FilterType; label: string }[] = [
+  const appCount = conversations.filter(c => c.isApplication || c.applicationId || c.castingId || c.type === 'application' || c.id?.startsWith('app_')).length;
+
+  const filterTabs: { id: FilterType; label: string; count?: number }[] = [
     { id: 'all', label: 'All' },
     { id: 'unread', label: 'Unread' },
-    { id: 'connections', label: 'Connections' },
-    { id: 'applications', label: 'Applications' },
+    { id: 'applications', label: 'Applications', count: appCount > 0 ? appCount : undefined },
   ];
 
   return (
@@ -171,7 +183,7 @@ export default function ChatSidebar({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search messages..."
+            placeholder="Search messages or applications..."
             className="w-full bg-[#18181c] border border-white/5 rounded-xl pl-10 pr-9 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#522C69]/50 focus:border-[#522C69]/50 transition-all"
           />
           {query && (
@@ -192,13 +204,20 @@ export default function ChatSidebar({
               <button
                 key={tab.id}
                 onClick={() => setActiveFilter(tab.id)}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                   isActive
-                    ? 'bg-[#522C69] text-[#0A0A0A] shadow-sm shadow-[#522C69]/20'
+                    ? 'bg-[#522C69] text-white shadow-sm shadow-[#522C69]/30'
                     : 'bg-[#18181c] text-gray-400 hover:text-white border border-white/5'
                 }`}
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-white/10 text-gray-300'
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -213,6 +232,13 @@ export default function ChatSidebar({
               const isSelected = c.id === activeChatId;
               const unreadCount = c.unreadCounts?.[currentUser?.uid] || 0;
               const timeString = formatChatTime(c.lastMessageAt || c.updatedAt);
+              const isAppConvo = Boolean(
+                c.isApplication ||
+                c.applicationId ||
+                c.castingId ||
+                c.type === 'application' ||
+                c.id?.startsWith('app_')
+              );
               return (
                 <div
                   key={c.id}
@@ -246,12 +272,24 @@ export default function ChatSidebar({
                     name={c.name}
                     size="md"
                     showStatus={true}
-                    className="!w-12 !h-12 md:!w-13 md:!h-13 shrink-0 rounded-full"
+                    className="!w-13 !h-13 sm:!w-14 sm:!h-14 shrink-0 rounded-full"
                   />
                   <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
-                    <span className="text-[15px] font-bold text-white block truncate leading-tight">
-                      {c.name || 'User'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[15px] font-bold text-white truncate leading-tight">
+                        {c.name || 'User'}
+                      </span>
+                      {isAppConvo && (
+                        <span className="text-[9px] font-bold text-purple-300 bg-[#522C69]/30 border border-[#522C69]/40 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
+                          {c.roleName || 'Audition'}
+                        </span>
+                      )}
+                    </div>
+                    {c.castingTitle && isAppConvo && (
+                      <span className="text-[11px] text-gray-400 truncate mt-0.5 block font-medium">
+                        {c.castingTitle}
+                      </span>
+                    )}
                     <p className="text-[13px] text-gray-400 truncate font-normal mt-1 leading-snug">
                       {formatLastMessage(c.lastMessage) || (
                         <span className="italic opacity-50 text-xs">No messages yet</span>
@@ -284,10 +322,18 @@ export default function ChatSidebar({
               <MessageSquare className="w-5 h-5 text-gray-500" />
             </div>
             <p className="text-sm font-medium text-gray-300">
-              {query ? 'No matching messages' : 'No messages in this category'}
+              {query
+                ? 'No matching messages or applications'
+                : (activeFilter === 'applications'
+                  ? 'No casting applications yet'
+                  : 'No messages in this category')}
             </p>
             <p className="text-xs text-gray-500 max-w-xs">
-              {query ? 'Try searching with a different keyword.' : 'Conversations will appear here as you chat.'}
+              {query
+                ? 'Try searching with a different keyword.'
+                : (activeFilter === 'applications'
+                  ? 'When performers submit audition applications to your casting calls, their applications will show up here.'
+                  : 'Conversations will appear here as you chat.')}
             </p>
           </div>
         )}
