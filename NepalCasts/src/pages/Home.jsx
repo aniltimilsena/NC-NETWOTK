@@ -448,8 +448,8 @@ export default function Home({ onNavigate, user }) {
     >
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="min-h-screen bg-[#141414] text-white pt-0 pb-1 font-sans selection:bg-[#522C69] selection:text-black">
-          {/* ================= HERO SECTION (Overlayed under top navbar) ================= */}
-          <section className="relative w-full h-[250px] sm:h-[280px] lg:h-[310px] pt-14 sm:pt-16 overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5 m-0 p-0">
+          {/* ================= HERO SECTION (Overlayed under top navbar on mobile) ================= */}
+          <section className="relative w-full h-[260px] sm:h-[280px] lg:h-[310px] -mt-14 sm:mt-0 pt-14 sm:pt-16 overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5 m-0 p-0">
             {/* 5 Smoothly Rotating Background Images (Every 4s) */}
             <div className="absolute inset-0 z-0 overflow-hidden">
               <AnimatePresence mode="popLayout">

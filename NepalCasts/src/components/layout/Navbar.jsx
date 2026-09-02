@@ -204,7 +204,13 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
     });
   }, [user?.uid]);
   return (<>
-    <header className="sticky top-0 z-50 transition-all duration-300 bg-[#0d0d0f]/95 backdrop-blur-xl border-b border-white/5 shadow-sm">
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${
+      isHome
+        ? (scrolled
+            ? 'bg-[#0d0d0f]/95 backdrop-blur-xl border-b border-white/5 shadow-sm'
+            : 'max-sm:bg-transparent max-sm:border-transparent max-sm:shadow-none bg-[#0d0d0f]/95 backdrop-blur-xl border-b border-white/5 shadow-sm')
+        : 'bg-[#0d0d0f]/95 backdrop-blur-xl border-b border-white/5 shadow-sm'
+    }`}>
       <nav className="relative z-30 bg-transparent">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
