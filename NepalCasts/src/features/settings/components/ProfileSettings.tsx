@@ -189,7 +189,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
       </div>
 
       {/* Physical Appearance Section */}
-      <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-4 sm:p-5 space-y-4">
+      <div className="bg-[#0E0E0E] border-0 rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-4">
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <User className="w-4 h-4 text-white"/>
           Physical Appearance
@@ -215,7 +215,7 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
       </div>
 
       {/* Visibility Section */}
-      <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-4 sm:p-5 flex justify-between items-center">
+      <div className="bg-[#0E0E0E] border-0 rounded-xl sm:rounded-2xl p-4 sm:p-5 flex justify-between items-center">
         <div className="text-left space-y-1">
           <h3 className="text-sm font-bold text-white">Show Contact Info</h3>
           <p className="text-xs text-nc-muted leading-relaxed">
