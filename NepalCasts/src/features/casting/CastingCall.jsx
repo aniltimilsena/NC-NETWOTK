@@ -409,6 +409,12 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
       return;
     }
     const isSaved = savedIds.includes(callId);
+    // Optimistically update saved state immediately for instant feedback
+    if (isSaved) {
+      setSavedIds(prev => prev.filter(id => id !== callId));
+    } else {
+      setSavedIds(prev => [...prev, callId]);
+    }
     try {
       const q = query(
         collection(db, "saved_calls"),
@@ -429,6 +435,12 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
         });
       }
     } catch (err) {
+      // Revert state if error
+      if (isSaved) {
+        setSavedIds(prev => [...prev, callId]);
+      } else {
+        setSavedIds(prev => prev.filter(id => id !== callId));
+      }
       console.error("Error toggling save:", err);
     }
   }, [user, savedIds, onNavigate]);

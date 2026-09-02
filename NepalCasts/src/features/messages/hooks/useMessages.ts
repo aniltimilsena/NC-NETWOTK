@@ -363,6 +363,35 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         if (!targetConvoId || !currentUser?.uid) {
             return { success: false, error: 'No active chat thread' };
         }
+
+        // Optimistically append message immediately to local state for zero latency
+        const optimisticId = `temp_${Date.now()}`;
+        const optimisticMessage: Message = {
+            id: optimisticId,
+            senderId: currentUser.uid,
+            text,
+            type,
+            replyTo,
+            createdAt: new Date(),
+            hasPendingWrites: true,
+            read: false,
+            delivered: false,
+        } as any;
+        setMessages(prev => [...prev, optimisticMessage]);
+
+        // Optimistically update sidebar conversation preview
+        setConversations(prev => prev.map(c => {
+            if (c.id === targetConvoId || c.otherParticipantId === targetConvoId) {
+                return {
+                    ...c,
+                    lastMessage: text,
+                    lastMessageAt: new Date(),
+                    lastSenderId: currentUser.uid,
+                };
+            }
+            return c;
+        }));
+
         return sendMessage(targetConvoId, currentUser.uid, text, false, replyTo, type);
     }, [activeChatId, initialUserId, currentUser?.uid, conversations]);
 

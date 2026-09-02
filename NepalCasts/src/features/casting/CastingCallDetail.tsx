@@ -296,9 +296,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   const handleToggleSave = async () => {
     if (!user) {
-      onNavigate('signin');
+      onNavigate ? onNavigate('signin') : (window.location.href = `/signin?redirect_url=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
+    const previousSaved = saved;
+    setSaved(!previousSaved);
     try {
       const q = query(
         collection(db, 'saved_calls'),
@@ -320,6 +322,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         showAlert?.('Saved casting call!', 'success');
       }
     } catch (err) {
+      setSaved(previousSaved);
       console.error('Error toggling save:', err);
     }
   };

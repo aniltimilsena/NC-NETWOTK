@@ -204,10 +204,10 @@ export default function ChatSidebar({
               <button
                 key={tab.id}
                 onClick={() => setActiveFilter(tab.id)}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                   isActive
                     ? 'bg-[#522C69] text-white shadow-sm shadow-[#522C69]/30'
-                    : 'bg-[#18181c] text-gray-400 hover:text-white border border-white/5'
+                    : 'bg-[#18181c] text-gray-400 hover:text-white border border-white/5 hover:border-white/15'
                 }`}
               >
                 <span>{tab.label}</span>
@@ -260,7 +260,7 @@ export default function ChatSidebar({
                     }
                     onSelectChat(c.id);
                   }}
-                  className={`flex items-center gap-3.5 px-4 sm:px-5 py-3.5 cursor-pointer transition-all ${
+                  className={`flex items-center gap-3.5 px-4 sm:px-5 py-3.5 cursor-pointer transition-all duration-150 active:scale-[0.99] ${
                     isSelected
                       ? 'bg-white/[0.08]'
                       : 'bg-transparent hover:bg-white/[0.03]'

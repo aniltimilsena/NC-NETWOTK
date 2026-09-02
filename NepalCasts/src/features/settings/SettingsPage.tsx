@@ -204,7 +204,7 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
                                     const pathSuffix = tab.id === 'about' ? 'profile' : tab.id === 'password' ? 'security' : tab.id;
                                     onNavigate(`/settings/${pathSuffix}`);
                                 }}
-                                className={`w-full flex items-center justify-start text-left gap-3.5 px-4 py-3 rounded-2xl text-base font-bold transition-all border cursor-pointer ${
+                                className={`w-full flex items-center justify-start text-left gap-3.5 px-4 py-3 rounded-2xl text-base font-bold transition-all duration-150 border cursor-pointer active:scale-[0.98] ${
                                     isSelected
                                         ? 'bg-white/10 text-white font-bold border-white/15 shadow-sm'
                                         : 'text-gray-400 hover:text-white hover:bg-white/5 border-transparent font-medium'
@@ -217,7 +217,7 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
                     })}
                 </div>
 
-                <div className={`md:col-span-3 animate-fade-in ${currentMobileView === 'content' ? 'block' : 'hidden md:block'}`}>
+                <div className={`md:col-span-3 min-h-[440px] animate-fade-in ${currentMobileView === 'content' ? 'block' : 'hidden md:block'}`}>
                     {activeTab === 'about' && (<ProfileSettings profile={activeProfile} onUpdate={updateProfileSettings} showAlert={showAlert} />)}
                     {activeTab === 'skills' && (<SkillsSettings profile={activeProfile} onUpdate={updateProfileSettings} showAlert={showAlert} />)}
                     {activeTab === 'experience' && (<ExperienceSettings profile={activeProfile} onUpdate={updateProfileSettings} showAlert={showAlert} />)}
