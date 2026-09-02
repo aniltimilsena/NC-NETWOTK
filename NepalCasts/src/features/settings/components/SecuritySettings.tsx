@@ -141,7 +141,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
     return (
         <div className="space-y-1.5 sm:space-y-3">
             {/* Change Password */}
-            <div className="bg-[#0E0E0E] border-0 rounded-none sm:rounded-2xl p-4 sm:p-5 space-y-4 text-left">
+            <div className="bg-[#0E0E0E] border-0 rounded-lg sm:rounded-xl p-4 sm:p-5 space-y-4 text-left">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <Lock className="w-4 h-4 text-white" />
                     Change Password
@@ -192,7 +192,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
             </div>
 
             {/* Blocked Users */}
-            <div className="bg-[#0E0E0E] border-0 rounded-none sm:rounded-2xl p-4 sm:p-5 space-y-4 text-left">
+            <div className="bg-[#0E0E0E] border-0 rounded-lg sm:rounded-xl p-4 sm:p-5 space-y-4 text-left">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <Shield className="w-4 h-4 text-white" />
                     Blocked Users
@@ -221,7 +221,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
             </div>
 
             {/* Active Sessions */}
-            <div className="bg-[#0E0E0E] border-0 rounded-none sm:rounded-2xl p-4 sm:p-5 space-y-4 text-left">
+            <div className="bg-[#0E0E0E] border-0 rounded-lg sm:rounded-xl p-4 sm:p-5 space-y-4 text-left">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <Monitor className="w-4 h-4 text-white" />
                     Active Sessions
@@ -272,7 +272,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
             </div>
 
             {/* Danger Zone: Delete Account */}
-            <div className="bg-[#180A0A] border-0 rounded-none sm:rounded-2xl p-4 sm:p-5 space-y-4 text-left">
+            <div className="bg-[#180A0A] border-0 rounded-lg sm:rounded-xl p-4 sm:p-5 space-y-4 text-left">
                 <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
                     <h2 className="text-lg font-bold text-red-400">Danger Zone</h2>
