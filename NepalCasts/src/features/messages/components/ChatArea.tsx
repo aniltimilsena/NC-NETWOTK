@@ -370,6 +370,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                                       src={mediaUrl}
                                       controls
                                       playsInline
+                                      preload="none"
                                       className="w-full max-h-[280px] rounded-xl object-contain"
                                     />
                                   </div>

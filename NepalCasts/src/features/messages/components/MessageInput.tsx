@@ -126,7 +126,7 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
                     {selectedFile.type.startsWith('image/') ? (
                         <img src={previewUrl} alt="Preview" className="max-w-[180px] max-h-[120px] rounded-lg object-cover" />
                     ) : (
-                        <video src={previewUrl} className="max-w-[180px] max-h-[120px] rounded-lg object-cover" />
+                        <video src={previewUrl} preload="metadata" className="max-w-[180px] max-h-[120px] rounded-lg object-cover" />
                     )}
                     <button type="button" onClick={handleRemovePreview} disabled={uploading} className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all z-10 cursor-pointer" title="Remove attachment">
                         <X className="w-3.5 h-3.5" />
