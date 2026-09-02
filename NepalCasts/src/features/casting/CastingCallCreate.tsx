@@ -5,6 +5,8 @@ import Button from '../../components/ui/Button';
 import { createCastingCall, uploadProfileMedia } from '../../services';
 import { collection, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { AuthService } from '../../services/AuthService';
+import { CurrentUser } from '../../utils/CurrentUser';
 
 const STEPS = [
   { id: 1, title: 'Project Details', icon: '' },
@@ -215,13 +217,14 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
         thumbnail: thumbnailUrl,
         horizontalThumbnail: horizontalUrl,
         bannerUrl: horizontalUrl,
-        requirements: requirementList,
-        production: user.displayName || 'Independent Production',
+        production: user.displayName || CurrentUser.fullName || 'Independent Production',
         budget: form.budget,
         deadline: form.deadline ? form.deadline.trim() : 'N/A',
-        creatorId: user.uid,
-        creatorName: user.displayName || 'Anonymous Producer',
-        creatorEmail: user.email,
+        creatorId: user.uid || user.id || AuthService.getUserId() || CurrentUser.id,
+        createdBy: user.uid || user.id || AuthService.getUserId() || CurrentUser.id,
+        creatorName: user.displayName || user.name || CurrentUser.fullName || 'Anonymous Producer',
+        creatorEmail: user.email || CurrentUser.email || '',
+        creatorPhoto: user.photoURL || user.image || CurrentUser.imageUrl || '',
         status: 'active',
         applicantsCount: 0,
         createdAt: new Date().toISOString(),

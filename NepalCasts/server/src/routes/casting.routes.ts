@@ -73,11 +73,13 @@ router.post('/casting', verifyToken, validateBody(CastingCallSchema), async (req
         const { id, ...dataToSave } = req.body as any;
         if (id) {
             const existingDoc = await db.collection('casting_calls').doc(id).get();
-            if (existingDoc.exists && existingDoc.data()?.createdBy !== uid) {
+            if (existingDoc.exists && existingDoc.data()?.createdBy !== uid && existingDoc.data()?.creatorId !== uid) {
                 return res.status(403).json({ error: 'Forbidden: You do not own this casting call' });
             }
             await db.collection('casting_calls').doc(id).update({
                 ...dataToSave,
+                createdBy: existingDoc.data()?.createdBy || uid,
+                creatorId: existingDoc.data()?.creatorId || uid,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
             addToBloomFilter('casting', id);
@@ -89,6 +91,7 @@ router.post('/casting', verifyToken, validateBody(CastingCallSchema), async (req
                 ...dataToSave,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 createdBy: uid,
+                creatorId: uid,
                 status: 'Open',
             });
             addToBloomFilter('casting', docRef.id);

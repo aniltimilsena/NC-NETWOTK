@@ -1,5 +1,6 @@
 import { db } from "../../../lib/firebase";
 import { AuthService } from "../../../services/AuthService";
+import { CurrentUser } from "../../../utils/CurrentUser";
 import { collection, doc, query, orderBy, where, onSnapshot, setDoc, serverTimestamp, addDoc, getDocs, limit } from "firebase/firestore";
 import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import apiClient from "../../../api/client";
@@ -153,23 +154,29 @@ export const dispatchTargetedAuditionAlerts = async (callId: string, callData: a
 
 export const createCastingCall = async (callData: any) => {
     try {
-        const currentUserUid = AuthService.getUserId() || callData.creatorId || callData.createdBy;
+        const currentUserUid = AuthService.getUserId() || CurrentUser.id || callData.creatorId || callData.createdBy;
         if (!currentUserUid) {
             return { id: null, error: "Authentication required" };
         }
+
+        const enrichedCallData = {
+            ...callData,
+            creatorId: currentUserUid,
+            createdBy: currentUserUid,
+        };
 
         let createdId: string | null = null;
         try {
             const response = await apiClient.post<{
                 id: string;
-            }>("/casting", callData, { timeout: 3000 });
-            createdId = response.data?.id || callData.id;
+            }>("/casting", enrichedCallData, { timeout: 3000 });
+            createdId = response.data?.id || enrichedCallData.id;
         } catch (backendError) {
             console.warn("Backend /casting endpoint unavailable, writing to Firestore directly:", backendError);
         }
 
         if (!createdId) {
-            const { id, ...dataToSave } = callData;
+            const { id, ...dataToSave } = enrichedCallData;
             const finalId = id || doc(collection(db, COLLECTIONS.CASTING_CALLS)).id;
             await setDoc(doc(db, COLLECTIONS.CASTING_CALLS, finalId), {
                 ...dataToSave,
