@@ -48,6 +48,13 @@ service cloud.firestore {
       allow create: if isSignedIn() && validUserCreate();
       allow update: if isSignedIn() && (isOwner(profileId) || isAdmin()) && notEscalatingAdmin();
       allow delete: if isOwner(profileId) || isAdmin();
+
+      match /login_history/{historyId} {
+        allow read, write: if isSignedIn() && (isOwner(profileId) || isAdmin());
+      }
+      match /sessions/{sessionId} {
+        allow read, write: if isSignedIn() && (isOwner(profileId) || isAdmin());
+      }
     }
 
     // --- CASTING CALLS ---
@@ -118,10 +125,6 @@ service cloud.firestore {
         allow create: if isSignedIn() && validMessage();
         allow update, delete: if isSignedIn();
       }
-
-      match /{document=**} {
-        allow read, write: if isSignedIn();
-      }
     }
 
     match /messages/{msgId} {
@@ -154,9 +157,25 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // --- CATCH-ALL FALLBACK ---
-    match /{document=**} {
-      allow read, write: if isSignedIn();
+    // --- SITE SETTINGS & SYSTEM ---
+    match /site_settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /feedback/{feedbackId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
     }
   }
 }
