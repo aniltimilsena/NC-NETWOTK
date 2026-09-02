@@ -1414,39 +1414,54 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">Posted by</h2>
               <div className="h-[1px] bg-white/10 flex-1" />
             </div>
-            <div className="flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-white/[0.03] border border-white/5">
-              <div className="flex items-center gap-3.5 min-w-0">
-                <Avatar
-                  userId={call.creatorId || call.createdBy || call.userId || directorProfile?.uid || directorProfile?.id}
-                  src={directorProfile?.photoURL || directorProfile?.image || directorProfile?.profileImage || call.creatorPhoto}
-                  name={directorProfile?.displayName || directorProfile?.name || directorProfile?.fullName || call.creatorName || call.production || 'Production'}
-                  size="md"
-                />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h4 className="font-bold text-white text-base truncate">
-                      {directorProfile?.displayName || directorProfile?.name || directorProfile?.fullName || call.creatorName || call.production || 'Production House'}
-                    </h4>
-                    <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0" style={{ width: '15px', height: '15px' }} title="Verified Production">
-                      <Check className="w-2.5 h-2.5 text-[#060709]" strokeWidth={3.5} />
-                    </span>
-                  </div>
-                  <p className="text-xs text-neutral-400 truncate">
-                    {directorProfile?.role || directorProfile?.category || (call.production && call.production !== 'Independent Production' ? call.production : 'Film Production House')}
-                  </p>
-                </div>
-              </div>
+            {(() => {
+              const creatorTargetUid = call.creatorId || call.createdBy || call.userId || directorProfile?.uid || directorProfile?.id;
+              const handleViewCreatorProfile = (e?: React.MouseEvent) => {
+                if (e) e.stopPropagation();
+                if (creatorTargetUid) {
+                  onNavigate('profile', creatorTargetUid);
+                }
+              };
 
-              {(call.creatorId || call.createdBy || call.userId || directorProfile?.uid || directorProfile?.id) && (
-                <button
-                  type="button"
-                  onClick={() => onNavigate('profile', call.creatorId || call.createdBy || call.userId || directorProfile?.uid || directorProfile?.id)}
-                  className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-white transition-all cursor-pointer whitespace-nowrap"
+              return (
+                <div
+                  onClick={handleViewCreatorProfile}
+                  className="flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 hover:border-white/15 transition-all cursor-pointer group"
                 >
-                  View Profile
-                </button>
-              )}
-            </div>
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <Avatar
+                      userId={creatorTargetUid}
+                      src={directorProfile?.photoURL || directorProfile?.image || directorProfile?.profileImage || call.creatorPhoto}
+                      name={directorProfile?.displayName || directorProfile?.name || directorProfile?.fullName || call.creatorName || call.production || 'Production'}
+                      size="md"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-bold text-white text-base truncate group-hover:text-[#522C69] transition-colors">
+                          {directorProfile?.displayName || directorProfile?.name || directorProfile?.fullName || call.creatorName || call.production || 'Production House'}
+                        </h4>
+                        <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0" style={{ width: '15px', height: '15px' }} title="Verified Production">
+                          <Check className="w-2.5 h-2.5 text-[#060709]" strokeWidth={3.5} />
+                        </span>
+                      </div>
+                      <p className="text-xs text-neutral-400 truncate">
+                        {directorProfile?.role || directorProfile?.category || (call.production && call.production !== 'Independent Production' ? call.production : 'Film Production House')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {creatorTargetUid && (
+                    <button
+                      type="button"
+                      onClick={handleViewCreatorProfile}
+                      className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-[#522C69]/20 hover:border-[#522C69]/40 border border-white/10 text-xs font-semibold text-white transition-all cursor-pointer whitespace-nowrap"
+                    >
+                      View Profile
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Applications Received Section for Creator */}
