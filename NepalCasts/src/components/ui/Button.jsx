@@ -1,6 +1,6 @@
 export default function Button({ children, variant = 'primary', size = 'md', className = '', onClick = () => { }, type = 'button', loading = false, disabled = false, ...props }) {
     const variants = {
-        primary: 'bg-gradient-to-r from-[#522C69] to-[#663782] hover:from-[#663782] hover:to-[#7a429c] text-white font-bold tracking-wide shadow-md hover:shadow-lg border border-white/10',
+        primary: 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold tracking-wide shadow-md active:scale-95 border border-white/5',
         secondary: 'bg-white/10 text-white hover:bg-white/15 border border-white/10 font-semibold',
         ghost: 'text-gray-300 hover:text-white hover:bg-white/5',
         danger: 'bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 font-semibold',
