@@ -7,7 +7,7 @@ service cloud.firestore {
     }
     
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return isSignedIn() && (request.auth.uid == userId || request.auth.token.email == userId);
     }
     
     function isAdmin() {
@@ -18,97 +18,145 @@ service cloud.firestore {
       );
     }
 
+    // Protect against privilege escalation: non-admins cannot set isAdmin or admin role
+    function notEscalatingAdmin() {
+      return (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']) || isAdmin()) &&
+             (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == false || isAdmin()) &&
+             (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role != 'admin' || isAdmin());
+    }
+
+    function validUserCreate() {
+      return (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == false || isAdmin()) &&
+             (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role != 'admin' || isAdmin());
+    }
+
+    // Limit message payload sizes (max 2000 characters)
+    function validMessage() {
+      return (!request.resource.data.keys().hasAny(['text']) || (request.resource.data.text is string && request.resource.data.text.size() <= 2000));
+    }
+
     // --- USERS & PROFILES ---
     match /users/{userId} {
       allow read: if true;
-      allow create, update: if true;
-      allow delete: if isSignedIn() || isAdmin();
+      allow create: if isSignedIn() && validUserCreate();
+      allow update: if isSignedIn() && (isOwner(userId) || isAdmin()) && notEscalatingAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
     }
 
     match /profiles/{profileId} {
       allow read: if true;
-      allow create, update: if true;
-      allow delete: if isSignedIn() || isAdmin();
+      allow create: if isSignedIn() && validUserCreate();
+      allow update: if isSignedIn() && (isOwner(profileId) || isAdmin()) && notEscalatingAdmin();
+      allow delete: if isOwner(profileId) || isAdmin();
     }
 
     // --- CASTING CALLS ---
     match /casting_calls/{callId} {
       allow read: if true;
-      allow create: if true;
-      allow update, delete: if true;
+      allow create: if isSignedIn() && (!request.resource.data.keys().hasAny(['title']) || (request.resource.data.title is string && request.resource.data.title.size() <= 200));
+      allow update, delete: if isSignedIn() && (
+        resource.data.createdBy == request.auth.uid ||
+        resource.data.creatorId == request.auth.uid ||
+        isAdmin()
+      );
     }
 
     // --- APPLICATIONS ---
     match /applications/{appId} {
-      allow read, write: if true;
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && (
+        !request.resource.data.keys().hasAny(['coverNote']) ||
+        (request.resource.data.coverNote is string && request.resource.data.coverNote.size() <= 3000)
+      );
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.creatorId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.creatorId == request.auth.uid ||
+        isAdmin()
+      );
     }
 
-    // --- SOCIAL & FOLLOWS ---
+    // --- SOCIAL, SAVED CALLS & FOLLOWS ---
     match /follows/{followId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
     match /saved_casting_calls/{saveId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
     match /saved_calls/{saveId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
     // --- REALTIME WEBRTC CALLS ---
     match /calls/{callId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
 
       match /callerCandidates/{candId} {
-        allow read, write: if true;
+        allow read, write: if isSignedIn();
       }
 
       match /calleeCandidates/{candId} {
-        allow read, write: if true;
+        allow read, write: if isSignedIn();
       }
     }
 
-    // --- CHATS & MESSAGING (Nested & Root) ---
+    // --- CHATS & MESSAGING ---
     match /conversations/{convId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
 
       match /messages/{messageId} {
-        allow read, write: if true;
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && validMessage();
+        allow update, delete: if isSignedIn();
       }
 
       match /{document=**} {
-        allow read, write: if true;
+        allow read, write: if isSignedIn();
       }
     }
 
     match /messages/{msgId} {
-      allow read, write: if true;
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && validMessage();
+      allow update, delete: if isSignedIn();
     }
 
     // --- NOTIFICATIONS ---
     match /notifications/{notifId} {
-      allow read, write: if true;
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
     }
 
     // --- SENSITIVE CONTACT INFO ---
     match /contact_info/{userId} {
-      allow read, write: if true;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (isOwner(userId) || isAdmin());
     }
 
     // --- ADMIN LOGS & TOKENS ---
     match /one_time_tokens/{tokenId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
     }
 
     match /admin_logs/{logId} {
-      allow read, write: if true;
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
     }
 
     // --- CATCH-ALL FALLBACK ---
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
     }
   }
 }
-
