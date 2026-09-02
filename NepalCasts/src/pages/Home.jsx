@@ -538,10 +538,10 @@ export default function Home({ onNavigate, user }) {
           </section>
 
           {/* Lower Cards Container */}
-          <div className="px-0 space-y-1.5">
+          <div className="px-1 sm:px-1.5 space-y-1.5">
 
             {/* ================= CASTING CALLS / HIRING NOW SECTION ================= */}
-            <section className="bg-black rounded-none sm:rounded-lg border-y sm:border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+            <section className="bg-black rounded-xl sm:rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
                   <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
@@ -656,7 +656,7 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= FEATURED TALENTS SECTION ================= */}
-            <section className="bg-black rounded-none sm:rounded-lg border-y sm:border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+            <section className="bg-black rounded-xl sm:rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
                   <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
@@ -717,7 +717,7 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= TALENTS BY CATEGORY SECTION ================= */}
-            <section className="bg-[#131418] rounded-none sm:rounded-lg p-3.5 sm:p-4 text-white shadow-md border-0">
+            <section className="bg-[#131418] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 text-white shadow-md border-0">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
                   <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
@@ -767,7 +767,7 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= RECENTLY JOINED TALENTS SECTION ================= */}
-            <section className="bg-black rounded-none sm:rounded-lg border-y sm:border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+            <section className="bg-black rounded-xl sm:rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
                   <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
@@ -856,7 +856,7 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= TRENDING TALENTS SECTION ================= */}
-            <section className="bg-black rounded-none sm:rounded-lg border-y sm:border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+            <section className="bg-black rounded-xl sm:rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
                   <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
@@ -950,7 +950,7 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= OUR GOALS SECTION ================= */}
-            <section className="bg-[#131418] rounded-none sm:rounded-lg p-3.5 sm:p-5 text-white shadow-md border-0 space-y-3 text-left">
+            <section className="bg-[#131418] rounded-xl sm:rounded-2xl p-3.5 sm:p-5 text-white shadow-md border-0 space-y-3 text-left">
               <div className="space-y-1">
                 <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
                   <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
