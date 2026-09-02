@@ -73,27 +73,22 @@ export default function Avatar(props: AvatarProps) {
     const isDefaultImage = (url?: string | null) => {
         if (!url || typeof url !== 'string' || url.trim() === '')
             return true;
+        const lower = url.toLowerCase();
         if (
-            url.includes('default-avatar.png') ||
-            url.includes('default-male.png') ||
-            url.includes('default-female.png') ||
-            url.includes('achyut.png') ||
-            url.startsWith('data:image/svg+xml')
+            lower.includes('default-avatar') ||
+            lower.includes('default-male') ||
+            lower.includes('default-female') ||
+            lower.includes('achyut.png') ||
+            lower.includes('img.clerk.com') ||
+            lower.includes('clerk.dev') ||
+            lower.startsWith('data:image/svg+xml')
         ) {
-            return true;
-        }
-        if (url.includes('img.clerk.com') || url.includes('clerk.dev')) {
-            const isTargetClerkSelf = Boolean(clerkUser && (clerkUser.id === targetId || clerkUser.id === user?.uid));
-            if (isTargetClerkSelf && clerkUser?.hasImage) {
-                return false;
-            }
             return true;
         }
         return false;
     };
 
-    const clerkCustomPhoto = (clerkUser && (clerkUser.id === targetId || clerkUser.id === user?.uid) && clerkUser.hasImage) ? clerkUser.imageUrl : null;
-    const rawFallback = propSrc || user?.image || user?.photoURL || user?.profileImage || user?.avatar || user?.picture || user?.photo || clerkCustomPhoto || null;
+    const rawFallback = propSrc || user?.image || user?.photoURL || user?.profileImage || user?.avatar || user?.picture || user?.photo || null;
     const fallbackSrc = isDefaultImage(rawFallback) ? null : rawFallback;
 
     // When targetId (userId) is provided, prioritize the live profile status.

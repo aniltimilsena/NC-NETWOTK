@@ -14,7 +14,7 @@ import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { CATEGORIES, getCategoryConfig, matchesCategory } from '../constants/categories';
 import { HOME_CATEGORY_CARDS, CategoryCardIcon } from '../components/ui/CategoryCards';
 import { cacheManager } from '../utils/cacheManager';
-import { formatRole } from '../utils';
+import { formatRole, isDefaultImage } from '../utils';
 import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
 /**
  * @param {{ onNavigate?: any, user?: any, initialCategory?: string, initialMode?: string }} props
@@ -25,7 +25,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
     const activeUser = user || (clerkUser ? {
         uid: clerkUser.id,
         displayName: clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || "Someone",
-        photoURL: clerkUser.imageUrl || "",
+        photoURL: (clerkUser.imageUrl && !isDefaultImage(clerkUser.imageUrl)) ? clerkUser.imageUrl : "",
     } : null);
     const [talents, setTalents] = useState([]);
     const [loading, setLoading] = useState(true);

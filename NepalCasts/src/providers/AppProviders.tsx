@@ -8,6 +8,7 @@ import { AuthService } from '../services/AuthService';
 import { CurrentUser } from '../utils/CurrentUser';
 import { notifyProfileUpdated } from '../features/profile/services/users';
 import { updateProfileData } from '../features/profile/services/profile';
+import { isDefaultImage } from '../utils/avatars';
 import { PermissionProvider } from '../context/PermissionContext';
 import { CallProvider } from '../context/CallContext';
 import { initOneSignal, oneSignalInitialized } from '../utils/oneSignal';
@@ -62,7 +63,7 @@ export default function AppProviders({ children }: {
                     email: clerkUser.primaryEmailAddress?.emailAddress || null,
                     fullName: clerkUser.fullName || null,
                     username: clerkUser.username || null,
-                    imageUrl: clerkUser.hasImage ? (clerkUser.imageUrl || null) : null,
+                    imageUrl: clerkUser.imageUrl && !isDefaultImage(clerkUser.imageUrl) ? clerkUser.imageUrl : null,
                     getToken: () => getToken(),
                 });
             } else {
@@ -149,7 +150,8 @@ export default function AppProviders({ children }: {
             const uid = clerkUser.id;
             const email = clerkUser.primaryEmailAddress?.emailAddress || '';
             const clerkName = clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || (email ? email.split('@')[0] : 'Talent User');
-            const photoURL = clerkUser.imageUrl || '';
+            const rawClerkPhoto = clerkUser.imageUrl || '';
+            const photoURL = isDefaultImage(rawClerkPhoto) ? '' : rawClerkPhoto;
 
             setUser({ uid, email, displayName: clerkName, photoURL });
 
@@ -188,7 +190,8 @@ export default function AppProviders({ children }: {
                         hasAdminFlag = true;
                     }
 
-                    const finalPhoto = profileData?.image || profileData?.photoURL || photoURL;
+                    const rawExistingPhoto = profileData?.image || profileData?.photoURL || userData?.image || userData?.photoURL || photoURL;
+                    const finalPhoto = isDefaultImage(rawExistingPhoto) ? '' : rawExistingPhoto;
                     const finalName = profileData?.name || profileData?.displayName || userData?.name || userData?.displayName || clerkName;
 
                     const profilePayload: any = {

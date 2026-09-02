@@ -7,7 +7,7 @@ import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/ser
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import { CATEGORIES, getCategoryColor, getCategoryConfig, matchesCategory } from '../constants/categories';
-import { formatRole } from '../utils';
+import { formatRole, isDefaultImage } from '../utils';
 import { cacheManager } from '../utils/cacheManager';
 import { useTranslation } from 'react-i18next';
 import { db } from '../lib/firebase';
@@ -18,7 +18,7 @@ export default function Trending({ onNavigate, user }) {
   const activeUser = user || (clerkUser ? {
     uid: clerkUser.id,
     displayName: clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || "Someone",
-    photoURL: clerkUser.imageUrl || "",
+    photoURL: (clerkUser.imageUrl && !isDefaultImage(clerkUser.imageUrl)) ? clerkUser.imageUrl : "",
   } : null);
   const [profiles, setProfiles] = useState([]);
   const [followingIds, setFollowingIds] = useState([]);
