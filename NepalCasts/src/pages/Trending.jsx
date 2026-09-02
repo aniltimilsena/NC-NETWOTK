@@ -409,7 +409,7 @@ export default function Trending({ onNavigate, user }) {
               const isFollowing = followingIds.includes(prof.id);
               const isNew = isProfileNew(prof);
               const catColor = getCategoryColor(prof.role);
-              return (<motion.div key={prof.id} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: (index % 10) * 0.05 }} onClick={() => onNavigate('profile', prof.id)} className="group flex items-center justify-between gap-4 py-2 active:bg-white/[0.01] transition-all duration-300 cursor-pointer text-left">
+              return (<motion.div key={prof.id} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: (index % 10) * 0.05 }} onClick={() => onNavigate('profile', prof.id)} className="group flex items-center justify-between gap-4 py-2 active:bg-white/[0.01] transition-all duration-300 cursor-pointer text-left cv-auto-item">
 
                 <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
 

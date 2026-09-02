@@ -450,7 +450,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                     const joinYear = createdDate.getFullYear();
                                     const expLevel = getExperienceLevel(talent);
                                     const talentPhoto = talent.image || talent.photoURL || talent.profileImage || talent.avatar || talent.photo;
-                                    return (<div key={talent.id} onMouseEnter={() => setHoveredTalent(talent)} onMouseLeave={() => setHoveredTalent(null)} onClick={() => onNavigate('profile', talent.id)} className="flex items-center justify-between py-2 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group">
+                                    return (<div key={talent.id} onMouseEnter={() => setHoveredTalent(talent)} onMouseLeave={() => setHoveredTalent(null)} onClick={() => onNavigate('profile', talent.id)} className="flex items-center justify-between py-2 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group cv-auto-item">
                                         <div className="flex items-center gap-4 min-w-0">
                                             <Avatar userId={talent.id || talent.uid} user={talent} src={talentPhoto} size="lg" name={talent.name} className="w-12 h-12 md:w-14 md:h-14 transition-transform group-hover:scale-105 duration-300" />
                                             <div className="min-w-0 text-left">

@@ -58,6 +58,22 @@
     color: #ffffff;
   }
 
+  /* Hardware Accelerated Virtual Rendering for Long Feeds & Lists */
+  .cv-auto-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 160px;
+  }
+
+  .cv-auto-item {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 90px;
+  }
+
+  .cv-auto-chat {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 60px;
+  }
+
   ::-webkit-scrollbar {
     width: 6px;
   }

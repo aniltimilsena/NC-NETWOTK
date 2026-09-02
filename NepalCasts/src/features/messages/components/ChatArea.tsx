@@ -280,7 +280,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
             const marginClass = (isGroupedWithPrev || isGroupedWithNext) ? 'my-0.5' : 'my-2.5';
             const showAvatar = !isMe && !isGroupedWithNext;
             const showTimestamp = !isGroupedWithNext || msg.isPinned || msg.hasPendingWrites;
-            return (<div key={msg.id} className={`group flex items-end gap-2.5 max-w-[85%] sm:max-w-[75%] ${marginClass} ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`} onTouchStart={() => startMessagePress(msg)} onTouchEnd={endMessagePress} onTouchMove={endMessagePress} onMouseDown={(e) => {
+            return (<div key={msg.id} className={`group flex items-end gap-2.5 max-w-[85%] sm:max-w-[75%] ${marginClass} ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'} cv-auto-chat`} onTouchStart={() => startMessagePress(msg)} onTouchEnd={endMessagePress} onTouchMove={endMessagePress} onMouseDown={(e) => {
                     if (e.button !== 0)
                         return;
                     startMessagePress(msg);

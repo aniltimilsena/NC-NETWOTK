@@ -518,7 +518,7 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
     </div>);
     const renderGroupList = (groupItems) => (<ul className="w-full">
         <AnimatePresence initial={false}>
-            {groupItems.map((notif) => (<motion.li key={notif.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }} className="w-full">
+            {groupItems.map((notif) => (<motion.li key={notif.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }} className="w-full cv-auto-item">
                 <NotificationCard notif={notif} followingIds={followingIds} handleFollowBack={handleFollowBack} markAsRead={markAsRead} onDeleteRequest={(id) => setDeletingNotifId(id)} handleNotificationClick={handleNotificationClick} timeAgo={timeAgo} />
             </motion.li>))}
         </AnimatePresence>
