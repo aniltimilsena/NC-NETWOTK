@@ -342,6 +342,37 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     }
   };
 
+  const handleDownloadMedia = (url: string, rawFilename?: string) => {
+    if (!url) return;
+    const filename = rawFilename || 'attachment';
+    let downloadUrl = url;
+    if (downloadUrl.includes('cloudinary.com') && downloadUrl.includes('/upload/')) {
+      downloadUrl = downloadUrl.replace('/upload/', '/upload/fl_attachment/');
+    }
+
+    fetch(downloadUrl)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      })
+      .catch(() => {
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = filename;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+  };
+
   const openApplyModal = (roleName?: string) => {
     if (!user) {
       onNavigate ? onNavigate('signin') : (window.location.href = `/signin?redirect_url=${encodeURIComponent(window.location.pathname)}`);
@@ -1638,61 +1669,65 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                           </p>
                         )}
 
-                        {/* Applicant Media & PDF Portfolio Attachments */}
+                        {/* Applicant Media & Attachments with Direct Download */}
                         {(() => {
                           const directFileUrl = app.portfolioUrl || app.fileUrl || app.resumeUrl || app.attachmentUrl || null;
                           const reelUrl = app.videoReel || app.reelUrl || app.videoUrl || app.showreel || null;
                           const isPdf = Boolean(directFileUrl && (directFileUrl.toLowerCase().includes('.pdf') || directFileUrl.includes('/pdf/') || app.fileType?.includes('pdf')));
+                          const isVideo = Boolean(directFileUrl && (directFileUrl.toLowerCase().includes('.mov') || directFileUrl.toLowerCase().includes('.mp4') || directFileUrl.toLowerCase().includes('.webm') || directFileUrl.includes('/video/') || app.fileType?.includes('video')));
 
-                          if (!directFileUrl && !reelUrl) return null;
+                          if (!directFileUrl && !reelUrl && !app.fileName) return null;
 
                           return (
                             <div className="flex flex-wrap items-center gap-2 pt-1">
-                              {directFileUrl ? (
-                                <div className="inline-flex items-center gap-1">
+                              {directFileUrl && (
+                                <div className="inline-flex items-center gap-2 p-1.5 px-3 rounded-xl bg-white/[0.06] border border-white/10 hover:border-white/20 transition-all">
+                                  {isVideo ? (
+                                    <Video className="w-4 h-4 text-white shrink-0" />
+                                  ) : (
+                                    <FileText className="w-4 h-4 text-white shrink-0" />
+                                  )}
+                                  <span className="text-xs font-semibold text-white truncate max-w-[130px] sm:max-w-[180px]">
+                                    {app.fileName || (isVideo ? 'Video_Audition.mov' : isPdf ? 'Portfolio.pdf' : 'Attachment')}
+                                  </span>
+
+                                  {isPdf && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setPreviewPdfUrl(directFileUrl);
+                                        setPreviewPdfName(app.fileName || `${app.userName || 'Applicant'}_Portfolio.pdf`);
+                                      }}
+                                      className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] text-white font-bold transition-all cursor-pointer flex items-center gap-1"
+                                      title="Preview PDF"
+                                    >
+                                      <Eye className="w-3 h-3 text-white" />
+                                      <span>View</span>
+                                    </button>
+                                  )}
+
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      setPreviewPdfUrl(directFileUrl);
-                                      setPreviewPdfName(app.fileName || `${app.userName || 'Applicant'}_Portfolio.pdf`);
-                                    }}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#522C69]/15 text-[10px] text-[#522C69] font-bold active:scale-95 transition-all cursor-pointer shadow-sm"
-                                    title="Click to view PDF portfolio"
+                                    onClick={() => handleDownloadMedia(directFileUrl, app.fileName || `${app.userName || 'Applicant'}_media`)}
+                                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-[11px] text-white font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                                    title="Download file"
                                   >
-                                    <FileText className="w-3.5 h-3.5 text-white" />
-                                    <span className="truncate max-w-[130px]">{app.fileName || 'Portfolio.pdf'}</span>
-                                    <Eye className="w-3 h-3 text-white" />
+                                    <Download className="w-3.5 h-3.5 text-white" />
+                                    <span>Download</span>
                                   </button>
-                                  <a
-                                    href={directFileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-1 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-gray-400 hover:text-white transition-colors"
-                                    title="Open in new tab"
-                                  >
-                                    <ExternalLink className="w-3 h-3" />
-                                  </a>
                                 </div>
-                              ) : app.fileName ? (
-                                <span
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 font-medium"
-                                  title="File name submitted by applicant"
-                                >
-                                  <FileText className="w-3 h-3 text-white" />
-                                  <span className="truncate max-w-[150px]">{app.fileName}</span>
-                                </span>
-                              ) : null}
+                              )}
 
-                              {/* Video Reel / Self Tape Link */}
+                              {/* Video Reel Link */}
                               {reelUrl && (
                                 <a
                                   href={reelUrl.startsWith('http') ? reelUrl : `https://${reelUrl}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-200 font-semibold active:scale-95 transition-all cursor-pointer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs text-white font-semibold hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
                                 >
-                                  <Video className="w-3 h-3 text-white" />
-                                  <span className="truncate max-w-[150px]">Reel / Link</span>
+                                  <Video className="w-3.5 h-3.5 text-white" />
+                                  <span className="truncate max-w-[140px]">Reel / Link</span>
                                   <ExternalLink className="w-3 h-3 text-gray-400" />
                                 </a>
                               )}
