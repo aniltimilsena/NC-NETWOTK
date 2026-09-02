@@ -1,4 +1,3 @@
-import imageCompression from "browser-image-compression";
 import { logger } from "../utils/logger";
 export interface OptimizedImageResult {
     file: File;
@@ -55,6 +54,7 @@ export class MediaOptimizer {
         };
         try {
             logger.log(`[MediaOptimizer] Optimizing image (${origMb} MB) with WebWorker...`);
+            const { default: imageCompression } = await import("browser-image-compression");
             const compressedBlob = await imageCompression(file, options);
             const fileName = file.name.substring(0, file.name.lastIndexOf(".")) + ".webp";
             const optimizedFile = new File([compressedBlob], fileName, {
