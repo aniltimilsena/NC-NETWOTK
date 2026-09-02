@@ -122,6 +122,9 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
                     if (email && seenEmails.has(email)) {
                         continue;
                     }
+                    if (normName && normName !== 'talent user' && normName !== 'discovery talent' && seenNames.has(normName)) {
+                        continue;
+                    }
                     if (
                         t.isAdmin === true ||
                         (t.role && t.role.toLowerCase() === 'admin') ||
