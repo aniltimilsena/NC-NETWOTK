@@ -614,7 +614,7 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
                   {isActive && (
                     <motion.div
                       layoutId="activeCategoryIndicator"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#522C69] shadow-[0_0_8px_rgba(255,180,0,0.8)]"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#522C69] shadow-[0_0_8px_rgba(82,44,105,0.8)]"
                       transition={{ duration: 0.2 }}
                     />
                   )}
