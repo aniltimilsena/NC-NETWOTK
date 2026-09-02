@@ -1,0 +1,16 @@
+# Cloudflare Pages & Netlify Cache-Control Configuration
+
+# Immutable hashed production assets
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+# Instant cache-busting for version check
+/version.json
+  Cache-Control: no-cache, no-store, must-revalidate, max-age=0
+  X-Content-Type-Options: nosniff
+
+# Instant fresh loads for HTML entry point
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate, max-age=0
+  X-Content-Type-Options: nosniff
