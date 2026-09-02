@@ -28,6 +28,7 @@ import {
   FileText,
   Scale
 } from "lucide-react";
+import { prefetchRoute } from '../../utils/prefetchRoute';
 import { db } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
@@ -201,19 +202,19 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                     </svg>
                   </button>
                   <div className="absolute top-full left-0 mt-2 w-60 rounded-2xl bg-[#0f1015]/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] p-2 space-y-1">
-                    <Link to="/discover" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                    <Link to="/discover" onMouseEnter={() => prefetchRoute('listing')} onTouchStart={() => prefetchRoute('listing')} className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
                       <LayoutGrid className="w-4 h-4 text-white shrink-0" />
                       <span>Category Grid</span>
                     </Link>
-                    <Link to="/talents" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                    <Link to="/talents" onMouseEnter={() => prefetchRoute('listing')} onTouchStart={() => prefetchRoute('listing')} className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
                       <Users className="w-4 h-4 text-white shrink-0" />
                       <span>{t('nav_talent_directory')}</span>
                     </Link>
-                    <Link to="/trending" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                    <Link to="/trending" onMouseEnter={() => prefetchRoute('trending')} onTouchStart={() => prefetchRoute('trending')} className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
                       <Flame className="w-4 h-4 text-white shrink-0" />
                       <span>{t('nav_trending_now')}</span>
                     </Link>
-                    <Link to="/settings" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                    <Link to="/settings" onMouseEnter={() => prefetchRoute('settings')} onTouchStart={() => prefetchRoute('settings')} className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
                       <Settings className="w-4 h-4 text-white shrink-0" />
                       <span>{t('nav_settings')}</span>
                     </Link>
@@ -240,11 +241,11 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                     </svg>
                   </button>
                   <div className="absolute top-full left-0 mt-2 w-60 rounded-2xl bg-[#0f1015]/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-[100] p-2 space-y-1">
-                    <Link to="/casting" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                    <Link to="/casting" onMouseEnter={() => prefetchRoute('casting')} onTouchStart={() => prefetchRoute('casting')} className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
                       <Clapperboard className="w-4 h-4 text-white shrink-0" />
                       <span>{t('nav_casting_calls')}</span>
                     </Link>
-                    <Link to="/casting/create" className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                    <Link to="/casting/create" onMouseEnter={() => prefetchRoute('casting-create')} onTouchStart={() => prefetchRoute('casting-create')} className="w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all">
                       <PlusCircle className="w-4 h-4 text-white shrink-0" />
                       <span>{t('nav_post_project')}</span>
                     </Link>
@@ -294,11 +295,11 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
                   </Link>
                 )}
 
-                <Link to="/notifications" className={`text-nc-secondary hover:text-white p-2 relative transition-colors ${isActionActive('notifications') ? 'text-white' : ''}`} aria-label="Notifications">
+                <Link to="/notifications" onMouseEnter={() => prefetchRoute('notifications')} onTouchStart={() => prefetchRoute('notifications')} className={`text-nc-secondary hover:text-white p-2 relative transition-colors ${isActionActive('notifications') ? 'text-white' : ''}`} aria-label="Notifications">
                   <NotificationIcon size={24} color="currentColor" active={false} />
                   {unreadCount > 0 && (<span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#ef4444]" />)}
                 </Link>
-                <Link to="/messages" className={`text-nc-secondary hover:text-white p-2 relative transition-colors ${isActionActive('messages') ? 'text-white' : ''}`} aria-label="Messages">
+                <Link to="/messages" onMouseEnter={() => prefetchRoute('messages')} onTouchStart={() => prefetchRoute('messages')} className={`text-nc-secondary hover:text-white p-2 relative transition-colors ${isActionActive('messages') ? 'text-white' : ''}`} aria-label="Messages">
                   <SendIcon size={24} color="currentColor" active={isActionActive('messages')} />
                   {unreadMessagesCount > 0 && (<span className="absolute top-2 right-2 w-2 h-2 bg-[#00BFFF] rounded-full border border-nc-dark animate-pulse shadow-[0_0_8px_#00BFFF]" />)}
                 </Link>

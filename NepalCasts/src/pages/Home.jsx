@@ -10,6 +10,7 @@ import { AvatarScrollSkeleton } from '../components/ui/Skeleton';
 import PullToRefresh from '../components/ui/PullToRefresh';
 import { ChevronRight, Pin } from 'lucide-react';
 import { getOptimizedImageUrl, getImageSrcSet } from '../utils/media';
+import { prefetchRoute } from '../utils/prefetchRoute';
 
 /* eslint-disable no-secrets/no-secrets */
 const HERO_BACKGROUND_PHOTOS = [
@@ -559,6 +560,8 @@ export default function Home({ onNavigate, user }) {
                 </div>
                 <button
                   onClick={() => onNavigate('casting')}
+                  onMouseEnter={() => prefetchRoute('casting')}
+                  onTouchStart={() => prefetchRoute('casting')}
                   className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                 >
                   <span>View all</span>
@@ -575,6 +578,8 @@ export default function Home({ onNavigate, user }) {
                       <div
                         key={call.id}
                         onClick={() => onNavigate('casting-detail', call.id)}
+                        onMouseEnter={() => prefetchRoute('casting-detail')}
+                        onTouchStart={() => prefetchRoute('casting-detail')}
                         className="flex flex-col shrink-0 w-[46vw] sm:w-52 md:w-60 cursor-pointer"
                       >
                         {/* Borderless Tall Cinematic Poster Thumbnail (Half Mobile Screen Coverage) */}
