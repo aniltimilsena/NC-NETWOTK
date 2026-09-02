@@ -12,6 +12,7 @@ import { isDefaultImage } from '../utils/avatars';
 import { PermissionProvider } from '../context/PermissionContext';
 import { CallProvider } from '../context/CallContext';
 import { initOneSignal, oneSignalInitialized } from '../utils/oneSignal';
+import { preloadNotificationSound } from '../utils/notification-sound';
 import OneSignal from 'react-onesignal';
 import SplashScreen from '../components/SplashScreen';
 const CallingOverlay = lazy(() => import('../features/call/components/CallingOverlay'));
@@ -161,6 +162,19 @@ export default function AppProviders({ children }: {
             if (timeoutHandle) {
                 clearTimeout(timeoutHandle);
             }
+        };
+    }, []);
+    useEffect(() => {
+        const handleFirstInteraction = () => {
+            preloadNotificationSound();
+            window.removeEventListener('pointerdown', handleFirstInteraction);
+            window.removeEventListener('keydown', handleFirstInteraction);
+        };
+        window.addEventListener('pointerdown', handleFirstInteraction, { passive: true, once: true });
+        window.addEventListener('keydown', handleFirstInteraction, { passive: true, once: true });
+        return () => {
+            window.removeEventListener('pointerdown', handleFirstInteraction);
+            window.removeEventListener('keydown', handleFirstInteraction);
         };
     }, []);
     useEffect(() => {
