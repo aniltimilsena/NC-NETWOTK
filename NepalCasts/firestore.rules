@@ -19,12 +19,6 @@ service cloud.firestore {
     }
 
     // Protect against privilege escalation: non-admins cannot set isAdmin or admin role
-    function notEscalatingAdmin() {
-      return (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']) || isAdmin()) &&
-             (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == false || isAdmin()) &&
-             (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role != 'admin' || isAdmin());
-    }
-
     function validUserCreate() {
       return (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == false || isAdmin()) &&
              (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role != 'admin' || isAdmin());
