@@ -364,7 +364,7 @@ export default function ProfileHeader({
         {/* 3 Meta Info Pills (Location, Age, Experience) */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-2xl pt-1">
           {/* Location Pill */}
-          <div className="bg-[#161616] border border-white/5 text-neutral-200 rounded-xl px-3 py-2.5 sm:py-3 text-center flex items-center justify-center gap-2 shadow-sm font-apple font-medium text-xs sm:text-sm md:text-base">
+          <div className="bg-[#161616] text-neutral-200 rounded-xl px-3 py-2.5 sm:py-3 text-center flex items-center justify-center gap-2 shadow-sm font-apple font-medium text-xs sm:text-sm md:text-base">
             <MapPin className="w-4 h-4 text-white shrink-0" />
             <div className="truncate">
               {location.includes('Not added') ? (
@@ -378,7 +378,7 @@ export default function ProfileHeader({
           </div>
 
           {/* Age Pill */}
-          <div className="bg-[#161616] border border-white/5 text-neutral-200 rounded-xl px-3 py-2.5 sm:py-3 text-center flex items-center justify-center gap-2 shadow-sm font-apple font-medium text-xs sm:text-sm md:text-base">
+          <div className="bg-[#161616] text-neutral-200 rounded-xl px-3 py-2.5 sm:py-3 text-center flex items-center justify-center gap-2 shadow-sm font-apple font-medium text-xs sm:text-sm md:text-base">
             <UserIcon className="w-4 h-4 text-white shrink-0" />
             <div className="truncate">
               {talentAge ? (
@@ -390,7 +390,7 @@ export default function ProfileHeader({
           </div>
 
           {/* Experience Pill */}
-          <div className="bg-[#161616] border border-white/5 text-neutral-200 rounded-xl px-3 py-2.5 sm:py-3 text-center flex items-center justify-center gap-2 shadow-sm font-apple font-medium text-xs sm:text-sm md:text-base">
+          <div className="bg-[#161616] text-neutral-200 rounded-xl px-3 py-2.5 sm:py-3 text-center flex items-center justify-center gap-2 shadow-sm font-apple font-medium text-xs sm:text-sm md:text-base">
             <Briefcase className="w-4 h-4 text-white shrink-0" />
             <div className="truncate">
               {experiencesList.length > 0 ? (
@@ -407,7 +407,7 @@ export default function ProfileHeader({
         </div>
 
         {/* Followers / Following Box */}
-        <div className="bg-[#161616] border border-white/5 rounded-xl py-2 sm:py-2.5 px-4 sm:px-6 grid grid-cols-2 text-center w-full max-w-2xl my-0.5 shadow-sm divide-x divide-white/10">
+        <div className="bg-[#161616] rounded-xl py-2 sm:py-2.5 px-4 sm:px-6 grid grid-cols-2 text-center w-full max-w-2xl my-0.5 shadow-sm divide-x divide-white/10">
           <button
             type="button"
             onClick={() => onFollowClick?.('followers')}

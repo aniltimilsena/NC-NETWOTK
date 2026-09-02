@@ -503,7 +503,7 @@ export default function ProfilePage({
   };
 
   const renderAttributesCard = () => (
-    <div className="bg-[#161616] border border-white/5 rounded-2xl p-4 sm:p-6 shadow-md space-y-2.5 text-center">
+    <div className="bg-[#161616] rounded-2xl p-4 sm:p-6 shadow-md space-y-2.5 text-center">
       <div className="pb-1.5 flex items-center justify-center text-center">
         <h4 className="font-apple font-bold text-base sm:text-lg text-white tracking-tight text-center">
           Physical Specs & Contact
@@ -785,7 +785,7 @@ export default function ProfilePage({
           {/* Right Column (Portfolio, Media, Experience, Skills) */}
           <div className="lg:col-span-8 xl:col-span-8 space-y-6">
             {/* 2. Media Section Card */}
-            <div className="bg-[#161616] border border-white/5 rounded-2xl p-5 sm:p-6 shadow-md text-left">
+            <div className="bg-[#161616] rounded-2xl p-5 sm:p-6 shadow-md text-left">
               <ProfileMedia
                 profile={profile}
                 isOwnProfile={effectiveIsOwn}
@@ -803,7 +803,7 @@ export default function ProfilePage({
             </div>
 
             {/* 4. Experience Section Card */}
-            <div className="bg-[#161616] border border-white/5 rounded-2xl p-5 sm:p-6 shadow-md text-left">
+            <div className="bg-[#161616] rounded-2xl p-5 sm:p-6 shadow-md text-left">
               <ProfileExperience
                 profile={profile}
                 isOwnProfile={effectiveIsOwn}
@@ -813,7 +813,7 @@ export default function ProfilePage({
             </div>
 
             {/* 5. Skills Section Card */}
-            <div className="bg-[#161616] border border-white/5 rounded-2xl p-5 sm:p-6 shadow-md text-left space-y-3">
+            <div className="bg-[#161616] rounded-2xl p-5 sm:p-6 shadow-md text-left space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-apple font-bold text-lg sm:text-xl text-white tracking-tight">
                   Skills
@@ -857,7 +857,7 @@ export default function ProfilePage({
                   <p className="text-[10px] text-gray-500 mt-0.5">Add skills you are good at...</p>
                 </div>
               ) : (
-                <div className="rounded-xl border border-white/5 bg-black/40 py-6 px-4 flex flex-col items-center justify-center text-center space-y-1">
+                <div className="rounded-xl bg-black/40 py-6 px-4 flex flex-col items-center justify-center text-center space-y-1">
                   <p className="text-xs sm:text-sm text-neutral-400 font-medium">No skills listed yet</p>
                   <p className="text-[11px] sm:text-xs text-neutral-500">Skills and specializations will appear here.</p>
                 </div>
