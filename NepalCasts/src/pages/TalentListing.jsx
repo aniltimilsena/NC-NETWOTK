@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MoreVertical, Share2, ChevronLeft, SlidersHorizontal } from 'lucide-react';
@@ -16,6 +16,110 @@ import { HOME_CATEGORY_CARDS, CategoryCardIcon } from '../components/ui/Category
 import { cacheManager } from '../utils/cacheManager';
 import { formatRole, isDefaultImage } from '../utils';
 import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
+import { prefetchProfile } from '../utils/prefetchRoute';
+
+const TalentListItem = memo(function TalentListItem({
+    talent,
+    isFollowing,
+    isSelf,
+    isMenuOpen,
+    onToggleMenu,
+    onCloseMenu,
+    onNavigate,
+    onToggleFollow,
+    onShareTalent,
+    expLevel,
+}) {
+    let createdDate = null;
+    if (talent.createdAt) {
+        createdDate = talent.createdAt.toDate ? talent.createdAt.toDate() : new Date(talent.createdAt);
+    } else if (talent.joinedYear) {
+        createdDate = new Date(`${talent.joinedYear}-01-01`);
+    }
+    if (!createdDate || isNaN(createdDate.getTime())) {
+        createdDate = new Date('2026-07-01');
+    }
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - createdDate.getTime());
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    const isNew = diffDays <= 2;
+    const joinYear = createdDate.getFullYear();
+    const talentPhoto = talent.image || talent.photoURL || talent.profileImage || talent.avatar || talent.photo;
+
+    return (
+        <div
+            onMouseEnter={() => prefetchProfile(talent.id)}
+            onTouchStart={() => prefetchProfile(talent.id)}
+            onClick={() => onNavigate('profile', talent.id)}
+            className="flex items-center justify-between py-2 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group cv-auto-item"
+        >
+            <div className="flex items-center gap-4 min-w-0">
+                <Avatar
+                    userId={talent.id || talent.uid}
+                    user={talent}
+                    src={talentPhoto}
+                    size="lg"
+                    name={talent.name}
+                    className="w-12 h-12 md:w-14 md:h-14 transition-transform group-hover:scale-105 duration-300"
+                />
+                <div className="min-w-0 text-left">
+                    <h3 className="font-apple font-bold text-white text-base md:text-lg tracking-wide truncate flex items-center gap-1.5 group-hover:text-[#522C69] transition-colors duration-300">
+                        {talent.name}
+                        {talent.verified && (<span className="verified-badge shrink-0" title="Verified Talent">✓</span>)}
+                        {talent.openToWork && (<span className="w-1.5 h-1.5 rounded-full bg-green-500 ring-2 ring-green-500/20" title="Open to Work" />)}
+                    </h3>
+                    <p className="text-xs text-gray-500 font-medium mt-0.5">
+                        {formatRole(talent.role)} • {expLevel} Level • {isNew ? 'New' : `Since ${joinYear}`}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1 truncate">
+                        {talent.location || 'Nepal'}
+                    </p>
+                </div>
+            </div>
+
+            <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                {!isSelf && (
+                    <button
+                        type="button"
+                        onClick={(e) => onToggleFollow(e, talent.id)}
+                        className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 border cursor-pointer ${isFollowing
+                            ? 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
+                            : 'bg-[#18181b] border-white/20 text-white hover:bg-white/15 hover:border-white/30 shadow-sm'
+                            }`}
+                    >
+                        {isFollowing ? 'Following' : 'Follow'}
+                    </button>
+                )}
+
+                <button
+                    type="button"
+                    onClick={() => onToggleMenu(talent.id)}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-white relative bg-transparent hover:bg-white/5 transition-colors"
+                >
+                    <MoreVertical size={16} />
+                    {isMenuOpen && (
+                        <>
+                            <div className="fixed inset-0 z-10" onClick={onCloseMenu} />
+                            <div className="absolute right-0 top-10 mt-1 w-36 bg-[#121212]/95 border border-white/10 rounded-xl shadow-2xl z-20 py-1.5 backdrop-blur-lg overflow-hidden text-left">
+                                <button
+                                    onClick={() => {
+                                        onShareTalent(talent);
+                                        onCloseMenu();
+                                    }}
+                                    className="w-full px-4 py-2.5 text-xs text-gray-300 hover:text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer text-left"
+                                >
+                                    <Share2 size={14} className="text-white" />
+                                    Share Profile
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </button>
+            </div>
+        </div>
+    );
+});
+
 /**
  * @param {{ onNavigate?: any, user?: any, initialCategory?: string, initialMode?: string }} props
  */
@@ -31,7 +135,6 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
     const [loading, setLoading] = useState(true);
     const [profilesReady, setProfilesReady] = useState(false);
     const [followingIds, setFollowingIds] = useState([]);
-    const [hoveredTalent, setHoveredTalent] = useState(null);
     const [viewMode, setViewMode] = useState(() => {
         if (initialMode) return initialMode;
         if (initialCategory && initialCategory !== 'All' && CATEGORIES.includes(initialCategory)) {
@@ -40,16 +143,31 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         return 'categories';
     });
     const [searchQuery, setSearchQuery] = useState('');
+    const deferredSearchQuery = useDeferredValue(searchQuery);
     const [selectedFilters, setSelectedFilters] = useState({
         category: initialCategory || 'All',
         location: 'All',
         experienceLevel: 'All',
     });
     const [activeSort, setActiveSort] = useState('trending');
+    const [visibleCount, setVisibleCount] = useState(12);
     const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
     const [notifySaved, setNotifySaved] = useState(false);
     const [activeMenuId, setActiveMenuId] = useState(null);
     const [activeShareTalent, setActiveShareTalent] = useState(null);
+
+    const handleToggleMenu = useCallback((id) => {
+        setActiveMenuId(prev => (prev === id ? null : id));
+    }, []);
+
+    const handleCloseMenu = useCallback(() => {
+        setActiveMenuId(null);
+    }, []);
+
+    const handleShareTalent = useCallback((talent) => {
+        setActiveShareTalent(talent);
+    }, []);
+
     const experienceLevels = ['All', 'Beginner', 'Intermediate', 'Expert', 'Pro'];
     const locationsList = ['All', ...new Set(talents.map(t => t.location).filter(Boolean))];
     const sortOptions = [
@@ -57,6 +175,10 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         { id: 'newest', label: 'Newest' },
         { id: 'followers', label: 'Most Followed' }
     ];
+
+    useEffect(() => {
+        setVisibleCount(12);
+    }, [selectedFilters, deferredSearchQuery, activeSort]);
     useEffect(() => {
         const resolveCategory = (catStr) => {
             if (!catStr)
@@ -127,11 +249,11 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         return talents.filter(t => {
             if (t.deactivated === true)
                 return false;
-            const matchesSearch = !searchQuery ||
-                t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                t.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                t.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                t.location?.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesSearch = !deferredSearchQuery ||
+                t.name?.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+                t.role?.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+                t.category?.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+                t.location?.toLowerCase().includes(deferredSearchQuery.toLowerCase());
             if (!matchesSearch)
                 return false;
             if (filterKey !== 'category' && selectedFilters.category !== 'All') {
@@ -164,7 +286,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
             return true;
         }).length;
     };
-    const handleToggleFollow = async (e, talentId) => {
+    const handleToggleFollow = useCallback(async (e, talentId) => {
         e.stopPropagation();
         const currentUser = activeUser;
         if (!currentUser) {
@@ -211,50 +333,53 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         catch (err) {
             console.error("Error toggling follow:", err);
         }
-    };
-    const filteredTalents = talents
-        .filter(t => {
-            const talentName = t.name || t.displayName || t.fullName || t.username;
-            if (t.deactivated === true || t.isAdmin === true || t.role?.toLowerCase() === 'admin' || t.email?.toLowerCase() === 'aniltimilsena53@gmail.com' || !talentName || talentName.trim() === '')
-                return false;
-            const matchesSearch = !searchQuery ||
-                talentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                t.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                t.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                t.location?.toLowerCase().includes(searchQuery.toLowerCase());
-            if (!matchesSearch)
-                return false;
-            if (selectedFilters.category !== 'All' && !matchesCategory(t, selectedFilters.category))
-                return false;
-            if (selectedFilters.location !== 'All' && t.location !== selectedFilters.location)
-                return false;
-            if (selectedFilters.experienceLevel !== 'All' && getExperienceLevel(t) !== selectedFilters.experienceLevel)
-                return false;
-            return true;
-        })
-        .reduce((acc, current) => {
-            const currentName = (current.name || current.displayName || current.fullName || '').trim().toLowerCase();
-            const currentEmail = (current.email || '').trim().toLowerCase();
-            const isDuplicate = acc.some(item => {
-                if (item.id === current.id || item.uid === current.uid) return true;
-                if (currentEmail && item.email && item.email.trim().toLowerCase() === currentEmail) return true;
-                if (currentName && currentName !== 'talent user' && item.name && item.name.trim().toLowerCase() === currentName) return true;
-                return false;
+    }, [activeUser, followingIds, onNavigate]);
+
+    const filteredTalents = useMemo(() => {
+        return talents
+            .filter(t => {
+                const talentName = t.name || t.displayName || t.fullName || t.username;
+                if (t.deactivated === true || t.isAdmin === true || t.role?.toLowerCase() === 'admin' || t.email?.toLowerCase() === 'aniltimilsena53@gmail.com' || !talentName || talentName.trim() === '')
+                    return false;
+                const matchesSearch = !deferredSearchQuery ||
+                    talentName.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+                    t.role?.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+                    t.category?.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+                    t.location?.toLowerCase().includes(deferredSearchQuery.toLowerCase());
+                if (!matchesSearch)
+                    return false;
+                if (selectedFilters.category !== 'All' && !matchesCategory(t, selectedFilters.category))
+                    return false;
+                if (selectedFilters.location !== 'All' && t.location !== selectedFilters.location)
+                    return false;
+                if (selectedFilters.experienceLevel !== 'All' && getExperienceLevel(t) !== selectedFilters.experienceLevel)
+                    return false;
+                return true;
+            })
+            .reduce((acc, current) => {
+                const currentName = (current.name || current.displayName || current.fullName || '').trim().toLowerCase();
+                const currentEmail = (current.email || '').trim().toLowerCase();
+                const isDuplicate = acc.some(item => {
+                    if (item.id === current.id || item.uid === current.uid) return true;
+                    if (currentEmail && item.email && item.email.trim().toLowerCase() === currentEmail) return true;
+                    if (currentName && currentName !== 'talent user' && item.name && item.name.trim().toLowerCase() === currentName) return true;
+                    return false;
+                });
+                if (!isDuplicate) {
+                    acc.push(current);
+                }
+                return acc;
+            }, [])
+            .sort((a, b) => {
+                if (activeSort === 'followers')
+                    return (b.followers || 0) - (a.followers || 0);
+                if (activeSort === 'trending')
+                    return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0) || (b.followers || 0) - (a.followers || 0);
+                const timeA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+                const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+                return timeB - timeA;
             });
-            if (!isDuplicate) {
-                acc.push(current);
-            }
-            return acc;
-        }, [])
-        .sort((a, b) => {
-            if (activeSort === 'followers')
-                return (b.followers || 0) - (a.followers || 0);
-            if (activeSort === 'trending')
-                return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0) || (b.followers || 0) - (a.followers || 0);
-            const timeA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
-            const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
-            return timeB - timeA;
-        });
+    }, [talents, deferredSearchQuery, selectedFilters, activeSort]);
     const handleClearFilters = () => {
         setSelectedFilters({
             category: selectedFilters.category,
@@ -275,17 +400,6 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                 <SEO title="Browse Professional Talent | NepalCasts" description="Premium directory of cinema professionals in Nepal." />
 
 
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                    <AnimatePresence>
-                        {hoveredTalent && (hoveredTalent.photoURL || hoveredTalent.profileImage || hoveredTalent.image) && (<motion.div key={hoveredTalent.id} initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 0.35, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} className="absolute right-0 top-0 bottom-0 w-[45vw] h-full hidden md:block">
-                            <img src={hoveredTalent.photoURL || hoveredTalent.profileImage || hoveredTalent.image} alt={hoveredTalent.name} className="w-full h-full object-cover filter grayscale brightness-50 contrast-125 transition-all duration-300" />
-
-                            <div className="absolute inset-0 bg-gradient-to-r from-[#141414] via-[#141414]/60 to-transparent" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-[#141414]" />
-                            <div className="absolute inset-0 bg-gradient-to-b from-[#141414] via-transparent to-[#141414]" />
-                        </motion.div>)}
-                    </AnimatePresence>
-                </div>
 
                 <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
 
@@ -427,80 +541,36 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                         {loading ? (<TalentCardSkeleton count={8} />) : !profilesReady ? (<TalentCardSkeleton count={8} />) : filteredTalents.length === 0 ? (<div className="text-center py-20 bg-[#111] border border-dashed border-white/5 rounded-[2rem]">
                             <Search className="w-12 h-12 text-gray-600 mx-auto mb-4" />
                             <h3 className="text-xl font-bold text-white">No talents found</h3>
-                            <p className="text-gray-500 text-sm mt-1.5 max-w-xs mx-auto">Try adjusting your filters or search query to find matching talent.</p>
                         </div>) : (<>
-
                             <div className="space-y-1">
-                                {filteredTalents.map((talent, idx) => {
-                                    const isFollowing = followingIds.includes(talent.id);
-                                    let createdDate = null;
-                                    if (talent.createdAt) {
-                                        createdDate = talent.createdAt.toDate ? talent.createdAt.toDate() : new Date(talent.createdAt);
-                                    }
-                                    else if (talent.joinedYear) {
-                                        createdDate = new Date(`${talent.joinedYear}-01-01`);
-                                    }
-                                    if (!createdDate || isNaN(createdDate.getTime())) {
-                                        createdDate = new Date('2026-07-01');
-                                    }
-                                    const now = new Date();
-                                    const diffTime = Math.abs(now.getTime() - createdDate.getTime());
-                                    const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                                    const isNew = diffDays <= 2;
-                                    const joinYear = createdDate.getFullYear();
-                                    const expLevel = getExperienceLevel(talent);
-                                    const talentPhoto = talent.image || talent.photoURL || talent.profileImage || talent.avatar || talent.photo;
-                                    return (<div key={talent.id} onMouseEnter={() => setHoveredTalent(talent)} onMouseLeave={() => setHoveredTalent(null)} onClick={() => onNavigate('profile', talent.id)} className="flex items-center justify-between py-2 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group cv-auto-item">
-                                        <div className="flex items-center gap-4 min-w-0">
-                                            <Avatar userId={talent.id || talent.uid} user={talent} src={talentPhoto} size="lg" name={talent.name} className="w-12 h-12 md:w-14 md:h-14 transition-transform group-hover:scale-105 duration-300" />
-                                            <div className="min-w-0 text-left">
-                                                <h3 className="font-apple font-bold text-white text-base md:text-lg tracking-wide truncate flex items-center gap-1.5 group-hover:text-[#522C69] transition-colors duration-300">
-                                                    {talent.name}
-                                                    {talent.verified && (<span className="verified-badge shrink-0" title="Verified Talent">✓</span>)}
-                                                    {talent.openToWork && (<span className="w-1.5 h-1.5 rounded-full bg-green-500 ring-2 ring-green-500/20" title="Open to Work" />)}
-                                                </h3>
-                                                <p className="text-xs text-gray-500 font-medium mt-0.5">
-                                                    {formatRole(talent.role)} • {expLevel} Level • {isNew ? 'New' : `Since ${joinYear}`}
-                                                </p>
-                                                <p className="text-xs text-gray-400 mt-1 truncate">
-                                                    {talent.location || 'Nepal'}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                                            {talent.id !== activeUser?.uid && (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => handleToggleFollow(e, talent.id)}
-                                                    className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 border cursor-pointer ${isFollowing
-                                                            ? 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
-                                                            : 'bg-[#18181b] border-white/20 text-white hover:bg-white/15 hover:border-white/30 shadow-sm'
-                                                        }`}
-                                                >
-                                                    {isFollowing ? 'Following' : 'Follow'}
-                                                </button>
-                                            )}
-
-                                            <button type="button" onClick={() => setActiveMenuId(activeMenuId === talent.id ? null : talent.id)} className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-white relative bg-transparent hover:bg-white/5 transition-colors">
-                                                <MoreVertical size={16} />
-                                                {activeMenuId === talent.id && (<>
-                                                    <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)} />
-                                                    <div className="absolute right-0 top-10 mt-1 w-36 bg-[#121212]/95 border border-white/10 rounded-xl shadow-2xl z-20 py-1.5 backdrop-blur-lg overflow-hidden text-left">
-                                                        <button onClick={() => {
-                                                            setActiveShareTalent(talent);
-                                                            setActiveMenuId(null);
-                                                        }} className="w-full px-4 py-2.5 text-xs text-gray-300 hover:text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer text-left">
-                                                            <Share2 size={14} className="text-white" />
-                                                            Share Profile
-                                                        </button>
-                                                    </div>
-                                                </>)}
-                                            </button>
-                                        </div>
-                                    </div>);
-                                })}
+                                {filteredTalents.slice(0, visibleCount).map((talent) => (
+                                    <TalentListItem
+                                        key={talent.id}
+                                        talent={talent}
+                                        isFollowing={followingIds.includes(talent.id)}
+                                        isSelf={talent.id === activeUser?.uid}
+                                        isMenuOpen={activeMenuId === talent.id}
+                                        onToggleMenu={handleToggleMenu}
+                                        onCloseMenu={handleCloseMenu}
+                                        onNavigate={onNavigate}
+                                        onToggleFollow={handleToggleFollow}
+                                        onShareTalent={handleShareTalent}
+                                        expLevel={getExperienceLevel(talent)}
+                                    />
+                                ))}
                             </div>
+
+                            {filteredTalents.length > visibleCount && (
+                                <div className="pt-4 pb-3 flex justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => setVisibleCount(prev => prev + 12)}
+                                        className="px-6 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold tracking-wide uppercase transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer shadow-md"
+                                    >
+                                        Load more talents ({filteredTalents.length - visibleCount} remaining)
+                                    </button>
+                                </div>
+                            )}
                         </>)}
                     </div>)}
 

@@ -1,6 +1,7 @@
-import OneSignal from 'react-onesignal';
 import { logger } from './logger';
+
 export let oneSignalInitialized = false;
+
 export const initOneSignal = async (): Promise<void> => {
     try {
         const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
@@ -8,12 +9,17 @@ export const initOneSignal = async (): Promise<void> => {
             logger.warn('OneSignal initialization skipped: VITE_ONESIGNAL_APP_ID is not set.');
             return;
         }
+
+        // Dynamically load react-onesignal only on-demand during idle state
+        const { default: OneSignal } = await import('react-onesignal');
+
         await OneSignal.init({
             appId,
             allowLocalhostAsSecureOrigin: true,
         });
         oneSignalInitialized = true;
         logger.log("OneSignal client-side initialized successfully.");
+
         OneSignal.Notifications.addEventListener('click', (event: any) => {
             logger.log("OneSignal Notification Clicked:", event);
             const actionId = event.result?.actionId;
@@ -44,5 +50,25 @@ export const initOneSignal = async (): Promise<void> => {
         } else {
             logger.warn("OneSignal client-side initialization failed:", err);
         }
+    }
+};
+
+export const loginOneSignal = async (uid: string): Promise<void> => {
+    if (!oneSignalInitialized) return;
+    try {
+        const { default: OneSignal } = await import('react-onesignal');
+        await OneSignal.login(uid);
+    } catch (e) {
+        logger.warn('OneSignal login failed:', e);
+    }
+};
+
+export const logoutOneSignal = async (): Promise<void> => {
+    if (!oneSignalInitialized) return;
+    try {
+        const { default: OneSignal } = await import('react-onesignal');
+        await OneSignal.logout();
+    } catch {
+        // Ignore OneSignal logout error on unauthenticated state
     }
 };

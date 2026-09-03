@@ -1,4 +1,4 @@
-import { collection, query, onSnapshot, getDocs } from "firebase/firestore";
+import { collection, query, onSnapshot, getDocs, limit, startAfter, type DocumentSnapshot } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { COLLECTIONS } from "../../../constants/collections";
 import apiClient from "../../../api/client";
@@ -10,27 +10,31 @@ type Talent = {
 
 import { cacheManager } from "../../../utils/cacheManager";
 import { formatRole } from "../../../utils";
+import { idbGet, idbSet, idbGetSync } from "../../../utils/idbStorage";
 
 const LOCAL_STORAGE_CACHE_KEY = "nc_cached_talents_real";
 
+let memoryTalentsCache: Talent[] | null = null;
+
 export const getSavedRealTalents = (): Talent[] => {
+    if (memoryTalentsCache) {
+        return memoryTalentsCache;
+    }
+    const synced = idbGetSync<Talent[]>(LOCAL_STORAGE_CACHE_KEY);
+    if (synced && Array.isArray(synced) && synced.length > 0) {
+        memoryTalentsCache = synced;
+        return synced;
+    }
+    // Migration fallback from older localStorage if present
     try {
         const stored = localStorage.getItem(LOCAL_STORAGE_CACHE_KEY);
         if (stored) {
             const parsed = JSON.parse(stored);
             if (Array.isArray(parsed) && parsed.length > 0) {
-                const seen = new Set<string>();
-                const unique: Talent[] = [];
-                for (const t of parsed) {
-                    const uid = (t.uid || t.id || '') as string;
-                    const username = (t.username || '') as string;
-                    if (!uid || seen.has(uid) || (username && seen.has(`usr_${username}`))) {
-                        continue;
-                    }
-                    seen.add(uid);
-                    unique.push(t);
-                }
-                return unique;
+                memoryTalentsCache = parsed;
+                idbSet(LOCAL_STORAGE_CACHE_KEY, parsed);
+                localStorage.removeItem(LOCAL_STORAGE_CACHE_KEY); // free quota
+                return parsed;
             }
         }
     } catch (_e) {
@@ -39,22 +43,34 @@ export const getSavedRealTalents = (): Talent[] => {
     return [];
 };
 
-export const saveRealTalents = (talents: Talent[]) => {
+export const saveRealTalents = (talents: Talent[], maxItems: number = 60) => {
     try {
         if (Array.isArray(talents) && talents.length > 0) {
-            localStorage.setItem(LOCAL_STORAGE_CACHE_KEY, JSON.stringify(talents));
+            const sliced = talents.slice(0, maxItems);
+            memoryTalentsCache = sliced;
+            // Asynchronous, non-blocking persist to IndexedDB
+            idbSet(LOCAL_STORAGE_CACHE_KEY, sliced);
         }
     } catch (_e) {
-        // ignore storage quota error
+        // ignore storage error
     }
 };
 
-export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
-    return cacheManager.subscribePooled("talents_list_all", (pooledCb) => {
-        // First check local persistent storage for previously cached real talents
+export const subscribeToTalents = (callback: (talents: Talent[]) => void, limitCount: number = 50) => {
+    const poolKey = `talents_list_limit_${limitCount}`;
+    return cacheManager.subscribePooled(poolKey, (pooledCb) => {
+        // First check in-memory fast cache
         const saved = getSavedRealTalents();
         if (saved.length > 0) {
-            pooledCb(saved, null);
+            pooledCb(saved.slice(0, limitCount), null);
+        } else {
+            // Check async IndexedDB storage
+            idbGet<Talent[]>(LOCAL_STORAGE_CACHE_KEY).then((idbSaved) => {
+                if (idbSaved && Array.isArray(idbSaved) && idbSaved.length > 0) {
+                    memoryTalentsCache = idbSaved;
+                    pooledCb(idbSaved.slice(0, limitCount), null);
+                }
+            });
         }
 
         const fetchFromApiFallback = async () => {
@@ -78,8 +94,8 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
                         unique.push(t);
                     }
                     unique.sort((a: any, b: any) => ((a.name || '').localeCompare(b.name || '')));
-                    saveRealTalents(unique);
-                    pooledCb(unique, null);
+                    saveRealTalents(unique, limitCount);
+                    pooledCb(unique.slice(0, limitCount), null);
                     return true;
                 }
             } catch (_apiErr) {
@@ -88,92 +104,84 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
             return false;
         };
 
-            let followsCountsMap: Record<string, number> = {};
-            let followingCountsMap: Record<string, number> = {};
+        const processSnapshotDocs = (docs: any[]) => {
+            const rawMapped = docs.map((docSnap) => ({
+                id: docSnap.id,
+                uid: docSnap.id,
+                ...docSnap.data(),
+            })) as any[];
 
-            const processSnapshotDocs = (docs: any[]) => {
-                const rawMapped = docs.map((docSnap) => ({
-                    id: docSnap.id,
-                    uid: docSnap.id,
-                    ...docSnap.data(),
-                })) as any[];
+            // Sort so most complete profiles come first (has photo, has cover, has bio, has experience)
+            rawMapped.sort((a, b) => {
+                const aScore = (a.image || a.photoURL ? 10 : 0) + (a.coverImage ? 5 : 0) + (a.bio ? 3 : 0) + (Array.isArray(a.experience) ? a.experience.length : 0);
+                const bScore = (b.image || b.photoURL ? 10 : 0) + (b.coverImage ? 5 : 0) + (b.bio ? 3 : 0) + (Array.isArray(b.experience) ? b.experience.length : 0);
+                return bScore - aScore;
+            });
 
-                // Sort so most complete profiles come first (has photo, has cover, has bio, has experience)
-                rawMapped.sort((a, b) => {
-                    const aScore = (a.image || a.photoURL ? 10 : 0) + (a.coverImage ? 5 : 0) + (a.bio ? 3 : 0) + (Array.isArray(a.experience) ? a.experience.length : 0);
-                    const bScore = (b.image || b.photoURL ? 10 : 0) + (b.coverImage ? 5 : 0) + (b.bio ? 3 : 0) + (Array.isArray(b.experience) ? b.experience.length : 0);
-                    return bScore - aScore;
-                });
+            const seenUids = new Set<string>();
+            const seenEmails = new Set<string>();
+            const seenNames = new Set<string>();
+            const unique: Talent[] = [];
 
-                const seenUids = new Set<string>();
-                const seenEmails = new Set<string>();
-                const seenNames = new Set<string>();
-                const unique: Talent[] = [];
+            for (const t of rawMapped) {
+                const uid = (t.uid || t.id || '') as string;
+                const name = (t.name || t.displayName || t.fullName || '').trim();
+                const email = (t.email || '').toLowerCase().trim();
+                const normName = name.toLowerCase();
 
-                for (const t of rawMapped) {
-                    const uid = (t.uid || t.id || '') as string;
-                    const name = (t.name || t.displayName || t.fullName || '').trim();
-                    const email = (t.email || '').toLowerCase().trim();
-                    const normName = name.toLowerCase();
-
-                    if (!uid || seenUids.has(uid)) {
-                        continue;
-                    }
-                    if (email && seenEmails.has(email)) {
-                        continue;
-                    }
-                    if (normName && normName !== 'talent user' && normName !== 'discovery talent' && seenNames.has(normName)) {
-                        continue;
-                    }
-                    if (
-                        t.isAdmin === true ||
-                        (t.role && t.role.toLowerCase() === 'admin') ||
-                        (t.category && t.category.toLowerCase() === 'admin') ||
-                        email === 'aniltimilsena53@gmail.com'
-                    ) {
-                        continue;
-                    }
-
-                    if (name || t.role || t.category || t.bio) {
-                        t.role = formatRole((t.role || t.category) as string);
-                        t.category = formatRole((t.category || t.role) as string);
-                        seenUids.add(uid);
-                        if (email) seenEmails.add(email);
-                        if (normName) seenNames.add(normName);
-                        unique.push(t);
-                    }
+                if (!uid || seenUids.has(uid)) {
+                    continue;
+                }
+                if (email && seenEmails.has(email)) {
+                    continue;
+                }
+                if (normName && normName !== 'talent user' && normName !== 'discovery talent' && seenNames.has(normName)) {
+                    continue;
+                }
+                if (
+                    t.isAdmin === true ||
+                    (t.role && t.role.toLowerCase() === 'admin') ||
+                    (t.category && t.category.toLowerCase() === 'admin') ||
+                    email === 'aniltimilsena53@gmail.com'
+                ) {
+                    continue;
                 }
 
-                for (const t of unique) {
-                    const u = t as any;
-                    const uid = (u.uid || u.id || '') as string;
-                    const uName = (u.username || '').toLowerCase().trim();
-                    const uEmail = (u.email || '').toLowerCase().trim();
-
-                    const rawDocFollowers = u.followersCount ?? u.followerCount ?? (Array.isArray(u.followers) ? u.followers.length : u.followers);
-                    const docFollowers = typeof rawDocFollowers === 'number' && !isNaN(rawDocFollowers) ? rawDocFollowers : 0;
-                    const liveFollowers = (uid && followsCountsMap[uid]) || (uName && followsCountsMap[uName]) || (uEmail && followsCountsMap[uEmail]) || 0;
-                    const finalFollowers = Math.max(docFollowers, liveFollowers);
-
-                    const rawDocFollowing = u.followingCount ?? u.following ?? (Array.isArray(u.following) ? u.following.length : 0);
-                    const docFollowing = typeof rawDocFollowing === 'number' && !isNaN(rawDocFollowing) ? rawDocFollowing : 0;
-                    const liveFollowing = (uid && followingCountsMap[uid]) || (uName && followingCountsMap[uName]) || (uEmail && followingCountsMap[uEmail]) || 0;
-                    const finalFollowing = Math.max(docFollowing, liveFollowing);
-
-                    u.followers = finalFollowers;
-                    u.followersCount = finalFollowers;
-                    u.following = finalFollowing;
-                    u.followingCount = finalFollowing;
+                if (name || t.role || t.category || t.bio) {
+                    t.role = formatRole((t.role || t.category) as string);
+                    t.category = formatRole((t.category || t.role) as string);
+                    seenUids.add(uid);
+                    if (email) seenEmails.add(email);
+                    if (normName) seenNames.add(normName);
+                    unique.push(t);
                 }
+            }
 
-                unique.sort((a: any, b: any) => ((a.name || '').localeCompare(b.name || '')));
-                return unique;
-            };
+            for (const t of unique) {
+                const u = t as any;
+                const rawDocFollowers = u.followersCount ?? u.followerCount ?? (Array.isArray(u.followers) ? u.followers.length : u.followers);
+                const docFollowers = typeof rawDocFollowers === 'number' && !isNaN(rawDocFollowers) ? rawDocFollowers : 0;
 
-            let profilesDocs: any[] = [];
-            let usersDocs: any[] = [];
+                const rawDocFollowing = u.followingCount ?? u.following ?? (Array.isArray(u.following) ? u.following.length : 0);
+                const docFollowing = typeof rawDocFollowing === 'number' && !isNaN(rawDocFollowing) ? rawDocFollowing : 0;
 
-            const mergeAndEmit = () => {
+                u.followers = docFollowers;
+                u.followersCount = docFollowers;
+                u.following = docFollowing;
+                u.followingCount = docFollowing;
+            }
+
+            unique.sort((a: any, b: any) => ((a.name || '').localeCompare(b.name || '')));
+            return unique;
+        };
+
+        let profilesDocs: any[] = [];
+        let usersDocs: any[] = [];
+        let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+        const mergeAndEmit = () => {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
                 const combinedMap = new Map<string, any>();
                 for (const d of usersDocs) {
                     const data = typeof d.data === 'function' ? d.data() : d;
@@ -197,50 +205,36 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
 
                 const talents = processSnapshotDocs(mergedDocs);
                 if (talents.length > 0) {
-                    saveRealTalents(talents);
-                    pooledCb(talents, null);
+                    saveRealTalents(talents, limitCount);
+                    pooledCb(talents.slice(0, limitCount), null);
                 }
-            };
+            }, 25);
+        };
 
-            const followsQuery = query(collection(db, COLLECTIONS.FOLLOWS));
-            const unsubFollows = onSnapshot(followsQuery, (followsSnap) => {
-                const fMap: Record<string, number> = {};
-                const ingMap: Record<string, number> = {};
-                followsSnap.docs.forEach((d) => {
-                    const data = d.data();
-                    const followerId = data.followerId || data.followerUid || data.userId || data.fromUserId;
-                    const followingId = data.followingId || data.followingUid || data.targetUserId || data.targetId || data.toUserId;
-                    if (followerId && followingId && followerId !== followingId) {
-                        fMap[followingId] = (fMap[followingId] || 0) + 1;
-                        ingMap[followerId] = (ingMap[followerId] || 0) + 1;
-                    }
-                });
-                followsCountsMap = fMap;
-                followingCountsMap = ingMap;
-                mergeAndEmit();
-            }, () => {});
-
-            const qProfiles = query(collection(db, COLLECTIONS.PROFILES));
-            const unsubProfiles = onSnapshot(qProfiles, (snapshot) => {
+        // Queries with explicit limits to prevent downloading the entire database
+        const qProfiles = query(collection(db, COLLECTIONS.PROFILES), limit(limitCount));
+        const unsubProfiles = onSnapshot(qProfiles, (snapshot) => {
+            profilesDocs = snapshot.docs;
+            mergeAndEmit();
+        }, (_error) => {
+            getDocs(qProfiles).then((snapshot) => {
                 profilesDocs = snapshot.docs;
                 mergeAndEmit();
-            }, (_error) => {
-                getDocs(qProfiles).then((snapshot) => {
-                    profilesDocs = snapshot.docs;
-                    mergeAndEmit();
-                }).catch(() => {});
+            }).catch(() => {
+                fetchFromApiFallback();
             });
+        });
 
-            const qUsers = query(collection(db, COLLECTIONS.USERS));
-            const unsubUsers = onSnapshot(qUsers, (snapshot) => {
+        const qUsers = query(collection(db, COLLECTIONS.USERS), limit(limitCount));
+        const unsubUsers = onSnapshot(qUsers, (snapshot) => {
+            usersDocs = snapshot.docs;
+            mergeAndEmit();
+        }, (_error) => {
+            getDocs(qUsers).then((snapshot) => {
                 usersDocs = snapshot.docs;
                 mergeAndEmit();
-            }, (_error) => {
-                getDocs(qUsers).then((snapshot) => {
-                    usersDocs = snapshot.docs;
-                    mergeAndEmit();
-                }).catch(() => {});
-            });
+            }).catch(() => {});
+        });
 
         const handleProfileUpdateEvent = (e: Event) => {
             const { uid, image } = (e as CustomEvent).detail || {};
@@ -259,8 +253,8 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
                         }
                         return t;
                     });
-                    saveRealTalents(updated);
-                    pooledCb(updated, null);
+                    saveRealTalents(updated, limitCount);
+                    pooledCb(updated.slice(0, limitCount), null);
                 }
             }
         };
@@ -270,10 +264,10 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void) => {
         }
 
         return () => {
+            if (debounceTimer) clearTimeout(debounceTimer);
             if (typeof window !== 'undefined') {
                 window.removeEventListener('nc-profile-updated', handleProfileUpdateEvent);
             }
-            unsubFollows();
             unsubProfiles();
             unsubUsers();
         };
@@ -334,15 +328,33 @@ export const notifyProfileUpdated = (uid: string, imageUrl?: string, updatedData
         updated = [newTalent, ...saved];
     }
     saveRealTalents(updated);
+    cacheManager.invalidateCache("talents_list");
+    cacheManager.reemit("talents_list_limit_50", updated.slice(0, 50));
     cacheManager.reemit("talents_list_all", updated);
     cacheManager.invalidateCache(`profile_${uid}`);
     cacheManager.invalidateCache(`profile_sub_${uid}`);
 };
 
 export const notifyFollowUpdated = (targetUid: string) => {
-    cacheManager.invalidateCache("talents_list_all");
+    cacheManager.invalidateCache("talents_list");
     cacheManager.invalidateCache(`profile_${targetUid}`);
     cacheManager.invalidateCache(`user_follows_${targetUid}`);
+};
+
+export const fetchTalentsPaginated = async (lastVisibleDoc: DocumentSnapshot | null = null, pageSize: number = 20) => {
+    try {
+        const q = lastVisibleDoc
+            ? query(collection(db, COLLECTIONS.PROFILES), startAfter(lastVisibleDoc), limit(pageSize))
+            : query(collection(db, COLLECTIONS.PROFILES), limit(pageSize));
+        const snap = await getDocs(q);
+        const docs = snap.docs;
+        const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;
+        const items = docs.map(d => ({ id: d.id, uid: d.id, ...d.data() }));
+        return { items, lastDoc, hasMore: docs.length === pageSize };
+    } catch (err) {
+        console.error("fetchTalentsPaginated error:", err);
+        return { items: [], lastDoc: null, hasMore: false };
+    }
 };
 
 

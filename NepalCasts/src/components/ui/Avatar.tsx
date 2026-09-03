@@ -13,7 +13,7 @@ import { Camera, Upload, Trash2 } from 'lucide-react';
 
 import ConfirmDialog from './ConfirmDialog';
 import CropModal from './CropModal';
-import { getOptimizedImageUrl } from '../../utils/media';
+import { getOptimizedImageUrl, getAvatarOptimizedUrl } from '../../utils/media';
 interface AvatarProps {
     src?: string | null;
     size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | number | string;
@@ -292,7 +292,7 @@ export default function Avatar(props: AvatarProps) {
               {!imageLoaded && <div className="absolute inset-0 skeleton rounded-full" />}
               <img
                 ref={imgRef}
-                src={getOptimizedImageUrl(currentSrc, { width: 320, quality: 'auto', format: 'auto' })}
+                src={getAvatarOptimizedUrl(currentSrc, size)}
                 alt={name || 'User avatar'}
                 loading="lazy"
                 decoding="async"

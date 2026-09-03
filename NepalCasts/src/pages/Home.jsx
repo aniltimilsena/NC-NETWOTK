@@ -10,15 +10,15 @@ import { AvatarScrollSkeleton } from '../components/ui/Skeleton';
 import PullToRefresh from '../components/ui/PullToRefresh';
 import { ChevronRight, Pin } from 'lucide-react';
 import { getOptimizedImageUrl, getImageSrcSet } from '../utils/media';
-import { prefetchRoute } from '../utils/prefetchRoute';
+import { prefetchRoute, prefetchProfile, prefetchCasting } from '../utils/prefetchRoute';
 
 /* eslint-disable no-secrets/no-secrets */
 const HERO_BACKGROUND_PHOTOS = [
-  'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1920&q=80',
-  'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1920&q=80',
-  'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=1920&q=80',
-  'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1920&q=80',
-  'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1200&q=75',
+  'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1200&q=75',
+  'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=1200&q=75',
+  'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1200&q=75',
+  'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=1200&q=75',
 ];
 /* eslint-enable no-secrets/no-secrets */
 
@@ -250,17 +250,20 @@ export default function Home({ onNavigate, user }) {
   useEffect(() => {
     let unsubUsers = () => { };
     let unsubCalls = () => { };
+    let unsubDeferredUsers = () => { };
+    let deferredTimer = null;
 
-    const loaderTimeout = setTimeout(() => setIsLoading(false), 3000);
+    const loaderTimeout = setTimeout(() => setIsLoading(false), 2000);
 
     try {
+      // Stage 1: Critical above-the-fold batch (fast LCP & instantaneous load)
       unsubUsers = subscribeToTalents((data) => {
         if (Array.isArray(data)) {
           setTalents(data);
           setTalentsReceived(true);
         }
         setIsLoading(false);
-      });
+      }, 12);
 
       unsubCalls = subscribeToCastingCalls('All', (data, error) => {
         if (error) {
@@ -268,7 +271,24 @@ export default function Home({ onNavigate, user }) {
         }
         if (data) setCastingCalls(data);
         setIsLoading(false);
-      });
+      }, 6);
+
+      // Stage 2: Deferred below-the-fold batch (expanded pool for Trending/New carousels)
+      const scheduleDeferred = () => {
+        deferredTimer = setTimeout(() => {
+          unsubDeferredUsers = subscribeToTalents((moreData) => {
+            if (Array.isArray(moreData) && moreData.length > 0) {
+              setTalents(moreData);
+            }
+          }, 30);
+        }, 1200);
+      };
+
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        window.requestIdleCallback(() => scheduleDeferred(), { timeout: 2000 });
+      } else {
+        scheduleDeferred();
+      }
     } catch (err) {
       console.error("Critical subscription crash:", err);
       setIsLoading(false);
@@ -276,8 +296,10 @@ export default function Home({ onNavigate, user }) {
 
     return () => {
       clearTimeout(loaderTimeout);
+      if (deferredTimer) clearTimeout(deferredTimer);
       if (typeof unsubUsers === 'function') unsubUsers();
       if (typeof unsubCalls === 'function') unsubCalls();
+      if (typeof unsubDeferredUsers === 'function') unsubDeferredUsers();
     };
   }, []);
 
@@ -459,6 +481,9 @@ export default function Home({ onNavigate, user }) {
                   key={heroImageIdx}
                   src={HERO_BACKGROUND_PHOTOS[heroImageIdx]}
                   alt="NepalCasts Hero"
+                  fetchPriority={heroImageIdx === 0 ? "high" : "auto"}
+                  loading={heroImageIdx === 0 ? "eager" : "lazy"}
+                  decoding="async"
                   initial={{ opacity: 0, scale: 1.06 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
@@ -492,6 +517,8 @@ export default function Home({ onNavigate, user }) {
                     exit={{ opacity: 0, x: 8, scale: 0.97 }}
                     transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                     className="flex items-end gap-2.5 sm:gap-3.5 cursor-pointer group"
+                    onMouseEnter={() => currentSpotlightUser?.id && prefetchProfile(currentSpotlightUser.id)}
+                    onTouchStart={() => currentSpotlightUser?.id && prefetchProfile(currentSpotlightUser.id)}
                     onClick={() => {
                       if (currentSpotlightUser?.id) {
                         onNavigate('profile', currentSpotlightUser.id);
@@ -578,9 +605,9 @@ export default function Home({ onNavigate, user }) {
                       <div
                         key={call.id}
                         onClick={() => onNavigate('casting-detail', call.id)}
-                        onMouseEnter={() => prefetchRoute('casting-detail')}
-                        onTouchStart={() => prefetchRoute('casting-detail')}
-                        className="flex flex-col shrink-0 w-[46vw] sm:w-52 md:w-60 cursor-pointer"
+                        onMouseEnter={() => prefetchCasting(call.id)}
+                        onTouchStart={() => prefetchCasting(call.id)}
+                        className="flex flex-col shrink-0 w-[46vw] sm:w-52 md:w-60 cursor-pointer cv-auto-card"
                       >
                         {/* Borderless Tall Cinematic Poster Thumbnail (Half Mobile Screen Coverage) */}
                         <div className="relative w-full aspect-[9/14] rounded-t-2xl rounded-b-none overflow-hidden bg-black shadow-md">
@@ -702,7 +729,9 @@ export default function Home({ onNavigate, user }) {
                     <div
                       key={talent.id}
                       onClick={() => onNavigate('profile', talent.id)}
-                      className="flex flex-col items-center shrink-0 w-[calc((100vw-36px)/2.5)] sm:w-36 cursor-pointer"
+                      onMouseEnter={() => prefetchProfile(talent.id)}
+                      onTouchStart={() => prefetchProfile(talent.id)}
+                      className="flex flex-col items-center shrink-0 w-[calc((100vw-36px)/2.5)] sm:w-36 cursor-pointer cv-auto-item"
                     >
                       <Avatar
                         userId={talent.id || talent.uid}
@@ -821,7 +850,9 @@ export default function Home({ onNavigate, user }) {
                     <div
                       key={talent.id || idx}
                       onClick={() => onNavigate('profile', talent.id)}
-                      className="flex items-center gap-3 sm:gap-4 py-1.5 cursor-pointer"
+                      onMouseEnter={() => prefetchProfile(talent.id)}
+                      onTouchStart={() => prefetchProfile(talent.id)}
+                      className="flex items-center gap-3 sm:gap-4 py-1.5 cursor-pointer cv-auto-item"
                     >
                       {/* Rank Number */}
                       <span className="text-2xl sm:text-3xl font-black text-white w-6 text-center shrink-0">
@@ -910,7 +941,9 @@ export default function Home({ onNavigate, user }) {
                     <div
                       key={talent.id || idx}
                       onClick={() => onNavigate('profile', talent.id)}
-                      className="flex items-center gap-3 sm:gap-4 py-1.5 cursor-pointer"
+                      onMouseEnter={() => prefetchProfile(talent.id)}
+                      onTouchStart={() => prefetchProfile(talent.id)}
+                      className="flex items-center gap-3 sm:gap-4 py-1.5 cursor-pointer cv-auto-item"
                     >
                       {/* Rank Number */}
                       <span className="text-2xl sm:text-3xl font-black text-white w-6 text-center shrink-0">

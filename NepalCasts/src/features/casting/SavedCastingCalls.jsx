@@ -254,7 +254,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                   <div
                     key={call.saveId}
                     onClick={() => handleViewDetails(call.castingId)}
-                    className="bg-black rounded-2xl border border-white/5 overflow-hidden cursor-pointer flex flex-row shadow-xl"
+                    className="bg-black rounded-2xl border border-white/5 overflow-hidden cursor-pointer flex flex-row shadow-xl cv-auto-card"
                   >
                     {/* Full-Bleed Poster Thumbnail (No empty black padding around it) */}
                     <div className="w-28 sm:w-40 md:w-44 self-stretch relative shrink-0 bg-[#121212] overflow-hidden flex items-center justify-center">

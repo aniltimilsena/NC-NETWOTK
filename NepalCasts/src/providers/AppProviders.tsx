@@ -11,9 +11,7 @@ import { updateProfileData } from '../features/profile/services/profile';
 import { isDefaultImage } from '../utils/avatars';
 import { PermissionProvider } from '../context/PermissionContext';
 import { CallProvider } from '../context/CallContext';
-import { initOneSignal, oneSignalInitialized } from '../utils/oneSignal';
 import { preloadNotificationSound } from '../utils/notification-sound';
-import OneSignal from 'react-onesignal';
 import SplashScreen from '../components/SplashScreen';
 const CallingOverlay = lazy(() => import('../features/call/components/CallingOverlay'));
 const IncomingCallPopup = lazy(() => import('../features/call/components/IncomingCallPopup'));
@@ -146,13 +144,17 @@ export default function AppProviders({ children }: {
     useEffect(() => {
         let idleHandle: any = null;
         let timeoutHandle: any = null;
+        const triggerInit = () => {
+            import('../utils/oneSignal').then(m => m.initOneSignal()).catch(() => {});
+        };
+
         if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
             idleHandle = (window as any).requestIdleCallback(() => {
-                initOneSignal();
+                triggerInit();
             }, { timeout: 3000 });
         } else {
             timeoutHandle = setTimeout(() => {
-                initOneSignal();
+                triggerInit();
             }, 2500);
         }
         return () => {
@@ -189,7 +191,7 @@ export default function AppProviders({ children }: {
 
             (async () => {
                 try {
-                    if (oneSignalInitialized) { await OneSignal.login(uid); }
+                    import('../utils/oneSignal').then(m => m.loginOneSignal(uid)).catch(() => {});
                 } catch (e) { console.warn("OneSignal login failed:", e); }
                 try {
                     if (!auth.currentUser) {
@@ -281,8 +283,7 @@ export default function AppProviders({ children }: {
             setUserProfile(null);
             setIsAdmin(false);
             try {
-                if (oneSignalInitialized)
-                    OneSignal.logout();
+                import('../utils/oneSignal').then(m => m.logoutOneSignal()).catch(() => {});
             }
             catch (e) {
                 // Ignore OneSignal logout error on auth check

@@ -54,66 +54,60 @@ export default defineConfig({
       }
     }
   },
+  esbuild: {
+    drop: ['console', 'debugger'],
+    legalComments: 'none',
+  },
   build: {
     sourcemap: false,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
-        drop_debugger: true,
-        passes: 2,
-      },
-      mangle: true,
-      format: {
-        comments: false,
-      },
-    },
+    minify: 'oxc',
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('@firebase/firestore') || id.includes('firebase/firestore')) {
+          const normId = id.replace(/\\/g, '/');
+          if (normId.includes('@firebase/firestore') || normId.includes('firebase/firestore')) {
             return 'vendor-firebase-firestore';
           }
-          if (id.includes('@firebase/storage') || id.includes('firebase/storage')) {
+          if (normId.includes('@firebase/storage') || normId.includes('firebase/storage')) {
             return 'vendor-firebase-storage';
           }
-          if (id.includes('@firebase/auth') || id.includes('firebase/auth')) {
+          if (normId.includes('@firebase/auth') || normId.includes('firebase/auth')) {
             return 'vendor-firebase-auth';
           }
-          if (id.includes('@firebase/functions') || id.includes('firebase/functions')) {
+          if (normId.includes('@firebase/functions') || normId.includes('firebase/functions')) {
             return 'vendor-firebase-functions';
           }
-          if (id.includes('firebase')) {
+          if (normId.includes('firebase')) {
             return 'vendor-firebase-core';
           }
-          if (id.includes('node_modules/lucide-react/')) {
+          if (normId.includes('node_modules/lucide-react/')) {
             return 'vendor-lucide';
           }
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router') || id.includes('node_modules/react-helmet-async/')) {
+          if (normId.includes('node_modules/react/') || normId.includes('node_modules/react-dom/') || normId.includes('node_modules/react-router') || normId.includes('node_modules/react-helmet-async/')) {
             return 'vendor-react';
           }
-          if (id.includes('node_modules/@clerk/')) {
+          if (normId.includes('node_modules/@clerk/')) {
             return 'vendor-clerk';
           }
-          if (id.includes('node_modules/framer-motion/')) {
+          if (normId.includes('node_modules/framer-motion/')) {
             return 'vendor-framer';
           }
-          if (id.includes('node_modules/react-onesignal/') || id.includes('node_modules/onesignal/')) {
+          if (normId.includes('node_modules/react-onesignal/') || normId.includes('node_modules/onesignal/')) {
             return 'vendor-onesignal';
           }
-          if (id.includes('node_modules/i18next/') || id.includes('node_modules/react-i18next/')) {
+          if (normId.includes('node_modules/i18next/') || normId.includes('node_modules/react-i18next/')) {
             return 'vendor-i18n';
           }
-          if (id.includes('node_modules/axios/')) {
+          if (normId.includes('node_modules/axios/')) {
             return 'vendor-axios';
           }
-          if (id.includes('node_modules/@radix-ui/')) {
+          if (normId.includes('node_modules/@radix-ui/')) {
             return 'vendor-radix';
           }
-          if (id.includes('node_modules/tailwind-merge/') || id.includes('node_modules/clsx/') || id.includes('node_modules/class-variance-authority/')) {
+          if (normId.includes('node_modules/tailwind-merge/') || normId.includes('node_modules/clsx/') || normId.includes('node_modules/class-variance-authority/')) {
             return 'vendor-utils';
           }
-          if (id.includes('node_modules/browser-image-compression/')) {
+          if (normId.includes('node_modules/browser-image-compression/')) {
             return 'vendor-compression';
           }
         }

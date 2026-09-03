@@ -1,35 +1,122 @@
 export interface ImageOptimizationOptions {
   width?: number;
   height?: number;
-  quality?: 'auto' | number;
+  quality?: 'auto' | 'good' | 'eco' | number;
   format?: 'auto' | 'webp' | 'avif' | 'jpg';
   crop?: 'fill' | 'fit' | 'scale' | 'thumb';
+  dpr?: number | string;
 }
 
 export function getOptimizedImageUrl(url?: string | null, options: ImageOptimizationOptions = {}): string {
-  if (!url || typeof url !== 'string') return '';
-  
-  if (!url.includes('res.cloudinary.com')) {
-    return url;
+  if (!url || typeof url !== 'string' || url.trim() === '') return '';
+  const trimmed = url.trim();
+
+  // 1. Unsplash Images Optimization
+  if (trimmed.includes('images.unsplash.com')) {
+    try {
+      const u = new URL(trimmed);
+      u.searchParams.set('auto', 'format');
+      u.searchParams.set('fit', options.crop === 'fit' ? 'max' : 'crop');
+      if (options.width) u.searchParams.set('w', options.width.toString());
+      if (options.height) u.searchParams.set('h', options.height.toString());
+      const q = typeof options.quality === 'number' ? options.quality : 75;
+      u.searchParams.set('q', q.toString());
+      return u.toString();
+    } catch (_e) {
+      return trimmed;
+    }
   }
 
-  if (url.includes('/f_auto,q_auto')) {
-    return url;
+  // 2. Google User Avatars Optimization (=s96-c param)
+  if (trimmed.includes('googleusercontent.com')) {
+    const targetSize = options.width || options.height || 120;
+    if (/=s\d+(-c)?/.test(trimmed)) {
+      return trimmed.replace(/=s\d+(-c)?/, `=s${targetSize}-c`);
+    }
+    return `${trimmed}=s${targetSize}-c`;
   }
 
-  const { width, height, quality = 'auto', format = 'auto', crop = 'fill' } = options;
-  const transforms: string[] = [`f_${format}`, `q_${quality}`];
+  // 3. Cloudinary CDN Transformation
+  if (trimmed.includes('res.cloudinary.com') && trimmed.includes('/upload/')) {
+    const { width, height, quality = 'auto', format = 'auto', crop = 'fill', dpr } = options;
+    const transforms: string[] = [`f_${format}`, `q_${quality}`];
 
-  if (width) transforms.push(`w_${width}`);
-  if (height) transforms.push(`h_${height}`);
-  if (width || height) transforms.push(`c_${crop}`);
+    if (width) transforms.push(`w_${width}`);
+    if (height) transforms.push(`h_${height}`);
+    if (width || height || crop) transforms.push(`c_${crop}`);
+    if (dpr) transforms.push(`dpr_${dpr}`);
 
-  const transformString = transforms.join(',');
-  return url.replace('/upload/', `/upload/${transformString}/`);
+    const transformString = transforms.join(',');
+
+    // If already has transformation parameters right after /upload/, replace or inject cleanly
+    const uploadIdx = trimmed.indexOf('/upload/');
+    if (uploadIdx !== -1) {
+      const prefix = trimmed.slice(0, uploadIdx + 8);
+      const rest = trimmed.slice(uploadIdx + 8);
+
+      // Check if already transformed with existing f_ or w_ parameters
+      const firstSlashIdx = rest.indexOf('/');
+      if (firstSlashIdx !== -1) {
+        const potentialTransform = rest.slice(0, firstSlashIdx);
+        if (potentialTransform.includes('f_') || potentialTransform.includes('w_') || potentialTransform.includes('q_') || potentialTransform.includes('c_')) {
+          // Replace existing transformation segment
+          return `${prefix}${transformString}/${rest.slice(firstSlashIdx + 1)}`;
+        }
+      }
+      return `${prefix}${transformString}/${rest}`;
+    }
+  }
+
+  return trimmed;
+}
+
+export type AvatarSizeVariant = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | number | string;
+
+export function getAvatarOptimizedUrl(url?: string | null, size: AvatarSizeVariant = 'md'): string {
+  if (!url) return '';
+  let pixelWidth = 120;
+
+  if (typeof size === 'number') {
+    pixelWidth = Math.round(size * 2); // 2x for Retina displays
+  } else if (typeof size === 'string') {
+    switch (size) {
+      case 'xs':
+        pixelWidth = 64;
+        break;
+      case 'sm':
+        pixelWidth = 80;
+        break;
+      case 'md':
+        pixelWidth = 120;
+        break;
+      case 'lg':
+        pixelWidth = 160;
+        break;
+      case 'xl':
+        pixelWidth = 240;
+        break;
+      case '2xl':
+        pixelWidth = 320;
+        break;
+      default: {
+        const parsed = parseInt(size, 10);
+        pixelWidth = !isNaN(parsed) && parsed > 0 ? Math.round(parsed * 2) : 120;
+        break;
+      }
+    }
+  }
+
+  return getOptimizedImageUrl(url, {
+    width: pixelWidth,
+    height: pixelWidth,
+    crop: 'fill',
+    quality: 'auto',
+    format: 'auto',
+  });
 }
 
 export function getImageSrcSet(url?: string | null, widths: number[] = [400, 800, 1200]): string {
-  if (!url || typeof url !== 'string' || !url.includes('res.cloudinary.com')) {
+  if (!url || typeof url !== 'string') {
     return '';
   }
   return widths

@@ -62,7 +62,9 @@ export const uploadFile = async (file: File, path: string, onProgress?: (p: numb
     }
     if (isImage) {
         try {
-            const optResult = await mediaOptimizer.optimizeImage(file);
+            const isCover = path.endsWith("cover.jpg");
+            const contextType = isProfilePath ? (isCover ? 'cover' : 'avatar') : isCastingPath ? 'banner' : isMediaPath ? 'portfolio' : 'general';
+            const optResult = await mediaOptimizer.optimizeImage(file, contextType);
             fileToUpload = optResult.file;
         }
         catch (compressionError) {

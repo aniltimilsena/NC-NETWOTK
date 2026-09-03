@@ -17,7 +17,7 @@ export interface VideoMetadataResult {
     previewUrl: string;
 }
 export class MediaOptimizer {
-    public async optimizeImage(file: File): Promise<OptimizedImageResult> {
+    public async optimizeImage(file: File, context: 'avatar' | 'cover' | 'banner' | 'portfolio' | 'general' = 'general'): Promise<OptimizedImageResult> {
         const tStart = performance.now();
         const origSize = file.size;
         const origMb = (origSize / (1024 * 1024)).toFixed(2);
@@ -36,20 +36,32 @@ export class MediaOptimizer {
         }
         let targetMaxSizeMb = 0.8;
         let maxDim = 1920;
-        if (origSize > 10 * 1024 * 1024) {
-            targetMaxSizeMb = 2.0;
-            maxDim = 2560;
-        }
-        else if (origSize > 3 * 1024 * 1024) {
-            targetMaxSizeMb = 1.0;
+
+        if (context === 'avatar') {
+            targetMaxSizeMb = 0.35;
+            maxDim = 800;
+        } else if (context === 'cover' || context === 'banner') {
+            targetMaxSizeMb = 0.75;
             maxDim = 1920;
+        } else if (context === 'portfolio') {
+            targetMaxSizeMb = 0.9;
+            maxDim = 1600;
+        } else {
+            if (origSize > 10 * 1024 * 1024) {
+                targetMaxSizeMb = 1.5;
+                maxDim = 2048;
+            } else if (origSize > 3 * 1024 * 1024) {
+                targetMaxSizeMb = 0.9;
+                maxDim = 1600;
+            }
         }
+
         const options = {
             maxSizeMB: targetMaxSizeMb,
             maxWidthOrHeight: maxDim,
             useWebWorker: true,
             preserveExif: true,
-            initialQuality: 0.88,
+            initialQuality: 0.85,
             fileType: "image/webp",
         };
         try {

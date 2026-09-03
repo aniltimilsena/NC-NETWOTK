@@ -10,9 +10,13 @@ import { addToBloomFilter } from '../services/cacheService';
 import type { AuthedRequest } from '../types';
 const router = Router();
 
-const getPublicProfilesHandler = async (_req: any, res: Response): Promise<any> => {
+const getPublicProfilesHandler = async (req: any, res: Response): Promise<any> => {
     try {
-        const snapshot = await db.collection('profiles').limit(50).get();
+        const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+        const limitCount = Math.min(50, Math.max(1, parseInt(req.query.limit as string, 10) || 12));
+        const offset = (page - 1) * limitCount;
+
+        const snapshot = await db.collection('profiles').offset(offset).limit(limitCount).get();
         const talents = snapshot.docs
             .map(doc => {
                 const data = doc.data() || {};
@@ -30,7 +34,13 @@ const getPublicProfilesHandler = async (_req: any, res: Response): Promise<any> 
                 };
             })
             .filter((t: any) => t.name && t.name.trim() !== '');
-        return res.json({ success: true, talents });
+        return res.json({ 
+            success: true, 
+            talents, 
+            page, 
+            limit: limitCount, 
+            hasMore: snapshot.docs.length === limitCount 
+        });
     } catch (error: any) {
         console.error('[PublicProfiles] Firestore query error:', error?.message || error);
         // Return 200 with empty array fallback so client proxy never encounters 500/502

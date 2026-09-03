@@ -42,10 +42,10 @@ service cloud.firestore {
       allow delete: if isOwner(profileId) || isAdmin();
 
       match /login_history/{historyId} {
-        allow read, write: if true;
+        allow read, write: if isOwner(profileId) || isAdmin();
       }
       match /sessions/{sessionId} {
-        allow read, write: if true;
+        allow read, write: if isOwner(profileId) || isAdmin();
       }
     }
 
@@ -115,13 +115,13 @@ service cloud.firestore {
 
     // --- SENSITIVE CONTACT INFO ---
     match /contact_info/{userId} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow write: if isOwner(userId) || isAdmin() || validUserCreate();
     }
 
     // --- ADMIN LOGS & TOKENS ---
     match /one_time_tokens/{tokenId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn() || isAdmin();
     }
 
     match /admin_logs/{logId} {

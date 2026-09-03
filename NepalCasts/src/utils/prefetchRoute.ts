@@ -1,6 +1,6 @@
 /**
  * Intelligent Route & Chunk Pre-fetching Utility
- * Preloads route JS and CSS bundles on hover/touch before user clicks
+ * Preloads route JS, CSS bundles, and Firestore documents on hover/touch before user clicks
  */
 
 const routeLoaders: Record<string, () => Promise<any>> = {
@@ -23,6 +23,7 @@ const routeLoaders: Record<string, () => Promise<any>> = {
 };
 
 const prefetched = new Set<string>();
+const prefetchedProfiles = new Set<string>();
 
 export function prefetchRoute(route: string): void {
   if (!route) return;
@@ -36,6 +37,40 @@ export function prefetchRoute(route: string): void {
       prefetched.delete(key);
     });
   }
+}
+
+/**
+ * Pre-warms both the profile route code chunk AND the Firestore profile document
+ * so clicking the card renders the profile page with 0ms perceived latency
+ */
+export function prefetchProfile(userId: string): void {
+  if (!userId || prefetchedProfiles.has(userId)) return;
+  prefetchedProfiles.add(userId);
+  prefetchRoute('profile');
+
+  // Pre-warm the profile document cache asynchronously
+  import('../features/profile/services/profile')
+    .then(({ subscribeToProfile }) => {
+      const unsub = subscribeToProfile(userId, () => {});
+      // Auto-cleanup prewarm listener after 8 seconds
+      setTimeout(() => {
+        try {
+          unsub();
+        } catch {
+          // ignore prewarm cleanup
+        }
+      }, 8000);
+    })
+    .catch(() => {
+      // ignore import failure
+    });
+}
+
+/**
+ * Pre-warms casting detail route code chunk
+ */
+export function prefetchCasting(_callId?: string): void {
+  prefetchRoute('casting-detail');
 }
 
 /**

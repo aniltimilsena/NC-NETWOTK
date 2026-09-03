@@ -6,22 +6,16 @@ import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
 import { cacheManager } from "../../../utils/cacheManager";
+import { idbGet, idbSet, idbGetSync } from "../../../utils/idbStorage";
+
 const saveCastingCallsCache = (filter: string, limitCount: number, data: any[]) => {
-    try {
-        localStorage.setItem(`nc_calls_cache_${filter.toLowerCase()}_${limitCount}`, JSON.stringify(data.slice(0, 50)));
-    } catch (e) {
-        // ignore quota error
-    }
+    const key = `nc_calls_cache_${filter.toLowerCase()}_${limitCount}`;
+    idbSet(key, data.slice(0, 50));
 };
 
 const getCastingCallsCache = (filter: string, limitCount: number): any[] => {
-    try {
-        const v = localStorage.getItem(`nc_calls_cache_${filter.toLowerCase()}_${limitCount}`);
-        if (v) return JSON.parse(v);
-    } catch (e) {
-        // ignore error
-    }
-    return [];
+    const key = `nc_calls_cache_${filter.toLowerCase()}_${limitCount}`;
+    return idbGetSync<any[]>(key) || [];
 };
 
 export const subscribeToCastingCalls = (filter?: string | ((data: any, error?: any) => void), callback?: (data: any, error?: any) => void, limitCount: number = 20) => {
@@ -36,9 +30,16 @@ export const subscribeToCastingCalls = (filter?: string | ((data: any, error?: a
     }
     const poolKey = `casting_calls_${actualFilter.toLowerCase()}_limit_${limitCount}`;
     return cacheManager.subscribePooled(poolKey, (pooledCb) => {
+        const cacheKey = `nc_calls_cache_${actualFilter.toLowerCase()}_${limitCount}`;
         const saved = getCastingCallsCache(actualFilter, limitCount);
         if (saved.length > 0) {
             pooledCb(saved, null);
+        } else {
+            idbGet<any[]>(cacheKey).then((asyncSaved) => {
+                if (asyncSaved && asyncSaved.length > 0) {
+                    pooledCb(asyncSaved, null);
+                }
+            });
         }
 
         let q;
