@@ -763,31 +763,22 @@ export default function Home({ onNavigate, user }) {
 
             {/* ================= TALENTS BY CATEGORY SECTION ================= */}
             <section
-              className="relative w-full rounded-2xl overflow-hidden p-3.5 sm:p-5 shadow-md select-none border-0"
-              style={{
-                background: 'linear-gradient(135deg, #1fb5cf 0%, #38bdf8 52%, #2dd4bf 100%)',
-              }}
+              className="relative w-full rounded-2xl overflow-hidden p-3.5 sm:p-5 shadow-md select-none border-0 bg-black bg-gradient-to-r from-[#522C69] to-[#522C69]/20"
             >
-              {/* Curved organic glowing wave highlight matching our goals card */}
-              <div className="absolute right-0 top-0 bottom-0 w-3/5 pointer-events-none overflow-hidden">
-                <div className="absolute -right-16 -top-20 w-[140%] h-[180%] rounded-[50%] bg-gradient-to-br from-white/30 via-white/10 to-transparent blur-xl" />
-                <div className="absolute -right-6 top-1/4 w-[100%] h-[120%] rounded-full bg-cyan-100/25 blur-2xl" />
-              </div>
-
               <div className="relative z-10 space-y-3">
                 <div className="flex items-start justify-between gap-3 mb-1">
                   <div className="space-y-1">
                     <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
-                      <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
+                      <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-white/80 to-white/10 rounded-full pointer-events-none" />
                       Talents by category
                     </span>
-                    <p className="text-xs sm:text-sm md:text-base text-slate-900 font-semibold drop-shadow-sm">
+                    <p className="text-xs sm:text-sm md:text-base text-gray-300 font-normal drop-shadow-sm">
                       Explore skilled professionals across every creative discipline
                     </p>
                   </div>
                   <button
                     onClick={() => onNavigate('discover')}
-                    className="text-slate-900 hover:text-black text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
+                    className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
                   >
                     <span>View all</span>
                     <ChevronRight className="w-4 h-4" />
