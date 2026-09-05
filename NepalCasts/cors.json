@@ -1,8 +1,22 @@
 [
   {
-    "origin": ["http://localhost:5173", "http://localhost:5000"],
-    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
-    "responseHeader": ["Content-Type", "x-goog-resumable"],
+    "origin": [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://nc-network-10d0b.web.app",
+      "https://nc-network-10d0b.firebaseapp.com",
+      "https://nepalcasts.com",
+      "https://www.nepalcasts.com"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "Content-Length",
+      "User-Agent",
+      "x-goog-resumable",
+      "x-goog-meta-*"
+    ],
     "maxAgeSeconds": 3600
   }
 ]

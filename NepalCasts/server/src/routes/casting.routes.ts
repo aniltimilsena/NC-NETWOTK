@@ -41,10 +41,48 @@ router.get('/castings/:id', verifyToken, scrapingPreventerMiddleware, bloomFilte
             .collection('casting_calls')
             .doc(req.params.id)
             .get();
-        if (!castingDoc.exists) {
-            return res.status(404).json({ error: 'Casting call not found' });
+        const castingData = castingDoc.data() || {};
+        const creatorId = castingData.createdBy || castingData.creatorId || castingData.created_by || castingData.user_id;
+        let creatorProfile: Record<string, any> | null = null;
+        if (creatorId) {
+            let profileSnap = await db.collection('profiles').doc(creatorId).get();
+            if (profileSnap.exists && (profileSnap.data()?.linkedUid || profileSnap.data()?.canonicalUid)) {
+                const targetId = profileSnap.data()?.linkedUid || profileSnap.data()?.canonicalUid;
+                const canonicalSnap = await db.collection('profiles').doc(targetId).get();
+                if (canonicalSnap.exists) {
+                    profileSnap = canonicalSnap;
+                }
+            }
+            if (profileSnap.exists) {
+                const pData = profileSnap.data() || {};
+                const userSnap = await db.collection('users').doc(profileSnap.id).get();
+                const uData = userSnap.exists ? userSnap.data() || {} : {};
+                creatorProfile = {
+                    id: profileSnap.id,
+                    uid: profileSnap.id,
+                    ...uData,
+                    ...pData,
+                };
+            } else {
+                const userSnap = await db.collection('users').doc(creatorId).get();
+                if (userSnap.exists) {
+                    creatorProfile = {
+                        id: userSnap.id,
+                        uid: userSnap.id,
+                        ...userSnap.data(),
+                    };
+                }
+            }
         }
-        return res.json({ casting: castingDoc.data() });
+
+        return res.json({
+            casting: {
+                id: castingDoc.id,
+                ...castingData,
+                postedBy: creatorProfile,
+                creator: creatorProfile,
+            }
+        });
     }
     catch (error) {
         return res.status(500).json({ error: 'Server error' });
@@ -103,11 +141,32 @@ router.post('/casting', verifyToken, validateBody(CastingCallSchema), async (req
         return res.status(500).json({ error: message });
     }
 });
-router.delete('/casting/:id', verifyToken, isAdmin, async (req: AuthedRequest<{
+router.delete('/casting/:id', verifyToken, async (req: AuthedRequest<{
     id: string;
 }>, res: Response): Promise<any> => {
     try {
-        await db.collection('casting_calls').doc(req.params.id).delete();
+        const uid = req.user?.uid;
+        if (!uid) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        const docRef = db.collection('casting_calls').doc(req.params.id);
+        const existingDoc = await docRef.get();
+        if (!existingDoc.exists) {
+            return res.status(404).json({ error: 'Casting call not found' });
+        }
+        const data = existingDoc.data() || {};
+        const isOwner = Boolean(
+            data.createdBy === uid ||
+            data.creatorId === uid ||
+            data.created_by === uid ||
+            data.user_id === uid ||
+            (req.user?.email && data.creatorEmail && req.user.email.toLowerCase() === data.creatorEmail.toLowerCase())
+        );
+        const isUserAdmin = req.user?.isAdmin === true || req.user?.admin === true || req.user?.role?.toLowerCase() === 'admin';
+        if (!isOwner && !isUserAdmin) {
+            return res.status(403).json({ error: 'Forbidden: Only the creator of this casting call can delete it' });
+        }
+        await docRef.delete();
         deleteFromCacheByPattern(`casting:${req.params.id}`);
         return res.json({ success: true });
     }

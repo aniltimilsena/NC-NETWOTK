@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { collection, query, where, onSnapshot, doc, deleteDoc, limit } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, deleteDoc, limit, orderBy } from 'firebase/firestore';
 import { FileText, ChevronLeft, Clock, CheckCircle2, XCircle, AlertCircle, Trash2, ArrowRight } from 'lucide-react';
 import { getCastingCallById } from './services/casting';
 import { db } from '../../lib/firebase';
@@ -43,11 +43,17 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
     const q = query(
       collection(db, 'applications'),
       where('userId', '==', currentUser.uid),
+      orderBy('createdAt', 'desc'),
       limit(visibleLimit + 1)
     );
 
     const unsub = onSnapshot(q, async (snap) => {
       const docsData = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+      docsData.sort((a: any, b: any) => {
+        const t1 = a.data?.appliedAt?.toDate ? a.data.appliedAt.toDate().getTime() : (a.data?.createdAt?.toDate ? a.data.createdAt.toDate().getTime() : (new Date(a.data?.appliedAt || a.data?.createdAt || 0).getTime()));
+        const t2 = b.data?.appliedAt?.toDate ? b.data.appliedAt.toDate().getTime() : (b.data?.createdAt?.toDate ? b.data.createdAt.toDate().getTime() : (new Date(b.data?.appliedAt || b.data?.createdAt || 0).getTime()));
+        return t2 - t1;
+      });
       const hasMoreData = docsData.length > visibleLimit;
       const slicedDocs = hasMoreData ? docsData.slice(0, visibleLimit) : docsData;
       setHasMore(hasMoreData);

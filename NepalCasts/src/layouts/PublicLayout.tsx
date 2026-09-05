@@ -8,6 +8,22 @@ interface PublicLayoutProps {
     showAlert: any;
     showToast: any;
 }
+
+const RouteLoadingFallback = () => (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 animate-pulse space-y-6">
+        <div className="h-8 bg-white/5 rounded-2xl w-48 mb-8" />
+        <div className="h-4 bg-white/5 rounded-xl w-3/4" />
+        <div className="h-4 bg-white/5 rounded-xl w-full" />
+        <div className="h-4 bg-white/5 rounded-xl w-5/6" />
+        <div className="pt-8 space-y-4">
+            <div className="h-6 bg-white/5 rounded-xl w-40" />
+            <div className="h-4 bg-white/5 rounded-xl w-full" />
+            <div className="h-4 bg-white/5 rounded-xl w-11/12" />
+            <div className="h-4 bg-white/5 rounded-xl w-4/5" />
+        </div>
+    </div>
+);
+
 export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showToast, }: PublicLayoutProps) {
     const location = useLocation();
     const navigate = useNavigate();
@@ -102,7 +118,7 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
     return (<div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
         {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate} />)}
         <main className="flex-1 px-0 pb-0 min-h-0">
-            <Suspense fallback={<div className="min-h-screen bg-[#141414]" />}>
+            <Suspense fallback={<RouteLoadingFallback />}>
                 <Outlet context={{ user, isAdmin, showAlert, showToast }} />
             </Suspense>
         </main>

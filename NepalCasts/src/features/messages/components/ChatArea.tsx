@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import { PhoneOff, VideoOff, Phone, Video, Check, Trash2, ChevronLeft, X, Pin, PinOff, Clock, Copy, Download, Share2, ExternalLink, FileText } from 'lucide-react';
+import { PhoneOff, VideoOff, Phone, Video, Check, Trash2, ChevronLeft, X, Pin, PinOff, Clock, Copy, Download, Share2, ExternalLink, FileText, CornerUpLeft, Forward } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Avatar } from '../../../components/ui';
 import { saveImageDirectly } from '../../../utils/media';
@@ -16,6 +17,9 @@ interface ChatAreaProps {
     onReplyTo: (msg: Message) => void;
     onDeleteMessage?: (msgId: string) => void;
     onPinMessage?: (msgId: string) => void;
+    onReactToMessage?: (msgId: string, emoji: string) => void;
+    onForwardMessage?: (text: string, toConversationId: string) => Promise<void>;
+    conversations?: any[];
     onTogglePinnedDrawer?: () => void;
     isPinnedDrawerOpen?: boolean;
 }
@@ -43,10 +47,12 @@ const getMsgMs = (timestamp?: any) => {
         return 0;
     }
 };
-export default function ChatArea({ chat, messages, currentUser, typingUsers, onBack, onInitiateCall, onReplyTo, onDeleteMessage, onPinMessage, onTogglePinnedDrawer, isPinnedDrawerOpen }: ChatAreaProps) {
+export default function ChatArea({ chat, messages, currentUser, typingUsers, onBack, onInitiateCall, onReplyTo, onDeleteMessage, onPinMessage, onReactToMessage, onForwardMessage, conversations = [], onTogglePinnedDrawer, isPinnedDrawerOpen }: ChatAreaProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
     const [activeActionMessage, setActiveActionMessage] = useState<Message | null>(null);
+    const [popupPos, setPopupPos] = useState<{ top: number; left?: number; right?: number } | null>(null);
+    const [forwardMsg, setForwardMsg] = useState<string | null>(null);
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isLongPressActive = useRef(false);
     const isInitialMount = useRef(true);
@@ -81,15 +87,26 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
         };
     }, [otherParticipantId, chat?.online, chat?.isOnline]);
 
-    const startMessagePress = (msg: Message) => {
+    const startMessagePress = (msg: Message, el?: HTMLElement | null) => {
         isLongPressActive.current = false;
         longPressTimer.current = setTimeout(() => {
             isLongPressActive.current = true;
             if (window.navigator && window.navigator.vibrate) {
                 window.navigator.vibrate(60);
             }
+            // Compute fixed position from the element bounding rect
+            if (el) {
+                const rect = el.getBoundingClientRect();
+                const isRight = rect.left + rect.width / 2 > window.innerWidth / 2;
+                const top = Math.min(rect.bottom + 6, window.innerHeight - 280);
+                setPopupPos(
+                    isRight
+                        ? { top, right: window.innerWidth - rect.right }
+                        : { top, left: rect.left }
+                );
+            }
             setActiveActionMessage(msg);
-        }, 1000);
+        }, 350);
     };
 
     const endMessagePress = () => {
@@ -99,7 +116,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
         }
         setTimeout(() => {
             isLongPressActive.current = false;
-        }, 50);
+        }, 100);
     };
 
     useEffect(() => {
@@ -280,11 +297,11 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
             const marginClass = (isGroupedWithPrev || isGroupedWithNext) ? 'my-0.5' : 'my-2.5';
             const showAvatar = !isMe && !isGroupedWithNext;
             const showTimestamp = !isGroupedWithNext || msg.isPinned || msg.hasPendingWrites;
-            return (<div key={msg.id} className={`group flex items-end gap-2.5 max-w-[85%] sm:max-w-[75%] ${marginClass} ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'} cv-auto-chat`} onTouchStart={() => startMessagePress(msg)} onTouchEnd={endMessagePress} onTouchMove={endMessagePress} onMouseDown={(e) => {
+            return (<div key={msg.id} className={`group relative flex items-end gap-2.5 max-w-[85%] sm:max-w-[75%] ${marginClass} ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'} cv-auto-chat`} onTouchStart={(e) => startMessagePress(msg, e.currentTarget)} onTouchEnd={endMessagePress} onTouchMove={endMessagePress} onMouseDown={(e) => {
                     if (e.button !== 0)
                         return;
-                    startMessagePress(msg);
-                }} onMouseUp={endMessagePress} onMouseLeave={endMessagePress}>
+                    startMessagePress(msg, e.currentTarget);
+                }} onMouseUp={endMessagePress}>
                 
                 {!isMe && (<div className="shrink-0 mb-0.5">
                     {showAvatar ? (
@@ -409,18 +426,34 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                     <span>{msg.hasPendingWrites ? 'Sending...' : formatMessageTime(msg.createdAt)}</span>
                     {isMe && (msg.hasPendingWrites ? (<Clock className="w-3 h-3 text-nc-muted animate-pulse"/>) : (<Check className="w-3 h-3 text-white"/>))}
                   </div>)}
+
+                  {/* Reaction Bubbles */}
+                  {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                    <div className={`flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      {Object.entries(msg.reactions)
+                        .filter(([, uids]) => uids.length > 0)
+                        .map(([emoji, uids]) => {
+                          const iMine = uids.includes(currentUser?.uid);
+                          return (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => onReactToMessage?.(msg.id, emoji)}
+                              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] border transition-all cursor-pointer ${
+                                iMine
+                                  ? 'bg-purple-500/20 border-purple-500/40 text-white'
+                                  : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                              }`}
+                            >
+                              <span>{emoji}</span>
+                              {uids.length > 1 && <span className="text-[10px] font-medium ml-0.5">{uids.length}</span>}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  )}
                 </div>
 
-                <div className="self-center opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0">
-                  {onPinMessage && (<button onClick={() => onPinMessage(msg.id)} className={`p-1.5 hover:bg-white/5 rounded-lg transition-colors cursor-pointer ${msg.isPinned ? 'text-[#522C69]' : 'text-nc-muted hover:text-[#522C69]'}`} title={msg.isPinned ? 'Unpin Message' : 'Pin Message'}>
-                      {msg.isPinned
-                        ? <PinOff className="w-3.5 h-3.5"/>
-                        : <Pin className="w-3.5 h-3.5"/>}
-                    </button>)}
-                  {isMe && onDeleteMessage && (<button onClick={() => onDeleteMessage(msg.id)} className="p-1.5 hover:bg-white/5 rounded-lg text-nc-muted hover:text-red-500 transition-colors" title="Delete">
-                      <Trash2 className="w-3.5 h-3.5"/>
-                    </button>)}
-                </div>
               </div>);
         })) : (<div className="flex-1 w-full h-full flex flex-col items-center justify-center text-center p-6 my-auto text-nc-muted text-xs space-y-2.5">
             <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-1 border border-white/5">
@@ -448,114 +481,191 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
           </motion.div>)}
       </AnimatePresence>
 
-      
+      {/* Message Action Menu — compact, tight, justified */}
       <AnimatePresence>
-        {activeActionMessage && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveActionMessage(null)} className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, y: 15 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 15 }} transition={{ type: 'spring', damping: 25, stiffness: 350 }} className="bg-[#121216] border border-white/10 rounded-2xl w-full max-w-xs overflow-hidden shadow-2xl p-4 sm:p-5 space-y-3 text-left" onClick={(e) => e.stopPropagation()}>
-              <div className="text-left pb-2 border-b border-white/10 flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-white tracking-tight">Message Options</h4>
-                  <p className="text-[11px] text-gray-400 font-medium truncate max-w-[200px]">
-                    {activeActionMessage.text || 'Selected Message'}
-                  </p>
-                </div>
+        {activeActionMessage && popupPos && (
+          <>
+            <div
+              className="fixed inset-0 z-[60]"
+              onClick={() => { setActiveActionMessage(null); setPopupPos(null); }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: -4 }}
+              transition={{ duration: 0.12, ease: 'easeOut' }}
+              style={{
+                position: 'fixed',
+                top: popupPos.top,
+                ...(popupPos.left !== undefined ? { left: popupPos.left } : {}),
+                ...(popupPos.right !== undefined ? { right: popupPos.right } : {}),
+              }}
+              className="z-[61] w-[190px] bg-[#1C1C1E] rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.9)] overflow-hidden select-none"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Quick Emoji Row */}
+              {onReactToMessage && (() => {
+                const QUICK_EMOJIS = ['👍','❤️','😂','😮','😢','😡'];
+                const myReactions = Object.entries(activeActionMessage.reactions || {})
+                  .filter(([, uids]) => uids.includes(currentUser?.uid))
+                  .map(([emoji]) => emoji);
+                return (
+                  <div className="flex items-center justify-around px-3 py-2.5 border-b border-white/5">
+                    {QUICK_EMOJIS.map(e => (
+                      <button
+                        key={e}
+                        type="button"
+                        onClick={() => {
+                          onReactToMessage(activeActionMessage.id, e);
+                          setActiveActionMessage(null); setPopupPos(null);
+                        }}
+                        className={`text-[18px] transition-transform hover:scale-125 active:scale-110 cursor-pointer ${
+                          myReactions.includes(e) ? 'opacity-100 drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]' : 'opacity-70 hover:opacity-100'
+                        }`}
+                        title={e}
+                      >
+                        {e}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
+              {/* Reply */}
+              {onReplyTo && (
                 <button
-                  onClick={() => setActiveActionMessage(null)}
-                  className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                  type="button"
+                  onClick={() => { onReplyTo(activeActionMessage); setActiveActionMessage(null); setPopupPos(null); }}
+                  className="w-full flex items-center justify-between gap-4 px-4 py-2.5 text-[13px] font-normal text-gray-200 hover:bg-white/6 transition-colors cursor-pointer border-b border-white/5"
                 >
-                  <X className="w-4 h-4" />
+                  <span>Reply</span>
+                  <CornerUpLeft className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                 </button>
-              </div>
+              )}
 
-              <div className="flex flex-col gap-2 pt-1">
-                {/* Save Option (for images/media) */}
-                {activeActionMessage.text && (activeActionMessage.type === 'image' || activeActionMessage.text.startsWith('http')) && (
-                  <button
-                    onClick={() => {
-                      const target = activeActionMessage.text;
-                      setActiveActionMessage(null);
-                      saveImageDirectly(target, 'nepalcasts-media.jpg');
-                    }}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-gray-200 hover:text-white font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
-                  >
-                    <Download className="w-4 h-4 text-gray-300" />
-                    <span>Save Image</span>
-                  </button>
-                )}
-
-                {/* Share Option */}
-                {activeActionMessage.text && (
-                  <button
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: 'NepalCasts Attachment',
-                          url: activeActionMessage.text,
-                        }).catch(() => {});
-                      } else {
-                        navigator.clipboard.writeText(activeActionMessage.text);
-                      }
-                      setActiveActionMessage(null);
-                    }}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-gray-200 hover:text-white font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
-                  >
-                    <Share2 className="w-4 h-4 text-gray-300" />
-                    <span>Share</span>
-                  </button>
-                )}
-
-                {/* Pin Option */}
-                {onPinMessage && (
-                  <button
-                    onClick={() => {
-                      onPinMessage(activeActionMessage.id);
-                      setActiveActionMessage(null);
-                    }}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-gray-200 hover:text-white font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
-                  >
-                    {activeActionMessage.isPinned ? <PinOff className="w-4 h-4 text-gray-300" /> : <Pin className="w-4 h-4 text-gray-300" />}
-                    <span>{activeActionMessage.isPinned ? 'Unpin Message' : 'Pin Message'}</span>
-                  </button>
-                )}
-
-                {/* Copy Text Option */}
-                {activeActionMessage.text && (
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(activeActionMessage.text);
-                      setActiveActionMessage(null);
-                    }}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-gray-200 hover:text-white font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
-                  >
-                    <Copy className="w-4 h-4 text-gray-300" />
-                    <span>Copy Message</span>
-                  </button>
-                )}
-
-                {/* Delete Option */}
-                {(activeActionMessage.senderId === currentUser?.uid || currentUser?.role === 'admin') && onDeleteMessage && (
-                  <button
-                    onClick={() => {
-                      onDeleteMessage(activeActionMessage.id);
-                      setActiveActionMessage(null);
-                    }}
-                    className="w-full py-2.5 px-3.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-semibold text-xs transition-all active:scale-[0.98] flex items-center gap-3 cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-400" />
-                    <span>Delete</span>
-                  </button>
-                )}
-              </div>
-
-              <div className="pt-1">
-                <button onClick={() => setActiveActionMessage(null)} className="w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 text-center text-xs font-bold text-gray-400 hover:text-white transition-all cursor-pointer">
-                  Cancel
+              {/* Copy */}
+              {activeActionMessage.text && (
+                <button
+                  type="button"
+                  onClick={() => { navigator.clipboard.writeText(activeActionMessage.text); setActiveActionMessage(null); setPopupPos(null); }}
+                  className="w-full flex items-center justify-between gap-4 px-4 py-2.5 text-[13px] font-normal text-gray-200 hover:bg-white/6 transition-colors cursor-pointer border-b border-white/5"
+                >
+                  <span>Copy</span>
+                  <Copy className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                 </button>
-              </div>
+              )}
+
+              {/* Pin */}
+              {onPinMessage && (
+                <button
+                  type="button"
+                  onClick={() => { onPinMessage(activeActionMessage.id); setActiveActionMessage(null); setPopupPos(null); }}
+                  className="w-full flex items-center justify-between gap-4 px-4 py-2.5 text-[13px] font-normal text-gray-200 hover:bg-white/6 transition-colors cursor-pointer border-b border-white/5"
+                >
+                  <span>{activeActionMessage.isPinned ? 'Unpin' : 'Pin'}</span>
+                  {activeActionMessage.isPinned
+                    ? <PinOff className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    : <Pin className="w-3.5 h-3.5 text-gray-400 shrink-0" />}
+                </button>
+              )}
+
+              {/* Forward */}
+              {activeActionMessage.text && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForwardMsg(activeActionMessage.text);
+                    setActiveActionMessage(null);
+                    setPopupPos(null);
+                  }}
+                  className="w-full flex items-center justify-between gap-4 px-4 py-2.5 text-[13px] font-normal text-gray-200 hover:bg-white/6 transition-colors cursor-pointer border-b border-white/5"
+                >
+                  <span>Forward</span>
+                  <Forward className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                </button>
+              )}
+
+              {/* Save Image */}
+              {activeActionMessage.text && (activeActionMessage.type === 'image' || activeActionMessage.text.startsWith('http')) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const t = activeActionMessage.text;
+                    setActiveActionMessage(null); setPopupPos(null);
+                    saveImageDirectly(t, 'nepalcasts-media.jpg');
+                  }}
+                  className="w-full flex items-center justify-between gap-4 px-4 py-2.5 text-[13px] font-normal text-gray-200 hover:bg-white/6 transition-colors cursor-pointer border-b border-white/5"
+                >
+                  <span>Save</span>
+                  <Download className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                </button>
+              )}
+
+              {/* Delete */}
+              {(activeActionMessage.senderId === currentUser?.uid || currentUser?.role === 'admin') && onDeleteMessage && (
+                <button
+                  type="button"
+                  onClick={() => { onDeleteMessage(activeActionMessage.id); setActiveActionMessage(null); setPopupPos(null); }}
+                  className="w-full flex items-center justify-between gap-4 px-4 py-2.5 text-[13px] font-normal text-red-400 hover:bg-red-500/8 transition-colors cursor-pointer"
+                >
+                  <span>Delete</span>
+                  <Trash2 className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                </button>
+              )}
             </motion.div>
-          </motion.div>
+          </>
         )}
       </AnimatePresence>
+
+      {/* Forward Message Picker — portalled to body so parent transforms don't affect fixed positioning */}
+      {createPortal(
+        <AnimatePresence>
+          {forwardMsg !== null && (
+            <>
+              <div style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.5)' }} onClick={() => setForwardMsg(null)} />
+              <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 'min(260px, calc(100vw - 2rem))', zIndex: 71 }}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.94 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.94 }}
+                  transition={{ duration: 0.13, ease: 'easeOut' }}
+                  style={{ width: '100%', background: '#1C1C1E', borderRadius: 12, boxShadow: '0 12px 36px rgba(0,0,0,0.9)', overflow: 'hidden' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest">Forward to</span>
+                    <button type="button" onClick={() => setForwardMsg(null)} className="w-5 h-5 flex items-center justify-center cursor-pointer text-gray-600 hover:text-gray-300 transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                  {/* List */}
+                  <div className="max-h-52 overflow-y-auto">
+                    {conversations
+                      .filter((c: any) => c.id !== chat?.id)
+                      .map((c: any, idx: number, arr: any[]) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={async () => {
+                            if (onForwardMessage && forwardMsg) await onForwardMessage(forwardMsg, c.id);
+                            setForwardMsg(null);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/6 transition-colors cursor-pointer${idx < arr.length - 1 ? ' border-b border-white/[0.05]' : ''}`}
+                        >
+                          <Avatar userId={c.otherParticipantId || c.id} src={c.avatar} name={c.name} size="sm" className="!w-7 !h-7 shrink-0 rounded-full" />
+                          <span className="text-[12px] text-gray-200 truncate">{c.name || 'Chat'}</span>
+                        </button>
+                      ))}
+                    {conversations.filter((c: any) => c.id !== chat?.id).length === 0 && (
+                      <p className="text-center text-gray-500 text-[11px] py-5">No other conversations</p>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>);
 }

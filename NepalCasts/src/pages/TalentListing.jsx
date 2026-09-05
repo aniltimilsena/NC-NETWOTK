@@ -538,10 +538,22 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                         </div>)}
 
 
-                        {loading ? (<TalentCardSkeleton count={8} />) : !profilesReady ? (<TalentCardSkeleton count={8} />) : filteredTalents.length === 0 ? (<div className="text-center py-20 bg-[#111] border border-dashed border-white/5 rounded-[2rem]">
-                            <Search className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold text-white">No talents found</h3>
-                        </div>) : (<>
+                        {loading ? (<TalentCardSkeleton count={8} />) : !profilesReady ? (<TalentCardSkeleton count={8} />) : filteredTalents.length === 0 ? (
+                            <div className="text-center py-16 px-4 bg-[#111] border border-dashed border-white/10 rounded-[2rem] space-y-4">
+                                <Search className="w-12 h-12 text-gray-600 mx-auto" />
+                                <div className="space-y-1">
+                                    <h3 className="text-xl font-bold text-white">No talents found</h3>
+                                    <p className="text-xs text-gray-400">No profiles match your current search and filter settings.</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleClearFilters}
+                                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer shadow-md inline-flex items-center gap-2"
+                                >
+                                    Clear All Filters
+                                </button>
+                            </div>
+                        ) : (<>
                             <div className="space-y-1">
                                 {filteredTalents.slice(0, visibleCount).map((talent) => (
                                     <TalentListItem

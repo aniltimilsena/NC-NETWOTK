@@ -73,6 +73,17 @@ export const createConversation = async (uid: string, participants: string[], in
     const otherParticipants = uniqueParticipants.filter(p => p !== uid);
     await checkBlockStatus(uid, otherParticipants);
     const sorted = uniqueParticipants.slice().sort();
+    const deterministicId = sorted.length === 2 ? `${sorted[0]}_${sorted[1]}` : null;
+    
+    // Fast O(1) direct document lookup
+    if (deterministicId) {
+        const directDoc = await db.collection('conversations').doc(deterministicId).get();
+        if (directDoc.exists) {
+            return directDoc.id;
+        }
+    }
+
+    // Fallback search for legacy random-ID conversations
     const snapshot = await db.collection('conversations')
         .where('participants', 'array-contains', uid)
         .get();
@@ -87,14 +98,19 @@ export const createConversation = async (uid: string, participants: string[], in
     if (existing) {
         return existing.id;
     }
-    const docRef = await db.collection('conversations').add({
+
+    const docRef = deterministicId
+        ? db.collection('conversations').doc(deterministicId)
+        : db.collection('conversations').doc();
+
+    await docRef.set({
         createdBy: uid,
         participants: sorted,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         lastMessage: "",
         lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    }, { merge: true });
     const otherParticipantId = sorted.find((p) => p !== uid);
     if (otherParticipantId) {
         let senderName = "Someone";

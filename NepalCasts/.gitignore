@@ -12,4 +12,6 @@ functions/.env
 *.key
 *.log
 service-account*.json
-
+server/public/uploads
+public/uploads
+*.tsbuildinfo

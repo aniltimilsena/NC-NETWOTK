@@ -8,35 +8,12 @@ const cache = new NodeCache({
 let userBloomFilter: BloomFilter;
 let castingBloomFilter: BloomFilter;
 let profileBloomFilter: BloomFilter;
-export const initBloomFilters = async (db: any) => {
-    console.log('Initializing Bloom Filters...');
+export const initBloomFilters = async (_db?: any) => {
+    console.log('Initializing Bloom Filters in lazy-load mode...');
     userBloomFilter = BloomFilter.create(100000, 0.01);
     castingBloomFilter = BloomFilter.create(50000, 0.01);
     profileBloomFilter = BloomFilter.create(100000, 0.01);
-    try {
-        const [usersSnap, castingsSnap, profilesSnap] = await Promise.all([
-            db.collection('users').select().get(),
-            db.collection('casting_calls').select().get(),
-            db.collection('profiles').select().get(),
-        ]);
-        usersSnap.docs.forEach((doc: any) => {
-            userBloomFilter.add(doc.id);
-        });
-        castingsSnap.docs.forEach((doc: any) => {
-            castingBloomFilter.add(doc.id);
-        });
-        profilesSnap.docs.forEach((doc: any) => {
-            profileBloomFilter.add(doc.id);
-        });
-        console.log(`Bloom Filters loaded:
-      Users: ${usersSnap.size}
-      Castings: ${castingsSnap.size}
-      Profiles: ${profilesSnap.size}
-    `);
-    }
-    catch (error) {
-        console.error('Bloom filter init error:', error);
-    }
+    console.log('Bloom Filters ready (zero boot-time Firestore read overhead).');
 };
 export const addToBloomFilter = (type: string, id: string) => {
     switch (type) {

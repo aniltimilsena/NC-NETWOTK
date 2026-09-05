@@ -1,7 +1,7 @@
 import { db } from "../../../lib/firebase";
 import { AuthService } from "../../../services/AuthService";
 import { CurrentUser } from "../../../utils/CurrentUser";
-import { collection, doc, query, orderBy, where, onSnapshot, setDoc, serverTimestamp, addDoc, getDocs, limit } from "firebase/firestore";
+import { collection, doc, query, orderBy, where, onSnapshot, setDoc, updateDoc, serverTimestamp, addDoc, getDocs, limit } from "firebase/firestore";
 import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
 import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
@@ -200,6 +200,48 @@ export const createCastingCall = async (callData: any) => {
     catch (clientError: any) {
         console.error("Client createCastingCall error:", clientError);
         return { id: null, error: clientError.message || "Failed to create casting call" };
+    }
+};
+
+export const updateCastingCall = async (id: string, updateData: any) => {
+    try {
+        const currentUserUid = AuthService.getUserId() || CurrentUser.id || updateData.creatorId || updateData.createdBy;
+        if (!currentUserUid) {
+            return { success: false, error: "Authentication required" };
+        }
+
+        const enrichedUpdateData = {
+            ...updateData,
+            id,
+            updatedAt: new Date().toISOString(),
+        };
+
+        let updated = false;
+        try {
+            const response = await apiClient.post<{ id: string }>("/casting", enrichedUpdateData, { timeout: 3000 });
+            if (response.data?.id) {
+                updated = true;
+            }
+        } catch (backendError) {
+            console.warn("Backend /casting endpoint unavailable for update, writing to Firestore directly:", backendError);
+        }
+
+        if (!updated) {
+            const { id: _, ...dataToSave } = enrichedUpdateData;
+            await updateDoc(doc(db, COLLECTIONS.CASTING_CALLS, id), {
+                ...dataToSave,
+                updatedAt: serverTimestamp(),
+            });
+        }
+
+        // Invalidate caches so UI sees changes immediately
+        cacheManager.invalidateCache(`casting_call_${id}`);
+        cacheManager.invalidateCache(`casting_calls_`);
+
+        return { success: true, error: null };
+    } catch (clientError: any) {
+        console.error("Client updateCastingCall error:", clientError);
+        return { success: false, error: clientError.message || "Failed to update casting call" };
     }
 };
 export const deleteCastingCallAdmin = async (id: string) => {

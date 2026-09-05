@@ -6,7 +6,7 @@ import MessageInput from './components/MessageInput';
 import NewChatModal from './components/NewChatModal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useCall } from '../../context/CallContext';
-import { deleteMessage, deleteConversation, pinMessage } from './services/messaging';
+import { deleteMessage, deleteConversation, pinMessage, reactToMessage } from './services/messaging';
 import type { Message } from '../../types';
 import { Pin, X } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
@@ -109,6 +109,23 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
             showAlert('Failed to pin/unpin message.', 'error');
         }
     };
+    const handleReactToMessage = async (msgId: string, emoji: string) => {
+        if (!activeChatId || !user?.uid) return;
+        try {
+            await reactToMessage(activeChatId, msgId, emoji, user.uid);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+    const handleForwardMessage = async (text: string, toConversationId: string) => {
+        try {
+            const { sendMessage } = await import('./services/messaging');
+            await sendMessage(toConversationId, user?.uid, text);
+        } catch (err) {
+            console.error(err);
+            showAlert('Failed to forward message.', 'error');
+        }
+    };
     if (loading) {
         return (<div className="min-h-screen bg-nc-dark text-white flex">
         
@@ -192,7 +209,7 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
         <div className={`flex-1 h-full flex flex-col ${!activeChatId ? 'hidden md:flex items-center justify-center bg-[#0d0d0f] text-gray-400 text-xs' : 'flex'}`}>
           {activeChat ? (<>
               <div className="flex-1 min-h-0">
-                <ChatArea chat={activeChat} messages={messages} currentUser={user} typingUsers={typingUsers} onBack={() => setActiveChatId(null)} onInitiateCall={handleInitiateCall} onReplyTo={setReplyingTo} onDeleteMessage={handleDeleteMessage} onPinMessage={handlePinMessage} onTogglePinnedDrawer={() => setShowPinnedDrawer(!showPinnedDrawer)} isPinnedDrawerOpen={showPinnedDrawer}/>
+                <ChatArea chat={activeChat} messages={messages} currentUser={user} typingUsers={typingUsers} onBack={() => setActiveChatId(null)} onInitiateCall={handleInitiateCall} onReplyTo={setReplyingTo} onDeleteMessage={handleDeleteMessage} onPinMessage={handlePinMessage} onReactToMessage={handleReactToMessage} onForwardMessage={handleForwardMessage} conversations={conversations} onTogglePinnedDrawer={() => setShowPinnedDrawer(!showPinnedDrawer)} isPinnedDrawerOpen={showPinnedDrawer}/>
               </div>
               <MessageInput onSend={handleSendMessage} replyingTo={replyingTo} onCancelReply={() => setReplyingTo(null)} onTyping={updateTyping}/>
             </>) : (<div className="space-y-3 text-center flex flex-col items-center justify-center p-6 h-full my-auto">

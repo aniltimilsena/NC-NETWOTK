@@ -16,13 +16,36 @@ type ProfileResponse = {
 import { cacheManager } from "../../../utils/cacheManager";
 export const getProfile = async (uid: string): Promise<ProfileResponse> => {
     try {
-        const snap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, uid));
+        let targetId = uid;
+        let snap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, targetId));
         if (snap.exists()) {
-            return { data: { uid, ...snap.data() } as ProfileData, error: null };
+            const data = snap.data() || {};
+            if (data.linkedUid || data.canonicalUid) {
+                targetId = data.linkedUid || data.canonicalUid;
+                const canonicalSnap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, targetId));
+                if (canonicalSnap.exists()) {
+                    snap = canonicalSnap;
+                }
+            }
+        }
+        
+        if (snap.exists()) {
+            const pData = snap.data() || {};
+            const userSnap = await rateLimitedGet(doc(db, COLLECTIONS.USERS, targetId));
+            const uData = userSnap.exists() ? (userSnap.data() || {}) : {};
+            return { data: { uid: targetId, id: targetId, ...uData, ...pData } as ProfileData, error: null };
         }
         const userSnap = await rateLimitedGet(doc(db, COLLECTIONS.USERS, uid));
         if (userSnap.exists()) {
-            return { data: { uid, ...userSnap.data() } as ProfileData, error: null };
+            const uData = userSnap.data() || {};
+            const canonicalId = uData.linkedUid || uData.canonicalUid;
+            if (canonicalId) {
+                const canonicalSnap = await rateLimitedGet(doc(db, COLLECTIONS.PROFILES, canonicalId));
+                if (canonicalSnap.exists()) {
+                    return { data: { uid: canonicalId, id: canonicalId, ...uData, ...canonicalSnap.data() } as ProfileData, error: null };
+                }
+            }
+            return { data: { uid, id: uid, ...uData } as ProfileData, error: null };
         }
         return { data: null, error: null };
     }
@@ -152,7 +175,21 @@ export const subscribeToProfile = (uid: string, callback: (data: ProfileData | n
                     unsubUser();
                     unsubUser = null;
                 }
-                pooledCb({ uid, ...snap.data() } as ProfileData, null);
+                const data = snap.data() || {};
+                const targetId = data.linkedUid || data.canonicalUid;
+                if (targetId && targetId !== uid) {
+                    rateLimitedGet(doc(db, COLLECTIONS.PROFILES, targetId)).then((canSnap) => {
+                        if (canSnap.exists()) {
+                            pooledCb({ uid: targetId, id: targetId, ...canSnap.data(), ...data } as ProfileData, null);
+                        } else {
+                            pooledCb({ uid, ...data } as ProfileData, null);
+                        }
+                    }).catch(() => {
+                        pooledCb({ uid, ...data } as ProfileData, null);
+                    });
+                } else {
+                    pooledCb({ uid, ...data } as ProfileData, null);
+                }
             }
             else {
                 if (!unsubUser) {

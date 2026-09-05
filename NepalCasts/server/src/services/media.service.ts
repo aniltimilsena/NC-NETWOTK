@@ -74,51 +74,53 @@ export const deleteGeneralMedia = async (publicId: string, isVideo: boolean): Pr
         resource_type: isVideo ? 'video' : 'image',
     });
 };
+import fs from 'fs';
+import path from 'path';
+import { bucket } from '../config';
+
 export const uploadValidatedFile = async (buffer: Buffer, safeName: string, mimeType: string, isVideo: boolean, sanitizedFolder: string): Promise<any> => {
     const resourceType = isVideo ? 'video' : 'image';
-    const { cloudName, apiKey, apiSecret, uploadPreset, isSignedConfigured } = getCloudinaryConfig();
-    if (isSignedConfigured) {
-        cloudinary.config({
-            cloud_name: cloudName,
-            api_key: apiKey,
-            api_secret: apiSecret,
-            secure: true,
+    const filename = `${Date.now()}_${safeName}`;
+    const filePath = `uploads/${sanitizedFolder}/${filename}`;
+
+    try {
+        const file = bucket.file(filePath);
+        await file.save(buffer, {
+            metadata: {
+                contentType: mimeType,
+                cacheControl: 'public, max-age=31536000',
+            },
+            resumable: false,
         });
-        return new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream({
-                public_id: safeName.replace(/\.[^.]+$/, ''),
-                folder: `nc-network/${sanitizedFolder}`,
-                resource_type: resourceType,
-                transformation: resourceType === 'image' ? [
-                    { quality: 'auto', fetch_format: 'auto' },
-                    { width: 1200, crop: 'limit' },
-                ] : [],
-            }, (error, result) => {
-                if (error)
-                    reject(error);
-                else
-                    resolve(result);
-            });
-            streamifier.createReadStream(buffer).pipe(stream);
-        });
-    }
-    else if (cloudName && uploadPreset) {
-        const b64 = Buffer.from(buffer).toString('base64');
-        const dataURI = `data:${mimeType};base64,${b64}`;
-        cloudinary.config({
-            cloud_name: cloudName,
-            secure: true,
-        });
-        const result = await cloudinary.uploader.unsigned_upload(dataURI, uploadPreset, {
-            folder: `nc-network/${sanitizedFolder}`,
+
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+        return {
+            secure_url: publicUrl,
+            public_id: filePath,
             resource_type: resourceType,
-        });
-        if (result && result.secure_url) {
-            return result;
+        };
+    } catch (cloudErr: any) {
+        console.warn('[MediaService] Cloud storage bucket unavailable, storing locally:', cloudErr?.message || cloudErr);
+
+        // Fallback: Save directly to frontend public/uploads folder so Vite serves it immediately
+        const publicUploadsDir = path.resolve(__dirname, '../../../public/uploads', sanitizedFolder);
+        if (!fs.existsSync(publicUploadsDir)) {
+            fs.mkdirSync(publicUploadsDir, { recursive: true });
         }
-        throw new Error('Cloudinary unsigned upload failed: secure_url not found in response');
-    }
-    else {
-        throw new Error('Cloudinary configuration is missing. Define CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET.');
+        fs.writeFileSync(path.join(publicUploadsDir, filename), buffer);
+
+        // Also ensure server's public/uploads has a copy
+        const serverUploadsDir = path.resolve(__dirname, '../../public/uploads', sanitizedFolder);
+        if (!fs.existsSync(serverUploadsDir)) {
+            fs.mkdirSync(serverUploadsDir, { recursive: true });
+        }
+        fs.writeFileSync(path.join(serverUploadsDir, filename), buffer);
+
+        const localUrl = `/uploads/${sanitizedFolder}/${filename}`;
+        return {
+            secure_url: localUrl,
+            public_id: filePath,
+            resource_type: resourceType,
+        };
     }
 };

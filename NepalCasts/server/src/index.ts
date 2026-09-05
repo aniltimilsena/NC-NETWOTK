@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -22,8 +23,10 @@ app.set('trust proxy', 1);
 app.use(requestIdMiddleware);
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: 'Too many requests from this IP, please try again after 15 minutes',
+    max: 1000,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many requests from this network. Please try again in a few minutes.',
 });
 app.use(helmet({
     frameguard: false,
@@ -72,6 +75,7 @@ app.use(rateLimitMiddleware);
 app.use(express.json());
 app.use(morgan('dev'));
 app.use('/api', globalRouter);
+app.use('/uploads', express.static(path.resolve(__dirname, '../public/uploads')));
 app.use(errorHandler);
 if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, () => {

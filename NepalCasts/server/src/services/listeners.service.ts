@@ -1,4 +1,5 @@
 import { db, admin } from '../config';
+import { sendOneSignalSegmentNotification } from './notification.service';
 const startupTime = admin.firestore.Timestamp.now();
 export function startFirestoreListeners(): void {
     console.log("Starting background Firestore listeners for Push Notifications...");
@@ -93,17 +94,26 @@ export function startFirestoreListeners(): void {
                     if (!castingType)
                         return;
                     const [roleSnap, skillSnap] = await Promise.all([
-                        db.collection('profiles').where('role', '==', castingType).get(),
-                        db.collection('profiles').where('skills', 'array-contains', castingType).get()
+                        db.collection('profiles').where('role', '==', castingType).limit(30).get(),
+                        db.collection('profiles').where('skills', 'array-contains', castingType).limit(30).get()
                     ]);
 
                     const matchingDocsMap = new Map();
                     roleSnap.docs.forEach(doc => matchingDocsMap.set(doc.id, doc.data()));
                     skillSnap.docs.forEach(doc => matchingDocsMap.set(doc.id, doc.data()));
 
-                                        const recipientIds = Array.from(matchingDocsMap.keys()).filter(id => id !== casting.createdBy);
-                    console.log(`[Casting Alert] Found ${recipientIds.length} matching profiles for casting type "${castingType}"`);
+                    const recipientIds = Array.from(matchingDocsMap.keys()).filter(id => id !== casting.createdBy).slice(0, 30);
+                    console.log(`[Casting Alert] Capped fanout to top ${recipientIds.length} profiles for casting type "${castingType}"`);
 
+                    // 1. One-call broadcast to all subscribed mobile/web users via OneSignal segments
+                    sendOneSignalSegmentNotification({
+                        segment: "Active Users",
+                        title: `New Casting Call: ${casting.title}`,
+                        body: `New ${castingType} opportunity in ${casting.location || 'Nepal'}`,
+                        url: `/casting/${docId}`,
+                    }).catch(() => {});
+
+                    // 2. Safe capped batch write for top active matched profiles
                     let batch = db.batch();
                     let count = 0;
                     for (const recipientId of recipientIds) {

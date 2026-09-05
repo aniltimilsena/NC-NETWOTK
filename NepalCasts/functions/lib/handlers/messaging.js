@@ -133,7 +133,7 @@ exports.sendMessage = (0, https_1.onCall)(config_1.callableOptions, async (reque
         });
         if (error instanceof https_1.HttpsError)
             throw error;
-        throw new https_1.HttpsError("internal", error.message || "Message sending failed");
+        throw new https_1.HttpsError("internal", "An unexpected error occurred while sending your message. Please try again later.");
     }
 });
 exports.updateMessage = (0, https_1.onCall)(config_1.callableOptions, async (request) => {
@@ -327,10 +327,10 @@ exports.onMessageCreated = (0, firestore_1.onDocumentCreated)({
         else if (type === "video") {
             preview = "🎥 Sent a video";
         }
-        const appId = process.env.ONESIGNAL_APP_ID || "a9962176-972c-4874-8161-ec84428e9036";
+        const appId = process.env.ONESIGNAL_APP_ID;
         const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
-        if (!restApiKey) {
-            logger.warn("⚠️ OneSignal REST API Key is not configured in Cloud Functions environment variables.");
+        if (!appId || !restApiKey) {
+            logger.warn("⚠️ OneSignal App ID or REST API Key is not configured in Cloud Functions environment variables.");
             return;
         }
         const payload = {

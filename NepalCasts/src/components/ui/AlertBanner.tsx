@@ -147,11 +147,8 @@ function SingleBanner({ alert, onDismiss }: {
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className={`text-[10px] font-black uppercase tracking-[0.15em] ${cfg.icon_color} mb-0.5`}>
-            {cfg.label}
-          </p>
           <p className="text-white text-sm font-semibold leading-snug">{alert.message}</p>
-          {alert.detail && (<p className="text-white/40 text-xs mt-0.5 leading-relaxed">{alert.detail}</p>)}
+          {alert.detail && (<p className="text-gray-400 text-xs mt-0.5 leading-relaxed">{alert.detail}</p>)}
         </div>
 
         <button onClick={() => onDismiss(alert.id)} className="text-white/20 hover:text-white/60 transition-colors flex-shrink-0 mt-0.5" aria-label="Dismiss">

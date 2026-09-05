@@ -96,7 +96,16 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
       if (window.history.length > 1) {
         navigate(-1);
       } else {
-        navigate('/casting');
+        const currentPath = window.location.pathname;
+        if (currentPath.startsWith('/profile')) {
+          navigate('/talents');
+        } else if (currentPath.startsWith('/casting')) {
+          navigate('/casting');
+        } else if (currentPath.startsWith('/messages')) {
+          navigate('/messages');
+        } else {
+          navigate('/');
+        }
       }
       return;
     }
@@ -107,6 +116,10 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
     let targetPage = page;
     if (page === 'casting-apply') {
       navigate(param ? `/casting/${param}/apply` : '/casting');
+      return;
+    }
+    if (page === 'casting-edit') {
+      navigate(param ? `/casting/${param}/edit` : '/casting');
       return;
     }
     if (page === 'casting-detail') targetPage = 'casting';
@@ -152,9 +165,11 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
         <Route path="/trust-safety" element={<TrustSafety />} />
 
         {/* Authentication Routes */}
+        <Route path="/auth" element={<Navigate to="/signin" replace />} />
         <Route path="/login" element={<Navigate to="/signin" replace />} />
         <Route path="/signin/*" element={<SignIn onNavigate={onNavigate} />} />
         <Route path="/signup/*" element={<SignUp onNavigate={onNavigate} />} />
+        <Route path="/register" element={<Navigate to="/signup" replace />} />
         <Route path="/sign-in/*" element={<SignIn onNavigate={onNavigate} />} />
         <Route path="/sign-up/*" element={<SignUp onNavigate={onNavigate} />} />
         <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback signInForceRedirectUrl="/discover" signUpForceRedirectUrl="/discover" />} />
@@ -183,10 +198,10 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
 
       {/* Error Pages */}
       <Route path="/402" element={<NotFound />} />
-      <Route path="/403" element={<NotFound />} />
+      <Route path="/403" element={<Forbidden />} />
       <Route path="/404" element={<NotFound />} />
       <Route path="/405" element={<NotFound />} />
-      <Route path="/500" element={<NotFound />} />
+      <Route path="/500" element={<ServerError />} />
 
       {/* Fallback 404 Route */}
       <Route path="*" element={<NotFound />} />

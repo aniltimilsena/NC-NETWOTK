@@ -7,7 +7,7 @@ service cloud.firestore {
     }
     
     function isOwner(userId) {
-      return isSignedIn() && (request.auth.uid == userId || request.auth.token.email == userId);
+      return (isSignedIn() && (request.auth.uid == userId || request.auth.token.email == userId));
     }
     
     function isAdmin() {
@@ -29,43 +29,80 @@ service cloud.firestore {
       return (!request.resource.data.keys().hasAny(['text']) || (request.resource.data.text is string && request.resource.data.text.size() <= 2000));
     }
 
-    // --- USERS & PROFILES ---
+    // Check if the authenticated user is the creator/owner of a casting call
+    function isCastingOwner(data) {
+      return isSignedIn() && (
+        request.auth.uid == data.createdBy ||
+        request.auth.uid == data.creatorId ||
+        request.auth.uid == data.created_by ||
+        request.auth.uid == data.user_id ||
+        (request.auth.token.email != null && data.creatorEmail != null && request.auth.token.email.lower() == data.creatorEmail.lower()) ||
+        (request.auth.token.email != null && data.contactInfo != null && request.auth.token.email.lower() == data.contactInfo.lower()) ||
+        isAdmin()
+      );
+    }
+
+    // --- USERS & PROFILES (Compatible with Clerk Authentication) ---
     match /users/{userId} {
       allow read: if true;
       allow create, update: if validUserCreate();
-      allow delete: if isOwner(userId) || isAdmin();
+      allow delete: if true;
     }
 
     match /profiles/{profileId} {
       allow read: if true;
       allow create, update: if validUserCreate();
-      allow delete: if isOwner(profileId) || isAdmin();
+      allow delete: if true;
 
       match /login_history/{historyId} {
-        allow read, write: if isOwner(profileId) || isAdmin();
+        allow read, write: if true;
       }
       match /sessions/{sessionId} {
-        allow read, write: if isOwner(profileId) || isAdmin();
+        allow read, write: if true;
       }
     }
 
     // --- CASTING CALLS ---
     match /casting_calls/{callId} {
+      // Publicly viewable by anyone on the network
       allow read: if true;
-      allow create: if (!request.resource.data.keys().hasAny(['title']) || (request.resource.data.title is string && request.resource.data.title.size() <= 200));
-      allow update, delete: if isSignedIn() && (
-        resource.data.createdBy == request.auth.uid ||
-        resource.data.creatorId == request.auth.uid ||
-        isAdmin()
-      );
+      // Only authenticated users can publish new casting calls
+      allow create: if isSignedIn();
+      // Only the owner of the casting call or an admin can edit or delete it
+      allow update, delete: if isCastingOwner(resource.data);
     }
 
     // --- APPLICATIONS ---
     match /applications/{appId} {
-      allow read, create, update, delete: if true;
+      // Any authenticated user can submit an audition application
+      allow create: if isSignedIn();
+      
+      // ONLY the applicant who submitted it OR the creator of that casting call OR an admin can see the application
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.uid == resource.data.user_id ||
+        (request.auth.token.email != null && resource.data.userEmail != null && request.auth.token.email.lower() == resource.data.userEmail.lower()) ||
+        (request.auth.token.email != null && resource.data.contactEmail != null && request.auth.token.email.lower() == resource.data.contactEmail.lower()) ||
+        request.auth.uid == resource.data.creatorId ||
+        request.auth.uid == resource.data.createdBy ||
+        isCastingOwner(resource.data) ||
+        (resource.data.castingId != null && exists(/databases/$(database)/documents/casting_calls/$(resource.data.castingId)) && isCastingOwner(get(/databases/$(database)/documents/casting_calls/$(resource.data.castingId)).data)) ||
+        isAdmin()
+      );
+      
+      // ONLY the applicant or the casting call owner can update (review/withdraw) or delete the application
+      allow update, delete: if isSignedIn() && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.uid == resource.data.user_id ||
+        request.auth.uid == resource.data.creatorId ||
+        request.auth.uid == resource.data.createdBy ||
+        isCastingOwner(resource.data) ||
+        (resource.data.castingId != null && exists(/databases/$(database)/documents/casting_calls/$(resource.data.castingId)) && isCastingOwner(get(/databases/$(database)/documents/casting_calls/$(resource.data.castingId)).data)) ||
+        isAdmin()
+      );
     }
 
-    // --- SOCIAL, SAVED CALLS & FOLLOWS ---
+    // --- SOCIAL FOLLOWS & SAVED CALLS ---
     match /follows/{followId} {
       allow read, write: if true;
     }
@@ -89,6 +126,10 @@ service cloud.firestore {
       match /calleeCandidates/{candId} {
         allow read, write: if true;
       }
+
+      match /{document=**} {
+        allow read, write: if true;
+      }
     }
 
     // --- CHATS & MESSAGING ---
@@ -96,7 +137,7 @@ service cloud.firestore {
       allow read, write: if true;
 
       match /messages/{messageId} {
-        allow read, write: if true;
+        allow read, write: if validMessage();
       }
 
       match /{document=**} {
@@ -105,7 +146,7 @@ service cloud.firestore {
     }
 
     match /messages/{msgId} {
-      allow read, write: if true;
+      allow read, write: if validMessage();
     }
 
     // --- NOTIFICATIONS ---
@@ -115,40 +156,35 @@ service cloud.firestore {
 
     // --- SENSITIVE CONTACT INFO ---
     match /contact_info/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(userId) || isAdmin() || validUserCreate();
+      allow read, write: if true;
     }
 
     // --- ADMIN LOGS & TOKENS ---
     match /one_time_tokens/{tokenId} {
-      allow read, write: if isSignedIn() || isAdmin();
+      allow read, write: if true;
     }
 
     match /admin_logs/{logId} {
-      allow read: if isAdmin();
-      allow create: if true;
-      allow update, delete: if isAdmin();
+      allow read, write: if true;
     }
 
     // --- SITE SETTINGS & SYSTEM ---
     match /site_settings/{settingId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
 
     match /categories/{categoryId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
 
     match /feedback/{feedbackId} {
-      allow read: if isAdmin();
-      allow create: if true;
+      allow read, create, write: if true;
     }
 
     match /reports/{reportId} {
-      allow read: if isAdmin();
-      allow create: if true;
+      allow read, create, write: if true;
     }
   }
 }

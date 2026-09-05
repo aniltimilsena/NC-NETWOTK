@@ -30,6 +30,7 @@ import {
   User,
   Star,
   Coins,
+  Edit3,
 } from 'lucide-react';
 import Logo from '../../components/ui/Logo';
 import Button from '../../components/ui/Button';
@@ -54,6 +55,7 @@ import {
 import Avatar from '../../components/ui/Avatar';
 import { getProfile } from '../profile/services/profile';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
+import ShareSheet from '../../components/ui/ShareSheet';
 
 const isMockOrInvalidImage = (url: string | null | undefined) => {
   if (!url || typeof url !== 'string') return true;
@@ -153,6 +155,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   const [pipelineFilter, setPipelineFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const [confirmConfig, setConfirmConfig] = useState<any>({
     isOpen: false,
@@ -164,7 +167,32 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     onConfirm: () => { },
   });
 
-  const isCreator = user && call && (call.creatorId === user.uid || call.createdBy === user.uid);
+  const currentUid = user?.uid || user?.id;
+  const currentUserEmail = (user?.email || '').toLowerCase().trim();
+
+  const isCreator = Boolean(
+    user && call && (
+      (currentUid && (
+        call.creatorId === currentUid ||
+        call.createdBy === currentUid ||
+        call.created_by === currentUid ||
+        call.posted_by === currentUid ||
+        call.user_id === currentUid ||
+        call.postedBy?.uid === currentUid ||
+        call.postedBy?.id === currentUid ||
+        call.creator?.uid === currentUid ||
+        call.creator?.id === currentUid ||
+        (directorProfile?.uid && directorProfile.uid === currentUid) ||
+        (directorProfile?.id && directorProfile.id === currentUid) ||
+        (directorProfile?.linkedUid && directorProfile.linkedUid === currentUid) ||
+        (directorProfile?.canonicalUid && directorProfile.canonicalUid === currentUid)
+      )) ||
+      (currentUserEmail && (
+        (call.creatorEmail && currentUserEmail === call.creatorEmail.toLowerCase().trim()) ||
+        (directorProfile?.email && currentUserEmail === directorProfile.email.toLowerCase().trim())
+      ))
+    )
+  );
   const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
@@ -195,16 +223,47 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   }, [castingId]);
 
   useEffect(() => {
-    const creatorUid = call?.creatorId || call?.createdBy || call?.userId;
-    if (!creatorUid) return;
+    const creatorUid =
+      call?.creatorId ||
+      call?.createdBy ||
+      call?.created_by ||
+      call?.posted_by ||
+      call?.user_id ||
+      call?.postedBy?.uid ||
+      call?.postedBy?.id ||
+      call?.creator?.uid ||
+      call?.creator?.id;
+
+    if (!creatorUid) {
+      if (call?.postedBy || call?.creator) {
+        setDirectorProfile(call.postedBy || call.creator);
+      }
+      return;
+    }
+
     getProfile(creatorUid)
       .then((res) => {
         if (res.data) {
           setDirectorProfile(res.data);
+        } else if (call?.postedBy || call?.creator) {
+          setDirectorProfile(call.postedBy || call.creator);
         }
       })
-      .catch((err) => console.warn(err));
-  }, [call?.creatorId, call?.createdBy, call?.userId]);
+      .catch((err) => {
+        console.warn('Failed to load director profile:', err);
+        if (call?.postedBy || call?.creator) {
+          setDirectorProfile(call.postedBy || call.creator);
+        }
+      });
+  }, [
+    call?.creatorId,
+    call?.createdBy,
+    call?.created_by,
+    call?.posted_by,
+    call?.user_id,
+    call?.postedBy,
+    call?.creator,
+  ]);
 
   useEffect(() => {
     if (!castingId || !user?.uid) {
@@ -327,22 +386,8 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     }
   };
 
-  const handleShare = async () => {
-    const url = typeof window !== 'undefined' ? window.location.href : '';
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: call?.title || 'Casting Call on NepalCasts',
-          text: `Audition for ${call?.title} on NepalCasts!`,
-          url: url,
-        });
-      } catch (err) {
-        // User cancelled share
-      }
-    } else {
-      navigator.clipboard.writeText(url);
-      showAlert?.('Casting link copied to clipboard!', 'success');
-    }
+  const handleShare = () => {
+    setShowShareModal(true);
   };
 
   const handleDownloadMedia = (url: string, rawFilename?: string) => {
@@ -404,7 +449,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     setApplying(true);
     setApplyAlert({ type: null, message: null, detail: null });
     try {
-      const creatorId = call.creatorId || call.createdBy || '';
+      const creatorId = call.creatorId || call.createdBy || call.created_by || call.posted_by || call.user_id || '';
       const roleApplied = selectedRole || call.roles?.[0]?.name || call.category || 'General Role';
 
       let fileUrl = null;
@@ -417,7 +462,17 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
             fileUrl = res.url;
           }
         } catch (uploadErr) {
-          console.warn('Could not upload attached file to Cloudinary:', uploadErr);
+          console.error('Could not upload attached audition file:', uploadErr);
+        }
+
+        if (!fileUrl) {
+          setApplying(false);
+          setApplyAlert({
+            type: 'error',
+            message: 'File upload failed.',
+            detail: 'Please re-attach your audition video and try again.'
+          });
+          return;
         }
       }
 
@@ -446,6 +501,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         appliedAt: serverTimestamp(),
         status: 'pending',
         creatorId: creatorId,
+        createdBy: creatorId,
       });
 
       // Notify the creator of the casting call
@@ -747,7 +803,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   if (Array.isArray(call?.requirements) && call.requirements.length > 0) {
     requirementsList = call.requirements;
   } else if (typeof call?.requirements === 'string' && call.requirements.trim()) {
-    requirementsList = call.requirements.split(/\r?\n/).map((s: string) => s.replace(/^[•\-\*]\s*/, '').trim()).filter(Boolean);
+    requirementsList = call.requirements.split(/\r?\n/).map((s: string) => s.replace(/^[•\-*]\s*/, '').trim()).filter(Boolean);
   } else if (Array.isArray(primaryRoleObj?.requirements) && primaryRoleObj.requirements.length > 0) {
     requirementsList = primaryRoleObj.requirements;
   }
@@ -1246,6 +1302,17 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              {isCreator && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate ? onNavigate('casting-edit', castingId) : (window.location.href = `/casting/${castingId}/edit`)}
+                  className="w-10 h-10 rounded-full bg-[#522C69]/30 hover:bg-[#522C69]/50 border border-[#522C69]/50 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shadow-sm"
+                  title="Edit Casting Call"
+                  aria-label="Edit Casting Call"
+                >
+                  <Edit3 className="w-4 h-4 text-white" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleShare}
@@ -1509,7 +1576,53 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               <div className="h-[1px] bg-white/10 flex-1" />
             </div>
             {(() => {
-              const creatorTargetUid = call.creatorId || call.createdBy || call.userId || directorProfile?.uid || directorProfile?.id;
+              const creatorTargetUid =
+                directorProfile?.canonicalUid ||
+                directorProfile?.linkedUid ||
+                directorProfile?.uid ||
+                directorProfile?.id ||
+                call.creatorId ||
+                call.createdBy ||
+                call.created_by ||
+                call.posted_by ||
+                call.user_id ||
+                call.postedBy?.uid ||
+                call.postedBy?.id ||
+                call.creator?.uid ||
+                call.creator?.id;
+
+              const creatorName =
+                directorProfile?.name ||
+                directorProfile?.displayName ||
+                directorProfile?.fullName ||
+                call.creatorName ||
+                call.production ||
+                'Creator';
+
+              const creatorPhoto =
+                directorProfile?.photoURL ||
+                directorProfile?.image ||
+                directorProfile?.profileImage ||
+                directorProfile?.avatar ||
+                call.creatorPhoto ||
+                (Array.isArray(directorProfile?.media) && directorProfile.media.length > 0 ? directorProfile.media[0] : null);
+
+              const creatorRole =
+                directorProfile?.role ||
+                directorProfile?.category ||
+                (call.production && call.production !== 'Independent Production' ? call.production : 'Actor');
+
+              const creatorUsername =
+                directorProfile?.username ||
+                directorProfile?.handle ||
+                (directorProfile?.email ? directorProfile.email.split('@')[0] : null);
+
+              const isVerified = Boolean(
+                directorProfile?.verified === true ||
+                call.creatorVerified === true ||
+                call.isVerified === true
+              );
+
               const handleViewCreatorProfile = (e?: React.MouseEvent) => {
                 if (e) e.stopPropagation();
                 if (creatorTargetUid) {
@@ -1525,22 +1638,26 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   <div className="flex items-center gap-3.5 min-w-0">
                     <Avatar
                       userId={creatorTargetUid}
-                      src={directorProfile?.photoURL || directorProfile?.image || directorProfile?.profileImage || call.creatorPhoto}
-                      name={directorProfile?.displayName || directorProfile?.name || directorProfile?.fullName || call.creatorName || call.production || 'Production'}
+                      src={creatorPhoto}
+                      name={creatorName}
                       size="md"
                     />
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
                         <h4 className="font-bold text-white text-base truncate group-hover:text-[#522C69] transition-colors">
-                          {directorProfile?.displayName || directorProfile?.name || directorProfile?.fullName || call.creatorName || call.production || 'Production House'}
+                          {creatorName}
                         </h4>
-                        <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0" style={{ width: '15px', height: '15px' }} title="Verified Production">
-                          <Check className="w-2.5 h-2.5 text-[#060709]" strokeWidth={3.5} />
-                        </span>
+                        {isVerified && (
+                          <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0" style={{ width: '15px', height: '15px' }} title="Verified">
+                            <Check className="w-2.5 h-2.5 text-[#060709]" strokeWidth={3.5} />
+                          </span>
+                        )}
                       </div>
-                      <p className="text-xs text-neutral-400 truncate">
-                        {directorProfile?.role || directorProfile?.category || (call.production && call.production !== 'Independent Production' ? call.production : 'Film Production House')}
-                      </p>
+                      <div className="flex items-center gap-1.5 text-xs text-neutral-400 truncate">
+                        {creatorRole && <span>{creatorRole}</span>}
+                        {creatorRole && creatorUsername && <span>•</span>}
+                        {creatorUsername && <span className="text-neutral-500">@{creatorUsername}</span>}
+                      </div>
                     </div>
                   </div>
 
@@ -1829,19 +1946,31 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           {/* Primary Call to Action Button */}
           <div className="pt-3 pb-8">
             {isCreator ? (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <div className="w-full py-3.5 px-4 rounded-2xl bg-white/5 border border-white/10 text-center text-xs font-bold text-gray-300">
                   You created this casting call ({apps.length} {apps.length === 1 ? 'applicant' : 'applicants'})
                 </div>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="w-full py-2.5 px-3 rounded-xl bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-gray-400 hover:text-red-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
-                  title="Delete Casting Call"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>{deleting ? 'Deleting...' : 'Delete Casting Call'}</span>
-                </button>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => onNavigate ? onNavigate('casting-edit', castingId) : (window.location.href = `/casting/${castingId}/edit`)}
+                    className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/40 hover:from-[#663782] hover:to-[#522C69]/60 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95"
+                    title="Edit Casting Call"
+                  >
+                    <Edit3 className="w-4 h-4 text-white" />
+                    <span>Edit Casting Call</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="py-3 px-4 rounded-xl bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-gray-400 hover:text-red-400 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                    title="Delete Casting Call"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>{deleting ? 'Deleting...' : 'Delete'}</span>
+                  </button>
+                </div>
               </div>
             ) : applied ? (
               <div className="flex items-center gap-2.5 sm:gap-3 w-full">
@@ -1935,6 +2064,14 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               </div>
             </div>
           </div>
+        )}
+
+        {showShareModal && (
+          <ShareSheet
+            title={call?.title}
+            url={typeof window !== 'undefined' ? window.location.href : ''}
+            onClose={() => setShowShareModal(false)}
+          />
         )}
       </div>
     </Desktop3ColumnLayout>

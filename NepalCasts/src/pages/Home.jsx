@@ -11,6 +11,7 @@ import PullToRefresh from '../components/ui/PullToRefresh';
 import { ChevronRight, Pin } from 'lucide-react';
 import { getOptimizedImageUrl, getImageSrcSet } from '../utils/media';
 import { prefetchRoute, prefetchProfile, prefetchCasting } from '../utils/prefetchRoute';
+import GoalsBannerCard from '../components/ui/GoalsBannerCard';
 
 /* eslint-disable no-secrets/no-secrets */
 const HERO_BACKGROUND_PHOTOS = [
@@ -481,7 +482,7 @@ export default function Home({ onNavigate, user }) {
                   key={heroImageIdx}
                   src={HERO_BACKGROUND_PHOTOS[heroImageIdx]}
                   alt="NepalCasts Hero"
-                  fetchPriority={heroImageIdx === 0 ? "high" : "auto"}
+                  fetchpriority={heroImageIdx === 0 ? "high" : "auto"}
                   loading={heroImageIdx === 0 ? "eager" : "lazy"}
                   decoding="async"
                   initial={{ opacity: 0, scale: 1.06 }}
@@ -535,7 +536,8 @@ export default function Home({ onNavigate, user }) {
                           srcSet={getImageSrcSet(rawPhoto, [200, 320, 480])}
                           sizes="(max-width: 640px) 100px, 136px"
                           alt={spotlightName}
-                          loading="lazy"
+                          loading="eager"
+                          fetchpriority="high"
                           decoding="async"
                           onError={() => setSpotlightImageError(true)}
                           className="w-full h-full object-cover rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm border-0"
@@ -760,52 +762,65 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= TALENTS BY CATEGORY SECTION ================= */}
-            <section className="bg-[#131418] rounded-2xl p-3.5 sm:p-4 text-white shadow-md border-0">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
-                    <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
-                    Talents by category
-                  </span>
-                  <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
-                    Explore skilled professionals across every creative discipline
-                  </p>
-                </div>
-                <button
-                  onClick={() => onNavigate('discover')}
-                  className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
-                >
-                  <span>View all</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+            <section
+              className="relative w-full rounded-2xl overflow-hidden p-3.5 sm:p-5 shadow-md select-none border-0"
+              style={{
+                background: 'linear-gradient(135deg, #1fb5cf 0%, #38bdf8 52%, #2dd4bf 100%)',
+              }}
+            >
+              {/* Curved organic glowing wave highlight matching our goals card */}
+              <div className="absolute right-0 top-0 bottom-0 w-3/5 pointer-events-none overflow-hidden">
+                <div className="absolute -right-16 -top-20 w-[140%] h-[180%] rounded-[50%] bg-gradient-to-br from-white/30 via-white/10 to-transparent blur-xl" />
+                <div className="absolute -right-6 top-1/4 w-[100%] h-[120%] rounded-full bg-cyan-100/25 blur-2xl" />
               </div>
 
-              {/* Horizontal Scroll Carousel: All Category Cards */}
-              <div className="flex gap-3 sm:gap-4 overflow-x-auto pt-1 pb-2 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
-                {HOME_CATEGORY_CARDS.map((cat) => {
-                  const count = getCategoryCount(cat.filter);
-                  return (
-                    <div
-                      key={cat.id}
-                      onClick={() => onNavigate('talents', cat.filter)}
-                      className="rounded-2xl p-4 sm:p-6 aspect-square shrink-0 w-44 sm:w-48 md:w-52 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-[#0a0a0a] shadow-lg border border-white/5 gap-2.5 sm:gap-3.5 hover:border-white/20 active:scale-[0.98]"
-                    >
-                      <CategoryCardIcon
-                        type={cat.iconType}
-                        color="#ffffff"
-                        className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 fill-current text-white shrink-0"
-                      />
-                      <div className="w-full flex flex-col items-center justify-center shrink-0">
-                        <span className="font-apple text-white font-bold text-lg sm:text-xl md:text-2xl leading-tight whitespace-pre-line text-center tracking-normal">
-                          {cat.label}
-                        </span>
-                        <span className="font-apple text-neutral-400 font-medium text-sm sm:text-base mt-1 tracking-normal">
-                          ({count} {count === 1 ? 'talent' : 'talents'})
-                        </span>
+              <div className="relative z-10 space-y-3">
+                <div className="flex items-start justify-between gap-3 mb-1">
+                  <div className="space-y-1">
+                    <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
+                      <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
+                      Talents by category
+                    </span>
+                    <p className="text-xs sm:text-sm md:text-base text-slate-900 font-semibold drop-shadow-sm">
+                      Explore skilled professionals across every creative discipline
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onNavigate('discover')}
+                    className="text-slate-900 hover:text-black text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
+                  >
+                    <span>View all</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Horizontal Scroll Carousel: All Category Cards */}
+                <div className="flex gap-3 sm:gap-4 overflow-x-auto pt-1 pb-2 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
+                  {HOME_CATEGORY_CARDS.map((cat) => {
+                    const count = getCategoryCount(cat.filter);
+                    return (
+                      <div
+                        key={cat.id}
+                        onClick={() => onNavigate('talents', cat.filter)}
+                        className="rounded-2xl p-4 sm:p-6 aspect-square shrink-0 w-44 sm:w-48 md:w-52 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-black/90 hover:bg-black shadow-xl border border-black/20 gap-2.5 sm:gap-3.5 active:scale-[0.98]"
+                      >
+                        <CategoryCardIcon
+                          type={cat.iconType}
+                          color="#ffffff"
+                          className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 fill-current text-white shrink-0"
+                        />
+                        <div className="w-full flex flex-col items-center justify-center shrink-0">
+                          <span className="font-apple text-white font-bold text-lg sm:text-xl md:text-2xl leading-tight whitespace-pre-line text-center tracking-normal">
+                            {cat.label}
+                          </span>
+                          <span className="font-apple text-neutral-400 font-medium text-sm sm:text-base mt-1 tracking-normal">
+                            ({count} {count === 1 ? 'talent' : 'talents'})
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </section>
 
@@ -997,17 +1012,7 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= OUR GOALS SECTION ================= */}
-            <section className="bg-[#131418] rounded-2xl p-3.5 sm:p-5 text-white shadow-md border-0 space-y-3 text-left">
-              <div className="space-y-1">
-                <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
-                  <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
-                  Our Goals
-                </span>
-              </div>
-              <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-normal">
-                Building Nepal's most transparent and accessible entertainment network. We connect Nepal's finest actors, directors, writers, and film technicians with leading casting agencies, providing a unified platform for talent discovery and casting opportunities across Nepal. By empowering emerging artists with visibility to global production houses and simplifying the casting process for producers, directors, and agencies, we aim to build a strong community that supports and grows Nepal's entertainment industry.
-              </p>
-            </section>
+            <GoalsBannerCard onNavigate={onNavigate} />
           </div>
         </div>
       </PullToRefresh>

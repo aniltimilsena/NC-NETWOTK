@@ -457,6 +457,30 @@ export default function ProfilePage({
 
   const bio = profile.bio || '';
 
+  const formatHeightSpec = (val: any) => {
+    if (val === null || val === undefined) return null;
+    const str = String(val).trim();
+    if (!str || str.toLowerCase() === 'undefined' || str.toLowerCase() === 'null') return null;
+    if (str.toLowerCase().includes('cm') || str.toLowerCase().includes('ft') || str.toLowerCase().includes('in') || str.includes("'") || str.includes('"')) {
+      return str;
+    }
+    const num = parseFloat(str);
+    if (!isNaN(num)) {
+      // If height is between 3.0 and 8.5, the user entered feet.inches (e.g. 5.9 => 5'9" ft)
+      if (num >= 3.0 && num <= 8.5) {
+        const parts = str.split('.');
+        const ft = parts[0];
+        const inches = parts[1] || '0';
+        return `${ft}'${inches}" ft`;
+      }
+      // If height is over 80, the user entered centimeters (e.g. 175 => 175 cm)
+      if (num > 80) {
+        return `${num} cm`;
+      }
+    }
+    return str;
+  };
+
   const formatPhysicalSpec = (val: any, unit: string) => {
     if (val === null || val === undefined) return null;
     const str = String(val).trim();
@@ -467,7 +491,7 @@ export default function ProfilePage({
     return `${str} ${unit}`;
   };
 
-  const height = formatPhysicalSpec(profile.height || (profile as any)?.heightInCm, 'cm');
+  const height = formatHeightSpec(profile.height || (profile as any)?.heightInCm);
   const weight = formatPhysicalSpec(profile.weight || (profile as any)?.weightInKg, 'kg');
   const contactPhone = profile.phone || (profile as any)?.phoneNumber || null;
   const contactEmail = profile.email || (profile as any)?.contactEmail || null;

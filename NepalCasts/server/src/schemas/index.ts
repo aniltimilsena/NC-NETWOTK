@@ -31,18 +31,23 @@ export const ProfileSchema = z.object({
 export const CastingCallSchema = z.object({
     title: z.string().min(2),
     description: z.string().optional().or(z.string().min(0)),
-    type: z.string(),
+    type: z.string().optional(),
+    category: z.string().optional(),
     budget: z.string().optional(),
     location: z.string(),
     thumbnail: z.string().optional(),
-    requirements: z.array(z.string()).optional(),
+    horizontalThumbnail: z.string().optional(),
+    bannerUrl: z.string().optional(),
+    requirements: z.any().optional(),
     deadline: z.string().optional(),
     production: z.string().optional(),
     creatorName: z.string().optional(),
     creatorEmail: z.string().optional(),
+    creatorPhoto: z.string().optional(),
     roles: z.array(z.any()).optional(),
     id: z.string().optional(),
-});
+    status: z.string().optional(),
+}).passthrough();
 export const MessageSchema = z.object({
     text: z.string().min(1).max(2000),
     type: z.enum(['text', 'image', 'file', 'video']).optional().default('text'),

@@ -182,7 +182,10 @@ exports.adminDeleteUser = (0, https_1.onCall)(config_1.callableOptions, async (r
         return { success: true };
     }
     catch (err) {
-        throw new https_1.HttpsError("internal", err.message || "Failed to delete user");
+        logger.error("adminDeleteUser internal error:", err);
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        throw new https_1.HttpsError("internal", "An unexpected error occurred while deleting user.");
     }
 });
 exports.adminBanUser = (0, https_1.onCall)(config_1.callableOptions, async (request) => {
@@ -230,7 +233,10 @@ exports.adminBanUser = (0, https_1.onCall)(config_1.callableOptions, async (requ
         return { success: true };
     }
     catch (err) {
-        throw new https_1.HttpsError("internal", err.message || "Failed to ban user");
+        logger.error("adminBanUser internal error:", err);
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        throw new https_1.HttpsError("internal", "An unexpected error occurred while banning user.");
     }
 });
 exports.adminUnbanUser = (0, https_1.onCall)(config_1.callableOptions, async (request) => {
@@ -267,7 +273,10 @@ exports.adminUnbanUser = (0, https_1.onCall)(config_1.callableOptions, async (re
         return { success: true };
     }
     catch (err) {
-        throw new https_1.HttpsError("internal", err.message || "Failed to unban user");
+        logger.error("adminUnbanUser internal error:", err);
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        throw new https_1.HttpsError("internal", "An unexpected error occurred while unbanning user.");
     }
 });
 exports.adminUpdateUserRole = (0, https_1.onCall)(config_1.callableOptions, async (request) => {
@@ -301,7 +310,10 @@ exports.adminUpdateUserRole = (0, https_1.onCall)(config_1.callableOptions, asyn
         return { success: true, role: nextRole, isAdmin: makeAdmin };
     }
     catch (err) {
-        throw new https_1.HttpsError("internal", err.message || "Failed to update user role");
+        logger.error("adminUpdateUserRole internal error:", err);
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        throw new https_1.HttpsError("internal", "An unexpected error occurred while updating user role.");
     }
 });
 exports.adminApproveDataRequest = (0, https_1.onCall)(config_1.callableOptions, async (request) => {
@@ -343,9 +355,10 @@ exports.adminApproveDataRequest = (0, https_1.onCall)(config_1.callableOptions, 
         return { success: true, downloadLink };
     }
     catch (err) {
+        logger.error("adminApproveDataRequest internal error:", err);
         if (err instanceof https_1.HttpsError)
             throw err;
-        throw new https_1.HttpsError("internal", err.message || "Failed to approve data request");
+        throw new https_1.HttpsError("internal", "An unexpected error occurred while approving data request.");
     }
 });
 exports.adminRejectDataRequest = (0, https_1.onCall)(config_1.callableOptions, async (request) => {
@@ -380,9 +393,10 @@ exports.adminRejectDataRequest = (0, https_1.onCall)(config_1.callableOptions, a
         return { success: true };
     }
     catch (err) {
+        logger.error("adminRejectDataRequest internal error:", err);
         if (err instanceof https_1.HttpsError)
             throw err;
-        throw new https_1.HttpsError("internal", err.message || "Failed to reject data request");
+        throw new https_1.HttpsError("internal", "An unexpected error occurred while rejecting data request.");
     }
 });
 //# sourceMappingURL=admin.js.map

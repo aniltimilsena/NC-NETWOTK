@@ -15,6 +15,7 @@ import { preloadNotificationSound } from '../utils/notification-sound';
 import SplashScreen from '../components/SplashScreen';
 const CallingOverlay = lazy(() => import('../features/call/components/CallingOverlay'));
 const IncomingCallPopup = lazy(() => import('../features/call/components/IncomingCallPopup'));
+const UploadProgressModal = lazy(() => import('../components/ui/UploadProgressModal'));
 import { AnimatePresence, LazyMotion, domAnimation } from 'framer-motion';
 
 export interface AppContextType {
@@ -64,7 +65,17 @@ export default function AppProviders({ children }: {
                     fullName: clerkUser.fullName || null,
                     username: clerkUser.username || null,
                     imageUrl: clerkUser.imageUrl && !isDefaultImage(clerkUser.imageUrl) ? clerkUser.imageUrl : null,
-                    getToken: () => getToken(),
+                    getToken: async () => {
+                        if (auth.currentUser) {
+                            try {
+                                const fbToken = await auth.currentUser.getIdToken();
+                                if (fbToken) return fbToken;
+                            } catch {
+                                // fallback
+                            }
+                        }
+                        return getToken();
+                    },
                 });
             } else {
                 AuthService.setSession({
@@ -194,11 +205,31 @@ export default function AppProviders({ children }: {
                     import('../utils/oneSignal').then(m => m.loginOneSignal(uid)).catch(() => {});
                 } catch (e) { console.warn("OneSignal login failed:", e); }
                 try {
-                    if (!auth.currentUser) {
+                    if (!auth.currentUser || auth.currentUser.uid !== uid) {
                         try {
-                            const token = await getToken({ template: 'integration_firebase' }).catch(() => null);
+                            // 1. Try Clerk native integration template if enabled
+                            let token = await getToken({ template: 'integration_firebase' }).catch(() => null);
+                            // 2. Fallback to server custom token bridge if Clerk template is not configured
+                            if (!token) {
+                                const clerkJwt = await getToken().catch(() => null);
+                                if (clerkJwt) {
+                                    const resp = await fetch('/api/auth/firebase-token', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Authorization': `Bearer ${clerkJwt}`,
+                                            'Content-Type': 'application/json',
+                                        },
+                                    }).catch(() => null);
+                                    if (resp && resp.ok) {
+                                        const body = await resp.json().catch(() => null);
+                                        token = body?.token || null;
+                                    }
+                                }
+                            }
                             if (token) {
-                                await signInWithCustomToken(auth, token).catch(() => {});
+                                await signInWithCustomToken(auth, token).catch((e) => {
+                                    console.warn('[AppProviders] signInWithCustomToken warning:', e);
+                                });
                             }
                         } catch (_aErr) {
                             /* ignore custom token error */
@@ -258,9 +289,11 @@ export default function AppProviders({ children }: {
                         ...(hasAdminFlag ? { isAdmin: true, role: 'Admin' } : {})
                     };
 
-                    await updateProfileData(uid, profilePayload).catch((err) => {
-                        console.warn("updateProfileData non-fatal warning:", err);
-                    });
+                    if (auth.currentUser && auth.currentUser.uid === uid) {
+                        await updateProfileData(uid, profilePayload).catch((err) => {
+                            console.warn("updateProfileData non-fatal warning:", err);
+                        });
+                    }
 
                     setUserProfile(profilePayload);
                     CurrentUser.setName(finalName);
@@ -493,6 +526,7 @@ export default function AppProviders({ children }: {
               <Suspense fallback={null}>
                 <CallingOverlay />
                 <IncomingCallPopup />
+                <UploadProgressModal />
               </Suspense>
             </div>
           </LazyMotion>

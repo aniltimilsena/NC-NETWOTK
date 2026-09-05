@@ -21,23 +21,20 @@ export const rateLimitMiddleware = async (req: Request, res: Response, next: Nex
         });
     }
 };
-export const bloomFilterMiddleware = (resourceType: string) => {
+export const bloomFilterMiddleware = (_resourceType: string) => {
     return (req: Request, res: Response, next: NextFunction): any => {
         const rawId = req.params.id || req.params.userId ||
             req.params.castingId || req.params.uid || (req.query.id as string);
         if (!rawId)
             return next();
         const id = Array.isArray(rawId) ? rawId[0] : (rawId as string);
-        if (id.length < 10 || id.length > 100) {
+        if (id.length < 5 || id.length > 100) {
             return res.status(404).json({
                 error: 'Resource not found',
             });
         }
-        if (!mightExist(resourceType, id)) {
-            return res.status(404).json({
-                error: 'Resource not found',
-            });
-        }
+        // Do not reject with 404 here: newly registered users and castings created after
+        // server boot must be verified against Firestore rather than an out-of-sync in-memory filter.
         next();
     };
 };

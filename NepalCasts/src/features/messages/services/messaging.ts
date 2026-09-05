@@ -2,7 +2,7 @@ import { db } from "../../../lib/firebase";
 import { AuthService } from "../../../services/AuthService";
 import { CurrentUser } from "../../../utils/CurrentUser";
 import { logger } from "../../../utils/logger";
-import { collection, doc, query, where, orderBy, onSnapshot, getDoc, getDocs, updateDoc, addDoc, deleteDoc, serverTimestamp, arrayUnion, arrayRemove, runTransaction, } from "firebase/firestore";
+import { collection, doc, query, where, orderBy, onSnapshot, getDoc, getDocs, updateDoc, setDoc, addDoc, deleteDoc, serverTimestamp, arrayUnion, arrayRemove, runTransaction, } from "firebase/firestore";
 import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
 import { getProfile } from "../../profile/services/profile";
@@ -266,13 +266,30 @@ export const reactToMessage = async (convoId: string, messageId: string, emoji: 
             const snap = await getDoc(messageRef);
             if (snap.exists()) {
                 const reactions = { ...(snap.data().reactions ?? {}) };
-                Object.keys(reactions).forEach((emojiKey) => {
-                    reactions[emojiKey] = (reactions[emojiKey] ?? []).filter((id: string) => id !== userId);
-                    if (reactions[emojiKey].length === 0) {
-                        delete reactions[emojiKey];
+                const currentList: string[] = reactions[emoji] ?? [];
+                const alreadyReacted = currentList.includes(userId);
+
+                if (alreadyReacted) {
+                    // Toggle OFF — remove user from this emoji
+                    const updated = currentList.filter((id: string) => id !== userId);
+                    if (updated.length === 0) {
+                        delete reactions[emoji];
+                    } else {
+                        reactions[emoji] = updated;
                     }
-                });
-                reactions[emoji] = [...(reactions[emoji] ?? []), userId];
+                } else {
+                    // Toggle ON — remove user from any other emoji first, then add to this one
+                    Object.keys(reactions).forEach((emojiKey) => {
+                        if (emojiKey !== emoji) {
+                            reactions[emojiKey] = (reactions[emojiKey] ?? []).filter((id: string) => id !== userId);
+                            if (reactions[emojiKey].length === 0) {
+                                delete reactions[emojiKey];
+                            }
+                        }
+                    });
+                    reactions[emoji] = [...(reactions[emoji] ?? []), userId];
+                }
+
                 await updateDoc(messageRef, { reactions, updatedAt: serverTimestamp() });
             }
             return { success: true, error: null };
@@ -304,6 +321,7 @@ export const pinMessage = async (convoId: string, messageId: string) => {
         return { success: false, error: error.message || "Failed to pin/unpin message" };
     }
 };
+
 export const subscribeToMessages = (conversationId: string, callback: (msgs: any) => void) => {
     const q = query(collection(db, COLLECTIONS.CONVERSATIONS, conversationId, COLLECTIONS.MESSAGES), orderBy("createdAt", "asc"));
     return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
@@ -318,6 +336,9 @@ export const subscribeToMessages = (conversationId: string, callback: (msgs: any
         callback([]);
     });
 };
+const participantProfilesCache = new Map<string, { data: any; ts: number }>();
+const PARTICIPANT_CACHE_TTL_MS = 10 * 60 * 1000;
+
 export const subscribeToConversations = (uid: string, callback: (convos: any[]) => void) => {
     const q = query(collection(db, COLLECTIONS.CONVERSATIONS), where("participants", "array-contains", uid));
     const unsubscribe = onSnapshot(q, async (snapshot) => {
@@ -329,27 +350,47 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
         
         const uniqueParticipantIds = Array.from(new Set(otherParticipantIds));
         const profilesMap = new Map<string, any>();
+        const now = Date.now();
+
+        // Populate already-cached profiles instantly (zero network latency)
+        const missingIds: string[] = [];
+        for (const id of uniqueParticipantIds) {
+            const cached = participantProfilesCache.get(id);
+            if (cached && (now - cached.ts < PARTICIPANT_CACHE_TTL_MS)) {
+                profilesMap.set(id, cached.data);
+            } else {
+                missingIds.push(id);
+            }
+        }
         
-        await Promise.all(uniqueParticipantIds.map(async (id) => {
-            try {
-                const res = await getProfile(id);
-                if (res.data) {
-                    profilesMap.set(id, res.data);
-                } else {
-                    const uSnap = await getDoc(doc(db, COLLECTIONS.USERS, id));
-                    if (uSnap.exists()) {
-                        profilesMap.set(id, uSnap.data());
+        // Fetch only missing or expired participant profiles
+        if (missingIds.length > 0) {
+            await Promise.all(missingIds.map(async (id) => {
+                try {
+                    const res = await getProfile(id);
+                    let profileData: any = null;
+                    if (res.data) {
+                        profileData = res.data;
                     } else {
-                        const pSnap = await getDoc(doc(db, COLLECTIONS.PROFILES, id));
-                        if (pSnap.exists()) {
-                            profilesMap.set(id, pSnap.data());
+                        const uSnap = await getDoc(doc(db, COLLECTIONS.USERS, id));
+                        if (uSnap.exists()) {
+                            profileData = uSnap.data();
+                        } else {
+                            const pSnap = await getDoc(doc(db, COLLECTIONS.PROFILES, id));
+                            if (pSnap.exists()) {
+                                profileData = pSnap.data();
+                            }
                         }
                     }
+                    if (profileData) {
+                        profilesMap.set(id, profileData);
+                        participantProfilesCache.set(id, { data: profileData, ts: Date.now() });
+                    }
+                } catch (err) {
+                    console.warn(`Failed to fetch profile ${id}:`, err);
                 }
-            } catch (err) {
-                console.warn(`Failed to fetch profile ${id}:`, err);
-            }
-        }));
+            }));
+        }
 
         const uniqueConvosMap = new Map<string, any>();
         
@@ -566,7 +607,18 @@ export const createConversation = async (participants: string[], initialMessage?
             }
         }
         const sorted = uniqueParticipants.slice().sort();
+        const deterministicId = sorted.length === 2 ? `${sorted[0]}_${sorted[1]}` : null;
+
         try {
+            // Fast O(1) direct document lookup
+            if (deterministicId) {
+                const directSnap = await getDoc(doc(db, COLLECTIONS.CONVERSATIONS, deterministicId));
+                if (directSnap.exists()) {
+                    return { id: directSnap.id, error: null };
+                }
+            }
+
+            // Fallback search for legacy random-ID conversations
             const q = query(collection(db, COLLECTIONS.CONVERSATIONS), where("participants", "array-contains", currentUserUid));
             const snapshot = await getDocs(q);
             const existing = snapshot.docs.find((doc) => {
@@ -580,13 +632,19 @@ export const createConversation = async (participants: string[], initialMessage?
             if (existing) {
                 return { id: existing.id, error: null };
             }
-            const convoRef = await addDoc(collection(db, COLLECTIONS.CONVERSATIONS), {
+
+            const convoDocRef = deterministicId
+                ? doc(db, COLLECTIONS.CONVERSATIONS, deterministicId)
+                : doc(collection(db, COLLECTIONS.CONVERSATIONS));
+
+            await setDoc(convoDocRef, {
                 participants: sorted,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 lastMessage: "",
                 lastMessageAt: serverTimestamp(),
-            });
+            }, { merge: true });
+            const convoId = convoDocRef.id;
             const otherParticipantId = sorted.find((p) => p !== currentUserUid);
             if (otherParticipantId) {
                 let senderName = CurrentUser.fullName || "Someone";
@@ -629,7 +687,7 @@ export const createConversation = async (participants: string[], initialMessage?
                                 "Authorization": `Bearer ${idToken}`
                             },
                             body: JSON.stringify({
-                                convoId: convoRef.id,
+                                convoId: convoId,
                                 senderName,
                                 previewText: `${senderName} started a new conversation with you.`,
                                 otherParticipants: [otherParticipantId]
@@ -652,9 +710,9 @@ export const createConversation = async (participants: string[], initialMessage?
                 }
             }
             if (initialMessage) {
-                await sendMessage(convoRef.id, "system", initialMessage, true);
+                await sendMessage(convoId, "system", initialMessage, true);
             }
-            return { id: convoRef.id, error: null };
+            return { id: convoId, error: null };
         }
         catch (fallbackError: any) {
             console.error("CreateConversation fallback failed:", fallbackError);

@@ -47,10 +47,14 @@ const corsConfiguration = [
     maxAgeSeconds: 3600,
     method: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
     origin: [
+      'http://localhost:3000',
       'http://localhost:5173',
       'http://localhost:5000',
+      'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
-      'https://nc-netwotk.vercel.app'
+      'https://nc-netwotk.vercel.app',
+      'https://nepalcasts.com',
+      'https://www.nepalcasts.com'
     ],
     responseHeader: ['Content-Type', 'Authorization', 'x-goog-resumable', 'x-firebase-storage-version'],
   }

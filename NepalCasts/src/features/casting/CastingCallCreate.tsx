@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Upload, ChevronLeft, RotateCcw } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
-import { createCastingCall, uploadProfileMedia } from '../../services';
+import { createCastingCall, updateCastingCall, getCastingCallById, uploadProfileMedia } from '../../services';
 import { collection, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { AuthService } from '../../services/AuthService';
@@ -33,12 +34,17 @@ interface CastingCallCreateProps {
   onNavigate?: (page: string, param?: any) => void;
   user?: any;
   showAlert?: (title: string, type: 'error' | 'success' | 'info', message: string) => void;
+  editId?: string;
 }
 
-export default function CastingCallCreate({ onNavigate, user, showAlert }: CastingCallCreateProps) {
+export default function CastingCallCreate({ onNavigate, user, showAlert, editId }: CastingCallCreateProps) {
+  const params = useParams();
+  const effectiveEditId = editId || params.id || params.castingId;
+  const isEditMode = Boolean(effectiveEditId);
+
   useEffect(() => {
     if (!user) {
-      showAlert?.('Sign In Required', 'info', 'Please sign in to publish a casting call.');
+      showAlert?.('Sign In Required', 'info', 'Please sign in to manage a casting call.');
       if (onNavigate) {
         onNavigate('signin');
       }
@@ -46,6 +52,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
   }, [user, onNavigate, showAlert]);
 
   const loadSavedDraft = () => {
+    if (isEditMode) return null;
     try {
       const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
       if (saved) {
@@ -59,9 +66,10 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
 
   const initialDraft = loadSavedDraft();
 
-  const [castingId] = useState(() => initialDraft?.castingId || doc(collection(db, 'casting_calls')).id);
+  const [castingId] = useState(() => effectiveEditId || initialDraft?.castingId || doc(collection(db, 'casting_calls')).id);
   const [step, setStep] = useState(() => initialDraft?.step || 1);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(isEditMode);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(() => initialDraft?.thumbnailPreview || initialDraft?.form?.thumbnail || '');
   const [horizontalThumbnailFile, setHorizontalThumbnailFile] = useState<File | null>(null);
@@ -99,8 +107,116 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
     };
   }, [thumbnailPreview, horizontalThumbnailPreview]);
 
-  // Auto-save form draft whenever values change
+  // Load existing casting call if in edit mode
   useEffect(() => {
+    if (!effectiveEditId) return;
+
+    let isMounted = true;
+    setLoadingInitial(true);
+
+    (async () => {
+      try {
+        const callData: any = await getCastingCallById(effectiveEditId);
+        if (!isMounted) return;
+
+        if (!callData) {
+          showAlert?.('Not Found', 'error', 'Casting call not found.');
+          if (onNavigate) onNavigate('back');
+          return;
+        }
+
+        // Ownership check
+        const currentUid = user?.uid || user?.id || AuthService.getUserId() || CurrentUser.id;
+        const callOwner = callData.creatorId || callData.createdBy || callData.created_by || callData.user_id;
+        const currentEmail = (user?.email || CurrentUser.email || '').toLowerCase().trim();
+        const callEmail = (callData.creatorEmail || callData.contactInfo || '').toLowerCase().trim();
+        const isOwner = (currentUid && callOwner && callOwner === currentUid) || (currentEmail && callEmail && currentEmail === callEmail);
+        const userIsAdmin = Boolean(user?.isAdmin || CurrentUser.role === 'admin' || (user?.email && user.email.toLowerCase() === 'aniltimilsena53@gmail.com'));
+
+        if (!isOwner && !userIsAdmin) {
+          showAlert?.('Permission Denied', 'error', 'You can only edit casting calls that you created.');
+          if (onNavigate) onNavigate('back');
+          return;
+        }
+
+        let reqWardrobe = false;
+        let reqTravel = false;
+        let reqHeadshot = false;
+        let otherReqs = '';
+
+        if (Array.isArray(callData.requirements)) {
+          reqHeadshot = callData.requirements.some((r: string) => /headshot/i.test(r));
+          reqWardrobe = callData.requirements.some((r: string) => /wardrobe/i.test(r));
+          reqTravel = callData.requirements.some((r: string) => /travel/i.test(r));
+          otherReqs = callData.requirements
+            .filter((r: string) => !/headshot|wardrobe|travel/i.test(r))
+            .join('\n');
+        } else if (callData.requirements && typeof callData.requirements === 'object') {
+          reqHeadshot = Boolean(callData.requirements.headshot);
+          reqWardrobe = Boolean(callData.requirements.wardrobe);
+          reqTravel = Boolean(callData.requirements.travel);
+          otherReqs = callData.otherRequirements || '';
+        } else if (typeof callData.requirements === 'string') {
+          otherReqs = callData.requirements;
+        }
+
+        let parsedRoles = [{ name: '', ageRange: '', description: '', pay: 'Paid' }];
+        if (Array.isArray(callData.roles) && callData.roles.length > 0) {
+          parsedRoles = callData.roles.map((r: any) => ({
+            name: typeof r === 'string' ? r : (r.name || ''),
+            ageRange: r.ageRange || '',
+            description: r.description || '',
+            pay: r.pay || r.compensation || 'Paid',
+            gender: r.gender || '',
+          }));
+        }
+
+        const isStandardCat = CATEGORY_OPTIONS.includes(callData.category);
+        if (!isStandardCat && callData.category) {
+          setIsOtherCategory(true);
+          setCustomCategory(callData.category);
+        }
+
+        setForm({
+          title: callData.title || '',
+          type: callData.type || 'Actor',
+          category: callData.category || 'Nepali Feature Film',
+          location: callData.location || '',
+          description: callData.description || '',
+          thumbnail: callData.thumbnail || '',
+          horizontalThumbnail: callData.horizontalThumbnail || callData.bannerUrl || '',
+          budget: callData.budget || callData.compensation || '',
+          deadline: callData.deadline || '',
+          contactInfo: callData.contactInfo || callData.creatorEmail || '',
+          roles: parsedRoles,
+          requirements: { wardrobe: reqWardrobe, travel: reqTravel, headshot: reqHeadshot },
+          otherRequirements: otherReqs,
+        });
+
+        if (callData.thumbnail) {
+          setThumbnailPreview(callData.thumbnail);
+        }
+        if (callData.horizontalThumbnail || callData.bannerUrl) {
+          setHorizontalThumbnailPreview(callData.horizontalThumbnail || callData.bannerUrl);
+        }
+      } catch (err) {
+        console.error('Error fetching casting call for edit:', err);
+        showAlert?.('Error', 'error', 'Failed to load casting call for editing.');
+      } finally {
+        if (isMounted) {
+          setLoadingInitial(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [effectiveEditId, user]);
+
+  // Auto-save form draft whenever values change (only when creating new call)
+  useEffect(() => {
+    if (isEditMode) return;
     const hasMeaningfulData =
       form.title ||
       form.location ||
@@ -128,7 +244,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
         // ignore quota errors
       }
     }
-  }, [castingId, form, step, isOtherType, customType, isOtherCategory, customCategory, thumbnailPreview, horizontalThumbnailPreview]);
+  }, [castingId, form, step, isOtherType, customType, isOtherCategory, customCategory, thumbnailPreview, horizontalThumbnailPreview, isEditMode]);
 
   const handleClearDraft = () => {
     try {
@@ -164,8 +280,9 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
   };
 
   const handlePublish = async () => {
+    if (isLoading) return;
     if (!user) {
-      showAlert?.('Error', 'error', 'You must be signed in to publish a casting call.');
+      showAlert?.('Error', 'error', 'You must be signed in to manage a casting call.');
       if (onNavigate) onNavigate('signin');
       return;
     }
@@ -238,20 +355,38 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
         creatorEmail: user.email || CurrentUser.email || '',
         creatorPhoto: user.photoURL || user.image || CurrentUser.imageUrl || '',
         status: 'active',
-        applicantsCount: 0,
-        createdAt: new Date().toISOString(),
+        requirements: requirementList,
       };
-      const result = await createCastingCall(callData);
-      if (result.error) {
-        showAlert?.('Publication Failed', 'error', result.error);
+
+      if (isEditMode && effectiveEditId) {
+        const result = await updateCastingCall(effectiveEditId, callData);
+        if (result.error) {
+          showAlert?.('Update Failed', 'error', result.error);
+        } else {
+          showAlert?.('Success!', 'success', 'Your casting call has been updated.');
+          if (onNavigate) {
+            onNavigate('casting-detail', effectiveEditId);
+          } else {
+            window.location.assign(`/casting/${effectiveEditId}`);
+          }
+        }
       } else {
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-        showAlert?.('Success!', 'success', 'Your casting call has been published to the network.');
-        if (onNavigate) onNavigate('casting');
+        const result = await createCastingCall({
+          ...callData,
+          applicantsCount: 0,
+          createdAt: new Date().toISOString(),
+        });
+        if (result.error) {
+          showAlert?.('Publication Failed', 'error', result.error);
+        } else {
+          localStorage.removeItem(DRAFT_STORAGE_KEY);
+          showAlert?.('Success!', 'success', 'Your casting call has been published to the network.');
+          if (onNavigate) onNavigate('casting');
+        }
       }
     } catch (err) {
-      console.error('Error publishing casting call:', err);
-      const msg = err instanceof Error ? err.message : 'Something went wrong while publishing.';
+      console.error('Error saving casting call:', err);
+      const msg = err instanceof Error ? err.message : 'Something went wrong while saving.';
       showAlert?.('Unexpected Error', 'error', msg);
     } finally {
       setIsLoading(false);
@@ -279,6 +414,15 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
     setStep((s: number) => s + 1);
   };
 
+  if (loadingInitial) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col items-center justify-center p-4">
+        <div className="w-8 h-8 rounded-full border-2 border-[#522C69]/30 border-t-[#522C69] animate-spin mb-3" />
+        <p className="text-xs font-semibold text-gray-400">Loading casting call details...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white pt-2 sm:pt-4 pb-12 font-sans">
       <div className="max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-8 w-full overflow-hidden">
@@ -295,19 +439,27 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
           </button>
 
           <div className="flex-1 text-center px-3">
-            <h1 className="text-xl sm:text-4xl font-black text-white tracking-tight">Post a Casting Call</h1>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Find the perfect talent for your next production</p>
+            <h1 className="text-xl sm:text-4xl font-black text-white tracking-tight">
+              {isEditMode ? 'Edit Casting Call' : 'Post a Casting Call'}
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium">
+              {isEditMode ? 'Update details, requirements, or roles for your casting call' : 'Find the perfect talent for your next production'}
+            </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleClearDraft}
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-white/10 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0 flex items-center justify-center"
-            title="Reset Form Draft"
-            aria-label="Reset Form Draft"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
+          {!isEditMode ? (
+            <button
+              type="button"
+              onClick={handleClearDraft}
+              className="w-10 h-10 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-white/10 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0 flex items-center justify-center"
+              title="Reset Form Draft"
+              aria-label="Reset Form Draft"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          ) : (
+            <div className="w-10 h-10" />
+          )}
         </div>
 
         {/* Mobile Step Indicator */}
@@ -701,8 +853,12 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
           {step === 4 && (
             <div className="space-y-6 text-left">
               <div>
-                <h2 className="text-lg font-black text-white uppercase tracking-wider">Preview & Publish</h2>
-                <p className="text-xs text-gray-500 mt-1 font-medium">Review your casting notice before launching</p>
+                <h2 className="text-lg font-black text-white uppercase tracking-wider">
+                  {isEditMode ? 'Preview & Save Changes' : 'Preview & Publish'}
+                </h2>
+                <p className="text-xs text-gray-500 mt-1 font-medium">
+                  {isEditMode ? 'Review your changes before updating your casting notice' : 'Review your casting notice before launching'}
+                </p>
               </div>
 
               <div className="bg-[#1a1a1a] border border-white/5 rounded-2xl p-6 space-y-4">
@@ -755,7 +911,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert }: Casti
                 disabled={isLoading}
                 className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-extrabold text-xs uppercase tracking-wider px-8 py-3 rounded-xl shadow-md border-0 active:scale-95 cursor-pointer"
               >
-                Publish Casting Call
+                {isEditMode ? (isLoading ? 'Saving Changes...' : 'Save Changes') : (isLoading ? 'Publishing...' : 'Publish Casting Call')}
               </Button>
             )}
           </div>

@@ -313,8 +313,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
 
 
 
-              </>) : (<Link to="/signup" className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-xl font-bold transition-all ml-1 shadow-md active:scale-95 flex items-center justify-center">
-                Join Now
+              </>) : (<Link to="/signin" className="bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-xl font-bold transition-all ml-1 shadow-md active:scale-95 flex items-center justify-center">
+                Sign In
               </Link>)}
 
               <button className="md:hidden text-white hover:text-white/80 p-1 flex items-center justify-center h-10 w-10 active:scale-95 transition-transform" onClick={() => setMenuOpen(!menuOpen)} title="Toggle Menu" aria-label="Toggle Menu">

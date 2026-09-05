@@ -1,7 +1,7 @@
 import { Router, type Response } from 'express';
 import multer from 'multer';
 import path from 'path';
-import { verifyToken } from '../middleware/auth';
+import { verifyToken, optionalAuth } from '../middleware/auth';
 import { validateUpload, type ValidatedRequest } from '../middleware/uploadSecurity';
 import { uploadLimiter } from '../middleware/rateLimiter';
 import { db, admin } from '../config';
@@ -55,7 +55,7 @@ router.get('/config/cloudinary', verifyToken, (req: AuthedRequest, res: Response
         uploadPreset,
     });
 });
-router.post('/upload', verifyToken, uploadLimiter, mediaUpload.single('file'), validateUpload, async (req: ValidatedRequest & AuthedRequest, res: Response): Promise<any> => {
+router.post('/upload', optionalAuth, uploadLimiter, mediaUpload.single('file'), validateUpload, async (req: ValidatedRequest & AuthedRequest, res: Response): Promise<any> => {
     try {
         if (!req.validatedFile) {
             return res.status(400).json({

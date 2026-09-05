@@ -202,7 +202,7 @@ export default function Desktop3ColumnLayout({
     const qFollowers = query(collection(db, 'follows'), where('followingId', '==', uid));
     const unsubFollowers = onSnapshot(qFollowers, (snap) => {
       // eslint-disable-next-line no-secrets/no-secrets
-      const mockUids = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', 'Mm1B6rYaEebs6ajRyu0EJBrrGwT2', uid]);
+      const mockUids = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', uid]);
       const valid = snap.docs.filter(d => d.data().followerId && !mockUids.has(d.data().followerId));
       setRealFollowers(valid.length);
     }, () => setRealFollowers(0));
@@ -375,7 +375,7 @@ export default function Desktop3ColumnLayout({
                     to="/signin"
                     className="w-full py-2.5 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold rounded-xl text-sm transition-all cursor-pointer shadow-md active:scale-[0.98] text-center block"
                   >
-                    Sign In / Register
+                    Sign In
                   </Link>
                 </div>
               )}

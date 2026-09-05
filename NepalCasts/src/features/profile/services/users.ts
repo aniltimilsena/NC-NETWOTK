@@ -175,65 +175,24 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void, limitC
             return unique;
         };
 
-        let profilesDocs: any[] = [];
-        let usersDocs: any[] = [];
-        let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-        const mergeAndEmit = () => {
-            if (debounceTimer) clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                const combinedMap = new Map<string, any>();
-                for (const d of usersDocs) {
-                    const data = typeof d.data === 'function' ? d.data() : d;
-                    const id = d.id || data.uid || data.id;
-                    if (id) {
-                        combinedMap.set(id, { id, uid: id, ...data });
-                    }
-                }
-                for (const d of profilesDocs) {
-                    const data = typeof d.data === 'function' ? d.data() : d;
-                    const id = d.id || data.uid || data.id;
-                    if (id) {
-                        const existing = combinedMap.get(id) || {};
-                        combinedMap.set(id, { ...existing, ...data, id, uid: id });
-                    }
-                }
-                const mergedDocs = Array.from(combinedMap.values()).map(item => ({
-                    id: item.id,
-                    data: () => item
-                }));
-
-                const talents = processSnapshotDocs(mergedDocs);
-                if (talents.length > 0) {
-                    saveRealTalents(talents, limitCount);
-                    pooledCb(talents.slice(0, limitCount), null);
-                }
-            }, 25);
+        const handleSnapshot = (docs: any[]) => {
+            const talents = processSnapshotDocs(docs);
+            if (talents.length > 0) {
+                saveRealTalents(talents, limitCount);
+                pooledCb(talents.slice(0, limitCount), null);
+            }
         };
 
-        // Queries with explicit limits to prevent downloading the entire database
+        // Consolidated query on canonical profiles collection
         const qProfiles = query(collection(db, COLLECTIONS.PROFILES), limit(limitCount));
         const unsubProfiles = onSnapshot(qProfiles, (snapshot) => {
-            profilesDocs = snapshot.docs;
-            mergeAndEmit();
+            handleSnapshot(snapshot.docs);
         }, (_error) => {
             getDocs(qProfiles).then((snapshot) => {
-                profilesDocs = snapshot.docs;
-                mergeAndEmit();
+                handleSnapshot(snapshot.docs);
             }).catch(() => {
                 fetchFromApiFallback();
             });
-        });
-
-        const qUsers = query(collection(db, COLLECTIONS.USERS), limit(limitCount));
-        const unsubUsers = onSnapshot(qUsers, (snapshot) => {
-            usersDocs = snapshot.docs;
-            mergeAndEmit();
-        }, (_error) => {
-            getDocs(qUsers).then((snapshot) => {
-                usersDocs = snapshot.docs;
-                mergeAndEmit();
-            }).catch(() => {});
         });
 
         const handleProfileUpdateEvent = (e: Event) => {
@@ -264,12 +223,10 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void, limitC
         }
 
         return () => {
-            if (debounceTimer) clearTimeout(debounceTimer);
             if (typeof window !== 'undefined') {
                 window.removeEventListener('nc-profile-updated', handleProfileUpdateEvent);
             }
             unsubProfiles();
-            unsubUsers();
         };
     }, (data) => callback(data));
 };

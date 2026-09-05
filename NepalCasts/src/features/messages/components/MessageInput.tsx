@@ -108,7 +108,7 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
     const hasContent = Boolean(text.trim() || selectedFile);
 
     return (
-        <div className="p-3 sm:p-4 bg-[#141414] border-t border-white/5 space-y-2.5">
+        <div className="p-3 sm:p-4 bg-[#141414] border-t border-white/5 space-y-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shrink-0">
             {replyingTo && (
                 <div className="flex justify-between items-center bg-[#1a1a1a] p-2.5 rounded-xl text-xs text-gray-400">
                     <div className="text-left truncate max-w-[80%]">

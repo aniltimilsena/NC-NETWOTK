@@ -42,6 +42,18 @@ export const CastingRoutes = ({ onNavigate, user, isAdmin, showAlert, authReady 
       }
     />
     <Route
+      path="/casting/:id/edit"
+      element={
+        !authReady ? (
+          <div className="min-h-screen bg-[#070709]" />
+        ) : user ? (
+          <CastingCallCreate onNavigate={onNavigate} user={user} showAlert={showAlert} />
+        ) : (
+          <Navigate to="/signin?redirect_url=/casting" replace />
+        )
+      }
+    />
+    <Route
       path="/casting/:id/apply"
       element={<CastingDetailWrapper onNavigate={onNavigate} user={user} showAlert={showAlert} defaultTab="apply" />}
     />
@@ -88,6 +100,18 @@ export const CastingRoutes = ({ onNavigate, user, isAdmin, showAlert, authReady 
           <CastingCallCreate onNavigate={onNavigate} user={user} showAlert={showAlert} />
         ) : (
           <Navigate to="/signin?redirect_url=/casting/create" replace />
+        )
+      }
+    />
+    <Route
+      path="/my-casting/:castingId/edit"
+      element={
+        !authReady ? (
+          <div className="min-h-screen bg-[#070709]" />
+        ) : user ? (
+          <CastingCallCreate onNavigate={onNavigate} user={user} showAlert={showAlert} />
+        ) : (
+          <Navigate to="/signin?redirect_url=/my-casting" replace />
         )
       }
     />

@@ -2,22 +2,34 @@ import React, { Suspense } from 'react';
 import AppProviders, { useApp } from './providers/AppProviders';
 import { DialogProvider } from './providers/DialogProvider';
 import RouteConfig from './routes/routeConfig';
+import ErrorBoundary from './components/ErrorBoundary';
+
 const AgentationWidget = import.meta.env.DEV
   ? React.lazy(() => import('agentation').then(m => ({ default: m.Agentation })))
   : null;
+
 function MainApp() {
   const { user, isAdmin, authReady, handleLogout, showAlert, showToast } = useApp();
-  return (<Suspense fallback={<div className="min-h-screen bg-[#070709]" />}>
-    <RouteConfig user={user} isAdmin={isAdmin} authReady={authReady} onLogout={handleLogout} showAlert={showAlert} showToast={showToast} />
-  </Suspense>);
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#070709]" />}>
+      <RouteConfig user={user} isAdmin={isAdmin} authReady={authReady} onLogout={handleLogout} showAlert={showAlert} showToast={showToast} />
+    </Suspense>
+  );
 }
+
 export default function App() {
-  return (<DialogProvider>
-    <AppProviders>
-      <MainApp />
-      {import.meta.env.DEV && AgentationWidget && (<Suspense fallback={null}>
-        <AgentationWidget />
-      </Suspense>)}
-    </AppProviders>
-  </DialogProvider>);
+  return (
+    <ErrorBoundary>
+      <DialogProvider>
+        <AppProviders>
+          <MainApp />
+          {import.meta.env.DEV && AgentationWidget && (
+            <Suspense fallback={null}>
+              <AgentationWidget />
+            </Suspense>
+          )}
+        </AppProviders>
+      </DialogProvider>
+    </ErrorBoundary>
+  );
 }

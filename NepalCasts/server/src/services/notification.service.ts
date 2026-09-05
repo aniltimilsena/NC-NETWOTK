@@ -73,3 +73,29 @@ export async function sendFcmMulticastNotification(tokens: string[], title: stri
         console.error('Failed to send FCM multicast notifications:', err);
     }
 }
+
+export async function sendOneSignalSegmentNotification({ segment, title, body, url }: { segment: string; title: string; body: string; url?: string }): Promise<void> {
+    const appId = process.env.ONESIGNAL_APP_ID;
+    const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
+    if (!appId || !restApiKey || restApiKey === 'your_onesignal_rest_api_key_here') return;
+    try {
+        const payload: Record<string, any> = {
+            app_id: appId,
+            contents: { en: body },
+            headings: { en: title },
+            url: url ? `${process.env.APP_URL || 'http://localhost:5173'}${url}` : undefined,
+            included_segments: [segment],
+            target_channel: "push"
+        };
+        await fetch("https://onesignal.com/api/v1/notifications", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": `Basic ${restApiKey}`
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch (err) {
+        console.warn("[OneSignal Segment Broadcast Error]:", err);
+    }
+}

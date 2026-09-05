@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { doc, getDoc, collection, query, where, getDocs, onSnapshot, setDoc, deleteDoc, serverTimestamp, documentId } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { db, auth } from '../../../lib/firebase';
 import type { UserProfile, ServiceResult } from '../../../types';
 import { CurrentUser } from '../../../utils/CurrentUser';
 export function useProfile(profileId: string | null, currentUser: any) {
@@ -54,7 +54,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
                     const data = snap.data();
-                    const realUid = data.uid || data.userId || snap.id;
+                    const realUid = data.linkedUid || data.canonicalUid || data.uid || data.userId || snap.id;
                     if (isMounted) {
                         setResolvedUid(realUid);
                         setResolvingUid(false);
@@ -67,7 +67,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
                 const userSnap = await getDoc(userDocRef);
                 if (userSnap.exists()) {
                     const data = userSnap.data();
-                    const realUid = data.uid || data.userId || userSnap.id;
+                    const realUid = data.linkedUid || data.canonicalUid || data.uid || data.userId || userSnap.id;
                     if (isMounted) {
                         setResolvedUid(realUid);
                         setResolvingUid(false);
@@ -82,7 +82,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
                 const qSnap = await getDocs(qProfiles);
                 if (!qSnap.empty) {
                     const docData = qSnap.docs[0].data();
-                    const realUid = docData.uid || docData.userId || qSnap.docs[0].id;
+                    const realUid = docData.linkedUid || docData.canonicalUid || docData.uid || docData.userId || qSnap.docs[0].id;
                     if (isMounted) {
                         setResolvedUid(realUid);
                         setResolvingUid(false);
@@ -267,7 +267,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
         if (!targetUid) return;
         const qFollowers = query(collection(db, "follows"), where("followingId", "==", targetUid));
         // eslint-disable-next-line no-secrets/no-secrets
-        const mockFollowerUids = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', 'Mm1B6rYaEebs6ajRyu0EJBrrGwT2', targetUid]);
+        const mockFollowerUids = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', targetUid]);
         const unsubFollowers = onSnapshot(qFollowers, (snap) => {
             const validDocs = snap.docs.filter(d => {
                 const data = d.data();
@@ -316,43 +316,56 @@ export function useProfile(profileId: string | null, currentUser: any) {
     useEffect(() => {
         if (!isOwnProfile || !currentUser?.uid)
             return;
-        const q = query(collection(db, 'saved_calls'), where('userId', '==', currentUser.uid));
-        const unsubscribe = onSnapshot(q, async (snap) => {
-            const docsData = snap.docs.map(d => ({ id: d.id, castingId: d.data().castingId }));
-            const castingIds = docsData.map(item => item.castingId).filter(Boolean);
-            const uniqueCastingIds = Array.from(new Set(castingIds));
-
-            const existingIds = new Set<string>();
-            const chunks = [];
-            for (let i = 0; i < uniqueCastingIds.length; i += 30) {
-                chunks.push(uniqueCastingIds.slice(i, i + 30));
+        let unsubscribeSnapshot: (() => void) | null = null;
+        const unsubAuth = auth.onAuthStateChanged((fbUser) => {
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
             }
+            if (fbUser && fbUser.uid === currentUser.uid) {
+                const q = query(collection(db, 'saved_calls'), where('userId', '==', currentUser.uid));
+                unsubscribeSnapshot = onSnapshot(q, async (snap) => {
+                    const docsData = snap.docs.map(d => ({ id: d.id, castingId: d.data().castingId }));
+                    const castingIds = docsData.map(item => item.castingId).filter(Boolean);
+                    const uniqueCastingIds = Array.from(new Set(castingIds));
 
-            await Promise.all(chunks.map(async (chunk) => {
-                try {
-                    const chunkQuery = query(collection(db, 'casting_calls'), where(documentId(), 'in', chunk));
-                    const chunkSnap = await getDocs(chunkQuery);
-                    chunkSnap.docs.forEach(docSnap => {
-                        existingIds.add(docSnap.id);
-                    });
-                } catch (err) {
-                    console.warn("Failed to check casting call existence batch:", err);
-                }
-            }));
+                    const existingIds = new Set<string>();
+                    const chunks = [];
+                    for (let i = 0; i < uniqueCastingIds.length; i += 30) {
+                        chunks.push(uniqueCastingIds.slice(i, i + 30));
+                    }
 
-            let activeCount = 0;
-            for (const item of docsData) {
-                if (existingIds.has(item.castingId)) {
-                    activeCount++;
-                } else if (item.castingId) {
-                    deleteDoc(doc(db, 'saved_calls', item.id)).catch(err => console.warn(err));
-                }
+                    await Promise.all(chunks.map(async (chunk) => {
+                        try {
+                            const chunkQuery = query(collection(db, 'casting_calls'), where(documentId(), 'in', chunk));
+                            const chunkSnap = await getDocs(chunkQuery);
+                            chunkSnap.docs.forEach(docSnap => {
+                                existingIds.add(docSnap.id);
+                            });
+                        } catch (err) {
+                            console.warn("Failed to check casting call existence batch:", err);
+                        }
+                    }));
+
+                    let activeCount = 0;
+                    for (const item of docsData) {
+                        if (existingIds.has(item.castingId)) {
+                            activeCount++;
+                        } else if (item.castingId) {
+                            deleteDoc(doc(db, 'saved_calls', item.id)).catch(err => console.warn(err));
+                        }
+                    }
+                    setSavedCount(activeCount);
+                }, (err) => {
+                    console.warn("Failed to subscribe to saved calls count:", err);
+                });
             }
-            setSavedCount(activeCount);
-        }, (err) => {
-            console.warn("Failed to subscribe to saved calls count:", err);
         });
-        return () => unsubscribe();
+
+        return () => {
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+            unsubAuth();
+        };
     }, [isOwnProfile, currentUser?.uid]);
     const toggleFollow = useCallback(async (): Promise<ServiceResult> => {
         if (!currentUser || !targetUid) {

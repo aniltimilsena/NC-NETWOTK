@@ -14,9 +14,21 @@ const getPublicProfilesHandler = async (req: any, res: Response): Promise<any> =
     try {
         const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
         const limitCount = Math.min(50, Math.max(1, parseInt(req.query.limit as string, 10) || 12));
-        const offset = (page - 1) * limitCount;
+        const lastDocId = req.query.lastDocId as string | undefined;
 
-        const snapshot = await db.collection('profiles').offset(offset).limit(limitCount).get();
+        let queryRef: FirebaseFirestore.Query = db.collection('profiles').orderBy('createdAt', 'desc');
+
+        if (lastDocId) {
+            const lastDoc = await db.collection('profiles').doc(lastDocId).get();
+            if (lastDoc.exists) {
+                queryRef = queryRef.startAfter(lastDoc);
+            }
+        } else if (page > 1) {
+            const offset = (page - 1) * limitCount;
+            queryRef = queryRef.offset(offset);
+        }
+
+        const snapshot = await queryRef.limit(limitCount).get();
         const talents = snapshot.docs
             .map(doc => {
                 const data = doc.data() || {};
@@ -34,16 +46,19 @@ const getPublicProfilesHandler = async (req: any, res: Response): Promise<any> =
                 };
             })
             .filter((t: any) => t.name && t.name.trim() !== '');
+
+        const lastItem = snapshot.docs[snapshot.docs.length - 1];
+
         return res.json({ 
             success: true, 
             talents, 
             page, 
             limit: limitCount, 
+            lastDocId: lastItem ? lastItem.id : null,
             hasMore: snapshot.docs.length === limitCount 
         });
     } catch (error: any) {
         console.error('[PublicProfiles] Firestore query error:', error?.message || error);
-        // Return 200 with empty array fallback so client proxy never encounters 500/502
         return res.json({ success: true, talents: [], note: 'Firestore admin credential uninitialized' });
     }
 };

@@ -1,6 +1,8 @@
 import { AuthService } from '../services/AuthService';
+import { getStorageInstance } from '../lib/firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
-export interface CloudinaryUploadResult {
+export interface MediaUploadResult {
     url: string;
     publicId: string;
     type: 'image' | 'video';
@@ -10,17 +12,23 @@ export interface CloudinaryUploadResult {
     format?: string;
     bytes?: number;
 }
+export type CloudinaryUploadResult = MediaUploadResult;
 
 export const uploadMedia = async (file: File, folder: string, onProgress?: (progress: number) => void): Promise<CloudinaryUploadResult> => {
     if (!file) {
         throw new Error('No file selected');
     }
-    const token = await AuthService.getIdToken().catch(() => null);
-
+    const uid = AuthService.getUserId() || 'public';
     const isVideo = file.type.startsWith('video/') || Boolean(file.name.match(/\.(mp4|mov|webm|mkv|avi|m4v|3gp)$/i));
-    const isPdf = file.type === 'application/pdf' || Boolean(file.name.match(/\.pdf$/i));
-    const resourceType = isVideo ? 'video' : isPdf ? 'raw' : 'auto';
+    const resourceType: 'image' | 'video' = isVideo ? 'video' : 'image';
     const isChat = folder === 'chat';
+
+    let previewUrl: string | null = null;
+    if (file && typeof window !== 'undefined' && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+        try {
+            previewUrl = URL.createObjectURL(file);
+        } catch {}
+    }
 
     if (!isChat && typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('nc-upload-start', {
@@ -28,134 +36,137 @@ export const uploadMedia = async (file: File, folder: string, onProgress?: (prog
                 fileName: file.name,
                 fileType: resourceType,
                 fileSize: file.size,
-                folder
+                folder,
+                previewUrl,
             }
         }));
     }
 
-    let cloudName = 'du7zu8mca';
-    let uploadPreset = 'stored_media';
-    if (!import.meta.env.DEV && token) {
-        try {
-            const configRes = await fetch('/api/config/cloudinary', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            }).catch(() => null);
-            if (configRes && configRes.ok) {
-                const config = await configRes.json();
-                if (config.cloudName)
-                    cloudName = config.cloudName;
-                if (config.uploadPreset)
-                    uploadPreset = config.uploadPreset;
-            }
-        } catch (_err) {
-            // Ignore optional config fetch errors and fallback to defaults
-        }
-    }
-
-    const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
-    return new Promise((resolve, reject) => {
+    // 1. First attempt: Same-Origin Backend Upload Endpoint (/api/upload)
+    // Completely avoids browser CORS preflight issues and executes virus/magic-byte checks.
+    try {
+        const token = await AuthService.getIdToken().catch(() => null);
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('upload_preset', uploadPreset);
-        formData.append('folder', `nc-network/${folder}`);
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', uploadUrl);
-        if (xhr.upload) {
-            xhr.upload.addEventListener('progress', (e) => {
-                if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
-                    onProgress?.(percent);
-                    if (!isChat && typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('nc-upload-progress', {
-                            detail: {
-                                fileName: file.name,
-                                progress: percent,
-                                folder
-                            }
-                        }));
+        formData.append('folder', folder);
+
+        const uploadResult = await new Promise<MediaUploadResult>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/upload');
+            if (token) {
+                xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            }
+
+            if (xhr.upload) {
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        onProgress?.(percent);
+                        if (!isChat && typeof window !== 'undefined') {
+                            window.dispatchEvent(new CustomEvent('nc-upload-progress', {
+                                detail: { fileName: file.name, progress: percent, folder }
+                            }));
+                        }
+                    }
+                });
+            }
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (res && res.url) {
+                            resolve({
+                                url: res.url,
+                                publicId: res.publicId || `${folder}/${file.name}`,
+                                type: resourceType,
+                                width: res.width || null,
+                                height: res.height || null,
+                                duration: res.duration || null,
+                                format: file.name.split('.').pop() || '',
+                                bytes: file.size,
+                            });
+                            return;
+                        }
+                    } catch {
+                        // ignore parse error
                     }
                 }
+                reject(new Error(`API upload returned status ${xhr.status}`));
             });
+
+            xhr.addEventListener('error', () => reject(new Error('Network error on /api/upload')));
+            xhr.addEventListener('timeout', () => reject(new Error('Timeout on /api/upload')));
+            xhr.timeout = 180000;
+            xhr.send(formData);
+        });
+
+        if (!isChat && typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('nc-upload-complete', {
+                detail: { fileName: file.name, folder }
+            }));
         }
-        xhr.addEventListener('load', () => {
-            if (xhr.status !== 200) {
-                let errMsg = `Upload failed (Status ${xhr.status})`;
-                try {
-                    const res = JSON.parse(xhr.responseText);
-                    if (res.error && res.error.message) {
-                        errMsg = res.error.message;
-                    }
-                } catch (_err) {
-                    // Ignore JSON parse failure on non-200 response
-                }
+        return uploadResult;
+    } catch (apiErr) {
+        console.warn('[uploadMedia] /api/upload unavailable or failed, falling back to direct Firebase Storage:', apiErr);
+    }
+
+    // 2. Fallback: Direct Firebase Storage Upload
+    const storage = await getStorageInstance();
+    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const storagePath = `${folder}/${uid}/${Date.now()}_${cleanName}`;
+    const storageRef = ref(storage, storagePath);
+
+    return new Promise((resolve, reject) => {
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+                const percent = snapshot.totalBytes > 0
+                    ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
+                    : 0;
+                onProgress?.(percent);
                 if (!isChat && typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('nc-upload-error', {
-                        detail: { fileName: file.name, error: errMsg, folder }
+                    window.dispatchEvent(new CustomEvent('nc-upload-progress', {
+                        detail: {
+                            fileName: file.name,
+                            progress: percent,
+                            folder
+                        }
                     }));
                 }
-                reject(new Error(errMsg));
-                return;
-            }
-            try {
-                const res = JSON.parse(xhr.responseText);
-                if (res.secure_url) {
+            },
+            (error) => {
+                if (!isChat && typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('nc-upload-error', {
+                        detail: { fileName: file.name, error: error.message, folder }
+                    }));
+                }
+                reject(error);
+            },
+            async () => {
+                try {
+                    const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
                     if (!isChat && typeof window !== 'undefined') {
                         window.dispatchEvent(new CustomEvent('nc-upload-complete', {
                             detail: { fileName: file.name, folder }
                         }));
                     }
                     resolve({
-                        url: res.secure_url,
-                        publicId: res.public_id,
-                        type: res.resource_type === 'video' ? 'video' : 'image',
-                        width: res.width || null,
-                        height: res.height || null,
-                        duration: res.duration || null,
-                        format: res.format || '',
-                        bytes: res.bytes || 0,
+                        url: downloadUrl,
+                        publicId: storagePath,
+                        type: resourceType,
+                        width: null,
+                        height: null,
+                        duration: null,
+                        format: file.name.split('.').pop() || '',
+                        bytes: file.size,
                     });
-                }
-                else {
-                    const errMsg = res.error?.message || 'Upload failed';
-                    if (!isChat && typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('nc-upload-error', {
-                            detail: { fileName: file.name, error: errMsg, folder }
-                        }));
-                    }
-                    reject(new Error(errMsg));
+                } catch (urlErr) {
+                    reject(urlErr);
                 }
             }
-            catch {
-                const errMsg = 'Failed to parse upload response';
-                if (!isChat && typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('nc-upload-error', {
-                        detail: { fileName: file.name, error: errMsg, folder }
-                    }));
-                }
-                reject(new Error(errMsg));
-            }
-        });
-        xhr.addEventListener('error', () => {
-            const errMsg = 'Network error during upload';
-            if (!isChat && typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('nc-upload-error', {
-                    detail: { fileName: file.name, error: errMsg, folder }
-                }));
-            }
-            reject(new Error(errMsg));
-        });
-        xhr.timeout = 300000;
-        xhr.addEventListener('timeout', () => {
-            const errMsg = 'Upload timed out. Try a smaller file.';
-            if (!isChat && typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('nc-upload-error', {
-                    detail: { fileName: file.name, error: errMsg, folder }
-                }));
-            }
-            reject(new Error(errMsg));
-        });
-        xhr.send(formData);
+        );
     });
 };

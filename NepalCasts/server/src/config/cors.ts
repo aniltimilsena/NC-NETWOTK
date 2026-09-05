@@ -8,12 +8,19 @@ export const getAllowedOrigins = (): string[] => {
     const origins = Array.from(new Set([...defaultProdOrigins, ...customOrigins]));
 
     if (process.env.NODE_ENV !== 'production') {
-        if (!origins.includes('http://localhost:5173')) {
-            origins.push('http://localhost:5173');
-        }
-        if (!origins.includes('http://127.0.0.1:5173')) {
-            origins.push('http://127.0.0.1:5173');
-        }
+        const devOrigins = [
+            'http://localhost:3000',
+            'http://localhost:5173',
+            'http://localhost:5000',
+            'http://127.0.0.1:3000',
+            'http://127.0.0.1:5173',
+            'http://127.0.0.1:5000',
+        ];
+        devOrigins.forEach((orig) => {
+            if (!origins.includes(orig)) {
+                origins.push(orig);
+            }
+        });
     }
     return origins;
 };
