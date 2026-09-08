@@ -109,7 +109,7 @@ export default function ProfileMedia({
           <input
             type="file"
             id="portfolio-upload"
-            multiple
+            multiple={media.length < 1}
             accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.gif,.bmp"
             className="hidden"
             onChange={handleMediaChange}
@@ -120,7 +120,7 @@ export default function ProfileMedia({
       {/* Media Header */}
       <div className="flex items-center justify-between pb-1">
         <h2 className="font-apple text-lg sm:text-xl font-bold text-white tracking-tight">
-          Media
+          Media ({media.length}/2)
         </h2>
 
         {isOwnProfile && (
@@ -133,15 +133,15 @@ export default function ProfileMedia({
                 document.getElementById('portfolio-upload')?.click();
               }
             }}
-            disabled={isUploadingVideo || isUploadingPhotos}
-            className="font-apple text-xs sm:text-sm font-semibold text-[#522C69] hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5"
+            disabled={isUploadingVideo || isUploadingPhotos || media.length >= 2}
+            className="font-apple text-xs sm:text-sm font-semibold text-[#522C69] hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isUploadingVideo || isUploadingPhotos ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
               <>
                 <Plus className="w-4 h-4" />
-                <span>Upload Media</span>
+                <span>{media.length >= 2 ? 'Limit Reached (2/2)' : 'Upload Media'}</span>
               </>
             )}
           </button>

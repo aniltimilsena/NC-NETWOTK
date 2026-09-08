@@ -1,33 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useProfile } from './hooks/useProfile';
 import SEO from '../../components/SEO';
 import ProfileHeader from './components/ProfileHeader';
-import ProfileMedia from './components/ProfileMedia';
 import ProfileExperience from './components/ProfileExperience';
 import FollowModal from './components/FollowModal';
 import ShareSheet from '../../components/ui/ShareSheet';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { doc, setDoc, deleteDoc, query, collection, where, getDocs, serverTimestamp, documentId } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
 import { AuthService } from '../../services/AuthService';
 import { updateProfileData, uploadProfileMedia } from '../../services';
+import { getOptimizedImageUrl } from '../../utils/media';
 import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
   Pencil,
   Plus,
   Ruler,
-  Scale,
   Phone,
   Mail,
-  Eye,
-  MessageSquare,
   X,
   Loader2,
-  Video,
-  Image as ImageIcon,
   ChevronLeft,
-  Share2,
-  ShieldCheck,
+  ChevronRight,
+  Trash2,
+  Camera,
 } from 'lucide-react';
+import type { UserProfile } from '../../types';
 
 interface ProfilePageProps {
   onNavigate: (page: string, param?: any) => void;
@@ -61,11 +63,11 @@ export default function ProfilePage({
   profileId,
   isAdmin,
   showAlert,
+  initialTab = 'grid',
 }: ProfilePageProps) {
   const {
     profile,
     setProfile,
-    resolvedUid,
     resolvingUid,
     loading,
     isOwnProfile,
@@ -77,10 +79,9 @@ export default function ProfilePage({
     toggleFollow,
   } = useProfile(profileId, user);
 
-  const [showFollowModal, setShowFollowModal] = useState<'followers' | 'following' | 'projects' | null>(null);
+  const [showFollowModal, setShowFollowModal] = useState<'followers' | 'following' | null>(null);
   const [followList, setFollowList] = useState<any[]>([]);
   const [loadingFollowList, setLoadingFollowList] = useState(false);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   // Direct Interactive Modals
   const [showSkillsModal, setShowSkillsModal] = useState(false);
@@ -88,17 +89,9 @@ export default function ProfilePage({
   const [customSkillInput, setCustomSkillInput] = useState('');
   const [isSavingSkills, setIsSavingSkills] = useState(false);
 
-  const [showExperienceModal, setShowExperienceModal] = useState(false);
-  const [expTitle, setExpTitle] = useState('');
-  const [expCompany, setExpCompany] = useState('');
-  const [expYear, setExpYear] = useState('');
-  const [expDesc, setExpDesc] = useState('');
-  const [isSavingExp, setIsSavingExp] = useState(false);
-
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [bioInput, setBioInput] = useState('');
   const [isSavingBio, setIsSavingBio] = useState(false);
-  const [isBioExpanded, setIsBioExpanded] = useState(false);
 
   const [showAttributesModal, setShowAttributesModal] = useState(false);
   const [heightInput, setHeightInput] = useState('');
@@ -106,8 +99,18 @@ export default function ProfilePage({
   const [phoneInput, setPhoneInput] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [isSavingAttributes, setIsSavingAttributes] = useState(false);
-  const [showMediaModal, setShowMediaModal] = useState(false);
-  const [showShareSheet, setShowShareSheet] = useState(false);
+
+  // Media / Lightbox state
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [isReelPlaying, setIsReelPlaying] = useState(true);
+  const [isReelMuted, setIsReelMuted] = useState(false);
+  const [reelProgress, setReelProgress] = useState(0);
+  const reelVideoRef = useRef<HTMLVideoElement>(null);
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [deletePhotoTarget, setDeletePhotoTarget] = useState<{ index: number; url: string } | null>(null);
+  const [deleteVideoConfirmOpen, setDeleteVideoConfirmOpen] = useState(false);
 
   const loggedInUserId = CurrentUser.id || AuthService.getUserId() || user?.uid || user?.id;
   const targetProfileId = profile?.uid || (profile as any)?.id;
@@ -118,62 +121,78 @@ export default function ProfilePage({
 
   const activeUserId = isRealOwn ? (targetProfileId || loggedInUserId) : null;
 
+  const rawMedia: unknown = profile?.media;
+  const media: string[] = Array.isArray(rawMedia)
+    ? rawMedia.map(String).filter((s) => s && s.trim() !== '')
+    : [];
+
+  const introVideo = profile?.introVideo || (profile as any)?.introVideoUrl || (profile as any)?.showreel || null;
+  const postsCount = media.length + (introVideo ? 1 : 0);
+
+  const handleCloseVideoModal = () => {
+    if (reelVideoRef.current) {
+      reelVideoRef.current.pause();
+    }
+    setShowVideoModal(false);
+    setIsReelPlaying(true);
+    setReelProgress(0);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (lightboxIndex !== null) setLightboxIndex(null);
+        if (showVideoModal) handleCloseVideoModal();
+      } else if (lightboxIndex !== null && media.length > 1) {
+        if (e.key === 'ArrowLeft') {
+          setLightboxIndex((prev) => (prev !== null ? (prev - 1 + media.length) % media.length : null));
+        } else if (e.key === 'ArrowRight') {
+          setLightboxIndex((prev) => (prev !== null ? (prev + 1) % media.length : null));
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxIndex, showVideoModal, media.length]);
+
   const handleFollowModalClose = () => {
     setShowFollowModal(null);
     setFollowList([]);
   };
 
-  const handleFollowModalOpen = async (type: 'followers' | 'following' | 'projects') => {
+  const handleFollowModalOpen = async (type: 'followers' | 'following') => {
     setShowFollowModal(type);
     setLoadingFollowList(true);
     try {
-      if (type === 'projects') {
-        const q = query(collection(db, 'casting_calls'), where('createdBy', '==', targetUid));
-        const snap = await getDocs(q);
-        const list = snap.docs.map((docSnap) => {
-          const data = docSnap.data();
-          return {
-            id: docSnap.id,
-            title: data.title || 'Untitled Project',
-            production: data.production || 'Independent',
-            status: data.status || 'Open',
-            location: data.location || 'Remote',
-          };
-        });
-        setFollowList(list);
-      } else {
-        const fieldName = type === 'followers' ? 'followingId' : 'followerId';
-        const queryField = type === 'followers' ? 'followerId' : 'followingId';
-        const q = query(collection(db, 'follows'), where(fieldName, '==', targetUid));
-        const snap = await getDocs(q);
-        const userIds = snap.docs
-          .map((docSnap: any) => docSnap.data()[queryField])
-          .filter((id: string) => id && id !== targetUid);
-        if (userIds.length === 0) {
-          setFollowList([]);
-          return;
-        }
-        const chunks = [];
-        for (let i = 0; i < userIds.length; i += 30) {
-          chunks.push(userIds.slice(i, i + 30));
-        }
-        const profileMap = new Map<string, any>();
-        await Promise.all(
-          chunks.map(async (chunk) => {
-            try {
-              const qSnap = query(collection(db, 'profiles'), where(documentId(), 'in', chunk));
-              const snapInner = await getDocs(qSnap);
-              snapInner.docs.forEach((docSnap) => {
-                profileMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
-              });
-            } catch (e) {
-              console.warn('Chunk query error:', e);
-            }
-          })
-        );
-        const result = userIds.map((id) => profileMap.get(id)).filter(Boolean);
-        setFollowList(result);
+      const subcollectionName = type === 'followers' ? 'followers' : 'following';
+      const qSnap = await getDocs(collection(db, 'profiles', targetUid, subcollectionName));
+      const userIds = qSnap.docs.map((d) => d.id).filter(Boolean);
+
+      if (userIds.length === 0) {
+        setFollowList([]);
+        return;
       }
+
+      const chunks = [];
+      for (let i = 0; i < userIds.length; i += 30) {
+        chunks.push(userIds.slice(i, i + 30));
+      }
+      const profileMap = new Map<string, any>();
+      await Promise.all(
+        chunks.map(async (chunk) => {
+          try {
+            const q = query(collection(db, 'profiles'), where(documentId(), 'in', chunk));
+            const snapInner = await getDocs(q);
+            snapInner.docs.forEach((docSnap) => {
+              profileMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+            });
+          } catch (e) {
+            console.warn('Chunk query error:', e);
+          }
+        })
+      );
+      const result = userIds.map((id) => profileMap.get(id)).filter(Boolean);
+      setFollowList(result);
     } catch (err) {
       console.error(err);
     } finally {
@@ -227,13 +246,41 @@ export default function ProfilePage({
     }
   };
 
+  // Upload Media (Enforced Limit: Max 2 Photos Only, 1 Video Reel, 1 Profile Photo)
+  const MAX_PORTFOLIO_PHOTOS = 2;
+
   const handleUploadMedia = async (files: FileList) => {
     const uidToUse = profile?.uid || activeUserId || user?.uid;
     if (!uidToUse) return;
+
+    const currentMedia = Array.isArray(profile?.media) ? profile.media : [];
+    const remainingSlots = MAX_PORTFOLIO_PHOTOS - currentMedia.length;
+
+    if (remainingSlots <= 0) {
+      showAlert(
+        'Photo Limit Reached',
+        'warning',
+        'You can only upload up to 2 portfolio photos. Please delete an existing photo to upload a new one.'
+      );
+      return;
+    }
+
+    const filesArray = Array.from(files);
+    const filesToUpload = filesArray.slice(0, remainingSlots);
+
+    if (filesArray.length > remainingSlots) {
+      showAlert(
+        'Photo Limit (Max 2)',
+        'info',
+        `You can only have up to 2 portfolio photos. Uploading ${remainingSlots} of ${filesArray.length} selected.`
+      );
+    }
+
+    setIsUploadingPhotos(true);
     const newUrls: string[] = [];
     let failedCount = 0;
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    for (let i = 0; i < filesToUpload.length; i++) {
+      const file = filesToUpload[i];
       try {
         const url = await uploadProfileMedia(uidToUse, file);
         if (url) {
@@ -247,59 +294,54 @@ export default function ProfilePage({
       }
     }
     if (newUrls.length > 0) {
-      const currentMedia = Array.isArray(profile?.media) ? profile.media : [];
-      const updatedMedia = [...currentMedia, ...newUrls];
-      setProfile((prev: any) => (prev ? { ...prev, media: updatedMedia } : prev));
-      await updateProfileData(uidToUse, { media: updatedMedia });
-      showAlert('Photos Uploaded', 'success');
-    } else if (failedCount > 0) {
-      showAlert('Upload Failed', 'error', 'Failed to upload photo(s).');
+      const updated = [...currentMedia, ...newUrls].slice(0, MAX_PORTFOLIO_PHOTOS);
+      setProfile((prev: any) => (prev ? { ...prev, media: updated } : prev));
+      await updateProfileData(uidToUse, { media: updated });
+      showAlert(`Uploaded ${newUrls.length} photo${newUrls.length > 1 ? 's' : ''} (${updated.length}/2 photos)`, 'success');
     }
+    if (failedCount > 0) {
+      showAlert(`Failed to upload ${failedCount} file(s).`, 'error');
+    }
+    setIsUploadingPhotos(false);
   };
 
   const handleDeleteMedia = async (src: string) => {
     const uidToUse = profile?.uid || activeUserId || user?.uid;
-    if (!uidToUse || !profile) return;
+    if (!uidToUse) return;
     try {
-      const currentMedia = Array.isArray(profile.media) ? profile.media : [];
-      const updatedMedia = currentMedia.filter((item) => item !== src);
-      setProfile((prev: any) => (prev ? { ...prev, media: updatedMedia } : prev));
-      await updateProfileData(uidToUse, { media: updatedMedia });
+      const currentMedia = Array.isArray(profile?.media) ? profile.media : [];
+      const updated = currentMedia.filter((url: string) => url !== src);
+      setProfile((prev: any) => (prev ? { ...prev, media: updated } : prev));
+      await updateProfileData(uidToUse, { media: updated });
+      showAlert('Photo Removed', 'info');
+      if (lightboxIndex !== null) setLightboxIndex(null);
     } catch (err) {
-      console.error(err);
+      console.error('Delete media error:', err);
+      showAlert('Failed to remove photo.', 'error');
     }
   };
 
   const handleUploadIntroVideo = async (file: File) => {
     const uidToUse = profile?.uid || activeUserId || user?.uid;
     if (!uidToUse) return;
+    setIsUploadingVideo(true);
     try {
       const url = await uploadProfileMedia(uidToUse, file);
       if (url) {
         setProfile((prev: any) =>
-          prev
-            ? {
-              ...prev,
-              introVideo: url,
-              introVideoUrl: url,
-              showreel: url,
-              showreelUrl: url,
-            }
-            : prev
+          prev ? { ...prev, introVideo: url, introVideoUrl: url } : prev
         );
         await updateProfileData(uidToUse, {
           introVideo: url,
           introVideoUrl: url,
-          showreel: url,
-          showreelUrl: url,
         });
         showAlert('Video Uploaded', 'success');
-      } else {
-        showAlert('Upload Failed', 'error', 'Failed to upload video.');
       }
     } catch (err) {
       console.error('Video upload error:', err);
       showAlert('Failed to upload video.', 'error');
+    } finally {
+      setIsUploadingVideo(false);
     }
   };
 
@@ -310,12 +352,12 @@ export default function ProfilePage({
       setProfile((prev: any) =>
         prev
           ? {
-            ...prev,
-            introVideo: null,
-            introVideoUrl: null,
-            showreel: null,
-            showreelUrl: null,
-          }
+              ...prev,
+              introVideo: null,
+              introVideoUrl: null,
+              showreel: null,
+              showreelUrl: null,
+            }
           : prev
       );
       await updateProfileData(uidToUse, {
@@ -324,12 +366,14 @@ export default function ProfilePage({
         showreel: null,
         showreelUrl: null,
       });
+      showAlert('Video Removed', 'info');
+      setShowVideoModal(false);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // 1. Direct Save Skills
+  // Direct Save Skills
   const handleSaveSkills = async () => {
     const uidToUse = profile?.uid || activeUserId || user?.uid;
     if (!uidToUse) return;
@@ -360,37 +404,7 @@ export default function ProfilePage({
     }
   };
 
-  // 2. Direct Save Experience
-  const handleSaveExperience = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const uidToUse = profile?.uid || activeUserId || user?.uid;
-    if (!uidToUse || !expTitle.trim()) return;
-    setIsSavingExp(true);
-    try {
-      const currentList = Array.isArray(profile?.experience) ? profile.experience : [];
-      const newExp = {
-        title: expTitle.trim(),
-        company: expCompany.trim(),
-        year: expYear.trim(),
-        description: expDesc.trim(),
-      };
-      const updatedList = [newExp, ...currentList];
-      setProfile((prev: any) => (prev ? { ...prev, experience: updatedList } : prev));
-      await updateProfileData(uidToUse, { experience: updatedList });
-      showAlert('Experience Added', 'success');
-      setExpTitle('');
-      setExpCompany('');
-      setExpYear('');
-      setExpDesc('');
-      setShowExperienceModal(false);
-    } catch (err: any) {
-      showAlert('Failed to add experience', 'error', err.message);
-    } finally {
-      setIsSavingExp(false);
-    }
-  };
-
-  // 3. Direct Save Bio
+  // Direct Save Bio
   const handleSaveBio = async () => {
     const uidToUse = profile?.uid || activeUserId || user?.uid;
     if (!uidToUse) return;
@@ -407,7 +421,7 @@ export default function ProfilePage({
     }
   };
 
-  // 4. Direct Save Attributes (Height, Weight, Contacts)
+  // Direct Save Attributes
   const handleSaveAttributes = async () => {
     const uidToUse = profile?.uid || activeUserId || user?.uid;
     if (!uidToUse) return;
@@ -430,12 +444,28 @@ export default function ProfilePage({
     }
   };
 
+  // Lightbox keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (lightboxIndex === null) return;
+      if (e.key === 'Escape') setLightboxIndex(null);
+      if (e.key === 'ArrowLeft' && media.length > 0) {
+        setLightboxIndex((lightboxIndex - 1 + media.length) % media.length);
+      }
+      if (e.key === 'ArrowRight' && media.length > 0) {
+        setLightboxIndex((lightboxIndex + 1) % media.length);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxIndex, media.length]);
+
   if (loading || resolvingUid) {
     return (
-      <div className="min-h-screen bg-[#141414] pb-6 text-left animate-pulse flex flex-col items-center justify-center p-6">
-        <div className="w-24 h-24 rounded-full border-2 border-white/10 skeleton mb-4" />
-        <div className="h-6 w-48 skeleton rounded-lg mb-2" />
-        <div className="h-4 w-32 skeleton rounded-md mb-4" />
+      <div className="min-h-screen bg-black pb-6 text-left animate-pulse flex flex-col items-center justify-center p-6">
+        <div className="w-20 h-20 rounded-full border-2 border-white/10 skeleton mb-4" />
+        <div className="h-5 w-36 skeleton rounded-lg mb-2" />
+        <div className="h-3 w-28 skeleton rounded-md mb-4" />
         <div className="h-24 w-full max-w-md skeleton rounded-2xl" />
       </div>
     );
@@ -443,12 +473,15 @@ export default function ProfilePage({
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#141414] pb-6 flex flex-col items-center justify-center text-center p-6 text-white">
+      <div className="min-h-screen bg-black pb-6 flex flex-col items-center justify-center text-center p-6 text-white">
         <h2 className="text-xl font-bold mb-2">Profile Not Found</h2>
         <p className="text-gray-400 text-sm max-w-xs mb-6">
           The profile you are looking for does not exist or has been deleted.
         </p>
-        <button onClick={() => onNavigate('home')} className="px-6 py-2.5 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold rounded-xl cursor-pointer">
+        <button
+          onClick={() => onNavigate('home')}
+          className="px-6 py-2.5 bg-[#522C69] hover:bg-[#663782] text-white font-bold rounded-xl cursor-pointer"
+        >
           Go Back Home
         </button>
       </div>
@@ -456,43 +489,8 @@ export default function ProfilePage({
   }
 
   const bio = profile.bio || '';
-
-  const formatHeightSpec = (val: any) => {
-    if (val === null || val === undefined) return null;
-    const str = String(val).trim();
-    if (!str || str.toLowerCase() === 'undefined' || str.toLowerCase() === 'null') return null;
-    if (str.toLowerCase().includes('cm') || str.toLowerCase().includes('ft') || str.toLowerCase().includes('in') || str.includes("'") || str.includes('"')) {
-      return str;
-    }
-    const num = parseFloat(str);
-    if (!isNaN(num)) {
-      // If height is between 3.0 and 8.5, the user entered feet.inches (e.g. 5.9 => 5'9" ft)
-      if (num >= 3.0 && num <= 8.5) {
-        const parts = str.split('.');
-        const ft = parts[0];
-        const inches = parts[1] || '0';
-        return `${ft}'${inches}" ft`;
-      }
-      // If height is over 80, the user entered centimeters (e.g. 175 => 175 cm)
-      if (num > 80) {
-        return `${num} cm`;
-      }
-    }
-    return str;
-  };
-
-  const formatPhysicalSpec = (val: any, unit: string) => {
-    if (val === null || val === undefined) return null;
-    const str = String(val).trim();
-    if (!str || str.toLowerCase() === 'undefined' || str.toLowerCase() === 'null') return null;
-    if (str.toLowerCase().includes(unit.toLowerCase()) || str.includes("'") || str.includes('"')) {
-      return str;
-    }
-    return `${str} ${unit}`;
-  };
-
-  const height = formatHeightSpec(profile.height || (profile as any)?.heightInCm);
-  const weight = formatPhysicalSpec(profile.weight || (profile as any)?.weightInKg, 'kg');
+  const height = profile.height || (profile as any)?.heightInCm;
+  const weight = profile.weight || (profile as any)?.weightInKg;
   const contactPhone = profile.phone || (profile as any)?.phoneNumber || null;
   const contactEmail = profile.email || (profile as any)?.contactEmail || null;
 
@@ -500,227 +498,30 @@ export default function ProfilePage({
   const skillsList: string[] = Array.isArray(rawSkills)
     ? rawSkills.map((s) => (typeof s === 'string' ? s : s?.name || '')).filter(Boolean)
     : typeof rawSkills === 'string' && rawSkills.trim() !== ''
-      ? rawSkills.split(',').map((s: string) => s.trim()).filter(Boolean)
-      : [];
-
-  const coverUrl =
-    profile?.coverImage ||
-    (profile as any)?.coverPhoto ||
-    (profile as any)?.bannerImage ||
-    '/hero-bg.png';
-
-  const effectiveIsOwn = isRealOwn && !isPreviewMode;
-
-  const renderFormattedBio = (text: string) => {
-    if (!text) return null;
-    const parts = text.split(/(\*\*[^*]+\*\*)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return (
-          <strong key={i} className="font-apple font-bold text-white">
-            {part.slice(2, -2)}
-          </strong>
-        );
-      }
-      return part;
-    });
-  };
-
-  const renderAttributesCard = () => (
-    <div className="bg-[#161616] rounded-2xl p-4 sm:p-6 shadow-md space-y-2.5 text-center">
-      <div className="pb-1.5 flex items-center justify-center text-center">
-        <h4 className="font-apple font-bold text-base sm:text-lg text-white tracking-tight text-center">
-          Physical Specs & Contact
-        </h4>
-      </div>
-
-      <div className="divide-y divide-white/10">
-        {/* Height Row */}
-        <div className="py-3 flex items-center justify-center gap-2.5 text-sm sm:text-base font-apple">
-          <div className="flex items-center gap-1.5 text-neutral-300">
-            <Ruler className="w-4.5 h-4.5 text-white" />
-            <span className="font-semibold text-neutral-200">Height:</span>
-          </div>
-          <span className={height ? 'text-white font-medium' : 'text-neutral-500'}>
-            {height ? height : 'Not added'}
-          </span>
-          {effectiveIsOwn && (
-            <button
-              onClick={() => {
-                setHeightInput(profile.height || '');
-                setWeightInput(profile.weight || '');
-                setPhoneInput(profile.phone || '');
-                setEmailInput(profile.email || '');
-                setShowAttributesModal(true);
-              }}
-              className="text-white/70 hover:text-white transition-colors cursor-pointer ml-1"
-            >
-              {height ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            </button>
-          )}
-        </div>
-
-        {/* Weight Row */}
-        <div className="py-3 flex items-center justify-center gap-2.5 text-sm sm:text-base font-apple">
-          <div className="flex items-center gap-1.5 text-neutral-300">
-            <Scale className="w-4.5 h-4.5 text-white" />
-            <span className="font-semibold text-neutral-200">Weight:</span>
-          </div>
-          <span className={weight ? 'text-white font-medium' : 'text-neutral-500'}>
-            {weight ? weight : 'Not added'}
-          </span>
-          {effectiveIsOwn && (
-            <button
-              onClick={() => {
-                setHeightInput(profile.height || '');
-                setWeightInput(profile.weight || '');
-                setPhoneInput(profile.phone || '');
-                setEmailInput(profile.email || '');
-                setShowAttributesModal(true);
-              }}
-              className="text-white/70 hover:text-white transition-colors cursor-pointer ml-1"
-            >
-              {weight ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            </button>
-          )}
-        </div>
-
-        {/* Contacts Row */}
-        <div className="py-3 flex items-center justify-center gap-2.5 text-sm sm:text-base font-apple flex-wrap">
-          <div className="flex items-center gap-1.5 text-neutral-300">
-            <Phone className="w-4.5 h-4.5 text-white" />
-            <span className="font-semibold text-neutral-200">Contacts:</span>
-          </div>
-          {contactPhone || contactEmail ? (
-            <div className="flex items-center gap-3 text-neutral-200 font-medium text-sm sm:text-base flex-wrap justify-center">
-              {contactPhone && (
-                <div className="flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-white/80" />
-                  <span>{contactPhone}</span>
-                </div>
-              )}
-              {contactEmail && (
-                <div className="flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-white/80" />
-                  <span>{contactEmail}</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <span className="text-neutral-500">Not added</span>
-          )}
-          {effectiveIsOwn && (
-            <button
-              onClick={() => {
-                setHeightInput(profile.height || '');
-                setWeightInput(profile.weight || '');
-                setPhoneInput(profile.phone || '');
-                setEmailInput(profile.email || '');
-                setShowAttributesModal(true);
-              }}
-              className="text-white/70 hover:text-white transition-colors cursor-pointer ml-1"
-            >
-              {contactPhone || contactEmail ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderActionButtons = () => (
-    <div className="w-full">
-      {isRealOwn && isPreviewMode ? (
-        <div className="flex items-center gap-2.5 sm:gap-3 w-full">
-          <button
-            onClick={() => setIsPreviewMode(false)}
-            className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
-          >
-            <Eye className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
-            <span>Exit Preview</span>
-          </button>
-          <button
-            onClick={() => onNavigate('/settings/profile')}
-            className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
-          >
-            <Pencil className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-            <span>Edit Profile</span>
-          </button>
-        </div>
-      ) : effectiveIsOwn ? (
-        <div className="space-y-2.5 w-full">
-          <div className="flex items-center gap-2.5 sm:gap-3 w-full">
-            <button
-              onClick={() => setIsPreviewMode(true)}
-              className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
-            >
-              <Eye className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
-              <span>Preview Mode</span>
-            </button>
-            <button
-              onClick={() => onNavigate('/settings/profile')}
-              className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
-            >
-              <Pencil className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              <span>Edit Profile</span>
-            </button>
-          </div>
-          {(isAdmin || (profile as any)?.isAdmin === true || (profile as any)?.role?.toLowerCase() === 'admin') && (
-            <button
-              type="button"
-              onClick={() => onNavigate('/admin')}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-red-600/25 via-red-500/15 to-red-600/20 hover:from-red-600/35 hover:to-red-500/25 border border-red-500/35 text-red-200 hover:text-white font-bold text-xs sm:text-sm md:text-base transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
-            >
-              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 shrink-0" />
-              <span>Admin Panel</span>
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="flex items-center gap-2.5 sm:gap-3 w-full">
-          <button
-            onClick={handleFollowToggle}
-            className={`flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl font-extrabold text-sm sm:text-base md:text-lg transition-all active:scale-98 cursor-pointer flex items-center justify-center shadow-md ${isFollowing
-              ? 'bg-[#222] hover:bg-[#2a2a2a] text-white border border-white/15'
-              : 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm shadow-lg'
-              }`}
-          >
-            <span>{isFollowing ? 'Following' : 'Follow'}</span>
-          </button>
-          <button
-            onClick={() => onNavigate?.('messages', profile.uid || (profile as any)?.id)}
-            className="flex-1 py-3 px-4 sm:py-3.5 sm:px-5 rounded-xl bg-[#1f1f1f] hover:bg-[#2a2a2a] border border-white/10 text-white font-extrabold text-sm sm:text-base md:text-lg transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-md"
-          >
-            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            <span>Message</span>
-          </button>
-        </div>
-      )}
-    </div>
-  );
+    ? rawSkills.split(',').map((s: string) => s.trim()).filter(Boolean)
+    : [];
 
   return (
-    <div className="min-h-screen bg-[#141414] pb-28 sm:pb-32 lg:pb-12 text-white font-sans">
+    <div className="min-h-screen bg-black text-white font-sans pb-16">
       <SEO
-        title={`${profile.name || 'Talent'} | NepalCasts Profile`}
-        description={profile.bio || `View ${profile.name || 'this talent'}'s portfolio, auditions, and experience on NepalCasts.`}
+        title={`${profile.name || 'Talent'} | NepalCasts`}
+        description={profile.bio || `View ${profile.name || 'this talent'}'s portfolio and casting profile on NepalCasts.`}
         image={profile.image || undefined}
         noindex={(profile as any).isPrivate === true}
       />
 
-
-      {/* Hidden file inputs for media uploads */}
+      {/* Hidden File Upload Inputs */}
       <input
         type="file"
         id="profile-direct-photo-upload"
-        multiple
+        multiple={media.length < 1}
         accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif"
         className="hidden"
         onChange={(e) => {
           if (e.target.files && e.target.files.length > 0) {
             handleUploadMedia(e.target.files);
-            setShowMediaModal(false);
           }
+          e.target.value = '';
         }}
       />
       <input
@@ -731,191 +532,559 @@ export default function ProfilePage({
         onChange={(e) => {
           if (e.target.files && e.target.files[0]) {
             handleUploadIntroVideo(e.target.files[0]);
-            setShowMediaModal(false);
           }
+          e.target.value = '';
         }}
       />
 
-      {/* Full-Width Edge-to-Edge Cinematic Cover Banner with Subtle Curved Bottom Edges */}
-      <div className="relative w-full h-52 sm:h-64 md:h-76 lg:h-84 overflow-hidden bg-[#161616] group border-b border-white/10 rounded-b-xl sm:rounded-b-2xl">
-        <img
-          src={coverUrl}
-          alt={`${profile.name || 'Talent'} Cover`}
-          className="w-full h-full object-cover object-center"
+      {/* Main Instagram Profile Container */}
+      <div className="w-full max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto px-0 sm:px-2 md:px-4 py-0 md:py-4">
+        {/* 1. Header (Avatar Left + 3 Stats Right + Bio + Action Buttons) */}
+        <ProfileHeader
+          profile={profile}
+          isOwnProfile={isRealOwn}
+          isFollowing={isFollowing}
+          followerCount={followerCount}
+          followingCount={followingCount}
+          savedCount={savedCount}
+          postsCount={postsCount}
+          onFollowToggle={handleFollowToggle}
+          onNavigate={onNavigate}
+          showAlert={showAlert}
+          onFollowClick={handleFollowModalOpen}
+          hideTopNav={false}
+          bio={bio}
+          onEditBio={() => {
+            setBioInput(profile.bio || '');
+            setShowAboutModal(true);
+          }}
+          isAdmin={isAdmin}
+          onOpenCall={() => onNavigate('call', profile.uid || (profile as any)?.id)}
         />
 
-        {/* Ambient Contrast Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/40 pointer-events-none" />
-
-        {/* Floating Top Navigation: Back Button & Share Button */}
-        <div className="absolute top-3 sm:top-5 left-3 sm:left-6 lg:left-10 right-3 sm:right-6 lg:left-10 flex items-center justify-between z-10 pointer-events-auto max-w-[1600px] mx-auto">
-          <button
-            onClick={() => onNavigate('back')}
-            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0 shadow-lg"
-            aria-label="Back"
-            title="Go Back"
-          >
-            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
-          </button>
-
-          <button
-            onClick={() => setShowShareSheet(true)}
-            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/15 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0 shadow-lg"
-            title="Share Profile"
-            aria-label="Share Profile"
-          >
-            <Share2 className="w-5 h-5 text-white" />
-          </button>
-        </div>
-      </div>
-
-      {/* Full Screen Unified Profile Container */}
-      <div className="w-full max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 space-y-6">
-        {/* Main Content Grid: 1 column on mobile, 2 columns on PC / Desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-          {/* Left Column (Desktop Hero & Specs Sidebar) */}
-          <div className="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-20">
-            {/* 1. Header (Centered Avatar overlapping cover, Bio card, 3 Meta Pills, Followers Count Box) */}
-            <ProfileHeader
-              profile={profile}
-              isOwnProfile={effectiveIsOwn}
-              isFollowing={isFollowing}
-              followerCount={followerCount}
-              followingCount={followingCount}
-              savedCount={savedCount}
-              onFollowToggle={handleFollowToggle}
-              onNavigate={onNavigate}
-              showAlert={showAlert}
-              onFollowClick={handleFollowModalOpen}
-              hideTopNav={true}
-              bio={bio}
-              onEditBio={() => {
-                setBioInput(profile.bio || '');
-                setShowAboutModal(true);
-              }}
-            />
-
-            {/* Desktop Action Buttons (Directly embedded in Left Sidebar on Laptop/Desktop) */}
-            <div className="hidden lg:block pt-1">
-              {renderActionButtons()}
-            </div>
-
-            {/* Desktop Attributes & Contacts */}
-            <div className="hidden lg:block">
-              {renderAttributesCard()}
-            </div>
-          </div>
-
-          {/* Right Column (Portfolio, Media, Experience, Skills) */}
-          <div className="lg:col-span-8 xl:col-span-8 space-y-6">
-            {/* 2. Media Section Card */}
-            <div className="bg-[#161616] rounded-2xl p-5 sm:p-6 shadow-md text-left">
-              <ProfileMedia
-                profile={profile}
-                isOwnProfile={effectiveIsOwn}
-                onUploadMedia={handleUploadMedia}
-                onDeleteMedia={handleDeleteMedia}
-                onUploadIntroVideo={handleUploadIntroVideo}
-                onDeleteIntroVideo={handleDeleteIntroVideo}
-                onNavigate={() => setShowMediaModal(true)}
-              />
-            </div>
-
-            {/* Attributes Box (mobile only) */}
-            <div className="lg:hidden">
-              {renderAttributesCard()}
-            </div>
-
-            {/* 4. Experience Section Card */}
-            <div className="bg-[#161616] rounded-2xl p-5 sm:p-6 shadow-md text-left">
-              <ProfileExperience
-                profile={profile}
-                isOwnProfile={effectiveIsOwn}
-                showAlert={showAlert}
-                onNavigate={() => setShowExperienceModal(true)}
-              />
-            </div>
-
-            {/* 5. Skills Section Card */}
-            <div className="bg-[#161616] rounded-2xl p-5 sm:p-6 shadow-md text-left space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-apple font-bold text-lg sm:text-xl text-white tracking-tight">
-                  Skills
-                </h3>
-                {effectiveIsOwn && (
-                  <button
-                    onClick={() => {
-                      setEditingSkills(skillsList);
-                      setShowSkillsModal(true);
-                    }}
-                    className="font-apple text-xs sm:text-sm font-semibold text-[#522C69] hover:text-amber-300 transition-colors cursor-pointer"
-                  >
-                    + Edit Skills
-                  </button>
-                )}
-              </div>
-
-              {skillsList.length > 0 ? (
-                <div className="flex flex-wrap gap-2 pt-0.5">
-                  {skillsList.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="bg-white text-black text-xs sm:text-sm font-apple font-bold px-3.5 py-1.5 rounded-full shadow-sm select-none"
-                    >
-                      {skill}
+        {/* 3-Column Square Media Grid */}
+        <div className="w-full mt-3 md:mt-6">
+            <div>
+              {/* Media Upload Banner for Owner (Limit: 1 Profile Photo, 1 Video Reel, 2 Portfolio Photos) */}
+              {isRealOwn && (
+                <div className="px-3 py-2 md:px-4 md:py-3 flex items-center justify-between bg-[#111111] border-b border-white/[0.06] md:rounded-t-xl">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs md:text-sm text-neutral-400">
+                      {postsCount} {postsCount === 1 ? 'post' : 'posts'}
                     </span>
-                  ))}
+                    <span className="text-[11px] md:text-xs text-neutral-500 font-medium">
+                      ({media.length}/2 photos • {introVideo ? '1/1 reel' : '0/1 reel'})
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (media.length >= 2) {
+                          showAlert(
+                            'Limit Reached',
+                            'warning',
+                            'You can only upload up to 2 portfolio photos. Delete an existing photo to upload a new one.'
+                          );
+                          return;
+                        }
+                        document.getElementById('profile-direct-photo-upload')?.click();
+                      }}
+                      disabled={isUploadingPhotos || media.length >= 2}
+                      title={media.length >= 2 ? 'Maximum 2 photos reached' : 'Add portfolio photo (limit 2)'}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 md:px-3 md:py-1.5 rounded text-xs font-medium transition-colors ${
+                        media.length >= 2
+                          ? 'bg-white/5 text-neutral-500 cursor-not-allowed border border-white/5'
+                          : 'bg-[#262626] hover:bg-[#333333] text-white cursor-pointer'
+                      }`}
+                    >
+                      {isUploadingPhotos ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Plus className="w-3.5 h-3.5" />
+                      )}
+                      <span>{media.length >= 2 ? 'Photos Full (2/2)' : `Add Photo (${media.length}/2)`}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('profile-direct-video-upload')?.click()}
+                      disabled={isUploadingVideo}
+                      title="Upload 1 video reel"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 md:px-3 md:py-1.5 rounded bg-[#262626] hover:bg-[#333333] text-white text-xs font-medium cursor-pointer transition-colors"
+                    >
+                      {isUploadingVideo ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Plus className="w-3.5 h-3.5" />
+                      )}
+                      <span>{introVideo ? 'Change Reel' : 'Add Reel (0/1)'}</span>
+                    </button>
+                  </div>
                 </div>
-              ) : effectiveIsOwn ? (
-                <div
-                  onClick={() => {
-                    setEditingSkills(skillsList);
-                    setShowSkillsModal(true);
-                  }}
-                  className="border border-dashed border-white/10 bg-black rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-white/20 transition-colors group"
-                >
-                  <Plus className="w-4 h-4 text-gray-400 group-hover:text-white mb-1" />
-                  <span className="text-xs font-semibold text-gray-400 group-hover:text-white">
-                    Add Skills
-                  </span>
-                  <p className="text-[10px] text-gray-500 mt-0.5">Add skills you are good at...</p>
+              )}
+
+              {/* 3-Column Square Grid (Responsive for mobile & laptop) */}
+              {media.length > 0 || introVideo ? (
+                <div className="grid grid-cols-3 gap-0.5 sm:gap-2 md:gap-4 lg:gap-5">
+                  {/* Intro Video Tile (if present, rendered with play icon) */}
+                  {introVideo && (
+                    <div
+                      onClick={() => setShowVideoModal(true)}
+                      className="relative aspect-square overflow-hidden bg-[#181818] group cursor-pointer md:rounded-xl"
+                    >
+                      <video
+                        src={introVideo}
+                        className="w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-300"
+                        preload="metadata"
+                        disablePictureInPicture
+                      />
+                      {/* Play badge bottom-left */}
+                      <div className="absolute bottom-1.5 left-1.5 md:bottom-2.5 md:left-2.5 z-10 flex items-center gap-1 text-[11px] md:text-xs font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                        <Play className="w-3.5 h-3.5 md:w-4 md:h-4 fill-white" />
+                        <span>Reel</span>
+                      </div>
+
+                      {/* Desktop Hover Overlay */}
+                      <div className="absolute inset-0 bg-black/30 opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                        <Play className="w-8 h-8 text-white fill-white drop-shadow-lg" />
+                      </div>
+
+                      {/* Owner Quick Delete Reel */}
+                      {isRealOwn && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteVideoConfirmOpen(true);
+                          }}
+                          className="absolute top-1.5 left-1.5 md:top-2.5 md:left-2.5 p-1.5 rounded-full bg-black/70 hover:bg-rose-600 text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-10 shadow-md"
+                          title="Delete reel"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Media Photos (Square 1:1 Tiles) */}
+                  {media.map((url, idx) => {
+                    return (
+                      <div
+                        key={url}
+                        onClick={() => setLightboxIndex(idx)}
+                        className="relative aspect-square overflow-hidden bg-[#181818] group cursor-pointer md:rounded-xl"
+                      >
+                        <img
+                          src={getOptimizedImageUrl(url, { width: 480, quality: 'auto', format: 'auto' })}
+                          alt={`Post ${idx + 1}`}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+
+                        {/* Desktop Hover Overlay */}
+                        <div className="absolute inset-0 bg-black/25 opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                          <Camera className="w-7 h-7 text-white drop-shadow-md stroke-[2]" />
+                        </div>
+
+                        {/* Owner Quick Delete Overlay */}
+                        {isRealOwn && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletePhotoTarget({ index: idx, url });
+                            }}
+                            className="absolute top-1.5 left-1.5 md:top-2.5 md:left-2.5 p-1.5 rounded-full bg-black/70 hover:bg-rose-600 text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-10 shadow-md"
+                            title="Delete photo"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
-                <div className="rounded-xl bg-black/40 py-6 px-4 flex flex-col items-center justify-center text-center space-y-1">
-                  <p className="text-xs sm:text-sm text-neutral-400 font-medium">No skills listed yet</p>
-                  <p className="text-[11px] sm:text-xs text-neutral-500">Skills and specializations will appear here.</p>
+                /* Empty Grid State */
+                <div className="py-16 text-center space-y-2 px-4">
+                  <div className="w-16 h-16 rounded-full border-2 border-neutral-700 flex items-center justify-center mx-auto text-neutral-400 mb-3">
+                    <Camera className="w-8 h-8 stroke-[1.5]" />
+                  </div>
+                  <h3 className="font-bold text-base text-white">No Posts Yet</h3>
+                  <p className="text-xs md:text-sm text-neutral-500 max-w-xs mx-auto">
+                    {isRealOwn
+                      ? 'Upload your media: 1 profile photo, 1 video reel, and up to 2 portfolio photos.'
+                      : 'This talent has not uploaded any photos yet.'}
+                  </p>
+                  {isRealOwn && (
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('profile-direct-photo-upload')?.click()}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#522C69] hover:bg-[#663782] text-white text-xs font-semibold cursor-pointer transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Photo (0/2)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('profile-direct-video-upload')?.click()}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#262626] hover:bg-[#333333] text-white text-xs font-semibold cursor-pointer transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Reel (0/1)</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
+        </div>
+
+        {/* Lower Cards Container (Responsive: 1 column on mobile, 2 columns on laptop) */}
+        <div className="px-0 sm:px-1.5 mt-4 md:mt-6 text-left">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 items-start">
+            {/* Column 1 (Left on Laptop): Experience & Skills */}
+            <div className="space-y-3 sm:space-y-4">
+              {/* 1. Experience & Productions Card */}
+              <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
+                <ProfileExperience
+                  profile={profile}
+                  isOwnProfile={isRealOwn}
+                  showAlert={showAlert}
+                  onNavigate={onNavigate}
+                />
+              </section>
+
+              {/* 2. Skills Card with Compact Tags */}
+              <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs md:text-sm font-bold uppercase tracking-wider text-neutral-300">
+                    Professional Skills ({skillsList.length})
+                  </h3>
+                  {isRealOwn && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingSkills(skillsList);
+                        setShowSkillsModal(true);
+                      }}
+                      className="text-xs text-sky-400 hover:text-sky-300 font-medium cursor-pointer"
+                    >
+                      Edit Skills
+                    </button>
+                  )}
+                </div>
+
+                {skillsList.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {skillsList.map((skill, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-200 bg-white/[0.05] border border-white/5"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-neutral-500">No skills added yet.</p>
+                )}
+              </section>
+            </div>
+
+            {/* Column 2 (Right on Laptop): Physical Specs & Contact Info */}
+            <div className="space-y-3 sm:space-y-4">
+              {/* 3. Physical Specs Card */}
+              <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs md:text-sm font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-1.5">
+                    <Ruler className="w-3.5 h-3.5 text-white" />
+                    Physical Specifications
+                  </h3>
+                  {isRealOwn && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHeightInput(profile.height || '');
+                        setWeightInput(profile.weight || '');
+                        setPhoneInput(profile.phone || '');
+                        setEmailInput(profile.email || '');
+                        setShowAttributesModal(true);
+                      }}
+                      className="text-xs text-sky-400 hover:text-sky-300 font-medium cursor-pointer"
+                    >
+                      Edit Specs
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/[0.04]">
+                    <span className="text-[11px] text-neutral-400 uppercase tracking-wide">Height</span>
+                    <span className="font-semibold text-white">{height || 'Not specified'}</span>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/[0.04]">
+                    <span className="text-[11px] text-neutral-400 uppercase tracking-wide">Weight</span>
+                    <span className="font-semibold text-white">{weight || 'Not specified'}</span>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/[0.04]">
+                    <span className="text-[11px] text-neutral-400 uppercase tracking-wide">Gender</span>
+                    <span className="font-semibold text-white capitalize">{profile.gender || 'Not specified'}</span>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/[0.04]">
+                    <span className="text-[11px] text-neutral-400 uppercase tracking-wide">Location</span>
+                    <span className="font-semibold text-white truncate max-w-[110px] text-right">{profile.location || 'Nepal'}</span>
+                  </div>
+                </div>
+              </section>
+
+              {/* 4. Contact Info Card */}
+              <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs md:text-sm font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-white" />
+                    Contact Information
+                  </h3>
+                  {isRealOwn && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHeightInput(profile.height || '');
+                        setWeightInput(profile.weight || '');
+                        setPhoneInput(profile.phone || '');
+                        setEmailInput(profile.email || '');
+                        setShowAttributesModal(true);
+                      }}
+                      className="text-xs text-sky-400 hover:text-sky-300 font-medium cursor-pointer"
+                    >
+                      Edit Contacts
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  {contactPhone ? (
+                    <div className="flex items-center gap-2 text-neutral-300">
+                      <Phone className="w-3.5 h-3.5 text-sky-400" />
+                      <a href={`tel:${contactPhone}`} className="hover:text-white font-medium">
+                        {contactPhone}
+                      </a>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-neutral-500">Phone not provided.</p>
+                  )}
+
+                  {contactEmail ? (
+                    <div className="flex items-center gap-2 text-neutral-300">
+                      <Mail className="w-3.5 h-3.5 text-sky-400" />
+                      <a href={`mailto:${contactEmail}`} className="hover:text-white font-medium">
+                        {contactEmail}
+                      </a>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-neutral-500">Email not provided.</p>
+                  )}
+                </div>
+              </section>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* MODAL 1: ADD / EDIT SKILLS */}
+      {/* FULLSCREEN PHOTO LIGHTBOX MODAL */}
+      {lightboxIndex !== null && media[lightboxIndex] && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setLightboxIndex(null)}
+        >
+          <button
+            onClick={() => setLightboxIndex(null)}
+            className="absolute top-4 right-4 z-20 text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all cursor-pointer"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {media.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex((lightboxIndex - 1 + media.length) % media.length);
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 text-white p-3 rounded-full bg-white/10 hover:bg-white/20 cursor-pointer"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex((lightboxIndex + 1) % media.length);
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 text-white p-3 rounded-full bg-white/10 hover:bg-white/20 cursor-pointer"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          <div
+            className="relative max-w-3xl max-h-[85vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={media[lightboxIndex]}
+              alt={`Photo ${lightboxIndex + 1}`}
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* FULLSCREEN VIDEO PLAYER MODAL (Instagram Reels Style) */}
+      {showVideoModal && introVideo && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 sm:bg-black/90 sm:backdrop-blur-md flex items-center justify-center sm:p-4 select-none"
+          onClick={handleCloseVideoModal}
+        >
+          {/* Top Bar Actions */}
+          <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
+            {/* Mute/Unmute */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (reelVideoRef.current) {
+                  reelVideoRef.current.muted = !isReelMuted;
+                  setIsReelMuted(!isReelMuted);
+                }
+              }}
+              className="p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white cursor-pointer transition-colors shadow-lg"
+              title={isReelMuted ? 'Unmute' : 'Mute'}
+            >
+              {isReelMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            </button>
+
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={handleCloseVideoModal}
+              className="p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white cursor-pointer transition-colors shadow-lg"
+              title="Close"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div
+            className="relative w-full h-full sm:h-[90vh] sm:max-h-[850px] sm:max-w-[420px] sm:rounded-2xl overflow-hidden bg-black shadow-2xl flex items-center justify-center cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (reelVideoRef.current) {
+                if (reelVideoRef.current.paused) {
+                  reelVideoRef.current.play();
+                  setIsReelPlaying(true);
+                } else {
+                  reelVideoRef.current.pause();
+                  setIsReelPlaying(false);
+                }
+              }
+            }}
+          >
+            <video
+              ref={reelVideoRef}
+              src={introVideo}
+              autoPlay
+              loop
+              playsInline
+              disablePictureInPicture
+              muted={isReelMuted}
+              onTimeUpdate={() => {
+                if (reelVideoRef.current && reelVideoRef.current.duration) {
+                  setReelProgress(
+                    (reelVideoRef.current.currentTime / reelVideoRef.current.duration) * 100
+                  );
+                }
+              }}
+              onPlay={() => setIsReelPlaying(true)}
+              onPause={() => setIsReelPlaying(false)}
+              onContextMenu={(e) => e.preventDefault()}
+              className="w-full h-full object-cover pointer-events-none select-none"
+            />
+
+            {/* Center Play/Pause indicator when paused */}
+            {!isReelPlaying && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
+                <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white shadow-xl">
+                  <Play className="w-8 h-8 fill-white translate-x-0.5" />
+                </div>
+              </div>
+            )}
+
+            {/* Gradient shadow for text readability */}
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+
+            {/* Bottom creator info overlay (Reel style) */}
+            <div className="absolute bottom-6 left-4 right-4 z-20 pointer-events-none text-left">
+              <div className="flex items-center gap-2.5 mb-1 pointer-events-auto">
+                <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-white/40 shadow-sm">
+                  <img
+                    src={(profile as any)?.profileImage || profile?.photoURL || profile?.image || ''}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-sm text-zinc-100 drop-shadow-sm tracking-normal truncate">
+                      {(profile as any)?.username || (profile?.name ? profile.name.toLowerCase().replace(/[^a-z0-9_.]/g, '') : 'talent')}
+                    </span>
+                    {profile.verified === true && (
+                      <span className="w-3.5 h-3.5 rounded-full bg-sky-400 flex items-center justify-center text-[9px] text-black font-bold">✓</span>
+                    )}
+                  </div>
+                  {profile?.name && (
+                    <p className="text-xs text-white/90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] truncate">
+                      {profile.name}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Progress Bar */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 z-20">
+              <div
+                className="h-full bg-white transition-all duration-100"
+                style={{ width: `${reelProgress}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 1: EDIT SKILLS */}
       {showSkillsModal && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setShowSkillsModal(false)}
         >
           <div
-            className="bg-[#181818] border border-white/10 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            className="bg-[#181818] border border-white/10 rounded-2xl p-5 max-w-md w-full space-y-4 shadow-2xl text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-white">Edit Skills</h3>
               <button
                 onClick={() => setShowSkillsModal(false)}
-                className="text-gray-400 hover:text-white text-sm cursor-pointer p-1"
+                className="text-gray-400 hover:text-white cursor-pointer p-1"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-gray-400">
-              Tap skill tags to select or type your custom skill below.
-            </p>
-
-            {/* Presets */}
             <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
               {PRESET_SKILLS.map((skill) => {
                 const isSelected = editingSkills.includes(skill);
@@ -924,10 +1093,11 @@ export default function ProfilePage({
                     key={skill}
                     type="button"
                     onClick={() => toggleSkillTag(skill)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${isSelected
-                      ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold shadow-md'
-                      : 'bg-[#121212] text-gray-300 border border-white/10 hover:border-white/20'
-                      }`}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#522C69] text-white font-bold'
+                        : 'bg-[#121212] text-gray-300 border border-white/10 hover:border-white/20'
+                    }`}
                   >
                     {isSelected ? `✓ ${skill}` : `+ ${skill}`}
                   </button>
@@ -935,8 +1105,7 @@ export default function ProfilePage({
               })}
             </div>
 
-            {/* Custom Skill Input */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-1">
               <input
                 type="text"
                 placeholder="Add other skill (e.g. Martial Arts)"
@@ -948,23 +1117,22 @@ export default function ProfilePage({
                     addCustomSkill();
                   }
                 }}
-                className="flex-1 bg-[#121212] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
+                className="flex-1 bg-[#121212] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
               />
               <button
                 type="button"
                 onClick={addCustomSkill}
-                className="px-3.5 py-2 bg-[#242424] hover:bg-[#2e2e2e] border border-white/10 text-white text-xs font-bold rounded-xl cursor-pointer"
+                className="px-3 py-1.5 bg-[#262626] hover:bg-[#333333] text-white text-xs font-semibold rounded-lg cursor-pointer"
               >
                 Add
               </button>
             </div>
 
-            {/* Save Buttons */}
-            <div className="flex justify-end gap-2 pt-3">
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowSkillsModal(false)}
-                className="px-4 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
+                className="px-3 py-1.5 text-xs text-gray-400 hover:text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -972,192 +1140,31 @@ export default function ProfilePage({
                 type="button"
                 onClick={handleSaveSkills}
                 disabled={isSavingSkills}
-                className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-4 py-1.5 rounded-lg bg-[#522C69] hover:bg-[#663782] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                {isSavingSkills ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                <span>Save Skills</span>
+                {isSavingSkills ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                <span>Save</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL 2: ADD EXPERIENCE */}
-      {showExperienceModal && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={() => setShowExperienceModal(false)}
-        >
-          <div
-            className="bg-[#181818] border border-white/10 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white">Add Work Experience</h3>
-              <button
-                onClick={() => setShowExperienceModal(false)}
-                className="text-gray-400 hover:text-white text-sm cursor-pointer p-1"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveExperience} className="space-y-3">
-              <div>
-                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
-                  Role / Title *
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Lead Actor, Supporting Actor, Model"
-                  value={expTitle}
-                  onChange={(e) => setExpTitle(e.target.value)}
-                  required
-                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
-                  Production / Project / Company
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Maya Short Film, Ek Din Web Series"
-                  value={expCompany}
-                  onChange={(e) => setExpCompany(e.target.value)}
-                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
-                  Year / Timeline
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 2024 or 2021 - 2023"
-                  value={expYear}
-                  onChange={(e) => setExpYear(e.target.value)}
-                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
-                  Description (Optional)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Brief details about your role..."
-                  value={expDesc}
-                  onChange={(e) => setExpDesc(e.target.value)}
-                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69] resize-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowExperienceModal(false)}
-                  className="px-4 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingExp}
-                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  {isSavingExp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                  <span>Save Experience</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 3: ADD MEDIA QUICK PICKER */}
-      {showMediaModal && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={() => setShowMediaModal(false)}
-        >
-          <div
-            className="bg-[#181818] border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-fade-in text-left"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white">Add Portfolio Media</h3>
-              <button
-                onClick={() => setShowMediaModal(false)}
-                className="text-gray-400 hover:text-white text-sm cursor-pointer p-1"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  document.getElementById('profile-direct-photo-upload')?.click();
-                }}
-                className="w-full p-4 rounded-xl bg-[#222222] hover:bg-[#2a2a2a] border border-white/10 flex items-center gap-3.5 text-left transition-all cursor-pointer group"
-              >
-                <div className="w-10 h-10 rounded-lg bg-[#522C69]/10 text-[#522C69] flex items-center justify-center shrink-0">
-                  <ImageIcon className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-sm font-bold text-white block group-hover:text-[#522C69] transition-colors">
-                    Upload Photos
-                  </span>
-                  <span className="text-[11px] text-gray-400 block">
-                    JPG, PNG, WebP portfolio shots
-                  </span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  document.getElementById('profile-direct-video-upload')?.click();
-                }}
-                className="w-full p-4 rounded-xl bg-[#222222] hover:bg-[#2a2a2a] border border-white/10 flex items-center gap-3.5 text-left transition-all cursor-pointer group"
-              >
-                <div className="w-10 h-10 rounded-lg bg-[#522C69]/10 text-[#522C69] flex items-center justify-center shrink-0">
-                  <Video className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-sm font-bold text-white block group-hover:text-[#522C69] transition-colors">
-                    Upload Intro Video
-                  </span>
-                  <span className="text-[11px] text-gray-400 block">
-                    MP4, MOV audition showreel
-                  </span>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 4: EDIT BIO */}
+      {/* MODAL 2: EDIT BIO */}
       {showAboutModal && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setShowAboutModal(false)}
         >
           <div
-            className="bg-[#181818] border border-white/10 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            className="bg-[#181818] border border-white/10 rounded-2xl p-5 max-w-md w-full space-y-4 shadow-2xl text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-white">Edit Bio</h3>
               <button
                 onClick={() => setShowAboutModal(false)}
-                className="text-gray-400 hover:text-white text-sm cursor-pointer p-1"
+                className="text-gray-400 hover:text-white cursor-pointer p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1165,17 +1172,17 @@ export default function ProfilePage({
 
             <textarea
               rows={4}
-              placeholder="Tell casting directors about your passion, training, and acting background..."
+              placeholder="Write a short bio about yourself..."
               value={bioInput}
               onChange={(e) => setBioInput(e.target.value)}
-              className="w-full bg-[#121212] border border-white/10 rounded-xl p-3.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69] resize-none leading-relaxed"
+              className="w-full bg-[#121212] border border-white/10 rounded-xl p-3 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69] resize-none"
             />
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setShowAboutModal(false)}
-                className="px-4 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
+                className="px-3 py-1.5 text-xs text-gray-400 hover:text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -1183,9 +1190,9 @@ export default function ProfilePage({
                 type="button"
                 onClick={handleSaveBio}
                 disabled={isSavingBio}
-                className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-4 py-1.5 rounded-lg bg-[#522C69] hover:bg-[#663782] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                {isSavingBio ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                {isSavingBio ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
                 <span>Save Bio</span>
               </button>
             </div>
@@ -1193,76 +1200,68 @@ export default function ProfilePage({
         </div>
       )}
 
-      {/* MODAL 5: EDIT ATTRIBUTES (Height, Weight, Contacts) */}
+      {/* MODAL 3: EDIT ATTRIBUTES & CONTACT */}
       {showAttributesModal && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setShowAttributesModal(false)}
         >
           <div
-            className="bg-[#181818] border border-white/10 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in text-left"
+            className="bg-[#181818] border border-white/10 rounded-2xl p-5 max-w-md w-full space-y-3 shadow-2xl text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white">Edit Physical & Contact Info</h3>
+              <h3 className="text-base font-bold text-white">Edit Specs & Contacts</h3>
               <button
                 onClick={() => setShowAttributesModal(false)}
-                className="text-gray-400 hover:text-white text-sm cursor-pointer p-1"
+                className="text-gray-400 hover:text-white cursor-pointer p-1"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5 text-xs">
               <div>
-                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
-                  Height
-                </label>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">Height</label>
                 <input
                   type="text"
                   placeholder="e.g. 5'10&quot; (178 cm)"
                   value={heightInput}
                   onChange={(e) => setHeightInput(e.target.value)}
-                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
+                  className="w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
-                  Weight
-                </label>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">Weight</label>
                 <input
                   type="text"
                   placeholder="e.g. 68 kg"
                   value={weightInput}
                   onChange={(e) => setWeightInput(e.target.value)}
-                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
+                  className="w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
-                  Phone Number
-                </label>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">Phone Number</label>
                 <input
                   type="text"
                   placeholder="e.g. +977 9812345678"
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value)}
-                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
+                  className="w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-gray-400 font-semibold mb-1">
-                  Contact Email
-                </label>
+                <label className="block text-[11px] text-gray-400 font-semibold mb-1">Contact Email</label>
                 <input
                   type="email"
                   placeholder="e.g. anil.timilsena@gmail.com"
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
-                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
+                  className="w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#522C69]"
                 />
               </div>
             </div>
@@ -1271,7 +1270,7 @@ export default function ProfilePage({
               <button
                 type="button"
                 onClick={() => setShowAttributesModal(false)}
-                className="px-4 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
+                className="px-3 py-1.5 text-xs text-gray-400 hover:text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -1279,23 +1278,50 @@ export default function ProfilePage({
                 type="button"
                 onClick={handleSaveAttributes}
                 disabled={isSavingAttributes}
-                className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-4 py-1.5 rounded-lg bg-[#522C69] hover:bg-[#663782] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                {isSavingAttributes ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                <span>Save Info</span>
+                {isSavingAttributes ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                <span>Save Specs</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Floating Action Bar (Mobile Only: hidden on laptop/desktop since embedded in sidebar) */}
-      <div className="block lg:hidden fixed bottom-0 left-0 right-0 z-40 p-3 sm:p-4 bg-[#141414]/90 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_35px_rgba(0,0,0,0.9)]">
-        <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl mx-auto">
-          {renderActionButtons()}
-        </div>
-      </div>
+      {/* CONFIRM DIALOGS */}
+      {deletePhotoTarget && (
+        <ConfirmDialog
+          isOpen={true}
+          title="Delete Photo"
+          message="Are you sure you want to remove this photo from your portfolio?"
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={() => {
+            handleDeleteMedia(deletePhotoTarget.url);
+            setDeletePhotoTarget(null);
+          }}
+          onCancel={() => setDeletePhotoTarget(null)}
+        />
+      )}
 
+      {deleteVideoConfirmOpen && (
+        <ConfirmDialog
+          isOpen={true}
+          title="Delete Video"
+          message="Are you sure you want to delete your audition reel video?"
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={() => {
+            handleDeleteIntroVideo();
+            setDeleteVideoConfirmOpen(false);
+          }}
+          onCancel={() => setDeleteVideoConfirmOpen(false)}
+        />
+      )}
+
+      {/* FOLLOWERS / FOLLOWING MODAL */}
       <FollowModal
         type={showFollowModal || 'followers'}
         isOpen={!!showFollowModal}
@@ -1304,23 +1330,6 @@ export default function ProfilePage({
         loading={loadingFollowList}
         onNavigate={onNavigate}
       />
-
-      {showShareSheet && (
-        <ShareSheet
-          profile={{
-            id: profile?.uid || (profile as any)?.id || CurrentUser.id || '',
-            name: profile.name || 'Talent',
-            role: profile.role || 'Actor',
-            location: (profile.location || 'Kathmandu, Nepal').replace('\nNot added', ''),
-            followers: followerCount || 0,
-            rating: (profile as any)?.rating || 5.0,
-            image: (profile as any)?.profileImage || profile?.photoURL || profile?.image || (profile as any)?.avatar || null,
-            verified: profile?.verified === true,
-            username: (profile as any)?.username || null,
-          }}
-          onClose={() => setShowShareSheet(false)}
-        />
-      )}
     </div>
   );
 }
