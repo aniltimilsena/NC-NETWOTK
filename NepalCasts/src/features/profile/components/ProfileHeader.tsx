@@ -499,28 +499,28 @@ export default function ProfileHeader({
           </div>
 
           {/* Role (e.g. Model) in SAME LINE with Action Buttons (Follow / Message) */}
-          <div className="flex items-center gap-3 -my-1">
-            {userRole && (
+          <div className="flex items-center justify-between gap-3 mt-1 mb-1">
+            {userRole ? (
               <span className="text-xs sm:text-sm font-semibold text-neutral-200 capitalize shrink-0 leading-none">
                 {userRole}
               </span>
-            )}
+            ) : <div />}
 
-            {/* Action Buttons aligned right in blank space and shifted more upper */}
-            <div className="flex-1 flex items-center justify-end gap-2 -translate-y-2 sm:-translate-y-2.5">
+            {/* Action Buttons right-aligned on same line without overlapping name */}
+            <div className="flex items-center justify-end gap-2 shrink-0">
               {isRealOwn ? (
                 <>
                   <button
                     type="button"
                     onClick={() => onNavigate('/settings/profile')}
-                    className="flex-1 max-w-[160px] h-6.5 sm:h-7 px-6 min-w-[125px] sm:min-w-[145px] rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer text-center active:scale-95 shadow-sm flex items-center justify-center"
+                    className="h-7 px-4 sm:px-5 min-w-[95px] sm:min-w-[110px] rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer text-center active:scale-95 shadow-sm flex items-center justify-center"
                   >
                     Edit profile
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowShareSheet(true)}
-                    className="flex-1 max-w-[160px] h-6.5 sm:h-7 px-6 min-w-[125px] sm:min-w-[145px] rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer text-center active:scale-95 shadow-sm flex items-center justify-center"
+                    className="h-7 px-4 sm:px-5 min-w-[95px] sm:min-w-[110px] rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer text-center active:scale-95 shadow-sm flex items-center justify-center"
                   >
                     Share profile
                   </button>
@@ -528,7 +528,7 @@ export default function ProfileHeader({
                     <button
                       type="button"
                       onClick={() => onNavigate('/admin')}
-                      className="h-6.5 sm:h-7 px-2.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-semibold text-xs transition-colors cursor-pointer active:scale-95 flex items-center justify-center"
+                      className="h-7 px-2.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-semibold text-xs transition-colors cursor-pointer active:scale-95 flex items-center justify-center"
                       title="Admin Panel"
                     >
                       <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
@@ -540,7 +540,7 @@ export default function ProfileHeader({
                   <button
                     type="button"
                     onClick={onFollowToggle}
-                    className={`flex-1 max-w-[160px] h-6.5 sm:h-7 px-6 min-w-[125px] sm:min-w-[145px] rounded-lg font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer flex items-center justify-center gap-1 active:scale-95 shadow-sm ${
+                    className={`h-7 px-4 sm:px-5 min-w-[95px] sm:min-w-[110px] rounded-lg font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer flex items-center justify-center gap-1 active:scale-95 shadow-sm ${
                       isFollowing
                         ? 'bg-[#262626] hover:bg-[#333333] text-white'
                         : 'bg-[#522C69] hover:bg-[#663782] text-white'
@@ -553,7 +553,7 @@ export default function ProfileHeader({
                   <button
                     type="button"
                     onClick={() => onNavigate('messages', profile.uid || (profile as any)?.id)}
-                    className="flex-1 max-w-[160px] h-6.5 sm:h-7 px-6 min-w-[125px] sm:min-w-[145px] rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
+                    className="h-7 px-4 sm:px-5 min-w-[100px] sm:min-w-[115px] rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     <span>Message</span>
