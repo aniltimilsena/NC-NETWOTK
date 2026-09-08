@@ -16,6 +16,7 @@ import ShareSheet from '../../../components/ui/ShareSheet';
 import { updateProfileData, uploadProfileMedia } from '../../../services';
 import { CurrentUser } from '../../../utils/CurrentUser';
 import { formatRole } from '../../../utils';
+import { isUserOnline } from '../../../utils/presence';
 import type { UserProfile } from '../../../types';
 
 interface ProfileHeaderProps {
@@ -236,8 +237,8 @@ export default function ProfileHeader({
               size="none"
               editable={false}
               userId={profile.uid}
-              showStatus={profile.isOnline === true}
-              status={profile.isOnline === true ? 'online' : 'offline'}
+              showStatus={isUserOnline(profile)}
+              status={isUserOnline(profile) ? 'online' : 'offline'}
               className="w-full h-full object-cover"
             />
           </div>
@@ -259,12 +260,17 @@ export default function ProfileHeader({
 
         {/* Right Info Column */}
         <div className="flex-1 space-y-4 text-left">
-          {/* Row 1: Username + Badges + Action Buttons */}
+          {/* Row 1: Name + Badges + Action Buttons */}
           <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-xl lg:text-2xl font-normal text-zinc-100 tracking-normal">
-                {username}
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-xl lg:text-2xl font-bold text-zinc-100 tracking-normal">
+                {name}
               </h2>
+              {username && username !== name && (
+                <span className="text-sm text-neutral-400 font-normal">
+                  @{username}
+                </span>
+              )}
               {profile.verified === true && (
                 <CheckCircle2 className="w-5 h-5 text-sky-400 fill-sky-400 stroke-black shrink-0" />
               )}
@@ -276,59 +282,67 @@ export default function ProfileHeader({
               )}
             </div>
 
-            {/* Action Buttons (Inline on Desktop) */}
-            <div className="flex items-center gap-2">
-              {isRealOwn ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('/settings/profile')}
-                    className="px-4 py-1.5 rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-sm transition-colors cursor-pointer"
-                  >
-                    Edit profile
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowShareSheet(true)}
-                    className="px-4 py-1.5 rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-sm transition-colors cursor-pointer"
-                  >
-                    Share profile
-                  </button>
-                  {(isAdmin || (profile as any)?.isAdmin === true || (profile as any)?.role?.toLowerCase() === 'admin') && (
+            {/* Role & Action Buttons in same line on Desktop */}
+            <div className="flex items-center gap-3">
+              {userRole && (
+                <span className="text-sm font-medium text-neutral-300 capitalize">
+                  {userRole}
+                </span>
+              )}
+
+              <div className="flex items-center gap-2.5">
+                {isRealOwn ? (
+                  <>
                     <button
                       type="button"
-                      onClick={() => onNavigate('/admin')}
-                      className="p-1.5 px-2.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 transition-colors cursor-pointer"
-                      title="Admin Panel"
+                      onClick={() => onNavigate('/settings/profile')}
+                      className="px-5 py-2 min-w-[110px] rounded-xl bg-[#262626] hover:bg-[#333333] text-white font-semibold text-sm transition-colors cursor-pointer text-center"
                     >
-                      <ShieldCheck className="w-4 h-4 text-red-400" />
+                      Edit profile
                     </button>
-                  )}
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={onFollowToggle}
-                    className={`px-5 py-1.5 rounded-lg font-semibold text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
-                      isFollowing
-                        ? 'bg-[#262626] hover:bg-[#333333] text-white'
-                        : 'bg-[#522C69] hover:bg-[#663782] text-white'
-                    }`}
-                  >
-                    <span>{isFollowing ? 'Following' : 'Follow'}</span>
-                    {isFollowing && <ChevronDown className="w-4 h-4" />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('messages', profile.uid || (profile as any)?.id)}
-                    className="px-4 py-1.5 rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-sm transition-colors cursor-pointer flex items-center gap-1.5"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>Message</span>
-                  </button>
-                </>
-              )}
+                    <button
+                      type="button"
+                      onClick={() => setShowShareSheet(true)}
+                      className="px-5 py-2 min-w-[110px] rounded-xl bg-[#262626] hover:bg-[#333333] text-white font-semibold text-sm transition-colors cursor-pointer text-center"
+                    >
+                      Share profile
+                    </button>
+                    {(isAdmin || (profile as any)?.isAdmin === true || (profile as any)?.role?.toLowerCase() === 'admin') && (
+                      <button
+                        type="button"
+                        onClick={() => onNavigate('/admin')}
+                        className="p-2 px-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 transition-colors cursor-pointer"
+                        title="Admin Panel"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-red-400" />
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={onFollowToggle}
+                      className={`px-6 py-2 min-w-[105px] rounded-xl font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                        isFollowing
+                          ? 'bg-[#262626] hover:bg-[#333333] text-white'
+                          : 'bg-[#522C69] hover:bg-[#663782] text-white'
+                      }`}
+                    >
+                      <span>{isFollowing ? 'Following' : 'Follow'}</span>
+                      {isFollowing && <ChevronDown className="w-4 h-4" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('messages', profile.uid || (profile as any)?.id)}
+                      className="px-6 py-2 min-w-[115px] rounded-xl bg-[#262626] hover:bg-[#333333] text-white font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Message</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -356,18 +370,10 @@ export default function ProfileHeader({
             </button>
           </div>
 
-          {/* Row 3: Name, Role, Bio & Links */}
-          <div className="space-y-1 text-left">
-            <h1 className="font-semibold text-base text-zinc-100">
-              {name}
-            </h1>
-            {userRole && (
-              <p className="text-xs md:text-sm text-neutral-400 font-medium capitalize">
-                {userRole}
-              </p>
-            )}
+          {/* Row 3: Bio & Links */}
+          <div className="flex flex-col gap-1 text-left">
             {(bio || isRealOwn) && (
-              <div className="text-sm text-neutral-200 leading-relaxed whitespace-pre-line max-w-2xl pt-0.5">
+              <div className="text-sm text-neutral-200 leading-normal whitespace-pre-line max-w-2xl">
                 {bio ? renderFormattedBio(bio) : <span className="text-neutral-500 italic">No bio added yet.</span>}
                 {isRealOwn && onEditBio && (
                   <button
@@ -381,22 +387,26 @@ export default function ProfileHeader({
                 )}
               </div>
             )}
-            {location && (
-              <div className="flex items-center gap-1 text-xs md:text-sm text-sky-400 hover:text-sky-300 pt-0.5 font-medium">
-                <MapPin className="w-3.5 h-3.5 shrink-0 text-sky-400" />
-                <span>{location.replace('\nNot added', '')}</span>
-              </div>
-            )}
+            {(() => {
+              const cleanLocation = location ? location.replace(/\bNot added\b/gi, '').replace(/\n+/g, ' ').trim() : '';
+              if (!cleanLocation) return null;
+              return (
+                <div className="flex items-center gap-1 text-xs md:text-sm text-sky-400 hover:text-sky-300 font-medium">
+                  <MapPin className="w-3.5 h-3.5 shrink-0 text-sky-400" />
+                  <span>{cleanLocation}</span>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
 
       {/* 3. MOBILE PROFILE HEADER CARD: Avatar Left + 3 Stats Right (Shown only on < md) */}
-      <div className="md:hidden px-4 sm:px-6 pt-3 pb-2 space-y-3">
-        <div className="flex items-center gap-6 sm:gap-8 md:gap-10">
+      <div className="md:hidden px-4 sm:px-6 pt-2 pb-1 space-y-2">
+        <div className="flex items-center gap-5 sm:gap-7">
           {/* Avatar */}
           <div className="relative shrink-0">
-            <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full overflow-hidden">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden">
               <Avatar
                 user={profile}
                 src={
@@ -412,8 +422,8 @@ export default function ProfileHeader({
                 size="none"
                 editable={false}
                 userId={profile.uid}
-                showStatus={profile.isOnline === true}
-                status={profile.isOnline === true ? 'online' : 'offline'}
+                showStatus={isUserOnline(profile)}
+                status={isUserOnline(profile) ? 'online' : 'offline'}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -422,13 +432,13 @@ export default function ProfileHeader({
             {isRealOwn && (
               <label
                 htmlFor="avatar-photo-upload"
-                className="absolute bottom-0 right-0 p-2 rounded-full bg-[#1e1e24] border border-white/20 text-white hover:bg-[#282830] cursor-pointer shadow-lg transition-all active:scale-95"
+                className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[#1e1e24] border border-white/20 text-white hover:bg-[#282830] cursor-pointer shadow-lg transition-all active:scale-95"
                 title="Change Profile Photo"
               >
                 {uploadingAvatar ? (
-                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
                 ) : (
-                  <Camera className="w-4 h-4 text-white" />
+                  <Camera className="w-3.5 h-3.5 text-white" />
                 )}
               </label>
             )}
@@ -437,72 +447,131 @@ export default function ProfileHeader({
           {/* Stats Row (Posts, Followers, Following) */}
           <div className="flex-1 grid grid-cols-3 text-center gap-1">
             {/* Posts */}
-            <div className="flex flex-col items-center justify-center py-1">
-              <span className="font-bold text-lg sm:text-xl md:text-2xl text-white leading-none">
+            <div className="flex flex-col items-center justify-center py-0.5">
+              <span className="font-bold text-base sm:text-lg text-white leading-none">
                 {formatCount(postsCount)}
               </span>
-              <span className="text-xs sm:text-sm md:text-[15px] text-neutral-300 mt-1.5">posts</span>
+              <span className="text-xs sm:text-[13px] text-neutral-300 mt-1">posts</span>
             </div>
 
             {/* Followers */}
             <button
               type="button"
               onClick={() => onFollowClick?.('followers')}
-              className="flex flex-col items-center justify-center py-1 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex flex-col items-center justify-center py-0.5 cursor-pointer hover:opacity-80 transition-opacity"
             >
-              <span className="font-bold text-lg sm:text-xl md:text-2xl text-white leading-none">
+              <span className="font-bold text-base sm:text-lg text-white leading-none">
                 {formatCount(followerCount)}
               </span>
-              <span className="text-xs sm:text-sm md:text-[15px] text-neutral-300 mt-1.5">followers</span>
+              <span className="text-xs sm:text-[13px] text-neutral-300 mt-1">followers</span>
             </button>
 
             {/* Following */}
             <button
               type="button"
               onClick={() => onFollowClick?.('following')}
-              className="flex flex-col items-center justify-center py-1 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex flex-col items-center justify-center py-0.5 cursor-pointer hover:opacity-80 transition-opacity"
             >
-              <span className="font-bold text-lg sm:text-xl md:text-2xl text-white leading-none">
+              <span className="font-bold text-base sm:text-lg text-white leading-none">
                 {formatCount(followingCount)}
               </span>
-              <span className="text-xs sm:text-sm md:text-[15px] text-neutral-300 mt-1.5">following</span>
+              <span className="text-xs sm:text-[13px] text-neutral-300 mt-1">following</span>
             </button>
           </div>
         </div>
 
         {/* Name, Role, Bio & Links */}
-        <div className="space-y-1 text-left pt-0.5">
-          {/* Display Name + Verified */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <h1 className="font-semibold text-sm sm:text-base text-zinc-100 tracking-normal">
+        <div className="flex flex-col gap-0 text-left">
+          {/* Display Name + Verified Badges */}
+          <div className="flex items-center gap-1.5 min-w-0 leading-none">
+            <h1 className="font-bold text-base sm:text-lg text-zinc-100 tracking-tight truncate leading-none">
               {name}
             </h1>
             {profile.verified === true && (
               <CheckCircle2 className="w-4 h-4 text-sky-400 fill-sky-400 stroke-black shrink-0" />
             )}
             {(profile.isAdmin === true || (profile as any)?.role?.toLowerCase() === 'admin' || userRole.toLowerCase() === 'admin') && (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
                 <ShieldCheck className="w-2.5 h-2.5" />
                 Admin
               </span>
             )}
           </div>
 
-          {/* Role / Category */}
-          {userRole && (
-            <p className="text-xs text-neutral-400 font-medium capitalize">
-              {userRole}
-            </p>
-          )}
+          {/* Role (e.g. Model) in SAME LINE with Action Buttons (Follow / Message) */}
+          <div className="flex items-center gap-3 -my-1">
+            {userRole && (
+              <span className="text-xs sm:text-sm font-semibold text-neutral-200 capitalize shrink-0 leading-none">
+                {userRole}
+              </span>
+            )}
+
+            {/* Action Buttons aligned right in blank space and shifted more upper */}
+            <div className="flex-1 flex items-center justify-end gap-2 -translate-y-2 sm:-translate-y-2.5">
+              {isRealOwn ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('/settings/profile')}
+                    className="flex-1 max-w-[160px] h-6.5 sm:h-7 px-6 min-w-[125px] sm:min-w-[145px] rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer text-center active:scale-95 shadow-sm flex items-center justify-center"
+                  >
+                    Edit profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowShareSheet(true)}
+                    className="flex-1 max-w-[160px] h-6.5 sm:h-7 px-6 min-w-[125px] sm:min-w-[145px] rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer text-center active:scale-95 shadow-sm flex items-center justify-center"
+                  >
+                    Share profile
+                  </button>
+                  {(isAdmin || (profile as any)?.isAdmin === true || (profile as any)?.role?.toLowerCase() === 'admin') && (
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('/admin')}
+                      className="h-6.5 sm:h-7 px-2.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-semibold text-xs transition-colors cursor-pointer active:scale-95 flex items-center justify-center"
+                      title="Admin Panel"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={onFollowToggle}
+                    className={`flex-1 max-w-[160px] h-6.5 sm:h-7 px-6 min-w-[125px] sm:min-w-[145px] rounded-lg font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer flex items-center justify-center gap-1 active:scale-95 shadow-sm ${
+                      isFollowing
+                        ? 'bg-[#262626] hover:bg-[#333333] text-white'
+                        : 'bg-[#522C69] hover:bg-[#663782] text-white'
+                    }`}
+                  >
+                    <span>{isFollowing ? 'Following' : 'Follow'}</span>
+                    {isFollowing && <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('messages', profile.uid || (profile as any)?.id)}
+                    className="flex-1 max-w-[160px] h-6.5 sm:h-7 px-6 min-w-[125px] sm:min-w-[145px] rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Message</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
 
           {/* Bio text */}
           {(bio || isRealOwn) && (() => {
             const firstLine = bio ? bio.split('\n')[0] : '';
             const isLongBio = Boolean(bio && (bio.length > 90 || bio.includes('\n')));
-            const bioToShow = isLongBio && !isBioExpanded ? (firstLine.length > 90 ? firstLine.slice(0, 90).trim() : firstLine) : bio;
+            const rawBioToShow = isLongBio && !isBioExpanded ? (firstLine.length > 90 ? firstLine.slice(0, 90).trim() : firstLine) : bio;
+            const bioToShow = rawBioToShow ? rawBioToShow.trim() : '';
 
             return (
-              <div className="text-xs text-neutral-200 leading-relaxed whitespace-pre-line pt-0.5">
+              <div className="text-xs text-neutral-200 leading-tight whitespace-pre-line mt-0.5">
                 {bioToShow ? (
                   <>
                     {renderFormattedBio(bioToShow)}
@@ -537,70 +606,16 @@ export default function ProfileHeader({
           })()}
 
           {/* Location / Meta link */}
-          {location && (
-            <div className="flex items-center gap-1 text-xs text-sky-400 hover:text-sky-300 pt-0.5 font-medium">
-              <MapPin className="w-3 h-3 shrink-0 text-sky-400" />
-              <span>{location.replace('\nNot added', '')}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons Row (Mobile) */}
-        <div className="pt-1">
-          {isRealOwn ? (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => onNavigate('/settings/profile')}
-                className="flex-1 py-1.5 px-3 rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer text-center"
-              >
-                Edit profile
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowShareSheet(true)}
-                className="flex-1 py-1.5 px-3 rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer text-center"
-              >
-                Share profile
-              </button>
-              {(isAdmin || (profile as any)?.isAdmin === true || (profile as any)?.role?.toLowerCase() === 'admin') && (
-                <button
-                  type="button"
-                  onClick={() => onNavigate('/admin')}
-                  className="py-1.5 px-2.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 font-semibold text-xs transition-colors cursor-pointer"
-                  title="Admin Panel"
-                >
-                  <ShieldCheck className="w-4 h-4 text-red-400" />
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              {/* Follow / Following Button */}
-              <button
-                type="button"
-                onClick={onFollowToggle}
-                className={`flex-1 py-1.5 px-3 rounded-lg font-semibold text-xs sm:text-sm transition-colors cursor-pointer flex items-center justify-center gap-1 ${
-                  isFollowing
-                    ? 'bg-[#262626] hover:bg-[#333333] text-white'
-                    : 'bg-[#522C69] hover:bg-[#663782] text-white'
-                }`}
-              >
-                <span>{isFollowing ? 'Following' : 'Follow'}</span>
-                {isFollowing && <ChevronDown className="w-3.5 h-3.5" />}
-              </button>
-
-              {/* Message Button */}
-              <button
-                type="button"
-                onClick={() => onNavigate('messages', profile.uid || (profile as any)?.id)}
-                className="flex-1 py-1.5 px-3 rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>Message</span>
-              </button>
-            </div>
-          )}
+          {(() => {
+            const cleanLocation = location ? location.replace(/\bNot added\b/gi, '').replace(/\n+/g, ' ').trim() : '';
+            if (!cleanLocation) return null;
+            return (
+              <div className="flex items-center gap-1 text-xs text-sky-400 hover:text-sky-300 font-medium leading-none">
+                <MapPin className="w-3.5 h-3.5 shrink-0 text-sky-400" />
+                <span>{cleanLocation}</span>
+              </div>
+            );
+          })()}
         </div>
       </div>
 

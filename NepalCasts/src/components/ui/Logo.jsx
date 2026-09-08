@@ -1,6 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-export const LogoIcon = ({ className = 'w-12 h-12' }) => (<img src="/logo.png" alt="NC Logo Icon" className={`${className} object-contain`}/>);
+export const LogoIcon = ({ className = 'w-12 h-12' }) => (
+  <picture className="inline-block shrink-0">
+    <source srcSet="/logo.webp" type="image/webp" />
+    <img
+      src="/logo.png"
+      alt="NepalCasts Logo"
+      loading="eager"
+      decoding="async"
+      className={`${className} object-contain`}
+    />
+  </picture>
+);
 const Logo = ({ size = 'md', className = '', showText = true }) => {
     const sizes = {
         sm: { box: 'w-10 h-10', font: 'text-sm' },

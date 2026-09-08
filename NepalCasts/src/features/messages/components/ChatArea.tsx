@@ -7,6 +7,8 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { Avatar } from '../../../components/ui';
 import { saveImageDirectly } from '../../../utils/media';
 import type { Message } from '../../../types';
+import { isUserOnline } from '../../../utils/presence';
+
 interface ChatAreaProps {
     chat: any;
     messages: Message[];
@@ -23,19 +25,19 @@ interface ChatAreaProps {
     onTogglePinnedDrawer?: () => void;
     isPinnedDrawerOpen?: boolean;
 }
+
 const formatMessageTime = (timestamp?: any) => {
     if (!timestamp)
         return '';
     try {
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        if (isNaN(date.getTime()))
-            return '';
-        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
     catch (e) {
         return '';
     }
 };
+
 const getMsgMs = (timestamp?: any) => {
     if (!timestamp)
         return 0;
@@ -47,7 +49,8 @@ const getMsgMs = (timestamp?: any) => {
         return 0;
     }
 };
-export default function ChatArea({ chat, messages, currentUser, typingUsers, onBack, onInitiateCall, onReplyTo, onDeleteMessage, onPinMessage, onReactToMessage, onForwardMessage, conversations = [], onTogglePinnedDrawer, isPinnedDrawerOpen }: ChatAreaProps) {
+
+export default function ChatArea({ chat, messages, currentUser, typingUsers, onBack, onInitiateCall, onReplyTo, onDeleteMessage, onPinMessage, onReactToMessage, onForwardMessage, conversations = [], onTogglePinnedDrawer, isPinnedDrawerOpen = false }: ChatAreaProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
     const [activeActionMessage, setActiveActionMessage] = useState<Message | null>(null);
@@ -56,21 +59,19 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isLongPressActive = useRef(false);
     const isInitialMount = useRef(true);
-    const otherParticipantId = chat?.participants?.find((p: string) => p !== currentUser?.uid) || chat?.otherParticipantId || chat?.id;
+    const otherParticipantId = chat?.otherParticipantId || chat?.participants?.find((p: string) => p !== currentUser?.uid);
     const isTyping = otherParticipantId ? typingUsers?.[otherParticipantId] === true : false;
-    const [isOnline, setIsOnline] = useState<boolean>(chat?.online === true || chat?.isOnline === true);
+    const [isOnline, setIsOnline] = useState<boolean>(() => isUserOnline(chat));
+    const otherUserDataRef = useRef<any>(null);
 
     useEffect(() => {
-        setIsOnline(chat?.online === true || chat?.isOnline === true);
+        setIsOnline(isUserOnline(chat));
         if (!otherParticipantId) return;
 
         const checkPresence = (data: any) => {
             if (!data) return;
-            if (typeof data.isOnline === 'boolean') {
-                setIsOnline(data.isOnline);
-            } else if (typeof data.online === 'boolean') {
-                setIsOnline(data.online);
-            }
+            otherUserDataRef.current = data;
+            setIsOnline(isUserOnline(data));
         };
 
         const unsubUser = onSnapshot(doc(db, 'users', otherParticipantId), (snap) => {
@@ -81,11 +82,21 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
             if (snap.exists()) checkPresence(snap.data());
         }, () => {});
 
+        // Re-evaluate presence every 20 seconds to automatically transition to Offline when inactive
+        const presenceTicker = setInterval(() => {
+            if (otherUserDataRef.current) {
+                setIsOnline(isUserOnline(otherUserDataRef.current));
+            } else if (chat) {
+                setIsOnline(isUserOnline(chat));
+            }
+        }, 20000);
+
         return () => {
             unsubUser();
             unsubProfile();
+            clearInterval(presenceTicker);
         };
-    }, [otherParticipantId, chat?.online, chat?.isOnline]);
+    }, [otherParticipantId, chat]);
 
     const startMessagePress = (msg: Message, el?: HTMLElement | null) => {
         isLongPressActive.current = false;

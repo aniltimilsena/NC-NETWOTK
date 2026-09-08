@@ -563,7 +563,7 @@ export default function ProfilePage({
         />
 
         {/* 3-Column Square Media Grid */}
-        <div className="w-full mt-3 md:mt-6">
+        <div className="w-full mt-2 md:mt-6 border-t border-white/10 pt-1 sm:pt-4">
             <div>
               {/* Media Upload Banner for Owner (Limit: 1 Profile Photo, 1 Video Reel, 2 Portfolio Photos) */}
               {isRealOwn && (
@@ -624,116 +624,126 @@ export default function ProfilePage({
                 </div>
               )}
 
-              {/* 3-Column Square Grid (Responsive for mobile & laptop) */}
-              {media.length > 0 || introVideo ? (
-                <div className="grid grid-cols-3 gap-0.5 sm:gap-2 md:gap-4 lg:gap-5">
-                  {/* Intro Video Tile (if present, rendered with play icon) */}
-                  {introVideo && (
-                    <div
-                      onClick={() => setShowVideoModal(true)}
-                      className="relative aspect-square overflow-hidden bg-[#181818] group cursor-pointer md:rounded-xl"
-                    >
-                      <video
-                        src={introVideo}
-                        className="w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-300"
-                        preload="metadata"
-                        disablePictureInPicture
-                      />
-                      {/* Play badge bottom-left */}
-                      <div className="absolute bottom-1.5 left-1.5 md:bottom-2.5 md:left-2.5 z-10 flex items-center gap-1 text-[11px] md:text-xs font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-                        <Play className="w-3.5 h-3.5 md:w-4 md:h-4 fill-white" />
-                        <span>Reel</span>
-                      </div>
+              {/* Responsive Media Grid */}
+              {media.length > 0 || introVideo ? (() => {
+                const totalMedia = (introVideo ? 1 : 0) + media.length;
+                const gridClass =
+                  totalMedia === 1
+                    ? 'grid grid-cols-1 max-w-sm sm:max-w-md mx-auto gap-3'
+                    : totalMedia === 2
+                    ? 'grid grid-cols-2 max-w-xl sm:max-w-2xl mx-auto gap-2 sm:gap-3 md:gap-4'
+                    : 'grid grid-cols-3 gap-1 sm:gap-2.5 md:gap-4 lg:gap-5';
 
-                      {/* Desktop Hover Overlay */}
-                      <div className="absolute inset-0 bg-black/30 opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                        <Play className="w-8 h-8 text-white fill-white drop-shadow-lg" />
-                      </div>
-
-                      {/* Owner Quick Delete Reel */}
-                      {isRealOwn && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteVideoConfirmOpen(true);
-                          }}
-                          className="absolute top-1.5 left-1.5 md:top-2.5 md:left-2.5 p-1.5 rounded-full bg-black/70 hover:bg-rose-600 text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-10 shadow-md"
-                          title="Delete reel"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Media Photos (Square 1:1 Tiles) */}
-                  {media.map((url, idx) => {
-                    return (
+                return (
+                  <div className={gridClass}>
+                    {/* Intro Video Tile (if present, rendered with play icon) */}
+                    {introVideo && (
                       <div
-                        key={url}
-                        onClick={() => setLightboxIndex(idx)}
-                        className="relative aspect-square overflow-hidden bg-[#181818] group cursor-pointer md:rounded-xl"
+                        onClick={() => setShowVideoModal(true)}
+                        className="relative aspect-square overflow-hidden bg-[#181818] group cursor-pointer rounded-xl md:rounded-2xl"
                       >
-                        <img
-                          src={getOptimizedImageUrl(url, { width: 480, quality: 'auto', format: 'auto' })}
-                          alt={`Post ${idx + 1}`}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        <video
+                          src={introVideo}
+                          className="w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-300"
+                          preload="metadata"
+                          disablePictureInPicture
                         />
-
-                        {/* Desktop Hover Overlay */}
-                        <div className="absolute inset-0 bg-black/25 opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                          <Camera className="w-7 h-7 text-white drop-shadow-md stroke-[2]" />
+                        {/* Play badge bottom-left */}
+                        <div className="absolute bottom-2 left-2 md:bottom-3 md:left-3 z-10 flex items-center gap-1.5 text-xs md:text-sm font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] bg-black/40 px-2 py-0.5 rounded-md backdrop-blur-sm">
+                          <Play className="w-3.5 h-3.5 md:w-4 md:h-4 fill-white" />
+                          <span>Reel</span>
                         </div>
 
-                        {/* Owner Quick Delete Overlay */}
+                        {/* Desktop Hover Overlay */}
+                        <div className="absolute inset-0 bg-black/30 opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                          <Play className="w-10 h-10 text-white fill-white drop-shadow-lg" />
+                        </div>
+
+                        {/* Owner Quick Delete Reel */}
                         {isRealOwn && (
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setDeletePhotoTarget({ index: idx, url });
+                              setDeleteVideoConfirmOpen(true);
                             }}
-                            className="absolute top-1.5 left-1.5 md:top-2.5 md:left-2.5 p-1.5 rounded-full bg-black/70 hover:bg-rose-600 text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-10 shadow-md"
-                            title="Delete photo"
+                            className="absolute top-2 left-2 md:top-3 md:left-3 p-1.5 rounded-full bg-black/70 hover:bg-rose-600 text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-10 shadow-md"
+                            title="Delete reel"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                /* Empty Grid State */
-                <div className="py-16 text-center space-y-2 px-4">
-                  <div className="w-16 h-16 rounded-full border-2 border-neutral-700 flex items-center justify-center mx-auto text-neutral-400 mb-3">
-                    <Camera className="w-8 h-8 stroke-[1.5]" />
+                    )}
+
+                    {/* Media Photos */}
+                    {media.map((url, idx) => {
+                      return (
+                        <div
+                          key={url}
+                          onClick={() => setLightboxIndex(idx)}
+                          className="relative aspect-square overflow-hidden bg-[#181818] group cursor-pointer rounded-xl md:rounded-2xl"
+                        >
+                          <img
+                            src={getOptimizedImageUrl(url, { width: 720, quality: 'auto', format: 'auto' })}
+                            alt={`Post ${idx + 1}`}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+
+                          {/* Desktop Hover Overlay */}
+                          <div className="absolute inset-0 bg-black/25 opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                            <Camera className="w-8 h-8 text-white drop-shadow-md stroke-[2]" />
+                          </div>
+
+                          {/* Owner Quick Delete Overlay */}
+                          {isRealOwn && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeletePhotoTarget({ index: idx, url });
+                              }}
+                              className="absolute top-2 left-2 md:top-3 md:left-3 p-1.5 rounded-full bg-black/70 hover:bg-rose-600 text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-10 shadow-md"
+                              title="Delete photo"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                  <h3 className="font-bold text-base text-white">No Posts Yet</h3>
-                  <p className="text-xs md:text-sm text-neutral-500 max-w-xs mx-auto">
+                );
+              })() : (
+                /* Empty Grid State */
+                <div className="py-24 sm:py-32 md:py-40 text-center space-y-3 px-4 flex flex-col items-center justify-center min-h-[300px] sm:min-h-[380px]">
+                  <div className="flex items-center justify-center mx-auto text-neutral-400 mb-2">
+                    <Camera className="w-16 h-16 sm:w-20 sm:h-20 stroke-[1.25] text-neutral-400 opacity-90" />
+                  </div>
+                  <h3 className="font-bold text-xl sm:text-2xl text-white tracking-tight">No Posts Yet</h3>
+                  <p className="text-sm sm:text-base text-neutral-400 max-w-sm mx-auto leading-relaxed">
                     {isRealOwn
                       ? 'Upload your media: 1 profile photo, 1 video reel, and up to 2 portfolio photos.'
                       : 'This talent has not uploaded any photos yet.'}
                   </p>
                   {isRealOwn && (
-                    <div className="mt-3 flex items-center justify-center gap-2">
+                    <div className="mt-4 flex items-center justify-center gap-3 pt-2">
                       <button
                         type="button"
                         onClick={() => document.getElementById('profile-direct-photo-upload')?.click()}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#522C69] hover:bg-[#663782] text-white text-xs font-semibold cursor-pointer transition-colors"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#522C69] hover:bg-[#663782] text-white text-sm font-semibold cursor-pointer transition-colors shadow-md active:scale-95"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-4 h-4" />
                         <span>Add Photo (0/2)</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => document.getElementById('profile-direct-video-upload')?.click()}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#262626] hover:bg-[#333333] text-white text-xs font-semibold cursor-pointer transition-colors"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#262626] hover:bg-[#333333] text-white text-sm font-semibold cursor-pointer transition-colors shadow-md active:scale-95"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-4 h-4" />
                         <span>Add Reel (0/1)</span>
                       </button>
                     </div>

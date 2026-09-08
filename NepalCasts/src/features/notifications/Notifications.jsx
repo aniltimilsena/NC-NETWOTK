@@ -243,14 +243,25 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
 }
 export default function Notifications({ onNavigate, user, initialFilter = 'all' }) {
     const [filter, setFilter] = useState(initialFilter || 'all');
-    const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true);
+    
+    // Instant cache-first paint: load from cacheManager if previously fetched
+    const cacheKey = user?.uid ? `user_notifications_cache_${user.uid}` : null;
+    const initialCached = cacheKey ? (cacheManager.getMemory?.(cacheKey) || null) : null;
+    
+    const [notifications, setNotifications] = useState(initialCached || []);
+    const [loading, setLoading] = useState(!initialCached || initialCached.length === 0);
     const [followingIds, setFollowingIds] = useState(new Set());
     const [myFollowerIds, setMyFollowerIds] = useState(new Set());
     const [followersLoaded, setFollowersLoaded] = useState(false);
     const [visibleLimit, setVisibleLimit] = useState(15);
     const [hasMore, setHasMore] = useState(false);
     const [deletingNotifId, setDeletingNotifId] = useState(null);
+
+    const myFollowerIdsRef = useRef(myFollowerIds);
+    myFollowerIdsRef.current = myFollowerIds;
+    const followersLoadedRef = useRef(followersLoaded);
+    followersLoadedRef.current = followersLoaded;
+
     const filters = [
         { id: 'all', label: 'All' },
         { id: 'unread', label: 'Unread' },
@@ -312,7 +323,13 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             setLoading(false);
             return;
         }
-        setLoading(true);
+        
+        // Only trigger loading skeleton if we don't already have cached items
+        const currentCached = cacheManager.getMemory?.(`user_notifications_cache_${user.uid}`);
+        if (!currentCached || currentCached.length === 0) {
+            setLoading(true);
+        }
+        
         const q = query(collection(db, 'notifications'), where('userId', '==', user.uid), limit(100));
         const unsub = onSnapshot(q, (snapshot) => {
             const rawItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -322,18 +339,19 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
                 return timeB - timeA;
             });
 
-            // Deduplicate follow notifications & filter out unfollowed users
+            // Deduplicate follow notifications & filter out unfollowed users using refs
             const seenFollowSenders = new Set();
+            const activeFollowers = myFollowerIdsRef.current;
+            const isFollowersLoaded = followersLoadedRef.current;
+
             const items = rawItems.filter(item => {
                 const isFollow = item.type === 'follow' || item.notificationType === 'follow';
                 if (isFollow && item.senderId) {
-                    // If we already have a newer follow notification from this sender, drop and delete older duplicate
                     if (seenFollowSenders.has(item.senderId)) {
                         deleteDoc(doc(db, 'notifications', item.id)).catch(() => {});
                         return false;
                     }
-                    // If followers list is loaded and this person is no longer following, drop and delete notification
-                    if (followersLoaded && !myFollowerIds.has(item.senderId)) {
+                    if (isFollowersLoaded && !activeFollowers.has(item.senderId)) {
                         deleteDoc(doc(db, 'notifications', item.id)).catch(() => {});
                         return false;
                     }
@@ -341,6 +359,9 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
                 }
                 return true;
             });
+
+            // Cache in memory for instant restoration next time
+            cacheManager.setMemory?.(`user_notifications_cache_${user.uid}`, items);
 
             if (items.length > visibleLimit) {
                 setHasMore(true);
@@ -353,11 +374,10 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             setLoading(false);
         }, (err) => {
             console.error('Failed to subscribe to notifications:', err);
-            setNotifications([]);
             setLoading(false);
         });
         return () => unsub();
-    }, [user?.uid, visibleLimit, myFollowerIds, followersLoaded]);
+    }, [user?.uid, visibleLimit]);
     const markAsRead = async (notifId) => {
         setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, read: true, isRead: true } : n));
         if (user?.uid) {

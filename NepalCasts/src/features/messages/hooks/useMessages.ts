@@ -5,16 +5,21 @@ import { subscribeToConversations, subscribeToMessages, sendMessage, createConve
 import { getProfile } from '../../profile/services/profile';
 import type { Message, ServiceResult } from '../../../types';
 import { subscribeToCallHistory } from '../../../services';
+import { cacheManager } from '../../../utils/cacheManager';
+import { isUserOnline } from '../../../utils/presence';
 
 export function useMessages(currentUser: any, initialUserId: string | null) {
-    const [rawConversations, setRawConversations] = useState<any[]>([]);
+    const cacheKey = currentUser?.uid ? `user_convos_cache_${currentUser.uid}` : null;
+    const initialCached = cacheKey ? (cacheManager.getMemory?.(cacheKey) || null) : null;
+
+    const [rawConversations, setRawConversations] = useState<any[]>(initialCached || []);
     const [receivedApps, setReceivedApps] = useState<any[]>([]);
     const [sentApps, setSentApps] = useState<any[]>([]);
-    const [conversations, setConversations] = useState<any[]>([]);
+    const [conversations, setConversations] = useState<any[]>(initialCached || []);
     const [activeChatId, setActiveChatId] = useState<string | null>(null);
     const [syntheticChat, setSyntheticChat] = useState<any | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!initialCached || initialCached.length === 0);
     const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
     const [callHistory, setCallHistory] = useState<any[]>([]);
     const [loadingCalls, setLoadingCalls] = useState(true);
@@ -185,6 +190,9 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         });
 
         setConversations(combined);
+        if (currentUser?.uid && combined.length > 0) {
+            cacheManager.setMemory?.(`user_convos_cache_${currentUser.uid}`, combined);
+        }
     }, [rawConversations, receivedApps, sentApps, currentUser?.uid]);
 
     useEffect(() => {
@@ -218,7 +226,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
                     participants: [currentUser.uid, targetId],
                     name: pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || 'User',
                     avatar: pData.image || '',
-                    online: pData.online || false
+                    online: isUserOnline(pData)
                 });
             }
         }).catch(console.warn);
@@ -392,7 +400,11 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             return c;
         }));
 
-        return sendMessage(targetConvoId, currentUser.uid, text, false, replyTo, type);
+        const res = await sendMessage(targetConvoId, currentUser.uid, text, false, replyTo, type);
+        if (!res.success) {
+            setMessages(prev => prev.filter(m => m.id !== optimisticId));
+        }
+        return res;
     }, [activeChatId, initialUserId, currentUser?.uid, conversations]);
 
     const activeChat = activeChatId ? (conversations.find(c => c.id === activeChatId || c.otherParticipantId === activeChatId) || syntheticChat) : null;

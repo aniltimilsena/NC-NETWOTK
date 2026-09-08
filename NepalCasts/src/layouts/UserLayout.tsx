@@ -2,6 +2,7 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import { subscribeToGlobalSettings } from '../features/admin/services/admin';
+import { prefetchRoute } from '../utils/prefetchRoute';
 interface UserLayoutProps {
     user: any;
     isAdmin: boolean;
@@ -35,6 +36,24 @@ export default function UserLayout({ user, isAdmin, onLogout, showAlert, showToa
         });
         return () => unsub();
     }, []);
+
+    // Pre-warm frequently switched routes in background so tapping them is instant
+    useEffect(() => {
+        if (!user?.uid) return;
+        const prewarm = () => {
+            prefetchRoute('notifications');
+            prefetchRoute('messages');
+        };
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+            const idleId = (window as any).requestIdleCallback(prewarm, { timeout: 1500 });
+            return () => {
+                if ('cancelIdleCallback' in window) (window as any).cancelIdleCallback(idleId);
+            };
+        } else {
+            const timer = setTimeout(prewarm, 800);
+            return () => clearTimeout(timer);
+        }
+    }, [user?.uid]);
     const handleLegacyNavigate = (page: string, param: any = null) => {
         if (!page) {
             navigate('/');

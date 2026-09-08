@@ -30,4 +30,20 @@ apiClient.interceptors.request.use(async (config) => {
 }, (error) => {
     return Promise.reject(error);
 });
+
+apiClient.interceptors.response.use(
+    (response) => {
+        // If serverless proxy returned 200 with proxy offline status, treat as error so fallback writes trigger
+        if (response?.data && (response.data.proxy === 'offline' || response.data.status === 'offline')) {
+            const err: any = new Error(response.data.message || 'Backend proxy offline');
+            err.isProxyOffline = true;
+            return Promise.reject(err);
+        }
+        return response;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
 export default apiClient;

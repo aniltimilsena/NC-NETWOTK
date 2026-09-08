@@ -6,12 +6,13 @@ import { collection, doc, query, where, orderBy, onSnapshot, getDoc, getDocs, up
 import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
 import { getProfile } from "../../profile/services/profile";
+import { isUserOnline } from "../../../utils/presence";
 export const sendMessage = async (convoId: string, senderId: string, text: string, isSystem: boolean = false, replyTo?: any, type: "text" | "image" | "video" = "text", clientMsgId?: string) => {
     if (text && typeof text === 'string' && text.length > 2000) {
         return { success: false, error: "Message exceeds maximum length of 2000 characters" };
     }
     try {
-        await apiClient.post(`/messaging/${convoId}/messages`, {
+        const response = await apiClient.post(`/messaging/${convoId}/messages`, {
             text,
             type,
             isSystem,
@@ -24,6 +25,9 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
                 }
                 : null,
         }, { timeout: 1500 });
+        if (!response?.data || response.data.proxy === 'offline' || response.data.error) {
+            throw new Error(response?.data?.message || "Backend proxy offline");
+        }
         return { success: true, error: null };
     }
     catch (apiError: any) {
@@ -41,6 +45,9 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
             let participants: string[] = [];
             if (convoSnap.exists()) {
                 participants = convoSnap.data().participants || [];
+            }
+            if (participants.length === 0 && convoId && convoId !== currentUserUid && !convoId.startsWith('app_')) {
+                participants = [currentUserUid, convoId];
             }
             const otherParticipantId = participants.find(p => p !== currentUserUid);
             if (otherParticipantId) {
@@ -106,7 +113,10 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
                 });
                 convoUpdate.unreadCounts = newUnreadCounts;
             }
-            await updateDoc(convoRef, convoUpdate);
+            await setDoc(convoRef, {
+                ...convoUpdate,
+                ...(participants.length > 0 ? { participants } : {}),
+            }, { merge: true });
             const otherParticipants = participants.filter((p: string) => p !== currentUserUid);
             if (otherParticipants.length > 0) {
                 let senderName = CurrentUser.fullName || "Someone";
@@ -341,57 +351,8 @@ const PARTICIPANT_CACHE_TTL_MS = 10 * 60 * 1000;
 
 export const subscribeToConversations = (uid: string, callback: (convos: any[]) => void) => {
     const q = query(collection(db, COLLECTIONS.CONVERSATIONS), where("participants", "array-contains", uid));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-        const docsData = snapshot.docs.map(d => ({ id: d.id, data: d.data() }));
-        const otherParticipantIds = docsData.map(item => {
-            const participants = Array.isArray(item.data.participants) ? item.data.participants : [];
-            return participants.find((p: string) => p !== uid);
-        }).filter((pId): pId is string => typeof pId === 'string' && pId !== '');
-        
-        const uniqueParticipantIds = Array.from(new Set(otherParticipantIds));
-        const profilesMap = new Map<string, any>();
-        const now = Date.now();
-
-        // Populate already-cached profiles instantly (zero network latency)
-        const missingIds: string[] = [];
-        for (const id of uniqueParticipantIds) {
-            const cached = participantProfilesCache.get(id);
-            if (cached && (now - cached.ts < PARTICIPANT_CACHE_TTL_MS)) {
-                profilesMap.set(id, cached.data);
-            } else {
-                missingIds.push(id);
-            }
-        }
-        
-        // Fetch only missing or expired participant profiles
-        if (missingIds.length > 0) {
-            await Promise.all(missingIds.map(async (id) => {
-                try {
-                    const res = await getProfile(id);
-                    let profileData: any = null;
-                    if (res.data) {
-                        profileData = res.data;
-                    } else {
-                        const uSnap = await getDoc(doc(db, COLLECTIONS.USERS, id));
-                        if (uSnap.exists()) {
-                            profileData = uSnap.data();
-                        } else {
-                            const pSnap = await getDoc(doc(db, COLLECTIONS.PROFILES, id));
-                            if (pSnap.exists()) {
-                                profileData = pSnap.data();
-                            }
-                        }
-                    }
-                    if (profileData) {
-                        profilesMap.set(id, profileData);
-                        participantProfilesCache.set(id, { data: profileData, ts: Date.now() });
-                    }
-                } catch (err) {
-                    console.warn(`Failed to fetch profile ${id}:`, err);
-                }
-            }));
-        }
-
+    
+    const buildAndEmit = (docsData: Array<{ id: string; data: any }>, profilesMap: Map<string, any>) => {
         const uniqueConvosMap = new Map<string, any>();
         
         docsData.forEach((item) => {
@@ -425,11 +386,11 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
                 (data.callerId === otherParticipantId ? data.callerPhoto : data.calleePhoto) ||
                 "";
 
-            let participantInfo: any = {
+            const participantInfo: any = {
                 name: resolvedName,
                 avatar: resolvedAvatar,
                 gender: pData?.gender || "unknown",
-                online: pData?.online || false,
+                online: isUserOnline(pData),
                 lastActive: pData?.lastActive || null,
                 lastSeen: pData?.lastSeen || null,
             };
@@ -480,6 +441,64 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
             return timeB - timeA;
         });
         callback(convos);
+    };
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const docsData = snapshot.docs.map(d => ({ id: d.id, data: d.data() }));
+        const otherParticipantIds = docsData.map(item => {
+            const participants = Array.isArray(item.data.participants) ? item.data.participants : [];
+            return participants.find((p: string) => p !== uid);
+        }).filter((pId): pId is string => typeof pId === 'string' && pId !== '');
+        
+        const uniqueParticipantIds = Array.from(new Set(otherParticipantIds));
+        const profilesMap = new Map<string, any>();
+        const now = Date.now();
+
+        // 1. Populate already-cached profiles immediately
+        const missingIds: string[] = [];
+        for (const id of uniqueParticipantIds) {
+            const cached = participantProfilesCache.get(id);
+            if (cached && (now - cached.ts < PARTICIPANT_CACHE_TTL_MS)) {
+                profilesMap.set(id, cached.data);
+            } else {
+                missingIds.push(id);
+            }
+        }
+        
+        // 2. Instant First Emission: Emit conversations immediately without waiting for missing network profile fetches!
+        buildAndEmit(docsData, profilesMap);
+
+        // 3. Non-blocking Background Profile Hydration
+        if (missingIds.length > 0) {
+            Promise.allSettled(missingIds.map(async (id) => {
+                try {
+                    const res = await getProfile(id);
+                    let profileData: any = null;
+                    if (res.data) {
+                        profileData = res.data;
+                    } else {
+                        const uSnap = await getDoc(doc(db, COLLECTIONS.USERS, id));
+                        if (uSnap.exists()) {
+                            profileData = uSnap.data();
+                        } else {
+                            const pSnap = await getDoc(doc(db, COLLECTIONS.PROFILES, id));
+                            if (pSnap.exists()) {
+                                profileData = pSnap.data();
+                            }
+                        }
+                    }
+                    if (profileData) {
+                        profilesMap.set(id, profileData);
+                        participantProfilesCache.set(id, { data: profileData, ts: Date.now() });
+                    }
+                } catch (err) {
+                    // ignore individual profile fetch error
+                }
+            })).then(() => {
+                // Re-emit with enriched avatars/names once network requests resolve
+                buildAndEmit(docsData, profilesMap);
+            });
+        }
     }, (error) => {
         console.error("Conversations subscription error:", error);
         callback([]);
@@ -569,7 +588,10 @@ export const createConversation = async (participants: string[], initialMessage?
             participants,
             initialMessage,
         }, { timeout: 1500 });
-        return { id: response.data?.id || null, error: null };
+        if (!response?.data?.id || (response.data as any).proxy === 'offline') {
+            throw new Error((response.data as any)?.message || "Backend proxy offline");
+        }
+        return { id: response.data.id, error: null };
     }
     catch (apiError: any) {
         console.warn("Backend createConversation failed, attempting client-side fallback:", apiError);

@@ -119,7 +119,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
       return;
     }
     return cacheManager.subscribePooled(`user_notifications_${user.uid}`, (pooledCb) => {
-      const q = query(collection(db, 'notifications'), where('recipientId', '==', user.uid), orderBy('createdAt', 'desc'), limit(20));
+      const q = query(collection(db, 'notifications'), where('userId', '==', user.uid), limit(25));
       return onSnapshot(q, (snapshot) => {
         const notifs = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -133,7 +133,7 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
         pooledCb([], err);
       });
     }, (notifs) => {
-      setUnreadCount(notifs.filter(n => !n.read).length);
+      setUnreadCount(notifs.filter(n => !n.read && !n.isRead).length);
     });
   }, [user?.uid]);
   useEffect(() => {
