@@ -72,29 +72,31 @@ export const uploadFile = async (file: File, path: string, onProgress?: (p: numb
         }
     }
     else if (isVideo) {
-        try {
-            const meta = await mediaOptimizer.extractVideoMetadata(file);
-            logger.log(`[Storage] Video pre-upload check: ${meta.width}x${meta.height}, Duration: ${meta.duration.toFixed(1)}s`);
-        }
-        catch (vErr) {
-            logger.warn("[Storage] Video metadata extraction error:", vErr);
-        }
+        // Non-blocking background telemetry: never delay or hang video upload
+        mediaOptimizer.extractVideoMetadata(file)
+            .then((meta) => {
+                logger.log(`[Storage] Video pre-upload check: ${meta.width}x${meta.height}, Duration: ${meta.duration.toFixed(1)}s`);
+            })
+            .catch((vErr) => {
+                logger.warn("[Storage] Video metadata extraction error:", vErr);
+            });
     }
+    const safeUid = uid.replace(/[^a-zA-Z0-9_-]/g, '_');
     let folder = "general";
     if (isProfilePath) {
-        folder = `avatars/${uid}`;
+        folder = `avatars/${safeUid}`;
     }
     else if (isMediaPath) {
-        folder = `gallery/${uid}`;
+        folder = `gallery/${safeUid}`;
     }
     else if (isCastingPath) {
         const parts = path.split('/');
-        const castingId = parts[1] || 'general';
+        const castingId = (parts[1] || 'general').replace(/[^a-zA-Z0-9_-]/g, '_');
         folder = `castings/${castingId}`;
     }
     else if (isConversationPath) {
         const parts = path.split('/');
-        const convoId = parts[1] || 'general';
+        const convoId = (parts[1] || 'general').replace(/[^a-zA-Z0-9_-]/g, '_');
         folder = `chat/${convoId}`;
     }
     try {

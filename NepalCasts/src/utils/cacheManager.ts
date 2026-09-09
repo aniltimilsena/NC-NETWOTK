@@ -214,6 +214,23 @@ class CacheManager {
         }
     }
 
+    getMemory<T>(key: string): T | null {
+        const cached = this.cache.get(key);
+        if (cached && Date.now() < cached.expiresAt) {
+            return cached.data;
+        }
+        return null;
+    }
+
+    setMemory<T>(key: string, data: T, ttlMs: number = 5 * 60 * 1000): void {
+        const now = Date.now();
+        this.cache.set(key, {
+            data,
+            timestamp: now,
+            expiresAt: now + ttlMs,
+        });
+    }
+
     clearAll() {
         this.cache.clear();
         console.debug(`[Cache] All entries cleared`);

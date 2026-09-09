@@ -109,14 +109,68 @@ export class MediaOptimizer {
         const tStart = performance.now();
         const objectUrl = URL.createObjectURL(file);
         return new Promise((resolve) => {
+            let isSettled = false;
+            let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+            const cleanup = () => {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+                video.onloadedmetadata = null;
+                video.onseeked = null;
+                video.onerror = null;
+            };
+
+            const finish = (res: VideoMetadataResult) => {
+                if (!isSettled) {
+                    isSettled = true;
+                    cleanup();
+                    resolve(res);
+                }
+            };
+
+            // Hard safety timeout: never let metadata extraction freeze an upload
+            timeoutId = setTimeout(() => {
+                const durationMs = Math.round(performance.now() - tStart);
+                logger.warn(`[MediaOptimizer] Video metadata extraction timed out after ${durationMs}ms, falling back to default`);
+                finish({
+                    duration: 0,
+                    width: 1280,
+                    height: 720,
+                    aspectRatio: 16 / 9,
+                    thumbnailBlob: null,
+                    previewUrl: objectUrl,
+                });
+            }, 2500);
+
             const video = document.createElement("video");
             video.preload = "metadata";
             video.src = objectUrl;
             video.muted = true;
             video.playsInline = true;
+
             video.onloadedmetadata = () => {
-                video.currentTime = Math.min(1.0, video.duration / 2 || 0.5);
+                const width = video.videoWidth || 1280;
+                const height = video.videoHeight || 720;
+                const duration = video.duration || 0;
+                const aspectRatio = width / (height || 1);
+
+                // Attempt quick thumbnail capture
+                try {
+                    video.currentTime = Math.min(0.5, duration / 2 || 0.1);
+                } catch {
+                    finish({
+                        duration,
+                        width,
+                        height,
+                        aspectRatio,
+                        thumbnailBlob: null,
+                        previewUrl: objectUrl,
+                    });
+                }
             };
+
             video.onseeked = async () => {
                 const width = video.videoWidth || 1280;
                 const height = video.videoHeight || 720;
@@ -134,13 +188,12 @@ export class MediaOptimizer {
                             canvas.toBlob(resBlob, "image/webp", 0.85);
                         });
                     }
-                }
-                catch (cErr) {
+                } catch (cErr) {
                     logger.warn("[MediaOptimizer] Canvas thumbnail capture error:", cErr);
                 }
                 const durationMs = Math.round(performance.now() - tStart);
                 logger.log(`[MediaOptimizer] Video metadata extracted in ${durationMs}ms: ${width}x${height}, Duration: ${duration.toFixed(1)}s`);
-                resolve({
+                finish({
                     duration,
                     width,
                     height,
@@ -149,9 +202,10 @@ export class MediaOptimizer {
                     previewUrl: objectUrl,
                 });
             };
+
             video.onerror = () => {
                 logger.warn("[MediaOptimizer] Video metadata extraction error");
-                resolve({
+                finish({
                     duration: 0,
                     width: 1280,
                     height: 720,

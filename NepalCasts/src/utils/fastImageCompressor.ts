@@ -107,7 +107,7 @@ export async function fastCompressImage(
     const baseName = file.name.replace(/\.[^/.]+$/, '');
     const compressedFileName = `${baseName}${extension}`;
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (import.meta.env.DEV) {
       console.log(`[fastCompressImage] Compressed in ${durationMs}ms: ${origMb}MB -> ${newMb}MB (${targetWidth}x${targetHeight})`);
     }
 

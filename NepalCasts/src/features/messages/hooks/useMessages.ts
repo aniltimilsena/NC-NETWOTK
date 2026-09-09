@@ -10,7 +10,7 @@ import { isUserOnline } from '../../../utils/presence';
 
 export function useMessages(currentUser: any, initialUserId: string | null) {
     const cacheKey = currentUser?.uid ? `user_convos_cache_${currentUser.uid}` : null;
-    const initialCached = cacheKey ? (cacheManager.getMemory?.(cacheKey) || null) : null;
+    const initialCached = cacheKey ? (cacheManager.getMemory<any[]>(cacheKey) || null) : null;
 
     const [rawConversations, setRawConversations] = useState<any[]>(initialCached || []);
     const [receivedApps, setReceivedApps] = useState<any[]>([]);

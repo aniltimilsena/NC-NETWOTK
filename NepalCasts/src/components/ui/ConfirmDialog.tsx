@@ -4,29 +4,38 @@ import { X, AlertTriangle, AlertCircle, CheckCircle2, Info } from 'lucide-react'
 
 interface ConfirmDialogProps {
     isOpen: boolean;
-    onClose: () => void;
+    onClose?: () => void;
+    onCancel?: () => void;
     onConfirm?: () => void | Promise<void>;
     title: string;
-    description: string;
+    description?: string;
+    message?: string;
     confirmText?: string;
     cancelText?: string;
     hideCancel?: boolean;
     type?: 'default' | 'danger' | 'warning' | 'success' | 'info';
+    variant?: 'default' | 'danger' | 'warning' | 'success' | 'info';
     isLoading?: boolean;
 }
 
 export default function ConfirmDialog({
     isOpen,
     onClose,
+    onCancel,
     onConfirm,
     title,
     description,
+    message,
     confirmText = "Okay",
     cancelText = "Cancel",
     hideCancel = false,
     type = "default",
+    variant,
     isLoading = false
 }: ConfirmDialogProps) {
+    const handleClose = onClose || onCancel || (() => {});
+    const dialogType = variant || type || "default";
+    const bodyText = description || message || "";
     const modalRef = useRef<HTMLDivElement>(null);
     const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -45,7 +54,7 @@ export default function ConfirmDialog({
             const handleKeyDown = (e: KeyboardEvent) => {
                 if (e.key === 'Escape') {
                     if (!isLoading) {
-                        onClose();
+                        handleClose();
                     }
                 }
                 if (e.key === 'Tab') {
@@ -77,10 +86,10 @@ export default function ConfirmDialog({
                 }
             };
         }
-    }, [isOpen, isLoading, onClose]);
+    }, [isOpen, isLoading, onClose, onCancel]);
 
     const getIconHeader = () => {
-        switch (type) {
+        switch (dialogType) {
             case 'danger':
                 return (
                     <div className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
@@ -110,7 +119,7 @@ export default function ConfirmDialog({
     };
 
     const getConfirmButtonClasses = () => {
-        switch (type) {
+        switch (dialogType) {
             case 'danger':
                 return 'bg-[#E41E3F] hover:bg-[#D01937] text-white';
             case 'warning':
@@ -129,7 +138,7 @@ export default function ConfirmDialog({
         if (onConfirm) {
             onConfirm();
         } else {
-            onClose();
+            handleClose();
         }
     };
 
@@ -149,7 +158,7 @@ export default function ConfirmDialog({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.15 }}
-                        onClick={isLoading ? undefined : onClose}
+                        onClick={isLoading ? undefined : handleClose}
                         className="absolute inset-0 bg-black/75 backdrop-blur-sm"
                     />
 
@@ -172,7 +181,7 @@ export default function ConfirmDialog({
                         {/* Description Content */}
                         <div className="px-5 py-4">
                             <p id="confirm-description" className="text-sm text-[#B0B3B8] leading-relaxed whitespace-pre-line">
-                                {description}
+                                {bodyText}
                             </p>
                         </div>
 
@@ -182,7 +191,7 @@ export default function ConfirmDialog({
                                 <button
                                     type="button"
                                     disabled={isLoading}
-                                    onClick={onClose}
+                                    onClick={handleClose}
                                     className="px-4 py-2 rounded-md bg-[#3A3B3C] hover:bg-[#4E4F50] text-[#E4E6EB] text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {cancelText}

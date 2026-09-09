@@ -214,12 +214,12 @@ export const subscribeToProfile = (uid: string, callback: (data: ProfileData | n
         };
     }, (data) => callback(data));
 };
-export const uploadProfileMedia = async (uid: string, file: File, onProgress?: (progress: number) => void, customPath?: string): Promise<string | null> => {
+export const uploadProfileMedia = async (uid: string, file: File, onProgress?: (progress: number) => void, customPath?: string): Promise<string> => {
     try {
         const targetUid = uid || AuthService.getUserId() || CurrentUser.id;
         if (!targetUid) {
             console.error("Unauthorized media upload attempt");
-            return null;
+            throw new Error("Authentication required: Please sign in to upload media.");
         }
         const defaultPath = `media/${targetUid}/${Date.now()}_${file.name}`;
         const targetPath = customPath
@@ -228,9 +228,9 @@ export const uploadProfileMedia = async (uid: string, file: File, onProgress?: (
         const url = await uploadFile(file, targetPath, onProgress, targetUid);
         return url;
     }
-    catch (error) {
+    catch (error: any) {
         console.error("Client-side storage upload failed:", error);
-        return null;
+        throw error;
     }
 };
 

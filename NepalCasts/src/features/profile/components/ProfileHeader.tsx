@@ -17,6 +17,8 @@ import { updateProfileData, uploadProfileMedia } from '../../../services';
 import { CurrentUser } from '../../../utils/CurrentUser';
 import { formatRole } from '../../../utils';
 import { isUserOnline } from '../../../utils/presence';
+import { notifyProfileUpdated } from '../services/users';
+import { useUser } from '@clerk/clerk-react';
 import type { UserProfile } from '../../../types';
 
 interface ProfileHeaderProps {
@@ -36,6 +38,7 @@ interface ProfileHeaderProps {
   onEditBio?: () => void;
   isAdmin?: boolean;
   onOpenCall?: () => void;
+  onProfileUpdated?: (updated: any) => void;
 }
 
 export default function ProfileHeader({
@@ -55,8 +58,11 @@ export default function ProfileHeader({
   onEditBio,
   isAdmin = false,
   onOpenCall,
+  onProfileUpdated,
 }: ProfileHeaderProps) {
+  const { user: clerkUser } = useUser();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
 
@@ -101,20 +107,53 @@ export default function ProfileHeader({
   const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const activeUid = CurrentUser.id || profile.uid;
-    if (!activeUid) return;
+    const activeUid = CurrentUser.id || profile?.uid || (profile as any)?.id;
+    if (!activeUid) {
+      showAlert('Sign In Required', 'warning', 'Please sign in to update your profile photo.');
+      return;
+    }
+
+    // Instant local preview for immediate visual feedback
+    const localPreview = URL.createObjectURL(file);
+    setAvatarPreviewUrl(localPreview);
     setUploadingAvatar(true);
+
     try {
-      const url = await uploadProfileMedia(activeUid, file);
+      const avatarPath = `profiles/${activeUid}/avatar_${Date.now()}.webp`;
+      const url = await uploadProfileMedia(activeUid, file, undefined, avatarPath);
       if (url) {
+        setAvatarPreviewUrl(url);
+        CurrentUser.setImageUrl(url);
+
         await updateProfileData(activeUid, {
           image: url,
           photoURL: url,
           profileImage: url,
         });
+
+        notifyProfileUpdated(activeUid, url);
+
+        if (onProfileUpdated) {
+          onProfileUpdated({
+            image: url,
+            photoURL: url,
+            profileImage: url,
+          });
+        }
+
+        // Sync avatar to Clerk so top navbar & user button reflect the new photo
+        if (clerkUser) {
+          try {
+            await clerkUser.setProfileImage({ file });
+          } catch (clerkErr) {
+            console.warn('[ProfileHeader] Clerk avatar sync skipped:', clerkErr);
+          }
+        }
+
         showAlert('Avatar Updated', 'success');
       }
     } catch (err: any) {
+      setAvatarPreviewUrl(null);
       showAlert('Upload Failed', 'error', err.message || 'Could not upload avatar');
     } finally {
       setUploadingAvatar(false);
@@ -225,6 +264,7 @@ export default function ProfileHeader({
             <Avatar
               user={profile}
               src={
+                avatarPreviewUrl ||
                 (profile as any)?.profileImage ||
                 profile?.photoURL ||
                 profile?.image ||
@@ -410,6 +450,7 @@ export default function ProfileHeader({
               <Avatar
                 user={profile}
                 src={
+                  avatarPreviewUrl ||
                   (profile as any)?.profileImage ||
                   profile?.photoURL ||
                   profile?.image ||

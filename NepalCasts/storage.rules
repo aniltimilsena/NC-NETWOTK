@@ -16,27 +16,47 @@ service firebase.storage {
 
     match /users/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId) || isAdmin();
+      allow write: if true;
     }
 
     match /profiles/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId) || isAdmin();
+      allow write: if true;
     }
 
     match /uploads/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId) || isAdmin();
+      allow write: if true;
     }
 
     match /applications/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId) || isAdmin();
+      allow write: if true;
+    }
+
+    match /gallery/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /avatars/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /media/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /castings/{allPaths=**} {
+      allow read: if true;
+      allow write: if true;
     }
 
     match /{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
   }
 }

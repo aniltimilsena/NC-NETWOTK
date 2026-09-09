@@ -279,6 +279,7 @@ export default function ProfilePage({
     setIsUploadingPhotos(true);
     const newUrls: string[] = [];
     let failedCount = 0;
+    let lastError = '';
     for (let i = 0; i < filesToUpload.length; i++) {
       const file = filesToUpload[i];
       try {
@@ -288,9 +289,10 @@ export default function ProfilePage({
         } else {
           failedCount++;
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Photo upload error:', err);
         failedCount++;
+        lastError = err?.message || 'Photo upload failed';
       }
     }
     if (newUrls.length > 0) {
@@ -300,7 +302,7 @@ export default function ProfilePage({
       showAlert(`Uploaded ${newUrls.length} photo${newUrls.length > 1 ? 's' : ''} (${updated.length}/2 photos)`, 'success');
     }
     if (failedCount > 0) {
-      showAlert(`Failed to upload ${failedCount} file(s).`, 'error');
+      showAlert(`Failed to upload ${failedCount} file(s).`, 'error', lastError);
     }
     setIsUploadingPhotos(false);
   };
@@ -323,7 +325,10 @@ export default function ProfilePage({
 
   const handleUploadIntroVideo = async (file: File) => {
     const uidToUse = profile?.uid || activeUserId || user?.uid;
-    if (!uidToUse) return;
+    if (!uidToUse) {
+      showAlert('Sign In Required', 'warning', 'Please sign in to upload a video reel.');
+      return;
+    }
     setIsUploadingVideo(true);
     try {
       const url = await uploadProfileMedia(uidToUse, file);
@@ -335,11 +340,13 @@ export default function ProfilePage({
           introVideo: url,
           introVideoUrl: url,
         });
-        showAlert('Video Uploaded', 'success');
+        showAlert('Video Uploaded', 'success', 'Your intro reel has been updated.');
+      } else {
+        throw new Error('Upload completed but no media URL was returned.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Video upload error:', err);
-      showAlert('Failed to upload video.', 'error');
+      showAlert('Upload Failed', 'error', err?.message || 'Failed to upload video reel.');
     } finally {
       setIsUploadingVideo(false);
     }
@@ -560,6 +567,7 @@ export default function ProfilePage({
           }}
           isAdmin={isAdmin}
           onOpenCall={() => onNavigate('call', profile.uid || (profile as any)?.id)}
+          onProfileUpdated={(updated) => setProfile((prev: any) => (prev ? { ...prev, ...updated } : prev))}
         />
 
         {/* 3-Column Square Media Grid */}
