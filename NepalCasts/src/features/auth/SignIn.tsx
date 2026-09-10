@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useSignIn } from '@clerk/clerk-react';
+import { useSignIn, useUser } from '@clerk/clerk-react';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, Check, Clapperboard, Users, Sparkles, ChevronLeft } from 'lucide-react';
 import SEO from '../../components/SEO';
 
@@ -12,6 +12,7 @@ interface SignInProps {
 export default function SignIn(_props: SignInProps) {
   const navigate = useNavigate();
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { isSignedIn, isLoaded: userLoaded } = useUser();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,16 +22,32 @@ export default function SignIn(_props: SignInProps) {
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
 
+  // If already signed in, navigate to home screen (or redirect_url if present)
+  useEffect(() => {
+    if (userLoaded && isSignedIn) {
+      const params = new URLSearchParams(window.location.search);
+      const redirectUrl = params.get('redirect_url');
+      if (redirectUrl && !redirectUrl.includes('/sign') && !redirectUrl.includes('/auth') && !redirectUrl.includes('/forgot') && !redirectUrl.includes('/reset')) {
+        navigate(redirectUrl, { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    }
+  }, [userLoaded, isSignedIn, navigate]);
+
   // Social OAuth Handler - Google Only
   const handleSocialSignIn = async (strategy: 'oauth_google' = 'oauth_google') => {
     if (!isLoaded || loading || socialLoading) return;
     setError(null);
     setSocialLoading(true);
     try {
+      const params = new URLSearchParams(window.location.search);
+      const redirectUrl = params.get('redirect_url');
+      const target = (redirectUrl && !redirectUrl.includes('/sign') && !redirectUrl.includes('/auth') && !redirectUrl.includes('/forgot') && !redirectUrl.includes('/reset')) ? redirectUrl : '/';
       await signIn.authenticateWithRedirect({
         strategy,
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: '/discover',
+        redirectUrlComplete: target,
       });
     } catch (err: any) {
       console.error('Google Sign In Error:', err);
@@ -62,7 +79,13 @@ export default function SignIn(_props: SignInProps) {
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        navigate('/discover');
+        const params = new URLSearchParams(window.location.search);
+        const redirectUrl = params.get('redirect_url');
+        if (redirectUrl && !redirectUrl.includes('/sign') && !redirectUrl.includes('/auth') && !redirectUrl.includes('/forgot') && !redirectUrl.includes('/reset')) {
+          navigate(redirectUrl);
+        } else {
+          navigate('/');
+        }
       } else {
         console.log('Sign in status:', result);
         setError('Sign in incomplete. Please check your credentials.');
@@ -87,7 +110,7 @@ export default function SignIn(_props: SignInProps) {
         navigate(redirectUrl);
         return;
       }
-    } catch (e) {}
+    } catch (e) { }
 
     try {
       const lastPage = sessionStorage.getItem('last_non_auth_path');
@@ -95,7 +118,7 @@ export default function SignIn(_props: SignInProps) {
         navigate(lastPage);
         return;
       }
-    } catch (e) {}
+    } catch (e) { }
 
     navigate('/');
   };
@@ -215,11 +238,10 @@ export default function SignIn(_props: SignInProps) {
               className="flex items-start gap-2.5 pt-1 text-left cursor-pointer group select-none"
             >
               <div
-                className={`mt-0.5 w-4 h-4 min-w-[16px] min-h-[16px] rounded flex items-center justify-center transition-colors shrink-0 border ${
-                  agreeTerms
+                className={`mt-0.5 w-4 h-4 min-w-[16px] min-h-[16px] rounded flex items-center justify-center transition-colors shrink-0 border ${agreeTerms
                     ? 'bg-[#7f4ef8] border-[#7f4ef8]'
                     : 'bg-[#151821] border-white/20 group-hover:border-white/40'
-                }`}
+                  }`}
               >
                 {agreeTerms && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
               </div>

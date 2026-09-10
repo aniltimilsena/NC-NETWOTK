@@ -94,7 +94,7 @@ export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
         if (result.createdSessionId) {
           await setActive({ session: result.createdSessionId });
         }
-        navigate('/discover');
+        navigate('/');
       } else {
         console.log('Reset attempt incomplete:', result);
         setError('Verification incomplete. Please check your code.');

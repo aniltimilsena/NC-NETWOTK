@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useSignUp } from '@clerk/clerk-react';
+import { useSignUp, useUser } from '@clerk/clerk-react';
 import { User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, ChevronLeft, Clapperboard, Users, Sparkles } from 'lucide-react';
 import SEO from '../../components/SEO';
 
@@ -12,6 +12,20 @@ interface SignUpProps {
 export default function SignUp(_props: SignUpProps) {
   const navigate = useNavigate();
   const { isLoaded, signUp, setActive } = useSignUp();
+  const { isSignedIn, isLoaded: userLoaded } = useUser();
+
+  // If already signed in, navigate to home screen
+  useEffect(() => {
+    if (userLoaded && isSignedIn) {
+      const params = new URLSearchParams(window.location.search);
+      const redirectUrl = params.get('redirect_url');
+      if (redirectUrl && !redirectUrl.includes('/sign') && !redirectUrl.includes('/auth') && !redirectUrl.includes('/forgot') && !redirectUrl.includes('/reset')) {
+        navigate(redirectUrl, { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    }
+  }, [userLoaded, isSignedIn, navigate]);
 
   const [fullName, setFullName] = useState('');
   const [emailAddress, setEmailAddress] = useState('');
@@ -38,7 +52,7 @@ export default function SignUp(_props: SignUpProps) {
         navigate(redirectUrl);
         return;
       }
-    } catch (e) {}
+    } catch (e) { }
 
     try {
       const lastPage = sessionStorage.getItem('last_non_auth_path');
@@ -46,7 +60,7 @@ export default function SignUp(_props: SignUpProps) {
         navigate(lastPage);
         return;
       }
-    } catch (e) {}
+    } catch (e) { }
 
     navigate('/');
   };
@@ -57,10 +71,13 @@ export default function SignUp(_props: SignUpProps) {
     setError(null);
     setSocialLoading(true);
     try {
+      const params = new URLSearchParams(window.location.search);
+      const redirectUrl = params.get('redirect_url');
+      const target = (redirectUrl && !redirectUrl.includes('/sign') && !redirectUrl.includes('/auth') && !redirectUrl.includes('/forgot') && !redirectUrl.includes('/reset')) ? redirectUrl : '/';
       await signUp.authenticateWithRedirect({
         strategy,
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: '/discover',
+        redirectUrlComplete: target,
       });
     } catch (err: any) {
       console.error('Google Sign Up Error:', err);
@@ -138,7 +155,13 @@ export default function SignUp(_props: SignUpProps) {
 
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId });
-        navigate('/discover');
+        const params = new URLSearchParams(window.location.search);
+        const redirectUrl = params.get('redirect_url');
+        if (redirectUrl && !redirectUrl.includes('/sign') && !redirectUrl.includes('/auth') && !redirectUrl.includes('/forgot') && !redirectUrl.includes('/reset')) {
+          navigate(redirectUrl);
+        } else {
+          navigate('/');
+        }
       } else {
         console.log('Verification status:', completeSignUp);
         setError('Verification incomplete. Please enter the valid code.');

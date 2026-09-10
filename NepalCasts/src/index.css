@@ -29,7 +29,12 @@
     overscroll-behavior-y: contain;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     letter-spacing: -0.02em;
     line-height: 1.25;
   }
@@ -76,12 +81,10 @@
 
   /* Progressive Shimmer & Blur-Up Image Loading */
   .img-shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.03) 0%,
-      rgba(255, 255, 255, 0.08) 50%,
-      rgba(255, 255, 255, 0.03) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0.03) 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0.03) 100%);
     background-size: 200% 100%;
     animation: ncShimmer 1.8s infinite ease-in-out;
   }
@@ -90,6 +93,7 @@
     0% {
       background-position: -200% 0;
     }
+
     100% {
       background-position: 200% 0;
     }
@@ -1438,13 +1442,15 @@ button.cl-formFieldInputShowPasswordButton:hover,
 
 /* Scrollbar hiding utilities */
 @layer utilities {
+
   .no-scrollbar::-webkit-scrollbar,
   .scrollbar-none::-webkit-scrollbar {
     display: none !important;
   }
+
   .no-scrollbar,
   .scrollbar-none {
     -ms-overflow-style: none !important;
     scrollbar-width: none !important;
   }
-}
+}

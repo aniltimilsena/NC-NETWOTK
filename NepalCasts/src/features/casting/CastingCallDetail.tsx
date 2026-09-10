@@ -55,6 +55,7 @@ import {
 import Avatar from '../../components/ui/Avatar';
 import { getProfile } from '../profile/services/profile';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
+import { CastingDetailSkeleton } from '../../components/ui/Skeleton';
 import ShareSheet from '../../components/ui/ShareSheet';
 
 const isMockOrInvalidImage = (url: string | null | undefined) => {
@@ -819,9 +820,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   if (loading) {
     return (
       <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting">
-        <div className="min-h-screen bg-[#141414] text-white p-4 sm:p-6 flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-2 border-[#522C69]/30 border-t-[#522C69] animate-spin" />
-        </div>
+        <CastingDetailSkeleton />
       </Desktop3ColumnLayout>
     );
   }

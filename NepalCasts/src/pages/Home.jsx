@@ -6,7 +6,7 @@ import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { subscribeToTalents, subscribeToCastingCalls } from '../services';
 import { matchesCategory } from '../constants/categories';
 import { subscribeToProfile } from '../features/profile/services/profile';
-import { AvatarScrollSkeleton } from '../components/ui/Skeleton';
+import { AvatarScrollSkeleton, CastingPosterScrollSkeleton } from '../components/ui/Skeleton';
 import PullToRefresh from '../components/ui/PullToRefresh';
 import { ChevronRight, MapPin } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
@@ -18,6 +18,7 @@ import { notifyFollowUpdated } from '../features/profile/services/users';
 import { getOptimizedImageUrl, getImageSrcSet } from '../utils/media';
 import { prefetchRoute, prefetchProfile, prefetchCasting } from '../utils/prefetchRoute';
 import GoalsBannerCard from '../components/ui/GoalsBannerCard';
+import RegionalFilmHubs from '../components/ui/RegionalFilmHubs';
 
 /* eslint-disable no-secrets/no-secrets */
 const HERO_BACKGROUND_PHOTOS = [
@@ -167,6 +168,7 @@ export default function Home({ onNavigate, user }) {
 
   const [isLoading, setIsLoading] = useState(true);
   const [talentsReceived, setTalentsReceived] = useState(false);
+  const [callsReceived, setCallsReceived] = useState(false);
   const [currentSpotlightIdx, setCurrentSpotlightIdx] = useState(0);
   const [talents, setTalents] = useState([]);
   const [castingCalls, setCastingCalls] = useState([]);
@@ -354,7 +356,10 @@ export default function Home({ onNavigate, user }) {
         if (error) {
           console.warn("Home query issue:", error);
         }
-        if (data) setCastingCalls(data);
+        if (data) {
+          setCastingCalls(data);
+          setCallsReceived(true);
+        }
         setIsLoading(false);
       }, 6);
 
@@ -553,7 +558,7 @@ export default function Home({ onNavigate, user }) {
       activeNav="discover"
       featuredTalents={displayFeaturedList}
       trendingCalls={castingCalls}
-      loading={!talentsReceived}
+      loading={!talentsReceived || !callsReceived}
     >
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="min-h-screen bg-[#141414] text-white pt-0 pb-1 font-sans selection:bg-[#522C69] selection:text-black">
@@ -684,7 +689,9 @@ export default function Home({ onNavigate, user }) {
 
               {/* Horizontal Scroll Carousel: Borderless Poster Thumbnails with Call Details */}
               <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pt-0.5 pb-1.5 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
-                {activeCastingCalls.length > 0 ? (
+                {!callsReceived ? (
+                  <CastingPosterScrollSkeleton count={3} />
+                ) : activeCastingCalls.length > 0 ? (
                   activeCastingCalls.slice(0, 8).map((call) => {
                     const thumbnail = getCastingThumbnail(call);
                     return (
@@ -926,14 +933,14 @@ export default function Home({ onNavigate, user }) {
                   [1, 2, 3, 4, 5].map((num) => (
                     <div key={num} className="flex items-center justify-between gap-3 sm:gap-4 py-2">
                       <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 shrink-0 animate-pulse" />
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full skeleton shrink-0 border border-white/5" />
                         <div className="flex-1 space-y-2">
-                          <div className="w-32 h-3.5 bg-white/10 rounded-full animate-pulse" />
-                          <div className="w-24 h-2.5 bg-white/10 rounded-full animate-pulse" />
-                          <div className="w-20 h-2 bg-white/10 rounded-full animate-pulse" />
+                          <div className="w-32 h-3.5 skeleton rounded" />
+                          <div className="w-24 h-2.5 skeleton rounded" />
+                          <div className="w-20 h-2 skeleton rounded" />
                         </div>
                       </div>
-                      <div className="w-20 h-8 rounded-full bg-white/10 shrink-0 animate-pulse hidden sm:block" />
+                      <div className="w-20 h-8 rounded-full skeleton shrink-0 hidden sm:block" />
                     </div>
                   ))
                 ) : newBornTalents.length > 0 ? (
@@ -1006,6 +1013,9 @@ export default function Home({ onNavigate, user }) {
               </div>
             </section>
 
+            {/* ================= REGIONAL FILM HUBS SECTION (TEST) ================= */}
+            <RegionalFilmHubs onNavigate={onNavigate} />
+
             {/* ================= TRENDING TALENTS SECTION ================= */}
             <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
@@ -1032,10 +1042,10 @@ export default function Home({ onNavigate, user }) {
                 {!talentsReceived ? (
                   [1, 2, 3, 4, 5].map((num) => (
                     <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 shrink-0 animate-pulse" />
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full skeleton shrink-0 border border-white/5" />
                       <div className="flex-1 space-y-2">
-                        <div className="w-full h-2.5 bg-white/10 rounded-full animate-pulse" />
-                        <div className="w-3/4 h-2 bg-white/10 rounded-full animate-pulse" />
+                        <div className="w-full h-3.5 skeleton rounded" />
+                        <div className="w-3/4 h-2.5 skeleton rounded" />
                       </div>
                     </div>
                   ))

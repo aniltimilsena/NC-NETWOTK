@@ -40,7 +40,7 @@ import { doc, getDoc } from 'firebase/firestore';
 
 const ProtectedRoute = ({ user, authReady, children }: any) => {
   const location = useLocation();
-  if (!authReady) return <div className="min-h-screen bg-[#070709]" />;
+  if (!authReady) return <div className="min-h-screen bg-nc-dark" />;
   return user ? (children || <Outlet />) : <Navigate to={`/signin?redirect_url=${encodeURIComponent(location.pathname + location.search)}`} replace />;
 };
 
@@ -84,7 +84,7 @@ const AdminRoute = ({ user, isAdmin, authReady, children }: any) => {
     return () => { isMounted = false; };
   }, [user, isAdmin, authReady]);
 
-  if (!authReady || checking) return <div className="min-h-screen bg-[#070709]" />;
+  if (!authReady || checking) return <div className="min-h-screen bg-nc-dark" />;
   return user && isLiveAdmin ? (children || <Outlet />) : <Navigate to="/" replace />;
 };
 
@@ -172,7 +172,7 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
         <Route path="/register" element={<Navigate to="/signup" replace />} />
         <Route path="/sign-in/*" element={<SignIn onNavigate={onNavigate} />} />
         <Route path="/sign-up/*" element={<SignUp onNavigate={onNavigate} />} />
-        <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback continueSignUpUrl="/signup" signInForceRedirectUrl="/discover" signUpForceRedirectUrl="/discover" />} />
+        <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback continueSignUpUrl="/signup" signInForceRedirectUrl="/" signUpForceRedirectUrl="/" />} />
         <Route path="/forgot-password" element={<ForgotPassword onNavigate={onNavigate} />} />
         <Route path="/reset-password" element={<ForgotPassword onNavigate={onNavigate} />} />
       </Route>

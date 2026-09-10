@@ -125,7 +125,7 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
         !isAuthPage &&
         !location.pathname.startsWith('/call') &&
         !location.pathname.startsWith('/messages');
-    return (<div className="flex flex-col min-h-screen bg-nc-dark text-nc-text">
+    return (<div className={`flex flex-col min-h-screen ${isAuthPage ? 'bg-[#0c0e15]' : 'bg-nc-dark'} text-nc-text`}>
         {showNavbar && (<Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate} />)}
         <main className="flex-1 px-0 pb-0 min-h-0">
             <Suspense fallback={<RouteLoadingFallback />}>

@@ -272,7 +272,6 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
     const filters = [
         { id: 'all', label: 'All' },
         { id: 'unread', label: 'Unread' },
-        { id: 'messages', label: 'Messages' },
         { id: 'casting', label: 'Casting' },
         { id: 'system', label: 'System' },
     ];
@@ -538,7 +537,6 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
     const getEmptyStateText = () => {
         switch (filter) {
             case 'unread': return { title: "You're all caught up!", desc: "No unread notifications." };
-            case 'messages': return { title: "No messages yet", desc: "Start conversations to see updates." };
             case 'casting': return { title: "No casting updates", desc: "Apply to casting calls to receive notices." };
             case 'system': return { title: "No system updates", desc: "Announcements and alerts will appear here." };
             default: return { title: "No notifications", desc: "Nothing here yet. Stay tuned!" };
@@ -557,7 +555,7 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             </motion.li>))}
         </AnimatePresence>
     </ul>);
-    return (<div className="min-h-screen bg-[#0a0a0a] text-white">
+    return (<div className="min-h-screen bg-[#141414] text-white">
 
         <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-8 md:px-12 pt-4 sm:pt-6 md:pt-10">
             {/* Top Bar Header */}

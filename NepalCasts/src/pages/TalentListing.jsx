@@ -9,6 +9,7 @@ import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import Tag from '../components/ui/Tag';
 import TalentCardSkeleton from '../components/ui/TalentCardSkeleton';
+import { CategoryGridSkeleton } from '../components/ui/Skeleton';
 import ShareSheet from '../components/ui/ShareSheet';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { CATEGORIES, getCategoryConfig, matchesCategory } from '../constants/categories';
@@ -404,7 +405,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
 
     return (
         <Desktop3ColumnLayout user={activeUser} onNavigate={onNavigate} activeNav="talent" featuredTalents={featuredTalents}>
-            <div className="min-h-screen bg-black text-white pt-2 sm:pt-4 pb-6 relative font-sans">
+            <div className="min-h-screen bg-[#141414] text-white pt-2 sm:pt-4 pb-6 relative font-sans">
                 <SEO title="Browse Professional Talent | NepalCasts" description="Premium directory of cinema professionals in Nepal." />
 
 
@@ -424,7 +425,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                             </div>
 
                             {loading ? (
-                                <TalentCardSkeleton count={6} />
+                                <CategoryGridSkeleton count={6} />
                             ) : (
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 w-full">
                                     {HOME_CATEGORY_CARDS.map((cat, idx) => {
@@ -447,7 +448,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                                         navigate(`/talents/${cat.filter}`);
                                                     }
                                                 }}
-                                                className="rounded-3xl p-4 sm:p-6 lg:p-8 aspect-square w-full h-full flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-[#0a0a0a] hover:bg-[#141414] shadow-xl group border-0 gap-2 sm:gap-3"
+                                                className="rounded-3xl p-4 sm:p-6 lg:p-8 aspect-square w-full h-full flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-black hover:bg-[#1c1c1c] shadow-xl group border border-white/5 gap-2 sm:gap-3"
                                             >
                                                 <CategoryCardIcon
                                                     type={cat.iconType}

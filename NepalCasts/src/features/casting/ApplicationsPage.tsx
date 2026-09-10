@@ -151,7 +151,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
 
   return (
     <Desktop3ColumnLayout user={currentUser} onNavigate={onNavigate} activeNav="applications">
-      <div className="min-h-screen bg-[#0A0A0A] text-white relative font-sans">
+      <div className="min-h-screen bg-[#141414] text-white relative font-sans">
         <SEO title="My Applications | NepalCasts Auditions" description="Track your submitted audition applications." />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">

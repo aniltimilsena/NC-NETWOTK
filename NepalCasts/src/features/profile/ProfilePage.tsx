@@ -6,6 +6,7 @@ import FollowModal from './components/FollowModal';
 import ShareSheet from '../../components/ui/ShareSheet';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import BackButton from '../../components/ui/BackButton';
+import { ProfileSkeleton } from '../../components/ui/Skeleton';
 import { doc, setDoc, deleteDoc, query, collection, where, getDocs, serverTimestamp, documentId } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
@@ -599,12 +600,7 @@ export default function ProfilePage({
   };
 
   if (loading || resolvingUid) {
-    return (
-      <div className="min-h-screen bg-[#141414] pb-6 text-left animate-pulse flex flex-col items-center justify-center p-6">
-        <Loader2 className="w-8 h-8 text-[#522C69] animate-spin mb-3" />
-        <p className="text-gray-400 text-sm">Loading profile...</p>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (!profile) {

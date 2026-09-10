@@ -280,3 +280,220 @@ export const AdminSettingsSkeleton = () => (
     ))}
   </div>
 );
+
+// 16. Full Profile Page Skeleton
+export const ProfileSkeleton = () => (
+  <div className="min-h-screen bg-[#141414] text-white font-sans pb-20 select-none animate-pulse" aria-hidden="true">
+    <div className="w-full px-0 sm:px-1.5 py-2 space-y-2 sm:space-y-2">
+      {/* Top Header Bar */}
+      <div className="flex items-center justify-between py-2 px-3 sm:px-4 mb-2">
+        <div className="w-9 h-9 rounded-full skeleton" />
+        <div className="h-5 skeleton w-24 rounded-lg" />
+        <div className="w-9 h-9 rounded-full skeleton" />
+      </div>
+
+      {/* Profile Identity & Avatar Block */}
+      <div className="flex items-center gap-4 sm:gap-5 px-3.5 sm:px-4 py-2 mb-2">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full skeleton shrink-0 border-2 border-white/10" />
+        <div className="min-w-0 flex-1 space-y-2 text-left">
+          <div className="h-5 sm:h-6 skeleton w-40 rounded-md" />
+          <div className="h-3.5 skeleton w-24 rounded-md" />
+          <div className="h-3 skeleton w-32 rounded-md" />
+          <div className="flex gap-2 pt-1">
+            <div className="h-4 skeleton w-16 rounded-full" />
+            <div className="h-4 skeleton w-20 rounded-full" />
+          </div>
+        </div>
+      </div>
+
+      {/* Follow / Connect Stats Row */}
+      <div className="flex items-center justify-around py-3 px-4 bg-black rounded-2xl border border-white/5 mx-2 sm:mx-0">
+        <div className="flex flex-col items-center space-y-1.5">
+          <div className="h-4 skeleton w-10 rounded" />
+          <div className="h-3 skeleton w-14 rounded" />
+        </div>
+        <div className="h-8 w-[1px] bg-white/5" />
+        <div className="flex flex-col items-center space-y-1.5">
+          <div className="h-4 skeleton w-10 rounded" />
+          <div className="h-3 skeleton w-14 rounded" />
+        </div>
+        <div className="h-8 w-[1px] bg-white/5" />
+        <div className="flex flex-col items-center space-y-1.5">
+          <div className="h-4 skeleton w-10 rounded" />
+          <div className="h-3 skeleton w-14 rounded" />
+        </div>
+      </div>
+
+      {/* Action Buttons Row */}
+      <div className="flex items-center gap-3 px-3 sm:px-4 py-2">
+        <div className="h-10 skeleton flex-1 rounded-xl" />
+        <div className="h-10 skeleton flex-1 rounded-xl" />
+        <div className="h-10 w-10 skeleton rounded-xl shrink-0" />
+      </div>
+
+      {/* Bio Card Section */}
+      <div className="p-4 bg-black rounded-2xl border border-white/5 space-y-2.5 mx-2 sm:mx-0">
+        <div className="h-4 skeleton w-24 rounded" />
+        <div className="h-3 skeleton w-full rounded" />
+        <div className="h-3 skeleton w-4/5 rounded" />
+        <div className="h-3 skeleton w-3/5 rounded" />
+      </div>
+
+      {/* Attributes / Key Specs Section */}
+      <div className="p-4 bg-black rounded-2xl border border-white/5 space-y-3 mx-2 sm:mx-0">
+        <div className="h-4 skeleton w-28 rounded" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-1.5 p-2 rounded-xl bg-white/[0.02]">
+              <div className="h-2.5 skeleton w-12 rounded" />
+              <div className="h-3.5 skeleton w-16 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Media Gallery Grid */}
+      <div className="p-4 bg-black rounded-2xl border border-white/5 space-y-3 mx-2 sm:mx-0">
+        <div className="flex justify-between items-center">
+          <div className="h-4 skeleton w-28 rounded" />
+          <div className="h-3 skeleton w-12 rounded" />
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="aspect-square rounded-xl skeleton" />
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// 17. Casting Call Detail Page Skeleton
+export const CastingDetailSkeleton = () => (
+  <div className="min-h-screen bg-[#141414] text-white pb-24 font-sans select-none animate-pulse" aria-hidden="true">
+    <div className="w-full max-w-2xl mx-auto px-3.5 sm:px-6 py-2 space-y-4 text-left">
+      {/* Top Header Bar */}
+      <div className="flex items-center justify-between py-1">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full skeleton shrink-0" />
+          <div className="h-5 skeleton w-36 rounded-lg" />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 rounded-full skeleton" />
+          <div className="w-10 h-10 rounded-full skeleton" />
+        </div>
+      </div>
+
+      {/* Poster Banner */}
+      <div className="relative w-full max-w-[280px] sm:max-w-[320px] mx-auto rounded-2xl overflow-hidden aspect-[9/13] skeleton border border-white/10 shadow-2xl" />
+
+      {/* Category Tag Pill */}
+      <div>
+        <div className="h-7 skeleton w-28 rounded-full" />
+      </div>
+
+      {/* Title & Metadata */}
+      <div className="space-y-3">
+        <div className="h-8 skeleton w-3/4 rounded-lg" />
+        <div className="flex items-center gap-4">
+          <div className="h-4 skeleton w-28 rounded" />
+          <div className="h-4 skeleton w-24 rounded" />
+        </div>
+      </div>
+
+      {/* About Section */}
+      <div className="space-y-3 pt-2">
+        <div className="h-5 skeleton w-32 rounded" />
+        <div className="space-y-2">
+          <div className="h-3.5 skeleton w-full rounded" />
+          <div className="h-3.5 skeleton w-5/6 rounded" />
+          <div className="h-3.5 skeleton w-2/3 rounded" />
+        </div>
+      </div>
+
+      {/* Roles Cards */}
+      <div className="space-y-3 pt-2">
+        <div className="h-5 skeleton w-36 rounded" />
+        <div className="space-y-3">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="p-4 rounded-2xl bg-black border border-white/5 space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="h-4 skeleton w-32 rounded" />
+                <div className="h-5 skeleton w-16 rounded-full" />
+              </div>
+              <div className="h-3 skeleton w-48 rounded" />
+              <div className="h-3 skeleton w-full rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom Sticky CTA Button */}
+      <div className="pt-4">
+        <div className="h-12 skeleton w-full rounded-2xl" />
+      </div>
+    </div>
+  </div>
+);
+
+// 18. Casting Poster Scroll Carousel Skeleton (Home - Hiring Now)
+export const CastingPosterScrollSkeleton = ({ count = 3 }) => (
+  <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pt-0.5 pb-1.5 px-0 animate-pulse w-full" aria-hidden="true">
+    {Array.from({ length: count }).map((_, i) => (
+      <div key={i} className="flex flex-col shrink-0 w-[46vw] sm:w-52 md:w-60">
+        <div className="w-full aspect-[9/14] rounded-t-2xl rounded-b-none skeleton border border-white/5" />
+        <div className="mt-2.5 flex items-center justify-between gap-2 px-0.5">
+          <div className="min-w-0 flex-1 space-y-1.5 text-left">
+            <div className="h-4 skeleton w-3/4 rounded" />
+            <div className="h-3 skeleton w-1/2 rounded" />
+          </div>
+          <div className="h-7 skeleton w-14 rounded-lg shrink-0" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+// 19. Category Grid Skeleton (Talents by Category)
+export const CategoryGridSkeleton = ({ count = 6 }) => (
+  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 w-full animate-pulse" aria-hidden="true">
+    {Array.from({ length: count }).map((_, i) => (
+      <div key={i} className="aspect-square rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center gap-3 bg-black/60 border border-white/5 shadow-xl">
+        <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-2xl skeleton" />
+        <div className="h-4 skeleton w-24 rounded mt-1" />
+        <div className="h-3 skeleton w-16 rounded" />
+      </div>
+    ))}
+  </div>
+);
+
+// 20. Casting Form Skeleton
+export const CastingFormSkeleton = () => (
+  <div className="min-h-screen bg-nc-dark text-white pt-4 sm:pt-8 pb-16 font-sans animate-pulse" aria-hidden="true">
+    <div className="max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 w-full space-y-6">
+      <div className="flex items-center justify-between border-b border-white/5 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full skeleton" />
+          <div className="h-6 skeleton w-48 rounded" />
+        </div>
+        <div className="h-4 skeleton w-20 rounded" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
+        <div className="lg:col-span-2 space-y-5">
+          <div className="h-5 skeleton w-32 rounded" />
+          <div className="h-12 skeleton rounded-xl w-full" />
+          <div className="h-5 skeleton w-28 rounded" />
+          <div className="h-32 skeleton rounded-xl w-full" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="h-12 skeleton rounded-xl w-full" />
+            <div className="h-12 skeleton rounded-xl w-full" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="h-48 skeleton rounded-2xl w-full" />
+          <div className="h-12 skeleton rounded-xl w-full" />
+        </div>
+      </div>
+    </div>
+  </div>
+);

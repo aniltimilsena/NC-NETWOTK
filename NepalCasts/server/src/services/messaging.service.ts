@@ -1,23 +1,5 @@
 import { db, admin } from '../config';
-import { sendFcmMulticastNotification, sendOneSignalNotification } from './notification.service';
-function formatMessagePreview(text: string): string {
-    if (!text)
-        return '';
-    if (typeof text !== 'string')
-        return String(text);
-    const trimmed = text.trim();
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-        const lower = trimmed.toLowerCase();
-        if (lower.includes('.mp4') || lower.includes('.webm') || lower.includes('.mov') || lower.includes('/video/')) {
-            return ' Sent a video';
-        }
-        if (lower.includes('.jpg') || lower.includes('.jpeg') || lower.includes('.png') || lower.includes('.gif') || lower.includes('.webp') || lower.includes('/image/') || lower.includes('cloudinary')) {
-            return ' Sent a photo';
-        }
-        return ' Sent a link';
-    }
-    return text;
-}
+
 export const assertParticipant = async (conversationId: string, userId: string): Promise<admin.firestore.DocumentSnapshot> => {
     const convoDoc = await db.collection('conversations').doc(conversationId).get();
     if (!convoDoc.exists) {
@@ -111,60 +93,7 @@ export const createConversation = async (uid: string, participants: string[], in
         lastMessage: "",
         lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
-    const otherParticipantId = sorted.find((p) => p !== uid);
-    if (otherParticipantId) {
-        let senderName = "Someone";
-        let senderAvatar = "";
-        try {
-            const profileSnap = await db.collection('profiles').doc(uid).get();
-            if (profileSnap.exists) {
-                const pData = profileSnap.data();
-                senderName = pData?.name || [pData?.firstName, pData?.lastName].filter(Boolean).join(' ') || pData?.username || senderName;
-                senderAvatar = pData?.image || pData?.photoURL || pData?.avatar || senderAvatar;
-            }
-        }
-        catch (e) {
-            console.warn("Error fetching profile for new convo notification:", e);
-        }
-        await db.collection('notifications').add({
-            userId: otherParticipantId,
-            recipientId: otherParticipantId,
-            receiverId: otherParticipantId,
-            senderId: uid,
-            senderName,
-            senderAvatar,
-            title: "New Conversation",
-            body: `${senderName} started a new conversation with you.`,
-            type: "messages",
-            notificationType: "messages",
-            isRead: false,
-            read: false,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            targetUrl: `/messages/${uid}`,
-            profileUrl: `/messages/${uid}`,
-            pushSent: true
-        });
-        const tokenDoc = await db.collection('users').doc(otherParticipantId).collection('private').doc('settings').get();
-        const allTokens: string[] = [];
-        if (tokenDoc.exists) {
-            const data = tokenDoc.data();
-            if (data?.fcmTokens && Array.isArray(data.fcmTokens)) {
-                allTokens.push(...data.fcmTokens);
-            }
-        }
-        if (allTokens.length > 0) {
-            await sendFcmMulticastNotification(allTokens, 'New Conversation', `${senderName} started a new conversation with you.`, `/messages/${uid}`);
-        }
-        sendOneSignalNotification({
-            userIds: [otherParticipantId],
-            title: 'New Conversation',
-            body: `${senderName} started a new conversation with you.`,
-            url: `/messages/${uid}`,
-            buttons: [
-                { id: 'view_chat', text: 'Open Chat' }
-            ]
-        });
-    }
+    // Message/conversation notifications removed per user request
     if (initialMessage) {
         const newMessage = {
             senderId: 'system',
@@ -276,76 +205,7 @@ export const sendMessageInConversation = async (conversationId: string, uid: str
     await db.collection('conversations')
         .doc(conversationId)
         .update(convoUpdate);
-    if (otherParticipants.length > 0) {
-        for (const otherParticipantId of otherParticipants) {
-            let senderName = userObj?.name || "Someone";
-            let senderAvatar = userObj?.picture || "";
-            try {
-                const profileSnap = await db.collection('profiles').doc(uid).get();
-                if (profileSnap.exists) {
-                    const pData = profileSnap.data();
-                    senderName = pData?.name || [pData?.firstName, pData?.lastName].filter(Boolean).join(' ') || pData?.username || senderName;
-                    senderAvatar = pData?.image || pData?.photoURL || pData?.avatar || senderAvatar;
-                }
-            }
-            catch (e) {
-                console.warn("Error fetching profile for notification:", e);
-            }
-            let title = "New Message";
-            let body = validatedData.text;
-            if (validatedData.type === "image") {
-                title = "Media received";
-                body = "Sent an image";
-            }
-            else if (validatedData.type === "video") {
-                title = "Media received";
-                body = "Sent a video";
-            }
-            await db.collection('notifications').add({
-                userId: otherParticipantId,
-                recipientId: otherParticipantId,
-                receiverId: otherParticipantId,
-                senderId: uid,
-                senderName,
-                senderAvatar,
-                title,
-                body,
-                type: "messages",
-                notificationType: "messages",
-                isRead: false,
-                read: false,
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                targetUrl: `/messages/${conversationId}`,
-                profileUrl: `/messages/${conversationId}`,
-                pushSent: true
-            });
-        }
-        const allTokens: string[] = [];
-        await Promise.all(otherParticipants.map(async (pId: string) => {
-            const tokenDoc = await db.collection('users').doc(pId).collection('private').doc('settings').get();
-            if (tokenDoc.exists) {
-                const data = tokenDoc.data();
-                if (data?.fcmTokens && Array.isArray(data.fcmTokens)) {
-                    allTokens.push(...data.fcmTokens);
-                }
-            }
-        }));
-        if (allTokens.length > 0) {
-            const preview = formatMessagePreview(validatedData.text);
-            await sendFcmMulticastNotification(allTokens, 'New Message', preview.length > 50 ? `${preview.substring(0, 47)}...` : preview, `/messages/${conversationId}`);
-        }
-        const preview = formatMessagePreview(validatedData.text);
-        sendOneSignalNotification({
-            userIds: otherParticipants,
-            title: 'New Message',
-            body: preview.length > 50 ? `${preview.substring(0, 47)}...` : preview,
-            url: `/messages/${conversationId}`,
-            buttons: [
-                { id: 'reply_chat', text: 'Reply' },
-                { id: 'view_chat', text: 'Open Chat' }
-            ]
-        });
-    }
+    // Message notifications removed per user request
 };
 export const updateMessageText = async (conversationId: string, messageId: string, uid: string, text: string): Promise<void> => {
     const msg = await assertMessageOwner(conversationId, messageId, uid);

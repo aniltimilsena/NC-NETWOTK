@@ -12,16 +12,16 @@ interface UserLayoutProps {
 }
 
 const RouteLoadingFallback = () => (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 animate-pulse space-y-6">
-        <div className="h-8 bg-white/5 rounded-2xl w-48 mb-8" />
-        <div className="h-4 bg-white/5 rounded-xl w-3/4" />
-        <div className="h-4 bg-white/5 rounded-xl w-full" />
-        <div className="h-4 bg-white/5 rounded-xl w-5/6" />
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 animate-pulse space-y-6" aria-hidden="true">
+        <div className="h-8 skeleton rounded-2xl w-48 mb-8" />
+        <div className="h-4 skeleton rounded-xl w-3/4" />
+        <div className="h-4 skeleton rounded-xl w-full" />
+        <div className="h-4 skeleton rounded-xl w-5/6" />
         <div className="pt-8 space-y-4">
-            <div className="h-6 bg-white/5 rounded-xl w-40" />
-            <div className="h-4 bg-white/5 rounded-xl w-full" />
-            <div className="h-4 bg-white/5 rounded-xl w-11/12" />
-            <div className="h-4 bg-white/5 rounded-xl w-4/5" />
+            <div className="h-6 skeleton rounded-xl w-40" />
+            <div className="h-4 skeleton rounded-xl w-full" />
+            <div className="h-4 skeleton rounded-xl w-11/12" />
+            <div className="h-4 skeleton rounded-xl w-4/5" />
         </div>
     </div>
 );
