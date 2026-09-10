@@ -172,7 +172,7 @@ export default function RouteConfig({ user, isAdmin, authReady, onLogout, showAl
         <Route path="/register" element={<Navigate to="/signup" replace />} />
         <Route path="/sign-in/*" element={<SignIn onNavigate={onNavigate} />} />
         <Route path="/sign-up/*" element={<SignUp onNavigate={onNavigate} />} />
-        <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback signInForceRedirectUrl="/discover" signUpForceRedirectUrl="/discover" />} />
+        <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback continueSignUpUrl="/signup" signInForceRedirectUrl="/discover" signUpForceRedirectUrl="/discover" />} />
         <Route path="/forgot-password" element={<ForgotPassword onNavigate={onNavigate} />} />
         <Route path="/reset-password" element={<ForgotPassword onNavigate={onNavigate} />} />
       </Route>

@@ -68,8 +68,8 @@ function FollowBtn({ targetUid }) {
           read: false,
           createdAt: serverTimestamp(),
           targetUrl: `/profile/${currentUserId}`,
-          title: 'New Follower',
-          body: 'Someone started following you.',
+          title: 'New Connect',
+          body: 'Someone connected with you.',
         }, { merge: true });
       }
     } catch (err) {
@@ -86,12 +86,12 @@ function FollowBtn({ targetUid }) {
       type="button"
       onClick={handleToggle}
       disabled={loading}
-      className={`flex-shrink-0 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold border transition-all cursor-pointer active:scale-[0.96] flex items-center gap-1 ${following
-        ? 'bg-white/10 border-white/20 text-white'
-        : 'bg-white/[0.06] border-white/10 text-white'
+      className={`flex-shrink-0 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer active:scale-[0.96] flex items-center gap-1 ${following
+        ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
+        : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
         } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
     >
-      {following ? 'Following' : 'Follow'}
+      {following ? 'Connected' : 'Connect'}
     </button>
   );
 }
@@ -636,7 +636,7 @@ export default function Desktop3ColumnLayout({
             <div className="flex-1 min-w-0">
               {children}
             </div>
-            <Footer />
+            {isHomePage && <Footer />}
           </main>
 
           {/* RIGHT SIDEBAR (Desktop Only: Home Page Only) */}
@@ -695,7 +695,7 @@ export default function Desktop3ColumnLayout({
               {(isTalentsLoading || safeFeatured.length > 0) && (
                 <div className="px-2 space-y-3">
                   <div className="flex items-center justify-between px-1 pt-1">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">People to follow</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">People to connect</h4>
                     <button
                       type="button"
                       onClick={() => onNavigate?.('talent')}

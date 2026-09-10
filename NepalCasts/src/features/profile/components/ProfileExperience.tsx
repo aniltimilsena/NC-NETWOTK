@@ -59,7 +59,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
     <div className="w-full space-y-2 text-left font-sans">
       {/* Header Bar */}
       <div className="flex items-center justify-between pb-1">
-        <h2 className="font-apple text-lg sm:text-xl font-bold text-white tracking-tight">
+        <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
           Experience
         </h2>
 
@@ -67,9 +67,9 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
           <button
             type="button"
             onClick={() => setShowAddForm(true)}
-            className="font-apple text-xs sm:text-sm font-semibold text-[#522C69] hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5"
+            className="text-xs font-semibold text-[#8f64f8] hover:text-[#a785fc] transition-colors cursor-pointer flex items-center gap-1.5"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Add Experience</span>
           </button>
         )}
@@ -149,25 +149,25 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
 
       {/* Stacked Experience Card List */}
       {experiencesList.length > 0 ? (
-        <div className="bg-[#181818] rounded-xl overflow-hidden divide-y divide-white/5 shadow-sm">
+        <div className="bg-[#141416] border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5 shadow-sm">
           {experiencesList.map((exp: any, index: number) => (
             <div
               key={index}
-              className="p-4 flex items-center justify-between gap-3 text-sm sm:text-base hover:bg-[#1a1a1a] transition-colors group"
+              className="p-3.5 sm:p-4 flex items-center justify-between gap-3 text-sm hover:bg-white/[0.02] transition-colors group"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 truncate">
-                  <span className="font-semibold text-gray-100 truncate text-sm sm:text-base">
+                  <span className="font-semibold text-gray-100 truncate text-xs sm:text-sm">
                     {exp.title || exp.role || 'Production Experience'}
                   </span>
                   {(exp.company || exp.production) && (
-                    <span className="text-gray-400 font-normal truncate text-xs sm:text-sm">
+                    <span className="text-gray-400 font-normal truncate text-[11px] sm:text-xs">
                       – “{exp.company || exp.production}”
                     </span>
                   )}
                 </div>
                 {exp.description && (
-                  <p className="text-xs sm:text-sm text-gray-400 mt-1 line-clamp-2">
+                  <p className="text-[11px] sm:text-xs text-gray-400 mt-1 line-clamp-2">
                     {exp.description}
                   </p>
                 )}
@@ -175,7 +175,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
 
               <div className="flex items-center gap-2.5 shrink-0">
                 {exp.year && (
-                  <span className="text-gray-400 font-mono text-xs sm:text-sm">
+                  <span className="text-gray-400 font-mono text-[11px] sm:text-xs">
                     {exp.year}
                   </span>
                 )}
@@ -197,7 +197,7 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
         isOwnProfile ? (
           <div
             onClick={() => (onNavigate ? onNavigate('/settings/experience') : setShowAddForm(true))}
-            className="border border-dashed border-white/10 bg-black rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-white/20 transition-colors group"
+            className="border border-dashed border-white/10 bg-[#141416] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-white/20 transition-colors group"
           >
             <Plus className="w-4 h-4 text-gray-400 group-hover:text-white mb-1" />
             <span className="text-xs font-semibold text-gray-400 group-hover:text-white">
@@ -206,9 +206,9 @@ export default function ProfileExperience({ profile, isOwnProfile, showAlert, on
             <p className="text-[10px] text-gray-500 mt-0.5">Share your work experience...</p>
           </div>
         ) : (
-          <div className="rounded-xl bg-black/40 py-8 px-4 flex flex-col items-center justify-center text-center space-y-1">
-            <p className="text-xs sm:text-sm text-neutral-400 font-medium">No experience listed yet</p>
-            <p className="text-[11px] sm:text-xs text-neutral-500">Past productions, roles, and project credits will appear here.</p>
+          <div className="rounded-xl bg-[#141416] border border-white/5 py-6 px-4 flex flex-col items-center justify-center text-center space-y-1">
+            <p className="text-xs text-neutral-300 font-medium">No experience listed yet</p>
+            <p className="text-[11px] text-neutral-500">Past productions, roles, and project credits will appear here.</p>
           </div>
         )
       ) : null}

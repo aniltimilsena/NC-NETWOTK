@@ -181,8 +181,8 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
     return (
         <div className="min-h-screen bg-nc-dark pb-6">
             <div className="max-w-[1600px] mx-auto px-3 sm:px-8 lg:px-12 pt-4 sm:pt-6 flex items-center gap-4">
-                <button onClick={handleBack} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all active:scale-95 shrink-0 cursor-pointer" aria-label="Back">
-                    <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                <button onClick={handleBack} type="button" className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors shrink-0 cursor-pointer" aria-label="Back">
+                    <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
                 </button>
                 <h1 className="text-2xl font-black text-white">
                     <span className="md:inline hidden">Account Settings</span>

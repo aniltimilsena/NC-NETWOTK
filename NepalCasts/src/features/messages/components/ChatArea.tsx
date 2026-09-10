@@ -165,11 +165,12 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                 <div className="flex items-center gap-3">
                     <button
                         onClick={onBack}
-                        className="md:hidden p-1.5 -ml-1 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        type="button"
+                        className="md:hidden w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
                         title="Back"
                         aria-label="Back"
                     >
-                        <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+                        <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
                     </button>
                     <Avatar
                         userId={otherParticipantId}

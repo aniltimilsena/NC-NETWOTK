@@ -37,8 +37,8 @@ export default function FollowModal({ type, isOpen, onClose, list, loading, onNa
     if (!isOpen)
         return null;
     const titleMap = {
-        followers: 'Followers',
-        following: 'Following',
+        followers: 'Connects',
+        following: 'Connected',
         projects: 'Posted Casting Calls'
     };
     return (<div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" onClick={onClose}>

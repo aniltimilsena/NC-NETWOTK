@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SignIn from '../features/auth/SignIn';
 
@@ -61,26 +61,22 @@ describe('Authentication - SignIn Page', () => {
         render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
 
         expect(screen.getByText(/Terms of Service/i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /forgot password\?/i })).toBeInTheDocument();
-        expect(screen.getByText(/Log in with Google/i)).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /forgot password\?/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument();
     });
 
     it('navigates to forgot password page when clicking Forgot Password', () => {
         render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
 
-        const forgotBtn = screen.getByRole('button', { name: /forgot password\?/i });
-        fireEvent.click(forgotBtn);
-
-        expect(mockNavigate).toHaveBeenCalledWith('/forgot-password');
+        const forgotLink = screen.getByRole('link', { name: /forgot password\?/i });
+        expect(forgotLink).toHaveAttribute('href', '/forgot-password');
     });
 
     it('navigates to signup page when clicking Create account', () => {
         render(<SignIn onNavigate={onNavigateMock} showAlert={showAlertMock} />);
 
-        const createAccountBtn = screen.getByRole('button', { name: /sign up|create account/i });
-        fireEvent.click(createAccountBtn);
-
-        expect(mockNavigate).toHaveBeenCalledWith('/signup');
+        const signUpLink = screen.getByRole('link', { name: /sign up/i });
+        expect(signUpLink).toHaveAttribute('href', '/signup');
     });
 });
 

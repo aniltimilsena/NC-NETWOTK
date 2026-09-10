@@ -7,19 +7,20 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { cacheManager } from '../../utils/cacheManager';
 import { NotificationSkeleton } from '../../components/ui/Skeleton';
 import { ChevronLeft, MessageSquare, PhoneMissed, PhoneOff, UserPlus, Clapperboard, Settings, Check } from 'lucide-react';
+import { notifyFollowUpdated } from '../profile/services/users';
 const getNotificationDetails = (notif) => {
     const type = (notif.type || notif.notificationType || '').toLowerCase();
     const body = (notif.body || notif.message || '').toLowerCase();
     const title = (notif.title || '').toLowerCase();
     const senderName = notif.senderName || 'Someone';
-    if (type === 'follow' || title.includes('follow') || body.includes('following you') || body.includes('started following')) {
+    if (type === 'follow' || title.includes('follow') || title.includes('connect') || body.includes('following you') || body.includes('started following') || body.includes('connected with you')) {
         return {
             type: 'follow',
             themeColor: 'emerald',
             iconName: 'follow',
             text: (<span>
                 <span className="font-bold text-white mr-1">{senderName}</span>
-                started following you
+                connected with you
             </span>),
         };
     }
@@ -215,12 +216,18 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
                 </div>
 
 
-                {(notif.type === 'follow' || notif.notificationType === 'follow') && notif.senderId && (<div className="mt-2">
-                    {followingIds.has(notif.senderId) ? (<button disabled className="px-3 py-1 md:px-5 md:py-2 rounded-xl bg-white/5 border border-white/10 text-gray-500 text-xs md:text-sm font-bold uppercase tracking-wider cursor-not-allowed">
-                        Following
-                    </button>) : (<button onClick={(e) => handleFollowBack(e, notif.senderId)} className="px-3 py-1 md:px-5 md:py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm text-xs md:text-sm font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer">
-                        Follow Back
-                    </button>)}
+                {(notif.type === 'follow' || notif.notificationType === 'follow') && notif.senderId && (<div className="mt-2.5">
+                    <button
+                        type="button"
+                        onClick={(e) => handleFollowBack(e, notif.senderId)}
+                        className={`px-4 sm:px-5 py-1 sm:py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer shadow-none ${
+                            followingIds.has(notif.senderId)
+                                ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
+                                : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
+                        }`}
+                    >
+                        {followingIds.has(notif.senderId) ? 'Connected' : 'Connect'}
+                    </button>
                 </div>)}
             </div>
 
@@ -433,33 +440,40 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             return;
         const followId = `${user.uid}_${senderId}`;
         const followDocRef = doc(db, "follows", followId);
+        const notifId = `${user.uid}_${senderId}_follow`;
+        const isFollowing = followingIds.has(senderId);
         try {
-            await setDoc(followDocRef, {
-                followerId: user.uid,
-                followingId: senderId,
-                createdAt: serverTimestamp()
-            });
-            const notifId = `${user.uid}_${senderId}_follow`;
-            await setDoc(doc(db, "notifications", notifId), {
-                userId: senderId,
-                recipientId: senderId,
-                receiverId: senderId,
-                senderId: user.uid,
-                notificationType: "follow",
-                type: "follow",
-                isRead: false,
-                read: false,
-                createdAt: serverTimestamp(),
-                profileUrl: `/profile/${user.uid}`,
-                targetUrl: `/profile/${user.uid}`,
-                title: "New Follower",
-                body: `${user.displayName || user.email || 'Someone'} started following you.`,
-                senderName: user.displayName || 'Someone',
-                senderAvatar: user.photoURL || ''
-            }, { merge: true });
+            if (isFollowing) {
+                await deleteDoc(followDocRef);
+                await deleteDoc(doc(db, "notifications", notifId)).catch(() => {});
+            } else {
+                await setDoc(followDocRef, {
+                    followerId: user.uid,
+                    followingId: senderId,
+                    createdAt: serverTimestamp()
+                });
+                await setDoc(doc(db, "notifications", notifId), {
+                    userId: senderId,
+                    recipientId: senderId,
+                    receiverId: senderId,
+                    senderId: user.uid,
+                    notificationType: "follow",
+                    type: "follow",
+                    isRead: false,
+                    read: false,
+                    createdAt: serverTimestamp(),
+                    profileUrl: `/profile/${user.uid}`,
+                    targetUrl: `/profile/${user.uid}`,
+                    title: "New Connect",
+                    body: `${user.displayName || user.email || 'Someone'} connected with you.`,
+                    senderName: user.displayName || 'Someone',
+                    senderAvatar: user.photoURL || ''
+                }, { merge: true });
+            }
+            notifyFollowUpdated(senderId);
         }
         catch (err) {
-            console.error("Error following back:", err);
+            console.error("Error toggling follow:", err);
         }
     };
     const handleMarkAllRead = async () => {
@@ -549,8 +563,8 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             {/* Top Bar Header */}
             <div className="flex items-center justify-between mb-6 md:mb-8 pb-2">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => onNavigate('back')} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer" aria-label="Back">
-                        <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+                    <button onClick={() => onNavigate('back')} type="button" className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors shrink-0 cursor-pointer" aria-label="Back">
+                        <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
                     </button>
                     <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight whitespace-nowrap">
                         Notifications

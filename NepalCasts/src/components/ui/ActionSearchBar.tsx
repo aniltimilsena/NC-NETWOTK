@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, ChevronLeft } from "lucide-react";
 import { AuthService } from "@/services/AuthService";
 import Avatar from "./Avatar";
 import { subscribeToTalents } from "@/features/profile/services/users";
@@ -219,10 +219,8 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
     return (<div ref={containerRef} className="w-full relative space-y-5 max-w-3xl mx-auto">
             
             <div className="flex items-center gap-3">
-                {onClose && (<button onClick={onClose} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shrink-0 cursor-pointer" title="Go Back" aria-label="Go Back">
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7"/>
-                        </svg>
+                {onClose && (<button onClick={onClose} className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors shrink-0 cursor-pointer" title="Go Back" aria-label="Go Back">
+                        <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
                     </button>)}
                 <div className="relative flex-1 flex items-center bg-[#242526] rounded-full px-4 py-2 border-0">
                     <input ref={inputRef} type="text" placeholder={t('ui.searchPlaceholder')} value={query} onFocus={() => setIsFocused(true)} onChange={(e) => {

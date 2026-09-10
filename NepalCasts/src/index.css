@@ -659,10 +659,10 @@ body.font-devanagari * {
 @media (max-width: 640px) {
 
   /* 1. Ensure touch/tap targets meet WCAG standards (at least 44px) for all buttons and clickable elements */
-  button:not(.hidden):not(.no-min-h):not(.rounded-full):not(.justify-start),
-  a.button:not(.hidden):not(.no-min-h):not(.rounded-full):not(.justify-start),
-  .btn:not(.hidden):not(.no-min-h):not(.rounded-full):not(.justify-start),
-  .button:not(.hidden):not(.no-min-h):not(.rounded-full):not(.justify-start),
+  button:not(.hidden):not(.no-min-h):not(.rounded-full):not(.justify-start):not(.justify-between),
+  a.button:not(.hidden):not(.no-min-h):not(.rounded-full):not(.justify-start):not(.justify-between),
+  .btn:not(.hidden):not(.no-min-h):not(.rounded-full):not(.justify-start):not(.justify-between),
+  .button:not(.hidden):not(.no-min-h):not(.rounded-full):not(.justify-start):not(.justify-between),
   .category-card:not(.hidden):not(.no-min-h) {
     min-height: 44px !important;
     display: inline-flex;
@@ -678,6 +678,16 @@ body.font-devanagari * {
     display: flex !important;
     align-items: center !important;
     justify-content: flex-start !important;
+  }
+
+  button.justify-between,
+  a.button.justify-between,
+  .btn.justify-between,
+  .button.justify-between {
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
   }
 
   /* 2. Prevent micro-copy/text sizes from dropping below legible limits (13px) on mobile */
@@ -883,9 +893,9 @@ div:has(> input[id="lastName-field"]) {
   text-indent: 0px !important;
 }
 
-#emailAddress,
-#email,
-input[type="email"] {
+.cl-root #emailAddress,
+.cl-root #email,
+.cl-root input[type="email"] {
   padding-left: 20px !important;
   text-indent: 0px !important;
 }
@@ -1391,11 +1401,11 @@ button.cl-formFieldInputShowPasswordButton:hover,
 }
 
 /* Ensure email and username inputs have adequate left/right padding to prevent text from overlapping autofill or badge icons */
-input[id="identifier-field"],
-input[id="emailAddress-field"],
-input[id="username-field"],
-input[type="email"],
-input[name="identifier"] {
+.cl-root input[id="identifier-field"],
+.cl-root input[id="emailAddress-field"],
+.cl-root input[id="username-field"],
+.cl-root input[type="email"],
+.cl-root input[name="identifier"] {
   padding-left: 48px !important;
   padding-right: 48px !important;
 }
@@ -1425,3 +1435,16 @@ input[name="identifier"] {
   box-shadow: none !important;
   filter: none !important;
 }
+
+/* Scrollbar hiding utilities */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar,
+  .scrollbar-none::-webkit-scrollbar {
+    display: none !important;
+  }
+  .no-scrollbar,
+  .scrollbar-none {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+}

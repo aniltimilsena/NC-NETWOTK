@@ -150,7 +150,7 @@ export default function ProfileMedia({
 
       {/* Horizontal Scrollable Reel */}
       {(introVideo || media.length > 0) ? (
-        <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* 1. Intro Video Card (First in Reel with Play Overlay) */}
           {introVideo && (
             <div

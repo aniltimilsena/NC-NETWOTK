@@ -431,11 +431,11 @@ export default function CastingCallCreate({ onNavigate, user, showAlert, editId 
           <button
             type="button"
             onClick={() => onNavigate && onNavigate('back')}
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+            className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
             title="Go Back"
             aria-label="Go Back"
           >
-            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+            <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
           </button>
 
           <div className="flex-1 text-center px-3">

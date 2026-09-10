@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import Avatar from '../components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +8,13 @@ import { matchesCategory } from '../constants/categories';
 import { subscribeToProfile } from '../features/profile/services/profile';
 import { AvatarScrollSkeleton } from '../components/ui/Skeleton';
 import PullToRefresh from '../components/ui/PullToRefresh';
-import { ChevronRight, Pin } from 'lucide-react';
+import { ChevronRight, MapPin } from 'lucide-react';
+import { useUser } from '@clerk/clerk-react';
+import { db } from '../lib/firebase';
+import { collection, onSnapshot, query, doc, deleteDoc, setDoc, serverTimestamp, where } from 'firebase/firestore';
+import { cacheManager } from '../utils/cacheManager';
+import { formatRole, isDefaultImage } from '../utils';
+import { notifyFollowUpdated } from '../features/profile/services/users';
 import { getOptimizedImageUrl, getImageSrcSet } from '../utils/media';
 import { prefetchRoute, prefetchProfile, prefetchCasting } from '../utils/prefetchRoute';
 import GoalsBannerCard from '../components/ui/GoalsBannerCard';
@@ -81,6 +87,84 @@ import { HOME_CATEGORY_CARDS, CategoryCardIcon } from '../components/ui/Category
 
 export default function Home({ onNavigate, user }) {
   const { t } = useTranslation();
+  const { user: clerkUser } = useUser();
+  const activeUser = user || (clerkUser ? {
+    uid: clerkUser.id,
+    id: clerkUser.id,
+    displayName: clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || "Someone",
+    photoURL: (clerkUser.imageUrl && !isDefaultImage(clerkUser.imageUrl)) ? clerkUser.imageUrl : "",
+  } : null);
+  const [followingIds, setFollowingIds] = useState([]);
+
+  useEffect(() => {
+    const userId = activeUser?.uid || clerkUser?.id;
+    if (userId) {
+      return cacheManager.subscribePooled(`user_follows_${userId}`, (pooledCb) => {
+        const q = query(collection(db, "follows"), where("followerId", "==", userId));
+        return onSnapshot(q, (snapshot) => {
+          const ids = snapshot.docs.map(doc => doc.data().followingId);
+          pooledCb(ids, null);
+        }, (err) => {
+          console.warn("Follows listener error:", err);
+          pooledCb([], err);
+        });
+      }, (ids) => {
+        setFollowingIds(ids);
+      });
+    } else {
+      setFollowingIds([]);
+    }
+  }, [activeUser?.uid, clerkUser?.id]);
+
+  const handleToggleFollow = useCallback(async (e, talentId) => {
+    e.stopPropagation();
+    const currentUser = activeUser;
+    if (!currentUser) {
+      if (typeof onNavigate === 'function') {
+        onNavigate('signin');
+      }
+      return;
+    }
+    if (currentUser.uid === talentId) {
+      return;
+    }
+    const followId = `${currentUser.uid}_${talentId}`;
+    const followDocRef = doc(db, "follows", followId);
+    const notifId = `${currentUser.uid}_${talentId}_follow`;
+    const isFollowing = followingIds.includes(talentId);
+    try {
+      if (isFollowing) {
+        await deleteDoc(followDocRef);
+        await deleteDoc(doc(db, "notifications", notifId)).catch(() => {});
+      } else {
+        await setDoc(followDocRef, {
+          followerId: currentUser.uid,
+          followingId: talentId,
+          createdAt: serverTimestamp()
+        });
+        await setDoc(doc(db, "notifications", notifId), {
+          userId: talentId,
+          recipientId: talentId,
+          receiverId: talentId,
+          senderId: currentUser.uid,
+          senderName: currentUser.displayName || "Someone",
+          senderAvatar: currentUser.photoURL || "",
+          title: "New Connect",
+          body: `${currentUser.displayName || "Someone"} connected with you.`,
+          type: "follow",
+          notificationType: "follow",
+          isRead: false,
+          read: false,
+          createdAt: serverTimestamp(),
+          targetUrl: `/profile/${currentUser.uid}`
+        }, { merge: true });
+      }
+      notifyFollowUpdated(talentId);
+    } catch (err) {
+      console.error("Error toggling follow:", err);
+    }
+  }, [activeUser, followingIds, onNavigate]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [talentsReceived, setTalentsReceived] = useState(false);
   const [currentSpotlightIdx, setCurrentSpotlightIdx] = useState(0);
@@ -537,7 +621,7 @@ export default function Home({ onNavigate, user }) {
                           sizes="(max-width: 640px) 100px, 136px"
                           alt={spotlightName}
                           loading="eager"
-                          fetchpriority="high"
+                          fetchPriority="high"
                           decoding="async"
                           onError={() => setSpotlightImageError(true)}
                           className="w-full h-full object-cover rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm border-0"
@@ -840,66 +924,82 @@ export default function Home({ onNavigate, user }) {
               <div className="space-y-2.5 pt-1">
                 {!talentsReceived ? (
                   [1, 2, 3, 4, 5].map((num) => (
-                    <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
-                      <span className="text-2xl sm:text-3xl font-black text-white w-6 text-center shrink-0">
-                        {num}
-                      </span>
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 shrink-0 animate-pulse" />
-                      <div className="flex-1 space-y-2">
-                        <div className="w-full h-2.5 bg-white/10 rounded-full animate-pulse" />
-                        <div className="w-3/4 h-2 bg-white/10 rounded-full animate-pulse" />
+                    <div key={num} className="flex items-center justify-between gap-3 sm:gap-4 py-2">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 shrink-0 animate-pulse" />
+                        <div className="flex-1 space-y-2">
+                          <div className="w-32 h-3.5 bg-white/10 rounded-full animate-pulse" />
+                          <div className="w-24 h-2.5 bg-white/10 rounded-full animate-pulse" />
+                          <div className="w-20 h-2 bg-white/10 rounded-full animate-pulse" />
+                        </div>
                       </div>
+                      <div className="w-20 h-8 rounded-full bg-white/10 shrink-0 animate-pulse hidden sm:block" />
                     </div>
                   ))
                 ) : newBornTalents.length > 0 ? (
-                  newBornTalents.slice(0, 5).map((talent, idx) => (
-                    <div
-                      key={talent.id || idx}
-                      onClick={() => onNavigate('profile', talent.id)}
-                      onMouseEnter={() => prefetchProfile(talent.id)}
-                      onTouchStart={() => prefetchProfile(talent.id)}
-                      className="flex items-center gap-3 sm:gap-4 py-1.5 cursor-pointer cv-auto-item"
-                    >
-                      {/* Rank Number */}
-                      <span className="text-2xl sm:text-3xl font-black text-white w-6 text-center shrink-0">
-                        {idx + 1}
-                      </span>
+                  newBornTalents.slice(0, 5).map((talent, idx) => {
+                    const isSelf = activeUser && (talent.id === activeUser.uid || talent.uid === activeUser.uid);
+                    const isFollowing = followingIds.includes(talent.id);
+                    const location = formatTalentLocation(talent) || talent.location || 'Kathmandu';
+                    const role = formatRole(talent.role || talent.category);
+                    return (
+                      <div
+                        key={talent.id || idx}
+                        onClick={() => onNavigate('profile', talent.id)}
+                        onMouseEnter={() => prefetchProfile(talent.id)}
+                        onTouchStart={() => prefetchProfile(talent.id)}
+                        className="flex items-center justify-between gap-3 sm:gap-4 py-2 cursor-pointer cv-auto-item group"
+                      >
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                          {/* Circular Avatar */}
+                          <Avatar
+                            userId={talent.id}
+                            user={talent}
+                            size="none"
+                            name={talent.name}
+                            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover shrink-0"
+                          />
 
-                      {/* Circular Avatar */}
-                      <Avatar
-                        userId={talent.id}
-                        user={talent}
-                        size="none"
-                        name={talent.name}
-                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover shrink-0"
-                      />
+                          {/* Metadata Lines & Talent Details */}
+                          <div className="flex-1 min-w-0 space-y-0.5 text-left">
+                            <p className="font-apple text-base sm:text-lg md:text-xl font-bold text-white truncate tracking-wide group-hover:text-purple-300 transition-colors">
+                              {talent.name}
+                            </p>
 
-                      {/* Metadata Lines & Talent Details */}
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-apple text-base sm:text-lg md:text-xl font-bold text-white truncate tracking-wide">
-                            {talent.name}
-                          </p>
-                          <span className="text-sm sm:text-base text-[#522C69] font-semibold shrink-0">
-                            {getTalentRoleAndAge(talent)}
-                          </span>
+                            {/* Username */}
+                            <p className="text-xs sm:text-sm text-gray-400 truncate">
+                              @{talent.username || talent.name?.toLowerCase().replace(/\s+/g, '')}
+                            </p>
+
+                            {/* Location • Role */}
+                            <p className="text-xs sm:text-sm text-gray-400 font-normal truncate flex items-center gap-1.5 mt-0.5">
+                              <MapPin className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                              <span>{location}</span>
+                              <span className="text-gray-600">•</span>
+                              <span>{role}</span>
+                            </p>
+                          </div>
                         </div>
 
-                        {/* Username & Location */}
-                        <p className="text-sm text-gray-400 truncate">
-                          @{talent.username || talent.name?.toLowerCase().replace(/\s+/g, '')}
-                        </p>
-                        {formatTalentLocation(talent) && (
-                          <p className="text-sm text-gray-500 truncate flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                            </svg>
-                            {formatTalentLocation(talent)}
-                          </p>
-                        )}
+                        {/* Right Side: Connect Button */}
+                        <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                          {!isSelf && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleFollow(e, talent.id)}
+                              className={`px-4 sm:px-5 py-1 sm:py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer shadow-none ${
+                                isFollowing
+                                  ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
+                                  : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
+                              }`}
+                            >
+                              {isFollowing ? 'Connected' : 'Connect'}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-gray-400 text-sm py-4 text-center">No new talents found</div>
                 )}
@@ -932,9 +1032,6 @@ export default function Home({ onNavigate, user }) {
                 {!talentsReceived ? (
                   [1, 2, 3, 4, 5].map((num) => (
                     <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
-                      <span className="text-2xl sm:text-3xl font-black text-white w-6 text-center shrink-0">
-                        {num}
-                      </span>
                       <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 shrink-0 animate-pulse" />
                       <div className="flex-1 space-y-2">
                         <div className="w-full h-2.5 bg-white/10 rounded-full animate-pulse" />
@@ -951,11 +1048,6 @@ export default function Home({ onNavigate, user }) {
                       onTouchStart={() => prefetchProfile(talent.id)}
                       className="flex items-center gap-3 sm:gap-4 py-1.5 cursor-pointer cv-auto-item"
                     >
-                      {/* Rank Number */}
-                      <span className="text-2xl sm:text-3xl font-black text-white w-6 text-center shrink-0">
-                        {idx + 1}
-                      </span>
-
                       {/* Circular Avatar */}
                       <Avatar
                         userId={talent.id}
@@ -976,13 +1068,13 @@ export default function Home({ onNavigate, user }) {
                           </span>
                         </div>
 
-                        {/* Username & Location / Followers */}
+                        {/* Username & Location / Connects */}
                         <div className="flex items-center justify-between text-sm text-gray-400">
                           <p className="truncate">
                             @{talent.username || talent.name?.toLowerCase().replace(/\s+/g, '')}
                           </p>
                           <span className="text-gray-400 font-medium text-xs sm:text-sm shrink-0">
-                            {getTalentFollowersCount(talent)} {getTalentFollowersCount(talent) === 1 ? 'follower' : 'followers'}
+                            {getTalentFollowersCount(talent)} {getTalentFollowersCount(talent) === 1 ? 'connect' : 'connects'}
                           </span>
                         </div>
                         {formatTalentLocation(talent) && (

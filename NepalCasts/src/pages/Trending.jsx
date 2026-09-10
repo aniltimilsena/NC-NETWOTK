@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { Crown, Search, ChevronLeft, SlidersHorizontal } from 'lucide-react';
+import { Crown, Search, ChevronLeft, SlidersHorizontal, MapPin } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { collection, onSnapshot, query, doc, deleteDoc, setDoc, serverTimestamp, where } from 'firebase/firestore';
 import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
+import { prefetchProfile } from '../utils/prefetchRoute';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
-import { CATEGORIES, getCategoryColor, getCategoryConfig, matchesCategory } from '../constants/categories';
+import { CATEGORIES, getCategoryConfig, matchesCategory } from '../constants/categories';
 import { formatRole, isDefaultImage } from '../utils';
 import { cacheManager } from '../utils/cacheManager';
 import { useTranslation } from 'react-i18next';
@@ -60,6 +61,27 @@ export default function Trending({ onNavigate, user }) {
       return false;
     const diff = Date.now() - createdDate.getTime();
     return diff < 7 * 24 * 60 * 60 * 1000;
+  };
+
+  const getExperienceLevel = (talent) => {
+    const count = Array.isArray(talent.experience) ? talent.experience.length : 0;
+    if (count === 0) return 'Beginner';
+    if (count <= 2) return 'Intermediate';
+    if (count <= 4) return 'Expert';
+    return 'Pro';
+  };
+
+  const getJoinYear = (talent) => {
+    let createdDate = null;
+    if (talent.createdAt) {
+      createdDate = talent.createdAt.toDate ? talent.createdAt.toDate() : new Date(talent.createdAt);
+    } else if (talent.joinedYear) {
+      createdDate = new Date(`${talent.joinedYear}-01-01`);
+    }
+    if (!createdDate || isNaN(createdDate.getTime())) {
+      createdDate = new Date('2026-07-01');
+    }
+    return createdDate.getFullYear();
   };
   const calculateTrendingScore = (profile, period) => {
     const followers = profile.followers || 0;
@@ -138,8 +160,8 @@ export default function Trending({ onNavigate, user }) {
           senderId: currentUser.uid,
           senderName: currentUser.displayName || "Someone",
           senderAvatar: currentUser.photoURL || "",
-          title: "New Follower",
-          body: `${currentUser.displayName || "Someone"} started following you.`,
+          title: "New Connect",
+          body: `${currentUser.displayName || "Someone"} connected with you.`,
           type: "follow",
           notificationType: "follow",
           isRead: false,
@@ -195,8 +217,8 @@ export default function Trending({ onNavigate, user }) {
 
       <div className="flex items-center justify-between gap-4 pb-3 mb-6">
         <div className="flex items-center gap-3.5 min-w-0">
-          <button onClick={() => onNavigate('back')} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0" aria-label="Back" title="Go Back">
-            <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+          <button onClick={() => onNavigate('back')} type="button" className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0" aria-label="Back" title="Go Back">
+            <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
           </button>
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl font-black text-white leading-none truncate">
@@ -298,31 +320,19 @@ export default function Trending({ onNavigate, user }) {
 
 
         <div className="flex flex-col">
-          {Array.from({ length: 5 }).map((_, idx) => (<div key={idx} className="flex items-center justify-between gap-4 py-5 border-b border-white/5">
-            <div className="flex items-center gap-4 min-w-0 flex-1">
-
-              <div className="w-10 sm:w-14 h-8 rounded-lg skeleton shrink-0" />
-
-
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full skeleton shrink-0" />
-
-
-              <div className="space-y-2 min-w-0 flex-1">
-                <div className="h-4 skeleton w-1/3" />
-                <div className="h-3 skeleton w-1/2" />
-                <div className="h-3.5 skeleton w-1/4 mt-1" />
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <div key={idx} className="flex items-center justify-between py-3.5 px-1 border-b border-white/[0.06]">
+              <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 flex-1">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full skeleton shrink-0" />
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="h-4 skeleton w-1/3" />
+                  <div className="h-3 skeleton w-1/2" />
+                  <div className="h-3 skeleton w-1/4" />
+                </div>
               </div>
+              <div className="w-20 sm:w-24 h-8 rounded-full skeleton shrink-0" />
             </div>
-
-
-            <div className="flex items-center gap-4 shrink-0">
-              <div className="text-right space-y-1.5 hidden sm:block">
-                <div className="h-3.5 skeleton w-16 ml-auto" />
-                <div className="h-3 skeleton w-20 ml-auto" />
-              </div>
-              <div className="w-20 sm:w-24 h-9 sm:h-10 rounded-xl skeleton" />
-            </div>
-          </div>))}
+          ))}
         </div>
       </div>) : rankedProfiles.length === 0 ? (<div className="text-center py-24 bg-[#111] border border-dashed border-white/5 rounded-[2.5rem]">
         <Search className="w-12 h-12 text-gray-600 mx-auto mb-4" />
@@ -379,7 +389,7 @@ export default function Trending({ onNavigate, user }) {
 
               <div className={`w-full ${item.height} bg-gradient-to-b from-[#111]/90 to-[#0A0A0A]/40 border-t ${item.borderGlow} rounded-t-[2.5rem] flex flex-col justify-between p-5 text-center transition-all duration-300 group-hover:border-white/10`}>
                 <div className="space-y-1">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">Followers</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">Connects</p>
                   <p className="text-xl sm:text-2xl font-black text-white">{Math.max(0, prof.followers || 0)}</p>
                 </div>
 
@@ -387,10 +397,16 @@ export default function Trending({ onNavigate, user }) {
                   New
                 </span>)}
 
-                <button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`w-full py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer active:scale-95 ${isFollowing
-                  ? 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
-                  : 'bg-[#18181b] border-white/20 text-white hover:bg-white/15 hover:border-white/30 shadow-sm'}`}>
-                  {isFollowing ? 'Following' : 'Follow'}
+                <button
+                  type="button"
+                  onClick={(e) => handleToggleFollow(e, prof.id)}
+                  className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 shadow-none ${
+                    isFollowing
+                      ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
+                      : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
+                  }`}
+                >
+                  {isFollowing ? 'Connected' : 'Connect'}
                 </button>
               </div>
             </motion.div>);
@@ -404,69 +420,72 @@ export default function Trending({ onNavigate, user }) {
           </h2>
 
           <div className="flex flex-col text-left">
-            {remainingList.slice(0, visibleCount).map((prof, index) => {
-              const rank = index + 1;
+            {remainingList.slice(0, visibleCount).map((prof) => {
+              const isSelf = prof.id === activeUser?.uid || prof.uid === activeUser?.uid;
               const isFollowing = followingIds.includes(prof.id);
-              const isNew = isProfileNew(prof);
-              const catColor = getCategoryColor(prof.role);
-              return (<motion.div key={prof.id} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: (index % 10) * 0.05 }} onClick={() => onNavigate('profile', prof.id)} className="group flex items-center justify-between gap-4 py-2 active:bg-white/[0.01] transition-all duration-300 cursor-pointer text-left cv-auto-item">
+              const expLevel = getExperienceLevel(prof);
+              const joinYear = getJoinYear(prof);
+              const talentPhoto = prof.image || prof.photoURL || prof.profileImage || prof.avatar || prof.photo;
 
-                <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
-
-                  <div className="w-10 sm:w-14 flex items-center justify-center relative shrink-0">
-                    <span className="text-2xl sm:text-3xl font-black select-none tracking-tighter text-white">
-                      #{rank}
-                    </span>
-                  </div>
-
-                  <div className="relative shrink-0">
-                    <Avatar user={prof} size="none" name={prof.name} className="w-20 h-20 sm:w-24 sm:h-24 border-white/5 group-hover:border-white/20" />
-                    {prof.openToWork && (<span className="absolute bottom-0 right-0 flex h-3.5 w-3.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-green-500 border border-[#111]"></span>
-                    </span>)}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h3 className="font-apple font-extrabold text-white text-sm sm:text-base tracking-tight truncate group-hover:text-[#522C69] transition-colors">
+              return (
+                <div
+                  key={prof.id}
+                  onMouseEnter={() => prefetchProfile(prof.id)}
+                  onTouchStart={() => prefetchProfile(prof.id)}
+                  onClick={() => onNavigate('profile', prof.id)}
+                  className="flex items-center justify-between py-3.5 px-1 border-b border-white/[0.06] hover:bg-white/[0.02] transition-all duration-200 cursor-pointer group select-none"
+                >
+                  <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                    <div className="relative shrink-0">
+                      <Avatar
+                        userId={prof.id || prof.uid}
+                        user={prof}
+                        src={talentPhoto}
+                        size="none"
+                        name={prof.name}
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-white/10 group-hover:border-purple-500/40 transition-colors"
+                      />
+                      {prof.openToWork && (
+                        <span
+                          className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-black absolute bottom-0 right-0 shadow-sm"
+                          title="Open to Work"
+                        />
+                      )}
+                    </div>
+                    <div className="min-w-0 text-left">
+                      <h3 className="font-bold text-white text-base sm:text-lg tracking-tight truncate flex items-center gap-1.5 group-hover:text-purple-300 transition-colors">
                         {prof.name}
+                        {prof.verified && (
+                          <span className="verified-badge shrink-0 text-sky-400 text-xs" title="Verified Talent">✓</span>
+                        )}
                       </h3>
-                      {isNew && (<span className="shrink-0 text-[#522C69] font-black text-[9px] sm:text-[10px] uppercase tracking-wider">
-                        New
-                      </span>)}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-gray-400">
-                      <span className="text-white font-semibold">
-                        @{prof.username || prof.name?.toLowerCase().replace(/\s+/g, '_') || 'talent'}
-                      </span>
-                      {prof.role && (<>
-                        <span className="text-gray-600">·</span>
-                        <span className="font-semibold text-gray-300 capitalize">
-                          {formatRole(prof.role)}
-                        </span>
-                      </>)}
-                      {prof.location && (<>
-                        <span className="text-gray-600">·</span>
-                        <span className="capitalize text-gray-400">
-                          {prof.location}
-                        </span>
-                      </>)}
+                      <p className="text-xs text-gray-400 font-normal mt-0.5 truncate">
+                        {formatRole(prof.role)} • {expLevel} Level • Since {joinYear}
+                      </p>
+                      <div className="flex items-center gap-1 text-xs text-gray-400 font-normal mt-0.5 truncate">
+                        <MapPin className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                        <span>{prof.location || 'Nepal'}</span>
+                      </div>
                     </div>
                   </div>
 
+                  <div className="flex items-center gap-3 shrink-0" onClick={e => e.stopPropagation()}>
+                    {!isSelf && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleToggleFollow(e, prof.id)}
+                        className={`px-4 sm:px-5 py-1 sm:py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer shadow-none ${
+                          isFollowing
+                            ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
+                            : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
+                        }`}
+                      >
+                        {isFollowing ? 'Connected' : 'Connect'}
+                      </button>
+                    )}
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-4 sm:gap-6 shrink-0">
-                  {prof.id !== activeUser?.uid && (<button type="button" onClick={(e) => handleToggleFollow(e, prof.id)} className={`px-5 py-2 sm:px-6 sm:py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer active:scale-95 ${isFollowing
-                    ? 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
-                    : 'bg-[#18181b] border-white/20 text-white hover:bg-white/15 hover:border-white/30 shadow-sm'}`}>
-                    {isFollowing ? 'Following' : 'Follow'}
-                  </button>)}
-                </div>
-
-              </motion.div>);
+              );
             })}
           </div>
 

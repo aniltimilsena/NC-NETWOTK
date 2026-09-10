@@ -111,6 +111,16 @@ export default function PublicLayout({ user, isAdmin, onLogout, showAlert, showT
         location.pathname.startsWith('/forgot-password') ||
         location.pathname.startsWith('/reset-password') ||
         location.pathname.startsWith('/sso-callback');
+
+    React.useEffect(() => {
+        if (!isAuthPage) {
+            try {
+                sessionStorage.setItem('last_non_auth_path', location.pathname + location.search);
+            } catch (e) {
+                // ignore
+            }
+        }
+    }, [location.pathname, location.search, isAuthPage]);
     const showNavbar =
         !isAuthPage &&
         !location.pathname.startsWith('/call') &&

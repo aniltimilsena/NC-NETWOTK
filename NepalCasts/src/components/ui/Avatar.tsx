@@ -82,6 +82,8 @@ export default function Avatar(props: AvatarProps) {
             lower.includes('achyut.png') ||
             lower.includes('img.clerk.com') ||
             lower.includes('clerk.dev') ||
+            lower.includes('googleusercontent.com') ||
+            lower.includes('lh3.google') ||
             lower.startsWith('data:image/svg+xml')
         ) {
             return true;

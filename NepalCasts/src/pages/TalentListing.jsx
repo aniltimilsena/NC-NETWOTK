@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, memo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { Search, X, MoreVertical, Share2, ChevronLeft, SlidersHorizontal } from 'lucide-react';
+import { Search, X, MoreVertical, MoreHorizontal, Share2, ChevronLeft, MapPin } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { db } from '../lib/firebase';
 import { collection, onSnapshot, query, doc, deleteDoc, setDoc, serverTimestamp, where } from 'firebase/firestore';
@@ -51,56 +51,64 @@ const TalentListItem = memo(function TalentListItem({
             onMouseEnter={() => prefetchProfile(talent.id)}
             onTouchStart={() => prefetchProfile(talent.id)}
             onClick={() => onNavigate('profile', talent.id)}
-            className="flex items-center justify-between py-2 active:bg-white/[0.01] transition-all duration-300 cursor-pointer group cv-auto-item"
+            className="flex items-center justify-between py-3.5 px-1 border-b border-white/[0.06] hover:bg-white/[0.02] transition-all duration-200 cursor-pointer group select-none"
         >
-            <div className="flex items-center gap-4 min-w-0">
-                <Avatar
-                    userId={talent.id || talent.uid}
-                    user={talent}
-                    src={talentPhoto}
-                    size="lg"
-                    name={talent.name}
-                    className="w-12 h-12 md:w-14 md:h-14 transition-transform group-hover:scale-105 duration-300"
-                />
+            <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                <div className="relative shrink-0">
+                    <Avatar
+                        userId={talent.id || talent.uid}
+                        user={talent}
+                        src={talentPhoto}
+                        size="none"
+                        name={talent.name}
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-white/10 group-hover:border-purple-500/40 transition-colors"
+                    />
+                    {talent.openToWork && (
+                        <span
+                            className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-black absolute bottom-0 right-0 shadow-sm"
+                            title="Open to Work"
+                        />
+                    )}
+                </div>
                 <div className="min-w-0 text-left">
-                    <h3 className="font-apple font-bold text-white text-base md:text-lg tracking-wide truncate flex items-center gap-1.5 group-hover:text-[#522C69] transition-colors duration-300">
+                    <h3 className="font-bold text-white text-base sm:text-lg tracking-tight truncate flex items-center gap-1.5 group-hover:text-purple-300 transition-colors">
                         {talent.name}
-                        {talent.verified && (<span className="verified-badge shrink-0" title="Verified Talent">✓</span>)}
-                        {talent.openToWork && (<span className="w-1.5 h-1.5 rounded-full bg-green-500 ring-2 ring-green-500/20" title="Open to Work" />)}
+                        {talent.verified && (<span className="verified-badge shrink-0 text-sky-400 text-xs" title="Verified Talent">✓</span>)}
                     </h3>
-                    <p className="text-xs text-gray-500 font-medium mt-0.5">
-                        {formatRole(talent.role)} • {expLevel} Level • {isNew ? 'New' : `Since ${joinYear}`}
+                    <p className="text-xs text-gray-400 font-normal mt-0.5 truncate">
+                        {formatRole(talent.role)} • {expLevel} Level • Since {joinYear}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1 truncate">
-                        {talent.location || 'Nepal'}
-                    </p>
+                    <div className="flex items-center gap-1 text-xs text-gray-400 font-normal mt-0.5 truncate">
+                        <MapPin className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                        <span>{talent.location || 'Nepal'}</span>
+                    </div>
                 </div>
             </div>
 
-            <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 shrink-0" onClick={e => e.stopPropagation()}>
                 {!isSelf && (
                     <button
                         type="button"
                         onClick={(e) => onToggleFollow(e, talent.id)}
-                        className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 border cursor-pointer ${isFollowing
-                            ? 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
-                            : 'bg-[#18181b] border-white/20 text-white hover:bg-white/15 hover:border-white/30 shadow-sm'
+                        className={`px-4 sm:px-5 py-1 sm:py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer shadow-none ${isFollowing
+                            ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
+                            : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
                             }`}
                     >
-                        {isFollowing ? 'Following' : 'Follow'}
+                        {isFollowing ? 'Connected' : 'Connect'}
                     </button>
                 )}
 
                 <button
                     type="button"
                     onClick={() => onToggleMenu(talent.id)}
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-white relative bg-transparent hover:bg-white/5 transition-colors"
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-white relative hover:bg-white/5 transition-colors cursor-pointer"
                 >
                     <MoreVertical size={16} />
                     {isMenuOpen && (
                         <>
                             <div className="fixed inset-0 z-10" onClick={onCloseMenu} />
-                            <div className="absolute right-0 top-10 mt-1 w-36 bg-[#121212]/95 border border-white/10 rounded-xl shadow-2xl z-20 py-1.5 backdrop-blur-lg overflow-hidden text-left">
+                            <div className="absolute right-0 top-10 mt-1 w-36 bg-[#121216] border border-white/10 rounded-xl shadow-2xl z-20 py-1.5 backdrop-blur-lg overflow-hidden text-left">
                                 <button
                                     onClick={() => {
                                         onShareTalent(talent);
@@ -173,7 +181,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
     const sortOptions = [
         { id: 'trending', label: 'Trending' },
         { id: 'newest', label: 'Newest' },
-        { id: 'followers', label: 'Most Followed' }
+        { id: 'followers', label: 'Most Connected' }
     ];
 
     useEffect(() => {
@@ -318,8 +326,8 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                     senderId: currentUser.uid,
                     senderName: currentUser.displayName || "Someone",
                     senderAvatar: currentUser.photoURL || "",
-                    title: "New Follower",
-                    body: `${currentUser.displayName || "Someone"} started following you.`,
+                    title: "New Connect",
+                    body: `${currentUser.displayName || "Someone"} connected with you.`,
                     type: "follow",
                     notificationType: "follow",
                     isRead: false,
@@ -396,7 +404,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
 
     return (
         <Desktop3ColumnLayout user={activeUser} onNavigate={onNavigate} activeNav="talent" featuredTalents={featuredTalents}>
-            <div className="min-h-screen bg-[#141414] text-white pt-2 sm:pt-4 pb-6 relative font-sans">
+            <div className="min-h-screen bg-black text-white pt-2 sm:pt-4 pb-6 relative font-sans">
                 <SEO title="Browse Professional Talent | NepalCasts" description="Premium directory of cinema professionals in Nepal." />
 
 
@@ -407,8 +415,8 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                     {viewMode === 'categories' && (
                         <div className="animate-fade-in space-y-6 text-left">
                             <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-                                <button onClick={() => onNavigate('home')} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 shrink-0 cursor-pointer" aria-label="Back" title="Go Back">
-                                    <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                                <button onClick={() => onNavigate('home')} className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0" aria-label="Back" title="Go Back">
+                                    <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
                                 </button>
                                 <div>
                                     <h1 className="text-2xl sm:text-4xl font-sans font-black text-white tracking-tight leading-none">Talents by Category</h1>
@@ -462,10 +470,10 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                         </div>
                     )}
 
-                    {viewMode === 'talents' && (<div className="animate-fade-in space-y-3 text-left">
-                        <div className="flex items-center justify-between gap-4 pb-3 border-b border-white/5 mb-6">
+                    {viewMode === 'talents' && (<div className="animate-fade-in space-y-4 text-left relative">
+                        <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/[0.06] mb-4 relative z-10">
 
-                            <div className="flex items-center gap-3.5 min-w-0">
+                            <div className="flex items-center gap-3 min-w-0">
                                 <button onClick={() => {
                                     setSelectedFilters(prev => ({ ...prev, category: 'All' }));
                                     setViewMode('categories');
@@ -475,35 +483,38 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                     } else {
                                         navigate('/talents');
                                     }
-                                }} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0" aria-label="Back to Categories" title="Back to Categories">
-                                    <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+                                }} className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0" aria-label="Back to Categories" title="Back to Categories">
+                                    <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
                                 </button>
                                 <div className="min-w-0">
-                                    <h2 className="text-xl sm:text-2xl font-black text-white leading-none truncate">
+                                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest leading-none mb-1">
+                                        TALENTS
+                                    </p>
+                                    <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight tracking-tight truncate">
                                         {selectedFilters.category === 'All' ? 'All' : getCategoryConfig(selectedFilters.category).label}
-                                    </h2>
-                                    <p className="text-[10px] sm:text-xs text-nc-muted mt-1 font-semibold">
+                                    </h1>
+                                    <p className="text-xs text-gray-400 font-medium mt-1">
                                         {filteredTalents.length} {filteredTalents.length === 1 ? 'talent' : 'talents'} found
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="relative shrink-0">
-                                <button onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)} className="w-7 h-7 flex items-center justify-center text-white hover:text-white/80 transition-colors duration-200 cursor-pointer" aria-label="Sort options" title="Sort options">
-                                    <SlidersHorizontal className="w-[18px] h-[18px] text-white" strokeWidth={2} />
+                            <div className="relative shrink-0 pt-1">
+                                <button onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 hover:text-white transition-colors cursor-pointer" aria-label="Sort options" title="Sort options">
+                                    <MoreHorizontal className="w-5 h-5 text-white" />
                                 </button>
 
                                 <AnimatePresence>
                                     {isSortDropdownOpen && (<>
                                         <div className="fixed inset-0 z-30" onClick={() => setIsSortDropdownOpen(false)} />
-                                        <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} transition={{ duration: 0.15 }} className="absolute right-0 mt-2 w-36 bg-[#111116] border border-white/10 rounded-xl shadow-2xl py-1 z-40 text-left">
+                                        <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} transition={{ duration: 0.15 }} className="absolute right-0 mt-2 w-40 bg-[#111116] border border-white/10 rounded-xl shadow-2xl py-1 z-40 text-left">
                                             {sortOptions.map(opt => {
                                                 const isActive = activeSort === opt.id;
                                                 return (<button key={opt.id} onClick={() => {
                                                     setActiveSort(opt.id);
                                                     setIsSortDropdownOpen(false);
-                                                }} className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
-                                                    ? 'text-[#522C69] bg-[#522C69]/10'
+                                                }} className={`w-full text-left px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
+                                                    ? 'text-purple-400 bg-purple-500/10'
                                                     : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                                                     {opt.label}
                                                 </button>);

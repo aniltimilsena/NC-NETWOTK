@@ -197,11 +197,12 @@ export default function ProfileHeader({
         <div className="md:hidden sticky top-0 z-30 bg-black/95 backdrop-blur-md border-b border-white/[0.08] px-3 sm:px-4 py-2.5 flex items-center justify-between">
           <button
             onClick={() => onNavigate('back')}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
+            type="button"
+            className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
             aria-label="Back"
             title="Go Back"
           >
-            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+            <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
           </button>
 
           <div className="flex items-center gap-1.5 min-w-0">
@@ -369,7 +370,7 @@ export default function ProfileHeader({
                           : 'bg-[#522C69] hover:bg-[#663782] text-white'
                       }`}
                     >
-                      <span>{isFollowing ? 'Following' : 'Follow'}</span>
+                      <span>{isFollowing ? 'Connected' : 'Connect'}</span>
                       {isFollowing && <ChevronDown className="w-4 h-4" />}
                     </button>
                     <button
@@ -398,7 +399,7 @@ export default function ProfileHeader({
               className="cursor-pointer hover:opacity-80 transition-opacity"
             >
               <span className="font-semibold text-white mr-1.5">{formatCount(followerCount)}</span>
-              <span>followers</span>
+              <span>connects</span>
             </button>
             <button
               type="button"
@@ -406,7 +407,7 @@ export default function ProfileHeader({
               className="cursor-pointer hover:opacity-80 transition-opacity"
             >
               <span className="font-semibold text-white mr-1.5">{formatCount(followingCount)}</span>
-              <span>following</span>
+              <span>connected</span>
             </button>
           </div>
 
@@ -504,7 +505,7 @@ export default function ProfileHeader({
               <span className="font-bold text-base sm:text-lg text-white leading-none">
                 {formatCount(followerCount)}
               </span>
-              <span className="text-xs sm:text-[13px] text-neutral-300 mt-1">followers</span>
+              <span className="text-xs sm:text-[13px] text-neutral-300 mt-1">connects</span>
             </button>
 
             {/* Following */}
@@ -516,7 +517,7 @@ export default function ProfileHeader({
               <span className="font-bold text-base sm:text-lg text-white leading-none">
                 {formatCount(followingCount)}
               </span>
-              <span className="text-xs sm:text-[13px] text-neutral-300 mt-1">following</span>
+              <span className="text-xs sm:text-[13px] text-neutral-300 mt-1">connected</span>
             </button>
           </div>
         </div>
@@ -587,7 +588,7 @@ export default function ProfileHeader({
                         : 'bg-[#522C69] hover:bg-[#663782] text-white'
                     }`}
                   >
-                    <span>{isFollowing ? 'Following' : 'Follow'}</span>
+                    <span>{isFollowing ? 'Connected' : 'Connect'}</span>
                     {isFollowing && <ChevronDown className="w-3.5 h-3.5" />}
                   </button>
 

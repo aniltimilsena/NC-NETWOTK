@@ -24,11 +24,11 @@ export default function Contact() {
         <div className="flex items-center pt-2">
           <button
             onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0 shadow-sm"
-            title="Go Back"
-            aria-label="Go Back"
+            type="button"
+            className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            aria-label="Back"
           >
-            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={2.5} />
+            <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
           </button>
         </div>
 

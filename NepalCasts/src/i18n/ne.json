@@ -19,8 +19,8 @@
   "nav_signup": "अहिले जोडिनुहोस्",
   "nav_signin": "लगइन गर्नुहोस्",
 
-  "btn_follow": "पछ्याउनुहोस्",
-  "btn_following": "पछ्याइरहेको",
+  "btn_follow": "जोडिनुहोस्",
+  "btn_following": "जोडिएको",
   "btn_message": "सन्देश पठाउनुहोस्",
   "btn_video_call": "भिडियो कल",
   "btn_audio_call": "अडियो कल",
@@ -46,8 +46,8 @@
   "btn_send": "पठाउनुहोस्",
 
   "trending_now": "ट्रेन्डिङ",
-  "followers": "पछ्याउनेहरू",
-  "follower": "पछ्याउने",
+  "followers": "जोडिएकाहरू",
+  "follower": "जोडिएको",
   "view_details": "विवरण हेर्नुहोस्",
 
   "categories": {

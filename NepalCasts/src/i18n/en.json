@@ -19,8 +19,8 @@
   "nav_signup": "Join Now",
   "nav_signin": "Sign In",
 
-  "btn_follow": "Follow",
-  "btn_following": "Following",
+  "btn_follow": "Connect",
+  "btn_following": "Connected",
   "btn_message": "Message",
   "btn_video_call": "Video Call",
   "btn_audio_call": "Audio Call",
@@ -46,8 +46,8 @@
   "btn_send": "Send",
 
   "trending_now": "Trending Now",
-  "followers": "followers",
-  "follower": "follower",
+  "followers": "connects",
+  "follower": "connect",
   "view_details": "View Details",
 
   "categories": {

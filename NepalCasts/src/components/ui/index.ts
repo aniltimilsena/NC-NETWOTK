@@ -23,3 +23,4 @@ export * from './ShadcnSwitch';
 export * from './AdBanner';
 export * from './UploadProgressModal';
 export { default as GoalsBannerCard, type GoalsBannerCardProps } from './GoalsBannerCard';
+export { default as BackButton, type BackButtonProps } from './BackButton';

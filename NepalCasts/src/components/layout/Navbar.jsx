@@ -26,7 +26,8 @@ import {
   Mail,
   Shield,
   FileText,
-  Scale
+  Scale,
+  ChevronLeft
 } from "lucide-react";
 import { prefetchRoute } from '../../utils/prefetchRoute';
 import { db } from '../../lib/firebase';
@@ -192,10 +193,8 @@ export default function Navbar({ onNavigate, onBack = () => { }, showBack = fals
           <div className="flex justify-between items-center h-14 sm:h-16">
 
             <div className="flex items-center gap-4 sm:gap-6">
-              {showBack && (<button onClick={onBack} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shrink-0" title="Go Back" aria-label="Go Back">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                </svg>
+              {showBack && (<button onClick={onBack} className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0" title="Go Back" aria-label="Go Back">
+                <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
               </button>)}
               <Logo onNavigate={onNavigate} size="md" showText={false} />
 

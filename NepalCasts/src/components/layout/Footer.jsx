@@ -1,7 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function Footer() {
+  const location = useLocation();
+  const pathname = location?.pathname || '';
+  const isHomePage = pathname === '/' || pathname === '';
+
+  if (!isHomePage) return null;
+
   const legalLinks = [
     { label: "About", to: "/about" },
     { label: "Trust & Safety", to: "/trust-safety" },
@@ -12,7 +18,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="block lg:hidden bg-transparent border-0 pt-3 pb-3 px-4 text-center mt-2 space-y-2 select-none">
+    <footer className="w-full bg-transparent border-0 pt-4 pb-4 px-4 text-center mt-2 space-y-2 select-none">
       {/* Brand Logo */}
       <div className="flex items-center justify-center gap-1.5">
         <span className="text-sm font-black text-white tracking-widest uppercase font-apple">

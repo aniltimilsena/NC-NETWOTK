@@ -858,11 +858,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               <button
                 type="button"
                 onClick={handleCloseApplyView}
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
+                className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
                 title="Back"
                 aria-label="Back"
               >
-                <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5} />
+                <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
               </button>
               <h1 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">
                 Apply for Casting Call
@@ -1290,11 +1290,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               <button
                 type="button"
                 onClick={() => onNavigate ? onNavigate('back') : (window.history.length > 1 ? window.history.back() : window.location.assign('/casting'))}
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shrink-0"
+                className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
                 title="Back"
                 aria-label="Back"
               >
-                <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.5} />
+                <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
               </button>
               <h1 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">
                 Casting Call Details
