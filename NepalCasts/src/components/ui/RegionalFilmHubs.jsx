@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import {
   MapPin,
   Film,
@@ -27,7 +27,7 @@ export const PROVINCES_DATA = [
     badgeColor: 'from-blue-500/20 to-indigo-600/10 text-blue-300 border-blue-500/30',
     accentColor: '#3b82f6',
     icon: Mountain,
-    bgImage: '/assets/hubs/koshi.jpg',
+    bgImage: '/assets/hubs/koshi.webp',
     capital: 'Biratnagar',
     elevation: '60m to 8,848m (Mt. Everest)',
     climate: 'Subtropical Plains to Arctic Glaciers',
@@ -90,7 +90,7 @@ export const PROVINCES_DATA = [
     badgeColor: 'from-rose-500/20 to-rose-600/10 text-rose-300 border-rose-500/30',
     accentColor: '#f43f5e',
     icon: Landmark,
-    bgImage: '/assets/hubs/janakpur.jpg',
+    bgImage: '/assets/hubs/janakpur.webp',
     capital: 'Janakpurdham',
     elevation: '60m to 300m (Terai Plains)',
     climate: 'Subtropical / Tropical Warm',
@@ -153,7 +153,7 @@ export const PROVINCES_DATA = [
     badgeColor: 'from-purple-500/20 to-purple-600/10 text-purple-300 border-purple-500/30',
     accentColor: '#8b5cf6',
     icon: Building2,
-    bgImage: '/assets/hubs/kathmandu.jpg',
+    bgImage: '/assets/hubs/kathmandu.webp',
     capital: 'Hetauda (Industry Center: Kathmandu)',
     elevation: '140m to 7,227m (Langtang Lirung)',
     climate: 'Temperate Valley to Alpine Glaciers',
@@ -216,7 +216,7 @@ export const PROVINCES_DATA = [
     badgeColor: 'from-sky-500/20 to-sky-600/10 text-sky-300 border-sky-500/30',
     accentColor: '#0ea5e9',
     icon: Waves,
-    bgImage: '/assets/hubs/pokhara.jpg',
+    bgImage: '/assets/hubs/pokhara.webp',
     capital: 'Pokhara',
     elevation: '200m to 8,167m (Dhaulagiri)',
     climate: 'Subtropical Lakes to Trans-Himalayan Desert',
@@ -279,7 +279,7 @@ export const PROVINCES_DATA = [
     badgeColor: 'from-amber-500/20 to-amber-600/10 text-amber-300 border-amber-500/30',
     accentColor: '#f59e0b',
     icon: Trees,
-    bgImage: '/assets/hubs/lumbini.jpg',
+    bgImage: '/assets/hubs/lumbini.webp',
     capital: 'Deukhuri (Dang)',
     elevation: '100m to 1,936m',
     climate: 'Subtropical Terai to Mild Hill Climates',
@@ -342,7 +342,7 @@ export const PROVINCES_DATA = [
     badgeColor: 'from-teal-500/20 to-teal-600/10 text-teal-300 border-teal-500/30',
     accentColor: '#14b8a6',
     icon: Compass,
-    bgImage: '/assets/hubs/karnali.jpg',
+    bgImage: '/assets/hubs/karnali.webp',
     capital: 'Birendranagar (Surkhet)',
     elevation: '250m to 7,132m (Mount Kanjiroba)',
     climate: 'Cold Alpine & Trans-Himalayan Dry Plateau',
@@ -405,7 +405,7 @@ export const PROVINCES_DATA = [
     badgeColor: 'from-emerald-500/20 to-emerald-600/10 text-emerald-300 border-emerald-500/30',
     accentColor: '#10b981',
     icon: Castle,
-    bgImage: '/assets/hubs/sudurpashchim.jpg',
+    bgImage: '/assets/hubs/sudurpashchim.webp',
     capital: 'Godawari (Commercial: Dhangadhi)',
     elevation: '109m to 7,132m (Api Peak)',
     climate: 'Subtropical Plains to Alpine Plateaus',
@@ -460,7 +460,7 @@ export const PROVINCES_DATA = [
   },
 ];
 
-export default function RegionalFilmHubs({ onNavigate }) {
+const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeProvinceId, setActiveProvinceId] = useState('koshi');
   const [activeSubTab, setActiveSubTab] = useState('all'); // 'all', 'places', 'project'
@@ -524,7 +524,7 @@ export default function RegionalFilmHubs({ onNavigate }) {
             Regional film hubs
           </span>
           <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
-            Discover shooting locations, regional productions & local talent across Nepal&apos;s 7 provinces
+            Cinema hubs across Nepal
           </p>
         </div>
 
@@ -622,7 +622,7 @@ export default function RegionalFilmHubs({ onNavigate }) {
                     }}
                     className="w-full py-2 px-3 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.98] border-0"
                   >
-                    <span>Explore Province Hub</span>
+                    <span>Explore</span>
                     <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
@@ -644,20 +644,25 @@ export default function RegionalFilmHubs({ onNavigate }) {
             className="relative w-full max-w-4xl max-h-[92vh] rounded-3xl overflow-hidden bg-[#0e0e13] border-0 shadow-2xl flex flex-col text-left text-white"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Top Sticky Header */}
+            {/* Modal Top Sticky Header - Focused on Selected Province */}
             <div className="shrink-0 px-4 sm:px-6 py-3.5 border-b border-white/5 bg-[#121218]/95 backdrop-blur-md flex items-center justify-between gap-4 z-20">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-600/30 text-white text-xs font-black">
-                    7
-                  </span>
-                  <h2 className="text-base sm:text-lg md:text-xl font-black font-apple tracking-wide text-white">
-                    Nepal Regional Film Hubs
-                  </h2>
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-600/30 text-white text-sm font-black shrink-0">
+                  {React.createElement(activeProvince.icon, { className: 'w-4 h-4 text-white' })}
+                </span>
+                <div className="truncate">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg md:text-xl font-black font-apple tracking-wide text-white truncate">
+                      {activeProvince.name}
+                    </h2>
+                    <span className="text-xs sm:text-sm font-bold text-purple-300 shrink-0">
+                      {activeProvince.nepaliName}
+                    </span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 truncate">
+                    Province {activeProvince.number} • Regional Cinema Profile & Filming Locations
+                  </p>
                 </div>
-                <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5">
-                  Explore filming locations, regional talent pools & production support across Nepal
-                </p>
               </div>
 
               {/* Close Button */}
@@ -671,34 +676,6 @@ export default function RegionalFilmHubs({ onNavigate }) {
               </button>
             </div>
 
-            {/* Horizontal Province Switcher Tabs */}
-            <div className="shrink-0 px-3 sm:px-6 py-2.5 bg-[#0a0a0d] border-b border-white/5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-              <div className="flex items-center gap-2 min-w-max">
-                {PROVINCES_DATA.map((p) => {
-                  const isActive = p.id === activeProvince.id;
-                  const Icon = p.icon;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveProvinceId(p.id);
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border-0 ${
-                        isActive
-                          ? 'bg-gradient-to-r from-[#522C69] to-[#6b3889] text-white shadow-md scale-[1.02]'
-                          : 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white'
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5 text-white" />
-                      <span>{`P${p.number}: ${p.name.replace(' Province', '')}`}</span>
-                      <span className="text-[10px] opacity-75 font-normal">{p.nepaliName}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* Scrollable Modal Content */}
             <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent">
               {/* Province Hero Banner */}
@@ -706,6 +683,8 @@ export default function RegionalFilmHubs({ onNavigate }) {
                 <img
                   src={activeProvince.bgImage}
                   alt={activeProvince.name}
+                  loading="lazy"
+                  decoding="async"
                   className="absolute inset-0 w-full h-full object-cover opacity-60"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e13] via-[#0e0e13]/60 to-transparent pointer-events-none" />
@@ -867,4 +846,8 @@ export default function RegionalFilmHubs({ onNavigate }) {
       )}
     </section>
   );
-}
+});
+
+RegionalFilmHubs.displayName = 'RegionalFilmHubs';
+
+export default RegionalFilmHubs;

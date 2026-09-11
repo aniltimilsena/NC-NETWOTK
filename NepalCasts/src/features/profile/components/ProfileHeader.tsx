@@ -47,7 +47,7 @@ export default function ProfileHeader({
   isFollowing,
   followerCount,
   followingCount,
-  savedCount,
+  savedCount: _savedCount,
   postsCount = 0,
   onFollowToggle,
   onNavigate,
@@ -57,7 +57,7 @@ export default function ProfileHeader({
   bio,
   onEditBio,
   isAdmin = false,
-  onOpenCall,
+  onOpenCall: _onOpenCall,
   onProfileUpdated,
 }: ProfileHeaderProps) {
   const { user: clerkUser } = useUser();

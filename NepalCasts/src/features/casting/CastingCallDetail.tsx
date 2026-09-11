@@ -3,9 +3,6 @@ import {
   ChevronLeft,
   Bookmark,
   MapPin,
-  Briefcase,
-  Globe,
-  ShoppingBag,
   Calendar,
   Clapperboard,
   Trash2,
@@ -15,11 +12,7 @@ import {
   Inbox,
   Upload,
   Share2,
-  ShieldCheck,
   Check,
-  Film,
-  Users,
-  ListChecks,
   ExternalLink,
   FileText,
   Mail,
@@ -32,8 +25,6 @@ import {
   Coins,
   Edit3,
 } from 'lucide-react';
-import Logo from '../../components/ui/Logo';
-import Button from '../../components/ui/Button';
 import SEO from '../../components/SEO';
 import { InlineAlert } from '../../components/ui/AlertBanner';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -57,6 +48,8 @@ import { getProfile } from '../profile/services/profile';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 import { CastingDetailSkeleton } from '../../components/ui/Skeleton';
 import ShareSheet from '../../components/ui/ShareSheet';
+import { getOptimizedImageUrl, getImageSrcSet } from '../../utils/media';
+import { cacheManager } from '../../utils/cacheManager';
 
 const isMockOrInvalidImage = (url: string | null | undefined) => {
   if (!url || typeof url !== 'string') return true;
@@ -206,20 +199,28 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   useEffect(() => {
     if (!castingId) return;
-    const unsub = onSnapshot(
-      doc(db, 'casting_calls', castingId),
-      (snap) => {
-        if (snap.exists()) {
-          const data: any = { id: snap.id, ...snap.data() };
-          setCall(data);
+    const unsub = cacheManager.subscribePooled(`casting_call_doc_${castingId}`, (pooledCb) => {
+      return onSnapshot(
+        doc(db, 'casting_calls', castingId),
+        (snap) => {
+          if (snap.exists()) {
+            const data: any = { id: snap.id, ...snap.data() };
+            pooledCb(data, null);
+          } else {
+            pooledCb(null, null);
+          }
+        },
+        (err) => {
+          console.warn('Casting call snapshot listener failed:', err);
+          pooledCb(null, err);
         }
-        setLoading(false);
-      },
-      (err) => {
-        console.warn('Casting call snapshot listener failed:', err);
-        setLoading(false);
+      );
+    }, (data) => {
+      if (data) {
+        setCall(data);
       }
-    );
+      setLoading(false);
+    });
     return () => unsub();
   }, [castingId]);
 
@@ -271,86 +272,100 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       setSaved(false);
       return;
     }
-    const q = query(
-      collection(db, 'saved_calls'),
-      where('userId', '==', user.uid),
-      where('castingId', '==', castingId)
-    );
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        setSaved(!snap.empty);
-      },
-      (err) => console.warn('Saved check failed:', err)
-    );
+    const unsub = cacheManager.subscribePooled(`saved_call_${user.uid}_${castingId}`, (pooledCb) => {
+      const q = query(
+        collection(db, 'saved_calls'),
+        where('userId', '==', user.uid),
+        where('castingId', '==', castingId)
+      );
+      return onSnapshot(
+        q,
+        (snap) => {
+          pooledCb(!snap.empty, null);
+        },
+        (err) => {
+          console.warn('Saved check failed:', err);
+          pooledCb(false, err);
+        }
+      );
+    }, (isSaved) => setSaved(Boolean(isSaved)));
     return () => unsub();
   }, [castingId, user?.uid]);
 
   useEffect(() => {
     if (!castingId || !user) return;
-    const q = query(
-      collection(db, 'applications'),
-      where('castingId', '==', castingId),
-      where('userId', '==', user.uid)
-    );
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        if (!snap.empty) {
-          setApplied(true);
-          setApplicationId(snap.docs[0].id);
-          setApplicationStatus(snap.docs[0].data().status || 'pending');
-        } else {
-          setApplied(false);
-          setApplicationId(null);
-          setApplicationStatus(null);
+    const unsub = cacheManager.subscribePooled(`applied_call_${user.uid}_${castingId}`, (pooledCb) => {
+      const q = query(
+        collection(db, 'applications'),
+        where('castingId', '==', castingId),
+        where('userId', '==', user.uid)
+      );
+      return onSnapshot(
+        q,
+        (snap) => {
+          if (!snap.empty) {
+            pooledCb({ applied: true, id: snap.docs[0].id, status: snap.docs[0].data().status || 'pending' }, null);
+          } else {
+            pooledCb({ applied: false, id: null, status: null }, null);
+          }
+        },
+        (error) => {
+          console.error('Checking applied status failed:', error);
+          pooledCb({ applied: false, id: null, status: null }, error);
         }
-      },
-      (error) => {
-        console.error('Checking applied status failed:', error);
+      );
+    }, (res) => {
+      if (res) {
+        setApplied(res.applied);
+        setApplicationId(res.id);
+        setApplicationStatus(res.status);
       }
-    );
+    });
     return () => unsub();
   }, [castingId, user]);
 
   useEffect(() => {
-    if (!castingId || !isCreator) {
+    if (!castingId || !isCreator || !user?.uid) {
       setApps([]);
       setLoadingApps(false);
       return;
     }
     setLoadingApps(true);
-    const q = query(
-      collection(db, 'applications'),
-      where('castingId', '==', castingId),
-      where('creatorId', '==', user.uid)
-    );
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        const docs = snap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        }));
-        docs.sort((a: any, b: any) => {
-          const t1 = a.appliedAt?.toDate ? a.appliedAt.toDate().getTime() : 0;
-          const t2 = b.appliedAt?.toDate ? b.appliedAt.toDate().getTime() : 0;
-          return t2 - t1;
-        });
-        const formattedDocs = docs.map((d: any) => ({
-          ...d,
-          appliedAtFormatted: d.appliedAt?.toDate
-            ? d.appliedAt.toDate().toLocaleDateString()
-            : 'Just now',
-        }));
-        setApps(formattedDocs);
-        setLoadingApps(false);
-      },
-      (error) => {
-        console.error('Applications snapshot listener failed:', error);
-        setLoadingApps(false);
-      }
-    );
+    const unsub = cacheManager.subscribePooled(`creator_apps_${user.uid}_${castingId}`, (pooledCb) => {
+      const q = query(
+        collection(db, 'applications'),
+        where('castingId', '==', castingId),
+        where('creatorId', '==', user.uid)
+      );
+      return onSnapshot(
+        q,
+        (snap) => {
+          const docs = snap.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+          }));
+          docs.sort((a: any, b: any) => {
+            const t1 = a.appliedAt?.toDate ? a.appliedAt.toDate().getTime() : 0;
+            const t2 = b.appliedAt?.toDate ? b.appliedAt.toDate().getTime() : 0;
+            return t2 - t1;
+          });
+          const formattedDocs = docs.map((d: any) => ({
+            ...d,
+            appliedAtFormatted: d.appliedAt?.toDate
+              ? d.appliedAt.toDate().toLocaleDateString()
+              : 'Just now',
+          }));
+          pooledCb(formattedDocs, null);
+        },
+        (error) => {
+          console.error('Applications snapshot listener failed:', error);
+          pooledCb([], error);
+        }
+      );
+    }, (formattedDocs) => {
+      setApps(formattedDocs || []);
+      setLoadingApps(false);
+    });
     return () => unsub();
   }, [castingId, isCreator, user?.uid]);
 
@@ -381,9 +396,10 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         });
         showAlert?.('Saved casting call!', 'success');
       }
-    } catch (err) {
+    } catch (err: any) {
       setSaved(previousSaved);
       console.error('Error toggling save:', err);
+      showAlert?.(err.message || 'Failed to update saved status.', 'error');
     }
   };
 
@@ -450,7 +466,19 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     setApplying(true);
     setApplyAlert({ type: null, message: null, detail: null });
     try {
-      const creatorId = call.creatorId || call.createdBy || call.created_by || call.posted_by || call.user_id || '';
+      const creatorId =
+        call.creatorId ||
+        call.createdBy ||
+        call.created_by ||
+        call.posted_by ||
+        call.user_id ||
+        call.postedBy?.uid ||
+        call.postedBy?.id ||
+        call.creator?.uid ||
+        call.creator?.id ||
+        directorProfile?.uid ||
+        directorProfile?.id ||
+        '';
       const roleApplied = selectedRole || call.roles?.[0]?.name || call.category || 'General Role';
 
       let fileUrl = null;
@@ -500,6 +528,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         attachmentUrl: fileUrl,
         portfolioUrl: selfTapeUrl.trim() || fileUrl || '',
         appliedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
         status: 'pending',
         creatorId: creatorId,
         createdBy: creatorId,
@@ -627,8 +656,9 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       setApplicationId(null);
       setApplicationStatus(null);
       showAlert?.('Application withdrawn successfully.', 'info');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error cancelling application:', err);
+      showAlert?.(err.message || 'Failed to withdraw application. Please try again.', 'error');
     } finally {
       setCancelling(false);
     }
@@ -648,8 +678,9 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           await deleteDoc(doc(db, 'casting_calls', castingId));
           showAlert?.('Casting call deleted successfully.', 'success');
           onNavigate('casting');
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error deleting casting call:', err);
+          showAlert?.(err.message || 'Failed to delete casting call. Please try again.', 'error');
         } finally {
           setDeleting(false);
         }
@@ -706,8 +737,9 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       }
 
       showAlert?.(`Applicant status updated to ${newStatus.toUpperCase()}`, 'success');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating app status:', err);
+      showAlert?.(err.message || 'Failed to update applicant status. Please try again.', 'error');
     }
   };
 
@@ -1349,11 +1381,15 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 {/* Ambient blurred backdrop */}
                 <div
                   className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110 pointer-events-none"
-                  style={{ backgroundImage: `url(${bannerImage})` }}
+                  style={{ backgroundImage: `url(${getOptimizedImageUrl(bannerImage, { width: 100, quality: 'eco', format: 'auto' })})` }}
                 />
                 <img
-                  src={bannerImage}
+                  src={getOptimizedImageUrl(bannerImage, { width: 640, quality: 'auto', format: 'auto' })}
+                  srcSet={getImageSrcSet(bannerImage, [320, 640, 960])}
+                  sizes="(max-width: 640px) 280px, 320px"
                   alt={call.title}
+                  loading="lazy"
+                  decoding="async"
                   className="relative z-10 w-full h-auto max-h-[380px] object-contain mx-auto block"
                   onError={(e: any) => {
                     e.currentTarget.style.display = 'none';

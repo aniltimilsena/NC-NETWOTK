@@ -36,15 +36,15 @@ class CacheManager {
         }
     }
 
-    private handleVisibilityChange() {
-        if (typeof document === 'undefined') return;
+    public handleVisibilityChange(forcedState?: 'hidden' | 'visible') {
+        const state = forcedState || (typeof document !== 'undefined' ? document.visibilityState : 'visible');
 
-        if (document.visibilityState === 'hidden') {
+        if (state === 'hidden') {
             // Delay pause by 45 seconds to avoid churn on quick tab switches
             this.visibilityTimer = setTimeout(() => {
                 this.pauseInactiveListeners();
             }, 45000);
-        } else if (document.visibilityState === 'visible') {
+        } else if (state === 'visible') {
             if (this.visibilityTimer) {
                 clearTimeout(this.visibilityTimer);
                 this.visibilityTimer = null;
@@ -55,27 +55,37 @@ class CacheManager {
         }
     }
 
-    private pauseInactiveListeners() {
+    public pauseInactiveListeners() {
         this.isBackgroundPaused = true;
         console.debug(`[Listener Pool] Tab hidden > 45s: Pausing ${this.listenerPool.size} background listeners to save quota`);
         for (const [_, entry] of this.listenerPool.entries()) {
             if (!entry.isPaused) {
                 try {
                     entry.unsubscribe();
-                    entry.isPaused = true;
                 } catch (e) {
                     // ignore teardown error
                 }
+                entry.isPaused = true;
             }
         }
     }
 
-    private resumeActiveListeners() {
+    public resumeActiveListeners() {
         this.isBackgroundPaused = false;
         console.debug(`[Listener Pool] Tab visible: Resuming ${this.listenerPool.size} active listeners`);
         for (const [key, entry] of this.listenerPool.entries()) {
             if (entry.isPaused && entry.refCount > 0) {
                 entry.isPaused = false;
+                // Immediately serve cached data to subscribers for responsive zero-latency tab resumption
+                if (entry.lastData !== undefined) {
+                    entry.subscribers.forEach(sub => {
+                        try {
+                            sub(entry.lastData, null);
+                        } catch (e) {
+                            console.error(`Error notifying subscriber on resume for ${key}:`, e);
+                        }
+                    });
+                }
                 const pooledCallback = (data: any, error?: any) => {
                     const poolEntry = this.listenerPool.get(key);
                     if (poolEntry) {
@@ -84,12 +94,25 @@ class CacheManager {
                     }
                 };
                 try {
-                    entry.unsubscribe = entry.listenerCreator(pooledCallback);
+                    const unsub = entry.listenerCreator(pooledCallback);
+                    entry.unsubscribe = () => {
+                        try {
+                            unsub();
+                        } catch (e) {}
+                    };
                 } catch (err) {
                     console.error(`Failed to resume pooled listener for ${key}:`, err);
                 }
             }
         }
+    }
+
+    get isPaused(): boolean {
+        return this.isBackgroundPaused;
+    }
+
+    get activeListenerCount(): number {
+        return this.listenerPool.size;
     }
 
     async fetchWithCache<T>(key: string, fetcher: () => Promise<T>, ttlMs: number = 5 * 60 * 1000): Promise<T> {
@@ -132,9 +155,16 @@ class CacheManager {
             const subscribers = new Set<(data: any, error?: any) => void>();
             subscribers.add(callback);
             
-            let currentUnsubscribe = () => {};
+            let currentUnsubscribe: (() => void) | null = null;
             entry = {
-                unsubscribe: () => currentUnsubscribe(),
+                unsubscribe: () => {
+                    if (currentUnsubscribe) {
+                        try {
+                            currentUnsubscribe();
+                        } catch (e) {}
+                        currentUnsubscribe = null;
+                    }
+                },
                 listenerCreator,
                 refCount: 1,
                 subscribers,
@@ -150,12 +180,21 @@ class CacheManager {
                 }
             };
             
-            try {
-                const unsubscribe = listenerCreator(pooledCallback);
-                currentUnsubscribe = unsubscribe;
-            } catch (err) {
-                this.listenerPool.delete(key);
-                throw err;
+            if (this.isBackgroundPaused) {
+                entry.isPaused = true;
+                const cachedMemory = this.getMemory(key);
+                if (cachedMemory !== null) {
+                    entry.lastData = cachedMemory;
+                    callback(cachedMemory, null);
+                }
+            } else {
+                try {
+                    const unsubscribe = listenerCreator(pooledCallback);
+                    currentUnsubscribe = unsubscribe;
+                } catch (err) {
+                    this.listenerPool.delete(key);
+                    throw err;
+                }
             }
             
             this.metrics.activeListeners = this.listenerPool.size;
@@ -177,12 +216,33 @@ class CacheManager {
             currentEntry.subscribers.delete(callback);
             currentEntry.refCount--;
             if (currentEntry.refCount <= 0) {
-                currentEntry.unsubscribe();
+                if (!currentEntry.isPaused) {
+                    try {
+                        currentEntry.unsubscribe();
+                    } catch (e) {}
+                }
                 this.listenerPool.delete(key);
                 this.metrics.activeListeners = this.listenerPool.size;
                 console.debug(`[Listener] Disposed pooled listener for key: ${key}. Remaining active: ${this.listenerPool.size}`);
             }
         };
+    }
+
+    subscribeThrottled(
+        key: string,
+        listenerCreator: (callback: (data: any, error?: any) => void) => () => void,
+        callback: (data: any, error?: any) => void
+    ): () => void {
+        return this.subscribePooled(key, listenerCreator, callback);
+    }
+
+    private throttledCounter = 0;
+    subscribeUniqueThrottled(
+        listenerCreator: (callback: (data: any, error?: any) => void) => () => void,
+        callback: (data: any, error?: any) => void
+    ): () => void {
+        const key = `__throttled_unique_${++this.throttledCounter}`;
+        return this.subscribePooled(key, listenerCreator, callback);
     }
 
     invalidateCache(keyOrPrefix: string, newData?: any) {
@@ -233,6 +293,19 @@ class CacheManager {
 
     clearAll() {
         this.cache.clear();
+        for (const [_, entry] of this.listenerPool.entries()) {
+            if (!entry.isPaused) {
+                try {
+                    entry.unsubscribe();
+                } catch (e) {}
+            }
+        }
+        this.listenerPool.clear();
+        this.isBackgroundPaused = false;
+        if (this.visibilityTimer) {
+            clearTimeout(this.visibilityTimer);
+            this.visibilityTimer = null;
+        }
         console.debug(`[Cache] All entries cleared`);
     }
 }

@@ -55,7 +55,7 @@ router.get('/config/cloudinary', verifyToken, (req: AuthedRequest, res: Response
         uploadPreset,
     });
 });
-router.post('/upload', optionalAuth, uploadLimiter, mediaUpload.single('file'), validateUpload, async (req: ValidatedRequest & AuthedRequest, res: Response): Promise<any> => {
+router.post('/upload', verifyToken, uploadLimiter, mediaUpload.single('file'), validateUpload, async (req: ValidatedRequest & AuthedRequest, res: Response): Promise<any> => {
     try {
         if (!req.validatedFile) {
             return res.status(400).json({
@@ -124,10 +124,27 @@ router.delete('/upload/:publicId', verifyToken, async (req: AuthedRequest<{
                 (profilePhotoId && profilePhotoId.includes(publicId));
 
             if (!isOwnAvatar) {
-                return res.status(403).json({
-                    error: 'Forbidden: You do not own this media asset',
-                    errorCode: 'FORBIDDEN_ASSET'
+                const castingSnap = await db
+                    .collection('casting_calls')
+                    .where('creatorId', '==', userId)
+                    .limit(50)
+                    .get();
+
+                const isOwnCastingAsset = castingSnap.docs.some(doc => {
+                    const data = doc.data();
+                    return (
+                        (data.thumbnail && typeof data.thumbnail === 'string' && data.thumbnail.includes(publicId)) ||
+                        (data.horizontalThumbnail && typeof data.horizontalThumbnail === 'string' && data.horizontalThumbnail.includes(publicId)) ||
+                        (data.bannerUrl && typeof data.bannerUrl === 'string' && data.bannerUrl.includes(publicId))
+                    );
                 });
+
+                if (!isOwnCastingAsset && !req.user?.isAdmin) {
+                    return res.status(403).json({
+                        error: 'Forbidden: You do not own this media asset',
+                        errorCode: 'FORBIDDEN_ASSET'
+                    });
+                }
             }
         }
 

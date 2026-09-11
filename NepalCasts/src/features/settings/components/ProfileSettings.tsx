@@ -73,40 +73,12 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
             setSubmitting(false);
         }
     };
-    const handleHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        if (!val.trim()) {
-            setHeight('');
-            return;
-        }
-        const clean = val.replace(/\s*ft\.?$/i, '').trim();
-        if (/[\d'".]_?$/.test(clean)) {
-            setHeight(`${clean} ft`);
-        }
-        else {
-            setHeight(val);
-        }
-    };
     const handleHeightBlur = () => {
         if (!height)
             return;
         const clean = height.replace(/\s*ft\.?$/i, '').trim();
         if (/[\d'".]_?$/.test(clean)) {
             setHeight(`${clean} ft`);
-        }
-    };
-    const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        if (!val.trim()) {
-            setWeight('');
-            return;
-        }
-        const clean = val.replace(/\s*kgs?$/i, '').trim();
-        if (/[\d.]_?$/.test(clean)) {
-            setWeight(`${clean} kg`);
-        }
-        else {
-            setWeight(val);
         }
     };
     const handleWeightBlur = () => {

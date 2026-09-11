@@ -73,7 +73,7 @@ app.use(cors({
 app.use(limiter);
 app.use(rateLimitMiddleware);
 app.use(express.json());
-app.use(morgan('dev'));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'short' : 'dev'));
 app.use('/api', globalRouter);
 app.use('/uploads', express.static(path.resolve(__dirname, '../public/uploads')));
 app.use(errorHandler);

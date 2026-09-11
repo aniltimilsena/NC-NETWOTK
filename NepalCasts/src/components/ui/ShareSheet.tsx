@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Share2, Download, MessageCircle } from 'lucide-react';
+import { X, Copy, Check, Share2, MessageCircle } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
+import { getAvatarOptimizedUrl } from '../../utils/media';
 
 interface ProfileData {
     id: string;
@@ -23,7 +24,6 @@ interface ShareSheetProps {
 
 export default function ShareSheet({ profile, title, url, onClose }: ShareSheetProps) {
     const [copied, setCopied] = useState(false);
-    const [isDownloading, setIsDownloading] = useState(false);
 
     const displayName = profile?.name || title || 'NepalCasts Profile';
     const cleanUsername = (profile?.username || profile?.id || '').replace(/^@/, '');
@@ -55,20 +55,6 @@ export default function ShareSheet({ profile, title, url, onClose }: ShareSheetP
 
     const handleLinkedInShare = () => {
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank');
-    };
-
-    const handleNativeShare = async () => {
-        if (typeof navigator !== 'undefined' && navigator.share) {
-            try {
-                await navigator.share({
-                    title: displayName,
-                    text: `Check out ${displayName} on NepalCasts`,
-                    url: shareUrl,
-                });
-            } catch {
-                // User dismissed
-            }
-        }
     };
 
     return (
@@ -119,7 +105,13 @@ export default function ShareSheet({ profile, title, url, onClose }: ShareSheetP
                         <div className="bg-[#18191A] border border-[#3E4042] rounded-lg p-3 flex items-center gap-3">
                             <div className="w-12 h-12 rounded-lg bg-[#3A3B3C] overflow-hidden shrink-0 flex items-center justify-center text-[#B0B3B8]">
                                 {profile?.image ? (
-                                    <img src={profile.image} alt={displayName} className="w-full h-full object-cover" />
+                                    <img
+                                      src={getAvatarOptimizedUrl(profile.image, 'md')}
+                                      alt={displayName}
+                                      loading="lazy"
+                                      decoding="async"
+                                      className="w-full h-full object-cover"
+                                    />
                                 ) : (
                                     <Share2 className="w-6 h-6" />
                                 )}

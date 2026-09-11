@@ -69,7 +69,7 @@ export const createRateLimiterMiddleware = (options: RateLimiterOptions) => {
         keyPrefix: options.keyPrefix || 'rl',
     });
     return async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-        let key = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown-ip';
+        let key = req.ip || 'unknown-ip';
         if (options.keyGenerator) {
             key = options.keyGenerator(req);
         }
@@ -106,7 +106,7 @@ export const strictAuthLimiter = createRateLimiterMiddleware({
     blockDuration: 60 * 60,
     keyPrefix: 'rl_auth_strict',
     keyGenerator: (req: Request) => {
-        const ip = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown-ip';
+        const ip = req.ip || 'unknown-ip';
         const identifier = req.body?.phone || req.body?.email || '';
         return `${ip}:${identifier}`;
     },
@@ -119,7 +119,7 @@ export const uploadLimiter = createRateLimiterMiddleware({
     keyPrefix: 'rl_upload',
     keyGenerator: (req: Request) => {
         const uid = (req as any).user?.uid;
-        const ip = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown-ip';
+        const ip = req.ip || 'unknown-ip';
         return uid ? `user:${uid}` : `ip:${ip}`;
     },
     errorMessage: 'Media upload rate limit exceeded. Please wait 15 minutes before uploading more media.',
@@ -131,7 +131,7 @@ export const messagingLimiter = createRateLimiterMiddleware({
     keyPrefix: 'rl_msg',
     keyGenerator: (req: Request) => {
         const uid = (req as any).user?.uid;
-        const ip = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown-ip';
+        const ip = req.ip || 'unknown-ip';
         return uid ? `user:${uid}` : `ip:${ip}`;
     },
     errorMessage: 'Too many messages sent in a short period. Messaging has been throttled for 5 minutes.',
@@ -150,7 +150,7 @@ export const authenticatedUserLimiter = createRateLimiterMiddleware({
     keyPrefix: 'rl_user',
     keyGenerator: (req: Request) => {
         const uid = (req as any).user?.uid;
-        const ip = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown-ip';
+        const ip = req.ip || 'unknown-ip';
         return uid ? `user:${uid}` : `ip:${ip}`;
     },
     errorMessage: 'User account request rate limit exceeded. Please wait 60 seconds.',

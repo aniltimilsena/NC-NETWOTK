@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { doc, onSnapshot, updateDoc, collection, query, where, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, query, where, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { subscribeToConversations, subscribeToMessages, sendMessage, createConversation, markConversationAsRead } from '../services/messaging';
 import { getProfile } from '../../profile/services/profile';
@@ -277,7 +277,8 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     useEffect(() => {
         if (!currentUser?.uid || !initialUserId) return;
         if (userClosedChatRef.current || resolvedInitialUserRef.current === initialUserId) return;
-        const existingConvo = conversations.find((c) => c.id === initialUserId || c.otherParticipantId === initialUserId);
+        const deterministicFallback = [currentUser.uid, initialUserId].sort().join('_');
+        const existingConvo = conversations.find((c) => c.id === deterministicFallback || c.id === initialUserId || c.otherParticipantId === initialUserId);
         if (existingConvo) {
             setActiveChatId(existingConvo.id);
             resolvedInitialUserRef.current = initialUserId;
@@ -289,13 +290,13 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
                 if (res?.id) {
                     setActiveChatId(res.id);
                 } else {
-                    setActiveChatId(initialUserId);
+                    setActiveChatId(deterministicFallback);
                 }
                 resolvedInitialUserRef.current = initialUserId;
             }
             catch (err) {
                 console.warn("Failed to resolve initial chat:", err);
-                setActiveChatId(initialUserId);
+                setActiveChatId(deterministicFallback);
                 resolvedInitialUserRef.current = initialUserId;
             }
         };
@@ -363,9 +364,13 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             }
         } else if (!targetConvoId && initialUserId) {
             const res = await createConversation([currentUser.uid, initialUserId], undefined, currentUser.uid);
-            if (res.id) {
+            if (res?.id) {
                 targetConvoId = res.id;
                 setActiveChatId(res.id);
+            } else {
+                const deterministicFallback = [currentUser.uid, initialUserId].sort().join('_');
+                targetConvoId = deterministicFallback;
+                setActiveChatId(deterministicFallback);
             }
         }
         if (!targetConvoId || !currentUser?.uid) {

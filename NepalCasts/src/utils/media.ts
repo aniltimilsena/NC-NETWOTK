@@ -7,6 +7,20 @@ export interface ImageOptimizationOptions {
   dpr?: number | string;
 }
 
+/**
+ * Returns a lightweight inline SVG data URI representing an elegant placeholder fallback
+ * when an image fails to load or 404s.
+ */
+export function getFallbackPlaceholderSvg(label = 'NC Media'): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" fill="none">
+    <rect width="400" height="400" fill="#141414"/>
+    <rect x="20" y="20" width="360" height="360" rx="16" stroke="#262626" stroke-width="2" stroke-dasharray="6 6"/>
+    <path d="M160 170a20 20 0 100-40 20 20 0 000 40zm-30 80h140l-45-60-35 45-25-30-35 45z" fill="#522C69" fill-opacity="0.4"/>
+    <text x="200" y="280" font-family="sans-serif" font-size="13" font-weight="600" fill="#737373" text-anchor="middle">${label}</text>
+  </svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 export function getOptimizedImageUrl(url?: string | null, options: ImageOptimizationOptions = {}): string {
   if (!url || typeof url !== 'string' || url.trim() === '') return '';
   const trimmed = url.trim();

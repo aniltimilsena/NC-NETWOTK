@@ -36,5 +36,5 @@ export const validateParams = (schema: ZodSchema) => {
 };
 export const sanitizeString = (input: unknown): string => {
     if (typeof input !== 'string') return '';
-    return input.replace(/[<>$]/g, '').trim();
+    return input.replace(/[\0<>$"'`]/g, '').trim();
 };

@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 export interface GoalsBannerCardProps {
   className?: string;
   onNavigate?: (route: string, param?: any) => void;
 }
 
-export default function GoalsBannerCard({ className = '' }: GoalsBannerCardProps) {
+const GoalsBannerCard = memo(function GoalsBannerCard({ className = '' }: GoalsBannerCardProps) {
   return (
     <section
       className={`relative w-full rounded-2xl overflow-hidden p-4 sm:p-6 select-none shadow-md text-left border-0 bg-black bg-gradient-to-r from-[#522C69] to-[#522C69]/20 ${className}`}
@@ -23,4 +23,8 @@ export default function GoalsBannerCard({ className = '' }: GoalsBannerCardProps
       </div>
     </section>
   );
-}
+});
+
+GoalsBannerCard.displayName = 'GoalsBannerCard';
+
+export default GoalsBannerCard;

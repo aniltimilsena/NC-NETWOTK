@@ -1,6 +1,24 @@
 import admin from 'firebase-admin';
 import * as jose from 'jose';
 const JWKS = jose.createRemoteJWKSet(new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'));
+
+// In-process sliding-window rate limiter: 20 admin actions per 60 seconds per admin UID
+const adminRateLimitMap = new Map();
+function checkAdminRateLimit(uid) {
+    const now = Date.now();
+    const windowMs = 60_000;
+    const maxRequests = 20;
+    const entry = adminRateLimitMap.get(uid) || { count: 0, windowStart: now };
+    if (now - entry.windowStart > windowMs) {
+        entry.count = 0;
+        entry.windowStart = now;
+    }
+    entry.count += 1;
+    adminRateLimitMap.set(uid, entry);
+    if (entry.count > maxRequests) {
+        throw Object.assign(new Error('Too many admin actions. Try again in 60 seconds.'), { status: 429 });
+    }
+}
 function initFirebaseAdmin() {
     if (admin.apps.length > 0)
         return;
@@ -121,6 +139,12 @@ export default async function handler(req, res) {
     }
     catch (authErr) {
         return res.status(authErr.status || 401).json({ error: authErr.message });
+    }
+    // Rate-limit after successful auth so only valid admins consume the counter
+    try {
+        checkAdminRateLimit(adminUser.uid);
+    } catch (rlErr) {
+        return res.status(rlErr.status || 429).json({ error: rlErr.message });
     }
     const db = admin.firestore();
     const auth = admin.auth();

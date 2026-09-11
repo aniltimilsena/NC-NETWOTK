@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSignIn } from '@clerk/clerk-react';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, ChevronLeft, Clapperboard, Users, Sparkles } from 'lucide-react';
 import SEO from '../../components/SEO';

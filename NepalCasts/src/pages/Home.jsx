@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import Avatar from '../components/ui/Avatar';
-import { useTranslation } from 'react-i18next';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { subscribeToTalents, subscribeToCastingCalls } from '../services';
 import { matchesCategory } from '../constants/categories';
@@ -10,11 +9,8 @@ import { AvatarScrollSkeleton, CastingPosterScrollSkeleton } from '../components
 import PullToRefresh from '../components/ui/PullToRefresh';
 import { ChevronRight, MapPin } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
-import { db } from '../lib/firebase';
-import { collection, onSnapshot, query, doc, deleteDoc, setDoc, serverTimestamp, where } from 'firebase/firestore';
-import { cacheManager } from '../utils/cacheManager';
-import { formatRole, isDefaultImage } from '../utils';
-import { notifyFollowUpdated } from '../features/profile/services/users';
+import { formatRole, isDefaultImage, isCastingCallClosed } from '../utils';
+import { subscribeToUserFollows, toggleFollowUser } from '../features/profile/services/users';
 import { getOptimizedImageUrl, getImageSrcSet } from '../utils/media';
 import { prefetchRoute, prefetchProfile, prefetchCasting } from '../utils/prefetchRoute';
 import GoalsBannerCard from '../components/ui/GoalsBannerCard';
@@ -28,6 +24,58 @@ const HERO_BACKGROUND_PHOTOS = [
   'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1200&q=75',
   'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=1200&q=75',
 ];
+
+// Continuous Typewriter Effect for Hero Slogan (isolated to prevent re-rendering Home tree)
+const HeroTypewriter = memo(function HeroTypewriter() {
+  const TYPEWRITER_PHRASES = [
+    'Multiple Talents In One Place',
+    'Actors, Models & Creators',
+    'Auditions & Casting Calls',
+    'Nepal’s Creative Network',
+  ];
+  const [typewriterText, setTypewriterText] = useState('');
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentPhrase = TYPEWRITER_PHRASES[phraseIdx % TYPEWRITER_PHRASES.length];
+    let timer;
+
+    if (!isDeleting) {
+      if (typewriterText.length < currentPhrase.length) {
+        timer = setTimeout(() => {
+          setTypewriterText(currentPhrase.slice(0, typewriterText.length + 1));
+        }, 70);
+      } else {
+        timer = setTimeout(() => {
+          setIsDeleting(true);
+        }, 1800);
+      }
+    } else {
+      if (typewriterText.length > 0) {
+        timer = setTimeout(() => {
+          setTypewriterText(currentPhrase.slice(0, typewriterText.length - 1));
+        }, 35);
+      } else {
+        setIsDeleting(false);
+        setPhraseIdx((prev) => (prev + 1) % TYPEWRITER_PHRASES.length);
+      }
+    }
+
+    return () => clearTimeout(timer);
+  }, [typewriterText, isDeleting, phraseIdx]);
+
+  return (
+    <div className="absolute top-16 sm:top-18 right-3 sm:right-5 z-20 pointer-events-none flex items-center justify-end">
+      <h1 className="font-mono font-bold text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] flex items-center gap-1.5 sm:gap-2">
+        <span className="text-white shrink-0">Discover</span>
+        <span className="text-white">{typewriterText}</span>
+        <span className="inline-block w-1.5 sm:w-2 h-3.5 sm:h-4 bg-[#522C69] ml-0.5 animate-pulse shrink-0" />
+      </h1>
+    </div>
+  );
+});
+HeroTypewriter.displayName = 'HeroTypewriter';
 /* eslint-enable no-secrets/no-secrets */
 
 function getInitials(name) {
@@ -36,24 +84,6 @@ function getInitials(name) {
   if (parts.length === 0) return 'NC';
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function isMockOrInvalidImage(url) {
-  if (!url || typeof url !== 'string' || url.trim() === '') return true;
-  const lower = url.toLowerCase();
-  if (
-    lower.includes('hero-talent') ||
-    lower.includes('default-avatar') ||
-    lower.includes('default-male') ||
-    lower.includes('default-female') ||
-    lower.includes('achyut') ||
-    lower.includes('img.clerk.com') ||
-    lower.includes('clerk.dev') ||
-    lower.startsWith('data:image/svg+xml')
-  ) {
-    return true;
-  }
-  return false;
 }
 
 function getCastingThumbnail(call) {
@@ -87,7 +117,6 @@ function getCastingThumbnail(call) {
 import { HOME_CATEGORY_CARDS, CategoryCardIcon } from '../components/ui/CategoryCards';
 
 export default function Home({ onNavigate, user }) {
-  const { t } = useTranslation();
   const { user: clerkUser } = useUser();
   const activeUser = user || (clerkUser ? {
     uid: clerkUser.id,
@@ -100,18 +129,7 @@ export default function Home({ onNavigate, user }) {
   useEffect(() => {
     const userId = activeUser?.uid || clerkUser?.id;
     if (userId) {
-      return cacheManager.subscribePooled(`user_follows_${userId}`, (pooledCb) => {
-        const q = query(collection(db, "follows"), where("followerId", "==", userId));
-        return onSnapshot(q, (snapshot) => {
-          const ids = snapshot.docs.map(doc => doc.data().followingId);
-          pooledCb(ids, null);
-        }, (err) => {
-          console.warn("Follows listener error:", err);
-          pooledCb([], err);
-        });
-      }, (ids) => {
-        setFollowingIds(ids);
-      });
+      return subscribeToUserFollows(userId, setFollowingIds);
     } else {
       setFollowingIds([]);
     }
@@ -126,47 +144,19 @@ export default function Home({ onNavigate, user }) {
       }
       return;
     }
-    if (currentUser.uid === talentId) {
-      return;
-    }
-    const followId = `${currentUser.uid}_${talentId}`;
-    const followDocRef = doc(db, "follows", followId);
-    const notifId = `${currentUser.uid}_${talentId}_follow`;
     const isFollowing = followingIds.includes(talentId);
-    try {
-      if (isFollowing) {
-        await deleteDoc(followDocRef);
-        await deleteDoc(doc(db, "notifications", notifId)).catch(() => {});
-      } else {
-        await setDoc(followDocRef, {
-          followerId: currentUser.uid,
-          followingId: talentId,
-          createdAt: serverTimestamp()
-        });
-        await setDoc(doc(db, "notifications", notifId), {
-          userId: talentId,
-          recipientId: talentId,
-          receiverId: talentId,
-          senderId: currentUser.uid,
-          senderName: currentUser.displayName || "Someone",
-          senderAvatar: currentUser.photoURL || "",
-          title: "New Connect",
-          body: `${currentUser.displayName || "Someone"} connected with you.`,
-          type: "follow",
-          notificationType: "follow",
-          isRead: false,
-          read: false,
-          createdAt: serverTimestamp(),
-          targetUrl: `/profile/${currentUser.uid}`
-        }, { merge: true });
+    setFollowingIds(prev => isFollowing ? prev.filter(id => id !== talentId) : [...prev, talentId]);
+    await toggleFollowUser({
+      currentUserId: currentUser.uid,
+      targetUserId: talentId,
+      isCurrentlyFollowing: isFollowing,
+      senderInfo: {
+        displayName: currentUser.displayName || "Someone",
+        photoURL: currentUser.photoURL || "",
       }
-      notifyFollowUpdated(talentId);
-    } catch (err) {
-      console.error("Error toggling follow:", err);
-    }
+    });
   }, [activeUser, followingIds, onNavigate]);
 
-  const [isLoading, setIsLoading] = useState(true);
   const [talentsReceived, setTalentsReceived] = useState(false);
   const [callsReceived, setCallsReceived] = useState(false);
   const [currentSpotlightIdx, setCurrentSpotlightIdx] = useState(0);
@@ -340,8 +330,6 @@ export default function Home({ onNavigate, user }) {
     let unsubDeferredUsers = () => { };
     let deferredTimer = null;
 
-    const loaderTimeout = setTimeout(() => setIsLoading(false), 2000);
-
     try {
       // Stage 1: Critical above-the-fold batch (fast LCP & instantaneous load)
       unsubUsers = subscribeToTalents((data) => {
@@ -349,7 +337,6 @@ export default function Home({ onNavigate, user }) {
           setTalents(data);
           setTalentsReceived(true);
         }
-        setIsLoading(false);
       }, 12);
 
       unsubCalls = subscribeToCastingCalls('All', (data, error) => {
@@ -360,7 +347,6 @@ export default function Home({ onNavigate, user }) {
           setCastingCalls(data);
           setCallsReceived(true);
         }
-        setIsLoading(false);
       }, 6);
 
       // Stage 2: Deferred below-the-fold batch (expanded pool for Trending/New carousels)
@@ -385,7 +371,6 @@ export default function Home({ onNavigate, user }) {
     }
 
     return () => {
-      clearTimeout(loaderTimeout);
       if (deferredTimer) clearTimeout(deferredTimer);
       if (typeof unsubUsers === 'function') unsubUsers();
       if (typeof unsubCalls === 'function') unsubCalls();
@@ -412,9 +397,11 @@ export default function Home({ onNavigate, user }) {
     }, []);
 
   const featuredTalentsList = activeTalentsList.filter(t => t.featured === true);
-  const displayFeaturedList = featuredTalentsList.length > 0 ? featuredTalentsList : activeTalentsList;
+  const displayFeaturedList = useMemo(() => {
+    return featuredTalentsList.length > 0 ? featuredTalentsList : activeTalentsList;
+  }, [featuredTalentsList, activeTalentsList]);
 
-  const getTalentCreatedTime = (talent) => {
+  const getTalentCreatedTime = useCallback((talent) => {
     if (!talent) return 0;
     const val = talent.createdAt || talent.created_at || talent.joinedAt || talent.updatedAt;
     if (!val) return 0;
@@ -424,65 +411,30 @@ export default function Home({ onNavigate, user }) {
     if (val.seconds) return val.seconds * 1000 + (val.nanoseconds || 0) / 1000000;
     const parsed = new Date(val).getTime();
     return isNaN(parsed) ? 0 : parsed;
-  };
+  }, []);
 
   // New Born Talents: Strictly sorted by newest account creation date/time (Top 5)
-  const newBornTalents = [...activeTalentsList]
-    .sort((a, b) => getTalentCreatedTime(b) - getTalentCreatedTime(a))
-    .slice(0, 5);
+  const newBornTalents = useMemo(() => {
+    return [...activeTalentsList]
+      .sort((a, b) => getTalentCreatedTime(b) - getTalentCreatedTime(a))
+      .slice(0, 5);
+  }, [activeTalentsList, getTalentCreatedTime]);
 
   // Trending Talents: Sorted by followers count or views
-  const trendingTalents = [...activeTalentsList]
-    .sort((a, b) => {
-      const scoreA = getTalentFollowersCount(a) * 2 + (a.views || 0);
-      const scoreB = getTalentFollowersCount(b) * 2 + (b.views || 0);
-      return scoreB - scoreA;
-    })
-    .slice(0, 5);
+  const trendingTalents = useMemo(() => {
+    return [...activeTalentsList]
+      .sort((a, b) => {
+        const scoreA = getTalentFollowersCount(a) * 2 + (a.views || 0);
+        const scoreB = getTalentFollowersCount(b) * 2 + (b.views || 0);
+        return scoreB - scoreA;
+      })
+      .slice(0, 5);
+  }, [activeTalentsList]);
 
-  // Active Casting Calls: Filter out closed calls
-  const activeCastingCalls = castingCalls
-    .filter(c => c.status !== 'closed' && (c.title || c.project || c.roleName))
-    .slice(0, 3);
-
-  // Continuous Typewriter Effect for Hero Slogan
-  const TYPEWRITER_PHRASES = [
-    'Multiple Talents In One Place',
-    'Actors, Models & Creators',
-    'Auditions & Casting Calls',
-    'Nepal’s Creative Network',
-  ];
-  const [typewriterText, setTypewriterText] = useState('');
-  const [phraseIdx, setPhraseIdx] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    const currentPhrase = TYPEWRITER_PHRASES[phraseIdx % TYPEWRITER_PHRASES.length];
-    let timer;
-
-    if (!isDeleting) {
-      if (typewriterText.length < currentPhrase.length) {
-        timer = setTimeout(() => {
-          setTypewriterText(currentPhrase.slice(0, typewriterText.length + 1));
-        }, 70);
-      } else {
-        timer = setTimeout(() => {
-          setIsDeleting(true);
-        }, 1800);
-      }
-    } else {
-      if (typewriterText.length > 0) {
-        timer = setTimeout(() => {
-          setTypewriterText(currentPhrase.slice(0, typewriterText.length - 1));
-        }, 35);
-      } else {
-        setIsDeleting(false);
-        setPhraseIdx(prev => (prev + 1) % TYPEWRITER_PHRASES.length);
-      }
-    }
-
-    return () => clearTimeout(timer);
-  }, [typewriterText, isDeleting, phraseIdx]);
+  // Active Casting Calls: Filter out closed calls and expired audition dates
+  const activeCastingCalls = useMemo(() => {
+    return castingCalls.filter(c => !isCastingCallClosed(c) && (c.title || c.project || c.roleName));
+  }, [castingCalls]);
 
   // Spotlight user rotation for overlaid rectangular portrait card
   const [spotlightProfile, setSpotlightProfile] = useState(null);
@@ -526,7 +478,7 @@ export default function Home({ onNavigate, user }) {
       currentSpotlightUser?.avatarUrl ||
       currentSpotlightUser?.avatar);
 
-  const hasRealPhoto = Boolean(rawPhoto && !isMockOrInvalidImage(rawPhoto));
+  const hasRealPhoto = Boolean(rawPhoto && !isDefaultImage(rawPhoto));
   const spotlightName = spotlightProfile?.name || currentSpotlightUser?.name || 'Talent';
   const rawSpotlightRole =
     spotlightProfile?.role?.split(',')[0] ||
@@ -557,7 +509,7 @@ export default function Home({ onNavigate, user }) {
       onNavigate={onNavigate}
       activeNav="discover"
       featuredTalents={displayFeaturedList}
-      trendingCalls={castingCalls}
+      trendingCalls={activeCastingCalls}
       loading={!talentsReceived || !callsReceived}
     >
       <PullToRefresh onRefresh={handleRefresh}>
@@ -569,9 +521,11 @@ export default function Home({ onNavigate, user }) {
               <AnimatePresence mode="popLayout">
                 <motion.img
                   key={heroImageIdx}
-                  src={HERO_BACKGROUND_PHOTOS[heroImageIdx]}
+                  src={getOptimizedImageUrl(HERO_BACKGROUND_PHOTOS[heroImageIdx], { width: 1200, quality: 'auto', format: 'auto' })}
+                  srcSet={getImageSrcSet(HERO_BACKGROUND_PHOTOS[heroImageIdx], [640, 1080, 1440])}
+                  sizes="100vw"
                   alt="NepalCasts Hero"
-                  fetchpriority={heroImageIdx === 0 ? "high" : "auto"}
+                  fetchPriority={heroImageIdx === 0 ? "high" : "auto"}
                   loading={heroImageIdx === 0 ? "eager" : "lazy"}
                   decoding="async"
                   initial={{ opacity: 0, scale: 1.06 }}
@@ -586,13 +540,7 @@ export default function Home({ onNavigate, user }) {
             </div>
 
             {/* Top Right Slogan in One Line with Typewriter Font & Live Typing Animation */}
-            <div className="absolute top-16 sm:top-18 right-3 sm:right-5 z-20 pointer-events-none flex items-center justify-end">
-              <h1 className="font-mono font-bold text-xs sm:text-sm md:text-base lg:text-lg whitespace-nowrap tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] flex items-center gap-1.5 sm:gap-2">
-                <span className="text-white shrink-0">Discover</span>
-                <span className="text-white">{typewriterText}</span>
-                <span className="inline-block w-1.5 sm:w-2 h-3.5 sm:h-4 bg-[#522C69] ml-0.5 animate-pulse shrink-0" />
-              </h1>
-            </div>
+            <HeroTypewriter />
 
 
 
@@ -626,7 +574,7 @@ export default function Home({ onNavigate, user }) {
                           sizes="(max-width: 640px) 100px, 136px"
                           alt={spotlightName}
                           loading="eager"
-                          fetchPriority="high"
+                          fetchPriority="auto"
                           decoding="async"
                           onError={() => setSpotlightImageError(true)}
                           className="w-full h-full object-cover rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm border-0"
@@ -673,7 +621,7 @@ export default function Home({ onNavigate, user }) {
                     Hiring now
                   </span>
                   <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
-                    Discover active auditions and verified casting calls across Nepal
+                    Active auditions in Nepal
                   </p>
                 </div>
                 <button
@@ -798,7 +746,7 @@ export default function Home({ onNavigate, user }) {
                     Featured talents
                   </span>
                   <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
-                    Handpicked verified actors, models, and industry professionals
+                    Top verified Nepali talents
                   </p>
                 </div>
                 <button
@@ -864,7 +812,7 @@ export default function Home({ onNavigate, user }) {
                       Talents by category
                     </span>
                     <p className="text-xs sm:text-sm md:text-base text-gray-300 font-normal drop-shadow-sm">
-                      Explore skilled professionals across every creative discipline
+                      Explore all creative roles
                     </p>
                   </div>
                   <button
@@ -915,7 +863,7 @@ export default function Home({ onNavigate, user }) {
                     Recently joined
                   </span>
                   <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
-                    New artists and emerging creators who recently joined NepalCasts
+                    New artists and creators
                   </p>
                 </div>
                 <button
@@ -1025,7 +973,7 @@ export default function Home({ onNavigate, user }) {
                     Trending talents
                   </span>
                   <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
-                    Popular profiles gaining the most attention from directors and producers
+                    Popular profiles this week
                   </p>
                 </div>
                 <button

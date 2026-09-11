@@ -49,4 +49,9 @@ export class CurrentUser {
     static get role(): string {
         return this.userRole;
     }
+
+    static get isAdmin(): boolean {
+        const r = (this.userRole || '').toLowerCase();
+        return r === 'admin' || (this.email?.toLowerCase() === 'aniltimilsena53@gmail.com');
+    }
 }

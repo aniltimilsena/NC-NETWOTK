@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { X, AlertTriangle, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 
 interface ConfirmDialogProps {
     isOpen: boolean;
@@ -88,36 +87,6 @@ export default function ConfirmDialog({
         }
     }, [isOpen, isLoading, onClose, onCancel]);
 
-    const getIconHeader = () => {
-        switch (dialogType) {
-            case 'danger':
-                return (
-                    <div className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
-                        <AlertCircle className="w-5 h-5" />
-                    </div>
-                );
-            case 'warning':
-                return (
-                    <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
-                        <AlertTriangle className="w-5 h-5" />
-                    </div>
-                );
-            case 'success':
-                return (
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
-                        <CheckCircle2 className="w-5 h-5" />
-                    </div>
-                );
-            case 'info':
-            default:
-                return (
-                    <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
-                        <Info className="w-5 h-5" />
-                    </div>
-                );
-        }
-    };
-
     const getConfirmButtonClasses = () => {
         switch (dialogType) {
             case 'danger':
@@ -134,9 +103,13 @@ export default function ConfirmDialog({
 
     const showCancel = !hideCancel && Boolean(cancelText && cancelText.trim() !== '');
 
-    const handleConfirmClick = () => {
+    const handleConfirmClick = async () => {
         if (onConfirm) {
-            onConfirm();
+            try {
+                await onConfirm();
+            } catch (err) {
+                console.error('[ConfirmDialog] Action failed:', err);
+            }
         } else {
             handleClose();
         }

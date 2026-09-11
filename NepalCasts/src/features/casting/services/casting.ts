@@ -39,6 +39,8 @@ export const subscribeToCastingCalls = (filter?: string | ((data: any, error?: a
                 if (asyncSaved && asyncSaved.length > 0) {
                     pooledCb(asyncSaved, null);
                 }
+            }).catch((idbErr) => {
+                console.warn("[casting] IndexedDB cache read failed:", idbErr);
             });
         }
 
@@ -205,9 +207,15 @@ export const createCastingCall = async (callData: any) => {
 
 export const updateCastingCall = async (id: string, updateData: any) => {
     try {
-        const currentUserUid = AuthService.getUserId() || CurrentUser.id || updateData.creatorId || updateData.createdBy;
+        const currentUserUid = AuthService.getUserId() || CurrentUser.id;
         if (!currentUserUid) {
             return { success: false, error: "Authentication required" };
+        }
+
+        // Verify ownership: callers cannot update a casting call owned by another user
+        const targetCreatorId = updateData.creatorId || updateData.createdBy;
+        if (targetCreatorId && targetCreatorId !== currentUserUid && !CurrentUser.isAdmin) {
+            return { success: false, error: "Unauthorized: You can only edit your own casting calls" };
         }
 
         const enrichedUpdateData = {

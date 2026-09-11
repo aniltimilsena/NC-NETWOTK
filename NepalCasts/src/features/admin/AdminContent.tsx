@@ -6,6 +6,7 @@ import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/fire
 import { logAdminAction } from '../../services';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { AdminCardSkeleton } from '../../components/ui/Skeleton';
+import { getOptimizedImageUrl } from '../../utils/media';
 type TalentProfile = {
     id: string;
     name?: string;
@@ -314,7 +315,13 @@ export default function AdminContent() {
                             {isVideo ? (<div className="w-full h-full flex flex-col items-center justify-center text-admin-primary">
                                 <Video className="w-8 h-8"/>
                                 <span className="text-[8px] font-black uppercase mt-1">Video Asset</span>
-                              </div>) : (<img src={url} alt={`Portfolio ${i}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"/>)}
+                              </div>) : (<img
+                                src={getOptimizedImageUrl(url, { width: 300, quality: 'auto', format: 'auto' })}
+                                alt={`Portfolio ${i}`}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              />)}
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                               <ExternalLink className="w-5 h-5 text-white"/>
                             </div>

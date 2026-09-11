@@ -71,6 +71,11 @@ export const usePermissions = () => {
                 setPermissionType('media');
                 setPendingAction(() => action);
                 setShowModal(true);
+            }).catch((permErr) => {
+                console.warn("Could not query browser permission state, falling back to modal:", permErr);
+                setPermissionType('media');
+                setPendingAction(() => action);
+                setShowModal(true);
             });
         }
         else {

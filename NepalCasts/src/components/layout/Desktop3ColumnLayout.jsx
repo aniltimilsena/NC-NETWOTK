@@ -5,14 +5,16 @@ import { ActionSearchBar } from '@/components/ui/ActionSearchBar';
 import { subscribeToTalents, subscribeToCastingCalls } from '../../services';
 import Avatar from '../ui/Avatar';
 import { getAvatar } from '../../utils/avatars';
-import { db } from '../../lib/firebase';
 import { CurrentUser } from '../../utils/CurrentUser';
-import { formatRole } from '../../utils';
+import { formatRole, isCastingCallClosed } from '../../utils';
 import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, collection, query, where } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { useTranslation } from 'react-i18next';
 import { AuthService } from '../../services/AuthService';
 import { FollowItemSkeleton, SidebarWidgetSkeleton } from '../ui/Skeleton';
 import Footer from './Footer';
+import { getOptimizedImageUrl } from '../../utils/media';
+import { useApp } from '../../providers/AppProviders';
 
 const getCallThumbnail = (call) => {
   if (!call) return null;
@@ -27,6 +29,7 @@ const getCallThumbnail = (call) => {
 
 // Inline follow button that mirrors ProfileHeader's style and uses Firestore
 function FollowBtn({ targetUid }) {
+  const { showToast } = useApp();
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(false);
   const currentUserId = CurrentUser.id;
@@ -74,6 +77,7 @@ function FollowBtn({ targetUid }) {
       }
     } catch (err) {
       console.error('Follow toggle failed:', err);
+      showToast?.('Failed to update connection. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -274,7 +278,8 @@ export default function Desktop3ColumnLayout({
 
 
   const safeFeatured = (Array.isArray(featuredTalents) && featuredTalents.length > 0) ? featuredTalents : internalFeatured;
-  const safeTrending = (Array.isArray(trendingCalls) && trendingCalls.length > 0) ? trendingCalls : internalTrending;
+  const safeTrending = ((Array.isArray(trendingCalls) && trendingCalls.length > 0) ? trendingCalls : internalTrending)
+    .filter(call => !isCastingCallClosed(call));
   const isTalentsLoading = loading || talentsLoading;
   const isCallsLoading = loading || callsLoading;
 
@@ -775,8 +780,10 @@ export default function Desktop3ColumnLayout({
                             <div className="absolute inset-0 select-none pointer-events-none flex items-center justify-center overflow-hidden">
                               {thumb ? (
                                 <img
-                                  src={thumb}
+                                  src={getOptimizedImageUrl(thumb, { width: 320, quality: 'auto', format: 'auto' })}
                                   alt={call.title}
+                                  loading="lazy"
+                                  decoding="async"
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
                                     e.currentTarget.style.display = 'none';

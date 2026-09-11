@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { collection, query, where, onSnapshot, doc, deleteDoc, limit, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, deleteDoc, limit, orderBy, getDocs, documentId } from 'firebase/firestore';
 import { FileText, ChevronLeft, Clock, CheckCircle2, XCircle, AlertCircle, Trash2, ArrowRight } from 'lucide-react';
 import { getCastingCallById } from './services/casting';
 import { db } from '../../lib/firebase';
@@ -8,6 +8,9 @@ import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 import { ApplicationSkeleton } from '../../components/ui/Skeleton';
 import { DeleteDialog } from '../../components/ui/ConfirmDialog';
+import { getOptimizedImageUrl } from '../../utils/media';
+import { cacheManager } from '../../utils/cacheManager';
+import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 
 interface ApplicationsPageProps {
   user?: any;
@@ -23,11 +26,23 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
   const [filter, setFilter] = useState(initialFilter || 'all');
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [visibleLimit, setVisibleLimit] = useState(20);
+  const [visibleLimit, setVisibleLimit] = useState(16);
   const [hasMore, setHasMore] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
   const castingCacheRef = useRef<Map<string, any>>(new Map());
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleLimit(prev => prev + 16);
+  }, []);
+
+  const sentinelRef = useInfiniteScroll({
+    onLoadMore: handleLoadMore,
+    hasMore,
+    isLoading: loading,
+  });
 
   useEffect(() => {
     if (initialFilter) {
@@ -40,64 +55,93 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
       setLoading(false);
       return;
     }
-    const q = query(
-      collection(db, 'applications'),
-      where('userId', '==', currentUser.uid),
-      orderBy('createdAt', 'desc'),
-      limit(visibleLimit + 1)
-    );
 
-    const unsub = onSnapshot(q, async (snap) => {
-      const docsData = snap.docs.map(d => ({ id: d.id, data: d.data() }));
-      docsData.sort((a: any, b: any) => {
-        const t1 = a.data?.appliedAt?.toDate ? a.data.appliedAt.toDate().getTime() : (a.data?.createdAt?.toDate ? a.data.createdAt.toDate().getTime() : (new Date(a.data?.appliedAt || a.data?.createdAt || 0).getTime()));
-        const t2 = b.data?.appliedAt?.toDate ? b.data.appliedAt.toDate().getTime() : (b.data?.createdAt?.toDate ? b.data.createdAt.toDate().getTime() : (new Date(b.data?.appliedAt || b.data?.createdAt || 0).getTime()));
-        return t2 - t1;
-      });
-      const hasMoreData = docsData.length > visibleLimit;
-      const slicedDocs = hasMoreData ? docsData.slice(0, visibleLimit) : docsData;
-      setHasMore(hasMoreData);
+    setLoading(true);
+    setError(null);
+    const poolKey = `user_applications_full_${currentUser.uid}_limit_${visibleLimit}_k_${reloadKey}`;
+    const unsub = cacheManager.subscribePooled(poolKey, (pooledCb) => {
+      const q = query(
+        collection(db, 'applications'),
+        where('userId', '==', currentUser.uid),
+        orderBy('appliedAt', 'desc'),
+        limit(visibleLimit + 1)
+      );
 
-      const castingIds = slicedDocs.map(item => item.data.castingId).filter(Boolean);
-      const uniqueCastingIds = Array.from(new Set(castingIds));
+      return onSnapshot(q, async (snap) => {
+        const docsData = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+        const hasMoreData = docsData.length > visibleLimit;
+        const slicedDocs = docsData.slice(0, visibleLimit);
 
-      const missingIds = uniqueCastingIds.filter(id => !castingCacheRef.current.has(id));
-      if (missingIds.length > 0) {
-        await Promise.all(missingIds.map(async (id) => {
+        // Batch fetch missing casting call metadata
+        const missingCastingIds = [...new Set(slicedDocs
+          .map((item) => item.data.castingId)
+          .filter((id) => id && !castingCacheRef.current.has(id)))];
+
+        if (missingCastingIds.length > 0) {
           try {
-            const data = await getCastingCallById(id);
-            if (data) {
-              castingCacheRef.current.set(id, data);
+            const chunks: string[][] = [];
+            for (let i = 0; i < missingCastingIds.length; i += 30) {
+              chunks.push(missingCastingIds.slice(i, i + 30));
             }
-          } catch (err) {
-            console.warn(`Failed to fetch casting call ${id}:`, err);
+            await Promise.all(
+              chunks.map(async (chunk) => {
+                const chunkQuery = query(
+                  collection(db, 'casting_calls'),
+                  where(documentId(), 'in', chunk)
+                );
+                const castingSnap = await getDocs(chunkQuery);
+                castingSnap.docs.forEach((d: any) => {
+                  castingCacheRef.current.set(d.id, { id: d.id, ...d.data() });
+                });
+              })
+            );
+          } catch (e) {
+            console.warn('Batch fetch casting calls warning in ApplicationsPage:', e);
           }
-        }));
-      }
+        }
 
-      const appData = slicedDocs.map((item) => {
-        const castingData = castingCacheRef.current.get(item.data.castingId);
-        return {
-          appId: item.id,
-          ...item.data,
-          castingCall: castingData || null
-        };
+        const appData = slicedDocs.map((item) => {
+          const castingData = castingCacheRef.current.get(item.data.castingId);
+          return {
+            appId: item.id,
+            ...item.data,
+            castingCall: castingData || null
+          };
+        });
+
+        pooledCb({ appData, hasMoreData }, null);
+      }, (err) => {
+        console.error('Applications snapshot error:', err);
+        pooledCb(null, err);
       });
-
-      setApplications(appData);
+    }, (result, err) => {
+      if (err) {
+        setError(err.message || 'Failed to load applications. Please check your connection.');
+      } else if (result) {
+        setError(null);
+        setHasMore(result.hasMoreData);
+        setApplications(result.appData || []);
+      }
       setLoading(false);
     });
 
     return () => unsub();
-  }, [currentUser?.uid, visibleLimit]);
+  }, [currentUser?.uid, visibleLimit, reloadKey]);
 
   const handleConfirmCancel = async () => {
     if (!deleteTargetId) return;
     try {
       setCancellingId(deleteTargetId);
       await deleteDoc(doc(db, 'applications', deleteTargetId));
-    } catch (err) {
+      setApplications(prev => prev.filter(a => a.appId !== deleteTargetId));
+      if (context?.showAlert) {
+        context.showAlert('Application withdrawn successfully.', 'info');
+      }
+    } catch (err: any) {
       console.error('Error cancelling application:', err);
+      if (context?.showAlert) {
+        context.showAlert(err.message || 'Failed to withdraw application. Please try again.', 'error');
+      }
     } finally {
       setCancellingId(null);
       setDeleteTargetId(null);
@@ -208,7 +252,21 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
           </div>
 
           {/* List Content */}
-          {loading ? (
+          {error && applications.length === 0 ? (
+            <div className="py-16 text-center space-y-4 bg-red-500/10 border border-red-500/20 rounded-3xl p-6">
+              <AlertCircle className="w-10 h-10 text-red-400 mx-auto" />
+              <h3 className="text-lg font-bold text-white">Failed to Load Applications</h3>
+              <p className="text-xs text-red-200 max-w-xs mx-auto">
+                {error}
+              </p>
+              <button
+                onClick={() => setReloadKey(k => k + 1)}
+                className="px-6 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : loading ? (
             <ApplicationSkeleton count={3} />
           ) : filteredApps.length === 0 ? (
             <div className="py-16 text-center space-y-4 bg-white/[0.02] border border-white/5 rounded-3xl p-6">
@@ -260,8 +318,10 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                       <div className="w-16 h-16 rounded-none overflow-hidden relative shrink-0 bg-[#141418] border border-white/10 flex items-center justify-center">
                         {thumbnail ? (
                           <img
-                            src={thumbnail}
+                            src={getOptimizedImageUrl(thumbnail, { width: 160, quality: 'auto', format: 'auto' })}
                             alt={title}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover"
                             onError={(e: any) => {
                               e.currentTarget.style.display = 'none';
@@ -325,9 +385,13 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                 );
               })}
               {hasMore && (
-                <div className="flex justify-center mt-6 py-2">
+                <div ref={sentinelRef} className="flex flex-col items-center justify-center gap-2.5 mt-6 py-2">
+                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                    <span className="w-4 h-4 border-2 border-[#522C69] border-t-transparent rounded-full animate-spin shrink-0" />
+                    <span>Loading more applications...</span>
+                  </div>
                   <button
-                    onClick={() => setVisibleLimit(prev => prev + 20)}
+                    onClick={handleLoadMore}
                     className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer shadow-sm active:scale-95"
                   >
                     Load More

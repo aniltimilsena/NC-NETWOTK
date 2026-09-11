@@ -60,18 +60,7 @@ export const uploadFile = async (file: File, path: string, onProgress?: (p: numb
             throw new Error(`File too large. Maximum size is ${isVideo ? '100MB' : '20MB'}`);
         }
     }
-    if (isImage) {
-        try {
-            const isCover = path.endsWith("cover.jpg");
-            const contextType = isProfilePath ? (isCover ? 'cover' : 'avatar') : isCastingPath ? 'banner' : isMediaPath ? 'portfolio' : 'general';
-            const optResult = await mediaOptimizer.optimizeImage(file, contextType);
-            fileToUpload = optResult.file;
-        }
-        catch (compressionError) {
-            logger.warn("[Storage] Image optimization fallback to original file:", compressionError);
-        }
-    }
-    else if (isVideo) {
+    if (isVideo) {
         // Non-blocking background telemetry: never delay or hang video upload
         mediaOptimizer.extractVideoMetadata(file)
             .then((meta) => {
@@ -91,13 +80,13 @@ export const uploadFile = async (file: File, path: string, onProgress?: (p: numb
     }
     else if (isCastingPath) {
         const parts = path.split('/');
-        const castingId = (parts[1] || 'general').replace(/[^a-zA-Z0-9_-]/g, '_');
-        folder = `castings/${castingId}`;
+        const castingId = (parts[1] === safeUid ? parts[2] : parts[1] || 'general').replace(/[^a-zA-Z0-9_-]/g, '_');
+        folder = `castings/${safeUid}/${castingId}`;
     }
     else if (isConversationPath) {
         const parts = path.split('/');
         const convoId = (parts[1] || 'general').replace(/[^a-zA-Z0-9_-]/g, '_');
-        folder = `chat/${convoId}`;
+        folder = `chat/${safeUid}/${convoId}`;
     }
     try {
         const result: CloudinaryUploadResult = await uploadMedia(fileToUpload, folder, onProgress);

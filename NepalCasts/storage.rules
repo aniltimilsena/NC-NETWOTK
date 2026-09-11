@@ -14,50 +14,88 @@ service firebase.storage {
       return isSignedIn() && request.auth.token.admin == true;
     }
 
-    match /users/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if true;
+    // MIME type validators
+    function isImage() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp|heic|gif)');
     }
 
-    match /profiles/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if true;
+    function isVideo() {
+      return request.resource.contentType.matches('video/(mp4|quicktime|webm|x-matroska|3gpp)');
     }
 
-    match /uploads/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if true;
+    function isMedia() {
+      return isImage() || isVideo();
     }
 
-    match /applications/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if true;
+    // Size limit helper
+    function maxSize(bytes) {
+      return request.resource.size <= bytes;
     }
 
-    match /gallery/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if true;
-    }
-
+    // Avatars: images only, max 10MB
     match /avatars/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if true;
+      allow write: if (isOwner(userId) || isAdmin()) && isImage() && maxSize(10 * 1024 * 1024);
     }
 
+    // Profile covers and assets: images only, max 15MB
+    match /profiles/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if (isOwner(userId) || isAdmin()) && isImage() && maxSize(15 * 1024 * 1024);
+    }
+
+    // Generic user folder: images only, max 15MB
+    match /users/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if (isOwner(userId) || isAdmin()) && isImage() && maxSize(15 * 1024 * 1024);
+    }
+
+    // Gallery / Portfolio: media (images & videos), max 200MB
+    match /gallery/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if (isOwner(userId) || isAdmin()) && isMedia() && maxSize(200 * 1024 * 1024);
+    }
+
+    // Media library: media (images & videos), max 200MB
     match /media/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if true;
+      allow write: if (isOwner(userId) || isAdmin()) && isMedia() && maxSize(200 * 1024 * 1024);
     }
 
+    // Audition applications: media, max 100MB
+    match /applications/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if (isOwner(userId) || isAdmin()) && isMedia() && maxSize(100 * 1024 * 1024);
+    }
+
+    // Direct uploads fallback: media, max 100MB
+    match /uploads/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if (isOwner(userId) || isAdmin()) && isMedia() && maxSize(100 * 1024 * 1024);
+    }
+
+    // Chat attachments: media, max 100MB
+    match /chat/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if (isOwner(userId) || isAdmin()) && isMedia() && maxSize(100 * 1024 * 1024);
+    }
+
+    // Casting banners and posters: scoped by userId to prevent tampering/deletion, images only, max 15MB
+    match /castings/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if (isOwner(userId) || isAdmin()) && isImage() && maxSize(15 * 1024 * 1024);
+    }
+
+    // Legacy castings path: allow read, but forbid direct non-admin writes
     match /castings/{allPaths=**} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdmin();
     }
 
+    // Default: public read only, no write access
     match /{allPaths=**} {
       allow read: if true;
-      allow write: if true;
+      allow write: if false;
     }
   }
 }
-

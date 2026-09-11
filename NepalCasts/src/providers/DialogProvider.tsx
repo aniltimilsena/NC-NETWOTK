@@ -86,11 +86,14 @@ export const DialogProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       try {
         await options.onConfirm();
-      } catch (err) {
+        setIsOpen(false);
+      } catch (err: any) {
         console.error("Error confirming dialog action:", err);
+        setIsOpen(false);
+        const errMsg = err?.message || "The requested action could not be completed. Please try again.";
+        showErrorDialog("Action Failed", errMsg);
       } finally {
         setIsLoading(false);
-        setIsOpen(false);
       }
     } else {
       setIsOpen(false);

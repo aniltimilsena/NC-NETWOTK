@@ -69,7 +69,6 @@ export const processSingleFileBuffer = async (file: Express.Multer.File): Promis
         try {
             processedBuffer = await sharp(file.buffer)
                 .rotate()
-                .withMetadata({})
                 .toBuffer();
         }
         catch (sharpError) {

@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import { LazyMotion, domAnimation } from 'framer-motion';
 import AppProviders, { useApp } from './providers/AppProviders';
 import { DialogProvider } from './providers/DialogProvider';
 import RouteConfig from './routes/routeConfig';
@@ -20,16 +21,18 @@ function MainApp() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <DialogProvider>
-        <AppProviders>
-          <MainApp />
-          {import.meta.env.DEV && AgentationWidget && (
-            <Suspense fallback={null}>
-              <AgentationWidget />
-            </Suspense>
-          )}
-        </AppProviders>
-      </DialogProvider>
+      <LazyMotion features={domAnimation} strict>
+        <DialogProvider>
+          <AppProviders>
+            <MainApp />
+            {import.meta.env.DEV && AgentationWidget && (
+              <Suspense fallback={null}>
+                <AgentationWidget />
+              </Suspense>
+            )}
+          </AppProviders>
+        </DialogProvider>
+      </LazyMotion>
     </ErrorBoundary>
   );
 }

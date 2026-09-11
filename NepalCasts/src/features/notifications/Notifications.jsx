@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { db } from '../../lib/firebase';
-import { collection, query, where, limit, doc, updateDoc, deleteDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, limit, doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import Avatar from '../../components/ui/Avatar';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { cacheManager } from '../../utils/cacheManager';
 import { NotificationSkeleton } from '../../components/ui/Skeleton';
 import { ChevronLeft, MessageSquare, PhoneMissed, PhoneOff, UserPlus, Clapperboard, Settings, Check } from 'lucide-react';
-import { notifyFollowUpdated } from '../profile/services/users';
+import { subscribeToUserFollows, toggleFollowUser } from '../profile/services/users';
+import { useApp } from '../../providers/AppProviders';
 const getNotificationDetails = (notif) => {
     const type = (notif.type || notif.notificationType || '').toLowerCase();
     const body = (notif.body || notif.message || '').toLowerCase();
@@ -249,6 +250,7 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
     </div>);
 }
 export default function Notifications({ onNavigate, user, initialFilter = 'all' }) {
+    const { showToast } = useApp();
     const [filter, setFilter] = useState(initialFilter || 'all');
     
     // Instant cache-first paint: load from cacheManager if previously fetched
@@ -288,32 +290,25 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             setFollowersLoaded(false);
             return;
         }
-        // Subscribe to who I am following
-        const unsubFollowing = cacheManager.subscribePooled(`user_follows_${user.uid}`, (pooledCb) => {
-            const q = query(collection(db, 'follows'), where('followerId', '==', user.uid));
-            return onSnapshot(q, (snapshot) => {
-                const ids = snapshot.docs.map(docSnap => docSnap.data().followingId);
-                pooledCb(ids, null);
-            }, (err) => {
-                if (err.code !== 'permission-denied') {
-                    console.error("Follows subscription failed in Notifications:", err);
-                }
-                pooledCb([], err);
-            });
-        }, (ids) => {
-            setFollowingIds(new Set(ids));
+        // Subscribe to who I am following via canonical service
+        const unsubFollowing = subscribeToUserFollows(user.uid, (set) => {
+            setFollowingIds(set);
         });
 
         // Subscribe to who is following me (my active followers)
-        const qFollowers = query(collection(db, 'follows'), where('followingId', '==', user.uid));
-        const unsubFollowers = onSnapshot(qFollowers, (snapshot) => {
-            const ids = new Set(snapshot.docs.map(d => d.data().followerId).filter(Boolean));
-            setMyFollowerIds(ids);
-            setFollowersLoaded(true);
-        }, (err) => {
-            if (err.code !== 'permission-denied') {
-                console.error("Followers subscription failed in Notifications:", err);
-            }
+        const unsubFollowers = cacheManager.subscribePooled(`user_followers_${user.uid}`, (pooledCb) => {
+            const qFollowers = query(collection(db, 'follows'), where('followingId', '==', user.uid));
+            return onSnapshot(qFollowers, (snapshot) => {
+                const ids = new Set(snapshot.docs.map(d => d.data().followerId).filter(Boolean));
+                pooledCb(ids, null);
+            }, (err) => {
+                if (err.code !== 'permission-denied') {
+                    console.error("Followers subscription failed in Notifications:", err);
+                }
+                pooledCb(new Set(), err);
+            });
+        }, (ids) => {
+            setMyFollowerIds(ids || new Set());
             setFollowersLoaded(true);
         });
 
@@ -336,10 +331,21 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             setLoading(true);
         }
         
-        const q = query(collection(db, 'notifications'), where('userId', '==', user.uid), limit(100));
-        const unsub = onSnapshot(q, (snapshot) => {
-            const rawItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            rawItems.sort((a, b) => {
+        const unsub = cacheManager.subscribePooled(`user_notifications_${user.uid}`, (pooledCb) => {
+            const q = query(collection(db, 'notifications'), where('userId', '==', user.uid), limit(100));
+            return onSnapshot(q, (snapshot) => {
+                const rawItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                pooledCb(rawItems, null);
+            }, (err) => {
+                console.error('Failed to subscribe to notifications:', err);
+                pooledCb([], err);
+            });
+        }, (rawItems) => {
+            if (!rawItems) {
+                setLoading(false);
+                return;
+            }
+            const sortedItems = [...rawItems].sort((a, b) => {
                 const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
                 const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
                 return timeB - timeA;
@@ -350,15 +356,19 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             const activeFollowers = myFollowerIdsRef.current;
             const isFollowersLoaded = followersLoadedRef.current;
 
-            const items = rawItems.filter(item => {
+            const items = sortedItems.filter(item => {
                 const isFollow = item.type === 'follow' || item.notificationType === 'follow';
                 if (isFollow && item.senderId) {
                     if (seenFollowSenders.has(item.senderId)) {
-                        deleteDoc(doc(db, 'notifications', item.id)).catch(() => {});
+                        deleteDoc(doc(db, 'notifications', item.id)).catch((err) => {
+                            console.warn("Could not delete duplicate notification:", err);
+                        });
                         return false;
                     }
                     if (isFollowersLoaded && !activeFollowers.has(item.senderId)) {
-                        deleteDoc(doc(db, 'notifications', item.id)).catch(() => {});
+                        deleteDoc(doc(db, 'notifications', item.id)).catch((err) => {
+                            console.warn("Could not delete orphaned notification:", err);
+                        });
                         return false;
                     }
                     seenFollowSenders.add(item.senderId);
@@ -377,9 +387,6 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
                 setHasMore(false);
                 setNotifications(items);
             }
-            setLoading(false);
-        }, (err) => {
-            console.error('Failed to subscribe to notifications:', err);
             setLoading(false);
         });
         return () => unsub();
@@ -437,46 +444,22 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
         e.stopPropagation();
         if (!user?.uid || !senderId || user.uid === senderId)
             return;
-        const followId = `${user.uid}_${senderId}`;
-        const followDocRef = doc(db, "follows", followId);
-        const notifId = `${user.uid}_${senderId}_follow`;
         const isFollowing = followingIds.has(senderId);
         try {
-            if (isFollowing) {
-                await deleteDoc(followDocRef);
-                await deleteDoc(doc(db, "notifications", notifId)).catch(() => {});
-            } else {
-                await setDoc(followDocRef, {
-                    followerId: user.uid,
-                    followingId: senderId,
-                    createdAt: serverTimestamp()
-                });
-                await setDoc(doc(db, "notifications", notifId), {
-                    userId: senderId,
-                    recipientId: senderId,
-                    receiverId: senderId,
-                    senderId: user.uid,
-                    notificationType: "follow",
-                    type: "follow",
-                    isRead: false,
-                    read: false,
-                    createdAt: serverTimestamp(),
-                    profileUrl: `/profile/${user.uid}`,
-                    targetUrl: `/profile/${user.uid}`,
-                    title: "New Connect",
-                    body: `${user.displayName || user.email || 'Someone'} connected with you.`,
-                    senderName: user.displayName || 'Someone',
-                    senderAvatar: user.photoURL || ''
-                }, { merge: true });
-            }
-            notifyFollowUpdated(senderId);
+            await toggleFollowUser(user.uid, senderId, isFollowing, {
+                displayName: user.displayName || user.email || 'Someone',
+                photoURL: user.photoURL || ''
+            });
         }
         catch (err) {
-            console.error("Error toggling follow:", err);
+            console.error("Error toggling follow in Notifications:", err);
+            showToast?.('Failed to update connection. Please try again.', 'error');
         }
     };
     const handleMarkAllRead = async () => {
         const unreadNotifs = notifications.filter(n => !n.read);
+        if (unreadNotifs.length === 0) return;
+        const previousNotifications = notifications;
         setNotifications(prev => prev.map(n => ({ ...n, read: true, isRead: true })));
         try {
             const promises = unreadNotifs.map(n => updateDoc(doc(db, 'notifications', n.id), { read: true, isRead: true }));
@@ -484,6 +467,8 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
         }
         catch (err) {
             console.warn("Failed to mark all read:", err);
+            setNotifications(previousNotifications);
+            showToast?.('Failed to mark notifications as read.', 'error');
         }
     };
     const loadMore = () => {

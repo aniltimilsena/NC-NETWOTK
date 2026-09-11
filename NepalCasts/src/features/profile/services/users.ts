@@ -1,4 +1,4 @@
-import { collection, query, onSnapshot, getDocs, limit, startAfter, type DocumentSnapshot } from "firebase/firestore";
+import { collection, query, onSnapshot, getDocs, limit, startAfter, where, doc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp, type DocumentSnapshot } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { COLLECTIONS } from "../../../constants/collections";
 import apiClient from "../../../api/client";
@@ -70,6 +70,8 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void, limitC
                     memoryTalentsCache = idbSaved;
                     pooledCb(idbSaved.slice(0, limitCount), null);
                 }
+            }).catch((idbErr) => {
+                console.warn("[users] IndexedDB cache read failed:", idbErr);
             });
         }
 
@@ -120,14 +122,12 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void, limitC
 
             const seenUids = new Set<string>();
             const seenEmails = new Set<string>();
-            const seenNames = new Set<string>();
             const unique: Talent[] = [];
 
             for (const t of rawMapped) {
                 const uid = (t.uid || t.id || '') as string;
                 const name = (t.name || t.displayName || t.fullName || '').trim();
                 const email = (t.email || '').toLowerCase().trim();
-                const normName = name.toLowerCase();
 
                 if (!uid || seenUids.has(uid)) {
                     continue;
@@ -135,14 +135,9 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void, limitC
                 if (email && seenEmails.has(email)) {
                     continue;
                 }
-                if (normName && normName !== 'talent user' && normName !== 'discovery talent' && seenNames.has(normName)) {
-                    continue;
-                }
                 if (
-                    t.isAdmin === true ||
-                    (t.role && t.role.toLowerCase() === 'admin') ||
-                    (t.category && t.category.toLowerCase() === 'admin') ||
-                    email === 'aniltimilsena53@gmail.com'
+                    (t.isAdmin === true && !t.role && !t.bio && !t.category) ||
+                    (t.role && t.role.toLowerCase() === 'admin' && !t.category && !t.bio && !t.skills)
                 ) {
                     continue;
                 }
@@ -152,7 +147,6 @@ export const subscribeToTalents = (callback: (talents: Talent[]) => void, limitC
                     t.category = formatRole((t.category || t.role) as string);
                     seenUids.add(uid);
                     if (email) seenEmails.add(email);
-                    if (normName) seenNames.add(normName);
                     unique.push(t);
                 }
             }
@@ -296,6 +290,110 @@ export const notifyFollowUpdated = (targetUid: string) => {
     cacheManager.invalidateCache("talents_list");
     cacheManager.invalidateCache(`profile_${targetUid}`);
     cacheManager.invalidateCache(`user_follows_${targetUid}`);
+};
+
+export const subscribeToUserFollows = (userId: string, callback: (ids: string[]) => void) => {
+    if (!userId) {
+        callback([]);
+        return () => {};
+    }
+    return cacheManager.subscribePooled(`user_follows_${userId}`, (pooledCb) => {
+        const q = query(collection(db, COLLECTIONS.FOLLOWS), where("followerId", "==", userId));
+        return onSnapshot(q, (snapshot) => {
+            const ids = snapshot.docs.map(d => (d.data() as any).followingId).filter(Boolean);
+            pooledCb(ids, null);
+        }, (err) => {
+            console.warn("Follows listener error:", err);
+            pooledCb([], err);
+        });
+    }, (ids) => {
+        callback(ids || []);
+    });
+};
+
+export interface ToggleFollowParams {
+    currentUserId: string;
+    targetUserId: string;
+    isCurrentlyFollowing: boolean;
+    senderInfo?: {
+        displayName?: string;
+        photoURL?: string;
+    };
+}
+
+export const toggleFollowUser = async ({
+    currentUserId,
+    targetUserId,
+    isCurrentlyFollowing,
+    senderInfo
+}: ToggleFollowParams): Promise<{ success: boolean; isFollowing: boolean; error?: string }> => {
+    if (!currentUserId || !targetUserId || currentUserId === targetUserId) {
+        return { success: false, isFollowing: isCurrentlyFollowing, error: "Invalid user IDs" };
+    }
+
+    const followId = `${currentUserId}_${targetUserId}`;
+    const followDocRef = doc(db, COLLECTIONS.FOLLOWS, followId);
+    const notifId = `${currentUserId}_${targetUserId}_follow`;
+
+    try {
+        if (isCurrentlyFollowing) {
+            await deleteDoc(followDocRef);
+            await deleteDoc(doc(db, COLLECTIONS.NOTIFICATIONS, notifId)).catch((err) => {
+                console.warn("Could not delete follow notification:", err);
+            });
+            await updateDoc(doc(db, COLLECTIONS.PROFILES, targetUserId), {
+                followers: increment(-1),
+                followersCount: increment(-1),
+                updatedAt: serverTimestamp()
+            }).catch((err) => console.warn("Could not decrement target followers:", err));
+            await updateDoc(doc(db, COLLECTIONS.PROFILES, currentUserId), {
+                following: increment(-1),
+                followingCount: increment(-1),
+                updatedAt: serverTimestamp()
+            }).catch((err) => console.warn("Could not decrement user following:", err));
+            notifyFollowUpdated(targetUserId);
+            notifyFollowUpdated(currentUserId);
+            return { success: true, isFollowing: false };
+        } else {
+            await setDoc(followDocRef, {
+                followerId: currentUserId,
+                followingId: targetUserId,
+                createdAt: serverTimestamp()
+            });
+            await setDoc(doc(db, COLLECTIONS.NOTIFICATIONS, notifId), {
+                userId: targetUserId,
+                recipientId: targetUserId,
+                receiverId: targetUserId,
+                senderId: currentUserId,
+                senderName: senderInfo?.displayName || "Someone",
+                senderAvatar: senderInfo?.photoURL || "",
+                title: "New Connect",
+                body: `${senderInfo?.displayName || "Someone"} connected with you.`,
+                type: "follow",
+                notificationType: "follow",
+                isRead: false,
+                read: false,
+                createdAt: serverTimestamp(),
+                targetUrl: `/profile/${currentUserId}`
+            }, { merge: true });
+            await updateDoc(doc(db, COLLECTIONS.PROFILES, targetUserId), {
+                followers: increment(1),
+                followersCount: increment(1),
+                updatedAt: serverTimestamp()
+            }).catch((err) => console.warn("Could not increment target followers:", err));
+            await updateDoc(doc(db, COLLECTIONS.PROFILES, currentUserId), {
+                following: increment(1),
+                followingCount: increment(1),
+                updatedAt: serverTimestamp()
+            }).catch((err) => console.warn("Could not increment user following:", err));
+            notifyFollowUpdated(targetUserId);
+            notifyFollowUpdated(currentUserId);
+            return { success: true, isFollowing: true };
+        }
+    } catch (err: any) {
+        console.error("Error toggling follow:", err);
+        return { success: false, isFollowing: isCurrentlyFollowing, error: err.message };
+    }
 };
 
 export const fetchTalentsPaginated = async (lastVisibleDoc: DocumentSnapshot | null = null, pageSize: number = 20) => {

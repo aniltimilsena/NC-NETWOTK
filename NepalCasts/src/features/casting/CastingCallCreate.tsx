@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Plus,
-  X,
   Upload,
-  ChevronLeft,
   RotateCcw,
   Film,
   MapPin,
   Calendar,
   Mail,
   Check,
-  Sparkles,
+  Lightbulb,
   Camera,
   Shirt,
   Plane,
@@ -20,9 +18,7 @@ import {
   Clapperboard,
   CheckCircle2,
   ArrowRight,
-  Info,
-  Layers,
-  FileText
+  Layers
 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import GlassCard from '../../components/ui/GlassCard';
@@ -363,7 +359,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert, editId 
           user.uid,
           thumbnailFile,
           undefined,
-          `castings/${castingId}/poster.jpg`
+          `castings/${user.uid}/${castingId}/poster.jpg`
         );
         if (uploadedUrl) thumbnailUrl = uploadedUrl;
       }
@@ -373,7 +369,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert, editId 
           user.uid,
           horizontalThumbnailFile,
           undefined,
-          `castings/${castingId}/horizontal_banner.jpg`
+          `castings/${user.uid}/${castingId}/horizontal_banner.jpg`
         );
         if (uploadedBannerUrl) horizontalUrl = uploadedBannerUrl;
       }
@@ -556,7 +552,6 @@ export default function CastingCallCreate({ onNavigate, user, showAlert, editId 
         {/* Desktop Step Navigation */}
         <div className="hidden sm:grid grid-cols-4 gap-3 mb-8">
           {STEPS.map((s) => {
-            const Icon = s.icon;
             const isCurrent = s.id === step;
             const isCompleted = s.id < step;
             return (
@@ -728,7 +723,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert, editId 
 
                   {/* Production Pro Tip */}
                   <div className="bg-[#522C69]/10 border-0 rounded-xl p-3.5 flex items-start gap-2.5">
-                    <Sparkles className="w-4 h-4 text-[#C48AE8] shrink-0 mt-0.5" />
+                    <Lightbulb className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <p className="text-[11px] text-gray-300 leading-relaxed">
                       <strong className="text-white font-semibold">Pro Tip:</strong> Casting notices with clean, high-contrast poster artwork receive up to <span className="text-[#C48AE8] font-bold">3x more auditions</span> from seasoned performers.
                     </p>

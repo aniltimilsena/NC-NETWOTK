@@ -38,13 +38,13 @@ const ServerError = lazyWithRetry(() => import('../pages/ServerError'));
 import { db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
-const ProtectedRoute = ({ user, authReady, children }: any) => {
+export const ProtectedRoute = ({ user, authReady, children }: any) => {
   const location = useLocation();
   if (!authReady) return <div className="min-h-screen bg-nc-dark" />;
   return user ? (children || <Outlet />) : <Navigate to={`/signin?redirect_url=${encodeURIComponent(location.pathname + location.search)}`} replace />;
 };
 
-const AdminRoute = ({ user, isAdmin, authReady, children }: any) => {
+export const AdminRoute = ({ user, isAdmin, authReady, children }: any) => {
   const [isLiveAdmin, setIsLiveAdmin] = React.useState<boolean>(
     Boolean(isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin' || (user?.email && user.email.toLowerCase() === 'aniltimilsena53@gmail.com'))
   );

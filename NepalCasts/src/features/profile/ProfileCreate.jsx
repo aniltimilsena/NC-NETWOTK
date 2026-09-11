@@ -4,6 +4,7 @@ import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
 import { serverTimestamp } from 'firebase/firestore';
 import { CATEGORIES, getCategoryConfig } from '../../constants/categories';
+import { getOptimizedImageUrl } from '../../utils/media';
 
 const STEPS = [
     { id: 1, title: 'Basic Info', icon: '' },
@@ -109,7 +110,18 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                     <div className="flex items-center gap-6 p-5 bg-nc-surface border border-nc-border border-dashed rounded-xl relative overflow-hidden">
                                         <div className="w-20 h-20 rounded-xl bg-nc-card flex items-center justify-center text-nc-muted relative overflow-hidden">
                                             {form.photoURL ? (
-                                                <img src={form.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                                                <img
+                                                    src={getOptimizedImageUrl(form.photoURL, { width: 160, height: 160, crop: 'fill', quality: 'auto', format: 'auto' })}
+                                                    alt="Profile"
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        const target = e.currentTarget;
+                                                        target.onerror = null;
+                                                        target.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160' fill='none'%3E%3Crect width='160' height='160' fill='%23141414'/%3E%3Cpath d='M80 75a20 20 0 100-40 20 20 0 000 40zm-35 45c0-18 15-28 35-28s35 10 35 28v5H45v-5z' fill='%23522C69' fill-opacity='0.5'/%3E%3C/svg%3E";
+                                                    }}
+                                                />
                                             ) : (
                                                 <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -370,14 +382,13 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                             ...form,
                                             category: form.role,
                                             image: form.photoURL,
+                                            photoURL: form.photoURL,
+                                            profileImage: form.photoURL,
                                             name: form.name.trim(),
+                                            displayName: form.name.trim(),
+                                            email: user.email || '',
+                                            username: user.username || (user.email ? user.email.split('@')[0] : null),
                                             updatedAt: serverTimestamp(),
-                                            createdAt: serverTimestamp(),
-                                            verified: false,
-                                            followers: 0,
-                                            following: 0,
-                                            rating: 0,
-                                            reviews: 0
                                         };
                                         const { success, error } = await updateProfileData(user.uid, profileData);
                                         if (success) {

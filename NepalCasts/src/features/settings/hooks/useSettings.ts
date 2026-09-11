@@ -4,6 +4,7 @@ import { db } from '../../../lib/firebase';
 import { getProfile, updateProfileData } from '../../../services';
 import type { UserProfile, ServiceResult } from '../../../types';
 import { CurrentUser } from '../../../utils/CurrentUser';
+import { cacheManager } from '../../../utils/cacheManager';
 export function useSettings(currentUser: any) {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -62,13 +63,17 @@ export function useSettings(currentUser: any) {
             setLoadingSessions(false);
             return;
         }
-        const q = query(collection(db, 'profiles', currentUser.uid, 'sessions'));
-        const unsub = onSnapshot(q, (snap) => {
-            const list = snap.docs.map(docSnap => docSnap.data());
-            setSessions(list);
-            setLoadingSessions(false);
-        }, (err) => {
-            console.warn("Failed to subscribe to sessions:", err);
+        const unsub = cacheManager.subscribePooled(`user_sessions_${currentUser.uid}`, (pooledCb) => {
+            const q = query(collection(db, 'profiles', currentUser.uid, 'sessions'));
+            return onSnapshot(q, (snap) => {
+                const list = snap.docs.map(docSnap => docSnap.data());
+                pooledCb(list, null);
+            }, (err) => {
+                console.warn("Failed to subscribe to sessions:", err);
+                pooledCb([], err);
+            });
+        }, (list) => {
+            setSessions(list || []);
             setLoadingSessions(false);
         });
         return () => unsub();
@@ -78,13 +83,19 @@ export function useSettings(currentUser: any) {
             setLoadingBlocks(false);
             return;
         }
-        const unsub = onSnapshot(doc(db, 'users', currentUser.uid), async (snap) => {
-            if (!snap.exists()) {
+        const unsub = cacheManager.subscribePooled(`user_blocked_${currentUser.uid}`, (pooledCb) => {
+            return onSnapshot(doc(db, 'users', currentUser.uid), (snap) => {
+                pooledCb(snap.exists() ? snap.data() : null, null);
+            }, (err) => {
+                pooledCb(null, err);
+            });
+        }, async (userData) => {
+            if (!userData) {
                 setBlockedUsersList([]);
                 setLoadingBlocks(false);
                 return;
             }
-            const blockedIds = snap.data()?.blockedUsers || [];
+            const blockedIds = userData?.blockedUsers || [];
             if (blockedIds.length === 0) {
                 setBlockedUsersList([]);
                 setLoadingBlocks(false);

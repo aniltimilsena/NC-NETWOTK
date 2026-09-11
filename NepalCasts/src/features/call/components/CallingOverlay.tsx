@@ -114,6 +114,8 @@ export default function CallingOverlay() {
             if (isMounted && res.data) {
                 setRemoteProfile(res.data);
             }
+        }).catch((err) => {
+            console.warn('[CallingOverlay] Failed to load remote profile:', err);
         });
         return () => {
             isMounted = false;

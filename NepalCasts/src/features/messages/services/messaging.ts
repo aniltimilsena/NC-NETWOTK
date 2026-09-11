@@ -1,7 +1,5 @@
 import { db } from "../../../lib/firebase";
 import { AuthService } from "../../../services/AuthService";
-import { CurrentUser } from "../../../utils/CurrentUser";
-import { logger } from "../../../utils/logger";
 import { collection, doc, query, where, orderBy, onSnapshot, getDoc, getDocs, updateDoc, setDoc, addDoc, deleteDoc, serverTimestamp, arrayUnion, arrayRemove, runTransaction, } from "firebase/firestore";
 import apiClient from "../../../api/client";
 import { COLLECTIONS } from "../../../constants/collections";
@@ -40,14 +38,27 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
             return { success: false, error: "Authentication required" };
         }
         try {
-            const convoRef = doc(db, COLLECTIONS.CONVERSATIONS, convoId);
+            let targetConvoId = convoId;
+            // If caller passed a raw user ID instead of a conversation ID, derive deterministic conversation ID
+            if (targetConvoId && !targetConvoId.includes('_') && !targetConvoId.startsWith('app_') && targetConvoId !== currentUserUid) {
+                const directSnap = await getDoc(doc(db, COLLECTIONS.CONVERSATIONS, targetConvoId));
+                if (!directSnap.exists()) {
+                    targetConvoId = [currentUserUid, targetConvoId].sort().join('_');
+                }
+            }
+            const convoRef = doc(db, COLLECTIONS.CONVERSATIONS, targetConvoId);
             const convoSnap = await getDoc(convoRef);
             let participants: string[] = [];
             if (convoSnap.exists()) {
                 participants = convoSnap.data().participants || [];
             }
-            if (participants.length === 0 && convoId && convoId !== currentUserUid && !convoId.startsWith('app_')) {
-                participants = [currentUserUid, convoId];
+            if (participants.length === 0 && targetConvoId && !targetConvoId.startsWith('app_')) {
+                if (targetConvoId.includes('_')) {
+                    const parts = targetConvoId.split('_');
+                    if (parts.length === 2 && parts.includes(currentUserUid)) {
+                        participants = parts;
+                    }
+                }
             }
             const otherParticipantId = participants.find(p => p !== currentUserUid);
             if (otherParticipantId) {
@@ -68,7 +79,7 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
                     }
                 }
             }
-            await addDoc(collection(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES), {
+            await addDoc(collection(db, COLLECTIONS.CONVERSATIONS, targetConvoId, COLLECTIONS.MESSAGES), {
                 senderId: isSystem ? "system" : currentUserUid,
                 text,
                 type,
@@ -166,13 +177,13 @@ export const deleteMessage = async (convoId: string, messageId: string) => {
                     lastMessage: "",
                     lastMessageAt: null,
                     ...(uid ? { [`deletedFor.${uid}`]: true } : {})
-                }).catch(() => {});
+                }).catch((err) => console.warn("Could not clear empty conversation summary:", err));
             } else {
                 const latest = msgsSnap.docs[0].data();
                 await updateDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId), {
                     lastMessage: latest.text || "",
                     lastMessageAt: latest.createdAt || null
-                }).catch(() => {});
+                }).catch((err) => console.warn("Could not update conversation snippet:", err));
             }
             return { success: true, error: null };
         }
@@ -439,15 +450,15 @@ export const deleteConversation = async (convoId: string, currentUserId?: string
                     [`deletedFor.${uid}`]: true,
                     lastMessage: "",
                     lastMessageAt: null
-                }).catch(() => {});
+                });
             }
 
-            const msgsSnap = await getDocs(collection(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES)).catch(() => null);
+            const msgsSnap = await getDocs(collection(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES));
             if (msgsSnap && !msgsSnap.empty) {
-                await Promise.all(msgsSnap.docs.map(m => deleteDoc(m.ref))).catch(() => {});
+                await Promise.all(msgsSnap.docs.map(m => deleteDoc(m.ref)));
             }
 
-            await deleteDoc(convoRef).catch(() => {});
+            await deleteDoc(convoRef);
             return { success: true, error: null };
         }
         catch (fallbackError: any) {

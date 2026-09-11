@@ -124,7 +124,7 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
             {previewUrl && selectedFile && (
                 <div className="relative inline-block bg-[#1a1a1a] p-2 rounded-xl max-w-[200px] text-left animate-in fade-in zoom-in duration-200">
                     {selectedFile.type.startsWith('image/') ? (
-                        <img src={previewUrl} alt="Preview" className="max-w-[180px] max-h-[120px] rounded-lg object-cover" />
+                        <img src={previewUrl} alt="Preview" decoding="async" className="max-w-[180px] max-h-[120px] rounded-lg object-cover" />
                     ) : (
                         <video src={previewUrl} preload="metadata" className="max-w-[180px] max-h-[120px] rounded-lg object-cover" />
                     )}

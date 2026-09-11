@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, ShieldCheck, UserMinus, Trash2, ExternalLink, Activity, X, UserCheck, ShieldAlert, ShieldX, Mail } from 'lucide-react';
 import { db } from "../../lib/firebase";
 import { CurrentUser } from '../../utils/CurrentUser';
-import { collection, doc, updateDoc, setDoc, addDoc, serverTimestamp, getDocs, query, orderBy, limit, startAfter, endBefore, limitToLast, getCountFromServer } from "firebase/firestore";
-import { useNavigate } from 'react-router-dom';
+import { collection, doc, updateDoc, setDoc, addDoc, serverTimestamp, getDocs, query, where, orderBy, limit, startAfter, endBefore, limitToLast, getCountFromServer } from "firebase/firestore";
 import { logAdminAction } from '../../services';
 import apiClient from '../../api/client';
 import { CATEGORIES, getCategoryConfig } from '../../constants/categories';
@@ -33,10 +32,8 @@ export default function AdminUsers() {
     const [lastVisible, setLastVisible] = useState<any>(null);
     const [firstVisible, setFirstVisible] = useState<any>(null);
     const [totalPages, setTotalPages] = useState(1);
-    const [totalCount, setTotalCount] = useState(0);
     const [pageChangeDirection, setPageChangeDirection] = useState<'next' | 'prev' | null>(null);
     const pageSize = 10;
-    const navigate = useNavigate();
     const adminEmail = CurrentUser.email || '';
     const [confirmConfig, setConfirmConfig] = useState({
         isOpen: false,
@@ -143,50 +140,6 @@ export default function AdminUsers() {
             console.error("Failed to update user role:", err);
             const errMsg = err.response?.data?.error || err.message || "Failed to update user role";
             alert(errMsg);
-        }
-    };
-
-
-
-    const handleToggleVerification = async (userId: string, currentVerified: boolean) => {
-        try {
-            const targetVerified = !currentVerified;
-            await updateDoc(doc(db, "users", userId), { verified: targetVerified });
-            await updateDoc(doc(db, "profiles", userId), { verified: targetVerified });
-            setUsers(prev => prev.map(u => u.id === userId ? { ...u, verified: targetVerified } : u));
-            await logAdminAction(adminEmail, `Update Verification`, userId, targetVerified ? `Granted Verified Blue Badge` : `Revoked Verified Blue Badge`);
-            try {
-                await addDoc(collection(db, "notifications"), {
-                    userId: userId,
-                    recipientId: userId,
-                    receiverId: userId,
-                    senderId: "system",
-                    senderName: "NepalCasts Team",
-                    senderAvatar: "",
-                    title: targetVerified ? "Account Verified" : "Verification Status Updated",
-                    body: targetVerified
-                        ? "Congratulations! Your account has been officially verified with the Blue Badge."
-                        : "Your verification badge status has been updated by administration.",
-                    type: "system",
-                    notificationType: "system",
-                    isRead: false,
-                    read: false,
-                    createdAt: serverTimestamp(),
-                    targetUrl: `/profile/${userId}`,
-                    profileUrl: `/profile/${userId}`
-                });
-            }
-            catch (notifErr) {
-                console.warn("Could not send verification notification:", notifErr);
-            }
-            if (selectedUser?.id === userId) {
-                setSelectedUser(prev => prev ? { ...prev, verified: targetVerified } : null);
-            }
-            alert(targetVerified ? "Verified Blue Badge granted successfully!" : "Verified Blue Badge revoked!");
-        }
-        catch (err) {
-            console.error("Failed to update verification:", err);
-            alert("Error updating verification badge.");
         }
     };
 
@@ -309,12 +262,19 @@ export default function AdminUsers() {
             alert(`Invalid category selection. Must be one of the approved categories.`);
             return;
         }
+        const cleanEmail = email.trim().toLowerCase();
         try {
+            const existingQ = query(collection(db, "profiles"), where("email", "==", cleanEmail));
+            const existingSnap = await getDocs(existingQ).catch(() => null);
+            if (existingSnap && !existingSnap.empty) {
+                alert(`A profile with email "${cleanEmail}" already exists in the system.`);
+                return;
+            }
             const tempId = doc(collection(db, "users")).id;
             const createdAt = new Date();
             await setDoc(doc(db, "users", tempId), {
-                name,
-                email,
+                name: name.trim(),
+                email: cleanEmail,
                 role,
                 status: 'Active',
                 createdAt,
@@ -322,15 +282,15 @@ export default function AdminUsers() {
                 isAdmin: false
             });
             await setDoc(doc(db, "profiles", tempId), {
-                name,
-                email,
+                name: name.trim(),
+                email: cleanEmail,
                 role,
                 status: 'Active',
                 createdAt,
                 verified: false,
                 isAdmin: false
             });
-            await logAdminAction(adminEmail, `Create User`, tempId, `Created new user ${name} (${role})`);
+            await logAdminAction(adminEmail, `Create User`, tempId, `Created new user ${name.trim()} (${role})`);
             alert("User added successfully!");
         }
         catch (err) {
@@ -368,11 +328,9 @@ export default function AdminUsers() {
                 setUsers(data);
                 setFirstVisible(null);
                 setLastVisible(null);
-                setTotalCount(data.length);
             } else {
                 const countSnap = await getCountFromServer(collection(db, "users"));
                 const total = countSnap.data().count;
-                setTotalCount(total);
                 setTotalPages(Math.ceil(total / pageSize));
                 let q;
                 if (pageChangeDirection === 'next' && lastVisible) {

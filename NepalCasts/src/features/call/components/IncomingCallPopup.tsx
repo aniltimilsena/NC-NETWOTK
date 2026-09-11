@@ -17,6 +17,8 @@ export default function IncomingCallPopup() {
             if (isMounted && res.data) {
                 setCallerProfile(res.data);
             }
+        }).catch((err) => {
+            console.warn('[IncomingCallPopup] Failed to load caller profile:', err);
         });
         return () => {
             isMounted = false;

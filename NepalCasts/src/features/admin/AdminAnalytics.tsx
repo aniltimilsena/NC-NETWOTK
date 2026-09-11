@@ -11,7 +11,6 @@ export default function AdminAnalytics() {
         withApps: 0
     });
     const [topTalents, setTopTalents] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
     useEffect(() => {
         const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
             const docs = snap.docs.map(d => d.data());
@@ -23,7 +22,6 @@ export default function AdminAnalytics() {
             });
             const sorted = [...docs].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 3);
             setTopTalents(sorted);
-            setLoading(false);
         });
         return () => unsubUsers();
     }, []);

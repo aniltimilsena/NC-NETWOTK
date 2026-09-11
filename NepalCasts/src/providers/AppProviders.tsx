@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useDialog } from './DialogProvider';
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
-import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc, query, collection, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { signOut as firebaseSignOut, signInWithCustomToken } from 'firebase/auth';
 import { db, auth } from '../lib/firebase';
 import { AuthService } from '../services/AuthService';
@@ -12,11 +12,12 @@ import { isDefaultImage } from '../utils/avatars';
 import { PermissionProvider } from '../context/PermissionContext';
 import { CallProvider } from '../context/CallContext';
 import { preloadNotificationSound } from '../utils/notification-sound';
+import { cacheManager } from '../utils/cacheManager';
 import SplashScreen from '../components/SplashScreen';
 const CallingOverlay = lazy(() => import('../features/call/components/CallingOverlay'));
 const IncomingCallPopup = lazy(() => import('../features/call/components/IncomingCallPopup'));
 const UploadProgressModal = lazy(() => import('../components/ui/UploadProgressModal'));
-import { AnimatePresence, LazyMotion, domAnimation } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 
 export interface AppContextType {
     user: any;
@@ -37,13 +38,6 @@ export const useApp = () => {
     return context;
 };
 type AlertType = 'info' | 'success' | 'error' | 'logout';
-interface AlertPayload {
-    id: string;
-    message: string;
-    type: AlertType;
-    detail?: string;
-    onAction?: () => void;
-}
 export default function AppProviders({ children }: {
     children: React.ReactNode;
 }) {
@@ -125,16 +119,17 @@ export default function AppProviders({ children }: {
         return () => clearTimeout(timer);
     }, []);
     const showAlert = useCallback((message: string, type: AlertType = 'info', detail?: string, onAction?: () => void) => {
+        const description = detail ? `${message}\n${detail}` : message;
         if (type === 'success') {
-            showSuccessDialog("Success", message, onAction);
+            showSuccessDialog("Success", description, onAction);
         } else if (type === 'error') {
-            showErrorDialog("Error", message);
+            showErrorDialog("Error", description);
         } else if (type === 'logout') {
-            showWarningDialog("Signed Out", message, () => {
+            showWarningDialog("Signed Out", detail || message, () => {
                 if (onAction) onAction();
             });
         } else {
-            showConfirmDialog("Notice", message, () => {
+            showConfirmDialog("Notice", description, () => {
                 if (onAction) onAction();
             });
         }
@@ -236,12 +231,43 @@ export default function AppProviders({ children }: {
                         }
                     }
                     const userDocRef = doc(db, 'users', uid);
-                    const userDoc = await getDoc(userDocRef).catch(() => null);
+                    let userDoc = await getDoc(userDocRef).catch(() => null);
                     const profileDocRef = doc(db, 'profiles', uid);
-                    const profileDoc = await getDoc(profileDocRef).catch(() => null);
+                    let profileDoc = await getDoc(profileDocRef).catch(() => null);
 
-                    const userData = userDoc?.exists() ? userDoc.data() : null;
-                    const profileData = profileDoc?.exists() ? profileDoc.data() : null;
+                    let userData = userDoc?.exists() ? userDoc.data() : null;
+                    let profileData = profileDoc?.exists() ? profileDoc.data() : null;
+
+                    // Reconcile legacy or admin-provisioned documents created under a different ID for the same email
+                    if (!userData && !profileData && email) {
+                        try {
+                            const cleanEmail = email.toLowerCase().trim();
+                            const emailQuery = query(collection(db, 'profiles'), where('email', '==', cleanEmail));
+                            const emailSnap = await getDocs(emailQuery).catch(() => null);
+                            if (emailSnap && !emailSnap.empty) {
+                                const legacyDoc = emailSnap.docs.find(d => d.id !== uid);
+                                if (legacyDoc) {
+                                    profileData = legacyDoc.data();
+                                    const legacyUserSnap = await getDoc(doc(db, 'users', legacyDoc.id)).catch(() => null);
+                                    if (legacyUserSnap && legacyUserSnap.exists()) {
+                                        userData = legacyUserSnap.data();
+                                    }
+                                    // Mark legacy records as migrated to avoid orphaned/duplicate entries
+                                    const migrationPayload = {
+                                        linkedUid: uid,
+                                        canonicalUid: uid,
+                                        migratedTo: uid,
+                                        deactivated: true,
+                                        updatedAt: serverTimestamp(),
+                                    };
+                                    await setDoc(doc(db, 'profiles', legacyDoc.id), migrationPayload, { merge: true }).catch(() => {});
+                                    await setDoc(doc(db, 'users', legacyDoc.id), migrationPayload, { merge: true }).catch(() => {});
+                                }
+                            }
+                        } catch (_reconErr) {
+                            console.warn("Email profile reconciliation error:", _reconErr);
+                        }
+                    }
 
                     let hasAdminFlag =
                         userData?.isAdmin === true ||
@@ -258,11 +284,13 @@ export default function AppProviders({ children }: {
                     const rawExistingPhoto = profileData?.image || profileData?.photoURL || userData?.image || userData?.photoURL || photoURL;
                     const finalPhoto = isDefaultImage(rawExistingPhoto) ? '' : rawExistingPhoto;
                     const finalName = profileData?.name || profileData?.displayName || userData?.name || userData?.displayName || clerkName;
+                    const resolvedUsername = clerkUser?.username || profileData?.username || userData?.username || (email ? email.split('@')[0] : null);
 
                     const profilePayload: any = {
                         uid,
                         id: uid,
                         email,
+                        username: resolvedUsername,
                         name: finalName,
                         displayName: finalName,
                         fullName: finalName,
@@ -371,23 +399,32 @@ export default function AppProviders({ children }: {
         window.addEventListener('beforeunload', handleBeforeUnload);
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
-        // 2. Profile snapshot listener
-        const unsub = onSnapshot(doc(db, 'profiles', user.uid), async (snap) => {
-            if (snap.exists()) {
-                const data = snap.data();
-                setUserProfile(data);
-                if (data.deactivated === true) {
-                    try {
-                        await setDoc(doc(db, 'profiles', user.uid), {
-                            deactivated: false,
-                            updatedAt: serverTimestamp()
-                        }, { merge: true });
-                        showAlert('Welcome Back!', 'success', 'Your deactivated profile has been automatically reactivated.');
-                    }
-                    catch (err) {
-                        // Ignore automatic profile reactivation errors
+        // 2. Profile snapshot listener (pooled and throttled when tab is hidden > 45s)
+        const unsub = cacheManager.subscribePooled(`profile_doc_${user.uid}`, (pooledCb) => {
+            return onSnapshot(doc(db, 'profiles', user.uid), async (snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    pooledCb(data, null);
+                    if (data.deactivated === true) {
+                        try {
+                            await setDoc(doc(db, 'profiles', user.uid), {
+                                deactivated: false,
+                                updatedAt: serverTimestamp()
+                            }, { merge: true });
+                            showAlert('Welcome Back!', 'success', 'Your deactivated profile has been automatically reactivated.');
+                        }
+                        catch (err) {
+                            // Ignore automatic profile reactivation errors
+                        }
                     }
                 }
+            }, (err) => {
+                console.warn('Profile snapshot error in AppProviders:', err);
+                pooledCb(null, err);
+            });
+        }, (data) => {
+            if (data) {
+                setUserProfile(data);
             }
         });
 
@@ -407,8 +444,16 @@ export default function AppProviders({ children }: {
         await updateDoc(doc(db, 'profiles', uid), {
             image: newUrl || null,
             photoURL: newUrl || null,
+            profileImage: newUrl || null,
             updatedAt: serverTimestamp()
-        });
+        }).catch(() => {});
+        await setDoc(doc(db, 'users', uid), {
+            image: newUrl || null,
+            photoURL: newUrl || null,
+            profileImage: newUrl || null,
+            updatedAt: serverTimestamp()
+        }, { merge: true }).catch(() => {});
+        CurrentUser.setImageUrl(newUrl || null);
         setUser((prev: any) => prev ? { ...prev, photoURL: newUrl || '' } : null);
     }, [user?.uid]);
 
@@ -503,8 +548,7 @@ export default function AppProviders({ children }: {
     return (<PermissionProvider>
       <CallProvider user={enrichedUser}>
         <AppContext.Provider value={appContextValue}>
-          <LazyMotion features={domAnimation} strict={false}>
-            {user && userProfile?.deletionScheduled === true && (<div className="fixed inset-0 z-[99999] bg-[#0A0A0A]/95 backdrop-blur-md flex items-center justify-center p-6">
+          {user && userProfile?.deletionScheduled === true && (<div className="fixed inset-0 z-[99999] bg-[#0A0A0A]/95 backdrop-blur-md flex items-center justify-center p-6">
                 <div className="max-w-md w-full bg-[#111] border border-white/5 rounded-3xl p-8 text-center space-y-6">
                   <div className="space-y-2">
                     <h2 className="text-xl font-bold text-white">Account Scheduled for Deletion</h2>
@@ -529,7 +573,6 @@ export default function AppProviders({ children }: {
                 <UploadProgressModal />
               </Suspense>
             </div>
-          </LazyMotion>
         </AppContext.Provider>
       </CallProvider>
     </PermissionProvider>);

@@ -68,7 +68,7 @@ export const formatTime = (dateInput: Date | string | number, lang: string = 'en
 
 export const formatCurrency = (
   amount: number | string,
-  currency: string = 'NPR',
+  _currency: string = 'NPR',
   lang: string = 'en'
 ): string => {
   const n = typeof amount === 'number' ? amount : parseFloat(amount);

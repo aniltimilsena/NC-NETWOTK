@@ -13,7 +13,8 @@ import { Camera, Upload, Trash2 } from 'lucide-react';
 
 import ConfirmDialog from './ConfirmDialog';
 import CropModal from './CropModal';
-import { getOptimizedImageUrl, getAvatarOptimizedUrl } from '../../utils/media';
+import { getAvatarOptimizedUrl } from '../../utils/media';
+import { isDefaultImage } from '../../utils/avatars';
 interface AvatarProps {
     src?: string | null;
     size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | number | string;
@@ -30,7 +31,7 @@ interface AvatarProps {
     showAlert?: (message: string, type?: any) => void;
 }
 export default function Avatar(props: AvatarProps) {
-    const { src: propSrc, size = 'md', editable = false, name, className = '', verified = false, user: propUser, userId, showStatus = false, status = 'online' } = props;
+    const { src: propSrc, size = 'md', editable = false, name, className = '', verified: _verified = false, user: propUser, userId, showStatus: _showStatus = false, status: _status = 'online' } = props;
     const { user: clerkUser } = useUser();
     const user = propUser || null;
     const [imageError, setImageError] = useState(false);
@@ -43,53 +44,24 @@ export default function Avatar(props: AvatarProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imgRef = useRef<HTMLImageElement>(null);
     const targetId = userId || user?.id || user?.uid;
-    const isSelf = editable || Boolean(targetId && user?.uid && targetId === user.uid);
 
     const [liveSrc, setLiveSrc] = useState<string | null>(null);
-    const [liveName, setLiveName] = useState<string | undefined>(undefined);
-    const [liveGender, setLiveGender] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         if (!targetId) {
             setLiveSrc(null);
-            setLiveName(undefined);
-            setLiveGender(undefined);
             return;
         }
         const unsub = subscribeToProfile(targetId, (profileData) => {
             if (profileData) {
                 const latestSrc = (profileData.image || profileData.photoURL || profileData.profileImage || profileData.avatar || profileData.photo || null) as string | null;
                 setLiveSrc(latestSrc || ""); // empty string represents explicitly loaded but null
-                setLiveName(profileData.name as string | undefined);
-                setLiveGender(profileData.gender as string | undefined);
             } else {
                 setLiveSrc("");
-                setLiveName(undefined);
-                setLiveGender(undefined);
             }
         });
         return () => unsub();
     }, [targetId]);
-
-    const isDefaultImage = (url?: string | null) => {
-        if (!url || typeof url !== 'string' || url.trim() === '')
-            return true;
-        const lower = url.toLowerCase();
-        if (
-            lower.includes('default-avatar') ||
-            lower.includes('default-male') ||
-            lower.includes('default-female') ||
-            lower.includes('achyut.png') ||
-            lower.includes('img.clerk.com') ||
-            lower.includes('clerk.dev') ||
-            lower.includes('googleusercontent.com') ||
-            lower.includes('lh3.google') ||
-            lower.startsWith('data:image/svg+xml')
-        ) {
-            return true;
-        }
-        return false;
-    };
 
     const rawFallback = propSrc || user?.image || user?.photoURL || user?.profileImage || user?.avatar || user?.picture || user?.photo || null;
     const fallbackSrc = isDefaultImage(rawFallback) ? null : rawFallback;

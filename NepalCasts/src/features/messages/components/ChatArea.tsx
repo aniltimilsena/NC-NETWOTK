@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import { PhoneOff, VideoOff, Phone, Video, Check, Trash2, ChevronLeft, X, Pin, PinOff, Clock, Copy, Download, Share2, ExternalLink, FileText, CornerUpLeft, Forward } from 'lucide-react';
+import { PhoneOff, VideoOff, Phone, Video, Check, Trash2, ChevronLeft, X, Pin, PinOff, Clock, Copy, Download, ExternalLink, FileText, CornerUpLeft, Forward, ImageOff } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Avatar } from '../../../components/ui';
-import { saveImageDirectly } from '../../../utils/media';
+import { saveImageDirectly, getOptimizedImageUrl } from '../../../utils/media';
 import type { Message } from '../../../types';
 import { isUserOnline } from '../../../utils/presence';
 
@@ -56,6 +56,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
     const [activeActionMessage, setActiveActionMessage] = useState<Message | null>(null);
     const [popupPos, setPopupPos] = useState<{ top: number; left?: number; right?: number } | null>(null);
     const [forwardMsg, setForwardMsg] = useState<string | null>(null);
+    const [failedMediaUrls, setFailedMediaUrls] = useState<Record<string, boolean>>({});
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isLongPressActive = useRef(false);
     const isInitialMount = useRef(true);
@@ -373,21 +374,34 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                               const isVid = mediaUrl.includes('/video/upload/') || mediaUrl.match(/\.(mp4|webm|ogg|mov)/i) || msg.type === 'video';
 
                               if (isImg) {
+                                const isFailed = failedMediaUrls[mediaUrl];
                                 return (
-                                  <div key={mIdx} className="overflow-hidden rounded-xl aspect-square w-52 sm:w-64 max-w-full">
-                                    <img
-                                      src={mediaUrl}
-                                      alt="Attachment"
-                                      className="w-full h-full object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
-                                      onClick={(e) => {
-                                        if (isLongPressActive.current) {
-                                          e.preventDefault();
-                                          e.stopPropagation();
-                                          return;
-                                        }
-                                        setLightboxUrl(mediaUrl);
-                                      }}
-                                    />
+                                  <div key={mIdx} className="overflow-hidden rounded-xl aspect-square w-52 sm:w-64 max-w-full bg-white/5 border border-white/5 relative">
+                                    {isFailed ? (
+                                      <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-black/40 text-gray-400">
+                                        <ImageOff className="w-7 h-7 text-gray-500 mb-1.5" />
+                                        <span className="text-[11px] text-gray-400">Media unavailable</span>
+                                      </div>
+                                    ) : (
+                                      <img
+                                        src={getOptimizedImageUrl(mediaUrl, { width: 480, quality: 'auto', format: 'auto' })}
+                                        alt="Attachment"
+                                        loading="lazy"
+                                        decoding="async"
+                                        className="w-full h-full object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
+                                        onError={() => {
+                                          setFailedMediaUrls(prev => ({ ...prev, [mediaUrl]: true }));
+                                        }}
+                                        onClick={(e) => {
+                                          if (isLongPressActive.current) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            return;
+                                          }
+                                          setLightboxUrl(mediaUrl);
+                                        }}
+                                      />
+                                    )}
                                   </div>
                                 );
                               }
@@ -485,7 +499,12 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
       <AnimatePresence>
         {lightboxUrl && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setLightboxUrl(null)} className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out animate-in fade-in duration-200">
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="relative max-w-full max-h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-              <img src={lightboxUrl} alt="Fullscreen Preview" className="max-w-[90vw] max-h-[90vh] object-contain rounded-2xl shadow-2xl border border-white/10"/>
+              <img
+                src={getOptimizedImageUrl(lightboxUrl, { width: 1440, quality: 'auto', format: 'auto' })}
+                alt="Fullscreen Preview"
+                decoding="async"
+                className="max-w-[90vw] max-h-[90vh] object-contain rounded-2xl shadow-2xl border border-white/10"
+              />
               <button onClick={() => setLightboxUrl(null)} className="absolute -top-12 right-0 md:-top-4 md:-right-12 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer border border-white/5 active:scale-95" title="Close">
                 <X className="w-5 h-5"/>
               </button>

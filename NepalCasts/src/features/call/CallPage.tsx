@@ -14,7 +14,7 @@ interface CallPageProps {
   filter?: string;
 }
 
-export default function CallPage({ initialCallId, filter }: CallPageProps = {}) {
+export default function CallPage({ initialCallId: _initialCallId, filter: _filter }: CallPageProps = {}) {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { callState, activeCall, isMuted, callDuration, initiateCall, hangUp, toggleMute, currentUser } = useCall();

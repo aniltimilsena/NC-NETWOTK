@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { collection, query, where, onSnapshot, doc, deleteDoc, limit } from 'firebase/firestore';
-import { ChevronLeft, Trash2, MapPin, Clock, BookmarkX } from 'lucide-react';
+import { ChevronLeft, Trash2, MapPin, Clock, BookmarkX, AlertCircle } from 'lucide-react';
 import { getCastingCallById } from './services/casting';
 import { db } from '../../lib/firebase';
 import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 import Button from '../../components/ui/Button';
 import { SavedCallSkeleton } from '../../components/ui/Skeleton';
+import { getOptimizedImageUrl, getImageSrcSet } from '../../utils/media';
+import { cacheManager } from '../../utils/cacheManager';
+import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 
 const formatDeadlineDate = (deadlineStr) => {
   if (!deadlineStr) return 'No deadline';
@@ -65,9 +68,21 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
   const showToast = propShowToast || context?.showToast || ((msg) => console.log(msg));
   const [savedCalls, setSavedCalls] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [removing, setRemoving] = useState(null);
-  const [visibleLimit, setVisibleLimit] = useState(20);
+  const [visibleLimit, setVisibleLimit] = useState(16);
   const [hasMore, setHasMore] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleLimit(prev => prev + 16);
+  }, []);
+
+  const sentinelRef = useInfiniteScroll({
+    onLoadMore: handleLoadMore,
+    hasMore,
+    isLoading: loading,
+  });
 
   useEffect(() => {
     if (!currentUser?.uid) {
@@ -78,71 +93,79 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
       setLoading(false);
     }, 2500);
 
-    const q = query(collection(db, 'saved_calls'), where('userId', '==', currentUser.uid), limit(visibleLimit + 1));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      clearTimeout(timeoutId);
-      const getTimestampMs = (val) => {
-        if (!val) return 0;
-        if (typeof val.toMillis === 'function') return val.toMillis();
-        if (typeof val.seconds === 'number') return val.seconds * 1000;
-        if (val instanceof Date) return val.getTime();
-        const parsed = new Date(val).getTime();
-        return isNaN(parsed) ? 0 : parsed;
-      };
+    const unsubscribe = cacheManager.subscribePooled(`user_saved_calls_${currentUser.uid}_${visibleLimit}`, (pooledCb) => {
+      const q = query(collection(db, 'saved_calls'), where('userId', '==', currentUser.uid), limit(visibleLimit + 1));
+      return onSnapshot(q, async (snapshot) => {
+        const getTimestampMs = (val) => {
+          if (!val) return 0;
+          if (typeof val.toMillis === 'function') return val.toMillis();
+          if (typeof val.seconds === 'number') return val.seconds * 1000;
+          if (val instanceof Date) return val.getTime();
+          const parsed = new Date(val).getTime();
+          return isNaN(parsed) ? 0 : parsed;
+        };
 
-      const sortedDocs = [...snapshot.docs].sort((a, b) => {
-        const timeA = getTimestampMs(a.data().savedAt);
-        const timeB = getTimestampMs(b.data().savedAt);
-        return timeB - timeA;
-      });
+        const sortedDocs = [...snapshot.docs].sort((a, b) => {
+          const timeA = getTimestampMs(a.data().savedAt);
+          const timeB = getTimestampMs(b.data().savedAt);
+          return timeB - timeA;
+        });
 
-      const docsData = sortedDocs.map(d => ({ id: d.id, data: d.data() }));
-      const hasMoreData = docsData.length > visibleLimit;
-      const slicedDocs = hasMoreData ? docsData.slice(0, visibleLimit) : docsData;
-      setHasMore(hasMoreData);
-      
-      const castingIds = slicedDocs.map(item => item.data.castingId).filter(Boolean);
-      const uniqueCastingIds = Array.from(new Set(castingIds));
-      
-      const castingCallsMap = new Map();
-      
-      await Promise.all(uniqueCastingIds.map(async (id) => {
-        try {
-          const data = await getCastingCallById(id);
-          if (data) {
-            castingCallsMap.set(id, data);
+        const docsData = sortedDocs.map(d => ({ id: d.id, data: d.data() }));
+        const hasMoreData = docsData.length > visibleLimit;
+        const slicedDocs = hasMoreData ? docsData.slice(0, visibleLimit) : docsData;
+
+        const castingIds = slicedDocs.map(item => item.data.castingId).filter(Boolean);
+        const uniqueCastingIds = Array.from(new Set(castingIds));
+        
+        const castingCallsMap = new Map();
+        
+        await Promise.all(uniqueCastingIds.map(async (id) => {
+          try {
+            const data = await getCastingCallById(id);
+            if (data) {
+              castingCallsMap.set(id, data);
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch casting call ${id}:`, err);
           }
-        } catch (err) {
-          console.warn(`Failed to fetch casting call ${id}:`, err);
+        }));
+        
+        const savedData = [];
+        for (const item of slicedDocs) {
+          const castingData = castingCallsMap.get(item.data.castingId);
+          if (castingData) {
+            savedData.push({
+              saveId: item.id,
+              savedAt: item.data.savedAt,
+              castingId: item.data.castingId,
+              ...castingData,
+            });
+          } else {
+            deleteDoc(doc(db, 'saved_calls', item.id)).catch(err => console.warn(err));
+          }
         }
-      }));
-      
-      const savedData = [];
-      for (const item of slicedDocs) {
-        const castingData = castingCallsMap.get(item.data.castingId);
-        if (castingData) {
-          savedData.push({
-            saveId: item.id,
-            savedAt: item.data.savedAt,
-            castingId: item.data.castingId,
-            ...castingData,
-          });
-        } else {
-          deleteDoc(doc(db, 'saved_calls', item.id)).catch(err => console.warn(err));
-        }
-      }
-      setSavedCalls(savedData);
-      setLoading(false);
-    }, (error) => {
+        pooledCb({ savedData, hasMoreData }, null);
+      }, (err) => {
+        console.error("Saved casting calls subscription error:", err);
+        pooledCb(null, err);
+      });
+    }, (result, err) => {
       clearTimeout(timeoutId);
-      console.error("Saved casting calls subscription error:", error);
+      if (err) {
+        setError(err.message || 'Failed to load saved casting calls. Please check your connection.');
+      } else if (result) {
+        setError(null);
+        setHasMore(result.hasMoreData);
+        setSavedCalls(result.savedData || []);
+      }
       setLoading(false);
     });
     return () => {
       clearTimeout(timeoutId);
       unsubscribe();
     };
-  }, [currentUser?.uid, visibleLimit]);
+  }, [currentUser?.uid, visibleLimit, reloadKey]);
 
   const handleUnsave = async (saveId, castingTitle) => {
     try {
@@ -217,8 +240,26 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
             <SavedCallSkeleton count={3} />
           )}
 
+          {/* Error State */}
+          {error && savedCalls.length === 0 && (
+            <div className="py-16 text-center space-y-5 bg-red-500/10 rounded-xl border border-red-500/20 p-6 sm:p-10 mx-3 sm:mx-0">
+              <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto shadow-xl">
+                <AlertCircle className="w-8 h-8" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-lg sm:text-xl font-bold text-white">Failed to Load Saved Calls</h3>
+                <p className="text-xs sm:text-sm text-red-200 max-w-sm mx-auto leading-relaxed">
+                  {error}
+                </p>
+              </div>
+              <Button onClick={() => setReloadKey(k => k + 1)} variant="primary" size="lg" className="rounded-xl font-bold px-6 text-xs uppercase tracking-wider">
+                Try Again
+              </Button>
+            </div>
+          )}
+
           {/* Empty State */}
-          {!loading && savedCalls.length === 0 && (
+          {!loading && !error && savedCalls.length === 0 && (
             <div className="py-16 text-center space-y-5 bg-black rounded-xl border border-white/10 p-6 sm:p-10 mx-3 sm:mx-0">
               <div className="w-16 h-16 rounded-full bg-[#522C69]/10 text-[#522C69] flex items-center justify-center mx-auto shadow-xl">
                 <BookmarkX className="w-8 h-8" />
@@ -261,8 +302,12 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                     <div className="w-28 sm:w-40 md:w-44 self-stretch relative shrink-0 bg-[#121212] overflow-hidden flex items-center justify-center">
                       {bannerImage ? (
                         <img
-                          src={bannerImage}
+                          src={getOptimizedImageUrl(bannerImage, { width: 400, quality: 'auto', format: 'auto' })}
+                          srcSet={getImageSrcSet(bannerImage, [240, 400, 600])}
+                          sizes="(max-width: 640px) 112px, 176px"
                           alt={call.title}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
@@ -351,10 +396,14 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
               })}
 
               {hasMore && (
-                <div className="flex justify-center pt-3 pb-6">
+                <div ref={sentinelRef} className="flex flex-col items-center justify-center gap-2.5 pt-4 pb-8">
+                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                    <span className="w-4 h-4 border-2 border-[#522C69] border-t-transparent rounded-full animate-spin shrink-0" />
+                    <span>Loading more saved calls...</span>
+                  </div>
                   <button
-                    onClick={() => setVisibleLimit(prev => prev + 20)}
-                    className="px-6 py-2.5 rounded-full bg-[#1c1c1c] hover:bg-[#282828] border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer shadow-md"
+                    onClick={handleLoadMore}
+                    className="px-6 py-2.5 rounded-full bg-[#1c1c1c] hover:bg-[#282828] border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer shadow-md active:scale-95"
                   >
                     Load More
                   </button>

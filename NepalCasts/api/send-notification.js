@@ -4,6 +4,25 @@ if (!admin.apps.length) {
         projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'nc-network-10d0b'
     });
 }
+
+// In-process sliding-window rate limiter: 30 notifications per 60 seconds per sender UID
+const notifRateLimitMap = new Map();
+function checkNotifRateLimit(uid) {
+    const now = Date.now();
+    const windowMs = 60_000;
+    const maxRequests = 30;
+    const entry = notifRateLimitMap.get(uid) || { count: 0, windowStart: now };
+    if (now - entry.windowStart > windowMs) {
+        entry.count = 0;
+        entry.windowStart = now;
+    }
+    entry.count += 1;
+    notifRateLimitMap.set(uid, entry);
+    if (entry.count > maxRequests) {
+        return false;
+    }
+    return true;
+}
 export default async function handler(req, res) {
     const allowedOrigins = [
         'https://nc-netwotk.vercel.app',
@@ -41,6 +60,9 @@ export default async function handler(req, res) {
             return res.status(401).json({ error: 'Unauthorized: Invalid token' });
         }
         const senderId = decodedToken.uid;
+        if (!checkNotifRateLimit(senderId)) {
+            return res.status(429).json({ error: 'Too many notifications sent. Please wait before sending more.' });
+        }
         const { convoId, senderName, previewText, otherParticipants } = req.body;
         if (!convoId || typeof convoId !== 'string' || convoId.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(convoId) ||
             !senderName || typeof senderName !== 'string' || senderName.length > 100 ||

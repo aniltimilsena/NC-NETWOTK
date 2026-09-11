@@ -74,9 +74,6 @@ export default defineConfig({
           if (normId.includes('@firebase/auth') || normId.includes('firebase/auth')) {
             return 'vendor-firebase-auth';
           }
-          if (normId.includes('@firebase/functions') || normId.includes('firebase/functions')) {
-            return 'vendor-firebase-functions';
-          }
           if (normId.includes('firebase')) {
             return 'vendor-firebase-core';
           }
@@ -104,7 +101,7 @@ export default defineConfig({
           if (normId.includes('node_modules/@radix-ui/')) {
             return 'vendor-radix';
           }
-          if (normId.includes('node_modules/tailwind-merge/') || normId.includes('node_modules/clsx/') || normId.includes('node_modules/class-variance-authority/')) {
+          if (normId.includes('node_modules/tailwind-merge/') || normId.includes('node_modules/clsx/')) {
             return 'vendor-utils';
           }
           if (normId.includes('node_modules/browser-image-compression/')) {

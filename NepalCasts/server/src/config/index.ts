@@ -37,6 +37,9 @@ if (!admin.apps.length) {
             // ADC initialization failed; fallback to manual/dummy config next
         }
         if (!initialized) {
+            if (process.env.NODE_ENV === 'production') {
+                throw new Error("FATAL: Firebase Admin credentials (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) or Application Default Credentials (ADC) must be properly configured in production.");
+            }
             console.warn("Firebase Admin credentials are not fully configured in environment variables.");
             console.warn("Initializing Firebase Admin with dynamically generated dummy credentials for local startup.");
             const { privateKey: dummyPrivateKey } = crypto.generateKeyPairSync('rsa', {

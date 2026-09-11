@@ -50,7 +50,8 @@ async function verifyClerkToken(token: string): Promise<any | null> {
             verifier.update(`${parts[0]}.${parts[1]}`);
             const isValid = verifier.verify(publicKeyPem, Buffer.from(parts[2], 'base64url'));
             if (!isValid) return null;
-        } else if (!payload.sub) {
+        } else {
+            // Could not fetch or locate the public key — reject to avoid signature bypass
             return null;
         }
 
@@ -171,7 +172,7 @@ export const isAdmin = async (req: AuthedRequest, res: Response, next: NextFunct
         return;
     }
 
-    if (req.user?.admin === true || req.user?.email === 'aniltimilsena53@gmail.com') {
+    if (req.user?.admin === true) {
         next();
         return;
     }

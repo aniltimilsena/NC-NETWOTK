@@ -149,7 +149,7 @@ const uploadViaBackend = async (
 const uploadViaFirebaseStorage = async (
     file: File,
     resourceType: 'image' | 'video',
-    folder: string,
+    _folder: string,
     uid: string,
     onProgress: (percent: number) => void
 ): Promise<MediaUploadResult> => {
@@ -220,7 +220,10 @@ export const uploadMedia = async (
         throw new Error('No file selected');
     }
 
-    const uid = AuthService.getUserId() || 'public';
+    const uid = AuthService.getUserId();
+    if (!uid) {
+        throw new Error('Authentication required: Please sign in before uploading files.');
+    }
     const isVideo = file.type.startsWith('video/') || Boolean(file.name.match(/\.(mp4|mov|webm|mkv|avi|m4v|3gp)$/i));
     const resourceType: 'image' | 'video' = isVideo ? 'video' : 'image';
     const isChat = folder === 'chat';

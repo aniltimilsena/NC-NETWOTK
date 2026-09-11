@@ -10,7 +10,7 @@ const rateLimiter = createLimiterInstance({
 });
 export const rateLimitMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const ip = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown-ip';
+        const ip = req.ip || 'unknown-ip';
         await rateLimiter.consume(ip);
         next();
     }

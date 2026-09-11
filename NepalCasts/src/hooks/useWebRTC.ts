@@ -237,7 +237,6 @@ export function useWebRTC(): UseWebRTCReturn {
         return pc;
     }, [flushRemoteCandidates]);
     const startCall = useCallback(async (params: StartCallParams) => {
-        const t0 = performance.now();
         logger.log(`[PERF TIMING 1] T0: Call button pressed / startCall initiated`);
         try {
             setCallState("calling");

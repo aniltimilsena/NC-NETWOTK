@@ -1,23 +1,22 @@
 import { useState, useEffect, useMemo, useCallback, memo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { Search, X, MoreVertical, MoreHorizontal, Share2, ChevronLeft, MapPin } from 'lucide-react';
+import { Search, X, MoreVertical, MoreHorizontal, Share2, ChevronLeft, MapPin, AlertCircle } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
-import { db } from '../lib/firebase';
-import { collection, onSnapshot, query, doc, deleteDoc, setDoc, serverTimestamp, where } from 'firebase/firestore';
+import { useApp } from '../providers/AppProviders';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import Tag from '../components/ui/Tag';
-import TalentCardSkeleton from '../components/ui/TalentCardSkeleton';
-import { CategoryGridSkeleton } from '../components/ui/Skeleton';
+import { CategoryGridSkeleton, TalentCardSkeleton } from '../components/ui/Skeleton';
 import ShareSheet from '../components/ui/ShareSheet';
 import Desktop3ColumnLayout from '../components/layout/Desktop3ColumnLayout';
 import { CATEGORIES, getCategoryConfig, matchesCategory } from '../constants/categories';
 import { HOME_CATEGORY_CARDS, CategoryCardIcon } from '../components/ui/CategoryCards';
 import { cacheManager } from '../utils/cacheManager';
 import { formatRole, isDefaultImage } from '../utils';
-import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
+import { subscribeToTalents, subscribeToUserFollows, toggleFollowUser } from '../features/profile/services/users';
 import { prefetchProfile } from '../utils/prefetchRoute';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 
 const TalentListItem = memo(function TalentListItem({
     talent,
@@ -140,8 +139,11 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         displayName: clerkUser.fullName || [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.username || "Someone",
         photoURL: (clerkUser.imageUrl && !isDefaultImage(clerkUser.imageUrl)) ? clerkUser.imageUrl : "",
     } : null);
+    const { showToast } = useApp();
     const [talents, setTalents] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [reloadKey, setReloadKey] = useState(0);
     const [profilesReady, setProfilesReady] = useState(false);
     const [followingIds, setFollowingIds] = useState([]);
     const [viewMode, setViewMode] = useState(() => {
@@ -213,26 +215,22 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         }
     }, [initialCategory, initialMode]);
     useEffect(() => {
-        return subscribeToTalents((data) => {
-            setTalents(data);
+        setLoading(true);
+        setError(null);
+        return subscribeToTalents((data, err) => {
+            if (err) {
+                setError(err.message || 'Failed to load talents. Please check your connection.');
+            } else {
+                setError(null);
+                setTalents(data || []);
+            }
             setLoading(false);
         });
-    }, []);
+    }, [reloadKey]);
     useEffect(() => {
         const userId = clerkUser?.id;
         if (userId) {
-            return cacheManager.subscribePooled(`user_follows_${userId}`, (pooledCb) => {
-                const q = query(collection(db, "follows"), where("followerId", "==", userId));
-                return onSnapshot(q, (snapshot) => {
-                    const ids = snapshot.docs.map(doc => doc.data().followingId);
-                    pooledCb(ids, null);
-                }, (err) => {
-                    console.warn("Follows listener error:", err);
-                    pooledCb([], err);
-                });
-            }, (ids) => {
-                setFollowingIds(ids);
-            });
+            return subscribeToUserFollows(userId, setFollowingIds);
         } else {
             setFollowingIds([]);
         }
@@ -302,47 +300,28 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
             onNavigate('/signin');
             return;
         }
-        if (currentUser.uid === talentId) {
-            return;
-        }
-        const followId = `${currentUser.uid}_${talentId}`;
-        const followDocRef = doc(db, "follows", followId);
-        const notifId = `${currentUser.uid}_${talentId}_follow`;
+        const previousFollowing = followingIds;
         const isFollowing = followingIds.includes(talentId);
+        setFollowingIds(prev => isFollowing ? prev.filter(id => id !== talentId) : [...prev, talentId]);
         try {
-            if (isFollowing) {
-                await deleteDoc(followDocRef);
-                await deleteDoc(doc(db, "notifications", notifId)).catch(() => { });
+            const res = await toggleFollowUser({
+                currentUserId: currentUser.uid,
+                targetUserId: talentId,
+                isCurrentlyFollowing: isFollowing,
+                senderInfo: {
+                    displayName: currentUser.displayName || "Someone",
+                    photoURL: currentUser.photoURL || "",
+                }
+            });
+            if (res && res.success === false) {
+                throw new Error(res.error || 'Failed to update connection');
             }
-            else {
-                await setDoc(followDocRef, {
-                    followerId: currentUser.uid,
-                    followingId: talentId,
-                    createdAt: serverTimestamp()
-                });
-                await setDoc(doc(db, "notifications", notifId), {
-                    userId: talentId,
-                    recipientId: talentId,
-                    receiverId: talentId,
-                    senderId: currentUser.uid,
-                    senderName: currentUser.displayName || "Someone",
-                    senderAvatar: currentUser.photoURL || "",
-                    title: "New Connect",
-                    body: `${currentUser.displayName || "Someone"} connected with you.`,
-                    type: "follow",
-                    notificationType: "follow",
-                    isRead: false,
-                    read: false,
-                    createdAt: serverTimestamp(),
-                    targetUrl: `/profile/${currentUser.uid}`
-                }, { merge: true });
-            }
-            notifyFollowUpdated(talentId);
+        } catch (err) {
+            console.error("Error toggling follow in TalentListing:", err);
+            setFollowingIds(previousFollowing);
+            showToast?.('Failed to update connection. Please try again.', 'error');
         }
-        catch (err) {
-            console.error("Error toggling follow:", err);
-        }
-    }, [activeUser, followingIds, onNavigate]);
+    }, [activeUser, followingIds, onNavigate, showToast]);
 
     const filteredTalents = useMemo(() => {
         return talents
@@ -402,6 +381,17 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
         const allActive = talents.filter(t => !t.deactivated);
         return (featuredOnly.length > 0 ? featuredOnly : allActive).slice(0, 50);
     }, [talents]);
+
+    const handleLoadMore = useCallback(() => {
+        setVisibleCount(prev => Math.min(filteredTalents.length, prev + 12));
+    }, [filteredTalents.length]);
+
+    const hasMoreTalents = filteredTalents.length > visibleCount;
+    const sentinelRef = useInfiniteScroll({
+        onLoadMore: handleLoadMore,
+        hasMore: hasMoreTalents,
+        isLoading: loading || !profilesReady,
+    });
 
     return (
         <Desktop3ColumnLayout user={activeUser} onNavigate={onNavigate} activeNav="talent" featuredTalents={featuredTalents}>
@@ -550,7 +540,21 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                         </div>)}
 
 
-                        {loading ? (<TalentCardSkeleton count={8} />) : !profilesReady ? (<TalentCardSkeleton count={8} />) : filteredTalents.length === 0 ? (
+                        {error && talents.length === 0 ? (
+                            <div className="text-center py-16 px-4 bg-red-500/10 border border-red-500/20 rounded-[2rem] space-y-4">
+                                <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-white">Failed to Load Talents</h3>
+                                    <p className="text-xs text-red-200 max-w-sm mx-auto">{error}</p>
+                                </div>
+                                <button
+                                    onClick={() => setReloadKey(k => k + 1)}
+                                    className="px-6 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                                >
+                                    Try Again
+                                </button>
+                            </div>
+                        ) : loading ? (<TalentCardSkeleton count={8} />) : !profilesReady ? (<TalentCardSkeleton count={8} />) : filteredTalents.length === 0 ? (
                             <div className="text-center py-16 px-4 bg-[#111] border border-dashed border-white/10 rounded-[2rem] space-y-4">
                                 <Search className="w-12 h-12 text-gray-600 mx-auto" />
                                 <div className="space-y-1">
@@ -584,12 +588,16 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                 ))}
                             </div>
 
-                            {filteredTalents.length > visibleCount && (
-                                <div className="pt-4 pb-3 flex justify-center">
+                            {hasMoreTalents && (
+                                <div ref={sentinelRef} className="pt-6 pb-4 flex flex-col items-center justify-center gap-2.5">
+                                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                                        <span className="w-4 h-4 border-2 border-[#522C69] border-t-transparent rounded-full animate-spin shrink-0" />
+                                        <span>Loading more profiles...</span>
+                                    </div>
                                     <button
                                         type="button"
-                                        onClick={() => setVisibleCount(prev => prev + 12)}
-                                        className="px-6 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold tracking-wide uppercase transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer shadow-md"
+                                        onClick={handleLoadMore}
+                                        className="px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold tracking-wide uppercase transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer shadow-md"
                                     >
                                         Load more talents ({filteredTalents.length - visibleCount} remaining)
                                     </button>

@@ -21,7 +21,7 @@ export type GlobalSettings = {
     };
     categories: string[];
 };
-export const logAdminAction = async (adminEmail: string, action: string, targetId: string, details: string) => {
+export const logAdminAction = async (_adminEmail: string, action: string, targetId: string, details: string) => {
     try {
         await apiClient.post("/admin/log", { action, targetId, details });
     }

@@ -12,6 +12,11 @@ import SEO from '../../components/SEO';
 import Desktop3ColumnLayout from '../../components/layout/Desktop3ColumnLayout';
 import { CastingCallSkeleton } from '../../components/ui/Skeleton';
 import { getOptimizedImageUrl, getImageSrcSet } from '../../utils/media';
+import { isCastingCallClosed } from '../../utils';
+import { prefetchProfile } from '../../utils/prefetchRoute';
+import { useApp } from '../../providers/AppProviders';
+import { cacheManager } from '../../utils/cacheManager';
+import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 
 const formatDeadlineDate = (deadlineStr) => {
   if (!deadlineStr) return 'No deadline';
@@ -214,6 +219,8 @@ const CATEGORY_TABS = [
 
 export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' }) {
   const { t } = useTranslation();
+  const { showToast } = useApp();
+  const inFlightSavesRef = useRef(new Set());
   const [selectedCategoryTab, setSelectedCategoryTab] = useState('All');
   const [activeFilter, setActiveFilter] = useState(filter === 'my-calls' ? 'My Applications' : 'All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -236,8 +243,18 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('All');
   const [selectedPayStatus, setSelectedPayStatus] = useState('All');
-  const [visibleLimit, setVisibleLimit] = useState(20);
+  const [visibleLimit, setVisibleLimit] = useState(16);
   const [hasMore, setHasMore] = useState(true);
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleLimit(prev => prev + 16);
+  }, []);
+
+  const sentinelRef = useInfiniteScroll({
+    onLoadMore: handleLoadMore,
+    hasMore,
+    isLoading,
+  });
 
   const LOCATIONS = [
     'All',
@@ -285,10 +302,10 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
   useEffect(() => {
     setIsLoading(true);
     const unsubscribe = subscribeToCastingCalls('All', (data) => {
-      setCalls(data);
+      setCalls(data || []);
       setIsLoading(false);
-      setHasMore(data.length >= visibleLimit);
-    }, undefined, visibleLimit);
+      setHasMore(data ? data.length >= visibleLimit : false);
+    }, visibleLimit);
     return () => unsubscribe();
   }, [visibleLimit]);
 
@@ -301,15 +318,20 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
       setSavedIds([]);
       return;
     }
-    const q = query(
-      collection(db, "saved_calls"),
-      where("userId", "==", user.uid)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const ids = snap.docs.map(doc => doc.data().castingId);
-      setSavedIds(ids);
-    }, (err) => {
-      console.warn("Saved calls subscription failed:", err);
+    const unsub = cacheManager.subscribePooled(`user_saved_ids_${user.uid}`, (pooledCb) => {
+      const q = query(
+        collection(db, "saved_calls"),
+        where("userId", "==", user.uid)
+      );
+      return onSnapshot(q, (snap) => {
+        const ids = snap.docs.map(doc => doc.data().castingId);
+        pooledCb(ids, null);
+      }, (err) => {
+        console.warn("Saved calls subscription failed:", err);
+        pooledCb([], err);
+      });
+    }, (ids) => {
+      setSavedIds(ids || []);
     });
     return () => unsub();
   }, [user?.uid]);
@@ -319,15 +341,20 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
       setAppliedCastingIds([]);
       return;
     }
-    const q = query(
-      collection(db, "applications"),
-      where("userId", "==", user.uid)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const ids = snap.docs.map(doc => doc.data().castingId);
-      setAppliedCastingIds(ids);
-    }, (err) => {
-      console.warn("Applications subscription failed:", err);
+    const unsub = cacheManager.subscribePooled(`user_applied_ids_${user.uid}`, (pooledCb) => {
+      const q = query(
+        collection(db, "applications"),
+        where("userId", "==", user.uid)
+      );
+      return onSnapshot(q, (snap) => {
+        const ids = snap.docs.map(doc => doc.data().castingId);
+        pooledCb(ids, null);
+      }, (err) => {
+        console.warn("Applications subscription failed:", err);
+        pooledCb([], err);
+      });
+    }, (ids) => {
+      setAppliedCastingIds(ids || []);
     });
     return () => unsub();
   }, [user?.uid]);
@@ -336,6 +363,11 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
 
   const filteredCalls = calls
     .filter(call => {
+      // If the audition date is closed, don't show the casting call (unless viewing My Applications)
+      if (activeFilter !== 'My Applications' && isCastingCallClosed(call)) {
+        return false;
+      }
+
       const matchesSearch = !searchQuery ||
         call.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         call.production?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -413,6 +445,9 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
       onNavigate('signin');
       return;
     }
+    if (inFlightSavesRef.current.has(callId)) return;
+    inFlightSavesRef.current.add(callId);
+
     const isSaved = savedIds.includes(callId);
     // Optimistically update saved state immediately for instant feedback
     if (isSaved) {
@@ -447,11 +482,14 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
         setSavedIds(prev => prev.filter(id => id !== callId));
       }
       console.error("Error toggling save:", err);
+      showToast?.('Failed to update saved casting call. Please try again.', 'error');
+    } finally {
+      inFlightSavesRef.current.delete(callId);
     }
-  }, [user, savedIds, onNavigate]);
+  }, [user, savedIds, onNavigate, showToast]);
 
   return (
-    <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting" trendingCalls={calls}>
+    <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting" trendingCalls={calls.filter(c => !isCastingCallClosed(c))}>
       <div className="min-h-screen bg-[#141414] text-white relative font-sans pb-12">
         <SEO
           title="Casting Calls & Auditions | NepalCasts"
@@ -674,10 +712,14 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
                   />
                 ))}
                 {hasMore && (
-                  <div className="flex justify-center pt-3 pb-6">
+                  <div ref={sentinelRef} className="flex flex-col items-center justify-center gap-2.5 pt-4 pb-8">
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <span className="w-4 h-4 border-2 border-[#522C69] border-t-transparent rounded-full animate-spin shrink-0" />
+                      <span>Loading more auditions...</span>
+                    </div>
                     <button
-                      onClick={() => setVisibleLimit(prev => prev + 20)}
-                      className="px-6 py-2.5 rounded-full bg-[#1c1c1c] hover:bg-[#282828] border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer shadow-md"
+                      onClick={handleLoadMore}
+                      className="px-6 py-2.5 rounded-full bg-[#1c1c1c] hover:bg-[#282828] border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer shadow-md active:scale-95"
                     >
                       Load More
                     </button>

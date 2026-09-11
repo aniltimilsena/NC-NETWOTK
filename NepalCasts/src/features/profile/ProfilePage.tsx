@@ -15,6 +15,7 @@ import { updateProfileData, uploadProfileMedia } from '../../services';
 import { notifyProfileUpdated } from './services/users';
 import { isUserOnline } from '../../utils/presence';
 import { formatRole, isDefaultImage } from '../../utils';
+import { getOptimizedImageUrl, getImageSrcSet, getAvatarOptimizedUrl } from '../../utils/media';
 import { useUser } from '@clerk/clerk-react';
 import {
   Play,
@@ -151,7 +152,6 @@ export default function ProfilePage({
   // Media / Lightbox state
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [isReelPlaying, setIsReelPlaying] = useState(true);
   const reelVideoRef = useRef<HTMLVideoElement>(null);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [showAddMediaChoice, setShowAddMediaChoice] = useState(false);
@@ -188,7 +188,6 @@ export default function ProfilePage({
       reelVideoRef.current.pause();
     }
     setShowVideoModal(false);
-    setIsReelPlaying(true);
   };
 
   useEffect(() => {
@@ -217,9 +216,24 @@ export default function ProfilePage({
     setShowFollowModal(type);
     setLoadingFollowList(true);
     try {
-      const subcollectionName = type === 'followers' ? 'followers' : 'following';
-      const qSnap = await getDocs(collection(db, 'profiles', targetUid, subcollectionName));
-      const userIds = qSnap.docs.map((d) => d.id).filter(Boolean);
+      let userIds: string[] = [];
+      if (type === 'followers') {
+        const followsQ = query(collection(db, 'follows'), where('followingId', '==', targetUid));
+        const followsSnap = await getDocs(followsQ);
+        userIds = followsSnap.docs.map((d) => d.data().followerId).filter(Boolean);
+      } else {
+        const followsQ = query(collection(db, 'follows'), where('followerId', '==', targetUid));
+        const followsSnap = await getDocs(followsQ);
+        userIds = followsSnap.docs.map((d) => d.data().followingId).filter(Boolean);
+      }
+
+      // Fallback check for legacy subcollections
+      if (userIds.length === 0) {
+        const subSnap = await getDocs(collection(db, 'profiles', targetUid, type)).catch(() => null);
+        if (subSnap && !subSnap.empty) {
+          userIds = subSnap.docs.map((d) => d.id).filter(Boolean);
+        }
+      }
 
       if (userIds.length === 0) {
         setFollowList([]);
@@ -244,10 +258,20 @@ export default function ProfilePage({
           }
         })
       );
-      const result = userIds.map((id) => profileMap.get(id)).filter(Boolean);
+      const result = userIds.map((id) => {
+        const p = profileMap.get(id);
+        if (!p) return null;
+        return {
+          id,
+          name: p.name || p.displayName || 'Talent User',
+          image: p.image || p.photoURL || p.profileImage || '',
+          role: p.role || p.category || 'Actor',
+        };
+      }).filter(Boolean);
       setFollowList(result);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error('Error fetching follow list:', err);
+      showAlert?.('Failed to load user list. Please try again.', 'error');
     } finally {
       setLoadingFollowList(false);
     }
@@ -436,20 +460,27 @@ export default function ProfilePage({
   const handleDeleteMedia = async (urlToDelete: string) => {
     const uidToUse = profile?.uid || activeUserId || user?.uid;
     if (!uidToUse) return;
+    const previousProfile = profile;
     try {
       const updatedMedia = media.filter((url) => url !== urlToDelete);
       setProfile((prev: any) => (prev ? { ...prev, media: updatedMedia } : prev));
-      await updateProfileData(uidToUse, { media: updatedMedia });
+      const res = await updateProfileData(uidToUse, { media: updatedMedia });
+      if (res && res.success === false) {
+        throw new Error(res.error || 'Failed to remove photo');
+      }
       showAlert('Photo Removed', 'info');
       if (lightboxIndex !== null) setLightboxIndex(null);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error('Failed to remove photo:', err);
+      setProfile(previousProfile);
+      showAlert(err.message || 'Failed to remove photo. Please try again.', 'error');
     }
   };
 
   const handleDeleteIntroVideo = async () => {
     const uidToUse = profile?.uid || activeUserId || user?.uid;
     if (!uidToUse) return;
+    const previousProfile = profile;
     try {
       setProfile((prev: any) =>
         prev
@@ -462,16 +493,21 @@ export default function ProfilePage({
             }
           : prev
       );
-      await updateProfileData(uidToUse, {
+      const res = await updateProfileData(uidToUse, {
         introVideo: null,
         introVideoUrl: null,
         showreel: null,
         showreelUrl: null,
       });
+      if (res && res.success === false) {
+        throw new Error(res.error || 'Failed to remove video');
+      }
       showAlert('Video Removed', 'info');
       setShowVideoModal(false);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error('Failed to remove video:', err);
+      setProfile(previousProfile);
+      showAlert(err.message || 'Failed to remove video. Please try again.', 'error');
     }
   };
 
@@ -640,15 +676,6 @@ export default function ProfilePage({
       ? rawAvatarCandidate
       : null;
 
-  const getInitials = (nameStr?: string) => {
-    if (!nameStr) return 'AT';
-    const parts = nameStr.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return nameStr.slice(0, 2).toUpperCase();
-  };
-
   const getRolesText = (p: any) => {
     if (Array.isArray(p?.roles) && p.roles.length > 0) {
       return p.roles.join(' • ');
@@ -791,8 +818,10 @@ export default function ProfilePage({
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-b from-[#1E1E26] to-[#111116] border-2 border-white/10 shadow-xl overflow-hidden flex items-center justify-center select-none">
               {displayAvatar ? (
                 <img
-                  src={displayAvatar}
+                  src={getAvatarOptimizedUrl(displayAvatar, 'xl')}
                   alt={displayName}
+                  loading="lazy"
+                  decoding="async"
                   onError={() => setAvatarLoadFailed(true)}
                   className="w-full h-full object-cover rounded-full"
                 />
@@ -1048,9 +1077,18 @@ export default function ProfilePage({
                     className="w-48 h-64 sm:w-56 sm:h-72 md:w-60 md:h-80 rounded-2xl overflow-hidden bg-black border border-white/5 shrink-0 relative cursor-pointer group shadow-sm"
                   >
                     <img
-                      src={imgUrl}
+                      src={getOptimizedImageUrl(imgUrl, { width: 480, quality: 'auto', format: 'auto' })}
+                      srcSet={getImageSrcSet(imgUrl, [240, 480, 720])}
+                      sizes="(max-width: 640px) 192px, 240px"
                       alt={`Portfolio ${idx + 1}`}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        target.onerror = null;
+                        target.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Crect width='400' height='400' fill='%23141414'/%3E%3Crect x='20' y='20' width='360' height='360' rx='16' stroke='%23262626' stroke-width='2' stroke-dasharray='6 6'/%3E%3Cpath d='M160 170a20 20 0 100-40 20 20 0 000 40zm-30 80h140l-45-60-35 45-25-30-35 45z' fill='%23522C69' fill-opacity='0.4'/%3E%3Ctext x='200' y='280' font-family='sans-serif' font-size='13' font-weight='600' fill='%23737373' text-anchor='middle'%3ENC Media%3C/text%3E%3C/svg%3E";
+                      }}
                     />
                     {isLastInVisitorView && (
                       <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex flex-col items-center justify-center text-white">
@@ -1803,8 +1841,9 @@ export default function ProfilePage({
           )}
 
           <img
-            src={media[lightboxIndex]}
+            src={getOptimizedImageUrl(media[lightboxIndex], { width: 1440, quality: 'good', format: 'auto' })}
             alt={`Portfolio full ${lightboxIndex + 1}`}
+            decoding="async"
             className="max-h-[85vh] max-w-[90vw] object-contain rounded-xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />

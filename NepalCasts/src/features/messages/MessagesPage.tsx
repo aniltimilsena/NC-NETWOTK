@@ -21,7 +21,7 @@ interface MessagesPageProps {
 }
 import { useTranslation } from 'react-i18next';
 
-export default function MessagesPage({ onNavigate, user, initialUserId, initialConversationId, activeSubView, showAlert }: MessagesPageProps) {
+export default function MessagesPage({ onNavigate, user, initialUserId, initialConversationId, activeSubView: _activeSubView, showAlert }: MessagesPageProps) {
     const { t } = useTranslation();
     const { conversations, activeChatId, activeChat: hookActiveChat, setActiveChatId, messages, loading, typingUsers, callHistory, loadingCalls, updateTyping, dispatchMessage } = useMessages(user, initialConversationId || initialUserId || null);
     const { initiateCall } = useCall();

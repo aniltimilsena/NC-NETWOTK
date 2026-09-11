@@ -42,9 +42,6 @@ export default class ErrorBoundary extends Component<Props, State> {
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
         const errorMsg = error?.message || "";
-        const isChunkLoadFailed = errorMsg.includes("Failed to fetch dynamically imported module") ||
-            errorMsg.includes("Importing a module script failed") ||
-            errorMsg.includes("error loading dynamically imported module");
         let chunkUrl = "Unknown URL";
         const match = errorMsg.match(/https?:\/\/[^\s"']+/);
         if (match) {
@@ -93,14 +90,21 @@ export default class ErrorBoundary extends Component<Props, State> {
     }
 
     private handleReload = () => {
-        sessionStorage.clear();
+        try {
+            sessionStorage.clear();
+            localStorage.removeItem('nc_casting_draft');
+            localStorage.removeItem('nc_last_crash');
+        } catch (_e) {}
         const url = new URL(window.location.href);
         url.searchParams.set('reload', Date.now().toString());
         window.location.href = url.toString();
     };
 
     private handleGoBack = () => {
-        sessionStorage.clear();
+        try {
+            sessionStorage.clear();
+            localStorage.removeItem('nc_casting_draft');
+        } catch (_e) {}
         this.setState({ hasError: false, error: null, showDetails: false });
         window.history.back();
     };
@@ -145,12 +149,6 @@ export default class ErrorBoundary extends Component<Props, State> {
             }
 
             // In development, show developer diagnostics view
-            let localVersion = 'dev';
-            try {
-                localVersion = __BUILD_VERSION__;
-            } catch (_e) {
-                // Build version unavailable
-            }
 
             return (
                 <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center p-6 text-center relative overflow-hidden font-sans">

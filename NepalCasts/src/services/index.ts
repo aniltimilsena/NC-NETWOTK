@@ -1,5 +1,4 @@
 export * from '../features/admin/services/admin';
-export * from '../features/auth/services/auth';
 export * from '../features/call/services/call';
 export * from '../features/casting/services/casting';
 export * from '../features/messages/services/messaging';

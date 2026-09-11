@@ -2,19 +2,18 @@ import { useState, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Crown, Search, ChevronLeft, SlidersHorizontal, MapPin } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
-import { collection, onSnapshot, query, doc, deleteDoc, setDoc, serverTimestamp, where } from 'firebase/firestore';
-import { subscribeToTalents, notifyFollowUpdated } from '../features/profile/services/users';
+import { subscribeToTalents, subscribeToUserFollows, toggleFollowUser } from '../features/profile/services/users';
 import { prefetchProfile } from '../utils/prefetchRoute';
 import Avatar from '../components/ui/Avatar';
 import SEO from '../components/SEO';
 import { CATEGORIES, getCategoryConfig, matchesCategory } from '../constants/categories';
 import { formatRole, isDefaultImage } from '../utils';
-import { cacheManager } from '../utils/cacheManager';
 import { useTranslation } from 'react-i18next';
-import { db } from '../lib/firebase';
+import { useApp } from '../providers/AppProviders';
 
 export default function Trending({ onNavigate, user }) {
   const { t } = useTranslation();
+  const { showToast } = useApp();
   const { user: clerkUser } = useUser();
   const activeUser = user || (clerkUser ? {
     uid: clerkUser.id,
@@ -24,32 +23,30 @@ export default function Trending({ onNavigate, user }) {
   const [profiles, setProfiles] = useState([]);
   const [followingIds, setFollowingIds] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState('This Week');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
+  const [reloadKey, setReloadKey] = useState(0);
+
   useEffect(() => {
     setLoading(true);
-    return subscribeToTalents((data) => {
-      setProfiles(data);
+    setError(null);
+    return subscribeToTalents((data, err) => {
+      if (err) {
+        setError(err.message || 'Failed to load trending talents');
+      } else {
+        setError(null);
+        setProfiles(data || []);
+      }
       setLoading(false);
     });
-  }, []);
+  }, [reloadKey]);
   useEffect(() => {
     const userId = clerkUser?.id;
     if (userId) {
-      return cacheManager.subscribePooled(`user_follows_${userId}`, (pooledCb) => {
-        const q = query(collection(db, "follows"), where("followerId", "==", userId));
-        return onSnapshot(q, (snapshot) => {
-          const ids = snapshot.docs.map(doc => doc.data().followingId);
-          pooledCb(ids, null);
-        }, (err) => {
-          console.warn("Follows listener error:", err);
-          pooledCb([], err);
-        });
-      }, (ids) => {
-        setFollowingIds(ids);
-      });
+      return subscribeToUserFollows(userId, setFollowingIds);
     } else {
       setFollowingIds([]);
     }
@@ -128,8 +125,6 @@ export default function Trending({ onNavigate, user }) {
       return;
     }
     const isFollowing = followingIds.includes(talentId);
-    const followId = `${currentUser.uid}_${talentId}`;
-    const followDocRef = doc(db, "follows", followId);
     const prevFollowingIds = [...followingIds];
     const prevProfiles = [...profiles];
     setFollowingIds(prev => isFollowing
@@ -141,41 +136,22 @@ export default function Trending({ onNavigate, user }) {
       }
       return p;
     }));
-    const notifId = `${currentUser.uid}_${talentId}_follow`;
     try {
-      if (isFollowing) {
-        await deleteDoc(followDocRef);
-        await deleteDoc(doc(db, "notifications", notifId)).catch(() => {});
-      }
-      else {
-        await setDoc(followDocRef, {
-          followerId: currentUser.uid,
-          followingId: talentId,
-          createdAt: serverTimestamp()
-        });
-        await setDoc(doc(db, "notifications", notifId), {
-          userId: talentId,
-          recipientId: talentId,
-          receiverId: talentId,
-          senderId: currentUser.uid,
-          senderName: currentUser.displayName || "Someone",
-          senderAvatar: currentUser.photoURL || "",
-          title: "New Connect",
-          body: `${currentUser.displayName || "Someone"} connected with you.`,
-          type: "follow",
-          notificationType: "follow",
-          isRead: false,
-          read: false,
-          createdAt: serverTimestamp(),
-          targetUrl: `/profile/${currentUser.uid}`
-        }, { merge: true });
-      }
-      notifyFollowUpdated(talentId);
+      await toggleFollowUser({
+        currentUserId: currentUser.uid,
+        targetUserId: talentId,
+        isCurrentlyFollowing: isFollowing,
+        senderInfo: {
+          displayName: currentUser.displayName || "Someone",
+          photoURL: currentUser.photoURL || "",
+        }
+      });
     }
     catch (err) {
       console.error("Error toggling follow:", err);
       setFollowingIds(prevFollowingIds);
       setProfiles(prevProfiles);
+      showToast?.('Failed to update connection. Please try again.', 'error');
     }
   };
   const rankedProfiles = profiles
@@ -286,7 +262,19 @@ export default function Trending({ onNavigate, user }) {
         </div>
       </div>
 
-      {loading ? (<div className="space-y-12">
+      {error && profiles.length === 0 ? (
+        <div className="max-w-md mx-auto py-16 px-4 text-center">
+          <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-white space-y-4">
+            <p className="text-sm text-red-200">{error}</p>
+            <button
+              onClick={() => setReloadKey(k => k + 1)}
+              className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      ) : loading ? (<div className="space-y-12">
 
         {selectedCategory === 'All' && (<div className="hidden md:flex justify-center items-end gap-6 max-w-4xl mx-auto pt-8 pb-4 relative">
 

@@ -3,6 +3,7 @@ import { doc, getDoc, collection, query, where, getDocs, onSnapshot, setDoc, del
 import { db, auth } from '../../../lib/firebase';
 import type { UserProfile, ServiceResult } from '../../../types';
 import { CurrentUser } from '../../../utils/CurrentUser';
+import { cacheManager } from '../../../utils/cacheManager';
 export function useProfile(profileId: string | null, currentUser: any) {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [resolvedUid, setResolvedUid] = useState<string | null>(null);
@@ -102,30 +103,6 @@ export function useProfile(profileId: string | null, currentUser: any) {
                     return;
                 }
 
-                // 3b. Name / DisplayName / Production matching
-                const nameQueries = [
-                    query(collection(db, "profiles"), where("displayName", "==", profileId)),
-                    query(collection(db, "profiles"), where("name", "==", profileId)),
-                    query(collection(db, "users"), where("displayName", "==", profileId)),
-                    query(collection(db, "users"), where("name", "==", profileId)),
-                    query(collection(db, "profiles"), where("production", "==", profileId)),
-                ];
-                for (const nq of nameQueries) {
-                    try {
-                        const nSnap = await getDocs(nq);
-                        if (!nSnap.empty) {
-                            const docData = nSnap.docs[0].data();
-                            const realUid = docData.uid || docData.userId || nSnap.docs[0].id;
-                            if (isMounted) {
-                                setResolvedUid(realUid);
-                                setResolvingUid(false);
-                            }
-                            return;
-                        }
-                    } catch (_e) {
-                        // ignore query error
-                    }
-                }
 
                 // 4. Local cache check
                 try {
@@ -136,7 +113,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
                             const match = saved.find((t: any) => {
                                 const tUid = t.uid || t.id;
                                 const tUser = (t.username || '').toLowerCase().trim();
-                                return tUid === profileId || (cleanUser && tUser === cleanUser);
+                                return tUid === profileId || (Boolean(cleanUser && tUser) && tUser === cleanUser);
                             });
                             if (match && (match.uid || match.id)) {
                                 const matchedUid = match.uid || match.id;
@@ -227,17 +204,25 @@ export function useProfile(profileId: string | null, currentUser: any) {
             setResolvingUid(false);
         };
 
-        const unsubProfile = onSnapshot(doc(db, "profiles", targetUid), (pSnap) => {
-            pData = pSnap.exists() ? pSnap.data() : {};
-            handleMerge();
-        }, () => {
+        const unsubProfile = cacheManager.subscribePooled(`profile_doc_${targetUid}`, (pooledCb) => {
+            return onSnapshot(doc(db, "profiles", targetUid), (pSnap) => {
+                pooledCb(pSnap.exists() ? pSnap.data() : {}, null);
+            }, () => {
+                pooledCb({}, null);
+            });
+        }, (data) => {
+            pData = data || {};
             handleMerge();
         });
 
-        const unsubUser = onSnapshot(doc(db, "users", targetUid), (uSnap) => {
-            uData = uSnap.exists() ? uSnap.data() : {};
-            handleMerge();
-        }, () => {
+        const unsubUser = cacheManager.subscribePooled(`user_doc_${targetUid}`, (pooledCb) => {
+            return onSnapshot(doc(db, "users", targetUid), (uSnap) => {
+                pooledCb(uSnap.exists() ? uSnap.data() : {}, null);
+            }, () => {
+                pooledCb({}, null);
+            });
+        }, (data) => {
+            uData = data || {};
             handleMerge();
         });
 
@@ -252,38 +237,31 @@ export function useProfile(profileId: string | null, currentUser: any) {
         };
     }, [targetUid, currentUser?.uid, currentUser?.id]);
 
-    const candidateIds = Array.from(new Set([
-        profile?.uid,
-        (profile as any)?.id,
-        resolvedUid,
-        profileId,
-        profileId?.replace(/^@/, ''),
-        currentUser?.uid,
-        currentUser?.id,
-        targetUid
-    ].filter(Boolean))) as string[];
-
     useEffect(() => {
         if (!targetUid) return;
         const qFollowers = query(collection(db, "follows"), where("followingId", "==", targetUid));
         // eslint-disable-next-line no-secrets/no-secrets
         const mockFollowerUids = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', targetUid]);
-        const unsubFollowers = onSnapshot(qFollowers, (snap) => {
-            const validDocs = snap.docs.filter(d => {
-                const data = d.data();
-                return data.followerId && !mockFollowerUids.has(data.followerId);
-            });
-            setFollowerCount(validDocs.length);
-        }, () => setFollowerCount(0));
+        const unsubFollowers = cacheManager.subscribePooled(`followers_count_${targetUid}`, (pooledCb) => {
+            return onSnapshot(qFollowers, (snap) => {
+                const validDocs = snap.docs.filter((d: any) => {
+                    const data = d.data();
+                    return data.followerId && !mockFollowerUids.has(data.followerId);
+                });
+                pooledCb(validDocs.length, null);
+            }, () => pooledCb(0, null));
+        }, (count) => setFollowerCount(count || 0));
 
         const qFollowing = query(collection(db, "follows"), where("followerId", "==", targetUid));
-        const unsubFollowing = onSnapshot(qFollowing, (snap) => {
-            const validDocs = snap.docs.filter(d => {
-                const data = d.data();
-                return data.followingId && data.followingId !== targetUid;
-            });
-            setFollowingCount(validDocs.length);
-        }, () => setFollowingCount(0));
+        const unsubFollowing = cacheManager.subscribePooled(`following_count_${targetUid}`, (pooledCb) => {
+            return onSnapshot(qFollowing, (snap) => {
+                const validDocs = snap.docs.filter((d: any) => {
+                    const data = d.data();
+                    return data.followingId && data.followingId !== targetUid;
+                });
+                pooledCb(validDocs.length, null);
+            }, () => pooledCb(0, null));
+        }, (count) => setFollowingCount(count || 0));
 
         // Auto-cleanup mock follow documents if logged-in user is targetUid
         if (currentUser?.uid && currentUser.uid === targetUid) {
@@ -308,8 +286,12 @@ export function useProfile(profileId: string | null, currentUser: any) {
             return;
         }
         const followDocRef = doc(db, "follows", `${currentUser.uid}_${targetUid}`);
-        const unsub = onSnapshot(followDocRef, (snap) => {
-            setIsFollowing(snap.exists());
+        const unsub = cacheManager.subscribePooled(`follow_rel_${currentUser.uid}_${targetUid}`, (pooledCb) => {
+            return onSnapshot(followDocRef, (snap) => {
+                pooledCb(snap.exists(), null);
+            }, () => pooledCb(false, null));
+        }, (exists) => {
+            setIsFollowing(Boolean(exists));
         });
         return () => unsub();
     }, [currentUser?.uid, targetUid]);
@@ -410,7 +392,7 @@ export function useProfile(profileId: string | null, currentUser: any) {
             else {
                 setContactInfo(null);
             }
-        }, (err) => {
+        }, () => {
             setContactInfo(null);
         });
         return () => unsub();

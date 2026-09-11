@@ -22,7 +22,7 @@ export const db = initializeFirestore(app, {
     })
 });
 
-// Dynamic/lazy loaders for heavy optional services (loaded strictly on-demand if invoked)
+// Dynamic/lazy loader for storage (loaded strictly on-demand if invoked)
 let storageInstance: any = null;
 export const getStorageInstance = async () => {
     if (!storageInstance) {
@@ -31,30 +31,5 @@ export const getStorageInstance = async () => {
     }
     return storageInstance;
 };
-
-let functionsInstance: any = null;
-export const getFunctionsInstance = async () => {
-    if (!functionsInstance) {
-        const { getFunctions } = await import("firebase/functions");
-        functionsInstance = getFunctions(app);
-    }
-    return functionsInstance;
-};
-
-let rtdbInstance: any = null;
-export const getRTDBInstance = async () => {
-    if (!rtdbInstance) {
-        const { getDatabase } = await import("firebase/database");
-        rtdbInstance = getDatabase(app);
-    }
-    return rtdbInstance;
-};
-
-// Fallback stubs for backwards compatibility
-export const rtdb = null as any;
-export const storage = null as any;
-export const functions = null as any;
-export const messaging = null as any;
-export const analytics = null as any;
 
 export default app;
