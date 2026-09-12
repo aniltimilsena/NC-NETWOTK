@@ -436,7 +436,10 @@ export const toggleFollowUser = async (
         }
     } catch (err: any) {
         console.error("Error toggling follow:", err);
-        return { success: false, isFollowing: isCurrentlyFollowing, error: err.message };
+        const errMsg = err?.message?.includes("permissions")
+            ? "Unable to update connection. Please try again."
+            : (err?.message || "Failed to update connection");
+        return { success: false, isFollowing: isCurrentlyFollowing, error: errMsg };
     }
 };
 

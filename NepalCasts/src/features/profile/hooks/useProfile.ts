@@ -4,6 +4,7 @@ import { db, auth } from '../../../lib/firebase';
 import type { UserProfile, ServiceResult } from '../../../types';
 import { CurrentUser } from '../../../utils/CurrentUser';
 import { cacheManager } from '../../../utils/cacheManager';
+import { toggleFollowUser } from '../services/users';
 export function useProfile(profileId: string | null, currentUser: any) {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [resolvedUid, setResolvedUid] = useState<string | null>(null);
@@ -350,30 +351,31 @@ export function useProfile(profileId: string | null, currentUser: any) {
         };
     }, [isOwnProfile, currentUser?.uid]);
     const toggleFollow = useCallback(async (): Promise<ServiceResult> => {
-        if (!currentUser || !targetUid) {
+        if (!currentUser?.uid || !targetUid) {
             return { success: false, error: "Authentication required" };
         }
         if (currentUser.uid === targetUid) {
-            return { success: false, error: "Cannot follow yourself" };
+            return { success: false, error: "Cannot connect with yourself" };
         }
-        const followId = `${currentUser.uid}_${targetUid}`;
-        const followDocRef = doc(db, "follows", followId);
         try {
-            if (isFollowing) {
-                await deleteDoc(followDocRef);
+            const res = await toggleFollowUser({
+                currentUserId: currentUser.uid,
+                targetUserId: targetUid,
+                isCurrentlyFollowing: Boolean(isFollowing),
+                senderInfo: {
+                    displayName: currentUser.displayName || currentUser.name || "Someone",
+                    photoURL: currentUser.photoURL || currentUser.image || "",
+                }
+            });
+            if (res.success) {
+                setIsFollowing(res.isFollowing);
+                setFollowerCount(prev => res.isFollowing ? prev + 1 : Math.max(0, prev - 1));
                 return { success: true, error: null };
             }
-            else {
-                await setDoc(followDocRef, {
-                    followerId: currentUser.uid,
-                    followingId: targetUid,
-                    createdAt: serverTimestamp(),
-                });
-                return { success: true, error: null };
-            }
+            return { success: false, error: res.error || "Failed to update connection" };
         }
         catch (err: any) {
-            return { success: false, error: err.message || "Failed to update follow status" };
+            return { success: false, error: err.message || "Failed to update connection" };
         }
     }, [currentUser, targetUid, isFollowing]);
     useEffect(() => {

@@ -282,44 +282,9 @@ export default function ProfilePage({
       onNavigate('signin');
       return;
     }
-    const notifId = `${user.uid}_${targetUid}_follow`;
     const res = await toggleFollow();
-    if (res.success) {
-      if (!isFollowing && targetUid) {
-        try {
-          await setDoc(
-            doc(db, 'notifications', notifId),
-            {
-              userId: targetUid,
-              recipientId: targetUid,
-              receiverId: targetUid,
-              senderId: user.uid,
-              notificationType: 'follow',
-              type: 'follow',
-              isRead: false,
-              read: false,
-              createdAt: serverTimestamp(),
-              profileUrl: `/profile/${user.uid}`,
-              targetUrl: `/profile/${user.uid}`,
-              title: 'New Connect',
-              body: `${user.displayName || 'Someone'} connected with you.`,
-              senderName: user.displayName || 'Someone',
-              senderAvatar: user.photoURL || '',
-            },
-            { merge: true }
-          );
-        } catch (err) {
-          console.warn('Could not dispatch follow notification:', err);
-        }
-      } else if (isFollowing && targetUid) {
-        try {
-          await deleteDoc(doc(db, 'notifications', notifId));
-        } catch (err) {
-          console.warn('Could not remove follow notification:', err);
-        }
-      }
-    } else {
-      showAlert(res.error || 'Failed to update follow status', 'error');
+    if (!res.success) {
+      showAlert(res.error || 'Failed to update connection', 'error');
     }
   };
 
