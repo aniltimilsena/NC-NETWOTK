@@ -244,7 +244,7 @@ export default function ChatSidebar({
         {filteredConversations.length > 0 ? (
           <div className="flex flex-col divide-y divide-white/[0.03]">
             {filteredConversations.map((c) => {
-              const isSelected = c.id === activeChatId;
+              const isSelected = c.id === activeChatId || c.otherParticipantId === activeChatId;
               const unreadCount = c.unreadCounts?.[currentUser?.uid] || 0;
               const timeString = formatChatTime(c.lastMessageAt || c.updatedAt);
               const isAppConvo = Boolean(

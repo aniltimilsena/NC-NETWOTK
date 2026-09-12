@@ -375,7 +375,12 @@ export default function ProfileHeader({
                     </button>
                     <button
                       type="button"
-                      onClick={() => onNavigate('messages', profile.uid || (profile as any)?.id)}
+                      onClick={() => {
+                        const effectiveRecipientId = profile.uid || (profile as any)?.id || (profile as any)?.userId || (profile as any)?.canonicalUid || (profile as any)?.linkedUid || profile.username;
+                        if (effectiveRecipientId) {
+                          onNavigate('messages', effectiveRecipientId);
+                        }
+                      }}
                       className="px-6 py-2 min-w-[115px] rounded-xl bg-[#262626] hover:bg-[#333333] text-white font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <MessageSquare className="w-4 h-4" />
@@ -594,7 +599,12 @@ export default function ProfileHeader({
 
                   <button
                     type="button"
-                    onClick={() => onNavigate('messages', profile.uid || (profile as any)?.id)}
+                    onClick={() => {
+                      const effectiveRecipientId = profile.uid || (profile as any)?.id || (profile as any)?.userId || (profile as any)?.canonicalUid || (profile as any)?.linkedUid || profile.username;
+                      if (effectiveRecipientId) {
+                        onNavigate('messages', effectiveRecipientId);
+                      }
+                    }}
                     className="h-7 px-4 sm:px-5 min-w-[100px] sm:min-w-[115px] rounded-lg bg-[#262626] hover:bg-[#333333] text-white font-semibold text-xs sm:text-[13px] transition-colors cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />

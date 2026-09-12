@@ -910,7 +910,12 @@ export default function ProfilePage({
             </button>
             <button
               type="button"
-              onClick={() => onNavigate('messages', targetUid)}
+              onClick={() => {
+                const effectiveRecipientId = profile?.uid || (profile as any)?.id || (profile as any)?.userId || (profile as any)?.canonicalUid || (profile as any)?.linkedUid || profile?.username || targetUid || profileId;
+                if (effectiveRecipientId) {
+                  onNavigate('messages', effectiveRecipientId);
+                }
+              }}
               className="flex-1 py-3 rounded-2xl bg-[#141416] hover:bg-[#1a1a1e] border border-white/5 text-white font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
             >
               <MessageSquare className="w-4 h-4" />
@@ -1674,7 +1679,10 @@ export default function ProfilePage({
                       type="button"
                       onClick={() => {
                         setShowContactModal(false);
-                        onNavigate('messages', targetUid);
+                        const effectiveRecipientId = profile?.uid || (profile as any)?.id || (profile as any)?.userId || (profile as any)?.canonicalUid || (profile as any)?.linkedUid || profile?.username || targetUid || profileId;
+                        if (effectiveRecipientId) {
+                          onNavigate('messages', effectiveRecipientId);
+                        }
                       }}
                       className="text-xs font-semibold text-[#8f64f8] hover:text-[#a785fc] transition-colors cursor-pointer"
                     >

@@ -9,6 +9,52 @@ import { cacheManager } from '../../../utils/cacheManager';
 import { isUserOnline } from '../../../utils/presence';
 import { getSavedRealTalents } from '../../profile/services/users';
 
+export const getResolvedTargetId = (rawId: string): string => {
+    if (!rawId) return '';
+    const clean = rawId.replace(/^@/, '').toLowerCase().trim();
+    const talents = getSavedRealTalents();
+    const found = talents.find((t: any) => {
+        const tUid = t.uid || t.id;
+        const tUser = (t.username || '').toLowerCase().trim();
+        const tName = (t.name || '').toLowerCase().trim();
+        return tUid === rawId || (Boolean(clean && tUser) && tUser === clean) || (Boolean(clean && tName) && tName === clean);
+    });
+    return found?.uid || found?.id || rawId;
+};
+
+export const findExistingConvo = (targetId: string | null, currentUid: string | null, convos: any[]): any | null => {
+    if (!targetId || !convos || convos.length === 0) return null;
+    const realTargetId = getResolvedTargetId(targetId);
+    const cleanTarget = targetId.replace(/^@/, '').toLowerCase().trim();
+    const cleanReal = realTargetId.replace(/^@/, '').toLowerCase().trim();
+    const deterministicId = currentUid ? [currentUid, realTargetId].sort().join('_') : null;
+    const rawDeterministicId = currentUid ? [currentUid, targetId].sort().join('_') : null;
+
+    return convos.find((c: any) => {
+        if (!c) return false;
+        // Direct ID match
+        if (c.id === targetId || c.id === realTargetId) return true;
+        if (deterministicId && c.id === deterministicId) return true;
+        if (rawDeterministicId && c.id === rawDeterministicId) return true;
+
+        // Participant ID match
+        if (c.otherParticipantId === targetId || c.otherParticipantId === realTargetId) return true;
+        if (Array.isArray(c.participants) && (c.participants.includes(targetId) || c.participants.includes(realTargetId))) {
+            return true;
+        }
+
+        // Username match
+        const cUser = (c.username || '').toLowerCase().trim();
+        if (cUser && (cUser === cleanTarget || cUser === cleanReal)) return true;
+
+        // Name match (e.g. Anil Timilsena)
+        const cName = (c.name || '').toLowerCase().trim();
+        if (cName && (cName === cleanTarget || cName === cleanReal)) return true;
+
+        return false;
+    }) || null;
+};
+
 export function useMessages(currentUser: any, initialUserId: string | null) {
     const cacheKey = currentUser?.uid ? `user_convos_cache_${currentUser.uid}` : null;
     const initialCached = cacheKey ? (cacheManager.getMemory<any[]>(cacheKey) || null) : null;
@@ -31,24 +77,36 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     const [activeChatId, setActiveChatId] = useState<string | null>(() => {
         if (!initialUserId) return null;
         if (initialUserId.includes('_') || initialUserId.startsWith('app_')) return initialUserId;
-        if (currentUser?.uid) {
-            return [currentUser.uid, initialUserId].sort().join('_');
+        const resolvedId = getResolvedTargetId(initialUserId);
+        if (initialCached && initialCached.length > 0) {
+            const existing = findExistingConvo(initialUserId, currentUser?.uid, initialCached);
+            if (existing) return existing.id;
         }
-        return initialUserId;
+        if (currentUser?.uid) {
+            return [currentUser.uid, resolvedId].sort().join('_');
+        }
+        return resolvedId;
     });
 
     useEffect(() => {
         if (!initialUserId) return;
         userClosedChatRef.current = false;
+        resolvedInitialUserRef.current = null;
+        const existing = findExistingConvo(initialUserId, currentUser?.uid, conversations);
+        if (existing) {
+            setActiveChatId(existing.id);
+            return;
+        }
         if (initialUserId.includes('_') || initialUserId.startsWith('app_')) {
             setActiveChatId(initialUserId);
         } else if (currentUser?.uid) {
-            const deterministicId = [currentUser.uid, initialUserId].sort().join('_');
+            const resolvedId = getResolvedTargetId(initialUserId);
+            const deterministicId = [currentUser.uid, resolvedId].sort().join('_');
             setActiveChatId(deterministicId);
         } else {
             setActiveChatId(initialUserId);
         }
-    }, [initialUserId, currentUser?.uid]);
+    }, [initialUserId, currentUser?.uid, conversations]);
     const [syntheticChat, setSyntheticChat] = useState<any | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(!initialCached || initialCached.length === 0);
@@ -262,6 +320,14 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     }, [rawConversations, receivedApps, sentApps, currentUser?.uid, deletedConvoIds]);
 
     useEffect(() => {
+        if (!initialUserId || conversations.length === 0) return;
+        const existing = findExistingConvo(initialUserId, currentUser?.uid, conversations);
+        if (existing && activeChatId !== existing.id) {
+            setActiveChatId(existing.id);
+        }
+    }, [conversations, initialUserId, currentUser?.uid, activeChatId]);
+
+    useEffect(() => {
         if (userClosedChatRef.current) return;
         if (!activeChatId && !initialUserId && conversations.length > 0) {
             if (typeof window !== 'undefined' && window.innerWidth >= 768) {
@@ -281,7 +347,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             setSyntheticChat(null);
             return;
         }
-        const existing = conversations.find(c => c.id === targetChatId || c.otherParticipantId === targetChatId);
+        const existing = findExistingConvo(targetChatId, currentUser?.uid, conversations);
         if (existing) {
             setSyntheticChat(null);
             return;
@@ -289,7 +355,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
 
         let otherUserId: string | null = null;
         if (initialUserId && !initialUserId.includes('_') && !initialUserId.startsWith('app_') && initialUserId !== currentUser.uid) {
-            otherUserId = initialUserId;
+            otherUserId = getResolvedTargetId(initialUserId);
         } else if (targetChatId.includes('_') && !targetChatId.startsWith('app_')) {
             const parts = targetChatId.split('_');
             otherUserId = parts.find((p: string) => p !== currentUser.uid) || null;
@@ -411,8 +477,9 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             return;
         }
 
-        const deterministicFallback = [currentUser.uid, initialUserId].sort().join('_');
-        const existingConvo = conversations.find((c) => c.id === deterministicFallback || c.id === initialUserId || c.otherParticipantId === initialUserId);
+        const realTargetId = getResolvedTargetId(initialUserId);
+        const deterministicFallback = [currentUser.uid, realTargetId].sort().join('_');
+        const existingConvo = findExistingConvo(initialUserId, currentUser.uid, conversations);
         if (existingConvo) {
             setActiveChatId(existingConvo.id);
             resolvedInitialUserRef.current = initialUserId;
@@ -420,7 +487,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         }
         const resolveConvo = async () => {
             try {
-                const res = await createConversation([currentUser.uid, initialUserId], undefined, currentUser.uid);
+                const res = await createConversation([currentUser.uid, realTargetId], undefined, currentUser.uid);
                 if (res?.id) {
                     setActiveChatId(res.id);
                 } else {
@@ -497,14 +564,21 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
                 console.warn('Could not initialize application conversation doc:', convoInitErr);
             }
         } else if (!targetConvoId && initialUserId) {
-            const res = await createConversation([currentUser.uid, initialUserId], undefined, currentUser.uid);
-            if (res?.id) {
-                targetConvoId = res.id;
-                setActiveChatId(res.id);
+            const existing = findExistingConvo(initialUserId, currentUser.uid, conversations);
+            if (existing) {
+                targetConvoId = existing.id;
+                setActiveChatId(existing.id);
             } else {
-                const deterministicFallback = [currentUser.uid, initialUserId].sort().join('_');
-                targetConvoId = deterministicFallback;
-                setActiveChatId(deterministicFallback);
+                const realTargetId = getResolvedTargetId(initialUserId);
+                const res = await createConversation([currentUser.uid, realTargetId], undefined, currentUser.uid);
+                if (res?.id) {
+                    targetConvoId = res.id;
+                    setActiveChatId(res.id);
+                } else {
+                    const deterministicFallback = [currentUser.uid, realTargetId].sort().join('_');
+                    targetConvoId = deterministicFallback;
+                    setActiveChatId(deterministicFallback);
+                }
             }
         }
         if (!targetConvoId || !currentUser?.uid) {

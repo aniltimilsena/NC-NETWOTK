@@ -382,6 +382,7 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
             const participantInfo: any = {
                 name: resolvedName,
                 avatar: resolvedAvatar,
+                username: pData?.username || '',
                 gender: pData?.gender || "unknown",
                 online: isUserOnline(pData),
                 lastActive: pData?.lastActive || null,
