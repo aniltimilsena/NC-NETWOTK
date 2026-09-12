@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, memo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { Search, X, MoreVertical, MoreHorizontal, Share2, ChevronLeft, MapPin, AlertCircle } from 'lucide-react';
+import { Search, X, MoreVertical, MoreHorizontal, Share2, ChevronLeft, MapPin, AlertCircle, UserPlus, UserCheck } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useApp } from '../providers/AppProviders';
 import Avatar from '../components/ui/Avatar';
@@ -71,7 +71,7 @@ const TalentListItem = memo(function TalentListItem({
                     )}
                 </div>
                 <div className="min-w-0 text-left">
-                    <h3 className="font-bold text-white text-base sm:text-lg tracking-tight truncate flex items-center gap-1.5 group-hover:text-purple-300 transition-colors">
+                    <h3 className="font-medium text-white text-base sm:text-lg tracking-normal truncate flex items-center gap-1.5 group-hover:text-purple-300 transition-colors">
                         {talent.name}
                         {talent.verified && (<span className="verified-badge shrink-0 text-sky-400 text-xs" title="Verified Talent">✓</span>)}
                     </h3>
@@ -90,12 +90,15 @@ const TalentListItem = memo(function TalentListItem({
                     <button
                         type="button"
                         onClick={(e) => onToggleFollow(e, talent.id)}
-                        className={`px-4 sm:px-5 py-1 sm:py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer shadow-none ${isFollowing
-                            ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
-                            : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
-                            }`}
+                        title={isFollowing ? 'Connected' : 'Connect'}
+                        aria-label={isFollowing ? 'Connected' : 'Connect'}
+                        className="p-2 transition-transform duration-200 active:scale-90 cursor-pointer flex items-center justify-center bg-transparent border-0"
                     >
-                        {isFollowing ? 'Connected' : 'Connect'}
+                        {isFollowing ? (
+                            <UserCheck className="w-5 h-5 text-purple-400 hover:text-purple-300 transition-colors" strokeWidth={2.2} />
+                        ) : (
+                            <UserPlus className="w-5 h-5 text-gray-400 hover:text-white transition-colors" strokeWidth={2} />
+                        )}
                     </button>
                 )}
 
@@ -410,7 +413,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                     <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
                                 </button>
                                 <div>
-                                    <h1 className="text-2xl sm:text-4xl font-sans font-black text-white tracking-tight leading-none">Talents by Category</h1>
+                                    <h1 className="text-2xl sm:text-4xl font-bold text-white tracking-tight leading-none">Talents by Category</h1>
                                 </div>
                             </div>
 
@@ -481,7 +484,7 @@ export default function TalentListing({ onNavigate, user, initialCategory = 'All
                                     <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest leading-none mb-1">
                                         TALENTS
                                     </p>
-                                    <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight tracking-tight truncate">
+                                    <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight tracking-tight truncate">
                                         {selectedFilters.category === 'All' ? 'All' : getCategoryConfig(selectedFilters.category).label}
                                     </h1>
                                     <p className="text-xs text-gray-400 font-medium mt-1">

@@ -184,7 +184,7 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
                 <button onClick={handleBack} type="button" className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors shrink-0 cursor-pointer" aria-label="Back">
                     <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
                 </button>
-                <h1 className="text-2xl font-black text-white">
+                <h1 className="text-2xl font-bold text-white tracking-tight">
                     <span className="md:inline hidden">Account Settings</span>
                     <span className="md:hidden inline">{currentMobileView === 'content' ? activeTabLabel : 'Account Settings'}</span>
                 </h1>

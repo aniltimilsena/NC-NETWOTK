@@ -510,8 +510,8 @@ export default function CastingCall({ onNavigate, user, isAdmin, filter = 'All' 
               >
                 <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
               </button>
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
-                CASTING CALLS & AUDITIONS
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                Casting Calls & Auditions
               </h1>
             </div>
 

@@ -200,7 +200,7 @@ export default function AdminContent() {
                     {profile.name?.charAt(0).toUpperCase()}
                   </div>
                   <div className="overflow-hidden">
-                    <h4 className="font-bold text-white text-base truncate">{profile.name || 'Unknown User'}</h4>
+                    <h4 className="font-medium text-white text-base tracking-normal truncate">{profile.name || 'Unknown User'}</h4>
                     <p className="text-xs text-nc-muted uppercase tracking-widest font-black truncate">{profile.role || 'Talent'}</p>
                   </div>
                 </div>
@@ -258,7 +258,7 @@ export default function AdminContent() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-white text-lg">{selectedProfile.name}</h3>
+                    <h3 className="font-medium text-white text-lg tracking-normal">{selectedProfile.name}</h3>
                     {selectedProfile.verified && (<CheckCircle className="w-4 h-4 text-admin-success fill-admin-success/15"/>)}
                   </div>
                   <p className="text-xs text-nc-muted uppercase tracking-widest font-black">{selectedProfile.role || 'Talent Profile'}</p>

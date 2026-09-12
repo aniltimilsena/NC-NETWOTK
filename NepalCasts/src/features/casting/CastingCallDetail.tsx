@@ -50,6 +50,8 @@ import { CastingDetailSkeleton } from '../../components/ui/Skeleton';
 import ShareSheet from '../../components/ui/ShareSheet';
 import { getOptimizedImageUrl, getImageSrcSet } from '../../utils/media';
 import { cacheManager } from '../../utils/cacheManager';
+import { AuthService } from '../../services/AuthService';
+import apiClient from '../../api/client';
 
 const isMockOrInvalidImage = (url: string | null | undefined) => {
   if (!url || typeof url !== 'string') return true;
@@ -466,6 +468,17 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     setApplying(true);
     setApplyAlert({ type: null, message: null, detail: null });
     try {
+      const currentApplicantUid = AuthService.getUserId() || user?.uid;
+      if (!currentApplicantUid) {
+        setApplying(false);
+        setApplyAlert({
+          type: 'error',
+          message: 'Authentication required.',
+          detail: 'Please sign in to submit your audition application.'
+        });
+        return;
+      }
+
       const creatorId =
         call.creatorId ||
         call.createdBy ||
@@ -505,129 +518,153 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         }
       }
 
-      const appDocRef = await addDoc(collection(db, 'applications'), {
-        castingId: call.id,
-        castingTitle: call.title,
-        userId: user.uid,
-        userName: fullName.trim() || user.displayName || 'Anonymous Actor',
-        fullName: fullName.trim() || user.displayName || 'Anonymous Actor',
-        userEmail: contactEmail.trim() || user.email,
-        contactEmail: contactEmail.trim() || user.email,
-        userPhone: contactPhone.trim(),
+      const applicationPayload = {
+        roleName: roleApplied,
+        userName: fullName.trim() || user?.displayName || 'Anonymous Actor',
+        fullName: fullName.trim() || user?.displayName || 'Anonymous Actor',
+        contactEmail: contactEmail.trim() || user?.email,
+        userEmail: contactEmail.trim() || user?.email,
         contactPhone: contactPhone.trim(),
+        userPhone: contactPhone.trim(),
         phone: contactPhone.trim(),
         age: applicantAge.trim(),
         gender: applicantGender,
         experience: applicantExperience,
-        userPhoto: user.photoURL || '',
-        roleName: roleApplied,
+        userPhoto: user?.photoURL || '',
         selfTapeUrl: selfTapeUrl.trim(),
         coverNote: coverNote.trim(),
         fileName: fileName,
         fileUrl: fileUrl,
         attachmentUrl: fileUrl,
         portfolioUrl: selfTapeUrl.trim() || fileUrl || '',
-        appliedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        status: 'pending',
-        creatorId: creatorId,
-        createdBy: creatorId,
-      });
+      };
 
-      // Notify the creator of the casting call
-      if (creatorId && creatorId !== user.uid) {
-        const notifId = `${user.uid}_${call.id}_${appDocRef.id}_application`;
-        const actorName = fullName.trim() || user.displayName || 'An actor';
-        await setDoc(
-          doc(db, 'notifications', notifId),
-          {
-            userId: creatorId,
-            recipientId: creatorId,
-            receiverId: creatorId,
-            senderId: user.uid,
-            senderName: actorName,
-            senderAvatar: user.photoURL || '',
-            type: 'casting',
-            notificationType: 'casting',
-            title: call.title || 'Casting Call',
-            body: `${actorName} applied to your casting call: "${call.title || 'Audition'}" for role "${roleApplied}"`,
-            message: `${actorName} applied to your casting call: "${call.title || 'Audition'}" for role "${roleApplied}"`,
-            targetUrl: `/casting/${call.id}`,
-            link: `/casting/${call.id}`,
-            profileUrl: `/profile/${user.uid}`,
-            castingId: call.id,
-            roleName: roleApplied,
-            read: false,
-            isRead: false,
-            createdAt: serverTimestamp(),
-          },
-          { merge: true }
-        ).catch((notifErr) => {
-          console.warn('Could not dispatch application notification to creator:', notifErr);
+      let submittedAppId: string | null = null;
+      try {
+        const response = await apiClient.post<{ success: boolean; id: string }>(
+          `/casting/${call.id}/apply`,
+          applicationPayload,
+          { timeout: 4000 }
+        );
+        if (response.data?.id) {
+          submittedAppId = response.data.id;
+        }
+      } catch (backendErr) {
+        console.warn('Backend application endpoint failed, falling back to Firestore direct write:', backendErr);
+      }
+
+      let appDocRefId = submittedAppId;
+      if (!appDocRefId) {
+        const appDocRef = await addDoc(collection(db, 'applications'), {
+          ...applicationPayload,
+          castingId: call.id,
+          castingTitle: call.title,
+          userId: currentApplicantUid,
+          appliedAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          status: 'pending',
+          creatorId: creatorId,
+          createdBy: creatorId,
         });
+        appDocRefId = appDocRef.id;
 
-        // Also create conversation thread in messaging under Applications
-        try {
-          const convoId = `app_${appDocRef.id}`;
-          const applicationMsgText = `Audition Application for "${roleApplied}" on "${call.title || 'Casting Call'}"${coverNote.trim() ? `\n\nCover Note: "${coverNote.trim()}"` : ''}`;
-          
+        // Notify the creator of the casting call if direct fallback was used
+        if (creatorId && creatorId !== currentApplicantUid) {
+          const notifId = `${currentApplicantUid}_${call.id}_${appDocRefId}_application`;
+          const actorName = fullName.trim() || user?.displayName || 'An actor';
           await setDoc(
-            doc(db, 'conversations', convoId),
+            doc(db, 'notifications', notifId),
             {
-              participants: [user.uid, creatorId],
-              type: 'application',
-              isApplication: true,
-              applicationId: appDocRef.id,
+              userId: creatorId,
+              recipientId: creatorId,
+              receiverId: creatorId,
+              senderId: currentApplicantUid,
+              senderName: actorName,
+              senderAvatar: user?.photoURL || '',
+              type: 'casting',
+              notificationType: 'casting',
+              title: call.title || 'Casting Call',
+              body: `${actorName} applied to your casting call: "${call.title || 'Audition'}" for role "${roleApplied}"`,
+              message: `${actorName} applied to your casting call: "${call.title || 'Audition'}" for role "${roleApplied}"`,
+              targetUrl: `/casting/${call.id}`,
+              link: `/casting/${call.id}`,
+              profileUrl: `/profile/${currentApplicantUid}`,
               castingId: call.id,
-              castingTitle: call.title || 'Casting Call',
               roleName: roleApplied,
-              applicantId: user.uid,
-              creatorId: creatorId,
-              lastMessage: `Applied for "${roleApplied}" on ${call.title || 'Casting Call'}`,
-              lastMessageAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-              lastSenderId: user.uid,
-              unread: true,
-              unreadCounts: {
-                [creatorId]: 1,
-                [user.uid]: 0,
-              },
-              readBy: {
-                [creatorId]: false,
-                [user.uid]: true,
-              },
-              participantNames: {
-                [user.uid]: actorName,
-                [creatorId]: call.creatorName || call.company || 'Casting Director',
-              },
-              participantAvatars: {
-                [user.uid]: user.photoURL || '',
-                [creatorId]: call.creatorAvatar || '',
-              },
+              read: false,
+              isRead: false,
               createdAt: serverTimestamp(),
             },
             { merge: true }
-          );
-
-          await addDoc(collection(db, 'conversations', convoId, 'messages'), {
-            senderId: user.uid,
-            text: applicationMsgText,
-            fileUrl: fileUrl || selfTapeUrl.trim() || null,
-            attachmentUrl: fileUrl || null,
-            selfTapeUrl: selfTapeUrl.trim() || null,
-            type: selfTapeUrl.trim() || (fileUrl && fileUrl.match(/\.(mp4|webm|mov|ogg)/i)) ? 'video' : (fileUrl && fileUrl.match(/\.(jpg|jpeg|png|webp|gif)/i) ? 'image' : 'text'),
-            isSystem: false,
-            reactions: {},
-            read: false,
-            delivered: true,
-            createdAt: serverTimestamp(),
+          ).catch((notifErr) => {
+            console.warn('Could not dispatch application notification to creator:', notifErr);
           });
-        } catch (msgErr) {
-          console.warn('Could not auto-create application conversation:', msgErr);
+
+          // Also create conversation thread in messaging under Applications
+          try {
+            const convoId = `app_${appDocRefId}`;
+            const applicationMsgText = `Audition Application for "${roleApplied}" on "${call.title || 'Casting Call'}"${coverNote.trim() ? `\n\nCover Note: "${coverNote.trim()}"` : ''}`;
+            
+            await setDoc(
+              doc(db, 'conversations', convoId),
+              {
+                participants: [currentApplicantUid, creatorId],
+                type: 'application',
+                isApplication: true,
+                applicationId: appDocRefId,
+                castingId: call.id,
+                castingTitle: call.title || 'Casting Call',
+                roleName: roleApplied,
+                applicantId: currentApplicantUid,
+                creatorId: creatorId,
+                lastMessage: `Applied for "${roleApplied}" on ${call.title || 'Casting Call'}`,
+                lastMessageAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                lastSenderId: currentApplicantUid,
+                unread: true,
+                unreadCounts: {
+                  [creatorId]: 1,
+                  [currentApplicantUid]: 0,
+                },
+                readBy: {
+                  [creatorId]: false,
+                  [currentApplicantUid]: true,
+                },
+                participantNames: {
+                  [currentApplicantUid]: actorName,
+                  [creatorId]: call.creatorName || call.company || 'Casting Director',
+                },
+                participantAvatars: {
+                  [currentApplicantUid]: user?.photoURL || '',
+                  [creatorId]: call.creatorAvatar || '',
+                },
+                createdAt: serverTimestamp(),
+              },
+              { merge: true }
+            );
+
+            await addDoc(collection(db, 'conversations', convoId, 'messages'), {
+              senderId: currentApplicantUid,
+              text: applicationMsgText,
+              fileUrl: fileUrl || selfTapeUrl.trim() || null,
+              attachmentUrl: fileUrl || null,
+              selfTapeUrl: selfTapeUrl.trim() || null,
+              type: selfTapeUrl.trim() || (fileUrl && fileUrl.match(/\.(mp4|webm|mov|ogg)/i)) ? 'video' : (fileUrl && fileUrl.match(/\.(jpg|jpeg|png|webp|gif)/i) ? 'image' : 'text'),
+              isSystem: false,
+              reactions: {},
+              read: false,
+              delivered: true,
+              createdAt: serverTimestamp(),
+            });
+          } catch (msgErr) {
+            console.warn('Could not auto-create application conversation:', msgErr);
+          }
         }
       }
 
+      setApplicationId(appDocRefId);
       setApplied(true);
+      setApplicationStatus('pending');
       setIsApplyView(false);
       setApplyAlert({
         type: 'success',
@@ -651,7 +688,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
     if (!applicationId) return;
     setCancelling(true);
     try {
-      await deleteDoc(doc(db, 'applications', applicationId));
+      try {
+        await apiClient.delete(`/casting/applications/${applicationId}`, { timeout: 3500 });
+      } catch (backendErr) {
+        console.warn('Backend delete application failed, using direct Firestore delete:', backendErr);
+        await deleteDoc(doc(db, 'applications', applicationId));
+      }
       setApplied(false);
       setApplicationId(null);
       setApplicationStatus(null);
@@ -675,7 +717,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
       onConfirm: async () => {
         setDeleting(true);
         try {
-          await deleteDoc(doc(db, 'casting_calls', castingId));
+          try {
+            await apiClient.delete(`/casting/${castingId}`, { timeout: 3500 });
+          } catch (backendErr) {
+            console.warn('Backend delete casting call failed, using direct Firestore delete:', backendErr);
+            await deleteDoc(doc(db, 'casting_calls', castingId));
+          }
           showAlert?.('Casting call deleted successfully.', 'success');
           onNavigate('casting');
         } catch (err: any) {
@@ -690,10 +737,22 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   const handleUpdateAppStatus = async (appId: string, newStatus: string) => {
     try {
-      await updateDoc(doc(db, 'applications', appId), {
-        status: newStatus,
-        updatedAt: serverTimestamp(),
-      });
+      let updatedViaBackend = false;
+      try {
+        const resp = await apiClient.put(`/casting/applications/${appId}/status`, { status: newStatus }, { timeout: 3500 });
+        if (resp.data?.success) {
+          updatedViaBackend = true;
+        }
+      } catch (backendErr) {
+        console.warn('Backend update application status failed, using direct Firestore update:', backendErr);
+      }
+
+      if (!updatedViaBackend) {
+        await updateDoc(doc(db, 'applications', appId), {
+          status: newStatus,
+          updatedAt: serverTimestamp(),
+        });
+      }
 
       const appItem = apps.find((a: any) => a.id === appId);
       if (appItem && appItem.userId && appItem.userId !== user?.uid) {
@@ -775,7 +834,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
         <head>
           <title>${call.title} - Candidate Roster</title>
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 24px; color: #0f172a; font-size: 11px; }
+            body { font-family: 'Ubuntu', sans-serif; padding: 24px; color: #0f172a; font-size: 11px; }
             table { width: 100%; border-collapse: collapse; margin-top: 16px; }
             th { background: #0f172a; color: #fff; padding: 8px 10px; text-align: left; font-size: 10px; }
             td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
@@ -902,7 +961,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
             {/* Title & Metadata Section */}
             <div className="space-y-2">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
                 {selectedRole ? `${selectedRole} – ${call.title}` : call.title}
               </h1>
 
@@ -1421,7 +1480,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
           {/* Title and Location/Date Meta */}
           <div className="space-y-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
               {call.title}
             </h1>
 

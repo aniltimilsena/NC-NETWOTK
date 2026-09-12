@@ -581,7 +581,7 @@ export default function Home({ onNavigate, user }) {
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1C1C24] to-[#121216] p-1.5 text-center select-none rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm border-0">
-                          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/5 border-0 flex items-center justify-center mb-1 text-white font-black text-sm sm:text-base tracking-tight shadow-inner">
+                          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/5 border-0 flex items-center justify-center mb-1 text-white font-bold text-sm sm:text-base tracking-tight shadow-inner">
                             {spotlightInitials}
                           </div>
                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate w-full px-0.5">
@@ -593,7 +593,7 @@ export default function Home({ onNavigate, user }) {
 
                     {/* Talent Meta beside photo */}
                     <div className="flex flex-col justify-end items-start gap-0.5 min-w-0 pb-0.5 text-left font-apple">
-                      <h2 className="font-apple text-base sm:text-xl font-bold text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] max-w-[140px] sm:max-w-[200px] tracking-normal">
+                      <h2 className="font-apple text-base sm:text-xl font-medium text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] max-w-[140px] sm:max-w-[200px] tracking-wide">
                         {spotlightName}
                       </h2>
                       <p className="text-xs sm:text-sm text-slate-300 font-normal capitalize drop-shadow-md truncate tracking-normal">
@@ -616,9 +616,9 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
+                  <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none">
                     <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
-                    Hiring now
+                    Hiring Now
                   </span>
                   <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
                     Active auditions in Nepal
@@ -686,7 +686,7 @@ export default function Home({ onNavigate, user }) {
                                 : (call.type || call.category || 'Audition')
                             }
                           >
-                            <span className="text-white font-black text-xs sm:text-sm uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] truncate">
+                            <span className="text-white font-bold text-xs sm:text-sm uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] truncate">
                               {Array.isArray(call.roles) && call.roles.length > 0
                                 ? call.roles.map(r => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(' • ') || (call.type || call.category || 'Audition')
                                 : (call.type || call.category || 'Audition')}
@@ -741,9 +741,9 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
+                  <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none">
                     <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
-                    Featured talents
+                    Featured Talents
                   </span>
                   <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
                     Top verified Nepali talents
@@ -781,7 +781,7 @@ export default function Home({ onNavigate, user }) {
                         name={talent.name}
                         className="w-[calc((100vw-44px)/2.5)] h-[calc((100vw-44px)/2.5)] sm:w-36 sm:h-36 rounded-full object-cover shadow-lg"
                       />
-                      <p className="font-apple text-white font-bold text-lg sm:text-xl md:text-2xl text-center mt-2.5 truncate w-full px-0.5 tracking-wide">
+                      <p className="font-apple text-white font-medium text-lg sm:text-xl md:text-2xl text-center mt-2.5 truncate w-full px-0.5 tracking-wide">
                         {formatTalentName(talent.name)}
                       </p>
                       <p className="font-apple text-[#522C69] font-semibold text-base sm:text-lg text-center mt-1 truncate w-full px-0.5 tracking-normal">
@@ -807,9 +807,9 @@ export default function Home({ onNavigate, user }) {
               <div className="relative z-10 space-y-3">
                 <div className="flex items-start justify-between gap-3 mb-1">
                   <div className="space-y-1">
-                    <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
+                    <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
                       <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-white/80 to-white/10 rounded-full pointer-events-none" />
-                      Talents by category
+                      Talents by Category
                     </span>
                     <p className="text-xs sm:text-sm md:text-base text-gray-300 font-normal drop-shadow-sm">
                       Explore all creative roles
@@ -858,9 +858,9 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
+                  <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none">
                     <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
-                    Recently joined
+                    Recently Joined
                   </span>
                   <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
                     New artists and creators
@@ -917,7 +917,7 @@ export default function Home({ onNavigate, user }) {
 
                           {/* Metadata Lines & Talent Details */}
                           <div className="flex-1 min-w-0 space-y-0.5 text-left">
-                            <p className="font-apple text-base sm:text-lg md:text-xl font-bold text-white truncate tracking-wide group-hover:text-purple-300 transition-colors">
+                            <p className="font-apple text-base sm:text-lg md:text-xl font-medium text-white truncate tracking-wide group-hover:text-purple-300 transition-colors">
                               {talent.name}
                             </p>
 
@@ -968,9 +968,9 @@ export default function Home({ onNavigate, user }) {
             <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
+                  <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none">
                     <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
-                    Trending talents
+                    Trending Talents
                   </span>
                   <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
                     Popular profiles this week
@@ -1018,7 +1018,7 @@ export default function Home({ onNavigate, user }) {
                       {/* Metadata Lines & Talent Details */}
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between">
-                          <p className="font-apple text-base sm:text-lg md:text-xl font-bold text-white truncate tracking-wide">
+                          <p className="font-apple text-base sm:text-lg md:text-xl font-medium text-white truncate tracking-wide">
                             {talent.name}
                           </p>
                           <span className="text-sm sm:text-base text-[#522C69] font-semibold shrink-0">

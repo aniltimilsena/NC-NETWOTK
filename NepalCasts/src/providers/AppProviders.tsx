@@ -438,41 +438,27 @@ export default function AppProviders({ children }: {
     }, [user?.uid, showAlert]);
 
     const updateAvatar = useCallback(async (newUrl: string | null) => {
-        if (!user?.uid)
+        const uid = AuthService.getUserId() || user?.uid;
+        if (!uid)
             return;
-        const uid = user.uid;
-        await updateDoc(doc(db, 'profiles', uid), {
+        await updateProfileData(uid, {
             image: newUrl || null,
             photoURL: newUrl || null,
             profileImage: newUrl || null,
-            updatedAt: serverTimestamp()
-        }).catch(() => {});
-        await setDoc(doc(db, 'users', uid), {
-            image: newUrl || null,
-            photoURL: newUrl || null,
-            profileImage: newUrl || null,
-            updatedAt: serverTimestamp()
-        }, { merge: true }).catch(() => {});
+        }).catch((err) => console.warn('Avatar update warning:', err));
         CurrentUser.setImageUrl(newUrl || null);
         setUser((prev: any) => prev ? { ...prev, photoURL: newUrl || '' } : null);
     }, [user?.uid]);
 
     const deleteAvatar = useCallback(async () => {
-        if (!user?.uid)
+        const uid = AuthService.getUserId() || user?.uid;
+        if (!uid)
             return;
-        const uid = user.uid;
-        await setDoc(doc(db, 'profiles', uid), {
+        await updateProfileData(uid, {
             image: "",
             photoURL: "",
             profileImage: "",
-            updatedAt: serverTimestamp()
-        }, { merge: true });
-        await setDoc(doc(db, 'users', uid), {
-            image: "",
-            photoURL: "",
-            profileImage: "",
-            updatedAt: serverTimestamp()
-        }, { merge: true });
+        }).catch((err) => console.warn('Avatar delete warning:', err));
         CurrentUser.setImageUrl(null);
         notifyProfileUpdated(uid, "");
         setUser((prev: any) => prev ? { ...prev, photoURL: '', image: '', profileImage: '' } : null);

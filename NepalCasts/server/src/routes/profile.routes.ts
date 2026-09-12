@@ -2,7 +2,7 @@ import { Router, type Response } from 'express';
 import { verifyToken, optionalAuth } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
 import { ProfileSchema } from '../schemas';
-import { db } from '../config';
+import { db, admin } from '../config';
 import type { firestore } from 'firebase-admin';
 import { getProfileByUid, updateProfileByUid } from '../services/profile.service';
 import { bloomFilterMiddleware, cacheMiddleware, scrapingPreventerMiddleware } from '../middleware/cacheProtection';
@@ -179,4 +179,86 @@ router.post('/profile', verifyToken, validateBody(ProfileSchema), async (req: Au
         return res.status(500).json({ error: message });
     }
 });
+
+router.post('/profile/follow', verifyToken, async (req: AuthedRequest, res: Response): Promise<any> => {
+    try {
+        const followerId = req.user?.uid;
+        if (!followerId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+        const { targetUserId, action, senderInfo } = req.body || {};
+        if (!targetUserId || typeof targetUserId !== 'string' || targetUserId === followerId) {
+            return res.status(400).json({ success: false, error: 'Invalid target user ID' });
+        }
+
+        const followId = `${followerId}_${targetUserId}`;
+        const followRef = db.collection('follows').doc(followId);
+        const notifId = `${followerId}_${targetUserId}_follow`;
+        const notifRef = db.collection('notifications').doc(notifId);
+        const targetProfileRef = db.collection('profiles').doc(targetUserId);
+        const followerProfileRef = db.collection('profiles').doc(followerId);
+
+        const isUnfollow = action === 'unfollow';
+
+        await db.runTransaction(async (transaction) => {
+            const followDoc = await transaction.get(followRef);
+            if (isUnfollow) {
+                if (followDoc.exists) {
+                    transaction.delete(followRef);
+                    transaction.delete(notifRef);
+                    transaction.set(targetProfileRef, {
+                        followers: admin.firestore.FieldValue.increment(-1),
+                        followersCount: admin.firestore.FieldValue.increment(-1),
+                        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                    transaction.set(followerProfileRef, {
+                        following: admin.firestore.FieldValue.increment(-1),
+                        followingCount: admin.firestore.FieldValue.increment(-1),
+                        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                }
+            } else {
+                if (!followDoc.exists) {
+                    transaction.set(followRef, {
+                        followerId,
+                        followingId: targetUserId,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                    });
+                    transaction.set(notifRef, {
+                        userId: targetUserId,
+                        recipientId: targetUserId,
+                        receiverId: targetUserId,
+                        senderId: followerId,
+                        senderName: senderInfo?.displayName || 'Someone',
+                        senderAvatar: senderInfo?.photoURL || '',
+                        title: 'New Connect',
+                        body: `${senderInfo?.displayName || 'Someone'} connected with you.`,
+                        type: 'follow',
+                        notificationType: 'follow',
+                        isRead: false,
+                        read: false,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                        targetUrl: `/profile/${followerId}`,
+                    }, { merge: true });
+                    transaction.set(targetProfileRef, {
+                        followers: admin.firestore.FieldValue.increment(1),
+                        followersCount: admin.firestore.FieldValue.increment(1),
+                        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                    transaction.set(followerProfileRef, {
+                        following: admin.firestore.FieldValue.increment(1),
+                        followingCount: admin.firestore.FieldValue.increment(1),
+                        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                }
+            }
+        });
+
+        return res.json({ success: true, isFollowing: !isUnfollow });
+    } catch (error: any) {
+        console.error('Follow error:', error);
+        return res.status(500).json({ success: false, error: error.message || 'Follow action failed' });
+    }
+});
+
 export default router;

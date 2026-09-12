@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { Crown, Search, ChevronLeft, SlidersHorizontal, MapPin } from 'lucide-react';
+import { Crown, Search, ChevronLeft, SlidersHorizontal, MapPin, UserPlus, UserCheck } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { subscribeToTalents, subscribeToUserFollows, toggleFollowUser } from '../features/profile/services/users';
 import { prefetchProfile } from '../utils/prefetchRoute';
@@ -197,7 +197,7 @@ export default function Trending({ onNavigate, user }) {
             <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
           </button>
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-black text-white leading-none truncate">
+            <h1 className="text-xl sm:text-2xl font-bold text-white leading-none truncate">
               {t('trending_now')}
             </h1>
           </div>
@@ -360,13 +360,13 @@ export default function Trending({ onNavigate, user }) {
                 </div>
 
 
-                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase border border-white/20 bg-[#111] text-white shadow-md">
+                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border border-white/20 bg-[#111] text-white shadow-md">
                   #{item.pos + 1}
                 </div>
               </div>
 
               <div className="text-center mb-4 w-full px-2">
-                <h3 className="font-apple font-bold text-white text-base tracking-tight truncate max-w-[180px] mx-auto">
+                <h3 className="font-apple font-medium text-white text-base tracking-normal truncate max-w-[180px] mx-auto">
                   {prof.name}
                 </h3>
                 <p className="text-xs text-white font-medium truncate mt-0.5">
@@ -377,25 +377,29 @@ export default function Trending({ onNavigate, user }) {
 
               <div className={`w-full ${item.height} bg-gradient-to-b from-[#111]/90 to-[#0A0A0A]/40 border-t ${item.borderGlow} rounded-t-[2.5rem] flex flex-col justify-between p-5 text-center transition-all duration-300 group-hover:border-white/10`}>
                 <div className="space-y-1">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">Connects</p>
-                  <p className="text-xl sm:text-2xl font-black text-white">{Math.max(0, prof.followers || 0)}</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Connects</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white tracking-tight">{Math.max(0, prof.followers || 0)}</p>
                 </div>
 
-                {isNew && (<span className="self-center text-[#522C69] font-black text-[9px] sm:text-[10px] uppercase tracking-wider">
+                {isNew && (<span className="self-center text-purple-400 font-bold text-[9px] sm:text-[10px] uppercase tracking-wider">
                   New
                 </span>)}
 
-                <button
-                  type="button"
-                  onClick={(e) => handleToggleFollow(e, prof.id)}
-                  className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 shadow-none ${
-                    isFollowing
-                      ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
-                      : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
-                  }`}
-                >
-                  {isFollowing ? 'Connected' : 'Connect'}
-                </button>
+                {!(prof.id === activeUser?.uid || prof.uid === activeUser?.uid) && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleFollow(e, prof.id)}
+                    title={isFollowing ? 'Connected' : 'Connect'}
+                    aria-label={isFollowing ? 'Connected' : 'Connect'}
+                    className="p-2 self-center transition-transform duration-200 active:scale-90 cursor-pointer flex items-center justify-center bg-transparent border-0"
+                  >
+                    {isFollowing ? (
+                      <UserCheck className="w-6 h-6 text-purple-400 hover:text-purple-300 transition-colors" strokeWidth={2.2} />
+                    ) : (
+                      <UserPlus className="w-6 h-6 text-gray-400 hover:text-white transition-colors" strokeWidth={2} />
+                    )}
+                  </button>
+                )}
               </div>
             </motion.div>);
           })}
@@ -403,7 +407,7 @@ export default function Trending({ onNavigate, user }) {
 
 
         <div className="space-y-4 max-w-4xl mx-auto">
-          <h2 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 text-left">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6 text-left">
             {selectedCategory === 'All' ? 'All Ranked Talent' : `${getCategoryConfig(selectedCategory).label} Rankings`}
           </h2>
 
@@ -441,7 +445,7 @@ export default function Trending({ onNavigate, user }) {
                       )}
                     </div>
                     <div className="min-w-0 text-left">
-                      <h3 className="font-bold text-white text-base sm:text-lg tracking-tight truncate flex items-center gap-1.5 group-hover:text-purple-300 transition-colors">
+                      <h3 className="font-medium text-white text-base sm:text-lg tracking-normal truncate flex items-center gap-1.5 group-hover:text-purple-300 transition-colors">
                         {prof.name}
                         {prof.verified && (
                           <span className="verified-badge shrink-0 text-sky-400 text-xs" title="Verified Talent">✓</span>
@@ -462,13 +466,15 @@ export default function Trending({ onNavigate, user }) {
                       <button
                         type="button"
                         onClick={(e) => handleToggleFollow(e, prof.id)}
-                        className={`px-4 sm:px-5 py-1 sm:py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer shadow-none ${
-                          isFollowing
-                            ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
-                            : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
-                        }`}
+                        title={isFollowing ? 'Connected' : 'Connect'}
+                        aria-label={isFollowing ? 'Connected' : 'Connect'}
+                        className="p-2 transition-transform duration-200 active:scale-90 cursor-pointer flex items-center justify-center bg-transparent border-0"
                       >
-                        {isFollowing ? 'Connected' : 'Connect'}
+                        {isFollowing ? (
+                          <UserCheck className="w-5 h-5 text-purple-400 hover:text-purple-300 transition-colors" strokeWidth={2.2} />
+                        ) : (
+                          <UserPlus className="w-5 h-5 text-gray-400 hover:text-white transition-colors" strokeWidth={2} />
+                        )}
                       </button>
                     )}
                   </div>

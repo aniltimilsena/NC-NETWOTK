@@ -12,6 +12,60 @@ if (!admin.apps.length) {
     }
 }
 
+import crypto from 'crypto';
+
+const jwksCache = new Map();
+
+async function verifyClerkToken(token) {
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+
+        const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+
+        const now = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < now) return null;
+        if (payload.nbf && payload.nbf > now) return null;
+
+        const isClerk = payload.iss && (payload.iss.includes('clerk') || payload.iss.includes('accounts.dev'));
+        if (!isClerk) return null;
+
+        const kid = header.kid;
+        let publicKeyPem = null;
+
+        if (kid) {
+            const cached = jwksCache.get(kid);
+            if (cached && cached.expiresAt > Date.now()) {
+                publicKeyPem = cached.pem;
+            } else {
+                const jwksUrl = `${payload.iss.replace(/\/$/, '')}/.well-known/jwks.json`;
+                const res = await fetch(jwksUrl).catch(() => null);
+                if (res && res.ok) {
+                    const jwks = await res.json();
+                    const key = jwks.keys?.find((k) => k.kid === kid);
+                    if (key) {
+                        const jwkKey = crypto.createPublicKey({ key, format: 'jwk' });
+                        publicKeyPem = jwkKey.export({ type: 'spki', format: 'pem' });
+                        jwksCache.set(kid, { pem: publicKeyPem, expiresAt: Date.now() + 3600000 });
+                    }
+                }
+            }
+        }
+
+        if (publicKeyPem) {
+            const verifier = crypto.createVerify('RSA-SHA256');
+            verifier.update(`${parts[0]}.${parts[1]}`);
+            const isValid = verifier.verify(publicKeyPem, Buffer.from(parts[2], 'base64url'));
+            if (!isValid) return null;
+            return { uid: payload.sub, email: payload.email || payload.primary_email_address || '' };
+        }
+        return null;
+    } catch {
+        return null;
+    }
+}
+
 const targetUrl = process.env.SERVER_URL || null;
 
 export default async function handler(req, res) {
@@ -25,9 +79,15 @@ export default async function handler(req, res) {
     if (!token) {
         return res.status(401).json({ error: 'Unauthorized: No token provided' });
     }
+    let authed = false;
     try {
         await admin.auth().verifyIdToken(token);
+        authed = true;
     } catch {
+        const clerkUser = await verifyClerkToken(token);
+        if (clerkUser) authed = true;
+    }
+    if (!authed) {
         return res.status(401).json({ error: 'Unauthorized: Invalid token' });
     }
 

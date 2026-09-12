@@ -4,8 +4,8 @@ import { CurrentUser } from "../../../utils/CurrentUser";
 import { notifyProfileUpdated, getSavedRealTalents, saveRealTalents } from "./users";
 import { doc, onSnapshot, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { rateLimitedGet } from "../../../utils/rateLimitedFirestore";
-import { uploadFile } from "../../../services/storage";
 import { COLLECTIONS } from "../../../constants/collections";
+import apiClient from "../../../api/client";
 export type ProfileData = {
     [key: string]: unknown;
 };
@@ -61,7 +61,7 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
 }> => {
     try {
         const currentUserUid = AuthService.getUserId() || CurrentUser.id;
-        if (!currentUserUid || (currentUserUid !== uid && !uid.includes(currentUserUid))) {
+        if (!currentUserUid || currentUserUid !== uid) {
             return { success: false, error: "Unauthorized profile update" };
         }
         const cleanData = Object.entries(data).reduce((acc, [k, v]) => {
@@ -74,6 +74,14 @@ export const updateProfileData = async (uid: string, data: ProfileData): Promise
             verified, isAdmin, status,
             ...profileDataOnly
         } = cleanData as any;
+
+        // 1. Sync through backend API where Clerk token is verified and Admin SDK updates the documents
+        try {
+            await apiClient.post('/profile', cleanData, { timeout: 3500 });
+        } catch (backendErr) {
+            console.warn("Backend profile update warning, proceeding with client Firestore sync:", backendErr);
+        }
+
         const userRef = doc(db, COLLECTIONS.USERS, uid);
         const userUpdate: Record<string, any> = { 
             uid,

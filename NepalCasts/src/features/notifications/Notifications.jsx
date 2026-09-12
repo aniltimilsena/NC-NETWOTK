@@ -446,9 +446,14 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             return;
         const isFollowing = followingIds.has(senderId);
         try {
-            await toggleFollowUser(user.uid, senderId, isFollowing, {
-                displayName: user.displayName || user.email || 'Someone',
-                photoURL: user.photoURL || ''
+            await toggleFollowUser({
+                currentUserId: user.uid,
+                targetUserId: senderId,
+                isCurrentlyFollowing: isFollowing,
+                senderInfo: {
+                    displayName: user.displayName || user.email || 'Someone',
+                    photoURL: user.photoURL || ''
+                }
             });
         }
         catch (err) {
@@ -549,7 +554,7 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
                     <button onClick={() => onNavigate('back')} type="button" className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors shrink-0 cursor-pointer" aria-label="Back">
                         <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
                     </button>
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight whitespace-nowrap">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight whitespace-nowrap">
                         Notifications
                     </h1>
                 </div>

@@ -23,7 +23,7 @@ export const PROVINCES_DATA = [
     name: 'Koshi Province',
     nepaliName: 'कोशी प्रदेश',
     tagline: 'Everest Heights, Tea Hills & Eastern Cinema',
-    badge: 'Province 1 • Alpine & Eastern Heritage',
+    badge: 'कोशी प्रदेश • Alpine & Eastern Heritage',
     badgeColor: 'from-blue-500/20 to-indigo-600/10 text-blue-300 border-blue-500/30',
     accentColor: '#3b82f6',
     icon: Mountain,
@@ -86,7 +86,7 @@ export const PROVINCES_DATA = [
     name: 'Madhesh Province',
     nepaliName: 'मधेश प्रदेश',
     tagline: 'Mithila Heritage, Sacred Temples & Terai Drama',
-    badge: 'Province 2 • Cultural Cradle',
+    badge: 'मधेश प्रदेश • Cultural Cradle',
     badgeColor: 'from-rose-500/20 to-rose-600/10 text-rose-300 border-rose-500/30',
     accentColor: '#f43f5e',
     icon: Landmark,
@@ -149,7 +149,7 @@ export const PROVINCES_DATA = [
     name: 'Bagmati Province',
     nepaliName: 'बागमती प्रदेश',
     tagline: 'Film Industry Capital, UNESCO Squares & Modern Studios',
-    badge: 'Province 3 • Industry Capital',
+    badge: 'बागमती प्रदेश • Industry Capital',
     badgeColor: 'from-purple-500/20 to-purple-600/10 text-purple-300 border-purple-500/30',
     accentColor: '#8b5cf6',
     icon: Building2,
@@ -212,7 +212,7 @@ export const PROVINCES_DATA = [
     name: 'Gandaki Province',
     nepaliName: 'गण्डकी प्रदेश',
     tagline: 'Annapurna Sanctuary, Lakeside Romance & Canyon Plateaus',
-    badge: 'Province 4 • Adventure & Romance',
+    badge: 'गण्डकी प्रदेश • Adventure & Romance',
     badgeColor: 'from-sky-500/20 to-sky-600/10 text-sky-300 border-sky-500/30',
     accentColor: '#0ea5e9',
     icon: Waves,
@@ -275,7 +275,7 @@ export const PROVINCES_DATA = [
     name: 'Lumbini Province',
     nepaliName: 'लुम्बिनी प्रदेश',
     tagline: 'Birthplace of Buddha, Royal Bardiya & Palpa Heritage',
-    badge: 'Province 5 • Peace & Wilderness',
+    badge: 'लुम्बिनी प्रदेश • Peace & Wilderness',
     badgeColor: 'from-amber-500/20 to-amber-600/10 text-amber-300 border-amber-500/30',
     accentColor: '#f59e0b',
     icon: Trees,
@@ -338,7 +338,7 @@ export const PROVINCES_DATA = [
     name: 'Karnali Province',
     nepaliName: 'कर्णाली प्रदेश',
     tagline: 'Rara Queen of Lakes, Shey Phoksundo & Ancient Khas Origins',
-    badge: 'Province 6 • Untamed Frontier',
+    badge: 'कर्णाली प्रदेश • Untamed Frontier',
     badgeColor: 'from-teal-500/20 to-teal-600/10 text-teal-300 border-teal-500/30',
     accentColor: '#14b8a6',
     icon: Compass,
@@ -401,7 +401,7 @@ export const PROVINCES_DATA = [
     name: 'Sudurpashchim Province',
     nepaliName: 'सुदूरपश्चिम प्रदेश',
     tagline: 'Khaptad Rolling Meadows, Shuklaphanta & Deuda Culture',
-    badge: 'Province 7 • Far-Western Frontier',
+    badge: 'सुदूरपश्चिम प्रदेश • Far-Western Frontier',
     badgeColor: 'from-emerald-500/20 to-emerald-600/10 text-emerald-300 border-emerald-500/30',
     accentColor: '#10b981',
     icon: Castle,
@@ -519,9 +519,9 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
       {/* Section Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="space-y-1">
-          <span className="relative inline-flex items-center pb-2 text-white font-apple font-black text-lg sm:text-xl md:text-2xl tracking-wider uppercase select-none">
+          <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none">
             <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
-            Regional film hubs
+            Regional Film Hubs
           </span>
           <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
             Cinema hubs across Nepal
@@ -563,18 +563,17 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
                 {/* Top Province Badge */}
                 <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
                   <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-black/75 backdrop-blur-md border-0 text-white`}
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-black/75 backdrop-blur-md border-0 text-white`}
                   >
                     <IconComponent className="w-3 h-3 text-white" />
-                    <span>{`Province ${hub.number}`}</span>
+                    <span>{hub.nepaliName}</span>
                   </span>
                 </div>
 
                 {/* Hub Title on Bottom of Image */}
                 <div className="absolute bottom-2.5 left-3 right-3 z-10 text-left">
-                  <h3 className="font-apple text-lg sm:text-xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] tracking-wide flex items-center justify-between">
-                    <span>{hub.name}</span>
-                    <span className="text-xs font-normal text-gray-300/80">{hub.nepaliName}</span>
+                  <h3 className="text-lg sm:text-xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] tracking-tight">
+                    {hub.name}
                   </h3>
                   <p className="text-xs text-purple-200/90 font-medium truncate drop-shadow-sm">
                     {hub.tagline}
@@ -647,12 +646,12 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
             {/* Modal Top Sticky Header - Focused on Selected Province */}
             <div className="shrink-0 px-4 sm:px-6 py-3.5 border-b border-white/5 bg-[#121218]/95 backdrop-blur-md flex items-center justify-between gap-4 z-20">
               <div className="flex items-center gap-3 min-w-0">
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-600/30 text-white text-sm font-black shrink-0">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-600/30 text-white text-sm font-bold shrink-0">
                   {React.createElement(activeProvince.icon, { className: 'w-4 h-4 text-white' })}
                 </span>
                 <div className="truncate">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base sm:text-lg md:text-xl font-black font-apple tracking-wide text-white truncate">
+                    <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white truncate">
                       {activeProvince.name}
                     </h2>
                     <span className="text-xs sm:text-sm font-bold text-purple-300 shrink-0">
@@ -660,7 +659,7 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
                     </span>
                   </div>
                   <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 truncate">
-                    Province {activeProvince.number} • Regional Cinema Profile & Filming Locations
+                    {activeProvince.nepaliName} • Regional Cinema Profile & Filming Locations
                   </p>
                 </div>
               </div>
@@ -692,7 +691,7 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
                 {/* Badges on Top of Banner */}
                 <div className="relative z-10 flex flex-wrap items-center gap-2 mb-3">
                   <span
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-black/80 backdrop-blur-md border-0 text-white"
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-black/80 backdrop-blur-md border-0 text-white"
                   >
                     {React.createElement(activeProvince.icon, { className: 'w-3.5 h-3.5 text-white' })}
                     <span>{activeProvince.badge}</span>
@@ -710,10 +709,10 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
                 {/* Title and Tagline */}
                 <div className="relative z-10">
                   <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white font-apple tracking-tight">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">
                       {activeProvince.name}
                     </h1>
-                    <span className="text-base sm:text-xl font-bold text-purple-300/90 font-apple">
+                    <span className="text-base sm:text-xl font-bold text-purple-300/90">
                       {activeProvince.nepaliName}
                     </span>
                   </div>
@@ -727,19 +726,19 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                 <div className="bg-white/5 border-0 rounded-xl p-3 text-center">
                   <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Top Hotspots</p>
-                  <p className="text-base sm:text-lg font-black text-white mt-0.5">{activeProvince.stats.hotspotsCount}</p>
+                  <p className="text-base sm:text-lg font-bold text-white mt-0.5 tracking-tight">{activeProvince.stats.hotspotsCount}</p>
                 </div>
                 <div className="bg-white/5 border-0 rounded-xl p-3 text-center">
                   <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Capital City</p>
-                  <p className="text-base sm:text-lg font-black text-purple-300 mt-0.5 truncate">{activeProvince.capital.split('(')[0].trim()}</p>
+                  <p className="text-base sm:text-lg font-bold text-purple-300 mt-0.5 truncate tracking-tight">{activeProvince.capital.split('(')[0].trim()}</p>
                 </div>
                 <div className="bg-white/5 border-0 rounded-xl p-3 text-center">
                   <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Best Filming Season</p>
-                  <p className="text-xs sm:text-sm font-black text-emerald-400 mt-1 truncate">{activeProvince.bestSeason.split('(')[0].trim()}</p>
+                  <p className="text-xs sm:text-sm font-bold text-emerald-400 mt-1 truncate tracking-tight">{activeProvince.bestSeason.split('(')[0].trim()}</p>
                 </div>
                 <div className="bg-white/5 border-0 rounded-xl p-3 text-center">
                   <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Highest Peak / Point</p>
-                  <p className="text-base sm:text-lg font-black text-sky-300 mt-0.5">{activeProvince.stats.elevationPeak}</p>
+                  <p className="text-base sm:text-lg font-bold text-sky-300 mt-0.5 tracking-tight">{activeProvince.stats.elevationPeak}</p>
                 </div>
               </div>
 

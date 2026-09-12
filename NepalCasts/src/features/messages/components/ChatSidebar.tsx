@@ -291,7 +291,7 @@ export default function ChatSidebar({
                   />
                   <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
                     <div className="flex items-center gap-2">
-                      <span className="text-[15px] font-bold text-white truncate leading-tight">
+                      <span className="text-[15px] font-medium text-white truncate leading-tight">
                         {c.name || 'User'}
                       </span>
                       {isAppConvo && (

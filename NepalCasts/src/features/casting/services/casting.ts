@@ -157,7 +157,7 @@ export const dispatchTargetedAuditionAlerts = async (callId: string, callData: a
 
 export const createCastingCall = async (callData: any) => {
     try {
-        const currentUserUid = AuthService.getUserId() || CurrentUser.id || callData.creatorId || callData.createdBy;
+        const currentUserUid = AuthService.getUserId();
         if (!currentUserUid) {
             return { id: null, error: "Authentication required" };
         }
@@ -207,12 +207,20 @@ export const createCastingCall = async (callData: any) => {
 
 export const updateCastingCall = async (id: string, updateData: any) => {
     try {
-        const currentUserUid = AuthService.getUserId() || CurrentUser.id;
+        const currentUserUid = AuthService.getUserId();
         if (!currentUserUid) {
             return { success: false, error: "Authentication required" };
         }
 
         // Verify ownership: callers cannot update a casting call owned by another user
+        const existingCall = await getCastingCallById(id);
+        if (existingCall) {
+            const ownerId = existingCall.creatorId || existingCall.createdBy;
+            if (ownerId && ownerId !== currentUserUid && !CurrentUser.isAdmin) {
+                return { success: false, error: "Unauthorized: You can only edit your own casting calls" };
+            }
+        }
+
         const targetCreatorId = updateData.creatorId || updateData.createdBy;
         if (targetCreatorId && targetCreatorId !== currentUserUid && !CurrentUser.isAdmin) {
             return { success: false, error: "Unauthorized: You can only edit your own casting calls" };

@@ -183,7 +183,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                     />
                     <div className="text-left flex flex-col justify-center">
                         <div className="flex items-center gap-2">
-                            <span className="text-base font-bold text-white leading-tight">
+                            <span className="text-base font-medium text-white leading-tight">
                                 {chat?.name || 'User'}
                             </span>
                             {isAppChat && (

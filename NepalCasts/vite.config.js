@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import fs from 'fs'
+import { spawn } from 'child_process'
+import http from 'http'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const buildVersion = Date.now().toString()
@@ -25,8 +27,38 @@ function generateVersionJson() {
   }
 }
 
+// Auto-spawn Express backend on port 5000 during dev if not already running
+function autoBackendPlugin() {
+  let serverProcess = null
+  return {
+    name: 'auto-backend-server',
+    configureServer(server) {
+      const checkReq = http.get('http://localhost:5000/api/health', () => {})
+      checkReq.on('error', () => {
+        console.log('⚡ [vite] Spawning backend Express API on port 5000...')
+        const isWin = process.platform === 'win32'
+        const cmd = isWin ? 'npm.cmd' : 'npm'
+        serverProcess = spawn(cmd, ['run', 'dev'], {
+          cwd: path.resolve(__dirname, 'server'),
+          stdio: 'inherit',
+          shell: true,
+        })
+      })
+      const cleanUp = () => {
+        if (serverProcess) {
+          try { serverProcess.kill() } catch (_) {}
+          serverProcess = null
+        }
+      }
+      process.on('exit', cleanUp)
+      process.on('SIGINT', cleanUp)
+      process.on('SIGTERM', cleanUp)
+    }
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), generateVersionJson()],
+  plugins: [react(), generateVersionJson(), autoBackendPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

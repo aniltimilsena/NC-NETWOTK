@@ -225,7 +225,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
               >
                 <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
               </button>
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 Saved Calls
               </h1>
             </div>

@@ -428,7 +428,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
                                                     )}
                                                     
                                                     <div className="min-w-0">
-                                                        <span className="font-apple text-[15px] font-bold text-white truncate flex items-center gap-1.5">
+                                                        <span className="font-apple text-[15px] font-medium text-white tracking-normal truncate flex items-center gap-1.5">
                                                             {displayName}
                                                             {item.type === 'profile' && displayVerified && (
                                                                 <span className="w-3.5 h-3.5 rounded-full bg-[#522C69] flex items-center justify-center text-white text-[8px] font-black shrink-0" title="Verified">
@@ -498,7 +498,7 @@ export function ActionSearchBar({ onActionSelect, onPageNavigate, onClose, }: {
                                                     </div>
 
                                                     <div className="min-w-0">
-                                                        <h3 className="font-apple font-bold text-white text-[15px] tracking-tight truncate flex items-center gap-1.5">
+                                                        <h3 className="font-apple font-medium text-white text-[15px] tracking-normal truncate flex items-center gap-1.5">
                                                             {profile.name}
                                                             {profile.username && (
                                                                 <span className="text-xs font-normal text-white/50">

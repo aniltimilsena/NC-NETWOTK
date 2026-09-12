@@ -15,68 +15,52 @@ import { FollowItemSkeleton, SidebarWidgetSkeleton } from '../ui/Skeleton';
 import Footer from './Footer';
 import { getOptimizedImageUrl } from '../../utils/media';
 import { useApp } from '../../providers/AppProviders';
+import { toggleFollowUser, subscribeToUserFollows } from '../../features/profile/services/users';
 
-const getCallThumbnail = (call) => {
-  if (!call) return null;
-  const raw = call.thumbnail || call.thumbnailUrl || call.posterUrl || call.poster || call.image || call.coverImage || call.mediaUrl || call.media?.[0]?.url || call.photoURL || null;
-  if (!raw || typeof raw !== 'string') return null;
-  const trimmed = raw.trim();
-  if (trimmed === '' || trimmed === 'has-file' || trimmed.includes('default-') || trimmed.includes('placeholder') || trimmed.includes('movie-banner')) {
-    return null;
-  }
-  return trimmed;
-};
-
-// Inline follow button that mirrors ProfileHeader's style and uses Firestore
-function FollowBtn({ targetUid }) {
+// Inline follow button that mirrors ProfileHeader's style and uses backend/Firestore permissions safely
+function FollowBtn({ targetUid, currentUser }) {
   const { showToast } = useApp();
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const currentUserId = CurrentUser.id;
+  const currentUserId = AuthService.getUserId() || currentUser?.uid || currentUser?.id || CurrentUser.id;
 
   useEffect(() => {
     if (!currentUserId || !targetUid || currentUserId === targetUid) return;
-    const followId = `${currentUserId}_${targetUid}`;
-    const unsub = onSnapshot(doc(db, 'follows', followId), (snap) => {
-      setFollowing(snap.exists());
+    const unsub = subscribeToUserFollows(currentUserId, (followingIds) => {
+      setFollowing(followingIds.includes(targetUid));
     });
     return () => unsub();
   }, [currentUserId, targetUid]);
 
   const handleToggle = async (e) => {
     e.stopPropagation();
-    if (!currentUserId || !targetUid || currentUserId === targetUid) return;
+    if (!currentUserId) {
+      showToast?.('Please sign in to connect', 'info');
+      return;
+    }
+    if (!targetUid || currentUserId === targetUid) return;
     setLoading(true);
-    const followId = `${currentUserId}_${targetUid}`;
-    const followDocRef = doc(db, 'follows', followId);
-    const notifId = `${currentUserId}_${targetUid}_follow`;
+    const prevFollowing = following;
+    setFollowing(!prevFollowing);
     try {
-      if (following) {
-        await deleteDoc(followDocRef);
-        await deleteDoc(doc(db, 'notifications', notifId)).catch(() => {});
-      } else {
-        await setDoc(followDocRef, {
-          followerId: currentUserId,
-          followingId: targetUid,
-          createdAt: serverTimestamp(),
-        });
-        await setDoc(doc(db, 'notifications', notifId), {
-          userId: targetUid,
-          recipientId: targetUid,
-          receiverId: targetUid,
-          senderId: currentUserId,
-          notificationType: 'follow',
-          type: 'follow',
-          isRead: false,
-          read: false,
-          createdAt: serverTimestamp(),
-          targetUrl: `/profile/${currentUserId}`,
-          title: 'New Connect',
-          body: 'Someone connected with you.',
-        }, { merge: true });
+      const res = await toggleFollowUser({
+        currentUserId,
+        targetUserId: targetUid,
+        isCurrentlyFollowing: prevFollowing,
+        senderInfo: {
+          displayName: currentUser?.displayName || currentUser?.name || 'Someone',
+          photoURL: currentUser?.photoURL || currentUser?.profileImage || '',
+        }
+      });
+      if (res && res.success === false) {
+        throw new Error(res.error || 'Failed to update connection');
+      }
+      if (typeof res?.isFollowing === 'boolean') {
+        setFollowing(res.isFollowing);
       }
     } catch (err) {
-      console.error('Follow toggle failed:', err);
+      console.error('Follow toggle failed in FollowBtn:', err);
+      setFollowing(prevFollowing);
       showToast?.('Failed to update connection. Please try again.', 'error');
     } finally {
       setLoading(false);
@@ -740,84 +724,9 @@ export default function Desktop3ColumnLayout({
                               {item.location && <span> · {item.location}</span>}
                             </p>
                           </div>
-                          <FollowBtn targetUid={item.id} />
+                          <FollowBtn targetUid={item.id} currentUser={user} />
                         </div>
                       ))
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Trending Casting Calls Widget (No TrendingUp Icon) */}
-              {(isCallsLoading || safeTrending.length > 0) && (
-                <div className="space-y-3 px-2">
-                  <div className="flex items-center justify-between px-1 pt-1">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">
-                      {t('sidebar.activeCalls', 'Active Calls')}
-                    </h4>
-                    <button
-                      type="button"
-                      onClick={() => onNavigate?.('casting')}
-                      className="text-xs font-normal text-gray-300 hover:text-white transition-colors cursor-pointer flex items-center gap-0.5"
-                    >
-                      View all <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {isCallsLoading ? (
-                      <SidebarWidgetSkeleton count={3} type="casting" />
-                    ) : (
-                      safeTrending.slice(0, 3).map((call) => {
-                        const thumb = getCallThumbnail(call);
-                        return (
-                          <div
-                            key={call.id}
-                            onClick={() => onNavigate?.('casting-detail', call.id)}
-                            className="relative h-32 rounded-2xl overflow-hidden cursor-pointer shadow-xl border border-white/5 flex flex-col justify-end p-4 bg-[#0a0a0c]"
-                          >
-                            {/* Background Image / Default Clapperboard Thumbnail */}
-                            <div className="absolute inset-0 select-none pointer-events-none flex items-center justify-center overflow-hidden">
-                              {thumb ? (
-                                <img
-                                  src={getOptimizedImageUrl(thumb, { width: 320, quality: 'auto', format: 'auto' })}
-                                  alt={call.title}
-                                  loading="lazy"
-                                  decoding="async"
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                    const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
-                                    if (fallback) fallback.style.display = 'flex';
-                                  }}
-                                />
-                              ) : null}
-                              {/* Default Clapperboard Thumbnail Fallback (No mock photo) */}
-                              <div
-                                className="default-clapper-thumb absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c22] via-[#121316] to-[#08080a] p-3 text-center"
-                                style={{ display: thumb ? 'none' : 'flex' }}
-                              >
-                                <svg className="w-10 h-10 text-white/30 fill-current mb-3 drop-shadow-sm" viewBox="0 0 24 24">
-                                  <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
-                                </svg>
-                              </div>
-                              {/* Dark Glassy Overlay */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-transparent" />
-                            </div>
-
-                            {/* Text info */}
-                            <div className="relative z-10 space-y-1">
-                              <h5 className="text-white text-base font-black truncate uppercase tracking-wider">
-                                {call.title}
-                              </h5>
-                              <div className="flex items-center justify-between text-xs text-gray-300 font-bold">
-                                <span className="bg-white/10 px-2 py-0.5 rounded text-[10px] tracking-wide uppercase">{call.type || 'General'}</span>
-                                <span className="text-[#522C69] font-black capitalize tracking-wide">{call.location || 'Nepal'}</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
                     )}
                   </div>
                 </div>

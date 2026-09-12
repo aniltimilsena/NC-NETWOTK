@@ -78,7 +78,7 @@ export default function FollowModal({ type, isOpen, onClose, list, loading, onNa
                     <div className="flex items-center gap-3">
                       <Avatar userId={userItem.id} src={userItem.image} name={userItem.name} size="sm"/>
                       <div>
-                        <span className="text-sm font-bold text-gray-100 block">{userItem.name}</span>
+                        <span className="text-sm font-medium text-gray-100 block">{userItem.name}</span>
                         <span className="text-[10px] text-nc-muted font-semibold uppercase tracking-wider">{formatRole(userItem.role)}</span>
                       </div>
                     </div>

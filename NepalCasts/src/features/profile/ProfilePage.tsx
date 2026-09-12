@@ -1087,7 +1087,7 @@ export default function ProfilePage({
                       onError={(e) => {
                         const target = e.currentTarget;
                         target.onerror = null;
-                        target.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Crect width='400' height='400' fill='%23141414'/%3E%3Crect x='20' y='20' width='360' height='360' rx='16' stroke='%23262626' stroke-width='2' stroke-dasharray='6 6'/%3E%3Cpath d='M160 170a20 20 0 100-40 20 20 0 000 40zm-30 80h140l-45-60-35 45-25-30-35 45z' fill='%23522C69' fill-opacity='0.4'/%3E%3Ctext x='200' y='280' font-family='sans-serif' font-size='13' font-weight='600' fill='%23737373' text-anchor='middle'%3ENC Media%3C/text%3E%3C/svg%3E";
+                        target.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Crect width='400' height='400' fill='%23141414'/%3E%3Crect x='20' y='20' width='360' height='360' rx='16' stroke='%23262626' stroke-width='2' stroke-dasharray='6 6'/%3E%3Cpath d='M160 170a20 20 0 100-40 20 20 0 000 40zm-30 80h140l-45-60-35 45-25-30-35 45z' fill='%23522C69' fill-opacity='0.4'/%3E%3Ctext x='200' y='280' font-family='Ubuntu, sans-serif' font-size='13' font-weight='600' fill='%23737373' text-anchor='middle'%3ENC Media%3C/text%3E%3C/svg%3E";
                       }}
                     />
                     {isLastInVisitorView && (

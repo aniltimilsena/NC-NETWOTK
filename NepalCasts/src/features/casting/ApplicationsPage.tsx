@@ -211,7 +211,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                 <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
               </button>
               <div>
-                <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
                   <FileText className="w-6 h-6 text-white" />
                   <span>My Audition Applications</span>
                 </h1>

@@ -33,9 +33,13 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
         if (apiError.response?.status === 403 || apiError.response?.status === 401) {
             return { success: false, error: apiError.response.data?.error || "Action forbidden" };
         }
-        const currentUserUid = senderId || AuthService.getUserId();
+        const authUid = AuthService.getUserId();
+        const currentUserUid = isSystem ? 'system' : (authUid || senderId);
         if (!currentUserUid) {
             return { success: false, error: "Authentication required" };
+        }
+        if (authUid && senderId && senderId !== 'system' && authUid !== senderId) {
+            return { success: false, error: "Unauthorized: Cannot send message as another user" };
         }
         try {
             let targetConvoId = convoId;
@@ -51,6 +55,9 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
             let participants: string[] = [];
             if (convoSnap.exists()) {
                 participants = convoSnap.data().participants || [];
+                if (!isSystem && participants.length > 0 && !participants.includes(currentUserUid)) {
+                    return { success: false, error: "Unauthorized: You are not a participant in this conversation" };
+                }
             }
             if (participants.length === 0 && targetConvoId && !targetConvoId.startsWith('app_')) {
                 if (targetConvoId.includes('_')) {
@@ -138,6 +145,10 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
     }
 };
 export const updateMessage = async (convoId: string, messageId: string, newText: string) => {
+    const authUid = AuthService.getUserId();
+    if (!authUid) {
+        return { success: false, error: "Authentication required" };
+    }
     if (newText && typeof newText === 'string' && newText.length > 2000) {
         return { success: false, error: "Message exceeds maximum length of 2000 characters" };
     }
@@ -162,6 +173,10 @@ export const updateMessage = async (convoId: string, messageId: string, newText:
     }
 };
 export const deleteMessage = async (convoId: string, messageId: string) => {
+    const authUid = AuthService.getUserId();
+    if (!authUid) {
+        return { success: false, error: "Authentication required" };
+    }
     try {
         await apiClient.delete(`/messaging/${convoId}/messages/${messageId}`, { timeout: 1500 });
         return { success: true, error: null };
@@ -172,7 +187,7 @@ export const deleteMessage = async (convoId: string, messageId: string) => {
             await deleteDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES, messageId));
             const msgsSnap = await getDocs(query(collection(db, COLLECTIONS.CONVERSATIONS, convoId, COLLECTIONS.MESSAGES), orderBy("createdAt", "desc")));
             if (msgsSnap.empty) {
-                const uid = AuthService.getUserId();
+                const uid = authUid;
                 await updateDoc(doc(db, COLLECTIONS.CONVERSATIONS, convoId), {
                     lastMessage: "",
                     lastMessageAt: null,
@@ -193,7 +208,12 @@ export const deleteMessage = async (convoId: string, messageId: string) => {
         }
     }
 };
-export const reactToMessage = async (convoId: string, messageId: string, emoji: string, userId: string) => {
+export const reactToMessage = async (convoId: string, messageId: string, emoji: string, userId?: string) => {
+    const authUid = AuthService.getUserId();
+    const effectiveUid = authUid || userId;
+    if (!effectiveUid) {
+        return { success: false, error: "Authentication required" };
+    }
     try {
         await apiClient.post(`/messaging/${convoId}/messages/${messageId}/react`, { emoji }, { timeout: 1500 });
         return { success: true, error: null };
@@ -279,7 +299,12 @@ const participantProfilesCache = new Map<string, { data: any; ts: number }>();
 const PARTICIPANT_CACHE_TTL_MS = 10 * 60 * 1000;
 
 export const subscribeToConversations = (uid: string, callback: (convos: any[]) => void) => {
-    const q = query(collection(db, COLLECTIONS.CONVERSATIONS), where("participants", "array-contains", uid));
+    const effectiveUid = AuthService.getUserId() || uid;
+    if (!effectiveUid) {
+        callback([]);
+        return () => {};
+    }
+    const q = query(collection(db, COLLECTIONS.CONVERSATIONS), where("participants", "array-contains", effectiveUid));
     
     const buildAndEmit = (docsData: Array<{ id: string; data: any }>, profilesMap: Map<string, any>) => {
         const uniqueConvosMap = new Map<string, any>();

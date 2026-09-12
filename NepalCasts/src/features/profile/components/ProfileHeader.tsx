@@ -304,7 +304,7 @@ export default function ProfileHeader({
           {/* Row 1: Name + Badges + Action Buttons */}
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl lg:text-2xl font-bold text-zinc-100 tracking-normal">
+              <h2 className="text-xl lg:text-2xl font-medium text-zinc-100 tracking-wide">
                 {name}
               </h2>
               {username && username !== name && (
@@ -526,7 +526,7 @@ export default function ProfileHeader({
         <div className="flex flex-col gap-0 text-left">
           {/* Display Name + Verified Badges */}
           <div className="flex items-center gap-1.5 min-w-0 leading-none">
-            <h1 className="font-bold text-base sm:text-lg text-zinc-100 tracking-tight truncate leading-none">
+            <h1 className="font-medium text-base sm:text-lg text-zinc-100 tracking-normal truncate leading-none">
               {name}
             </h1>
             {profile.verified === true && (

@@ -1,6 +1,7 @@
 import { collection, query, onSnapshot, getDocs, limit, startAfter, where, doc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp, type DocumentSnapshot } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { COLLECTIONS } from "../../../constants/collections";
+import { AuthService } from "../../../services/AuthService";
 import apiClient from "../../../api/client";
 
 type Talent = {
@@ -321,19 +322,65 @@ export interface ToggleFollowParams {
     };
 }
 
-export const toggleFollowUser = async ({
-    currentUserId,
-    targetUserId,
-    isCurrentlyFollowing,
-    senderInfo
-}: ToggleFollowParams): Promise<{ success: boolean; isFollowing: boolean; error?: string }> => {
-    if (!currentUserId || !targetUserId || currentUserId === targetUserId) {
+export const toggleFollowUser = async (
+    paramsOrUserId: ToggleFollowParams | string,
+    targetUserIdParam?: string,
+    isCurrentlyFollowingParam?: boolean,
+    senderInfoParam?: { displayName?: string; photoURL?: string }
+): Promise<{ success: boolean; isFollowing: boolean; error?: string }> => {
+    let currentUserId: string;
+    let targetUserId: string;
+    let isCurrentlyFollowing: boolean;
+    let senderInfo: { displayName?: string; photoURL?: string } | undefined;
+
+    if (typeof paramsOrUserId === 'string') {
+        currentUserId = paramsOrUserId;
+        targetUserId = targetUserIdParam || '';
+        isCurrentlyFollowing = !!isCurrentlyFollowingParam;
+        senderInfo = senderInfoParam;
+    } else {
+        currentUserId = paramsOrUserId.currentUserId;
+        targetUserId = paramsOrUserId.targetUserId;
+        isCurrentlyFollowing = paramsOrUserId.isCurrentlyFollowing;
+        senderInfo = paramsOrUserId.senderInfo;
+    }
+
+    const authUid = AuthService.getUserId();
+    const effectiveUserId = authUid || currentUserId;
+
+    if (!effectiveUserId || !targetUserId || effectiveUserId === targetUserId) {
         return { success: false, isFollowing: isCurrentlyFollowing, error: "Invalid user IDs" };
     }
 
-    const followId = `${currentUserId}_${targetUserId}`;
+    // Block cross-user impersonation
+    if (authUid && currentUserId && authUid !== currentUserId) {
+        return { success: false, isFollowing: isCurrentlyFollowing, error: "Unauthorized: Cannot impersonate another user" };
+    }
+
+    const action = isCurrentlyFollowing ? 'unfollow' : 'follow';
+
+    // 1. Try secure backend endpoint first (has admin privileges to update counters safely)
+    try {
+        const res = await apiClient.post('/profile/follow', {
+            targetUserId,
+            action,
+            senderInfo,
+        }, { timeout: 8000 });
+
+        if (res.data?.success) {
+            notifyFollowUpdated(targetUserId);
+            notifyFollowUpdated(effectiveUserId);
+            return { success: true, isFollowing: res.data.isFollowing };
+        }
+    } catch (backendError) {
+        console.warn("Backend follow endpoint failed, falling back to direct Firestore write:", backendError);
+    }
+
+    // 2. Direct Firestore fallback
+    // Note: Clients NEVER write directly to another user's profile document (targetUserId)
+    const followId = `${effectiveUserId}_${targetUserId}`;
     const followDocRef = doc(db, COLLECTIONS.FOLLOWS, followId);
-    const notifId = `${currentUserId}_${targetUserId}_follow`;
+    const notifId = `${effectiveUserId}_${targetUserId}_follow`;
 
     try {
         if (isCurrentlyFollowing) {
@@ -341,22 +388,19 @@ export const toggleFollowUser = async ({
             await deleteDoc(doc(db, COLLECTIONS.NOTIFICATIONS, notifId)).catch((err) => {
                 console.warn("Could not delete follow notification:", err);
             });
-            await updateDoc(doc(db, COLLECTIONS.PROFILES, targetUserId), {
-                followers: increment(-1),
-                followersCount: increment(-1),
-                updatedAt: serverTimestamp()
-            }).catch((err) => console.warn("Could not decrement target followers:", err));
-            await updateDoc(doc(db, COLLECTIONS.PROFILES, currentUserId), {
+            // Update only current user's own profile following counter
+            await updateDoc(doc(db, COLLECTIONS.PROFILES, effectiveUserId), {
                 following: increment(-1),
                 followingCount: increment(-1),
                 updatedAt: serverTimestamp()
             }).catch((err) => console.warn("Could not decrement user following:", err));
+
             notifyFollowUpdated(targetUserId);
-            notifyFollowUpdated(currentUserId);
+            notifyFollowUpdated(effectiveUserId);
             return { success: true, isFollowing: false };
         } else {
             await setDoc(followDocRef, {
-                followerId: currentUserId,
+                followerId: effectiveUserId,
                 followingId: targetUserId,
                 createdAt: serverTimestamp()
             });
@@ -364,7 +408,7 @@ export const toggleFollowUser = async ({
                 userId: targetUserId,
                 recipientId: targetUserId,
                 receiverId: targetUserId,
-                senderId: currentUserId,
+                senderId: effectiveUserId,
                 senderName: senderInfo?.displayName || "Someone",
                 senderAvatar: senderInfo?.photoURL || "",
                 title: "New Connect",
@@ -374,20 +418,20 @@ export const toggleFollowUser = async ({
                 isRead: false,
                 read: false,
                 createdAt: serverTimestamp(),
-                targetUrl: `/profile/${currentUserId}`
-            }, { merge: true });
-            await updateDoc(doc(db, COLLECTIONS.PROFILES, targetUserId), {
-                followers: increment(1),
-                followersCount: increment(1),
-                updatedAt: serverTimestamp()
-            }).catch((err) => console.warn("Could not increment target followers:", err));
-            await updateDoc(doc(db, COLLECTIONS.PROFILES, currentUserId), {
+                targetUrl: `/profile/${effectiveUserId}`
+            }, { merge: true }).catch((notifErr) => {
+                console.warn("Could not create follow notification document:", notifErr);
+            });
+
+            // Update only current user's own profile following counter
+            await updateDoc(doc(db, COLLECTIONS.PROFILES, effectiveUserId), {
                 following: increment(1),
                 followingCount: increment(1),
                 updatedAt: serverTimestamp()
             }).catch((err) => console.warn("Could not increment user following:", err));
+
             notifyFollowUpdated(targetUserId);
-            notifyFollowUpdated(currentUserId);
+            notifyFollowUpdated(effectiveUserId);
             return { success: true, isFollowing: true };
         }
     } catch (err: any) {

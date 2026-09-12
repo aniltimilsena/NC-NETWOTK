@@ -491,7 +491,7 @@ export default function CastingCallCreate({ onNavigate, user, showAlert, editId 
                   {isEditMode ? 'Production Editor' : 'Producer Studio'}
                 </span>
               </div>
-              <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight mt-1 truncate">
+              <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight mt-1 truncate">
                 {isEditMode ? 'Edit Casting Call' : 'Post a Casting Call'}
               </h1>
               <p className="text-xs sm:text-sm text-gray-400 mt-0.5 font-medium line-clamp-1 sm:line-clamp-none">

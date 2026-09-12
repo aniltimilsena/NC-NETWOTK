@@ -578,7 +578,7 @@ export default function AdminUsers() {
                   {selectedUser.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-lg">{selectedUser.name}</h3>
+                  <h3 className="font-medium text-white text-lg tracking-normal">{selectedUser.name}</h3>
                   <p className="text-xs text-nc-muted uppercase tracking-widest font-black">Account moderation console</p>
                 </div>
               </div>
