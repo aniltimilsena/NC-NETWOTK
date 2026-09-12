@@ -11,6 +11,7 @@ import type { Message } from '../../types';
 import { Pin, X } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Avatar } from '../../components/ui';
+import { getSavedRealTalents } from '../profile/services/users';
 interface MessagesPageProps {
     onNavigate: (page: string, param?: any) => void;
     user: any;
@@ -33,16 +34,33 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
         if (!activeChatId) return null;
         const found = conversations.find((c) => c.id === activeChatId || c.otherParticipantId === activeChatId);
         if (found) return found;
-        if (hookActiveChat) return hookActiveChat;
+        if (hookActiveChat && hookActiveChat.name && hookActiveChat.name !== 'User') return hookActiveChat;
         const resolvedOtherId = activeChatId.includes('_') && !activeChatId.startsWith('app_')
             ? activeChatId.split('_').find((p: string) => p !== user?.uid) || activeChatId
             : activeChatId;
+
+        const saved = getSavedRealTalents();
+        const clean = resolvedOtherId.replace(/^@/, '').toLowerCase().trim();
+        const cached = saved.find((t: any) => {
+            const tUid = t.uid || t.id;
+            const tUser = (t.username || '').toLowerCase().trim();
+            return tUid === resolvedOtherId || (Boolean(clean && tUser) && tUser === clean);
+        });
+
+        const name = cached?.name ||
+            [cached?.firstName, cached?.lastName].filter(Boolean).join(' ') ||
+            cached?.displayName ||
+            cached?.username ||
+            hookActiveChat?.name ||
+            'User';
+        const avatar = cached?.image || cached?.photoURL || cached?.profileImage || hookActiveChat?.avatar || '';
+
         return {
             id: activeChatId,
             otherParticipantId: resolvedOtherId,
             participants: user?.uid ? [user.uid, resolvedOtherId] : [resolvedOtherId],
-            name: 'User',
-            avatar: '',
+            name,
+            avatar,
             online: false
         };
     }, [activeChatId, conversations, hookActiveChat, user?.uid]);

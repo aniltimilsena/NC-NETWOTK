@@ -47,6 +47,42 @@ export const getProfile = async (uid: string): Promise<ProfileResponse> => {
             }
             return { data: { uid, id: uid, ...uData } as ProfileData, error: null };
         }
+
+        // Check local persistent cache of real talents
+        const cleanParam = uid.replace(/^@/, '').toLowerCase().trim();
+        const savedTalents = getSavedRealTalents();
+        if (Array.isArray(savedTalents) && savedTalents.length > 0) {
+            const found = savedTalents.find((t: any) => {
+                const tUid = t.uid || t.id;
+                const tUser = (t.username || '').toLowerCase().trim();
+                return tUid === uid || (Boolean(cleanParam && tUser) && tUser === cleanParam);
+            });
+            if (found) {
+                return { data: { uid: found.uid || found.id, id: found.id || found.uid, ...found } as ProfileData, error: null };
+            }
+        }
+
+        // Check if uid matches a username in profiles or users
+        if (cleanParam) {
+            try {
+                const { collection, query: fsQuery, where: fsWhere, getDocs: fsGetDocs } = await import('firebase/firestore');
+                const qProfiles = fsQuery(collection(db, COLLECTIONS.PROFILES), fsWhere("username", "==", cleanParam));
+                const snapProfiles = await fsGetDocs(qProfiles);
+                if (!snapProfiles.empty) {
+                    const docData = snapProfiles.docs[0].data();
+                    const realUid = docData.linkedUid || docData.canonicalUid || docData.uid || snapProfiles.docs[0].id;
+                    return { data: { uid: realUid, id: realUid, ...docData } as ProfileData, error: null };
+                }
+                const qUsers = fsQuery(collection(db, COLLECTIONS.USERS), fsWhere("username", "==", cleanParam));
+                const snapUsers = await fsGetDocs(qUsers);
+                if (!snapUsers.empty) {
+                    const docData = snapUsers.docs[0].data();
+                    const realUid = docData.uid || snapUsers.docs[0].id;
+                    return { data: { uid: realUid, id: realUid, ...docData } as ProfileData, error: null };
+                }
+            } catch (_qErr) {}
+        }
+
         return { data: null, error: null };
     }
     catch (error: unknown) {

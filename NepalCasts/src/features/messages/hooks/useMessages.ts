@@ -7,6 +7,7 @@ import type { Message, ServiceResult } from '../../../types';
 import { subscribeToCallHistory } from '../../../services';
 import { cacheManager } from '../../../utils/cacheManager';
 import { isUserOnline } from '../../../utils/presence';
+import { getSavedRealTalents } from '../../profile/services/users';
 
 export function useMessages(currentUser: any, initialUserId: string | null) {
     const cacheKey = currentUser?.uid ? `user_convos_cache_${currentUser.uid}` : null;
@@ -301,16 +302,32 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             return;
         }
 
+        // Check local saved talents first for instant sync resolution
+        const saved = getSavedRealTalents();
+        const cleanOtherId = otherUserId.replace(/^@/, '').toLowerCase().trim();
+        const cached = saved.find((t: any) => {
+            const tUid = t.uid || t.id;
+            const tUser = (t.username || '').toLowerCase().trim();
+            return tUid === otherUserId || (Boolean(cleanOtherId && tUser) && tUser === cleanOtherId);
+        });
+
+        const initialName = cached?.name ||
+            [cached?.firstName, cached?.lastName].filter(Boolean).join(' ') ||
+            cached?.displayName ||
+            cached?.username ||
+            '';
+        const initialAvatar = cached?.image || cached?.photoURL || cached?.profileImage || '';
+
         // Set immediate synthetic chat so header & inputs are active immediately
         setSyntheticChat((prev: any) => {
-            if (prev && prev.otherParticipantId === otherUserId) return prev;
+            if (prev && prev.otherParticipantId === otherUserId && prev.name && prev.name !== 'User') return prev;
             return {
                 id: targetChatId,
                 otherParticipantId: otherUserId,
                 participants: [currentUser.uid, otherUserId],
-                name: 'User',
-                avatar: '',
-                online: false
+                name: initialName || prev?.name || 'User',
+                avatar: initialAvatar || prev?.avatar || '',
+                online: cached ? isUserOnline(cached) : false
             };
         });
 
@@ -323,8 +340,9 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
                     [pData.firstName, pData.lastName].filter(Boolean).join(' ') ||
                     pData.displayName ||
                     pData.username ||
+                    initialName ||
                     'User';
-                const resolvedAvatar = pData.image || pData.photoURL || pData.profileImage || '';
+                const resolvedAvatar = pData.image || pData.photoURL || pData.profileImage || initialAvatar || '';
                 setSyntheticChat({
                     id: targetChatId,
                     otherParticipantId: otherUserId,
@@ -557,6 +575,23 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         ? activeChatId.split('_').find(p => p !== currentUser?.uid) || activeChatId
         : (activeChatId || initialUserId);
 
+    const cachedFallbackTalent = fallbackOtherId ? (() => {
+        const saved = getSavedRealTalents();
+        const clean = fallbackOtherId.replace(/^@/, '').toLowerCase().trim();
+        return saved.find((t: any) => {
+            const tUid = t.uid || t.id;
+            const tUser = (t.username || '').toLowerCase().trim();
+            return tUid === fallbackOtherId || (Boolean(clean && tUser) && tUser === clean);
+        });
+    })() : null;
+
+    const fallbackName = cachedFallbackTalent?.name ||
+        [cachedFallbackTalent?.firstName, cachedFallbackTalent?.lastName].filter(Boolean).join(' ') ||
+        cachedFallbackTalent?.displayName ||
+        cachedFallbackTalent?.username ||
+        'User';
+    const fallbackAvatar = cachedFallbackTalent?.image || cachedFallbackTalent?.photoURL || cachedFallbackTalent?.profileImage || '';
+
     const activeChat = activeChatId ? (
         conversations.find(c => c.id === activeChatId || c.otherParticipantId === activeChatId) ||
         syntheticChat ||
@@ -564,9 +599,9 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             id: activeChatId,
             otherParticipantId: fallbackOtherId,
             participants: currentUser?.uid ? [currentUser.uid, fallbackOtherId] : [fallbackOtherId],
-            name: 'User',
-            avatar: '',
-            online: false
+            name: fallbackName,
+            avatar: fallbackAvatar,
+            online: cachedFallbackTalent ? isUserOnline(cachedFallbackTalent) : false
         } : null)
     ) : null;
 

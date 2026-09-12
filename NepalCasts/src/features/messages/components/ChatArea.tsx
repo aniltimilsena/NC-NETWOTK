@@ -8,6 +8,7 @@ import { Avatar } from '../../../components/ui';
 import { saveImageDirectly, getOptimizedImageUrl } from '../../../utils/media';
 import type { Message } from '../../../types';
 import { isUserOnline } from '../../../utils/presence';
+import { getSavedRealTalents } from '../../profile/services/users';
 
 interface ChatAreaProps {
     chat: any;
@@ -64,23 +65,37 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
     const isTyping = otherParticipantId ? typingUsers?.[otherParticipantId] === true : false;
     const [isOnline, setIsOnline] = useState<boolean>(() => isUserOnline(chat));
     const otherUserDataRef = useRef<any>(null);
+    const [liveUserData, setLiveUserData] = useState<any>(null);
 
     useEffect(() => {
         setIsOnline(isUserOnline(chat));
         if (!otherParticipantId) return;
 
-        const checkPresence = (data: any) => {
+        // Check local saved talents cache immediately
+        const saved = getSavedRealTalents();
+        const cleanId = otherParticipantId.replace(/^@/, '').toLowerCase().trim();
+        const cached = saved.find((t: any) => {
+            const tUid = t.uid || t.id;
+            const tUser = (t.username || '').toLowerCase().trim();
+            return tUid === otherParticipantId || (Boolean(cleanId && tUser) && tUser === cleanId);
+        });
+        if (cached) {
+            setLiveUserData(cached);
+        }
+
+        const handleUserData = (data: any) => {
             if (!data) return;
-            otherUserDataRef.current = data;
+            otherUserDataRef.current = { ...(otherUserDataRef.current || {}), ...data };
+            setLiveUserData((prev: any) => ({ ...(prev || {}), ...data }));
             setIsOnline(isUserOnline(data));
         };
 
         const unsubUser = onSnapshot(doc(db, 'users', otherParticipantId), (snap) => {
-            if (snap.exists()) checkPresence(snap.data());
+            if (snap.exists()) handleUserData(snap.data());
         }, () => {});
 
         const unsubProfile = onSnapshot(doc(db, 'profiles', otherParticipantId), (snap) => {
-            if (snap.exists()) checkPresence(snap.data());
+            if (snap.exists()) handleUserData(snap.data());
         }, () => {});
 
         // Re-evaluate presence every 20 seconds to automatically transition to Offline when inactive
@@ -98,6 +113,22 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
             clearInterval(presenceTicker);
         };
     }, [otherParticipantId, chat]);
+
+    const displayName = (chat?.name && chat.name !== 'User' && chat.name !== 'Loading...')
+        ? chat.name
+        : (liveUserData?.name ||
+           [liveUserData?.firstName, liveUserData?.lastName].filter(Boolean).join(' ') ||
+           liveUserData?.displayName ||
+           liveUserData?.username ||
+           chat?.name ||
+           'User');
+
+    const displayAvatar = (chat?.avatar)
+        ? chat.avatar
+        : (liveUserData?.image ||
+           liveUserData?.photoURL ||
+           liveUserData?.profileImage ||
+           '');
 
     const startMessagePress = (msg: Message, el?: HTMLElement | null) => {
         isLongPressActive.current = false;
@@ -175,8 +206,8 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                     </button>
                     <Avatar
                         userId={otherParticipantId}
-                        src={chat?.avatar}
-                        name={chat?.name}
+                        src={displayAvatar}
+                        name={displayName}
                         size="md"
                         showStatus={true}
                         className="!w-12 !h-12 sm:!w-13 sm:!h-13 shrink-0 rounded-full"
@@ -184,7 +215,7 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
                     <div className="text-left flex flex-col justify-center">
                         <div className="flex items-center gap-2">
                             <span className="text-base font-medium text-white leading-tight">
-                                {chat?.name || 'User'}
+                                {displayName}
                             </span>
                             {isAppChat && (
                                 <span className="text-[9px] font-bold text-purple-300 bg-[#522C69]/30 border border-[#522C69]/40 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
