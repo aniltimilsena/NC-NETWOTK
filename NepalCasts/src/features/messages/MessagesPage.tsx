@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useMessages } from './hooks/useMessages';
 import ChatSidebar from './components/ChatSidebar';
 import ChatArea from './components/ChatArea';
@@ -29,7 +29,23 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
     const [showNewChatModal, setShowNewChatModal] = useState(false);
     const [deletingConvoId, setDeletingConvoId] = useState<string | null>(null);
     const [showPinnedDrawer, setShowPinnedDrawer] = useState(false);
-    const activeChat = activeChatId ? (conversations.find((c) => c.id === activeChatId || c.otherParticipantId === activeChatId) || hookActiveChat) : null;
+    const activeChat = useMemo(() => {
+        if (!activeChatId) return null;
+        const found = conversations.find((c) => c.id === activeChatId || c.otherParticipantId === activeChatId);
+        if (found) return found;
+        if (hookActiveChat) return hookActiveChat;
+        const resolvedOtherId = activeChatId.includes('_') && !activeChatId.startsWith('app_')
+            ? activeChatId.split('_').find((p: string) => p !== user?.uid) || activeChatId
+            : activeChatId;
+        return {
+            id: activeChatId,
+            otherParticipantId: resolvedOtherId,
+            participants: user?.uid ? [user.uid, resolvedOtherId] : [resolvedOtherId],
+            name: 'User',
+            avatar: '',
+            online: false
+        };
+    }, [activeChatId, conversations, hookActiveChat, user?.uid]);
     const handleDeleteConversation = async (convoId: string) => {
         try {
             const targetConvo = conversations.find(c => c.id === convoId);

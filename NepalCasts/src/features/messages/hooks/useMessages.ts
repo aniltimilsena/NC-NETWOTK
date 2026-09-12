@@ -27,7 +27,27 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     const [receivedApps, setReceivedApps] = useState<any[]>([]);
     const [sentApps, setSentApps] = useState<any[]>([]);
     const [conversations, setConversations] = useState<any[]>(initialCached || []);
-    const [activeChatId, setActiveChatId] = useState<string | null>(null);
+    const [activeChatId, setActiveChatId] = useState<string | null>(() => {
+        if (!initialUserId) return null;
+        if (initialUserId.includes('_') || initialUserId.startsWith('app_')) return initialUserId;
+        if (currentUser?.uid) {
+            return [currentUser.uid, initialUserId].sort().join('_');
+        }
+        return initialUserId;
+    });
+
+    useEffect(() => {
+        if (!initialUserId) return;
+        userClosedChatRef.current = false;
+        if (initialUserId.includes('_') || initialUserId.startsWith('app_')) {
+            setActiveChatId(initialUserId);
+        } else if (currentUser?.uid) {
+            const deterministicId = [currentUser.uid, initialUserId].sort().join('_');
+            setActiveChatId(deterministicId);
+        } else {
+            setActiveChatId(initialUserId);
+        }
+    }, [initialUserId, currentUser?.uid]);
     const [syntheticChat, setSyntheticChat] = useState<any | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(!initialCached || initialCached.length === 0);
@@ -251,31 +271,75 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
 
     // Synthetic fallback chat object for newly initiated conversations
     useEffect(() => {
-        const targetId = activeChatId;
-        if (!targetId || !currentUser?.uid) {
+        if (!currentUser?.uid) {
             setSyntheticChat(null);
             return;
         }
-        const existing = conversations.find(c => c.id === targetId || c.otherParticipantId === targetId);
+        const targetChatId = activeChatId || initialUserId;
+        if (!targetChatId) {
+            setSyntheticChat(null);
+            return;
+        }
+        const existing = conversations.find(c => c.id === targetChatId || c.otherParticipantId === targetChatId);
         if (existing) {
             setSyntheticChat(null);
             return;
         }
-        // Fetch target profile metadata for synthetic chat state
-        getProfile(targetId).then(res => {
+
+        let otherUserId: string | null = null;
+        if (initialUserId && !initialUserId.includes('_') && !initialUserId.startsWith('app_') && initialUserId !== currentUser.uid) {
+            otherUserId = initialUserId;
+        } else if (targetChatId.includes('_') && !targetChatId.startsWith('app_')) {
+            const parts = targetChatId.split('_');
+            otherUserId = parts.find((p: string) => p !== currentUser.uid) || null;
+        } else if (!targetChatId.startsWith('app_') && targetChatId !== currentUser.uid) {
+            otherUserId = targetChatId;
+        }
+
+        if (!otherUserId) {
+            setSyntheticChat(null);
+            return;
+        }
+
+        // Set immediate synthetic chat so header & inputs are active immediately
+        setSyntheticChat((prev: any) => {
+            if (prev && prev.otherParticipantId === otherUserId) return prev;
+            return {
+                id: targetChatId,
+                otherParticipantId: otherUserId,
+                participants: [currentUser.uid, otherUserId],
+                name: 'User',
+                avatar: '',
+                online: false
+            };
+        });
+
+        let isCancelled = false;
+        getProfile(otherUserId).then(res => {
+            if (isCancelled) return;
             if (res.data) {
                 const pData = res.data as any;
+                const resolvedName = pData.name ||
+                    [pData.firstName, pData.lastName].filter(Boolean).join(' ') ||
+                    pData.displayName ||
+                    pData.username ||
+                    'User';
+                const resolvedAvatar = pData.image || pData.photoURL || pData.profileImage || '';
                 setSyntheticChat({
-                    id: targetId,
-                    otherParticipantId: targetId,
-                    participants: [currentUser.uid, targetId],
-                    name: pData.name || [pData.firstName, pData.lastName].filter(Boolean).join(' ') || pData.username || 'User',
-                    avatar: pData.image || '',
+                    id: targetChatId,
+                    otherParticipantId: otherUserId,
+                    participants: [currentUser.uid, otherUserId],
+                    name: resolvedName,
+                    avatar: resolvedAvatar,
                     online: isUserOnline(pData)
                 });
             }
         }).catch(console.warn);
-    }, [activeChatId, conversations, currentUser?.uid]);
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [activeChatId, initialUserId, conversations, currentUser?.uid]);
 
     useEffect(() => {
         if (!activeChatId || !currentUser?.uid) {
@@ -322,6 +386,13 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     useEffect(() => {
         if (!currentUser?.uid || !initialUserId) return;
         if (userClosedChatRef.current || resolvedInitialUserRef.current === initialUserId) return;
+
+        if (initialUserId.startsWith('app_') || initialUserId.includes('_')) {
+            setActiveChatId(initialUserId);
+            resolvedInitialUserRef.current = initialUserId;
+            return;
+        }
+
         const deterministicFallback = [currentUser.uid, initialUserId].sort().join('_');
         const existingConvo = conversations.find((c) => c.id === deterministicFallback || c.id === initialUserId || c.otherParticipantId === initialUserId);
         if (existingConvo) {
@@ -438,17 +509,30 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         setMessages(prev => [...prev, optimisticMessage]);
 
         // Optimistically update sidebar conversation preview
-        setConversations(prev => prev.map(c => {
-            if (c.id === targetConvoId || c.otherParticipantId === targetConvoId) {
-                return {
-                    ...c,
+        setConversations(prev => {
+            const exists = prev.some(c => c.id === targetConvoId || c.otherParticipantId === targetConvoId);
+            if (!exists && syntheticChat) {
+                return [{
+                    ...syntheticChat,
+                    id: targetConvoId,
                     lastMessage: text,
                     lastMessageAt: new Date(),
                     lastSenderId: currentUser.uid,
-                };
+                    unread: false,
+                }, ...prev];
             }
-            return c;
-        }));
+            return prev.map(c => {
+                if (c.id === targetConvoId || c.otherParticipantId === targetConvoId) {
+                    return {
+                        ...c,
+                        lastMessage: text,
+                        lastMessageAt: new Date(),
+                        lastSenderId: currentUser.uid,
+                    };
+                }
+                return c;
+            });
+        });
 
         const res = await sendMessage(targetConvoId, currentUser.uid, text, false, replyTo, type, optimisticId);
         if (res.success) {
@@ -467,9 +551,24 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             setMessages(prev => prev.filter(m => m.id !== optimisticId));
         }
         return res;
-    }, [activeChatId, initialUserId, currentUser?.uid, conversations]);
+    }, [activeChatId, initialUserId, currentUser?.uid, conversations, syntheticChat]);
 
-    const activeChat = activeChatId ? (conversations.find(c => c.id === activeChatId || c.otherParticipantId === activeChatId) || syntheticChat) : null;
+    const fallbackOtherId = activeChatId && activeChatId.includes('_') && !activeChatId.startsWith('app_')
+        ? activeChatId.split('_').find(p => p !== currentUser?.uid) || activeChatId
+        : (activeChatId || initialUserId);
+
+    const activeChat = activeChatId ? (
+        conversations.find(c => c.id === activeChatId || c.otherParticipantId === activeChatId) ||
+        syntheticChat ||
+        (fallbackOtherId ? {
+            id: activeChatId,
+            otherParticipantId: fallbackOtherId,
+            participants: currentUser?.uid ? [currentUser.uid, fallbackOtherId] : [fallbackOtherId],
+            name: 'User',
+            avatar: '',
+            online: false
+        } : null)
+    ) : null;
 
     return {
         conversations,
