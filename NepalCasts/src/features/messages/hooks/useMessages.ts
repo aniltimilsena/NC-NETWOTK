@@ -11,6 +11,17 @@ import { isUserOnline } from '../../../utils/presence';
 export function useMessages(currentUser: any, initialUserId: string | null) {
     const cacheKey = currentUser?.uid ? `user_convos_cache_${currentUser.uid}` : null;
     const initialCached = cacheKey ? (cacheManager.getMemory<any[]>(cacheKey) || null) : null;
+    const deletedStorageKey = currentUser?.uid ? `nc_deleted_convos_${currentUser.uid}` : null;
+
+    const [deletedConvoIds, setDeletedConvoIds] = useState<Set<string>>(() => {
+        if (!deletedStorageKey) return new Set();
+        try {
+            const raw = localStorage.getItem(deletedStorageKey);
+            return raw ? new Set(JSON.parse(raw)) : new Set();
+        } catch {
+            return new Set();
+        }
+    });
 
     const [rawConversations, setRawConversations] = useState<any[]>(initialCached || []);
     const [receivedApps, setReceivedApps] = useState<any[]>([]);
@@ -34,6 +45,23 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         }
         setActiveChatId(id);
     }, []);
+
+    const removeConversation = useCallback((convoId: string) => {
+        setDeletedConvoIds(prev => {
+            const next = new Set(prev);
+            next.add(convoId);
+            if (deletedStorageKey) {
+                try {
+                    localStorage.setItem(deletedStorageKey, JSON.stringify(Array.from(next)));
+                } catch (e) {}
+            }
+            return next;
+        });
+        setRawConversations(prev => prev.filter(c => c.id !== convoId && c.otherParticipantId !== convoId));
+        setConversations(prev => prev.filter(c => c.id !== convoId && c.otherParticipantId !== convoId));
+        setActiveChatId(prev => (prev === convoId ? null : prev));
+        setMessages(prev => (activeChatId === convoId ? [] : prev));
+    }, [deletedStorageKey, activeChatId]);
 
     // 1. Subscribe to regular conversations
     useEffect(() => {
@@ -86,8 +114,15 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
 
         // 1. Process regular conversations
         rawConversations.forEach(c => {
+            if (deletedConvoIds.has(c.id) || (c.otherParticipantId && deletedConvoIds.has(c.otherParticipantId))) {
+                return;
+            }
+            if (c.deletedFor && (c.deletedFor[currentUser?.uid] === true || (Array.isArray(c.deletedFor) && c.deletedFor.includes(currentUser?.uid)))) {
+                return;
+            }
             const otherId = c.otherParticipantId || c.participants?.find((p: string) => p !== currentUser?.uid);
             if (otherId) {
+                if (deletedConvoIds.has(otherId)) return;
                 convosByParticipant.set(otherId, { ...c });
             } else if (c.id) {
                 convosByParticipant.set(c.id, { ...c });
@@ -96,8 +131,13 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
 
         // 2. Merge received casting applications (as Creator)
         receivedApps.forEach(app => {
+            const appId = `app_${app.id}`;
+            if (deletedConvoIds.has(appId) || deletedConvoIds.has(app.id)) return;
+            if (app.deletedFor && (app.deletedFor[currentUser?.uid] === true || (Array.isArray(app.deletedFor) && app.deletedFor.includes(currentUser?.uid)))) {
+                return;
+            }
             const otherId = app.userId;
-            if (!otherId) return;
+            if (!otherId || deletedConvoIds.has(otherId)) return;
             const existing = convosByParticipant.get(otherId);
             if (existing) {
                 // Enrich existing conversation with application details
@@ -147,8 +187,13 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
 
         // 3. Merge sent casting applications (as Applicant)
         sentApps.forEach(app => {
+            const appId = `app_${app.id}`;
+            if (deletedConvoIds.has(appId) || deletedConvoIds.has(app.id)) return;
+            if (app.deletedFor && (app.deletedFor[currentUser?.uid] === true || (Array.isArray(app.deletedFor) && app.deletedFor.includes(currentUser?.uid)))) {
+                return;
+            }
             const otherId = app.creatorId;
-            if (!otherId) return;
+            if (!otherId || deletedConvoIds.has(otherId)) return;
             const existing = convosByParticipant.get(otherId);
             if (existing) {
                 existing.isApplication = true;
@@ -193,7 +238,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         if (currentUser?.uid && combined.length > 0) {
             cacheManager.setMemory?.(`user_convos_cache_${currentUser.uid}`, combined);
         }
-    }, [rawConversations, receivedApps, sentApps, currentUser?.uid]);
+    }, [rawConversations, receivedApps, sentApps, currentUser?.uid, deletedConvoIds]);
 
     useEffect(() => {
         if (userClosedChatRef.current) return;
@@ -437,7 +482,8 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         callHistory,
         loadingCalls,
         updateTyping,
-        dispatchMessage
+        dispatchMessage,
+        removeConversation
     };
 }
 export type UseMessagesReturn = ReturnType<typeof useMessages>;

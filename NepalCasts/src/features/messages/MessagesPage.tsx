@@ -23,7 +23,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function MessagesPage({ onNavigate, user, initialUserId, initialConversationId, activeSubView: _activeSubView, showAlert }: MessagesPageProps) {
     const { t } = useTranslation();
-    const { conversations, activeChatId, activeChat: hookActiveChat, setActiveChatId, messages, loading, typingUsers, callHistory, loadingCalls, updateTyping, dispatchMessage } = useMessages(user, initialConversationId || initialUserId || null);
+    const { conversations, activeChatId, activeChat: hookActiveChat, setActiveChatId, messages, loading, typingUsers, callHistory, loadingCalls, updateTyping, dispatchMessage, removeConversation } = useMessages(user, initialConversationId || initialUserId || null);
     const { initiateCall } = useCall();
     const [replyingTo, setReplyingTo] = useState<Message | null>(null);
     const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -33,11 +33,16 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
     const handleDeleteConversation = async (convoId: string) => {
         try {
             const targetConvo = conversations.find(c => c.id === convoId);
+            const otherId = targetConvo?.otherParticipantId;
+            removeConversation?.(convoId);
+            if (otherId) {
+                removeConversation?.(otherId);
+            }
+            if (activeChatId === convoId || activeChatId === otherId) {
+                setActiveChatId(null);
+            }
             const res = await deleteConversation(convoId, user?.uid);
             if (res.success) {
-                if (activeChatId === convoId || activeChatId === targetConvo?.otherParticipantId) {
-                    setActiveChatId(null);
-                }
                 onNavigate('messages');
             }
             else {

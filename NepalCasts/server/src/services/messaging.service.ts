@@ -83,7 +83,15 @@ export const getConversationsForUser = async (uid: string): Promise<any[]> => {
     const snapshot = await db.collection('conversations')
         .where('participants', 'array-contains', uid)
         .get();
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return snapshot.docs
+        .filter((doc) => {
+            const data = doc.data();
+            if (data.deletedFor && (data.deletedFor[uid] === true || (Array.isArray(data.deletedFor) && data.deletedFor.includes(uid)))) {
+                return false;
+            }
+            return true;
+        })
+        .map((doc) => ({ id: doc.id, ...doc.data() }));
 };
 export const createConversation = async (uid: string, participants: string[], initialMessage?: string): Promise<string> => {
     const uniqueParticipants = Array.from(new Set(participants));
@@ -152,9 +160,8 @@ export const createConversation = async (uid: string, participants: string[], in
     return docRef.id;
 };
 export const deleteConversationForUser = async (conversationId: string, uid: string): Promise<void> => {
-    const convo = await assertParticipant(conversationId, uid);
-    const convoData = convo.data();
-    if (convoData?.createdBy === uid) {
+    try {
+        const convo = await assertParticipant(conversationId, uid);
         // Delete all messages in subcollection first to avoid orphaned records in Firestore
         try {
             const messagesSnap = await convo.ref.collection('messages').get();
@@ -180,10 +187,24 @@ export const deleteConversationForUser = async (conversationId: string, uid: str
         }
         await convo.ref.delete();
     }
-    else {
-        await convo.ref.update({
-            [`deletedFor.${uid}`]: true
-        });
+    catch (err: any) {
+        if (err?.status === 404) {
+            // Already deleted or not found
+            return;
+        }
+        throw err;
+    }
+
+    if (conversationId.startsWith('app_')) {
+        const appId = conversationId.replace('app_', '');
+        try {
+            await db.collection('applications').doc(appId).update({
+                [`deletedFor.${uid}`]: true
+            });
+        }
+        catch (appErr) {
+            // ignore if app doc missing
+        }
     }
 };
 export const getMessagesInConversation = async (conversationId: string, uid: string): Promise<any[]> => {

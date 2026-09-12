@@ -436,6 +436,28 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
         }
     };
 
+    let isSubActive = true;
+    let pollInterval: any = null;
+
+    const fetchConvosFromServer = async () => {
+        try {
+            const res = await apiClient.get('/messaging/conversations', { timeout: 8000 });
+            if (isSubActive && Array.isArray(res.data)) {
+                const docsData = res.data.map((c: any) => ({
+                    id: c.id,
+                    data: c,
+                }));
+                const profilesMap = new Map<string, any>();
+                buildAndEmit(docsData, profilesMap);
+            }
+        } catch (e) {
+            // ignore background error
+        }
+    };
+
+    // Initial fetch from server for immediate conversations loading
+    fetchConvosFromServer();
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const docsData = snapshot.docs.map(d => ({ id: d.id, data: d.data() }));
         const otherParticipantIds = docsData.map(item => {
@@ -510,7 +532,7 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
 };
 export const deleteConversation = async (convoId: string, currentUserId?: string) => {
     try {
-        await apiClient.delete(`/messaging/${convoId}`, { timeout: 1500 });
+        await apiClient.delete(`/messaging/${convoId}`, { timeout: 10000 });
         return { success: true, error: null };
     }
     catch (apiError: any) {
