@@ -81,8 +81,8 @@ router.post('/messaging/:conversationId/messages', verifyToken, messagingLimiter
         if (!uid) {
             return res.status(401).send('Unauthorized');
         }
-        await sendMessageInConversation(req.params.conversationId, uid, req.body, req.user);
-        return res.json({ success: true });
+        const createdMessage = await sendMessageInConversation(req.params.conversationId, uid, req.body, req.user);
+        return res.json({ success: true, message: createdMessage, messageId: createdMessage?.id });
     }
     catch (error: any) {
         console.error("Error in POST /api/messaging/:conversationId/messages:", error);

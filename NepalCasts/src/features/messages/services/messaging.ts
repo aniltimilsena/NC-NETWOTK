@@ -22,11 +22,16 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
                     senderId: replyTo.senderId,
                 }
                 : null,
-        }, { timeout: 1500 });
+        }, { timeout: 8000 });
         if (!response?.data || response.data.proxy === 'offline' || response.data.error) {
             throw new Error(response?.data?.message || "Backend proxy offline");
         }
-        return { success: true, error: null };
+        return {
+            success: true,
+            message: response.data.message,
+            messageId: response.data.messageId || response.data.message?.id,
+            error: null,
+        };
     }
     catch (apiError: any) {
         console.warn("Backend sendMessage failed, attempting client-side fallback write:", apiError);
@@ -282,18 +287,50 @@ export const pinMessage = async (convoId: string, messageId: string) => {
 };
 
 export const subscribeToMessages = (conversationId: string, callback: (msgs: any) => void) => {
+    let isSubActive = true;
+    let pollInterval: any = null;
+
+    const fetchFromServer = async () => {
+        try {
+            const res = await apiClient.get(`/messaging/${conversationId}/messages`, { timeout: 8000 });
+            if (isSubActive && Array.isArray(res.data)) {
+                const formatted = res.data.map((m: any) => ({
+                    ...m,
+                    hasPendingWrites: false,
+                }));
+                callback(formatted);
+            }
+        } catch (e) {
+            // Ignore background fetch error
+        }
+    };
+
+    // Initial fetch from backend API for immediate delivery
+    fetchFromServer();
+
     const q = query(collection(db, COLLECTIONS.CONVERSATIONS, conversationId, COLLECTIONS.MESSAGES), orderBy("createdAt", "asc"));
-    return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+    const unsub = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
         const messages = snapshot.docs.map((d) => ({
             id: d.id,
             ...d.data(),
             hasPendingWrites: d.metadata.hasPendingWrites,
         }));
-        callback(messages);
+        if (isSubActive) {
+            callback(messages);
+        }
     }, (error) => {
-        console.error("Message subscription error:", error);
-        callback([]);
+        console.warn("Firestore message subscription permission denied or offline, using API polling fallback:", error?.message);
+        if (isSubActive && !pollInterval) {
+            fetchFromServer();
+            pollInterval = setInterval(fetchFromServer, 3000);
+        }
     });
+
+    return () => {
+        isSubActive = false;
+        if (pollInterval) clearInterval(pollInterval);
+        unsub();
+    };
 };
 const participantProfilesCache = new Map<string, { data: any; ts: number }>();
 const PARTICIPANT_CACHE_TTL_MS = 10 * 60 * 1000;
@@ -394,7 +431,9 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
             const timeB = b.lastMessageAt?.toMillis?.() || b.lastMessageAt?.seconds * 1000 || 0;
             return timeB - timeA;
         });
-        callback(convos);
+        if (isSubActive) {
+            callback(convos);
+        }
     };
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -450,14 +489,24 @@ export const subscribeToConversations = (uid: string, callback: (convos: any[]) 
                 }
             })).then(() => {
                 // Re-emit with enriched avatars/names once network requests resolve
-                buildAndEmit(docsData, profilesMap);
+                if (isSubActive) {
+                    buildAndEmit(docsData, profilesMap);
+                }
             });
         }
     }, (error) => {
-        console.error("Conversations subscription error:", error);
-        callback([]);
+        console.warn("Conversations subscription permission denied or offline, using API polling fallback:", error?.message);
+        if (isSubActive && !pollInterval) {
+            fetchConvosFromServer();
+            pollInterval = setInterval(fetchConvosFromServer, 4000);
+        }
     });
-    return unsubscribe;
+
+    return () => {
+        isSubActive = false;
+        if (pollInterval) clearInterval(pollInterval);
+        unsubscribe();
+    };
 };
 export const deleteConversation = async (convoId: string, currentUserId?: string) => {
     try {

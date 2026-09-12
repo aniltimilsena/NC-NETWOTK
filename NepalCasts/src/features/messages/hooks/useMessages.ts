@@ -405,8 +405,20 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             return c;
         }));
 
-        const res = await sendMessage(targetConvoId, currentUser.uid, text, false, replyTo, type);
-        if (!res.success) {
+        const res = await sendMessage(targetConvoId, currentUser.uid, text, false, replyTo, type, optimisticId);
+        if (res.success) {
+            setMessages(prev => prev.map(m => {
+                if (m.id === optimisticId) {
+                    return {
+                        ...m,
+                        id: (res as any).messageId || (res as any).message?.id || m.id,
+                        hasPendingWrites: false,
+                        createdAt: (res as any).message?.createdAt ? new Date((res as any).message.createdAt) : m.createdAt,
+                    };
+                }
+                return m;
+            }));
+        } else {
             setMessages(prev => prev.filter(m => m.id !== optimisticId));
         }
         return res;

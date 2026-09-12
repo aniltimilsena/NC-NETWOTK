@@ -1,7 +1,45 @@
 import { db, admin } from '../config';
 
 export const assertParticipant = async (conversationId: string, userId: string): Promise<admin.firestore.DocumentSnapshot> => {
-    const convoDoc = await db.collection('conversations').doc(conversationId).get();
+    let convoDoc = await db.collection('conversations').doc(conversationId).get();
+    if (!convoDoc.exists) {
+        if (conversationId.startsWith('app_')) {
+            const appId = conversationId.replace('app_', '');
+            const appDoc = await db.collection('applications').doc(appId).get();
+            if (appDoc.exists) {
+                const appData = appDoc.data();
+                const participants = [appData?.userId, appData?.creatorId].filter(Boolean);
+                if (participants.includes(userId)) {
+                    await db.collection('conversations').doc(conversationId).set({
+                        participants,
+                        type: 'application',
+                        isApplication: true,
+                        applicationId: appId,
+                        castingId: appData?.castingId || null,
+                        castingTitle: appData?.castingTitle || null,
+                        roleName: appData?.roleName || null,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                        lastMessage: '',
+                        lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                    convoDoc = await db.collection('conversations').doc(conversationId).get();
+                }
+            }
+        } else if (conversationId.includes('_')) {
+            const parts = conversationId.split('_');
+            if (parts.length === 2 && parts.includes(userId)) {
+                await db.collection('conversations').doc(conversationId).set({
+                    participants: parts,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    lastMessage: '',
+                    lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
+                convoDoc = await db.collection('conversations').doc(conversationId).get();
+            }
+        }
+    }
     if (!convoDoc.exists) {
         throw { status: 404, message: 'Conversation not found' };
     }
@@ -165,16 +203,17 @@ export const getMessagesInConversation = async (conversationId: string, uid: str
         .get();
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
-export const sendMessageInConversation = async (conversationId: string, uid: string, validatedData: any, userObj: any): Promise<void> => {
+export const sendMessageInConversation = async (conversationId: string, uid: string, validatedData: any, userObj: any): Promise<any> => {
     const convoDoc = await assertParticipant(conversationId, uid);
     const participants = convoDoc.data()?.participants || [];
     const otherParticipants = participants.filter((p: string) => p !== uid);
     await checkBlockStatus(uid, otherParticipants);
     const isSystem = validatedData.isSystem || uid === 'system';
+    const now = new Date();
     const newMessage = {
         senderId: isSystem ? 'system' : uid,
         text: validatedData.text,
-        type: validatedData.type,
+        type: validatedData.type || 'text',
         isSystem,
         replyTo: validatedData.replyTo || null,
         reactions: {},
@@ -183,7 +222,7 @@ export const sendMessageInConversation = async (conversationId: string, uid: str
         clientMsgId: validatedData.clientMsgId || null,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
-    await db.collection('conversations')
+    const msgRef = await db.collection('conversations')
         .doc(conversationId)
         .collection('messages')
         .add(newMessage);
@@ -205,7 +244,11 @@ export const sendMessageInConversation = async (conversationId: string, uid: str
     await db.collection('conversations')
         .doc(conversationId)
         .update(convoUpdate);
-    // Message notifications removed per user request
+    return {
+        id: msgRef.id,
+        ...newMessage,
+        createdAt: now.toISOString(),
+    };
 };
 export const updateMessageText = async (conversationId: string, messageId: string, uid: string, text: string): Promise<void> => {
     const msg = await assertMessageOwner(conversationId, messageId, uid);
