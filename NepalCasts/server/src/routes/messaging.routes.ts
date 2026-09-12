@@ -1,13 +1,13 @@
 import { Router, type Response } from 'express';
 import { verifyToken } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
-import { messagingLimiter } from '../middleware/rateLimiter';
+import { messagingLimiter, publicApiLimiter } from '../middleware/rateLimiter';
 import { ConversationSchema, MessageSchema } from '../schemas';
 import { db, admin } from '../config';
 import { createConversation, getConversationsForUser, deleteConversationForUser, getMessagesInConversation, sendMessageInConversation, updateMessageText, deleteMessageText, reactToMessageId, removeReactionFromMessageId, pinMessageId, markConversationRead } from '../services/messaging.service';
 import type { AuthedRequest } from '../types';
 const router = Router();
-router.post('/messaging/conversations', verifyToken, messagingLimiter, validateBody(ConversationSchema), async (req: AuthedRequest, res: Response): Promise<any> => {
+router.post('/messaging/conversations', verifyToken, publicApiLimiter, validateBody(ConversationSchema), async (req: AuthedRequest, res: Response): Promise<any> => {
     try {
         const uid = req.user?.uid;
         if (!uid) {

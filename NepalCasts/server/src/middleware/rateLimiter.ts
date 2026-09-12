@@ -125,16 +125,16 @@ export const uploadLimiter = createRateLimiterMiddleware({
     errorMessage: 'Media upload rate limit exceeded. Please wait 15 minutes before uploading more media.',
 });
 export const messagingLimiter = createRateLimiterMiddleware({
-    points: 20,
+    points: 60,
     duration: 60,
-    blockDuration: 5 * 60,
+    blockDuration: 10,
     keyPrefix: 'rl_msg',
     keyGenerator: (req: Request) => {
         const uid = (req as any).user?.uid;
         const ip = req.ip || 'unknown-ip';
         return uid ? `user:${uid}` : `ip:${ip}`;
     },
-    errorMessage: 'Too many messages sent in a short period. Messaging has been throttled for 5 minutes.',
+    errorMessage: 'Too many messages sent in a short period. Please wait a moment before sending more.',
 });
 export const publicApiLimiter = createRateLimiterMiddleware({
     points: 60,
