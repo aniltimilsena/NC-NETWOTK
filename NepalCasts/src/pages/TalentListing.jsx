@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, memo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { Search, X, MoreVertical, MoreHorizontal, Share2, ChevronLeft, MapPin, AlertCircle, UserPlus, UserCheck } from 'lucide-react';
+import { Search, X, MoreHorizontal, Share2, ChevronLeft, MapPin, AlertCircle, UserPlus, UserCheck } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useApp } from '../providers/AppProviders';
 import Avatar from '../components/ui/Avatar';
@@ -101,31 +101,6 @@ const TalentListItem = memo(function TalentListItem({
                         )}
                     </button>
                 )}
-
-                <button
-                    type="button"
-                    onClick={() => onToggleMenu(talent.id)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-white relative hover:bg-white/5 transition-colors cursor-pointer"
-                >
-                    <MoreVertical size={16} />
-                    {isMenuOpen && (
-                        <>
-                            <div className="fixed inset-0 z-10" onClick={onCloseMenu} />
-                            <div className="absolute right-0 top-10 mt-1 w-36 bg-[#121216] border border-white/10 rounded-xl shadow-2xl z-20 py-1.5 backdrop-blur-lg overflow-hidden text-left">
-                                <button
-                                    onClick={() => {
-                                        onShareTalent(talent);
-                                        onCloseMenu();
-                                    }}
-                                    className="w-full px-4 py-2.5 text-xs text-gray-300 hover:text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors cursor-pointer text-left"
-                                >
-                                    <Share2 size={14} className="text-white" />
-                                    Share Profile
-                                </button>
-                            </div>
-                        </>
-                    )}
-                </button>
             </div>
         </div>
     );
