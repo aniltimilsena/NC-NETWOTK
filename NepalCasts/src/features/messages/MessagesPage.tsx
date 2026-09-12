@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useMessages } from './hooks/useMessages';
+import { useMessages, extractOtherParticipantId, isDirectConversationId, getResolvedTargetId } from './hooks/useMessages';
 import ChatSidebar from './components/ChatSidebar';
 import ChatArea from './components/ChatArea';
 import MessageInput from './components/MessageInput';
@@ -35,16 +35,17 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
         const found = conversations.find((c) => c.id === activeChatId || c.otherParticipantId === activeChatId);
         if (found) return found;
         if (hookActiveChat && hookActiveChat.name && hookActiveChat.name !== 'User') return hookActiveChat;
-        const resolvedOtherId = activeChatId.includes('_') && !activeChatId.startsWith('app_')
-            ? activeChatId.split('_').find((p: string) => p !== user?.uid) || activeChatId
-            : activeChatId;
+        const resolvedOtherId = (activeChatId && isDirectConversationId(activeChatId, user?.uid) && !activeChatId.startsWith('app_'))
+            ? extractOtherParticipantId(activeChatId, user?.uid)
+            : getResolvedTargetId(activeChatId);
 
         const saved = getSavedRealTalents();
         const clean = resolvedOtherId.replace(/^@/, '').toLowerCase().trim();
         const cached = saved.find((t: any) => {
             const tUid = t.uid || t.id;
             const tUser = (t.username || '').toLowerCase().trim();
-            return tUid === resolvedOtherId || (Boolean(clean && tUser) && tUser === clean);
+            const tName = (t.name || '').toLowerCase().trim();
+            return tUid === resolvedOtherId || (Boolean(clean && tUser) && tUser === clean) || (Boolean(clean && tName) && tName === clean);
         });
 
         const name = cached?.name ||

@@ -9,6 +9,27 @@ import { cacheManager } from '../../../utils/cacheManager';
 import { isUserOnline } from '../../../utils/presence';
 import { getSavedRealTalents } from '../../profile/services/users';
 
+export const isDirectConversationId = (id: string | null | undefined, currentUid?: string | null): boolean => {
+    if (!id) return false;
+    if (id.startsWith('app_')) return true;
+    if (currentUid && id.includes(currentUid) && id !== currentUid) return true;
+    const userMatches = id.match(/user_/g);
+    if (userMatches && userMatches.length >= 2) return true;
+    return false;
+};
+
+export const extractOtherParticipantId = (convoId: string | null | undefined, currentUid?: string | null): string => {
+    if (!convoId) return '';
+    if (convoId.startsWith('app_')) return '';
+    if (!currentUid) return convoId;
+    if (convoId === currentUid) return '';
+    if (convoId.includes(currentUid)) {
+        const remaining = convoId.replace(currentUid, '').replace(/^_+|_+$/g, '');
+        if (remaining) return remaining;
+    }
+    return convoId;
+};
+
 export const getResolvedTargetId = (rawId: string): string => {
     if (!rawId) return '';
     const clean = rawId.replace(/^@/, '').toLowerCase().trim();
@@ -76,16 +97,18 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
     const [conversations, setConversations] = useState<any[]>(initialCached || []);
     const [activeChatId, setActiveChatId] = useState<string | null>(() => {
         if (!initialUserId) return null;
-        if (initialUserId.includes('_') || initialUserId.startsWith('app_')) return initialUserId;
+        if (initialUserId.startsWith('app_') || isDirectConversationId(initialUserId, currentUser?.uid)) {
+            return initialUserId;
+        }
         const resolvedId = getResolvedTargetId(initialUserId);
         if (initialCached && initialCached.length > 0) {
             const existing = findExistingConvo(initialUserId, currentUser?.uid, initialCached);
             if (existing) return existing.id;
         }
-        if (currentUser?.uid) {
+        if (currentUser?.uid && resolvedId) {
             return [currentUser.uid, resolvedId].sort().join('_');
         }
-        return resolvedId;
+        return resolvedId || initialUserId;
     });
 
     useEffect(() => {
@@ -97,7 +120,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
             setActiveChatId(existing.id);
             return;
         }
-        if (initialUserId.includes('_') || initialUserId.startsWith('app_')) {
+        if (initialUserId.startsWith('app_') || isDirectConversationId(initialUserId, currentUser?.uid)) {
             setActiveChatId(initialUserId);
         } else if (currentUser?.uid) {
             const resolvedId = getResolvedTargetId(initialUserId);
@@ -354,13 +377,12 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         }
 
         let otherUserId: string | null = null;
-        if (initialUserId && !initialUserId.includes('_') && !initialUserId.startsWith('app_') && initialUserId !== currentUser.uid) {
+        if (initialUserId && !isDirectConversationId(initialUserId, currentUser.uid) && initialUserId !== currentUser.uid) {
             otherUserId = getResolvedTargetId(initialUserId);
-        } else if (targetChatId.includes('_') && !targetChatId.startsWith('app_')) {
-            const parts = targetChatId.split('_');
-            otherUserId = parts.find((p: string) => p !== currentUser.uid) || null;
-        } else if (!targetChatId.startsWith('app_') && targetChatId !== currentUser.uid) {
-            otherUserId = targetChatId;
+        } else if (targetChatId && isDirectConversationId(targetChatId, currentUser.uid) && !targetChatId.startsWith('app_')) {
+            otherUserId = extractOtherParticipantId(targetChatId, currentUser.uid);
+        } else if (targetChatId && !targetChatId.startsWith('app_') && targetChatId !== currentUser.uid) {
+            otherUserId = getResolvedTargetId(targetChatId);
         }
 
         if (!otherUserId) {
@@ -471,7 +493,7 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         if (!currentUser?.uid || !initialUserId) return;
         if (userClosedChatRef.current || resolvedInitialUserRef.current === initialUserId) return;
 
-        if (initialUserId.startsWith('app_') || initialUserId.includes('_')) {
+        if (initialUserId.startsWith('app_') || isDirectConversationId(initialUserId, currentUser?.uid)) {
             setActiveChatId(initialUserId);
             resolvedInitialUserRef.current = initialUserId;
             return;
@@ -645,8 +667,8 @@ export function useMessages(currentUser: any, initialUserId: string | null) {
         return res;
     }, [activeChatId, initialUserId, currentUser?.uid, conversations, syntheticChat]);
 
-    const fallbackOtherId = activeChatId && activeChatId.includes('_') && !activeChatId.startsWith('app_')
-        ? activeChatId.split('_').find(p => p !== currentUser?.uid) || activeChatId
+    const fallbackOtherId = activeChatId && isDirectConversationId(activeChatId, currentUser?.uid) && !activeChatId.startsWith('app_')
+        ? extractOtherParticipantId(activeChatId, currentUser?.uid)
         : (activeChatId || initialUserId);
 
     const cachedFallbackTalent = fallbackOtherId ? (() => {

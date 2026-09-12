@@ -48,8 +48,12 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
         }
         try {
             let targetConvoId = convoId;
+            const isCompositeConvo = targetConvoId?.startsWith('app_') ||
+                (Boolean(currentUserUid && targetConvoId?.includes(currentUserUid) && targetConvoId !== currentUserUid)) ||
+                (Boolean(targetConvoId && targetConvoId.match(/user_/g)?.length && (targetConvoId.match(/user_/g)!.length >= 2)));
+
             // If caller passed a raw user ID instead of a conversation ID, derive deterministic conversation ID
-            if (targetConvoId && !targetConvoId.includes('_') && !targetConvoId.startsWith('app_') && targetConvoId !== currentUserUid) {
+            if (targetConvoId && !isCompositeConvo && targetConvoId !== currentUserUid) {
                 const directSnap = await getDoc(doc(db, COLLECTIONS.CONVERSATIONS, targetConvoId));
                 if (!directSnap.exists()) {
                     targetConvoId = [currentUserUid, targetConvoId].sort().join('_');
@@ -64,11 +68,11 @@ export const sendMessage = async (convoId: string, senderId: string, text: strin
                     return { success: false, error: "Unauthorized: You are not a participant in this conversation" };
                 }
             }
-            if (participants.length === 0 && targetConvoId && !targetConvoId.startsWith('app_')) {
-                if (targetConvoId.includes('_')) {
-                    const parts = targetConvoId.split('_');
-                    if (parts.length === 2 && parts.includes(currentUserUid)) {
-                        participants = parts;
+            if (participants.length === 0 && targetConvoId && !targetConvoId.startsWith('app_') && currentUserUid) {
+                if (targetConvoId.includes(currentUserUid) && targetConvoId !== currentUserUid) {
+                    const otherId = targetConvoId.replace(currentUserUid, '').replace(/^_+|_+$/g, '');
+                    if (otherId) {
+                        participants = [currentUserUid, otherId];
                     }
                 }
             }

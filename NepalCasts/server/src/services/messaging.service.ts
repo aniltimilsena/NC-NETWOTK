@@ -26,11 +26,12 @@ export const assertParticipant = async (conversationId: string, userId: string):
                     convoDoc = await db.collection('conversations').doc(conversationId).get();
                 }
             }
-        } else if (conversationId.includes('_')) {
-            const parts = conversationId.split('_');
-            if (parts.length === 2 && parts.includes(userId)) {
+        } else if (userId && conversationId.includes(userId) && conversationId !== userId) {
+            const otherId = conversationId.replace(userId, '').replace(/^_+|_+$/g, '');
+            if (otherId) {
+                const participants = [userId, otherId].sort();
                 await db.collection('conversations').doc(conversationId).set({
-                    participants: parts,
+                    participants,
                     createdAt: admin.firestore.FieldValue.serverTimestamp(),
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                     lastMessage: '',
@@ -38,6 +39,22 @@ export const assertParticipant = async (conversationId: string, userId: string):
                 }, { merge: true });
                 convoDoc = await db.collection('conversations').doc(conversationId).get();
             }
+        } else if (userId && !conversationId.startsWith('app_') && conversationId !== userId) {
+            // If caller passed a raw other user ID, derive composite conversation ID
+            const compositeId = [userId, conversationId].sort().join('_');
+            const compDoc = await db.collection('conversations').doc(compositeId).get();
+            if (compDoc.exists) {
+                return compDoc;
+            }
+            const participants = [userId, conversationId].sort();
+            await db.collection('conversations').doc(compositeId).set({
+                participants,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                lastMessage: '',
+                lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            return await db.collection('conversations').doc(compositeId).get();
         }
     }
     if (!convoDoc.exists) {

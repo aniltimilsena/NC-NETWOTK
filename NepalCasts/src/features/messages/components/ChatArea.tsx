@@ -9,6 +9,8 @@ import { saveImageDirectly, getOptimizedImageUrl } from '../../../utils/media';
 import type { Message } from '../../../types';
 import { isUserOnline } from '../../../utils/presence';
 import { getSavedRealTalents } from '../../profile/services/users';
+import { extractOtherParticipantId, isDirectConversationId, getResolvedTargetId } from '../hooks/useMessages';
+import { getProfile } from '../../profile/services/profile';
 
 interface ChatAreaProps {
     chat: any;
@@ -61,7 +63,10 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isLongPressActive = useRef(false);
     const isInitialMount = useRef(true);
-    const otherParticipantId = chat?.otherParticipantId || chat?.participants?.find((p: string) => p !== currentUser?.uid);
+    const rawOtherId = chat?.otherParticipantId || chat?.participants?.find((p: string) => p !== currentUser?.uid);
+    const otherParticipantId = (rawOtherId && currentUser?.uid && isDirectConversationId(rawOtherId, currentUser.uid))
+        ? extractOtherParticipantId(rawOtherId, currentUser.uid)
+        : (rawOtherId ? getResolvedTargetId(rawOtherId) : (chat?.id && currentUser?.uid && isDirectConversationId(chat.id, currentUser.uid) ? extractOtherParticipantId(chat.id, currentUser.uid) : ''));
     const isTyping = otherParticipantId ? typingUsers?.[otherParticipantId] === true : false;
     const [isOnline, setIsOnline] = useState<boolean>(() => isUserOnline(chat));
     const otherUserDataRef = useRef<any>(null);
@@ -77,10 +82,15 @@ export default function ChatArea({ chat, messages, currentUser, typingUsers, onB
         const cached = saved.find((t: any) => {
             const tUid = t.uid || t.id;
             const tUser = (t.username || '').toLowerCase().trim();
-            return tUid === otherParticipantId || (Boolean(cleanId && tUser) && tUser === cleanId);
+            const tName = (t.name || '').toLowerCase().trim();
+            return tUid === otherParticipantId || (Boolean(cleanId && tUser) && tUser === cleanId) || (Boolean(cleanId && tName) && tName === cleanId);
         });
         if (cached) {
             setLiveUserData(cached);
+        } else {
+            getProfile(otherParticipantId).then((res) => {
+                if (res.data) handleUserData(res.data);
+            }).catch(() => {});
         }
 
         const handleUserData = (data: any) => {
