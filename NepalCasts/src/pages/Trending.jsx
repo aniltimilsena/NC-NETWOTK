@@ -179,46 +179,46 @@ export default function Trending({ onNavigate, user }) {
   ];
   const getRankColor = (rank) => {
     if (rank === 1)
-      return '#522C69';
+      return '#194332';
     if (rank === 2)
       return '#C0C0C0';
     if (rank === 3)
       return '#CD7F32';
     return '#4B5563';
   };
-  return (<div className="min-h-screen bg-[#141414] text-white pt-2 sm:pt-4 pb-6 relative font-sans">
+  return (<div className="min-h-screen bg-[#FAF8F4] text-[#202923] pt-2 sm:pt-4 pb-6 relative font-sans">
     <SEO title="Trending Cinema Talent | NepalCasts" description="Check out who's trending now on Nepal's premier casting and cinema professional network." />
 
     <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12">
 
       <div className="flex items-center justify-between gap-4 pb-3 mb-6">
         <div className="flex items-center gap-3.5 min-w-0">
-          <button onClick={() => onNavigate('back')} type="button" className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0" aria-label="Back" title="Go Back">
+          <button onClick={() => onNavigate('back')} type="button" className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-[#626860] hover:text-[#202923] hover:bg-[#F3F0E9] transition-colors cursor-pointer shrink-0" aria-label="Back" title="Go Back">
             <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
           </button>
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-white leading-none truncate">
+            <h1 className="text-xl sm:text-2xl font-display font-semibold text-[#202923] leading-none truncate">
               {t('trending_now')}
             </h1>
           </div>
         </div>
 
         <div className="relative shrink-0">
-          <button onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-white hover:text-white/80 transition-colors duration-200 cursor-pointer" aria-label="Category Filter" title="Category Filter">
-            <SlidersHorizontal className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-white" strokeWidth={2} />
+          <button onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-[#202923] hover:text-[#194332] transition-colors duration-200 cursor-pointer" aria-label="Category Filter" title="Category Filter">
+            <SlidersHorizontal className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#202923]" strokeWidth={2} />
           </button>
 
           <AnimatePresence>
             {isFilterDropdownOpen && (<>
               <div className="fixed inset-0 z-30" onClick={() => setIsFilterDropdownOpen(false)} />
-              <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} transition={{ duration: 0.15 }} className="absolute right-0 mt-2 w-36 bg-[#111116] border border-white/10 rounded-xl shadow-2xl py-1 z-40 text-left">
+              <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} transition={{ duration: 0.15 }} className="absolute right-0 mt-2 w-36 bg-white border border-[#E7E5E0] rounded-xl shadow-lg py-1 z-40 text-left">
                 <button onClick={() => {
                   setSelectedCategory('All');
                   setVisibleCount(10);
                   setIsFilterDropdownOpen(false);
                 }} className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${selectedCategory === 'All'
-                  ? 'text-[#522C69] bg-[#522C69]/10'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                  ? 'text-[#194332] bg-[#EAF2ED]'
+                  : 'text-[#626860] hover:text-[#202923] hover:bg-[#FAF8F4]'}`}>
                   {t('nav_talent_directory')}
                 </button>
                 {CATEGORIES.map(cat => {
@@ -228,8 +228,8 @@ export default function Trending({ onNavigate, user }) {
                     setVisibleCount(10);
                     setIsFilterDropdownOpen(false);
                   }} className={`w-full text-left px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${isActive
-                    ? 'text-[#522C69] bg-[#522C69]/10'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                    ? 'text-[#194332] bg-[#EAF2ED]'
+                    : 'text-[#626860] hover:text-[#202923] hover:bg-[#FAF8F4]'}`}>
                     {getCategoryConfig(cat).label}
                   </button>);
                 })}
@@ -241,7 +241,7 @@ export default function Trending({ onNavigate, user }) {
 
 
       <div className="flex justify-center mb-6 sm:mb-8">
-        <div className="inline-flex bg-[#0E0E0E] border border-white/10 rounded-full p-1 max-w-full overflow-x-auto items-center gap-1">
+        <div className="inline-flex bg-white border border-[#E7E5E0] rounded-full p-1 max-w-full overflow-x-auto items-center gap-1 shadow-2xs">
           {['Today', 'This Week', 'This Month'].map(p => (
             <button
               key={p}
@@ -250,11 +250,10 @@ export default function Trending({ onNavigate, user }) {
                 setSelectedPeriod(p);
                 setVisibleCount(10);
               }}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                selectedPeriod === p
-                  ? 'bg-[#18181b] border border-white/20 text-white shadow-sm'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${selectedPeriod === p
+                  ? 'bg-[#194332] text-white shadow-xs'
+                  : 'text-[#626860] hover:text-[#202923] hover:bg-[#FAF8F4]'
+                }`}
             >
               {p}
             </button>
@@ -322,10 +321,10 @@ export default function Trending({ onNavigate, user }) {
             </div>
           ))}
         </div>
-      </div>) : rankedProfiles.length === 0 ? (<div className="text-center py-24 bg-[#111] border border-dashed border-white/5 rounded-[2.5rem]">
-        <Search className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-        <h3 className="text-xl font-bold text-white">No matches found</h3>
-        <p className="text-gray-500 text-sm mt-1.5 max-w-xs mx-auto">
+      </div>) : rankedProfiles.length === 0 ? (<div className="text-center py-24 bg-white border border-dashed border-[#E7E5E0] rounded-2xl shadow-card">
+        <Search className="w-12 h-12 text-[#777C75] mx-auto mb-4" />
+        <h3 className="text-xl font-display font-semibold text-[#202923]">No matches found</h3>
+        <p className="text-[#626860] text-sm mt-1.5 max-w-xs mx-auto">
           Nobody in the "{selectedCategory}" category fits the active search filters for {selectedPeriod.toLowerCase()}.
         </p>
       </div>) : (<div className="space-y-12">
@@ -333,7 +332,7 @@ export default function Trending({ onNavigate, user }) {
 
         {topThree.length > 0 && selectedCategory === 'All' && (<div className="hidden md:flex justify-center items-end gap-6 max-w-4xl mx-auto pt-8 pb-4 relative">
 
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-gradient-to-r from-yellow-500/5 via-blue-500/5 to-purple-500/5 blur-[80px] rounded-full pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-gradient-to-r from-amber-500/10 via-sky-500/10 to-indigo-500/10 blur-[80px] rounded-full pointer-events-none" />
 
           {podiumOrder.map((item, idx) => {
             const prof = item.profile;
@@ -346,42 +345,42 @@ export default function Trending({ onNavigate, user }) {
               <div className="relative mb-6">
 
                 {item.pos === 0 && (<div className="absolute -top-7 left-1/2 -translate-x-1/2 z-10 animate-bounce">
-                  <Crown className="w-8 h-8 text-white drop-shadow-[0_0_10px_rgba(250,204,21,0.5)] fill-yellow-400" />
+                  <Crown className="w-8 h-8 text-amber-500 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)] fill-amber-400" />
                 </div>)}
 
-                <div className={`p-1.5 rounded-full border-2 bg-black/40 ${item.pos === 0 ? 'border-yellow-400' : item.pos === 1 ? 'border-slate-300' : 'border-amber-700'} relative`}>
+                <div className={`p-1.5 rounded-full border-2 bg-white ${item.pos === 0 ? 'border-amber-400' : item.pos === 1 ? 'border-slate-400' : 'border-amber-700'} relative shadow-md`}>
                   <Avatar userId={prof.id || prof.uid} user={prof} size={item.pos === 0 ? 'xl' : 'lg'} name={prof.name} className="group-hover:scale-105 transition-transform duration-500" />
 
 
                   {prof.openToWork && (<span className="absolute bottom-1.5 right-1.5 flex h-4.5 w-4.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border border-[#0A0A0A]"></span>
+                    <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border border-white"></span>
                   </span>)}
                 </div>
 
 
-                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border border-white/20 bg-[#111] text-white shadow-md">
+                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border border-[#E7E5E0] bg-white text-[#202923] shadow-md">
                   #{item.pos + 1}
                 </div>
               </div>
 
               <div className="text-center mb-4 w-full px-2">
-                <h3 className="font-apple font-medium text-white text-base tracking-normal truncate max-w-[180px] mx-auto">
+                <h3 className="font-display font-semibold text-[#202923] text-base tracking-normal truncate max-w-[180px] mx-auto">
                   {prof.name}
                 </h3>
-                <p className="text-xs text-white font-medium truncate mt-0.5">
+                <p className="text-xs text-[#626860] font-medium truncate mt-0.5">
                   @{prof.username || prof.name?.toLowerCase().replace(/\s+/g, '_') || 'talent'}
                 </p>
               </div>
 
 
-              <div className={`w-full ${item.height} bg-gradient-to-b from-[#111]/90 to-[#0A0A0A]/40 border-t ${item.borderGlow} rounded-t-[2.5rem] flex flex-col justify-between p-5 text-center transition-all duration-300 group-hover:border-white/10`}>
+              <div className={`w-full ${item.height} bg-[#F5EFE1] border-t-2 ${item.borderGlow} rounded-t-[2.5rem] flex flex-col justify-between p-5 text-center transition-all duration-300 shadow-md group-hover:bg-[#ece4d4]`}>
                 <div className="space-y-1">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Connects</p>
-                  <p className="text-xl sm:text-2xl font-bold text-white tracking-tight">{Math.max(0, prof.followers || 0)}</p>
+                  <p className="text-[10px] text-[#78716c] uppercase tracking-wider font-bold">Connects</p>
+                  <p className="text-xl sm:text-2xl font-bold text-[#1c1917] tracking-tight">{Math.max(0, prof.followers || 0)}</p>
                 </div>
 
-                {isNew && (<span className="self-center text-purple-400 font-bold text-[9px] sm:text-[10px] uppercase tracking-wider">
+                {isNew && (<span className="self-center text-emerald-700 font-bold text-[9px] sm:text-[10px] uppercase tracking-wider">
                   New
                 </span>)}
 
@@ -394,9 +393,9 @@ export default function Trending({ onNavigate, user }) {
                     className="p-2 self-center transition-transform duration-200 active:scale-90 cursor-pointer flex items-center justify-center bg-transparent border-0"
                   >
                     {isFollowing ? (
-                      <UserCheck className="w-6 h-6 text-purple-400 hover:text-purple-300 transition-colors" strokeWidth={2.2} />
+                      <UserCheck className="w-6 h-6 text-emerald-700 hover:text-emerald-800 transition-colors" strokeWidth={2.2} />
                     ) : (
-                      <UserPlus className="w-6 h-6 text-gray-400 hover:text-white transition-colors" strokeWidth={2} />
+                      <UserPlus className="w-6 h-6 text-[#57534e] hover:text-[#1c1917] transition-colors" strokeWidth={2} />
                     )}
                   </button>
                 )}
@@ -407,7 +406,7 @@ export default function Trending({ onNavigate, user }) {
 
 
         <div className="space-y-4 max-w-4xl mx-auto">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6 text-left">
+          <h2 className="text-xs font-bold text-[#78716c] uppercase tracking-wider mb-6 text-left">
             {selectedCategory === 'All' ? 'All Ranked Talent' : `${getCategoryConfig(selectedCategory).label} Rankings`}
           </h2>
 
@@ -425,7 +424,7 @@ export default function Trending({ onNavigate, user }) {
                   onMouseEnter={() => prefetchProfile(prof.id)}
                   onTouchStart={() => prefetchProfile(prof.id)}
                   onClick={() => onNavigate('profile', prof.id)}
-                  className="flex items-center justify-between py-3.5 px-1 border-b border-white/[0.06] hover:bg-white/[0.02] transition-all duration-200 cursor-pointer group select-none"
+                  className="flex items-center justify-between py-3.5 px-4 rounded-2xl bg-[#F5EFE1] border border-black/5 hover:bg-[#ece4d4] transition-all duration-200 cursor-pointer group select-none shadow-sm mb-2.5"
                 >
                   <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
                     <div className="relative shrink-0">
@@ -435,27 +434,27 @@ export default function Trending({ onNavigate, user }) {
                         src={talentPhoto}
                         size="none"
                         name={prof.name}
-                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-white/10 group-hover:border-purple-500/40 transition-colors"
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-black/10 group-hover:border-black/30 transition-colors"
                       />
                       {prof.openToWork && (
                         <span
-                          className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-black absolute bottom-0 right-0 shadow-sm"
+                          className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white absolute bottom-0 right-0 shadow-sm"
                           title="Open to Work"
                         />
                       )}
                     </div>
                     <div className="min-w-0 text-left">
-                      <h3 className="font-medium text-white text-base sm:text-lg tracking-normal truncate flex items-center gap-1.5 group-hover:text-purple-300 transition-colors">
+                      <h3 className="font-semibold text-[#1c1917] text-base sm:text-lg tracking-normal truncate flex items-center gap-1.5 group-hover:text-black transition-colors">
                         {prof.name}
                         {prof.verified && (
-                          <span className="verified-badge shrink-0 text-sky-400 text-xs" title="Verified Talent">✓</span>
+                          <span className="verified-badge shrink-0 text-sky-600 text-xs" title="Verified Talent">✓</span>
                         )}
                       </h3>
-                      <p className="text-xs text-gray-400 font-normal mt-0.5 truncate">
+                      <p className="text-xs text-[#57534e] font-normal mt-0.5 truncate">
                         {formatRole(prof.role)} • {expLevel} Level • Since {joinYear}
                       </p>
-                      <div className="flex items-center gap-1 text-xs text-gray-400 font-normal mt-0.5 truncate">
-                        <MapPin className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                      <div className="flex items-center gap-1 text-xs text-[#78716c] font-normal mt-0.5 truncate">
+                        <MapPin className="w-3.5 h-3.5 text-[#78716c] shrink-0" />
                         <span>{prof.location || 'Nepal'}</span>
                       </div>
                     </div>
@@ -471,9 +470,9 @@ export default function Trending({ onNavigate, user }) {
                         className="p-2 transition-transform duration-200 active:scale-90 cursor-pointer flex items-center justify-center bg-transparent border-0"
                       >
                         {isFollowing ? (
-                          <UserCheck className="w-5 h-5 text-purple-400 hover:text-purple-300 transition-colors" strokeWidth={2.2} />
+                          <UserCheck className="w-5 h-5 text-emerald-700 hover:text-emerald-800 transition-colors" strokeWidth={2.2} />
                         ) : (
-                          <UserPlus className="w-5 h-5 text-gray-400 hover:text-white transition-colors" strokeWidth={2} />
+                          <UserPlus className="w-5 h-5 text-[#57534e] hover:text-[#1c1917] transition-colors" strokeWidth={2} />
                         )}
                       </button>
                     )}
@@ -484,7 +483,7 @@ export default function Trending({ onNavigate, user }) {
           </div>
 
           {rankedProfiles.length > visibleCount && (<div className="pt-8 text-center">
-            <button onClick={() => setVisibleCount(prev => prev + 10)} className="inline-flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-white/5 hover:border-white/10 text-white font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-2xl transition-all shadow-lg active:scale-[0.98]">
+            <button onClick={() => setVisibleCount(prev => prev + 10)} className="inline-flex items-center gap-2 bg-[#AEC4D4] hover:bg-[#97b1c3] border border-black/10 text-[#1c1917] font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-2xl transition-all shadow-md active:scale-[0.98] cursor-pointer">
               Load More Profiles
             </button>
           </div>)}

@@ -95,11 +95,11 @@ describe('Route Security & Permission Guards', () => {
       expect(screen.queryByTestId('home-page')).not.toBeInTheDocument();
     });
 
-    it('permits access when verified superadmin email matches', () => {
-      const superAdminUser = {
-        uid: 'user_anil_superadmin',
-        email: 'aniltimilsena53@gmail.com',
-        role: 'SuperAdmin',
+    it('permits access when user has isAdmin: true', () => {
+      const adminUser = {
+        uid: 'user_admin',
+        email: 'admin@nepalcasts.com',
+        isAdmin: true,
       };
 
       render(
@@ -109,7 +109,7 @@ describe('Route Security & Permission Guards', () => {
             <Route
               path="/admin"
               element={
-                <AdminRoute user={superAdminUser} isAdmin={false} authReady={true}>
+                <AdminRoute user={adminUser} isAdmin={true} authReady={true}>
                   <div data-testid="admin-panel">Admin Content</div>
                 </AdminRoute>
               }

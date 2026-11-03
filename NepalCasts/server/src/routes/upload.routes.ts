@@ -139,7 +139,7 @@ router.delete('/upload/:publicId', verifyToken, async (req: AuthedRequest<{
                     );
                 });
 
-                if (!isOwnCastingAsset && !req.user?.isAdmin) {
+                if (!isOwnCastingAsset && !req.user?.isAdmin && !req.user?.admin) {
                     return res.status(403).json({
                         error: 'Forbidden: You do not own this media asset',
                         errorCode: 'FORBIDDEN_ASSET'

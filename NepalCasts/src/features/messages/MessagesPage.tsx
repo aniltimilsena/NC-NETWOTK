@@ -167,11 +167,11 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
         }
     };
     if (loading) {
-        return (<div className="min-h-screen bg-nc-dark text-white flex">
+        return (<div className="min-h-screen bg-[#FAF8F4] text-[#202923] flex font-inter">
         
         <div className="max-w-[1600px] mx-auto w-full px-3.5 sm:px-8 lg:px-12 py-3 sm:py-8 flex gap-6 h-[calc(100vh-80px)]">
           
-          <div className="w-80 border border-white/5 bg-[#111]/80 rounded-[2rem] p-5 hidden md:flex flex-col space-y-6 shrink-0">
+          <div className="w-80 border border-[#E7E5E0] bg-white rounded-2xl p-5 hidden md:flex flex-col space-y-6 shrink-0 shadow-card">
             <div className="flex items-center justify-between pb-2">
               <div className="h-6 skeleton w-24"/>
               <div className="w-9 h-9 rounded-full skeleton"/>
@@ -189,9 +189,9 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
           </div>
 
           
-          <div className="flex-1 border border-white/5 bg-[#111]/80 rounded-[2rem] p-6 flex flex-col justify-between">
+          <div className="flex-1 border border-[#E7E5E0] bg-white rounded-2xl p-6 flex flex-col justify-between shadow-card">
             
-            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+            <div className="flex items-center justify-between border-b border-[#E7E5E0] pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full skeleton"/>
                 <div className="space-y-1.5">
@@ -227,17 +227,17 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
       </div>);
     }
     if (!user) {
-        return (<div className="min-h-screen bg-[#141414] pb-24 flex flex-col items-center justify-center text-center p-6">
-        <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
-        <p className="text-gray-400 text-sm max-w-xs mb-6">
+        return (<div className="min-h-screen bg-[#FAF8F4] pb-24 flex flex-col items-center justify-center text-center p-6 font-inter">
+        <h2 className="font-display text-2xl font-semibold text-[#202923] mb-2">Access Denied</h2>
+        <p className="text-[#626860] text-sm max-w-xs mb-6">
           Please log in to check your messages.
         </p>
-        <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold rounded-xl cursor-pointer">
+        <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-[#194332] hover:bg-[#102F28] active:bg-[#0c241e] text-white shadow-sm font-semibold rounded-lg cursor-pointer transition-colors">
           Sign In
         </button>
       </div>);
     }
-    return (<div className="h-screen h-dvh bg-[#0d0d0f] flex overflow-hidden">
+    return (<div className="h-screen h-dvh bg-[#FAF8F4] flex overflow-hidden font-inter">
       
       <div className="w-full flex h-full overflow-hidden">
         
@@ -246,30 +246,30 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
         </div>
 
         
-        <div className={`flex-1 h-full flex flex-col ${!activeChatId ? 'hidden md:flex items-center justify-center bg-[#0d0d0f] text-gray-400 text-xs' : 'flex'}`}>
+        <div className={`flex-1 h-full flex flex-col ${!activeChatId ? 'hidden md:flex items-center justify-center bg-[#FAF8F4] text-[#626860] text-xs' : 'flex'}`}>
           {activeChat ? (<>
               <div className="flex-1 min-h-0">
                 <ChatArea chat={activeChat} messages={messages} currentUser={user} typingUsers={typingUsers} onBack={() => setActiveChatId(null)} onInitiateCall={handleInitiateCall} onReplyTo={setReplyingTo} onDeleteMessage={handleDeleteMessage} onPinMessage={handlePinMessage} onReactToMessage={handleReactToMessage} onForwardMessage={handleForwardMessage} conversations={conversations} onTogglePinnedDrawer={() => setShowPinnedDrawer(!showPinnedDrawer)} isPinnedDrawerOpen={showPinnedDrawer}/>
               </div>
               <MessageInput onSend={handleSendMessage} replyingTo={replyingTo} onCancelReply={() => setReplyingTo(null)} onTyping={updateTyping}/>
             </>) : (<div className="space-y-3 text-center flex flex-col items-center justify-center p-6 h-full my-auto">
-              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto border border-white/5">
+              <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center mx-auto border border-[#E7E5E0] shadow-sm">
                 <span className="text-2xl">💬</span>
               </div>
-              <p className="text-sm font-medium text-gray-300">{t('messages.empty')}</p>
+              <p className="text-sm font-medium text-[#202923]">{t('messages.empty')}</p>
             </div>)}
         </div>
 
         
         <AnimatePresence>
-          {showPinnedDrawer && activeChat && (<motion.div initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: '100%', opacity: 0 }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-y-0 right-0 z-40 w-full sm:w-80 md:w-96 lg:static lg:h-full lg:w-80 border-l border-white/5 bg-[#141414] flex flex-col shadow-2xl shrink-0">
+          {showPinnedDrawer && activeChat && (<motion.div initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: '100%', opacity: 0 }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-y-0 right-0 z-40 w-full sm:w-80 md:w-96 lg:static lg:h-full lg:w-80 border-l border-[#E7E5E0] bg-white flex flex-col shadow-xl shrink-0">
               
-              <div className="p-4 pt-6 md:p-4 border-b border-white/5 flex items-center justify-between">
+              <div className="p-4 pt-6 md:p-4 border-b border-[#E7E5E0] flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Pin className="w-5 h-5 text-white"/>
-                  <h3 className="text-lg font-bold text-white">Pinned Messages</h3>
+                  <Pin className="w-4 h-4 text-[#194332]"/>
+                  <h3 className="text-base font-semibold text-[#202923]">Pinned Messages</h3>
                 </div>
-                <button onClick={() => setShowPinnedDrawer(false)} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white border border-white/10 transition-all cursor-pointer flex shrink-0 items-center justify-center" title="Close Drawer">
+                <button onClick={() => setShowPinnedDrawer(false)} className="w-8 h-8 rounded-full bg-[#FAF8F4] hover:bg-[#F3F0E9] flex items-center justify-center text-[#202923] border border-[#E7E5E0] transition-all cursor-pointer shrink-0" title="Close Drawer">
                   <X className="w-4 h-4"/>
                 </button>
               </div>
@@ -280,22 +280,22 @@ export default function MessagesPage({ onNavigate, user, initialUserId, initialC
                 const isMsgMe = msg.senderId === user.uid;
                 const senderName = isMsgMe ? 'You' : (activeChat.name || 'User');
                 const senderAvatar = isMsgMe ? (user.photoURL || '') : (activeChat.avatar || '');
-                return (<div key={msg.id} className="bg-white/5 border border-white/5 rounded-2xl p-3.5 space-y-2 relative group hover:border-[#522C69]/20 transition-all text-left">
+                return (<div key={msg.id} className="bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl p-3.5 space-y-2 relative group hover:border-[#D5D1C7] transition-all text-left">
                         <div className="flex items-center gap-2">
                           <Avatar userId={msg.senderId} src={senderAvatar} name={senderName} size="xs" className="w-6 h-6"/>
                           <div className="flex-1 min-w-0">
-                            <span className="text-xs font-bold text-white block truncate">{senderName}</span>
+                            <span className="text-xs font-semibold text-[#202923] block truncate">{senderName}</span>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-300 break-words line-clamp-4">
-                          {msg.type === 'image' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/image/upload/') || msg.text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i))) ? (<span className="italic text-nc-muted"> Sent a photo</span>) : msg.type === 'video' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/video/upload/') || msg.text.match(/\.(mp4|webm|ogg|mov)/i))) ? (<span className="italic text-nc-muted"> Sent a video</span>) : msg.type === 'file' || (msg.text && msg.text.startsWith('http') && msg.text.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|zip|rar)/i)) ? (<span className="italic text-[#522C69]"> Document File</span>) : (msg.text)}
+                        <div className="text-xs text-[#414840] break-words line-clamp-4">
+                          {msg.type === 'image' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/image/upload/') || msg.text.match(/\.(jpeg|jpg|gif|png|webp|svg)/i))) ? (<span className="italic text-[#777C75]"> Sent a photo</span>) : msg.type === 'video' || (msg.text && msg.text.startsWith('http') && (msg.text.includes('/video/upload/') || msg.text.match(/\.(mp4|webm|ogg|mov)/i))) ? (<span className="italic text-[#777C75]"> Sent a video</span>) : msg.type === 'file' || (msg.text && msg.text.startsWith('http') && msg.text.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|zip|rar)/i)) ? (<span className="italic text-[#194332] font-semibold"> Document File</span>) : (msg.text)}
                         </div>
                       </div>);
-            })) : (<div className="h-full flex flex-col items-center justify-center text-center p-6 text-nc-muted space-y-3">
-                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
-                      <Pin className="w-6 h-6 text-white/40"/>
+            })) : (<div className="h-full flex flex-col items-center justify-center text-center p-6 text-[#777C75] space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-[#FAF8F4] border border-[#E7E5E0] flex items-center justify-center">
+                      <Pin className="w-5 h-5 text-[#777C75]"/>
                     </div>
-                    <p className="text-xs font-medium text-nc-muted">No pinned messages in this conversation yet.</p>
+                    <p className="text-xs font-medium text-[#777C75]">No pinned messages in this conversation yet.</p>
                   </div>)}
               </div>
             </motion.div>)}

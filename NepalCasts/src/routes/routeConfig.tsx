@@ -46,12 +46,12 @@ export const ProtectedRoute = ({ user, authReady, children }: any) => {
 
 export const AdminRoute = ({ user, isAdmin, authReady, children }: any) => {
   const [isLiveAdmin, setIsLiveAdmin] = React.useState<boolean>(
-    Boolean(isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin' || (user?.email && user.email.toLowerCase() === 'aniltimilsena53@gmail.com'))
+    Boolean(isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin')
   );
   const [checking, setChecking] = React.useState<boolean>(true);
 
   React.useEffect(() => {
-    if (isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin' || (user?.email && user.email.toLowerCase() === 'aniltimilsena53@gmail.com')) {
+    if (isAdmin || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin') {
       setIsLiveAdmin(true);
       setChecking(false);
       return;

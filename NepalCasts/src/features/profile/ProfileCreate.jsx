@@ -72,11 +72,11 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
     };
 
     return (
-        <div className="min-h-screen bg-nc-dark pt-6 sm:pt-8 pb-6">
+        <div className="min-h-screen bg-[#FAF8F4] pt-6 sm:pt-8 pb-12">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-black text-white">Create Your Profile</h1>
-                    <p className="text-nc-muted mt-2">Get discovered by top productions</p>
+                    <h1 className="font-display text-3xl font-semibold text-[#202923]">Create Your Profile</h1>
+                    <p className="text-[#626860] mt-2 text-sm">Get discovered by top productions and casting directors</p>
                 </div>
 
                 <div className="flex items-center justify-center gap-2 mb-10 overflow-x-auto pb-2">
@@ -85,30 +85,30 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                             <button
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                                     s.id === step
-                                        ? 'bg-nc-accent text-nc-darker'
+                                        ? 'bg-[#194332] text-white shadow-xs'
                                         : s.id < step
-                                        ? 'bg-nc-accent/20 text-nc-accent border border-nc-accent/30'
-                                        : 'bg-nc-card border border-nc-border text-nc-muted'
+                                        ? 'bg-[#EAF2ED] text-[#194332] border border-[#194332]/20'
+                                        : 'bg-white border border-[#E7E5E0] text-[#777C75]'
                                 }`}
                             >
                                 <span>{s.id < step ? '✓' : s.icon}</span>
                                 <span className="hidden sm:block">{s.title}</span>
                             </button>
                             {idx < STEPS.length - 1 && (
-                                <div className={`w-8 h-0.5 ${s.id < step ? 'bg-nc-accent' : 'bg-nc-border'}`} />
+                                <div className={`w-8 h-0.5 ${s.id < step ? 'bg-[#194332]' : 'bg-[#E7E5E0]'}`} />
                             )}
                         </div>
                     ))}
                 </div>
 
-                <GlassCard strong className="p-6 sm:p-8">
+                <GlassCard strong className="p-6 sm:p-8 bg-white border border-[#E7E5E0] rounded-2xl shadow-card">
                     {step === 1 && (
                         <div className="space-y-5">
-                            <h2 className="text-xl font-bold text-white mb-6">Basic Information</h2>
+                            <h2 className="font-display text-xl font-semibold text-[#202923] mb-6">Basic Information</h2>
                             <div className="flex flex-col sm:flex-row flex-wrap gap-5">
                                 <div className="w-full">
-                                    <div className="flex items-center gap-6 p-5 bg-nc-surface border border-nc-border border-dashed rounded-xl relative overflow-hidden">
-                                        <div className="w-20 h-20 rounded-xl bg-nc-card flex items-center justify-center text-nc-muted relative overflow-hidden">
+                                    <div className="flex items-center gap-6 p-5 bg-[#FAF8F4] border border-[#E7E5E0] border-dashed rounded-xl relative overflow-hidden">
+                                        <div className="w-20 h-20 rounded-xl bg-white border border-[#E7E5E0] flex items-center justify-center text-[#777C75] relative overflow-hidden shadow-xs">
                                             {form.photoURL ? (
                                                 <img
                                                     src={getOptimizedImageUrl(form.photoURL, { width: 160, height: 160, crop: 'fill', quality: 'auto', format: 'auto' })}
@@ -119,7 +119,7 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                                     onError={(e) => {
                                                         const target = e.currentTarget;
                                                         target.onerror = null;
-                                                        target.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160' fill='none'%3E%3Crect width='160' height='160' fill='%23141414'/%3E%3Cpath d='M80 75a20 20 0 100-40 20 20 0 000 40zm-35 45c0-18 15-28 35-28s35 10 35 28v5H45v-5z' fill='%23522C69' fill-opacity='0.5'/%3E%3C/svg%3E";
+                                                        target.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160' fill='none'%3E%3Crect width='160' height='160' fill='%23FAF8F4'/%3E%3Cpath d='M80 75a20 20 0 100-40 20 20 0 000 40zm-35 45c0-18 15-28 35-28s35 10 35 28v5H45v-5z' fill='%23194332' fill-opacity='0.4'/%3E%3C/svg%3E";
                                                     }}
                                                 />
                                             ) : (
@@ -130,17 +130,17 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                             )}
                                             {isUploadingPhoto && (
                                                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
-                                                    <span className="text-nc-accent text-xs font-bold">{photoProgress}%</span>
+                                                    <span className="text-white text-xs font-semibold">{photoProgress}%</span>
                                                 </div>
                                             )}
                                         </div>
                                         <div>
-                                            <p className="font-medium text-white">Upload Profile Photo</p>
-                                            <p className="text-nc-muted text-sm mt-1">JPG, PNG. Max 5MB. Min 400x400px</p>
+                                            <p className="font-semibold text-[#202923]">Upload Profile Photo</p>
+                                            <p className="text-[#626860] text-sm mt-1">JPG, PNG. Max 5MB. Min 400x400px</p>
                                             <button
                                                 onClick={() => document.getElementById('profile-create-photo')?.click()}
                                                 disabled={isUploadingPhoto}
-                                                className="mt-2 text-nc-accent text-sm font-medium hover:text-amber-300 disabled:opacity-50"
+                                                className="mt-2 text-[#194332] text-sm font-semibold hover:text-[#102F28] disabled:opacity-50 transition-colors"
                                             >
                                                 {isUploadingPhoto ? 'Uploading...' : 'Browse files'}
                                             </button>
@@ -149,21 +149,21 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                     </div>
                                 </div>
                                 <div className="flex-1 min-w-[200px]">
-                                    <label className="block text-sm font-medium text-nc-secondary mb-2">Full Name *</label>
+                                    <label className="block text-sm font-medium text-[#414840] mb-2">Full Name *</label>
                                     <input
                                         type="text"
                                         value={form.name}
                                         onChange={e => setForm({ ...form, name: e.target.value })}
                                         placeholder="Your full name"
-                                        className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
+                                        className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-4 py-3 text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors text-sm"
                                     />
                                 </div>
                                 <div className="flex-1 min-w-[200px]">
-                                    <label className="block text-sm font-medium text-nc-secondary mb-2">Category / Profession *</label>
+                                    <label className="block text-sm font-medium text-[#414840] mb-2">Category / Profession *</label>
                                     <select
                                         value={form.role}
                                         onChange={e => setForm({ ...form, role: e.target.value })}
-                                        className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
+                                        className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-4 py-3 text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors text-sm"
                                     >
                                         {CATEGORIES.map(catId => {
                                             const cfg = getCategoryConfig(catId);
@@ -172,36 +172,36 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                     </select>
                                 </div>
                                 <div className="flex-1 min-w-[200px]">
-                                    <label className="block text-sm font-medium text-nc-secondary mb-2">Location *</label>
+                                    <label className="block text-sm font-medium text-[#414840] mb-2">Location *</label>
                                     <input
                                         type="text"
                                         value={form.location}
                                         onChange={e => setForm({ ...form, location: e.target.value })}
                                         placeholder="City, State"
-                                        className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
+                                        className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-4 py-3 text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors text-sm"
                                     />
                                 </div>
                                 <div className="w-full">
-                                    <label className="block text-sm font-medium text-nc-secondary mb-2">Bio</label>
+                                    <label className="block text-sm font-medium text-[#414840] mb-2">Bio</label>
                                     <textarea
                                         value={form.bio}
                                         onChange={e => setForm({ ...form, bio: e.target.value })}
                                         placeholder="Tell productions about yourself..."
                                         rows={4}
-                                        className="w-full bg-nc-surface border border-nc-border rounded-xl px-4 py-3 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm resize-none"
+                                        className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-4 py-3 text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors text-sm resize-none"
                                     />
                                 </div>
                                 <div className="w-full">
-                                    <label className="block text-sm font-medium text-nc-secondary mb-3">Gender *</label>
+                                    <label className="block text-sm font-medium text-[#414840] mb-3">Gender *</label>
                                     <div className="flex gap-4">
                                         {['Male', 'Female', 'Other'].map(g => (
                                             <button
                                                 key={g}
                                                 onClick={() => setForm({ ...form, gender: g })}
-                                                className={`flex-1 py-3 px-4 rounded-xl border text-sm font-bold transition-all ${
+                                                className={`flex-1 py-3 px-4 rounded-xl border text-sm font-semibold transition-all ${
                                                     form.gender === g
-                                                        ? 'bg-nc-accent/20 border-nc-accent text-nc-accent'
-                                                        : 'bg-nc-surface border-nc-border text-nc-muted hover:border-nc-accent/30'
+                                                        ? 'bg-[#EAF2ED] border-[#194332] text-[#194332]'
+                                                        : 'bg-[#FAF8F4] border-[#E7E5E0] text-[#626860] hover:border-[#D5D1C7]'
                                                 }`}
                                             >
                                                 {g}
@@ -211,7 +211,7 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                 </div>
 
                                 <div className="w-full">
-                                    <label className="block text-sm font-medium text-nc-secondary mb-3">Languages</label>
+                                    <label className="block text-sm font-medium text-[#414840] mb-3">Languages</label>
                                     <div className="flex flex-wrap gap-2">
                                         {languages.map(lang => (
                                             <button
@@ -219,8 +219,8 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                                 onClick={() => toggleLanguage(lang)}
                                                 className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${
                                                     form.languages.includes(lang)
-                                                        ? 'bg-nc-accent/20 border-nc-accent text-nc-accent'
-                                                        : 'bg-nc-surface border-nc-border text-nc-muted hover:border-nc-accent/30'
+                                                        ? 'bg-[#194332] border-[#194332] text-white font-medium shadow-xs'
+                                                        : 'bg-[#FAF8F4] border-[#E7E5E0] text-[#626860] hover:border-[#D5D1C7]'
                                                 }`}
                                             >
                                                 {lang}
@@ -234,10 +234,10 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
 
                     {step === 2 && (
                         <div className="space-y-6">
-                            <h2 className="text-xl font-bold text-white mb-2">Your Skills</h2>
-                            <p className="text-nc-muted text-sm">Add your core skills with proficiency levels</p>
+                            <h2 className="font-display text-xl font-semibold text-[#202923] mb-2">Your Skills</h2>
+                            <p className="text-[#626860] text-sm">Add your core skills with proficiency levels</p>
                             {form.skills.map((skill, idx) => (
-                                <div key={idx} className="bg-nc-surface border border-nc-border rounded-xl p-4 space-y-3">
+                                <div key={idx} className="bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl p-4 space-y-3">
                                     <div className="flex gap-3 items-center">
                                         <input
                                             type="text"
@@ -248,19 +248,19 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                                 setForm({ ...form, skills: s });
                                             }}
                                             placeholder="Skill name (e.g. Acting)"
-                                            className="flex-1 bg-nc-card border border-nc-border rounded-lg px-4 py-2.5 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
+                                            className="flex-1 bg-white border border-[#E7E5E0] rounded-lg px-4 py-2.5 text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors text-sm"
                                         />
                                         <button
                                             onClick={() => setForm({ ...form, skills: form.skills.filter((_, i) => i !== idx) })}
-                                            className="text-nc-muted hover:text-red-400 transition-colors p-2"
+                                            className="text-[#777C75] hover:text-red-600 transition-colors p-2"
                                         >
                                             ✕
                                         </button>
                                     </div>
                                     <div className="space-y-1">
-                                        <div className="flex justify-between text-xs text-nc-muted">
+                                        <div className="flex justify-between text-xs text-[#626860]">
                                             <span>Proficiency</span>
-                                            <span className="text-nc-accent font-medium">{skill.level}%</span>
+                                            <span className="text-[#194332] font-semibold">{skill.level}%</span>
                                         </div>
                                         <input
                                             type="range"
@@ -272,14 +272,14 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                                 s[idx].level = Number(e.target.value);
                                                 setForm({ ...form, skills: s });
                                             }}
-                                            className="w-full accent-[#522C69]"
+                                            className="w-full accent-[#194332]"
                                         />
                                     </div>
                                 </div>
                             ))}
                             <button
                                 onClick={() => setForm({ ...form, skills: [...form.skills, { name: '', level: 80 }] })}
-                                className="flex items-center gap-2 text-nc-accent text-sm font-medium hover:text-amber-300 transition-colors"
+                                className="flex items-center gap-2 text-[#194332] text-sm font-semibold hover:text-[#102F28] transition-colors cursor-pointer"
                             >
                                 + Add Another Skill
                             </button>
@@ -288,10 +288,10 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
 
                     {step === 3 && (
                         <div className="space-y-6">
-                            <h2 className="text-xl font-bold text-white mb-2">Experience</h2>
-                            <p className="text-nc-muted text-sm">Add your work history and projects</p>
+                            <h2 className="font-display text-xl font-semibold text-[#202923] mb-2">Experience</h2>
+                            <p className="text-[#626860] text-sm">Add your work history and projects</p>
                             {form.experience.map((exp, idx) => (
-                                <div key={idx} className="bg-nc-surface border border-nc-border rounded-xl p-4 space-y-3">
+                                <div key={idx} className="bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl p-4 space-y-3">
                                     <div className="flex flex-col sm:flex-row gap-3">
                                         <input
                                             type="text"
@@ -302,7 +302,7 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                                 setForm({ ...form, experience: ex });
                                             }}
                                             placeholder="Role / Project Title"
-                                            className="flex-1 bg-nc-card border border-nc-border rounded-lg px-4 py-2.5 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
+                                            className="flex-1 bg-white border border-[#E7E5E0] rounded-lg px-4 py-2.5 text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors text-sm"
                                         />
                                         <input
                                             type="text"
@@ -313,7 +313,7 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                                 setForm({ ...form, experience: ex });
                                             }}
                                             placeholder="Production / Company"
-                                            className="flex-1 bg-nc-card border border-nc-border rounded-lg px-4 py-2.5 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
+                                            className="flex-1 bg-white border border-[#E7E5E0] rounded-lg px-4 py-2.5 text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors text-sm"
                                         />
                                     </div>
                                     <input
@@ -325,7 +325,7 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                             setForm({ ...form, experience: ex });
                                         }}
                                         placeholder="Year (e.g. 2023)"
-                                        className="w-full bg-nc-card border border-nc-border rounded-lg px-4 py-2.5 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm"
+                                        className="w-full bg-white border border-[#E7E5E0] rounded-lg px-4 py-2.5 text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors text-sm"
                                     />
                                     <textarea
                                         value={exp.description}
@@ -336,23 +336,23 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                                         }}
                                         placeholder="Brief description..."
                                         rows={3}
-                                        className="w-full bg-nc-card border border-nc-border rounded-lg px-4 py-2.5 text-white placeholder-nc-muted outline-none focus:border-nc-accent transition-colors text-sm resize-none"
+                                        className="w-full bg-white border border-[#E7E5E0] rounded-lg px-4 py-2.5 text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors text-sm resize-none"
                                     />
                                 </div>
                             ))}
                             <button
                                 onClick={() => setForm({ ...form, experience: [...form.experience, { title: '', company: '', year: '', description: '' }] })}
-                                className="flex items-center gap-2 text-nc-accent text-sm font-medium hover:text-amber-300"
+                                className="flex items-center gap-2 text-[#194332] text-sm font-semibold hover:text-[#102F28] transition-colors cursor-pointer"
                             >
                                 + Add Experience
                             </button>
                         </div>
                     )}
 
-                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-nc-border">
+                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-[#E7E5E0]">
                         <button
                             onClick={() => (step > 1 ? setStep(s => s - 1) : onNavigate('home'))}
-                            className="text-nc-muted hover:text-white text-sm flex items-center gap-2 transition-colors cursor-pointer"
+                            className="text-[#626860] hover:text-[#202923] text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer"
                         >
                             {step > 1 ? '← Back' : '← Cancel'}
                         </button>
@@ -412,13 +412,13 @@ export default function ProfileCreate({ onNavigate, user, showAlert }) {
                 </GlassCard>
 
                 <div className="mt-6">
-                    <div className="flex justify-between text-xs text-nc-muted mb-2">
+                    <div className="flex justify-between text-xs text-[#777C75] mb-2">
                         <span>Step {step} of {STEPS.length}</span>
                         <span>{Math.round((step / STEPS.length) * 100)}% complete</span>
                     </div>
-                    <div className="h-1 bg-nc-card rounded-full overflow-hidden">
+                    <div className="h-1 bg-[#E7E5E0] rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-nc-accent rounded-full transition-all duration-500"
+                            className="h-full bg-[#194332] rounded-full transition-all duration-500"
                             style={{ width: `${(step / STEPS.length) * 100}%` }}
                         />
                     </div>

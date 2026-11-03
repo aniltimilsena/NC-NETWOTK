@@ -160,7 +160,7 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
     const status = (statusStr || 'pending').toLowerCase();
     if (status === 'accepted' || status === 'shortlisted') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF2ED] border border-[#194332]/20 text-[#194332] text-xs font-semibold uppercase tracking-wider">
           <CheckCircle2 className="w-3.5 h-3.5" />
           <span>Shortlisted</span>
         </span>
@@ -168,14 +168,14 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
     }
     if (status === 'rejected') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-wider">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEE4E2] border border-[#B42318]/20 text-[#B42318] text-xs font-semibold uppercase tracking-wider">
           <XCircle className="w-3.5 h-3.5" />
           <span>Not Selected</span>
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider">
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEF3EB] border border-[#946019]/20 text-[#946019] text-xs font-semibold uppercase tracking-wider">
         <Clock className="w-3.5 h-3.5 animate-pulse" />
         <span>Pending Review</span>
       </span>
@@ -195,37 +195,37 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
 
   return (
     <Desktop3ColumnLayout user={currentUser} onNavigate={onNavigate} activeNav="applications">
-      <div className="min-h-screen bg-[#141414] text-white relative font-sans">
+      <div className="min-h-screen bg-[#FAF8F4] text-[#202923] relative font-sans pb-16">
         <SEO title="My Applications | NepalCasts Auditions" description="Track your submitted audition applications." />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center justify-between border-b border-[#E7E5E0] pb-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={handleBack}
                 type="button"
-                className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
+                className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-[#626860] hover:text-[#202923] hover:bg-[#F3F0E9] transition-colors cursor-pointer shrink-0"
                 title="Go Back"
               >
-                <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
+                <ChevronLeft className="w-6 h-6" strokeWidth={2} />
               </button>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                  <FileText className="w-6 h-6 text-white" />
+                <h1 className="text-xl sm:text-2xl font-serif font-medium text-[#202923] tracking-tight flex items-center gap-2">
+                  <FileText className="w-6 h-6 text-[#194332]" />
                   <span>My Audition Applications</span>
                 </h1>
-                <p className="text-xs text-gray-400 font-medium">Track your status across submitted casting calls</p>
+                <p className="text-xs text-[#626860] font-normal">Track your status across submitted casting calls</p>
               </div>
             </div>
 
-            <span className="text-xs font-extrabold text-gray-400 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+            <span className="text-xs font-semibold text-[#626860] bg-white px-3.5 py-1.5 rounded-full border border-[#E7E5E0] shadow-card">
               {applications.length} Total
             </span>
           </div>
 
           {/* Sub Navigation Tabs */}
-          <div className="flex gap-2 border-b border-white/10 pb-3 overflow-x-auto scrollbar-none">
+          <div className="flex gap-2 border-b border-[#E7E5E0] pb-3 overflow-x-auto scrollbar-none">
             {[
               { id: 'all', label: 'All Applications', path: '/applications' },
               { id: 'active', label: 'Active / Pending', path: '/applications/active' },
@@ -240,9 +240,9 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                     setFilter(tab.id);
                     navigate(tab.path);
                   }}
-                  className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${isActive
-                      ? 'bg-[#522C69] text-[#0A0A0A] shadow-sm shadow-[#522C69]/20'
-                      : 'bg-[#18181c] text-gray-400 hover:text-white border border-white/5'
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${isActive
+                      ? 'bg-[#194332] text-white font-semibold shadow-sm'
+                      : 'bg-white text-[#626860] hover:text-[#202923] border border-[#E7E5E0]'
                     }`}
                 >
                   {tab.label}
@@ -253,15 +253,15 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
 
           {/* List Content */}
           {error && applications.length === 0 ? (
-            <div className="py-16 text-center space-y-4 bg-red-500/10 border border-red-500/20 rounded-3xl p-6">
-              <AlertCircle className="w-10 h-10 text-red-400 mx-auto" />
-              <h3 className="text-lg font-bold text-white">Failed to Load Applications</h3>
-              <p className="text-xs text-red-200 max-w-xs mx-auto">
+            <div className="py-16 text-center space-y-4 bg-white border border-[#E7E5E0] rounded-2xl p-6 shadow-card">
+              <AlertCircle className="w-10 h-10 text-[#B42318] mx-auto" />
+              <h3 className="text-lg font-serif font-semibold text-[#202923]">Failed to Load Applications</h3>
+              <p className="text-xs text-[#B42318] max-w-xs mx-auto">
                 {error}
               </p>
               <button
                 onClick={() => setReloadKey(k => k + 1)}
-                className="px-6 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                className="px-6 py-2 rounded-lg bg-[#194332] hover:bg-[#102F28] text-white font-semibold text-xs tracking-wider transition-colors cursor-pointer"
               >
                 Try Again
               </button>
@@ -269,17 +269,17 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
           ) : loading ? (
             <ApplicationSkeleton count={3} />
           ) : filteredApps.length === 0 ? (
-            <div className="py-16 text-center space-y-4 bg-white/[0.02] border border-white/5 rounded-3xl p-6">
-              <AlertCircle className="w-10 h-10 text-gray-600 mx-auto" />
-              <h3 className="text-lg font-bold text-white">No Applications Found</h3>
-              <p className="text-xs text-gray-400 max-w-xs mx-auto">
+            <div className="py-16 text-center space-y-4 bg-white border border-[#E7E5E0] rounded-2xl p-8 shadow-card">
+              <AlertCircle className="w-10 h-10 text-[#777C75] mx-auto" />
+              <h3 className="text-lg font-serif font-semibold text-[#202923]">No Applications Found</h3>
+              <p className="text-xs text-[#626860] max-w-xs mx-auto">
                 {filter === 'all'
                   ? "You haven't submitted any audition applications yet."
                   : `No ${filter} applications match your filter.`}
               </p>
               <button
                 onClick={() => (onNavigate ? onNavigate('casting') : navigate('/casting'))}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all cursor-pointer shadow-md active:scale-95"
+                className="px-6 py-2.5 rounded-lg bg-[#194332] hover:bg-[#102F28] text-white shadow-sm font-semibold text-xs tracking-wider transition-all cursor-pointer active:scale-95"
               >
                 Browse Casting Calls
               </button>
@@ -312,10 +312,10 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                 return (
                   <div
                     key={app.appId}
-                    className="p-5 rounded-xl bg-black border border-white/5 hover:border-white/20 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md"
+                    className="p-5 rounded-2xl bg-white border border-[#E7E5E0] hover:border-[#D5D1C7] transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-card hover:shadow-elevated text-[#202923]"
                   >
                     <div className="flex items-center gap-4 min-w-0 flex-1">
-                      <div className="w-16 h-16 rounded-none overflow-hidden relative shrink-0 bg-[#141418] border border-white/10 flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-xl overflow-hidden relative shrink-0 bg-[#F3F0E9] border border-[#E7E5E0] flex items-center justify-center">
                         {thumbnail ? (
                           <img
                             src={getOptimizedImageUrl(thumbnail, { width: 160, quality: 'auto', format: 'auto' })}
@@ -331,10 +331,10 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                           />
                         ) : null}
                         <div
-                          className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#22222a] via-[#1a1a20] to-[#101014] p-1 text-center"
+                          className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-[#F3F0E9] p-1 text-center"
                           style={{ display: thumbnail ? 'none' : 'flex' }}
                         >
-                          <svg className="w-8 h-8 text-indigo-300/90 fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
+                          <svg className="w-8 h-8 text-[#777C75] fill-current" viewBox="0 0 24 24">
                             <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
                           </svg>
                         </div>
@@ -346,23 +346,23 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                               ? onNavigate('casting-detail', app.castingId)
                               : navigate(`/casting/${app.castingId}`)
                           }
-                          className="font-bold text-white text-base truncate hover:text-[#522C69] cursor-pointer transition-colors"
+                          className="font-serif font-semibold text-[#202923] text-base truncate hover:text-[#194332] cursor-pointer transition-colors"
                         >
                           {title}
                         </h3>
-                        <p className="text-xs text-gray-400">
-                          Role: <span className="text-white font-semibold">{roleName}</span>
+                        <p className="text-xs text-[#626860]">
+                          Role: <span className="text-[#202923] font-semibold">{roleName}</span>
                         </p>
                         <div className="pt-1">{getStatusBadge(app.status)}</div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E7E5E0]">
                       {app.status === 'pending' && (
                         <button
                           onClick={() => setDeleteTargetId(app.appId)}
                           disabled={cancellingId === app.appId}
-                          className="px-3.5 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                          className="px-3.5 py-2 rounded-lg bg-[#FEE4E2] border border-[#B42318]/20 text-[#B42318] hover:bg-red-100 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           <span>Cancel</span>
@@ -375,10 +375,10 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
                             ? onNavigate('casting-detail', app.castingId)
                             : navigate(`/casting/${app.castingId}`)
                         }
-                        className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                        className="px-4 py-2 rounded-lg bg-white hover:bg-[#F3F0E9] border border-[#D5D1C7] text-[#202923] text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
                       >
                         <span>View Details</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-white" />
+                        <ArrowRight className="w-3.5 h-3.5 text-[#194332]" />
                       </button>
                     </div>
                   </div>
@@ -386,13 +386,13 @@ export default function ApplicationsPage({ user: propUser, onNavigate, initialFi
               })}
               {hasMore && (
                 <div ref={sentinelRef} className="flex flex-col items-center justify-center gap-2.5 mt-6 py-2">
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <span className="w-4 h-4 border-2 border-[#522C69] border-t-transparent rounded-full animate-spin shrink-0" />
+                  <div className="flex items-center gap-2 text-xs text-[#626860]">
+                    <span className="w-4 h-4 border-2 border-[#194332] border-t-transparent rounded-full animate-spin shrink-0" />
                     <span>Loading more applications...</span>
                   </div>
                   <button
                     onClick={handleLoadMore}
-                    className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer shadow-sm active:scale-95"
+                    className="px-6 py-2.5 rounded-lg bg-white hover:bg-[#F3F0E9] border border-[#D5D1C7] text-xs font-semibold uppercase tracking-wider text-[#202923] transition-all cursor-pointer shadow-card active:scale-95"
                   >
                     Load More
                   </button>

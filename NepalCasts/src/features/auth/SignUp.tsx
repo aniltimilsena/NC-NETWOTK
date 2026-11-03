@@ -187,29 +187,29 @@ export default function SignUp(_props: SignUpProps) {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-[#0c0e15] text-white font-sans selection:bg-[#7f4ef8] selection:text-white relative overflow-hidden">
+    <div className="min-h-screen w-full flex bg-[#FAF8F4] text-[#202923] font-sans selection:bg-[#194332] selection:text-white relative overflow-hidden">
       <SEO title="Create Account | NepalCasts" description="Join the NepalCasts community." noindex />
 
       {/* Left Column: Form */}
-      <div className="w-full lg:w-[480px] xl:w-[540px] shrink-0 min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-14 relative z-10 bg-[#0c0e15] lg:border-r lg:border-white/[0.06] overflow-y-auto overflow-x-hidden">
+      <div className="w-full lg:w-[480px] xl:w-[540px] shrink-0 min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-14 relative z-10 bg-[#FAF8F4] lg:border-r lg:border-[#E7E5E0] overflow-y-auto overflow-x-hidden">
         {/* Top Header Bar */}
         <div className="flex items-center justify-between min-h-[44px] mb-6">
           <button
             onClick={handleBack}
             type="button"
-            className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-[#626860] hover:text-[#202923] hover:bg-[#F3F0E9] transition-colors cursor-pointer"
             aria-label="Back"
           >
             <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
           </button>
 
           {!pendingVerification && (
-            <div className="text-xs sm:text-[13px] text-[#7e8697] font-medium select-none flex items-center">
+            <div className="text-xs sm:text-[13px] text-[#626860] font-medium select-none flex items-center">
               <span>Already have an account?</span>
               <Link
                 to="/signin"
                 replace
-                className="text-[#8f64f8] font-semibold hover:text-[#a785fc] transition-colors ml-1.5 cursor-pointer"
+                className="text-[#194332] font-semibold hover:text-[#102F28] transition-colors ml-1.5 cursor-pointer"
               >
                 Sign In
               </Link>
@@ -234,18 +234,18 @@ export default function SignUp(_props: SignUpProps) {
             <>
               {/* Heading */}
               <div className="text-left mb-6 sm:mb-8">
-                <h1 className="text-[32px] sm:text-[36px] font-black text-white tracking-tight leading-tight">
-                  <span>Create Your</span> <span className="text-[#8f64f8]">Account</span>
+                <h1 className="text-[32px] sm:text-[36px] font-display font-semibold text-[#202923] tracking-tight leading-tight">
+                  <span>Create Your</span> <span className="text-[#194332]">Account</span>
                 </h1>
-                <p className="text-[13px] sm:text-[14px] text-[#7e8697] mt-2 font-normal leading-relaxed">
+                <p className="text-[13px] sm:text-[14px] text-[#626860] mt-2 font-normal leading-relaxed">
                   Join a growing community of talent, creators and industry professionals.
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="w-full space-y-3 text-left">
                 {/* Full Name */}
-                <div className="relative flex items-center h-[52px] sm:h-[54px] bg-[#151821] border border-white/[0.08] hover:border-white/15 focus-within:border-[#8f64f8] focus-within:ring-2 focus-within:ring-[#8f64f8]/20 transition-all rounded-xl px-4">
-                  <User className="w-5 h-5 text-[#737b8d] shrink-0 stroke-[1.8]" />
+                <div className="relative flex items-center h-[52px] sm:h-[54px] bg-white border border-[#E7E5E0] hover:border-[#D5D1C7] focus-within:border-[#194332] focus-within:ring-2 focus-within:ring-[#194332]/15 shadow-2xs transition-all rounded-xl px-4">
+                  <User className="w-5 h-5 text-[#777C75] shrink-0 stroke-[1.8]" />
                   <input
                     id="fullName"
                     type="text"
@@ -253,13 +253,13 @@ export default function SignUp(_props: SignUpProps) {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Full name"
-                    className="w-full bg-transparent border-none text-white text-[14px] placeholder:text-[#737b8d] outline-none ml-3 !pl-0"
+                    className="w-full bg-transparent border-none text-[#202923] text-[14px] placeholder:text-[#777C75] outline-none ml-3 !pl-0"
                   />
                 </div>
 
                 {/* Email Address */}
-                <div className="relative flex items-center h-[52px] sm:h-[54px] bg-[#151821] border border-white/[0.08] hover:border-white/15 focus-within:border-[#8f64f8] focus-within:ring-2 focus-within:ring-[#8f64f8]/20 transition-all rounded-xl px-4">
-                  <Mail className="w-5 h-5 text-[#737b8d] shrink-0 stroke-[1.8]" />
+                <div className="relative flex items-center h-[52px] sm:h-[54px] bg-white border border-[#E7E5E0] hover:border-[#D5D1C7] focus-within:border-[#194332] focus-within:ring-2 focus-within:ring-[#194332]/15 shadow-2xs transition-all rounded-xl px-4">
+                  <Mail className="w-5 h-5 text-[#777C75] shrink-0 stroke-[1.8]" />
                   <input
                     id="emailAddress"
                     type="email"
@@ -268,13 +268,13 @@ export default function SignUp(_props: SignUpProps) {
                     value={emailAddress}
                     onChange={(e) => setEmailAddress(e.target.value)}
                     placeholder="Email address"
-                    className="w-full bg-transparent border-none text-white text-[14px] placeholder:text-[#737b8d] outline-none ml-3 !pl-0"
+                    className="w-full bg-transparent border-none text-[#202923] text-[14px] placeholder:text-[#777C75] outline-none ml-3 !pl-0"
                   />
                 </div>
 
                 {/* Password */}
-                <div className="relative flex items-center h-[52px] sm:h-[54px] bg-[#151821] border border-white/[0.08] hover:border-white/15 focus-within:border-[#8f64f8] focus-within:ring-2 focus-within:ring-[#8f64f8]/20 transition-all rounded-xl px-4">
-                  <Lock className="w-5 h-5 text-[#737b8d] shrink-0 stroke-[1.8]" />
+                <div className="relative flex items-center h-[52px] sm:h-[54px] bg-white border border-[#E7E5E0] hover:border-[#D5D1C7] focus-within:border-[#194332] focus-within:ring-2 focus-within:ring-[#194332]/15 shadow-2xs transition-all rounded-xl px-4">
+                  <Lock className="w-5 h-5 text-[#777C75] shrink-0 stroke-[1.8]" />
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -283,12 +283,12 @@ export default function SignUp(_props: SignUpProps) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
-                    className="w-full bg-transparent border-none text-white text-[14px] placeholder:text-[#737b8d] outline-none ml-3 pr-2 !pl-0"
+                    className="w-full bg-transparent border-none text-[#202923] text-[14px] placeholder:text-[#777C75] outline-none ml-3 pr-2 !pl-0"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-[#737b8d] hover:text-white transition-colors cursor-pointer p-1"
+                    className="text-[#777C75] hover:text-[#202923] transition-colors cursor-pointer p-1"
                     title={showPassword ? 'Hide password' : 'Show password'}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -297,8 +297,8 @@ export default function SignUp(_props: SignUpProps) {
                 </div>
 
                 {/* Confirm Password */}
-                <div className="relative flex items-center h-[52px] sm:h-[54px] bg-[#151821] border border-white/[0.08] hover:border-white/15 focus-within:border-[#8f64f8] focus-within:ring-2 focus-within:ring-[#8f64f8]/20 transition-all rounded-xl px-4">
-                  <Lock className="w-5 h-5 text-[#737b8d] shrink-0 stroke-[1.8]" />
+                <div className="relative flex items-center h-[52px] sm:h-[54px] bg-white border border-[#E7E5E0] hover:border-[#D5D1C7] focus-within:border-[#194332] focus-within:ring-2 focus-within:ring-[#194332]/15 shadow-2xs transition-all rounded-xl px-4">
+                  <Lock className="w-5 h-5 text-[#777C75] shrink-0 stroke-[1.8]" />
                   <input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
@@ -307,12 +307,12 @@ export default function SignUp(_props: SignUpProps) {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm password"
-                    className="w-full bg-transparent border-none text-white text-[14px] placeholder:text-[#737b8d] outline-none ml-3 pr-2 !pl-0"
+                    className="w-full bg-transparent border-none text-[#202923] text-[14px] placeholder:text-[#777C75] outline-none ml-3 pr-2 !pl-0"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="text-[#737b8d] hover:text-white transition-colors cursor-pointer p-1"
+                    className="text-[#777C75] hover:text-[#202923] transition-colors cursor-pointer p-1"
                     title={showConfirmPassword ? 'Hide password' : 'Show password'}
                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
@@ -324,7 +324,7 @@ export default function SignUp(_props: SignUpProps) {
                 <button
                   type="submit"
                   disabled={loading || !fullName || !emailAddress || !password || !confirmPassword}
-                  className="w-full h-[52px] sm:h-[54px] mt-4 bg-[#7f4ef8] hover:bg-[#7241eb] active:scale-[0.99] text-white font-semibold text-[15px] rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-[52px] sm:h-[54px] mt-4 bg-[#194332] hover:bg-[#102F28] active:scale-[0.99] text-white font-semibold text-[15px] rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
@@ -344,9 +344,9 @@ export default function SignUp(_props: SignUpProps) {
               <div className="w-full mt-6 mb-2">
                 <div className="relative flex items-center justify-center mb-4">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/[0.08]" />
+                    <div className="w-full border-t border-[#E7E5E0]" />
                   </div>
-                  <div className="relative px-3 bg-[#0c0e15] text-[12px] text-[#636b7b] font-normal select-none">
+                  <div className="relative px-3 bg-[#FAF8F4] text-[12px] text-[#777C75] font-normal select-none">
                     Or continue with
                   </div>
                 </div>
@@ -357,12 +357,12 @@ export default function SignUp(_props: SignUpProps) {
                     type="button"
                     onClick={() => handleSocialSignUp('oauth_google')}
                     disabled={loading || socialLoading}
-                    className="w-[52px] h-[52px] rounded-full bg-[#161922] hover:bg-[#1e222e] border border-white/[0.06] hover:border-white/15 flex items-center justify-center transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                    className="w-[52px] h-[52px] rounded-full bg-white hover:bg-[#F3F0E9] border border-[#E7E5E0] hover:border-[#D5D1C7] flex items-center justify-center transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs"
                     title="Continue with Google"
                     aria-label="Continue with Google"
                   >
                     {socialLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-[#8f64f8]" />
+                      <Loader2 className="w-5 h-5 animate-spin text-[#194332]" />
                     ) : (
                       <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -376,13 +376,13 @@ export default function SignUp(_props: SignUpProps) {
               </div>
 
               {/* Terms Disclaimer */}
-              <p className="text-[11px] text-[#616979] text-center mt-4 leading-relaxed">
+              <p className="text-[11px] text-[#777C75] text-center mt-4 leading-relaxed">
                 By creating an account, you agree to our{' '}
-                <Link to="/terms" className="text-[#8f64f8] underline hover:text-[#a785fc]">
+                <Link to="/terms" className="text-[#194332] underline hover:text-[#102F28]">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link to="/privacy" className="text-[#8f64f8] underline hover:text-[#a785fc]">
+                <Link to="/privacy" className="text-[#194332] underline hover:text-[#102F28]">
                   Privacy Policy
                 </Link>
                 .
@@ -392,18 +392,18 @@ export default function SignUp(_props: SignUpProps) {
             /* STEP 2: Email Verification Code */
             <div className="w-full text-left">
               <div className="mb-6">
-                <h1 className="text-[32px] font-extrabold text-white tracking-tight">
-                  Verify <span className="text-[#8f64f8]">Email</span>
+                <h1 className="text-[32px] font-display font-semibold text-[#202923] tracking-tight">
+                  Verify <span className="text-[#194332]">Email</span>
                 </h1>
-                <p className="text-[13px] text-[#7e8697] mt-2 font-normal leading-relaxed">
+                <p className="text-[13px] text-[#626860] mt-2 font-normal leading-relaxed">
                   We sent a 6-digit verification code to{' '}
-                  <span className="text-white font-medium">{emailAddress}</span>.
+                  <span className="text-[#202923] font-medium">{emailAddress}</span>.
                 </p>
               </div>
 
               <form onSubmit={handleVerify} className="space-y-4">
-                <div className="relative flex items-center h-[52px] sm:h-[54px] bg-[#151821] border border-white/[0.08] hover:border-white/15 focus-within:border-[#8f64f8] focus-within:ring-2 focus-within:ring-[#8f64f8]/20 transition-all rounded-xl px-4">
-                  <Mail className="w-5 h-5 text-[#737b8d] shrink-0 stroke-[1.8]" />
+                <div className="relative flex items-center h-[52px] sm:h-[54px] bg-white border border-[#E7E5E0] hover:border-[#D5D1C7] focus-within:border-[#194332] focus-within:ring-2 focus-within:ring-[#194332]/15 shadow-2xs transition-all rounded-xl px-4">
+                  <Mail className="w-5 h-5 text-[#777C75] shrink-0 stroke-[1.8]" />
                   <input
                     id="code"
                     type="text"
@@ -412,14 +412,14 @@ export default function SignUp(_props: SignUpProps) {
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     placeholder="Enter 6-digit code"
-                    className="w-full bg-transparent border-none text-white text-base tracking-widest font-mono placeholder:font-sans placeholder:tracking-normal placeholder:text-[#737b8d] outline-none ml-3 !pl-0"
+                    className="w-full bg-transparent border-none text-[#202923] text-base tracking-widest font-mono placeholder:font-sans placeholder:tracking-normal placeholder:text-[#777C75] outline-none ml-3 !pl-0"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading || code.trim().length < 6}
-                  className="w-full h-[52px] sm:h-[54px] bg-[#7f4ef8] hover:bg-[#7241eb] active:scale-[0.99] text-white font-semibold text-[15px] rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full h-[52px] sm:h-[54px] bg-[#194332] hover:bg-[#102F28] active:scale-[0.99] text-white font-semibold text-[15px] rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -438,7 +438,7 @@ export default function SignUp(_props: SignUpProps) {
                   <button
                     type="button"
                     onClick={handleResendCode}
-                    className="text-xs text-[#7e8697] hover:text-[#8f64f8] transition-colors cursor-pointer"
+                    className="text-xs text-[#777C75] hover:text-[#194332] transition-colors cursor-pointer"
                   >
                     Didn’t receive the code? Resend
                   </button>
@@ -452,13 +452,13 @@ export default function SignUp(_props: SignUpProps) {
         <div className="pt-6 flex flex-col select-none relative z-10">
           <div className="text-left pointer-events-none">
             <div className="space-y-[3px]">
-              <p className="text-[9.5px] font-bold tracking-[0.22em] text-[#606877] uppercase leading-none">PEOPLE</p>
-              <p className="text-[9.5px] font-bold tracking-[0.22em] text-[#606877] uppercase leading-none">PROJECTS</p>
-              <p className="text-[9.5px] font-bold tracking-[0.22em] text-[#606877] uppercase leading-none">OPPORTUNITIES</p>
-              <div className="w-7 h-[3px] bg-[#8f64f8] mt-2 rounded-full" />
+              <p className="text-[9.5px] font-bold tracking-[0.22em] text-[#777C75] uppercase leading-none">PEOPLE</p>
+              <p className="text-[9.5px] font-bold tracking-[0.22em] text-[#777C75] uppercase leading-none">PROJECTS</p>
+              <p className="text-[9.5px] font-bold tracking-[0.22em] text-[#777C75] uppercase leading-none">OPPORTUNITIES</p>
+              <div className="w-7 h-[3px] bg-[#D4A373] mt-2 rounded-full" />
             </div>
           </div>
-          <div className="w-full text-left text-xs text-[#525968] mt-4">
+          <div className="w-full text-left text-xs text-[#777C75] mt-4">
             © 2026 NepalCasts Inc. All rights reserved.
           </div>
         </div>
@@ -473,9 +473,8 @@ export default function SignUp(_props: SignUpProps) {
           >
             <defs>
               <linearGradient id="waveBgSignUpMobile" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#25123d" stopOpacity="0.9" />
-                <stop offset="60%" stopColor="#1a0c2c" stopOpacity="0.95" />
-                <stop offset="100%" stopColor="#10071c" stopOpacity="0.85" />
+                <stop offset="0%" stopColor="#F3F0E9" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#FAF8F4" stopOpacity="0.3" />
               </linearGradient>
             </defs>
             <path
@@ -484,67 +483,67 @@ export default function SignUp(_props: SignUpProps) {
             />
             <path
               d="M-20 190 C 40 235, 120 275, 260 270 C 340 265, 390 285, 440 320"
-              stroke="#7f4ef8"
+              stroke="#D5D1C7"
               strokeWidth="1.2"
-              strokeOpacity="0.25"
+              strokeOpacity="0.3"
             />
             <path
               d="M-20 140 C 20 200, 70 245, 170 260 C 270 275, 340 250, 440 320"
-              stroke="#9d74fa"
+              stroke="#E7E5E0"
               strokeWidth="1.5"
-              strokeOpacity="0.5"
+              strokeOpacity="0.6"
             />
           </svg>
         </div>
       </div>
 
       {/* Right Side: Cinematic Showcase Panel (Laptops & Desktops) */}
-      <div className="hidden lg:flex flex-1 relative bg-[#07080c] flex-col justify-between p-12 xl:p-16 overflow-hidden">
+      <div className="hidden lg:flex flex-1 relative bg-[#F3F0E9] flex-col justify-between p-12 xl:p-16 overflow-hidden">
         {/* Ambient Glows */}
-        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-[#7f4ef8]/10 rounded-full blur-[160px] pointer-events-none" />
-        <div className="absolute bottom-10 left-10 w-[400px] h-[400px] bg-[#8f64f8]/5 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-[#194332]/5 rounded-full blur-[160px] pointer-events-none" />
+        <div className="absolute bottom-10 left-10 w-[400px] h-[400px] bg-[#D4A373]/10 rounded-full blur-[140px] pointer-events-none" />
 
         {/* Top Brand Bar */}
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="NepalCasts" className="w-9 h-9 object-contain" />
-            <span className="font-extrabold text-white text-lg tracking-tight">NepalCasts</span>
+            <span className="font-extrabold text-[#202923] text-lg tracking-tight">NepalCasts</span>
           </div>
-          <span className="px-3.5 py-1 rounded-full text-xs font-semibold bg-white/5 border border-white/10 text-gray-300">
+          <span className="px-3.5 py-1 rounded-full text-xs font-semibold bg-white border border-[#E7E5E0] text-[#414840]">
             Cinema Network
           </span>
         </div>
 
         {/* Center Content Showcase */}
         <div className="relative z-10 max-w-lg space-y-6 my-auto text-left">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#7f4ef8]/15 border border-[#8f64f8]/30 text-[#a785fc] text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-[#8f64f8]" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EAF2ED] border border-[#194332]/20 text-[#194332] text-xs font-semibold">
+            <Sparkles className="w-3.5 h-3.5 text-[#194332]" />
             <span>Join 10,000+ Film Creators</span>
           </div>
 
-          <h2 className="text-3xl xl:text-4xl font-extrabold text-white tracking-tight leading-[1.25]">
+          <h2 className="text-3xl xl:text-4xl font-display font-semibold text-[#202923] tracking-tight leading-[1.25]">
             Where Nepali cinema talent meets opportunity.
           </h2>
 
-          <p className="text-sm xl:text-base text-gray-400 leading-relaxed font-normal">
+          <p className="text-sm xl:text-base text-[#626860] leading-relaxed font-normal">
             Build your casting profile, connect with top directors, and discover verified film and TV auditions.
           </p>
 
           {/* Feature Cards */}
           <div className="grid grid-cols-2 gap-3.5 pt-2">
-            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1 text-left">
-              <div className="w-8 h-8 rounded-xl bg-[#7f4ef8]/15 border border-[#8f64f8]/20 flex items-center justify-center text-[#a785fc] mb-2">
-                <Clapperboard className="w-4 h-4 text-[#8f64f8]" />
+            <div className="p-4 rounded-2xl bg-white border border-[#E7E5E0] shadow-card space-y-1 text-left">
+              <div className="w-8 h-8 rounded-xl bg-[#EAF2ED] border border-[#194332]/20 flex items-center justify-center text-[#194332] mb-2">
+                <Clapperboard className="w-4 h-4 text-[#194332]" />
               </div>
-              <p className="text-sm font-bold text-white">Verified Casting</p>
-              <p className="text-xs text-gray-400 font-normal">Direct auditions for TV and film.</p>
+              <p className="text-sm font-bold text-[#202923]">Verified Casting</p>
+              <p className="text-xs text-[#626860] font-normal">Direct auditions for TV and film.</p>
             </div>
-            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1 text-left">
-              <div className="w-8 h-8 rounded-xl bg-[#7f4ef8]/15 border border-[#8f64f8]/20 flex items-center justify-center text-[#a785fc] mb-2">
-                <Users className="w-4 h-4 text-[#8f64f8]" />
+            <div className="p-4 rounded-2xl bg-white border border-[#E7E5E0] shadow-card space-y-1 text-left">
+              <div className="w-8 h-8 rounded-xl bg-[#EAF2ED] border border-[#194332]/20 flex items-center justify-center text-[#194332] mb-2">
+                <Users className="w-4 h-4 text-[#194332]" />
               </div>
-              <p className="text-sm font-bold text-white">Global Reach</p>
-              <p className="text-xs text-gray-400 font-normal">Nepali talent showcased worldwide.</p>
+              <p className="text-sm font-bold text-[#202923]">Global Reach</p>
+              <p className="text-xs text-[#626860] font-normal">Nepali talent showcased worldwide.</p>
             </div>
           </div>
         </div>
@@ -559,9 +558,8 @@ export default function SignUp(_props: SignUpProps) {
           >
             <defs>
               <linearGradient id="waveBgSignUpDesk" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#25123d" stopOpacity="0.8" />
-                <stop offset="60%" stopColor="#1a0c2c" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#10071c" stopOpacity="0.8" />
+                <stop offset="0%" stopColor="#FAF8F4" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#E7E5E0" stopOpacity="0.5" />
               </linearGradient>
             </defs>
             <path
@@ -570,7 +568,7 @@ export default function SignUp(_props: SignUpProps) {
             />
             <path
               d="M-20 120 C 180 180, 360 220, 520 200 C 660 180, 740 220, 840 280"
-              stroke="#9d74fa"
+              stroke="#D5D1C7"
               strokeWidth="1.5"
               strokeOpacity="0.4"
             />
@@ -578,9 +576,9 @@ export default function SignUp(_props: SignUpProps) {
         </div>
 
         {/* Bottom Footer Details */}
-        <div className="relative z-10 pt-6 border-t border-white/5 flex items-center justify-between text-xs text-gray-500">
+        <div className="relative z-10 pt-6 border-t border-[#E7E5E0] flex items-center justify-between text-xs text-[#777C75]">
           <span>© 2026 NepalCasts Inc.</span>
-          <span className="text-gray-400 font-medium">Kathmandu, Nepal</span>
+          <span className="text-[#626860] font-medium">Kathmandu, Nepal</span>
         </div>
       </div>
     </div>

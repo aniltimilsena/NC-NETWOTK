@@ -141,44 +141,44 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
     return (
         <div className="space-y-2 sm:space-y-3">
             {/* Change Password */}
-            <div className="bg-[#0E0E0E] border-0 rounded-2xl p-4 sm:p-5 space-y-4 text-left">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-white" />
+            <div className="bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 space-y-4 text-left">
+                <h2 className="text-lg font-bold text-[#202923] flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-[#194332]" />
                     Change Password
                 </h2>
 
                 <form onSubmit={handleChangePassword} className="space-y-4">
                     <div className="space-y-1.5 text-left">
-                        <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Current Password</label>
+                        <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Current Password</label>
                         <input
                             type="password"
                             placeholder="Enter current password"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
+                            className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none transition-all"
                         />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5 text-left">
-                            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">New Password</label>
+                            <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">New Password</label>
                             <input
                                 type="password"
                                 placeholder="Enter new password (min. 6 chars)"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
+                                className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none transition-all"
                             />
                         </div>
 
                         <div className="space-y-1.5 text-left">
-                            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Confirm New Password</label>
+                            <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Confirm New Password</label>
                             <input
                                 type="password"
                                 placeholder="Confirm new password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"
+                                className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none transition-all"
                             />
                         </div>
                     </div>
@@ -192,21 +192,21 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
             </div>
 
             {/* Blocked Users */}
-            <div className="bg-[#0E0E0E] border-0 rounded-2xl p-4 sm:p-5 space-y-4 text-left">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-white" />
+            <div className="bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 space-y-4 text-left">
+                <h2 className="text-lg font-bold text-[#202923] flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-[#194332]" />
                     Blocked Users
                 </h2>
 
                 {blockedUsers && blockedUsers.length > 0 ? (
                     <div className="space-y-3">
                         {blockedUsers.map((u) => (
-                            <div key={u.uid} className="flex justify-between items-center bg-white/5 border border-white/5 p-3 rounded-xl">
+                            <div key={u.uid} className="flex justify-between items-center bg-[#FAF8F4] border border-[#E7E5E0] p-3 rounded-xl">
                                 <div className="flex items-center gap-3">
                                     <Avatar userId={u.uid} src={u.image} name={u.name} size="sm" />
                                     <div className="text-left">
-                                        <span className="text-xs font-bold text-white block">{u.name}</span>
-                                        <span className="text-[9px] text-nc-muted uppercase tracking-wider font-bold">{formatRole(u.role)}</span>
+                                        <span className="text-xs font-bold text-[#202923] block">{u.name}</span>
+                                        <span className="text-[9px] text-[#777C75] uppercase tracking-wider font-bold">{formatRole(u.role)}</span>
                                     </div>
                                 </div>
                                 <Button size="sm" variant="outline" onClick={() => handleUnblock(u.uid)} className="h-8 text-xs rounded-xl px-3">
@@ -216,54 +216,54 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                         ))}
                     </div>
                 ) : (
-                    <p className="text-xs text-nc-muted py-2">No blocked users found.</p>
+                    <p className="text-xs text-[#777C75] py-2">No blocked users found.</p>
                 )}
             </div>
 
             {/* Active Sessions */}
-            <div className="bg-[#0E0E0E] border-0 rounded-2xl p-4 sm:p-5 space-y-4 text-left">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Monitor className="w-4 h-4 text-white" />
+            <div className="bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 space-y-4 text-left">
+                <h2 className="text-lg font-bold text-[#202923] flex items-center gap-2">
+                    <Monitor className="w-4 h-4 text-[#194332]" />
                     Active Sessions
                 </h2>
 
                 <div className="space-y-3">
                     {sessions && sessions.length > 0 ? (
                         sessions.map((s) => (
-                            <div key={s.id} className="flex justify-between items-center bg-white/5 border border-white/5 p-3.5 rounded-xl">
+                            <div key={s.id} className="flex justify-between items-center bg-[#FAF8F4] border border-[#E7E5E0] p-3.5 rounded-xl">
                                 <div className="flex items-start gap-3.5 min-w-0">
-                                    <div className="w-9 h-9 bg-white/5 rounded-xl flex items-center justify-center shrink-0">
+                                    <div className="w-9 h-9 bg-[#EAF2ED] rounded-xl flex items-center justify-center shrink-0">
                                         {s.os?.toLowerCase().includes('windows') || s.os?.toLowerCase().includes('mac') ? (
-                                             <Monitor className="w-4 h-4 text-white/70" />
+                                             <Monitor className="w-4 h-4 text-[#194332]" />
                                         ) : (
-                                            <Smartphone className="w-4 h-4 text-white/70" />
+                                            <Smartphone className="w-4 h-4 text-[#194332]" />
                                         )}
                                     </div>
                                     <div className="text-left min-w-0">
-                                        <span className="text-xs font-bold text-white block truncate">{s.browser || 'Web Browser'} on {s.os || 'Current OS'}</span>
-                                        <span className="text-[10px] text-nc-muted block truncate font-medium">{s.location || 'Nepal'}</span>
+                                        <span className="text-xs font-bold text-[#202923] block truncate">{s.browser || 'Web Browser'} on {s.os || 'Current OS'}</span>
+                                        <span className="text-[10px] text-[#777C75] block truncate font-medium">{s.location || 'Nepal'}</span>
                                     </div>
                                 </div>
-                                <button onClick={() => handleRevoke(s.id)} className="text-nc-muted hover:text-red-500 transition-colors p-2 shrink-0 cursor-pointer" title="Revoke session">
+                                <button onClick={() => handleRevoke(s.id)} className="text-[#777C75] hover:text-[#B42318] transition-colors p-2 shrink-0 cursor-pointer" title="Revoke session">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
                         ))
                     ) : (
-                        <div className="flex justify-between items-center bg-white/5 border border-white/5 p-3.5 rounded-xl">
+                        <div className="flex justify-between items-center bg-[#FAF8F4] border border-[#E7E5E0] p-3.5 rounded-xl">
                             <div className="flex items-center gap-3.5 min-w-0">
-                                <div className="w-9 h-9 bg-white/5 rounded-xl flex items-center justify-center shrink-0">
-                                    <Monitor className="w-4 h-4 text-white/70" />
+                                <div className="w-9 h-9 bg-[#EAF2ED] rounded-xl flex items-center justify-center shrink-0">
+                                    <Monitor className="w-4 h-4 text-[#194332]" />
                                 </div>
                                 <div className="text-left min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs font-bold text-white block truncate">Current Session</span>
-                                        <span className="inline-flex items-center gap-1 bg-green-500/10 text-green-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-green-500/20">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                                        <span className="text-xs font-bold text-[#202923] block truncate">Current Session</span>
+                                        <span className="inline-flex items-center gap-1 bg-[#286847]/10 text-[#286847] text-[9px] font-bold px-2 py-0.5 rounded-full border border-[#286847]/20">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#286847] animate-pulse" />
                                             Active Now
                                         </span>
                                     </div>
-                                    <span className="text-[10px] text-nc-muted block truncate font-medium">Web Browser • Nepal</span>
+                                    <span className="text-[10px] text-[#777C75] block truncate font-medium">Web Browser • Nepal</span>
                                 </div>
                             </div>
                         </div>
@@ -272,12 +272,12 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
             </div>
 
             {/* Danger Zone: Delete Account */}
-            <div className="bg-[#180A0A] border-0 rounded-2xl p-4 sm:p-5 space-y-4 text-left">
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 space-y-4 text-left">
                 <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
                     <h2 className="text-lg font-bold text-red-400">Danger Zone</h2>
                 </div>
-                <p className="text-xs text-gray-400 leading-relaxed">
+                <p className="text-xs text-[#626860] leading-relaxed">
                     Permanently delete your personal profile and account. This will completely remove your profile data, portfolio, media, and contact information from the NepalCasts database. You can only delete your own account, and this action cannot be undone.
                 </p>
                 <div className="pt-1">
@@ -297,28 +297,28 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
 
             {/* Delete Account Confirmation Modal */}
             {showDeleteModal && (
-                <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-[#141414] border border-red-500/30 rounded-2xl max-w-md w-full p-6 text-left shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-[99999] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white border border-[#E7E5E0] rounded-2xl max-w-md w-full p-6 text-left shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5 text-red-400">
                                 <div className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
                                     <AlertTriangle className="w-5 h-5 text-red-400" />
                                 </div>
-                                <h3 className="text-lg font-bold text-white">Delete Account</h3>
+                                <h3 className="text-lg font-bold text-[#202923]">Delete Account</h3>
                             </div>
                             <button
                                 onClick={() => !deletingAccount && setShowDeleteModal(false)}
-                                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                                className="w-8 h-8 rounded-lg hover:bg-[#FAF8F4] text-[#777C75] hover:text-[#202923] flex items-center justify-center transition-colors cursor-pointer"
                             >
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
 
-                        <div className="space-y-3 text-xs text-gray-300 leading-relaxed">
+                        <div className="space-y-3 text-xs text-[#414840] leading-relaxed">
                             <p>
                                 Are you sure you want to permanently delete your account? This action is <strong className="text-red-400">irreversible</strong>.
                             </p>
-                            <ul className="list-disc pl-5 space-y-1 text-gray-400">
+                            <ul className="list-disc pl-5 space-y-1 text-[#626860]">
                                 <li>Your profile will be removed from all talent directories and search.</li>
                                 <li>Your uploaded media and portfolio will be permanently deleted from the database.</li>
                                 <li>You will be immediately logged out.</li>
@@ -326,7 +326,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                         </div>
 
                         <div className="space-y-2 text-left">
-                            <label className="text-[11px] font-bold text-gray-300 uppercase tracking-wider block">
+                            <label className="text-[11px] font-bold text-[#414840] uppercase tracking-wider block">
                                 Type <span className="text-red-400 font-mono">DELETE</span> to confirm:
                             </label>
                             <input
@@ -335,7 +335,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                                 onChange={(e) => setConfirmText(e.target.value)}
                                 placeholder="DELETE"
                                 disabled={deletingAccount}
-                                className="w-full bg-black/50 border border-white/15 focus:border-red-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/20 outline-none font-mono transition-all"
+                                className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-red-500 rounded-xl px-3.5 py-2.5 text-xs text-[#202923] placeholder-[#777C75] outline-none font-mono transition-all"
                             />
                         </div>
 
@@ -344,7 +344,7 @@ export default function SecuritySettings({ sessions, blockedUsers, onRevokeSessi
                                 type="button"
                                 disabled={deletingAccount}
                                 onClick={() => setShowDeleteModal(false)}
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors cursor-pointer disabled:opacity-50"
+                                className="px-4 py-2 rounded-xl text-xs font-bold text-[#414840] hover:text-[#202923] bg-[#FAF8F4] hover:bg-[#F3F0E9] border border-[#E7E5E0] transition-colors cursor-pointer disabled:opacity-50"
                             >
                                 Cancel
                             </button>

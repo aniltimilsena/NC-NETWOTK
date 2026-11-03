@@ -7,6 +7,31 @@ import type { AuthedRequest } from '../types';
 
 const jwksCache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
 
+function isValidClerkIssuer(iss: unknown): boolean {
+    if (typeof iss !== 'string') return false;
+    try {
+        const parsed = new URL(iss);
+        if (parsed.protocol !== 'https:') return false;
+
+        const configuredIssuer = process.env.CLERK_ISSUER_URL;
+        if (configuredIssuer && iss.replace(/\/$/, '') === configuredIssuer.replace(/\/$/, '')) {
+            return true;
+        }
+
+        // Official Clerk development and production instances
+        if (/^[a-zA-Z0-9-]+\.clerk\.accounts\.dev$/.test(parsed.hostname)) {
+            return true;
+        }
+        if (parsed.hostname === 'clerk.com' || parsed.hostname.endsWith('.clerk.com')) {
+            return true;
+        }
+
+        return false;
+    } catch {
+        return false;
+    }
+}
+
 /**
  * Verifies a Clerk-issued JWT using Clerk's JWKS public keys.
  */
@@ -22,8 +47,7 @@ async function verifyClerkToken(token: string): Promise<any | null> {
         if (payload.exp && payload.exp < now) return null;
         if (payload.nbf && payload.nbf > now) return null;
 
-        const isClerk = payload.iss && (payload.iss.includes('clerk') || payload.iss.includes('accounts.dev'));
-        if (!isClerk) return null;
+        if (!isValidClerkIssuer(payload.iss)) return null;
 
         const kid = header.kid;
         let publicKeyPem: string | null = null;
@@ -31,7 +55,8 @@ async function verifyClerkToken(token: string): Promise<any | null> {
         if (kid) {
             publicKeyPem = jwksCache.get<string>(`jwks_${kid}`) || null;
             if (!publicKeyPem) {
-                const jwksUrl = `${payload.iss.replace(/\/$/, '')}/.well-known/jwks.json`;
+                const parsedIss = new URL(payload.iss);
+                const jwksUrl = `https://${parsedIss.hostname}/.well-known/jwks.json`;
                 const res = await fetch(jwksUrl).catch(() => null);
                 if (res && res.ok) {
                     const jwks = await res.json() as any;
@@ -55,13 +80,16 @@ async function verifyClerkToken(token: string): Promise<any | null> {
             return null;
         }
 
+        const isUserAdmin = payload.public_metadata?.isAdmin === true || payload.admin === true;
+
         return {
             uid: payload.sub,
             sub: payload.sub,
             email: payload.email || payload.primary_email_address || '',
             name: payload.name || payload.full_name || '',
             picture: payload.picture || payload.image_url || '',
-            admin: payload.public_metadata?.isAdmin === true || payload.admin === true,
+            admin: isUserAdmin,
+            isAdmin: isUserAdmin,
             auth_time: payload.iat || now,
             provider: 'clerk',
         };
@@ -172,7 +200,7 @@ export const isAdmin = async (req: AuthedRequest, res: Response, next: NextFunct
         return;
     }
 
-    if (req.user?.admin === true) {
+    if (req.user?.admin === true || req.user?.isAdmin === true) {
         next();
         return;
     }

@@ -450,12 +450,12 @@ export default function ProfilePage({
       setProfile((prev: any) =>
         prev
           ? {
-              ...prev,
-              introVideo: null,
-              introVideoUrl: null,
-              showreel: null,
-              showreelUrl: null,
-            }
+            ...prev,
+            introVideo: null,
+            introVideoUrl: null,
+            showreel: null,
+            showreelUrl: null,
+          }
           : prev
       );
       const res = await updateProfileData(uidToUse, {
@@ -660,7 +660,7 @@ export default function ProfilePage({
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return (
-          <strong key={i} className="font-bold text-white">
+          <strong key={i} className="font-bold text-[#202923]">
             {part.slice(2, -2)}
           </strong>
         );
@@ -680,8 +680,8 @@ export default function ProfilePage({
   const skillsList: string[] = Array.isArray(rawSkills)
     ? rawSkills.map((s) => (typeof s === 'string' ? s : s?.name || '')).filter(Boolean)
     : typeof rawSkills === 'string' && rawSkills.trim() !== ''
-    ? rawSkills.split(',').map((s: string) => s.trim()).filter(Boolean)
-    : [];
+      ? rawSkills.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : [];
 
   const formatCount = (count: number) => {
     if (!count) return '0';
@@ -693,7 +693,7 @@ export default function ProfilePage({
   const isOnline = isUserOnline(profile);
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white font-sans selection:bg-[#522C69] selection:text-black pb-20 select-none">
+    <div className="min-h-screen bg-[#FAF8F4] text-[#202923] font-inter selection:bg-[#194332]/10 selection:text-[#194332] pb-20 select-none">
       <SEO
         title={`${displayName} | NepalCasts`}
         description={bio || `View ${displayName}'s portfolio and casting profile on NepalCasts.`}
@@ -738,7 +738,7 @@ export default function ProfilePage({
       />
 
       {/* Main Responsive Container matching home page cards layout */}
-      <div className="w-full px-0 sm:px-1.5 py-2 space-y-2 sm:space-y-2">
+      <div className="w-full px-0 sm:px-1.5 py-2 space-y-3 sm:space-y-4">
         {/* Top Header Bar */}
         {isRealOwn ? (
           <div className="flex items-center justify-between py-2 px-3 sm:px-4 mb-2">
@@ -746,11 +746,11 @@ export default function ProfilePage({
               onClick={() => onNavigate('back')}
               ariaLabel="Go Back"
             />
-            <h1 className="text-base font-bold text-white tracking-tight">My Profile</h1>
+            <h1 className="font-display text-base font-semibold text-[#202923] tracking-tight">My Profile</h1>
             <button
               type="button"
               onClick={() => setShowShareSheet(true)}
-              className="w-10 h-10 -mr-2 rounded-full hover:bg-white/5 flex items-center justify-center text-white/80 hover:text-white transition-colors cursor-pointer"
+              className="w-10 h-10 -mr-2 rounded-full hover:bg-[#F3F0E9] flex items-center justify-center text-[#626860] hover:text-[#202923] transition-colors cursor-pointer"
               title="Share Profile"
               aria-label="Share"
             >
@@ -763,11 +763,11 @@ export default function ProfilePage({
               onClick={() => onNavigate('back')}
               ariaLabel="Go Back"
             />
-            <h1 className="text-base font-bold text-white tracking-tight">Profile</h1>
+            <h1 className="font-display text-base font-semibold text-[#202923] tracking-tight">Profile</h1>
             <button
               type="button"
               onClick={() => setShowShareSheet(true)}
-              className="w-10 h-10 -mr-2 rounded-full hover:bg-white/5 flex items-center justify-center text-white/80 hover:text-white transition-colors cursor-pointer"
+              className="w-10 h-10 -mr-2 rounded-full hover:bg-[#F3F0E9] flex items-center justify-center text-[#626860] hover:text-[#202923] transition-colors cursor-pointer"
               title="Share Profile"
               aria-label="Share"
             >
@@ -780,7 +780,7 @@ export default function ProfilePage({
         <div className="flex items-center gap-5 px-3.5 sm:px-4 py-1 mb-2">
           {/* Avatar with distinct rounded shape */}
           <div className="relative shrink-0">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-b from-[#1E1E26] to-[#111116] border-2 border-white/10 shadow-xl overflow-hidden flex items-center justify-center select-none">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white border-2 border-[#E7E5E0] shadow-sm overflow-hidden flex items-center justify-center select-none">
               {displayAvatar ? (
                 <img
                   src={getAvatarOptimizedUrl(displayAvatar, 'xl')}
@@ -804,7 +804,7 @@ export default function ProfilePage({
                 type="button"
                 onClick={() => document.getElementById('avatar-photo-upload')?.click()}
                 disabled={uploadingAvatar}
-                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#8f64f8] hover:bg-[#7c4fed] active:scale-95 border-2 border-black flex items-center justify-center text-white cursor-pointer shadow-md transition-all"
+                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#194332] hover:bg-[#102F28] active:scale-95 border-2 border-white flex items-center justify-center text-white cursor-pointer shadow-md transition-all"
                 title="Change Profile Photo"
                 aria-label="Change Profile Photo"
               >
@@ -816,7 +816,7 @@ export default function ProfilePage({
               </button>
             ) : isOnline ? (
               <div
-                className="absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-black bg-emerald-500 shadow-sm"
+                className="absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-white bg-[#286847] shadow-sm"
                 title="Online"
               />
             ) : null}
@@ -825,7 +825,7 @@ export default function ProfilePage({
           {/* Details (Name, Roles, Location) */}
           <div className="flex-1 min-w-0 text-left">
             <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">
+              <h2 className="font-display text-xl sm:text-2xl font-semibold text-[#202923] tracking-tight truncate">
                 {displayName}
               </h2>
               {isRealOwn && (
@@ -837,50 +837,50 @@ export default function ProfilePage({
                     setLocationInput(displayLocation);
                     setShowNameModal(true);
                   }}
-                  className="p-1 text-gray-400 hover:text-white rounded transition-colors cursor-pointer"
+                  className="p-1 text-[#777C75] hover:text-[#202923] rounded transition-colors cursor-pointer"
                   title="Edit Profile Info"
                 >
                   <Pencil className="w-4 h-4" />
                 </button>
               )}
             </div>
-            <p className="text-xs sm:text-[13px] text-gray-400 font-medium mb-1.5 truncate">
+            <p className="text-xs sm:text-[13px] text-[#626860] font-medium mb-1.5 truncate">
               {displayRoles}
             </p>
-            <div className="flex items-center gap-1.5 text-xs text-gray-400">
-              <MapPin className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+            <div className="flex items-center gap-1.5 text-xs text-[#626860]">
+              <MapPin className="w-3.5 h-3.5 shrink-0 text-[#777C75]" />
               <span className="truncate">{displayLocation}</span>
             </div>
           </div>
         </div>
 
         {/* 3-Column Stats Row with Vertical Dividers */}
-        <div className="grid grid-cols-3 py-3 px-3 sm:px-4 mb-2 divide-x divide-white/10 text-center">
+        <div className="grid grid-cols-3 py-3.5 px-3 sm:px-4 mb-2 divide-x divide-[#E7E5E0] bg-white border border-[#E7E5E0] rounded-2xl shadow-card text-center">
           <div className="flex flex-col items-center justify-center">
-            <span className="text-base sm:text-lg font-bold text-white leading-tight">
+            <span className="text-base sm:text-lg font-semibold text-[#202923] leading-tight">
               {postsCount}
             </span>
-            <span className="text-[11px] sm:text-xs text-gray-400 font-normal mt-0.5">Projects</span>
+            <span className="text-[11px] sm:text-xs text-[#777C75] font-normal mt-0.5">Projects</span>
           </div>
           <button
             type="button"
             onClick={() => handleFollowModalOpen('followers')}
             className="flex flex-col items-center justify-center w-full cursor-pointer hover:opacity-80 transition-opacity"
           >
-            <span className="text-base sm:text-lg font-bold text-white leading-tight">
+            <span className="text-base sm:text-lg font-semibold text-[#202923] leading-tight">
               {formatCount(followerCount)}
             </span>
-            <span className="text-[11px] sm:text-xs text-gray-400 font-normal mt-0.5">Connects</span>
+            <span className="text-[11px] sm:text-xs text-[#777C75] font-normal mt-0.5">Connects</span>
           </button>
           <button
             type="button"
             onClick={() => handleFollowModalOpen('following')}
             className="flex flex-col items-center justify-center w-full cursor-pointer hover:opacity-80 transition-opacity"
           >
-            <span className="text-base sm:text-lg font-bold text-white leading-tight">
+            <span className="text-base sm:text-lg font-semibold text-[#202923] leading-tight">
               {formatCount(followingCount)}
             </span>
-            <span className="text-[11px] sm:text-xs text-gray-400 font-normal mt-0.5">Connected</span>
+            <span className="text-[11px] sm:text-xs text-[#777C75] font-normal mt-0.5">Connected</span>
           </button>
         </div>
 
@@ -890,11 +890,10 @@ export default function ProfilePage({
             <button
               type="button"
               onClick={handleFollowToggle}
-              className={`flex-1 py-3 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] ${
-                isFollowing
-                  ? 'bg-[#141416] hover:bg-[#1a1a1e] text-white border border-white/10'
-                  : 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-lg'
-              }`}
+              className={`flex-1 py-3 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] ${isFollowing
+                  ? 'bg-white hover:bg-[#F3F0E9] text-[#202923] border border-[#D5D1C7]'
+                  : 'bg-[#194332] hover:bg-[#102F28] active:bg-[#0c241e] text-white shadow-sm'
+                }`}
             >
               {isFollowing ? (
                 <>
@@ -916,7 +915,7 @@ export default function ProfilePage({
                   onNavigate('messages', effectiveRecipientId);
                 }
               }}
-              className="flex-1 py-3 rounded-2xl bg-[#141416] hover:bg-[#1a1a1e] border border-white/5 text-white font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+              className="flex-1 py-3 rounded-2xl bg-white hover:bg-[#F3F0E9] border border-[#D5D1C7] text-[#202923] font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
             >
               <MessageSquare className="w-4 h-4" />
               <span>Message</span>
@@ -925,9 +924,9 @@ export default function ProfilePage({
         )}
 
         {/* Card 1: About Me Card */}
-        <div className="w-full bg-black border border-white/5 rounded-2xl p-3.5 sm:p-4 text-left relative shadow-md">
+        <div className="w-full bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 text-left relative shadow-card">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-bold text-white tracking-tight">
+            <h3 className="text-sm sm:text-base font-semibold text-[#202923] tracking-tight">
               {isRealOwn ? 'About Me' : 'About'}
             </h3>
             {isRealOwn && (
@@ -937,7 +936,7 @@ export default function ProfilePage({
                   setBioInput(bio || '');
                   setShowAboutModal(true);
                 }}
-                className="p-1 text-gray-400 hover:text-white rounded transition-colors cursor-pointer"
+                className="p-1 text-[#777C75] hover:text-[#202923] rounded transition-colors cursor-pointer"
                 title="Edit Bio"
               >
                 <Pencil className="w-3.5 h-3.5" />
@@ -975,13 +974,13 @@ export default function ProfilePage({
             }
 
             return (
-              <p className="text-xs sm:text-[13px] text-gray-300 leading-relaxed font-normal">
+              <p className="text-xs sm:text-[13px] text-[#414840] leading-relaxed font-normal">
                 <span className="whitespace-pre-line">{renderFormattedBio(displayText)}</span>
                 {isLong && (
                   <button
                     type="button"
                     onClick={() => setIsBioExpanded(!isBioExpanded)}
-                    className="text-xs font-semibold text-[#8f64f8] hover:text-[#a785fc] transition-colors cursor-pointer ml-1.5 inline align-baseline"
+                    className="text-xs font-semibold text-[#194332] hover:text-[#102F28] transition-colors cursor-pointer ml-1.5 inline align-baseline"
                   >
                     {isBioExpanded ? 'See less' : 'See more'}
                   </button>
@@ -991,16 +990,16 @@ export default function ProfilePage({
           })()}
         </div>
         {/* Card 2: Media Card */}
-        <div className="w-full bg-black border border-white/5 rounded-2xl p-4 sm:p-5 text-left shadow-md">
+        <div className="w-full bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 text-left shadow-card">
           <div className="flex items-center justify-between mb-3.5">
-            <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">Media</h3>
+            <h3 className="text-sm sm:text-base font-semibold text-[#202923] tracking-tight">Media</h3>
           </div>
 
           {!isRealOwn && media.length === 0 && !introVideo ? (
-            <div className="rounded-xl bg-white/[0.02] border border-white/5 py-8 px-4 flex flex-col items-center justify-center text-center">
-              <Camera className="w-7 h-7 text-gray-500 mb-2" />
-              <p className="text-xs sm:text-sm text-gray-300 font-medium">No media uploaded yet</p>
-              <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">Portfolio photos and audition clips will appear here.</p>
+            <div className="rounded-xl bg-[#FAF8F4] border border-[#E7E5E0] py-8 px-4 flex flex-col items-center justify-center text-center">
+              <Camera className="w-7 h-7 text-[#777C75] mb-2" />
+              <p className="text-xs sm:text-sm text-[#202923] font-medium">No media uploaded yet</p>
+              <p className="text-[11px] sm:text-xs text-[#777C75] mt-0.5">Portfolio photos and audition clips will appear here.</p>
             </div>
           ) : (
             /* Horizontal Media Strip */
@@ -1011,7 +1010,7 @@ export default function ProfilePage({
                   type="button"
                   onClick={() => setShowAddMediaChoice(true)}
                   disabled={isUploadingPhotos || isUploadingVideo}
-                  className="w-48 h-64 sm:w-56 sm:h-72 md:w-60 md:h-80 rounded-2xl border border-white/5 bg-[#141416] hover:bg-[#1a1a1e] flex flex-col items-center justify-center gap-2.5 text-gray-400 hover:text-white cursor-pointer shrink-0 transition-all group"
+                  className="w-48 h-64 sm:w-56 sm:h-72 md:w-60 md:h-80 rounded-2xl border border-dashed border-[#D5D1C7] bg-[#FAF8F4] hover:bg-[#F3F0E9] hover:border-[#194332] flex flex-col items-center justify-center gap-2.5 text-[#626860] hover:text-[#194332] cursor-pointer shrink-0 transition-all group"
                 >
                   {isUploadingPhotos || isUploadingVideo ? (
                     <div className="flex flex-col items-center gap-2 px-3 text-center">
@@ -1026,11 +1025,11 @@ export default function ProfilePage({
                     </div>
                   ) : (
                     <>
-                      <div className="w-12 h-12 rounded-full bg-white/5 group-hover:bg-white/10 flex items-center justify-center transition-colors">
-                        <Plus className="w-6 h-6 text-gray-300 group-hover:text-white transition-colors" />
+                      <div className="w-12 h-12 rounded-full bg-white border border-[#E7E5E0] group-hover:border-[#194332]/30 flex items-center justify-center transition-colors">
+                        <Plus className="w-6 h-6 text-[#626860] group-hover:text-[#194332] transition-colors" />
                       </div>
-                      <span className="text-xs sm:text-sm font-semibold text-gray-300 group-hover:text-white">Add Media</span>
-                      <span className="text-[10px] text-gray-500">Photo or Video</span>
+                      <span className="text-xs sm:text-sm font-semibold text-[#626860] group-hover:text-[#194332]">Add Media</span>
+                      <span className="text-[10px] text-[#777C75]">Photo or Video</span>
                     </>
                   )}
                 </button>
@@ -1044,7 +1043,7 @@ export default function ProfilePage({
                   <div
                     key={idx}
                     onClick={() => setLightboxIndex(idx)}
-                    className="w-48 h-64 sm:w-56 sm:h-72 md:w-60 md:h-80 rounded-2xl overflow-hidden bg-black border border-white/5 shrink-0 relative cursor-pointer group shadow-sm"
+                    className="w-48 h-64 sm:w-56 sm:h-72 md:w-60 md:h-80 rounded-2xl overflow-hidden bg-[#FAF8F4] border border-[#E7E5E0] shrink-0 relative cursor-pointer group shadow-card"
                   >
                     <img
                       src={getOptimizedImageUrl(imgUrl, { width: 480, quality: 'auto', format: 'auto' })}
@@ -1088,7 +1087,7 @@ export default function ProfilePage({
               {introVideo && (
                 <div
                   onClick={() => setShowVideoModal(true)}
-                  className="w-48 h-64 sm:w-56 sm:h-72 md:w-60 md:h-80 rounded-2xl overflow-hidden bg-black border border-white/5 shrink-0 relative cursor-pointer group shadow-sm"
+                  className="w-48 h-64 sm:w-56 sm:h-72 md:w-60 md:h-80 rounded-2xl overflow-hidden bg-[#FAF8F4] border border-[#E7E5E0] shrink-0 relative cursor-pointer group shadow-card"
                 >
                   <video
                     key={introVideo}
@@ -1100,7 +1099,7 @@ export default function ProfilePage({
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
                   />
                   <div className="absolute inset-0 bg-black/30 group-hover:bg-black/15 transition-colors flex items-center justify-center">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-[#522C69]/80 group-hover:border-[#522C69] transition-all shadow-md">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-[#194332] group-hover:border-[#194332] transition-all shadow-md">
                       <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-white ml-0.5" />
                     </div>
                   </div>
@@ -1132,7 +1131,7 @@ export default function ProfilePage({
         </div>
 
         {/* Navigation List Menu */}
-        <div className="w-full bg-black border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden text-left mb-2 shadow-md">
+        <div className="w-full bg-white border border-[#E7E5E0] rounded-2xl divide-y divide-[#E7E5E0] overflow-hidden text-left mb-2 shadow-card">
           {/* Personal Information */}
           <button
             type="button"
@@ -1144,15 +1143,15 @@ export default function ProfilePage({
               setIsEditingAttributes(false);
               setShowAttributesModal(true);
             }}
-            className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-white/[0.04] transition-colors cursor-pointer group text-left"
+            className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-[#FAF8F4] transition-colors cursor-pointer group text-left"
           >
             <div className="flex items-center gap-3 text-left">
-              <User className="w-4 h-4 text-gray-300 group-hover:text-white transition-colors shrink-0" />
-              <span className="text-sm font-medium text-gray-200 group-hover:text-white text-left">
+              <User className="w-4 h-4 text-[#194332] transition-colors shrink-0" />
+              <span className="text-sm font-medium text-[#202923] group-hover:text-[#194332] text-left transition-colors">
                 Personal Information
               </span>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors shrink-0" />
+            <ChevronRight className="w-4 h-4 text-[#777C75] group-hover:text-[#202923] transition-colors shrink-0" />
           </button>
 
           {/* Skills */}
@@ -1163,30 +1162,30 @@ export default function ProfilePage({
               setIsEditingSkillsMode(false);
               setShowSkillsModal(true);
             }}
-            className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-white/[0.04] transition-colors cursor-pointer group text-left"
+            className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-[#FAF8F4] transition-colors cursor-pointer group text-left"
           >
             <div className="flex items-center gap-3 text-left">
-              <BadgeCheck className="w-4 h-4 text-gray-300 group-hover:text-white transition-colors shrink-0" />
-              <span className="text-sm font-medium text-gray-200 group-hover:text-white text-left">
+              <BadgeCheck className="w-4 h-4 text-[#194332] transition-colors shrink-0" />
+              <span className="text-sm font-medium text-[#202923] group-hover:text-[#194332] text-left transition-colors">
                 Skills
               </span>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors shrink-0" />
+            <ChevronRight className="w-4 h-4 text-[#777C75] group-hover:text-[#202923] transition-colors shrink-0" />
           </button>
 
           {/* Experience */}
           <button
             type="button"
             onClick={() => setShowExperienceModal(true)}
-            className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-white/[0.04] transition-colors cursor-pointer group text-left"
+            className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-[#FAF8F4] transition-colors cursor-pointer group text-left"
           >
             <div className="flex items-center gap-3 text-left">
-              <Briefcase className="w-4 h-4 text-gray-300 group-hover:text-white transition-colors shrink-0" />
-              <span className="text-sm font-medium text-gray-200 group-hover:text-white text-left">
+              <Briefcase className="w-4 h-4 text-[#194332] transition-colors shrink-0" />
+              <span className="text-sm font-medium text-[#202923] group-hover:text-[#194332] text-left transition-colors">
                 Experience
               </span>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors shrink-0" />
+            <ChevronRight className="w-4 h-4 text-[#777C75] group-hover:text-[#202923] transition-colors shrink-0" />
           </button>
 
           {/* Contacts */}
@@ -1198,15 +1197,15 @@ export default function ProfilePage({
               setIsEditingContacts(false);
               setShowContactModal(true);
             }}
-            className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-white/[0.04] transition-colors cursor-pointer group text-left"
+            className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-[#FAF8F4] transition-colors cursor-pointer group text-left"
           >
             <div className="flex items-center gap-3 text-left">
-              <Contact className="w-4 h-4 text-gray-300 group-hover:text-white transition-colors shrink-0" />
-              <span className="text-sm font-medium text-gray-200 group-hover:text-white text-left">
+              <Contact className="w-4 h-4 text-[#194332] transition-colors shrink-0" />
+              <span className="text-sm font-medium text-[#202923] group-hover:text-[#194332] text-left transition-colors">
                 Contacts
               </span>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors shrink-0" />
+            <ChevronRight className="w-4 h-4 text-[#777C75] group-hover:text-[#202923] transition-colors shrink-0" />
           </button>
         </div>
 
@@ -1216,7 +1215,7 @@ export default function ProfilePage({
             <button
               type="button"
               onClick={() => onNavigate('casting')}
-              className="w-full py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all border-0"
+              className="w-full py-3 sm:py-3.5 rounded-xl bg-[#194332] hover:bg-[#102F28] active:scale-[0.99] text-white font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all border-0"
             >
               <Clapperboard className="w-4 h-4" />
               <span>Apply for Opportunities</span>
@@ -1228,18 +1227,18 @@ export default function ProfilePage({
       {/* MODAL: EDIT NAME & HEADLINE */}
       {showNameModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowNameModal(false)}
         >
           <div
-            className="bg-[#141416] rounded-2xl p-5 max-w-md w-full space-y-3.5 shadow-2xl text-left"
+            className="bg-white border border-[#E7E5E0] rounded-2xl p-5 max-w-md w-full space-y-3.5 shadow-card text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white">Edit Profile Info</h3>
+              <h3 className="font-display text-base font-semibold text-[#202923]">Edit Profile Info</h3>
               <button
                 onClick={() => setShowNameModal(false)}
-                className="text-gray-400 hover:text-white cursor-pointer p-1"
+                className="text-[#777C75] hover:text-[#202923] cursor-pointer p-1 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1247,35 +1246,35 @@ export default function ProfilePage({
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] text-gray-400 font-semibold mb-1">Full Name</label>
+                <label className="block text-[11px] text-[#626860] font-semibold mb-1">Full Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Anil Timilsena"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  className="w-full bg-black border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#7f4ef8]"
+                  className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-3.5 py-2.5 text-xs text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-gray-400 font-semibold mb-1">Headline / Roles (separated by •)</label>
+                <label className="block text-[11px] text-[#626860] font-semibold mb-1">Headline / Roles (separated by •)</label>
                 <input
                   type="text"
                   placeholder="e.g. Actor • Model • Creator"
                   value={rolesInput}
                   onChange={(e) => setRolesInput(e.target.value)}
-                  className="w-full bg-black border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#7f4ef8]"
+                  className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-3.5 py-2.5 text-xs text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-gray-400 font-semibold mb-1">Location</label>
+                <label className="block text-[11px] text-[#626860] font-semibold mb-1">Location</label>
                 <input
                   type="text"
                   placeholder="e.g. Kathmandu, Nepal"
                   value={locationInput}
                   onChange={(e) => setLocationInput(e.target.value)}
-                  className="w-full bg-black border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 outline-none focus:border-[#7f4ef8]"
+                  className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-3.5 py-2.5 text-xs text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors"
                 />
               </div>
             </div>
@@ -1284,7 +1283,7 @@ export default function ProfilePage({
               <button
                 type="button"
                 onClick={() => setShowNameModal(false)}
-                className="px-3 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
+                className="px-3 py-2 text-xs text-[#626860] hover:text-[#202923] cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -1292,7 +1291,7 @@ export default function ProfilePage({
                 type="button"
                 onClick={handleSaveNameAndHeadline}
                 disabled={isSavingName}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+                className="px-4 py-2 rounded-xl bg-[#194332] hover:bg-[#102F28] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors shadow-sm"
               >
                 {isSavingName && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Save</span>
@@ -1305,18 +1304,18 @@ export default function ProfilePage({
       {/* MODAL: EDIT BIO */}
       {showAboutModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowAboutModal(false)}
         >
           <div
-            className="bg-[#141416] rounded-2xl p-5 max-w-md w-full space-y-4 shadow-2xl text-left"
+            className="bg-white border border-[#E7E5E0] rounded-2xl p-5 max-w-md w-full space-y-4 shadow-card text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white">Edit About Me</h3>
+              <h3 className="font-display text-base font-semibold text-[#202923]">Edit About Me</h3>
               <button
                 onClick={() => setShowAboutModal(false)}
-                className="text-gray-400 hover:text-white cursor-pointer p-1"
+                className="text-[#777C75] hover:text-[#202923] cursor-pointer p-1 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1327,14 +1326,14 @@ export default function ProfilePage({
               placeholder="Write about yourself, your acting journey, passion, and storytelling..."
               value={bioInput}
               onChange={(e) => setBioInput(e.target.value)}
-              className="w-full bg-black border border-white/10 rounded-xl p-3 text-xs text-white placeholder-gray-500 outline-none focus:border-[#7f4ef8] resize-none leading-relaxed"
+              className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl p-3 text-xs text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] resize-none leading-relaxed transition-colors"
             />
 
             <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setShowAboutModal(false)}
-                className="px-3 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
+                className="px-3 py-2 text-xs text-[#626860] hover:text-[#202923] cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -1342,7 +1341,7 @@ export default function ProfilePage({
                 type="button"
                 onClick={handleSaveBio}
                 disabled={isSavingBio}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+                className="px-4 py-2 rounded-xl bg-[#194332] hover:bg-[#102F28] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors shadow-sm"
               >
                 {isSavingBio && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Save Bio</span>
@@ -1355,24 +1354,24 @@ export default function ProfilePage({
       {/* MODAL: SKILLS */}
       {showSkillsModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowSkillsModal(false)}
         >
           <div
-            className="bg-[#141416] rounded-2xl p-5 max-w-md w-full space-y-4 shadow-2xl text-left"
+            className="bg-white border border-[#E7E5E0] rounded-2xl p-5 max-w-md w-full space-y-4 shadow-card text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-1">
               <div className="flex items-center gap-2">
-                <BadgeCheck className="w-4 h-4 text-white" />
-                <h3 className="text-base font-bold text-white">Skills</h3>
+                <BadgeCheck className="w-4 h-4 text-[#194332]" />
+                <h3 className="font-display text-base font-semibold text-[#202923]">Skills</h3>
               </div>
               <div className="flex items-center gap-2">
                 {isRealOwn && !isEditingSkillsMode && (
                   <button
                     type="button"
                     onClick={() => setIsEditingSkillsMode(true)}
-                    className="text-xs font-semibold text-[#8f64f8] hover:text-[#a785fc] flex items-center gap-1 cursor-pointer transition-colors"
+                    className="text-xs font-semibold text-[#194332] hover:text-[#102F28] flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     <span>Edit</span>
@@ -1380,7 +1379,7 @@ export default function ProfilePage({
                 )}
                 <button
                   onClick={() => setShowSkillsModal(false)}
-                  className="text-gray-400 hover:text-white cursor-pointer p-1"
+                  className="text-[#777C75] hover:text-[#202923] cursor-pointer p-1 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1394,17 +1393,15 @@ export default function ProfilePage({
                     skillsList.map((skill, idx) => (
                       <span
                         key={idx}
-                        className="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-gray-200 font-medium select-none"
+                        className="px-3 py-1 rounded-full bg-[#FAF8F4] border border-[#E7E5E0] text-xs text-[#202923] font-medium select-none"
                       >
                         {skill}
                       </span>
                     ))
                   ) : (
-                    <p className="text-xs text-gray-400">No skills added yet.</p>
+                    <p className="text-xs text-[#777C75]">No skills added yet.</p>
                   )}
                 </div>
-
-
               </div>
             ) : (
               <>
@@ -1418,8 +1415,8 @@ export default function ProfilePage({
                         onClick={() => toggleSkillTag(skill)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 text-white font-bold'
-                            : 'bg-black text-gray-300 border border-white/10 hover:border-white/20'
+                            ? 'bg-[#194332] text-white font-semibold shadow-xs'
+                            : 'bg-[#FAF8F4] text-[#414840] border border-[#E7E5E0] hover:border-[#D5D1C7]'
                         }`}
                       >
                         {isSelected ? `✓ ${skill}` : `+ ${skill}`}
@@ -1440,12 +1437,12 @@ export default function ProfilePage({
                         addCustomSkill();
                       }
                     }}
-                    className="flex-1 bg-black border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#7f4ef8]"
+                    className="flex-1 bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors"
                   />
                   <button
                     type="button"
                     onClick={addCustomSkill}
-                    className="px-3.5 py-2 bg-[#1a1a20] hover:bg-[#22222a] text-white text-xs font-semibold rounded-xl cursor-pointer"
+                    className="px-3.5 py-2 bg-[#F3F0E9] hover:bg-[#E7E5E0] text-[#202923] border border-[#E7E5E0] text-xs font-semibold rounded-xl cursor-pointer transition-colors"
                   >
                     Add
                   </button>
@@ -1455,7 +1452,7 @@ export default function ProfilePage({
                   <button
                     type="button"
                     onClick={() => setIsEditingSkillsMode(false)}
-                    className="px-3 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
+                    className="px-3 py-2 text-xs text-[#626860] hover:text-[#202923] cursor-pointer transition-colors"
                   >
                     Back
                   </button>
@@ -1466,7 +1463,7 @@ export default function ProfilePage({
                       setIsEditingSkillsMode(false);
                     }}
                     disabled={isSavingSkills}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 rounded-xl bg-[#194332] hover:bg-[#102F28] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors shadow-sm"
                   >
                     {isSavingSkills && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Save</span>
@@ -1481,24 +1478,24 @@ export default function ProfilePage({
       {/* MODAL: PERSONAL INFORMATION */}
       {showAttributesModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowAttributesModal(false)}
         >
           <div
-            className="bg-[#141416] rounded-2xl p-5 max-w-md w-full space-y-4 shadow-2xl text-left"
+            className="bg-white border border-[#E7E5E0] rounded-2xl p-5 max-w-md w-full space-y-4 shadow-card text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-1">
               <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-white" />
-                <h3 className="text-base font-bold text-white">Personal Information</h3>
+                <User className="w-4 h-4 text-[#194332]" />
+                <h3 className="font-display text-base font-semibold text-[#202923]">Personal Information</h3>
               </div>
               <div className="flex items-center gap-2">
                 {isRealOwn && !isEditingAttributes && (
                   <button
                     type="button"
                     onClick={() => setIsEditingAttributes(true)}
-                    className="text-xs font-semibold text-[#8f64f8] hover:text-[#a785fc] flex items-center gap-1 cursor-pointer transition-colors"
+                    className="text-xs font-semibold text-[#194332] hover:text-[#102F28] flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     <span>Edit</span>
@@ -1506,7 +1503,7 @@ export default function ProfilePage({
                 )}
                 <button
                   onClick={() => setShowAttributesModal(false)}
-                  className="text-gray-400 hover:text-white cursor-pointer p-1"
+                  className="text-[#777C75] hover:text-[#202923] cursor-pointer p-1 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1516,55 +1513,53 @@ export default function ProfilePage({
             {!isEditingAttributes ? (
               <div className="space-y-3 text-xs">
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
-                    <p className="text-[10px] text-gray-400 font-medium mb-1">Height</p>
-                    <p className="font-semibold text-white text-xs">{profile.height || 'Not specified'}</p>
+                  <div className="p-3 rounded-xl bg-[#FAF8F4] border border-[#E7E5E0]">
+                    <p className="text-[10px] text-[#777C75] font-medium mb-1">Height</p>
+                    <p className="font-semibold text-[#202923] text-xs">{profile.height || 'Not specified'}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
-                    <p className="text-[10px] text-gray-400 font-medium mb-1">Weight</p>
-                    <p className="font-semibold text-white text-xs">{profile.weight || 'Not specified'}</p>
+                  <div className="p-3 rounded-xl bg-[#FAF8F4] border border-[#E7E5E0]">
+                    <p className="text-[10px] text-[#777C75] font-medium mb-1">Weight</p>
+                    <p className="font-semibold text-[#202923] text-xs">{profile.weight || 'Not specified'}</p>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
+                <div className="p-3 rounded-xl bg-[#FAF8F4] border border-[#E7E5E0] flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] text-gray-400 font-medium mb-0.5">Location</p>
-                    <p className="font-semibold text-white text-xs">{displayLocation}</p>
+                    <p className="text-[10px] text-[#777C75] font-medium mb-0.5">Location</p>
+                    <p className="font-semibold text-[#202923] text-xs">{displayLocation}</p>
                   </div>
-                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <MapPin className="w-4 h-4 text-[#194332]" />
                 </div>
 
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
+                <div className="p-3 rounded-xl bg-[#FAF8F4] border border-[#E7E5E0] flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] text-gray-400 font-medium mb-0.5">Role</p>
-                    <p className="font-semibold text-white text-xs">{formatRole(profile.role)}</p>
+                    <p className="text-[10px] text-[#777C75] font-medium mb-0.5">Role</p>
+                    <p className="font-semibold text-[#202923] text-xs">{formatRole(profile.role)}</p>
                   </div>
-                  <Briefcase className="w-4 h-4 text-gray-400" />
+                  <Briefcase className="w-4 h-4 text-[#194332]" />
                 </div>
-
-
               </div>
             ) : (
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-[11px] text-gray-400 font-semibold mb-1">Height</label>
+                  <label className="block text-[11px] text-[#626860] font-semibold mb-1">Height</label>
                   <input
                     type="text"
                     placeholder="e.g. 5'10&quot; (178 cm)"
                     value={heightInput}
                     onChange={(e) => setHeightInput(e.target.value)}
-                    className="w-full bg-black border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#7f4ef8]"
+                    className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-gray-400 font-semibold mb-1">Weight</label>
+                  <label className="block text-[11px] text-[#626860] font-semibold mb-1">Weight</label>
                   <input
                     type="text"
                     placeholder="e.g. 68 kg"
                     value={weightInput}
                     onChange={(e) => setWeightInput(e.target.value)}
-                    className="w-full bg-black border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#7f4ef8]"
+                    className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors"
                   />
                 </div>
 
@@ -1572,7 +1567,7 @@ export default function ProfilePage({
                   <button
                     type="button"
                     onClick={() => setIsEditingAttributes(false)}
-                    className="px-3 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
+                    className="px-3 py-2 text-xs text-[#626860] hover:text-[#202923] cursor-pointer transition-colors"
                   >
                     Back
                   </button>
@@ -1583,7 +1578,7 @@ export default function ProfilePage({
                       setIsEditingAttributes(false);
                     }}
                     disabled={isSavingAttributes}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 rounded-xl bg-[#194332] hover:bg-[#102F28] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors shadow-sm"
                   >
                     {isSavingAttributes && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Save</span>
@@ -1598,24 +1593,24 @@ export default function ProfilePage({
       {/* MODAL: CONTACTS */}
       {showContactModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowContactModal(false)}
         >
           <div
-            className="bg-[#141416] rounded-2xl p-5 max-w-md w-full space-y-4 shadow-2xl text-left"
+            className="bg-white border border-[#E7E5E0] rounded-2xl p-5 max-w-md w-full space-y-4 shadow-card text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-1">
               <div className="flex items-center gap-2">
-                <Contact className="w-4 h-4 text-white" />
-                <h3 className="text-base font-bold text-white">Contact Information</h3>
+                <Contact className="w-4 h-4 text-[#194332]" />
+                <h3 className="font-display text-base font-semibold text-[#202923]">Contact Information</h3>
               </div>
               <div className="flex items-center gap-2">
                 {isRealOwn && !isEditingContacts && (
                   <button
                     type="button"
                     onClick={() => setIsEditingContacts(true)}
-                    className="text-xs font-semibold text-[#8f64f8] hover:text-[#a785fc] flex items-center gap-1 cursor-pointer transition-colors"
+                    className="text-xs font-semibold text-[#194332] hover:text-[#102F28] flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     <span>Edit</span>
@@ -1623,7 +1618,7 @@ export default function ProfilePage({
                 )}
                 <button
                   onClick={() => setShowContactModal(false)}
-                  className="text-gray-400 hover:text-white cursor-pointer p-1"
+                  className="text-[#777C75] hover:text-[#202923] cursor-pointer p-1 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1635,19 +1630,19 @@ export default function ProfilePage({
                 {contactPhone ? (
                   <a
                     href={`tel:${contactPhone}`}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 hover:bg-white/[0.05] transition-colors group text-gray-200"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-[#FAF8F4] border border-[#E7E5E0] hover:border-[#D5D1C7] hover:bg-[#F3F0E9] transition-colors group text-[#202923]"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/10 transition-colors">
-                      <Phone className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-lg bg-white border border-[#E7E5E0] flex items-center justify-center shrink-0 group-hover:border-[#194332]/20 transition-colors shadow-xs">
+                      <Phone className="w-4 h-4 text-[#194332]" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] text-gray-400 font-medium">Phone</p>
-                      <p className="font-semibold text-white truncate text-xs">{contactPhone}</p>
+                      <p className="text-[10px] text-[#777C75] font-medium">Phone</p>
+                      <p className="font-semibold text-[#202923] truncate text-xs">{contactPhone}</p>
                     </div>
                   </a>
                 ) : (
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5 text-gray-400 text-xs">
-                    <Phone className="w-4 h-4 text-gray-500" />
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-[#FAF8F4] border border-[#E7E5E0] text-[#777C75] text-xs">
+                    <Phone className="w-4 h-4 text-[#777C75]" />
                     <span>No phone number listed</span>
                   </div>
                 )}
@@ -1655,25 +1650,25 @@ export default function ProfilePage({
                 {contactEmail ? (
                   <a
                     href={`mailto:${contactEmail}`}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 hover:bg-white/[0.05] transition-colors group text-gray-200"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-[#FAF8F4] border border-[#E7E5E0] hover:border-[#D5D1C7] hover:bg-[#F3F0E9] transition-colors group text-[#202923]"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/10 transition-colors">
-                      <Mail className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-lg bg-white border border-[#E7E5E0] flex items-center justify-center shrink-0 group-hover:border-[#194332]/20 transition-colors shadow-xs">
+                      <Mail className="w-4 h-4 text-[#194332]" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] text-gray-400 font-medium">Email</p>
-                      <p className="font-semibold text-white truncate text-xs">{contactEmail}</p>
+                      <p className="text-[10px] text-[#777C75] font-medium">Email</p>
+                      <p className="font-semibold text-[#202923] truncate text-xs">{contactEmail}</p>
                     </div>
                   </a>
                 ) : (
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5 text-gray-400 text-xs">
-                    <Mail className="w-4 h-4 text-gray-500" />
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-[#FAF8F4] border border-[#E7E5E0] text-[#777C75] text-xs">
+                    <Mail className="w-4 h-4 text-[#777C75]" />
                     <span>No email listed</span>
                   </div>
                 )}
 
                 {!contactPhone && !contactEmail && !isRealOwn && (
-                  <div className="py-2.5 px-3 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between text-xs text-gray-400">
+                  <div className="py-2.5 px-3 rounded-xl bg-[#FAF8F4] border border-[#E7E5E0] flex items-center justify-between text-xs text-[#626860]">
                     <span>Direct contacts not publicly listed</span>
                     <button
                       type="button"
@@ -1684,36 +1679,34 @@ export default function ProfilePage({
                           onNavigate('messages', effectiveRecipientId);
                         }
                       }}
-                      className="text-xs font-semibold text-[#8f64f8] hover:text-[#a785fc] transition-colors cursor-pointer"
+                      className="text-xs font-semibold text-[#194332] hover:underline transition-colors cursor-pointer"
                     >
                       Send Message
                     </button>
                   </div>
                 )}
-
-
               </div>
             ) : (
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-[11px] text-gray-400 font-semibold mb-1">Phone Number</label>
+                  <label className="block text-[11px] text-[#626860] font-semibold mb-1">Phone Number</label>
                   <input
                     type="text"
                     placeholder="e.g. +977 98XXXXXXXX"
                     value={contactPhoneInput}
                     onChange={(e) => setContactPhoneInput(e.target.value)}
-                    className="w-full bg-black border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#7f4ef8]"
+                    className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-gray-400 font-semibold mb-1">Contact Email</label>
+                  <label className="block text-[11px] text-[#626860] font-semibold mb-1">Contact Email</label>
                   <input
                     type="email"
                     placeholder="e.g. artist@example.com"
                     value={contactEmailInput}
                     onChange={(e) => setContactEmailInput(e.target.value)}
-                    className="w-full bg-black border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#7f4ef8]"
+                    className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors"
                   />
                 </div>
 
@@ -1721,7 +1714,7 @@ export default function ProfilePage({
                   <button
                     type="button"
                     onClick={() => setIsEditingContacts(false)}
-                    className="px-3 py-2 text-xs text-gray-400 hover:text-white cursor-pointer"
+                    className="px-3 py-2 text-xs text-[#626860] hover:text-[#202923] cursor-pointer transition-colors"
                   >
                     Back
                   </button>
@@ -1732,7 +1725,7 @@ export default function ProfilePage({
                       setIsEditingContacts(false);
                     }}
                     disabled={isSavingContacts}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 rounded-xl bg-[#194332] hover:bg-[#102F28] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors shadow-sm"
                   >
                     {isSavingContacts && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Save</span>
@@ -1747,21 +1740,21 @@ export default function ProfilePage({
       {/* MODAL: EXPERIENCE / CREDITS */}
       {showExperienceModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowExperienceModal(false)}
         >
           <div
-            className="bg-[#141416] rounded-2xl p-5 max-w-lg w-full max-h-[85vh] overflow-y-auto space-y-4 shadow-2xl text-left"
+            className="bg-white border border-[#E7E5E0] rounded-2xl p-5 max-w-lg w-full max-h-[85vh] overflow-y-auto space-y-4 shadow-card text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-1">
               <div className="flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-white" />
-                <h3 className="text-base font-bold text-white">Experience & Credits</h3>
+                <Briefcase className="w-4 h-4 text-[#194332]" />
+                <h3 className="font-display text-base font-semibold text-[#202923]">Experience & Credits</h3>
               </div>
               <button
                 onClick={() => setShowExperienceModal(false)}
-                className="text-gray-400 hover:text-white cursor-pointer p-1"
+                className="text-[#777C75] hover:text-[#202923] cursor-pointer p-1 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1855,18 +1848,18 @@ export default function ProfilePage({
       {/* MODAL: ADD MEDIA CHOICE */}
       {showAddMediaChoice && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowAddMediaChoice(false)}
         >
           <div
-            className="bg-[#141416] border border-white/10 rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl text-left"
+            className="bg-white border border-[#E7E5E0] rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-card text-left"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-              <h3 className="text-base font-bold text-white">Add Media</h3>
+            <div className="flex items-center justify-between border-b border-[#E7E5E0] pb-3">
+              <h3 className="font-display text-base font-semibold text-[#202923]">Add Media</h3>
               <button
                 onClick={() => setShowAddMediaChoice(false)}
-                className="text-gray-400 hover:text-white cursor-pointer p-1"
+                className="text-[#777C75] hover:text-[#202923] cursor-pointer p-1 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1879,14 +1872,14 @@ export default function ProfilePage({
                   setShowAddMediaChoice(false);
                   document.getElementById('profile-direct-photo-upload')?.click();
                 }}
-                className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/20 hover:bg-white/[0.06] transition-all text-left cursor-pointer group"
+                className="flex items-center gap-3.5 p-3.5 rounded-xl bg-[#FAF8F4] border border-[#E7E5E0] hover:border-[#D5D1C7] hover:bg-[#F3F0E9] transition-all text-left cursor-pointer group"
               >
-                <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0 group-hover:bg-purple-500/20 transition-colors">
-                  <Camera className="w-5 h-5 text-[#8f64f8]" />
+                <div className="w-10 h-10 rounded-lg bg-[#EAF2ED] border border-[#194332]/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-all">
+                  <Camera className="w-5 h-5 text-[#194332]" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-white">Upload Photos</p>
-                  <p className="text-[11px] text-gray-400">Add portfolio photos (JPG, PNG, WEBP)</p>
+                  <p className="text-xs font-semibold text-[#202923]">Upload Photos</p>
+                  <p className="text-[11px] text-[#777C75]">Add portfolio photos (JPG, PNG, WEBP)</p>
                 </div>
               </button>
 
@@ -1896,14 +1889,14 @@ export default function ProfilePage({
                   setShowAddMediaChoice(false);
                   document.getElementById('profile-direct-video-upload')?.click();
                 }}
-                className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/20 hover:bg-white/[0.06] transition-all text-left cursor-pointer group"
+                className="flex items-center gap-3.5 p-3.5 rounded-xl bg-[#FAF8F4] border border-[#E7E5E0] hover:border-[#D5D1C7] hover:bg-[#F3F0E9] transition-all text-left cursor-pointer group"
               >
-                <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0 group-hover:bg-blue-500/20 transition-colors">
-                  <Video className="w-5 h-5 text-blue-400" />
+                <div className="w-10 h-10 rounded-lg bg-[#EAF2ED] border border-[#194332]/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-all">
+                  <Video className="w-5 h-5 text-[#194332]" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-white">Upload Video</p>
-                  <p className="text-[11px] text-gray-400">Add showreel or audition reel (MP4, MOV)</p>
+                  <p className="text-xs font-semibold text-[#202923]">Upload Video</p>
+                  <p className="text-[11px] text-[#777C75]">Add showreel or audition reel (MP4, MOV)</p>
                 </div>
               </button>
             </div>

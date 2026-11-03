@@ -18,25 +18,25 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="w-full bg-transparent border-0 pt-4 pb-4 px-4 text-center mt-2 space-y-2 select-none">
+    <footer className="w-full bg-[#FAF8F4] border-t border-[#E7E5E0] pt-6 pb-6 px-4 text-center mt-6 space-y-3 select-none">
       {/* Brand Logo */}
       <div className="flex items-center justify-center gap-1.5">
-        <span className="text-sm font-black text-white tracking-widest uppercase font-apple">
+        <span className="font-display text-base font-semibold text-[#202923] tracking-widest uppercase">
           NEPALCASTS
         </span>
       </div>
 
-      <p className="text-[11px] text-gray-500 max-w-xs mx-auto leading-relaxed">
+      <p className="text-xs text-[#626860] max-w-sm mx-auto leading-relaxed font-inter">
         Nepal&apos;s unified talent discovery and casting network.
       </p>
 
       {/* Navigation Links */}
-      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs text-gray-400 font-medium pt-0.5">
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-[#626860] font-medium pt-1 font-inter">
         {legalLinks.map((link) => (
           <Link
             key={link.to}
             to={link.to}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="hover:text-[#194332] transition-colors"
           >
             {link.label}
           </Link>
@@ -44,7 +44,7 @@ export default function Footer() {
       </div>
 
       {/* Copyright */}
-      <div className="pt-1 text-[10px] text-gray-600 font-medium">
+      <div className="pt-2 text-[11px] text-[#777C75] font-inter">
         &copy; {new Date().getFullYear()} NepalCasts. All rights reserved.
       </div>
     </footer>

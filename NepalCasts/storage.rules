@@ -62,21 +62,21 @@ service firebase.storage {
       allow write: if (isOwner(userId) || isAdmin()) && isMedia() && maxSize(200 * 1024 * 1024);
     }
 
-    // Audition applications: media, max 100MB
+    // Audition applications: media, max 100MB (authenticated read only)
     match /applications/{userId}/{allPaths=**} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow write: if (isOwner(userId) || isAdmin()) && isMedia() && maxSize(100 * 1024 * 1024);
     }
 
     // Direct uploads fallback: media, max 100MB
     match /uploads/{userId}/{allPaths=**} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow write: if (isOwner(userId) || isAdmin()) && isMedia() && maxSize(100 * 1024 * 1024);
     }
 
-    // Chat attachments: media, max 100MB
+    // Chat attachments: media, max 100MB (authenticated read only)
     match /chat/{userId}/{allPaths=**} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow write: if (isOwner(userId) || isAdmin()) && isMedia() && maxSize(100 * 1024 * 1024);
     }
 
@@ -92,9 +92,9 @@ service firebase.storage {
       allow write: if isAdmin();
     }
 
-    // Default: public read only, no write access
+    // Default: no read or write access (default deny)
     match /{allPaths=**} {
-      allow read: if true;
+      allow read: if false;
       allow write: if false;
     }
   }

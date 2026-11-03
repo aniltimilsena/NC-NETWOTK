@@ -54,7 +54,7 @@ service cloud.firestore {
 
     // --- USERS & PROFILES ---
     match /users/{userId} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && (isOwner(userId) || isAdmin()) && validUserCreate();
       allow update: if isSignedIn() && (isOwner(userId) || isAdmin()) && validUserUpdate();
       allow delete: if isOwner(userId) || isAdmin();

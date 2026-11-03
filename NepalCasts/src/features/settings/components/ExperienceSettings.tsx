@@ -58,33 +58,33 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
     };
     return (<div className="space-y-2 sm:space-y-3">
       
-      <div className="bg-[#0E0E0E] border-0 rounded-2xl p-4 sm:p-5 space-y-4">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <Briefcase className="w-4 h-4 text-white"/>
+      <div className="bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 space-y-4">
+        <h2 className="text-lg font-bold text-[#202923] flex items-center gap-2">
+          <Briefcase className="w-4 h-4 text-[#194332]"/>
           Add Professional Experience
         </h2>
 
         <form onSubmit={handleAddExperience} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5 text-left">
-              <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Project Title</label>
-              <input type="text" placeholder="e.g. Kathmandu Dreams Film" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
+              <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Project Title</label>
+              <input type="text" placeholder="e.g. Kathmandu Dreams Film" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none"/>
             </div>
 
             <div className="space-y-1.5 text-left">
-              <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Your Role</label>
-              <input type="text" placeholder="e.g. Lead Actor, Supporting, Cameraman" value={role} onChange={(e) => setRole(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
+              <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Your Role</label>
+              <input type="text" placeholder="e.g. Lead Actor, Supporting, Cameraman" value={role} onChange={(e) => setRole(e.target.value)} className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none"/>
             </div>
 
             <div className="space-y-1.5 text-left">
-              <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Year / Period</label>
-              <input type="text" placeholder="e.g. 2024" value={year} onChange={(e) => setYear(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none"/>
+              <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Year / Period</label>
+              <input type="text" placeholder="e.g. 2024" value={year} onChange={(e) => setYear(e.target.value)} className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none"/>
             </div>
           </div>
 
           <div className="space-y-1.5 text-left">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Description</label>
-            <textarea rows={3} placeholder="Detail your responsibilities, working crew, or specific awards received..." value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none resize-none"/>
+            <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Description</label>
+            <textarea rows={3} placeholder="Detail your responsibilities, working crew, or specific awards received..." value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none resize-none"/>
           </div>
 
           <div className="flex justify-end">
@@ -96,29 +96,29 @@ export default function ExperienceSettings({ profile, onUpdate, showAlert }: Exp
       </div>
 
       
-      <div className="bg-[#0E0E0E] border-0 rounded-2xl p-4 sm:p-5 space-y-4">
-        <h2 className="text-base font-bold text-white">Work History</h2>
+      <div className="bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 space-y-4">
+        <h2 className="text-base font-bold text-[#202923]">Work History</h2>
 
         {experienceList.length > 0 ? (<div className="space-y-3">
-            {experienceList.map((item, idx) => (<div key={idx} className="flex gap-4 p-4 bg-white/5 border border-white/5 rounded-xl items-start">
-                <div className="w-10 h-10 rounded-xl bg-[#522C69]/10 flex items-center justify-center shrink-0">
-                  <Briefcase className="w-5 h-5 text-white"/>
+            {experienceList.map((item, idx) => (<div key={idx} className="flex gap-4 p-4 bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl items-start">
+                <div className="w-10 h-10 rounded-xl bg-[#EAF2ED] flex items-center justify-center shrink-0">
+                  <Briefcase className="w-5 h-5 text-[#194332]"/>
                 </div>
                 <div className="flex-1 space-y-1 text-left min-w-0">
                   <div className="flex justify-between items-start gap-4">
-                    <h3 className="text-sm font-bold text-white truncate">{item.title}</h3>
-                    <span className="text-[10px] text-nc-muted font-bold whitespace-nowrap">{item.year}</span>
+                    <h3 className="text-sm font-bold text-[#202923] truncate">{item.title}</h3>
+                    <span className="text-[10px] text-[#777C75] font-bold whitespace-nowrap">{item.year}</span>
                   </div>
-                  <span className="text-xs text-[#522C69] font-semibold block uppercase tracking-wider">
+                  <span className="text-xs text-[#194332] font-semibold block uppercase tracking-wider">
                     {item.role}
                   </span>
-                  {item.description && (<p className="text-xs text-nc-muted leading-relaxed mt-2">{item.description}</p>)}
+                  {item.description && (<p className="text-xs text-[#777C75] leading-relaxed mt-2">{item.description}</p>)}
                 </div>
-                <button type="button" onClick={() => handleRemoveExperience(idx)} className="text-nc-muted hover:text-red-500 transition-colors p-2 self-start cursor-pointer">
+                <button type="button" onClick={() => handleRemoveExperience(idx)} className="text-[#777C75] hover:text-[#B42318] transition-colors p-2 self-start cursor-pointer">
                   <Trash2 className="w-4 h-4"/>
                 </button>
               </div>))}
-          </div>) : (<p className="text-xs text-nc-muted py-6">No experience history added yet.</p>)}
+          </div>) : (<p className="text-xs text-[#777C75] py-6">No experience history added yet.</p>)}
       </div>
 
       

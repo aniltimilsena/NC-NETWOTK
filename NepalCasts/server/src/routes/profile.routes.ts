@@ -28,6 +28,9 @@ const getPublicProfilesHandler = async (req: any, res: Response): Promise<any> =
             queryRef = queryRef.offset(offset);
         }
 
+        const callerUid = req.user?.uid;
+        const isCallerAdmin = req.user?.admin === true || req.user?.isAdmin === true;
+
         const snapshot = await queryRef.limit(limitCount).get();
         const talents = snapshot.docs
             .map(doc => {
@@ -38,12 +41,26 @@ const getPublicProfilesHandler = async (req: any, res: Response): Promise<any> =
                     loginAttempts: _loginAttempts,
                     password: _password,
                     passwordHash: _passwordHash,
+                    email,
+                    phone,
+                    contactEmail,
+                    contactPhone,
+                    showContactInfo,
                     ...rest
                 } = data;
-                return {
+                const talent: any = {
                     id: doc.id,
-                    ...rest
+                    ...rest,
+                    showContactInfo: !!showContactInfo,
                 };
+                const isOwner = callerUid === doc.id;
+                if (isOwner || isCallerAdmin || showContactInfo === true) {
+                    if (email !== undefined) talent.email = email;
+                    if (phone !== undefined) talent.phone = phone;
+                    if (contactEmail !== undefined) talent.contactEmail = contactEmail;
+                    if (contactPhone !== undefined) talent.contactPhone = contactPhone;
+                }
+                return talent;
             })
             .filter((t: any) => t.name && t.name.trim() !== '');
 
@@ -81,19 +98,23 @@ router.get('/search', verifyToken, scrapingPreventerMiddleware, async (req: Auth
                 loginAttempts: _loginAttempts,
                 email,
                 phone,
+                contactEmail,
+                contactPhone,
                 showContactInfo,
                 ...rest
             } = data;
             const isOwner = req.user?.uid === doc.id;
-            const isAdminUser = req.user?.admin === true;
+            const isAdminUser = req.user?.admin === true || req.user?.isAdmin === true;
             const talent: any = {
                 id: doc.id,
                 ...rest,
-                showContactInfo
+                showContactInfo: !!showContactInfo
             };
             if (isOwner || isAdminUser || showContactInfo === true) {
-                talent.email = email;
-                talent.phone = phone;
+                if (email !== undefined) talent.email = email;
+                if (phone !== undefined) talent.phone = phone;
+                if (contactEmail !== undefined) talent.contactEmail = contactEmail;
+                if (contactPhone !== undefined) talent.contactPhone = contactPhone;
             }
             return talent;
         });

@@ -63,23 +63,23 @@ export default function NewChatModal({ isOpen, onClose, onSelectUser }: NewChatM
 
     const filtered = profiles.filter(p => (p.name || '').toLowerCase().includes(search.toLowerCase()));
 
-    return (<div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="bg-[#181818] border border-white/5 w-full max-w-md rounded-2xl overflow-hidden flex flex-col max-h-[480px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    return (<div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-inter" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="bg-white border border-[#E7E5E0] w-full max-w-md rounded-2xl overflow-hidden flex flex-col max-h-[480px] shadow-card" onClick={(e) => e.stopPropagation()}>
         
-        <div className="flex justify-between items-center px-5 py-4 border-b border-white/5">
-          <h3 className="text-base font-bold text-white">New Conversation</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors cursor-pointer">
+        <div className="flex justify-between items-center px-5 py-4 border-b border-[#E7E5E0]">
+          <h3 className="font-display text-base font-semibold text-[#202923]">New Conversation</h3>
+          <button onClick={onClose} className="text-[#777C75] hover:text-[#202923] transition-colors cursor-pointer">
             <X className="w-5 h-5"/>
           </button>
         </div>
 
         
-        <div className="p-3.5 border-b border-white/5">
+        <div className="p-3.5 border-b border-[#E7E5E0] bg-[#FAF8F4]">
           <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#777C75]">
               <Search className="w-4 h-4"/>
             </span>
-            <input type="text" placeholder="Search by name..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-[#141414] rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-gray-500 outline-none focus:ring-1 focus:ring-white/20 transition-all"/>
+            <input type="text" placeholder="Search by name..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-white rounded-xl py-2 pl-9 pr-4 text-xs text-[#202923] placeholder-[#777C75] border border-[#E7E5E0] outline-none focus:ring-1 focus:ring-[#194332] focus:border-[#194332] transition-all"/>
           </div>
         </div>
 
@@ -90,13 +90,13 @@ export default function NewChatModal({ isOpen, onClose, onSelectUser }: NewChatM
           ) : filtered.length > 0 ? (filtered.map((p) => (<div key={p.uid} onClick={() => {
                 onSelectUser(p.uid);
                 onClose();
-            }} className="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer hover:bg-white/5 transition-all">
-                <Avatar userId={p.uid} src={p.image} name={p.name} size="sm"/>
+            }} className="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer hover:bg-[#FAF8F4] transition-all">
+                <Avatar userId={p.uid} src={p.image} name={p.name} size="sm" className="border border-[#E7E5E0]"/>
                 <div className="text-left">
-                  <span className="text-sm font-bold text-white block">{p.name || 'User'}</span>
-                  <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{formatRole(p.role)}</span>
+                  <span className="text-sm font-semibold text-[#202923] block">{p.name || 'User'}</span>
+                  <span className="text-[10px] text-[#626860] font-medium uppercase tracking-wider">{formatRole(p.role)}</span>
                 </div>
-              </div>))) : (<p className="text-xs text-gray-400 text-center py-8">No users found.</p>)}
+              </div>))) : (<p className="text-xs text-[#777C75] text-center py-8">No users found.</p>)}
         </div>
       </div>
     </div>);

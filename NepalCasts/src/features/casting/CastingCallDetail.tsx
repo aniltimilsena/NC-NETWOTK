@@ -919,12 +919,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   if (!call) {
     return (
       <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting">
-        <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center p-4 text-center">
-          <h2 className="text-xl font-bold text-white mb-2">Casting Call Not Found</h2>
-          <p className="text-gray-400 text-xs mb-6">This casting call may have been removed or closed.</p>
+        <div className="min-h-screen bg-[#FAF8F4] flex flex-col items-center justify-center p-4 text-center">
+          <h2 className="text-xl font-serif font-semibold text-[#202923] mb-2">Casting Call Not Found</h2>
+          <p className="text-[#626860] text-xs mb-6">This casting call may have been removed or closed.</p>
           <button
             onClick={() => onNavigate ? onNavigate('back') : (window.history.length > 1 ? window.history.back() : window.location.assign('/casting'))}
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold text-xs uppercase tracking-wider cursor-pointer"
+            className="px-6 py-2.5 rounded-lg bg-[#194332] hover:bg-[#102F28] text-white shadow-sm font-semibold text-xs tracking-wider cursor-pointer transition-colors"
           >
             Back to Casting Calls
           </button>
@@ -936,7 +936,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
   if (isApplyView) {
     return (
       <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting">
-        <div className="min-h-screen bg-[#141414] text-white pb-24 font-sans select-none">
+        <div className="min-h-screen bg-[#FAF8F4] text-[#202923] pb-24 font-sans select-none">
           <SEO
             title={`Apply - ${call.title} | NepalCasts`}
             description={`Submit your audition application for ${call.title}`}
@@ -948,40 +948,40 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               <button
                 type="button"
                 onClick={handleCloseApplyView}
-                className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
+                className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-[#626860] hover:text-[#202923] hover:bg-[#F3F0E9] transition-colors cursor-pointer shrink-0"
                 title="Back"
                 aria-label="Back"
               >
-                <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
+                <ChevronLeft className="w-6 h-6" strokeWidth={2} />
               </button>
-              <h1 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">
+              <h1 className="text-base sm:text-lg font-serif font-semibold text-[#202923] tracking-tight truncate">
                 Apply for Casting Call
               </h1>
             </div>
 
             {/* Title & Metadata Section */}
             <div className="space-y-2">
-              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-serif font-semibold text-[#202923] tracking-tight leading-tight">
                 {selectedRole ? `${selectedRole} – ${call.title}` : call.title}
               </h1>
 
-              {/* Sub-metadata row with White Icons */}
-              <div className="flex items-center gap-4 text-xs sm:text-sm text-neutral-400 font-medium flex-wrap pt-1">
-                <span className="flex items-center gap-1.5 text-neutral-300">
-                  <Clapperboard className="w-4 h-4 text-white" />
+              {/* Sub-metadata row */}
+              <div className="flex items-center gap-4 text-xs sm:text-sm text-[#626860] font-medium flex-wrap pt-1">
+                <span className="flex items-center gap-1.5 text-[#414840]">
+                  <Clapperboard className="w-4 h-4 text-[#194332]" />
                   <span>{call.category || 'Short Film'}</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-neutral-300">
-                  <MapPin className="w-4 h-4 text-white" />
+                <span className="flex items-center gap-1.5 text-[#414840]">
+                  <MapPin className="w-4 h-4 text-[#194332]" />
                   <span>{call.location || 'Kathmandu, Nepal'}</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-neutral-300">
-                  <Calendar className="w-4 h-4 text-white" />
+                <span className="flex items-center gap-1.5 text-[#414840]">
+                  <Calendar className="w-4 h-4 text-[#194332]" />
                   <span>Audition: {shortDeadline}</span>
                 </span>
               </div>
 
-              <p className="text-xs sm:text-sm text-neutral-400 pt-2 font-normal">
+              <p className="text-xs sm:text-sm text-[#626860] pt-2 font-normal">
                 Please fill out the form below to apply for this casting call.
               </p>
             </div>
@@ -990,17 +990,17 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
             <form onSubmit={handleConfirmSubmitApplication} className="space-y-6 pt-1">
               {/* Role Selection / Role Information Section */}
               {allRoles.length > 1 ? (
-                <div className="space-y-3 p-4 rounded-2xl bg-[#18181c] border border-white/10">
+                <div className="space-y-3 p-4 rounded-2xl bg-white border border-[#E7E5E0] shadow-card">
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-xs sm:text-sm font-bold text-white block">
-                        Select Role to Apply For <span className="text-red-400">*</span>
+                      <label className="text-xs sm:text-sm font-semibold text-[#202923] block">
+                        Select Role to Apply For <span className="text-[#B42318]">*</span>
                       </label>
-                      <p className="text-[11px] text-neutral-400">
+                      <p className="text-[11px] text-[#626860]">
                         This casting call has {allRoles.length} open roles. Select the role you are auditioning for:
                       </p>
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#522C69]/30 border border-[#522C69]/50 text-[#ba7fd6] text-[11px] font-bold shrink-0">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#EAF2ED] border border-[#194332]/20 text-[#194332] text-[11px] font-semibold shrink-0">
                       {allRoles.length} Roles
                     </span>
                   </div>
@@ -1018,36 +1018,36 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                           key={idx}
                           onClick={() => setSelectedRole(r.name)}
                           className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer space-y-2 select-none ${isSelected
-                            ? 'bg-[#522C69]/20 border-[#ba7fd6] ring-1 ring-[#ba7fd6]/40 text-white shadow-md'
-                            : 'bg-black/30 border-white/10 text-gray-300 hover:border-white/20 hover:bg-black/50'
+                            ? 'bg-[#EAF2ED] border-[#194332] ring-1 ring-[#194332]/30 text-[#194332] shadow-sm'
+                            : 'bg-[#FAF8F4] border-[#E7E5E0] text-[#414840] hover:border-[#D5D1C7] hover:bg-white'
                             }`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2.5 min-w-0">
                               <div
-                                className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all shrink-0 ${isSelected ? 'border-[#ba7fd6] bg-transparent' : 'border-neutral-500 bg-transparent'
+                                className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all shrink-0 ${isSelected ? 'border-[#194332] bg-transparent' : 'border-[#D5D1C7] bg-transparent'
                                   }`}
                               >
-                                {isSelected && <div className="w-2 h-2 rounded-full bg-[#ba7fd6]" />}
+                                {isSelected && <div className="w-2 h-2 rounded-full bg-[#194332]" />}
                               </div>
-                              <span className={`text-sm font-bold truncate ${isSelected ? 'text-[#ba7fd6]' : 'text-white'}`}>
+                              <span className={`text-sm font-semibold truncate ${isSelected ? 'text-[#194332]' : 'text-[#202923]'}`}>
                                 {r.name}
                               </span>
                             </div>
 
                             <div className="flex items-center gap-1.5 flex-wrap shrink-0">
                               {rolePay && (
-                                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded bg-[#EAF2ED] text-[#194332] border border-[#194332]/20">
                                   {rolePay}
                                 </span>
                               )}
                               {roleAge && (
-                                <span className="text-[10px] text-neutral-300 font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                                <span className="text-[10px] text-[#626860] font-medium px-2 py-0.5 rounded bg-white border border-[#E7E5E0]">
                                   {roleAge}
                                 </span>
                               )}
                               {roleGender && (
-                                <span className="text-[10px] text-neutral-300 font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                                <span className="text-[10px] text-[#626860] font-medium px-2 py-0.5 rounded bg-white border border-[#E7E5E0]">
                                   {roleGender}
                                 </span>
                               )}
@@ -1055,7 +1055,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                           </div>
 
                           {roleDesc && (
-                            <p className="text-xs text-neutral-300 leading-relaxed pl-6">
+                            <p className="text-xs text-[#626860] leading-relaxed pl-6">
                               {roleDesc}
                             </p>
                           )}
@@ -1065,30 +1065,30 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   </div>
                 </div>
               ) : allRoles.length === 1 ? (
-                <div className="p-4 rounded-2xl bg-[#18181c] border border-white/10 space-y-2">
+                <div className="p-4 rounded-2xl bg-white border border-[#E7E5E0] shadow-card space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Role Applied For</span>
+                    <span className="text-[11px] font-semibold text-[#777C75] uppercase tracking-wider">Role Applied For</span>
                     {allRoles[0].pay && (
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded bg-[#EAF2ED] text-[#194332] border border-[#194332]/20">
                         {allRoles[0].pay}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-bold text-white">{allRoles[0].name}</h3>
+                    <h3 className="text-base font-semibold text-[#202923]">{allRoles[0].name}</h3>
                     {allRoles[0].ageRange && (
-                      <span className="text-xs text-neutral-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
+                      <span className="text-xs text-[#626860] bg-[#FAF8F4] border border-[#E7E5E0] px-2 py-0.5 rounded-md">
                         {allRoles[0].ageRange}
                       </span>
                     )}
                     {allRoles[0].gender && (
-                      <span className="text-xs text-neutral-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
+                      <span className="text-xs text-[#626860] bg-[#FAF8F4] border border-[#E7E5E0] px-2 py-0.5 rounded-md">
                         {allRoles[0].gender}
                       </span>
                     )}
                   </div>
                   {allRoles[0].description && (
-                    <p className="text-xs text-neutral-300 leading-relaxed pt-1">
+                    <p className="text-xs text-[#626860] leading-relaxed pt-1">
                       {allRoles[0].description}
                     </p>
                   )}
@@ -1097,45 +1097,45 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
               {/* Role Applying For Input Section */}
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-bold text-white block">
-                  Role Applying For <span className="text-red-400">*</span>
+                <label className="text-xs sm:text-sm font-semibold text-[#202923] block">
+                  Role Applying For <span className="text-[#B42318]">*</span>
                 </label>
-                <p className="text-[11px] text-neutral-400">Type or specify the role you are auditioning for.</p>
+                <p className="text-[11px] text-[#626860]">Type or specify the role you are auditioning for.</p>
                 <input
                   type="text"
                   required
                   placeholder="Lead Actor, Supporting Cast, Extra"
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value)}
-                  className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] transition-colors"
+                  className="w-full bg-white border border-[#E7E5E0] rounded-xl px-4 py-3 text-xs sm:text-sm text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors shadow-card"
                 />
               </div>
 
               {/* 1. Full Name */}
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-bold text-white block">
-                  1. Full Name <span className="text-red-400">*</span>
+                <label className="text-xs sm:text-sm font-semibold text-[#202923] block">
+                  1. Full Name <span className="text-[#B42318]">*</span>
                 </label>
-                <p className="text-[11px] text-neutral-400">Enter your full name.</p>
+                <p className="text-[11px] text-[#626860]">Enter your full name.</p>
                 <input
                   type="text"
                   required
                   placeholder="Your name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] transition-colors"
+                  className="w-full bg-white border border-[#E7E5E0] rounded-xl px-4 py-3 text-xs sm:text-sm text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors shadow-card"
                 />
               </div>
 
               {/* 2. Email Address */}
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-bold text-white block">
-                  2. Email Address <span className="text-red-400">*</span>
+                <label className="text-xs sm:text-sm font-semibold text-[#202923] block">
+                  2. Email Address <span className="text-[#B42318]">*</span>
                 </label>
-                <p className="text-[11px] text-neutral-400">Enter your active email address.</p>
+                <p className="text-[11px] text-[#626860]">Enter your active email address.</p>
                 <div className="relative flex items-center">
-                  <div className="absolute left-3 pointer-events-none text-white flex items-center">
-                    <Mail className="w-4 h-4 text-white" />
+                  <div className="absolute left-3.5 pointer-events-none text-[#777C75] flex items-center">
+                    <Mail className="w-4 h-4 text-[#777C75]" />
                   </div>
                   <input
                     type="email"
@@ -1143,19 +1143,19 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                     placeholder="yourname@gmail.com"
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
-                    className="w-full bg-[#18181c] border border-white/10 rounded-xl pl-8.5 pr-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] transition-colors"
+                    className="w-full bg-white border border-[#E7E5E0] rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors shadow-card"
                   />
                 </div>
               </div>
 
               {/* 3. Phone Number */}
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-bold text-white block">
-                  3. Phone Number <span className="text-red-400">*</span>
+                <label className="text-xs sm:text-sm font-semibold text-[#202923] block">
+                  3. Phone Number <span className="text-[#B42318]">*</span>
                 </label>
-                <p className="text-[11px] text-neutral-400">Enter your phone number.</p>
+                <p className="text-[11px] text-[#626860]">Enter your phone number.</p>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 bg-[#18181c] border border-white/10 rounded-xl px-3 py-3 text-xs sm:text-sm text-white shrink-0 select-none">
+                  <div className="flex items-center gap-2 bg-[#F3F0E9] border border-[#E7E5E0] rounded-xl px-3 py-3 text-xs sm:text-sm text-[#202923] shrink-0 select-none">
                     <img
                       src="https://flagcdn.com/w40/np.png"
                       srcSet="https://flagcdn.com/w80/np.png 2x"
@@ -1170,17 +1170,17 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                     placeholder="98XXXXXXXX"
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
-                    className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] transition-colors"
+                    className="w-full bg-white border border-[#E7E5E0] rounded-xl px-4 py-3 text-xs sm:text-sm text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors shadow-card"
                   />
                 </div>
               </div>
 
               {/* 4. Age */}
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-bold text-white block">
-                  4. Age <span className="text-red-400">*</span>
+                <label className="text-xs sm:text-sm font-semibold text-[#202923] block">
+                  4. Age <span className="text-[#B42318]">*</span>
                 </label>
-                <p className="text-[11px] text-neutral-400">Enter your age.</p>
+                <p className="text-[11px] text-[#626860]">Enter your age.</p>
                 <input
                   type="number"
                   min="1"
@@ -1189,16 +1189,16 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   placeholder="e.g. 24"
                   value={applicantAge}
                   onChange={(e) => setApplicantAge(e.target.value)}
-                  className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] transition-colors"
+                  className="w-full bg-white border border-[#E7E5E0] rounded-xl px-4 py-3 text-xs sm:text-sm text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] transition-colors shadow-card"
                 />
               </div>
 
               {/* 5. Gender */}
               <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-bold text-white block">
-                  5. Gender <span className="text-red-400">*</span>
+                <label className="text-xs sm:text-sm font-semibold text-[#202923] block">
+                  5. Gender <span className="text-[#B42318]">*</span>
                 </label>
-                <p className="text-[11px] text-neutral-400">Select your gender.</p>
+                <p className="text-[11px] text-[#626860]">Select your gender.</p>
                 <div className="space-y-2.5 pt-1">
                   {['Male', 'Female', 'Other'].map((g) => {
                     const isSelected = applicantGender === g;
@@ -1206,12 +1206,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                       <div
                         key={g}
                         onClick={() => setApplicantGender(g)}
-                        className="flex items-center gap-3 text-xs sm:text-sm text-neutral-300 cursor-pointer select-none group w-fit"
+                        className="flex items-center gap-3 text-xs sm:text-sm text-[#414840] cursor-pointer select-none group w-fit"
                       >
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'border-white bg-transparent' : 'border-neutral-500 bg-transparent group-hover:border-neutral-400'}`}>
-                          {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'border-[#194332] bg-transparent' : 'border-[#D5D1C7] bg-transparent group-hover:border-[#777C75]'}`}>
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-[#194332]" />}
                         </div>
-                        <span className={isSelected ? 'text-white font-medium' : 'text-neutral-400'}>{g}</span>
+                        <span className={isSelected ? 'text-[#194332] font-semibold' : 'text-[#626860]'}>{g}</span>
                       </div>
                     );
                   })}
@@ -1220,26 +1220,26 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
               {/* 6. Experience */}
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-bold text-white block">
-                  6. Experience <span className="text-red-400">*</span>
+                <label className="text-xs sm:text-sm font-semibold text-[#202923] block">
+                  6. Experience <span className="text-[#B42318]">*</span>
                 </label>
-                <p className="text-[11px] text-neutral-400">Select your experience level.</p>
+                <p className="text-[11px] text-[#626860]">Select your experience level.</p>
                 <div className="relative">
                   <select
                     required
                     value={applicantExperience}
                     onChange={(e) => setApplicantExperience(e.target.value)}
-                    className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-white outline-none focus:border-[#522C69] transition-colors appearance-none cursor-pointer"
+                    className="w-full bg-white border border-[#E7E5E0] rounded-xl px-4 py-3 text-xs sm:text-sm text-[#202923] outline-none focus:border-[#194332] transition-colors appearance-none cursor-pointer shadow-card"
                   >
-                    <option value="" disabled className="bg-[#18181c] text-neutral-500">Select experience</option>
-                    <option value="Fresher / Beginner" className="bg-[#18181c] text-white">Fresher / Beginner</option>
-                    <option value="1 - 2 Years" className="bg-[#18181c] text-white">1 - 2 Years</option>
-                    <option value="3 - 5 Years" className="bg-[#18181c] text-white">3 - 5 Years</option>
-                    <option value="5+ Years" className="bg-[#18181c] text-white">5+ Years</option>
-                    <option value="Professional / Lead Actor" className="bg-[#18181c] text-white">Professional / Lead Actor</option>
+                    <option value="" disabled className="text-[#777C75]">Select experience</option>
+                    <option value="Fresher / Beginner">Fresher / Beginner</option>
+                    <option value="1 - 2 Years">1 - 2 Years</option>
+                    <option value="3 - 5 Years">3 - 5 Years</option>
+                    <option value="5+ Years">5+ Years</option>
+                    <option value="Professional / Lead Actor">Professional / Lead Actor</option>
                   </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#777C75]">
+                    <svg className="w-4 h-4 text-[#777C75]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -1248,16 +1248,16 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
               {/* 7. Portfolio / Showreel (Optional) */}
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-bold text-white block">
+                <label className="text-xs sm:text-sm font-semibold text-[#202923] block">
                   7. Portfolio / Showreel (Optional)
                 </label>
-                <p className="text-[11px] text-neutral-400">Upload your portfolio, showreel or any acting sample.</p>
+                <p className="text-[11px] text-[#626860]">Upload your portfolio, showreel or any acting sample.</p>
 
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   className={`border border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all ${attachedFile
-                    ? 'border-[#522C69]/50 bg-[#522C69]/5'
-                    : 'border-white/15 hover:border-white/30 bg-[#18181c]/60 hover:bg-[#18181c]'
+                    ? 'border-[#194332] bg-[#EAF2ED]'
+                    : 'border-[#D5D1C7] hover:border-[#194332] bg-white hover:bg-[#FAF8F4]'
                     }`}
                 >
                   <input
@@ -1273,11 +1273,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   />
                   {attachedFile ? (
                     <div className="flex flex-col items-center gap-1.5">
-                      <FileText className="w-8 h-8 text-white" />
-                      <p className="text-xs font-bold text-white truncate max-w-xs">
+                      <FileText className="w-8 h-8 text-[#194332]" />
+                      <p className="text-xs font-semibold text-[#202923] truncate max-w-xs">
                         {attachedFile.name}
                       </p>
-                      <p className="text-[11px] text-[#522C69] font-medium">
+                      <p className="text-[11px] text-[#194332] font-medium">
                         {(attachedFile.size / (1024 * 1024)).toFixed(2)} MB • File ready to upload
                       </p>
                       <button
@@ -1287,19 +1287,19 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                           setAttachedFile(null);
                           if (fileInputRef.current) fileInputRef.current.value = '';
                         }}
-                        className="mt-1 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-[10px] text-gray-200 cursor-pointer transition-all"
+                        className="mt-1 px-3 py-1 rounded-full bg-white hover:bg-[#F3F0E9] border border-[#E7E5E0] text-[10px] text-[#202923] cursor-pointer transition-all"
                       >
                         Remove / Replace
                       </button>
                     </div>
                   ) : (
                     <>
-                      <Upload className="w-6 h-6 text-white" />
+                      <Upload className="w-6 h-6 text-[#194332]" />
                       <div>
-                        <p className="text-xs sm:text-sm font-medium text-neutral-200">
+                        <p className="text-xs sm:text-sm font-medium text-[#202923]">
                           Click to upload or drag and drop
                         </p>
-                        <p className="text-[11px] text-neutral-500 mt-0.5">
+                        <p className="text-[11px] text-[#777C75] mt-0.5">
                           PDF, MP4, MOV or Link (Max 50MB)
                         </p>
                       </div>
@@ -1314,24 +1314,24 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                     placeholder="Or paste video showreel / portfolio link (e.g. YouTube, Vimeo, Drive)"
                     value={selfTapeUrl}
                     onChange={(e) => setSelfTapeUrl(e.target.value)}
-                    className="w-full bg-[#18181c] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-neutral-500 outline-none focus:border-[#522C69]"
+                    className="w-full bg-white border border-[#E7E5E0] rounded-xl px-4 py-2.5 text-xs text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] shadow-card"
                   />
                 </div>
               </div>
 
               {/* 8. Additional Information (Optional) */}
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-bold text-white block">
+                <label className="text-xs sm:text-sm font-semibold text-[#202923] block">
                   8. Additional Information (Optional)
                 </label>
-                <p className="text-[11px] text-neutral-400">Anything else you would like to share.</p>
+                <p className="text-[11px] text-[#626860]">Anything else you would like to share.</p>
                 <textarea
                   rows={4}
                   maxLength={500}
                   placeholder="Write here..."
                   value={coverNote}
                   onChange={(e) => setCoverNote(e.target.value)}
-                  className="w-full bg-[#18181c] border border-white/10 rounded-xl p-4 text-xs sm:text-sm text-white placeholder-neutral-500 outline-none focus:border-[#522C69] resize-none leading-relaxed"
+                  className="w-full bg-white border border-[#E7E5E0] rounded-xl p-4 text-xs sm:text-sm text-[#202923] placeholder-[#777C75] outline-none focus:border-[#194332] resize-none leading-relaxed shadow-card"
                 />
               </div>
 
@@ -1340,7 +1340,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 <button
                   type="submit"
                   disabled={applying}
-                  className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold text-base flex items-center justify-center gap-2 shadow-xl transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                  className="w-full py-4 px-6 rounded-lg bg-[#194332] hover:bg-[#102F28] text-white font-semibold text-base flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
                 >
                   <span>{applying ? 'Submitting Application...' : 'Submit Application'}</span>
                 </button>
@@ -1354,7 +1354,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
   return (
     <Desktop3ColumnLayout user={user} onNavigate={onNavigate} activeNav="casting">
-      <div className="min-h-screen bg-[#141414] text-white pb-24 font-sans select-none">
+      <div className="min-h-screen bg-[#FAF8F4] text-[#202923] pb-24 font-sans select-none">
         <SEO
           title={`${call.title} | NepalCasts Casting Call`}
           description={call.description}
@@ -1380,13 +1380,13 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               <button
                 type="button"
                 onClick={() => onNavigate ? onNavigate('back') : (window.history.length > 1 ? window.history.back() : window.location.assign('/casting'))}
-                className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
+                className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-[#626860] hover:text-[#202923] hover:bg-[#F3F0E9] transition-colors cursor-pointer shrink-0"
                 title="Back"
                 aria-label="Back"
               >
-                <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
+                <ChevronLeft className="w-6 h-6" strokeWidth={2} />
               </button>
-              <h1 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">
+              <h1 className="text-base sm:text-lg font-serif font-semibold text-[#202923] tracking-tight truncate">
                 Casting Call Details
               </h1>
             </div>
@@ -1396,30 +1396,30 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                 <button
                   type="button"
                   onClick={() => onNavigate ? onNavigate('casting-edit', castingId) : (window.location.href = `/casting/${castingId}/edit`)}
-                  className="w-10 h-10 rounded-full bg-[#522C69]/30 hover:bg-[#522C69]/50 border border-[#522C69]/50 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer shadow-sm"
+                  className="w-10 h-10 rounded-full bg-white hover:bg-[#F3F0E9] border border-[#E7E5E0] flex items-center justify-center text-[#194332] transition-all active:scale-95 cursor-pointer shadow-card"
                   title="Edit Casting Call"
                   aria-label="Edit Casting Call"
                 >
-                  <Edit3 className="w-4 h-4 text-white" />
+                  <Edit3 className="w-4 h-4 text-[#194332]" />
                 </button>
               )}
               <button
                 type="button"
                 onClick={handleShare}
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer"
+                className="w-10 h-10 rounded-full bg-white hover:bg-[#F3F0E9] border border-[#E7E5E0] flex items-center justify-center text-[#202923] transition-all active:scale-95 cursor-pointer shadow-card"
                 title="Share"
                 aria-label="Share"
               >
-                <Share2 className="w-4 h-4 text-white" />
+                <Share2 className="w-4 h-4 text-[#202923]" />
               </button>
               <button
                 type="button"
                 onClick={handleToggleSave}
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer"
+                className="w-10 h-10 rounded-full bg-white hover:bg-[#F3F0E9] border border-[#E7E5E0] flex items-center justify-center text-[#202923] transition-all active:scale-95 cursor-pointer shadow-card"
                 title="Save"
                 aria-label="Save"
               >
-                <Bookmark className={`w-4 h-4 ${saved ? 'fill-[#522C69] text-[#522C69]' : 'text-white'}`} />
+                <Bookmark className={`w-4 h-4 ${saved ? 'fill-[#194332] text-[#194332]' : 'text-[#777C75]'}`} />
               </button>
             </div>
           </div>
@@ -1433,15 +1433,10 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
             />
           )}
 
-          {/* Casting Call Thumbnail Banner (Uncropped & Full Poster View) */}
-          <div className="relative w-full max-w-[280px] sm:max-w-[320px] mx-auto rounded-2xl overflow-hidden bg-[#0a0a0c] border border-white/10 shadow-2xl -mt-1 flex items-center justify-center">
+          {/* Casting Call Thumbnail Banner */}
+          <div className="relative w-full max-w-[280px] sm:max-w-[320px] mx-auto rounded-2xl overflow-hidden bg-white border border-[#E7E5E0] shadow-card -mt-1 flex items-center justify-center">
             {bannerImage ? (
               <>
-                {/* Ambient blurred backdrop */}
-                <div
-                  className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110 pointer-events-none"
-                  style={{ backgroundImage: `url(${getOptimizedImageUrl(bannerImage, { width: 100, quality: 'eco', format: 'auto' })})` }}
-                />
                 <img
                   src={getOptimizedImageUrl(bannerImage, { width: 640, quality: 'auto', format: 'auto' })}
                   srcSet={getImageSrcSet(bannerImage, [320, 640, 960])}
@@ -1460,19 +1455,17 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
             ) : null}
 
             <div
-              className="default-clapper-banner w-full h-40 flex flex-col items-center justify-center bg-gradient-to-b from-[#1a1f2e] to-[#0d0d12] p-4 text-center"
+              className="default-clapper-banner w-full h-40 flex flex-col items-center justify-center bg-[#F3F0E9] p-4 text-center"
               style={{ display: bannerImage ? 'none' : 'flex' }}
             >
-              <Clapperboard className="w-10 h-10 text-white/40 mb-1.5" />
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{call.category || 'Casting Call'}</span>
+              <Clapperboard className="w-10 h-10 text-[#777C75] mb-1.5" />
+              <span className="text-xs font-semibold text-[#626860] uppercase tracking-wider">{call.category || 'Casting Call'}</span>
             </div>
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none z-10" />
           </div>
 
           {/* Category Tag Pill */}
           <div>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-white font-apple font-semibold text-xs tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-[#E7E5E0] text-[#194332] font-semibold text-xs tracking-wider shadow-card">
               <span>🎬</span>
               <span>{call.category || 'Short Film'}</span>
             </span>
@@ -1480,17 +1473,17 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
           {/* Title and Location/Date Meta */}
           <div className="space-y-2.5">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-serif font-semibold text-[#202923] tracking-tight leading-tight">
               {call.title}
             </h1>
 
-            <div className="flex items-center gap-4 text-xs sm:text-sm text-neutral-400 font-medium flex-wrap">
-              <span className="flex items-center gap-1.5 text-neutral-300">
-                <MapPin className="w-4 h-4 text-white" />
+            <div className="flex items-center gap-4 text-xs sm:text-sm text-[#626860] font-medium flex-wrap">
+              <span className="flex items-center gap-1.5 text-[#414840]">
+                <MapPin className="w-4 h-4 text-[#194332]" />
                 <span>{call.location || 'Kathmandu, Nepal'}</span>
               </span>
-              <span className="flex items-center gap-1.5 text-neutral-300">
-                <Calendar className="w-4 h-4 text-white" />
+              <span className="flex items-center gap-1.5 text-[#414840]">
+                <Calendar className="w-4 h-4 text-[#194332]" />
                 <span>Posted {postedTimeAgo}</span>
               </span>
             </div>
@@ -1499,10 +1492,10 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           {/* Section 1: About the Role */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center gap-3">
-              <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">About the Role</h2>
-              <div className="h-[1px] bg-white/10 flex-1" />
+              <h2 className="text-base sm:text-lg font-serif font-semibold text-[#202923] whitespace-nowrap">About the Role</h2>
+              <div className="h-[1px] bg-[#E7E5E0] flex-1" />
             </div>
-            <p className="text-neutral-300 text-sm sm:text-base leading-relaxed whitespace-pre-line font-normal">
+            <p className="text-[#414840] text-sm sm:text-base leading-relaxed whitespace-pre-line font-normal">
               {call.description || `We are looking for talent for the role in ${call.title}.`}
             </p>
           </div>
@@ -1512,12 +1505,12 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">Roles Available</h2>
-                  <span className="px-2 py-0.5 rounded-full bg-[#522C69]/30 border border-[#522C69]/50 text-[#ba7fd6] text-xs font-bold">
+                  <h2 className="text-base sm:text-lg font-serif font-semibold text-[#202923] whitespace-nowrap">Roles Available</h2>
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#EAF2ED] border border-[#194332]/20 text-[#194332] text-xs font-semibold">
                     {allRoles.length} {allRoles.length === 1 ? 'Role' : 'Roles'}
                   </span>
                 </div>
-                <div className="h-[1px] bg-white/10 flex-1" />
+                <div className="h-[1px] bg-[#E7E5E0] flex-1" />
               </div>
 
               <div className="grid grid-cols-1 gap-3 pt-1">
@@ -1531,32 +1524,32 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   return (
                     <div
                       key={idx}
-                      className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-all space-y-2.5 text-left"
+                      className="p-4 rounded-xl bg-white border border-[#E7E5E0] shadow-card space-y-2.5 text-left"
                     >
                       <div className="flex items-start justify-between gap-3 flex-wrap sm:flex-nowrap">
                         <div className="space-y-1.5 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-base font-bold text-white tracking-tight">
+                            <h3 className="text-base font-semibold text-[#202923] tracking-tight">
                               {roleName}
                             </h3>
                             {rolePay && (
-                              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded bg-[#EAF2ED] text-[#194332] border border-[#194332]/20">
                                 {rolePay}
                               </span>
                             )}
                           </div>
 
                           {/* Role Tags */}
-                          <div className="flex items-center gap-2 flex-wrap text-xs text-neutral-400">
+                          <div className="flex items-center gap-2 flex-wrap text-xs text-[#626860]">
                             {roleAge && (
-                              <span className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-md text-neutral-300 text-xs">
-                                <Calendar className="w-3.5 h-3.5 text-white" />
+                              <span className="inline-flex items-center gap-1.5 bg-[#F3F0E9] border border-[#E7E5E0] px-2.5 py-0.5 rounded-md text-[#414840] text-xs">
+                                <Calendar className="w-3.5 h-3.5 text-[#194332]" />
                                 <span>{roleAge}</span>
                               </span>
                             )}
                             {roleGender && (
-                              <span className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-md text-neutral-300 text-xs">
-                                <User className="w-3.5 h-3.5 text-white" />
+                              <span className="inline-flex items-center gap-1.5 bg-[#F3F0E9] border border-[#E7E5E0] px-2.5 py-0.5 rounded-md text-[#414840] text-xs">
+                                <User className="w-3.5 h-3.5 text-[#194332]" />
                                 <span>{roleGender}</span>
                               </span>
                             )}
@@ -1565,7 +1558,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                       </div>
 
                       {roleDesc && (
-                        <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed font-normal bg-black/25 p-3 rounded-xl border border-white/5">
+                        <p className="text-xs sm:text-sm text-[#626860] leading-relaxed font-normal bg-[#FAF8F4] p-3 rounded-lg border border-[#E7E5E0]">
                           {roleDesc}
                         </p>
                       )}
@@ -1579,44 +1572,44 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           {/* Section 2: Role Details */}
           <div className="space-y-3.5 pt-2">
             <div className="flex items-center gap-3">
-              <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">Role Details</h2>
-              <div className="h-[1px] bg-white/10 flex-1" />
+              <h2 className="text-base sm:text-lg font-serif font-semibold text-[#202923] whitespace-nowrap">Role Details</h2>
+              <div className="h-[1px] bg-[#E7E5E0] flex-1" />
             </div>
             <div className="space-y-3 pt-1">
               <div className="flex items-center justify-between text-sm sm:text-base">
-                <span className="flex items-center gap-2.5 text-neutral-400">
-                  <User className="w-4 h-4 text-white" />
+                <span className="flex items-center gap-2.5 text-[#626860]">
+                  <User className="w-4 h-4 text-[#194332]" />
                   <span>Gender</span>
                 </span>
-                <span className="font-semibold text-white">{displayGender}</span>
+                <span className="font-semibold text-[#202923]">{displayGender}</span>
               </div>
               <div className="flex items-center justify-between text-sm sm:text-base">
-                <span className="flex items-center gap-2.5 text-neutral-400">
-                  <Calendar className="w-4 h-4 text-white" />
+                <span className="flex items-center gap-2.5 text-[#626860]">
+                  <Calendar className="w-4 h-4 text-[#194332]" />
                   <span>Age</span>
                 </span>
-                <span className="font-semibold text-white">{displayAge}</span>
+                <span className="font-semibold text-[#202923]">{displayAge}</span>
               </div>
               <div className="flex items-center justify-between text-sm sm:text-base">
-                <span className="flex items-center gap-2.5 text-neutral-400">
-                  <MapPin className="w-4 h-4 text-white" />
+                <span className="flex items-center gap-2.5 text-[#626860]">
+                  <MapPin className="w-4 h-4 text-[#194332]" />
                   <span>Location</span>
                 </span>
-                <span className="font-semibold text-white">{displayLocation}</span>
+                <span className="font-semibold text-[#202923]">{displayLocation}</span>
               </div>
               <div className="flex items-center justify-between text-sm sm:text-base">
-                <span className="flex items-center gap-2.5 text-neutral-400">
-                  <Star className="w-4 h-4 text-white" />
+                <span className="flex items-center gap-2.5 text-[#626860]">
+                  <Star className="w-4 h-4 text-[#194332]" />
                   <span>Experience</span>
                 </span>
-                <span className="font-semibold text-white">{displayExperience}</span>
+                <span className="font-semibold text-[#202923]">{displayExperience}</span>
               </div>
               <div className="flex items-center justify-between text-sm sm:text-base">
-                <span className="flex items-center gap-2.5 text-neutral-400">
-                  <Coins className="w-4 h-4 text-white" />
+                <span className="flex items-center gap-2.5 text-[#626860]">
+                  <Coins className="w-4 h-4 text-[#194332]" />
                   <span>Compensation</span>
                 </span>
-                <span className="font-semibold text-white">{displayCompensation}</span>
+                <span className="font-semibold text-[#202923]">{displayCompensation}</span>
               </div>
             </div>
           </div>
@@ -1625,13 +1618,13 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           {requirementsList.length > 0 && (
             <div className="space-y-3 pt-2">
               <div className="flex items-center gap-3">
-                <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">Requirements</h2>
-                <div className="h-[1px] bg-white/10 flex-1" />
+                <h2 className="text-base sm:text-lg font-serif font-semibold text-[#202923] whitespace-nowrap">Requirements</h2>
+                <div className="h-[1px] bg-[#E7E5E0] flex-1" />
               </div>
-              <ul className="space-y-2 text-sm sm:text-base text-neutral-300 pt-1">
+              <ul className="space-y-2 text-sm sm:text-base text-[#414840] pt-1">
                 {requirementsList.map((req: string, idx: number) => (
                   <li key={idx} className="flex items-start gap-3">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/80 shrink-0 mt-2" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#194332] shrink-0 mt-2" />
                     <span>{req}</span>
                   </li>
                 ))}
@@ -1642,23 +1635,23 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           {/* Section 4: Audition */}
           <div className="space-y-3.5 pt-2">
             <div className="flex items-center gap-3">
-              <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">Audition</h2>
-              <div className="h-[1px] bg-white/10 flex-1" />
+              <h2 className="text-base sm:text-lg font-serif font-semibold text-[#202923] whitespace-nowrap">Audition</h2>
+              <div className="h-[1px] bg-[#E7E5E0] flex-1" />
             </div>
             <div className="space-y-3 pt-1">
               <div className="flex items-center justify-between text-sm sm:text-base">
-                <span className="flex items-center gap-2.5 text-neutral-400">
-                  <Calendar className="w-4 h-4 text-white" />
+                <span className="flex items-center gap-2.5 text-[#626860]">
+                  <Calendar className="w-4 h-4 text-[#194332]" />
                   <span>Audition</span>
                 </span>
-                <span className="font-semibold text-white">{fullDeadline}</span>
+                <span className="font-semibold text-[#202923]">{fullDeadline}</span>
               </div>
               <div className="flex items-center justify-between text-sm sm:text-base">
-                <span className="flex items-center gap-2.5 text-neutral-400">
-                  <MapPin className="w-4 h-4 text-white" />
+                <span className="flex items-center gap-2.5 text-[#626860]">
+                  <MapPin className="w-4 h-4 text-[#194332]" />
                   <span>Location</span>
                 </span>
-                <span className="font-semibold text-white">{call.auditionLocation || call.location || 'Kathmandu'}</span>
+                <span className="font-semibold text-[#202923]">{call.auditionLocation || call.location || 'Kathmandu'}</span>
               </div>
             </div>
           </div>
@@ -1666,8 +1659,8 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           {/* Section 5: Posted by */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center gap-3">
-              <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">Posted by</h2>
-              <div className="h-[1px] bg-white/10 flex-1" />
+              <h2 className="text-base sm:text-lg font-serif font-semibold text-[#202923] whitespace-nowrap">Posted by</h2>
+              <div className="h-[1px] bg-[#E7E5E0] flex-1" />
             </div>
             {(() => {
               const creatorTargetUid =
@@ -1727,7 +1720,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               return (
                 <div
                   onClick={handleViewCreatorProfile}
-                  className="flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 hover:border-white/15 transition-all cursor-pointer group"
+                  className="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-white hover:border-[#D5D1C7] border border-[#E7E5E0] shadow-card transition-all cursor-pointer group"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <Avatar
@@ -1738,19 +1731,17 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                     />
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <h4 className="font-bold text-white text-base truncate group-hover:text-[#522C69] transition-colors">
+                        <h4 className="font-semibold text-[#202923] text-base truncate group-hover:text-[#194332] transition-colors">
                           {creatorName}
                         </h4>
                         {isVerified && (
-                          <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0" style={{ width: '15px', height: '15px' }} title="Verified">
-                            <Check className="w-2.5 h-2.5 text-[#060709]" strokeWidth={3.5} />
-                          </span>
+                          <span className="text-[#194332] text-xs" title="Verified">✓</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-neutral-400 truncate">
+                      <div className="flex items-center gap-1.5 text-xs text-[#626860] truncate">
                         {creatorRole && <span>{creatorRole}</span>}
                         {creatorRole && creatorUsername && <span>•</span>}
-                        {creatorUsername && <span className="text-neutral-500">@{creatorUsername}</span>}
+                        {creatorUsername && <span className="text-[#777C75]">@{creatorUsername}</span>}
                       </div>
                     </div>
                   </div>
@@ -1759,7 +1750,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                     <button
                       type="button"
                       onClick={handleViewCreatorProfile}
-                      className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-[#522C69]/20 hover:border-[#522C69]/40 border border-white/10 text-xs font-semibold text-white transition-all cursor-pointer whitespace-nowrap"
+                      className="px-4 py-1.5 rounded-lg bg-white hover:bg-[#F3F0E9] border border-[#D5D1C7] text-xs font-semibold text-[#202923] transition-all cursor-pointer whitespace-nowrap shadow-sm"
                     >
                       View Profile
                     </button>
@@ -1771,15 +1762,15 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
           {/* Applications Received Section for Creator */}
           {isCreator && (
-            <div className="bg-black border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4 text-left shadow-2xl mt-4">
+            <div className="bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 space-y-4 text-left shadow-card mt-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                  <Inbox className="w-4 h-4 text-white" />
+                <h3 className="text-sm sm:text-base font-serif font-semibold text-[#202923] flex items-center gap-2">
+                  <Inbox className="w-4 h-4 text-[#194332]" />
                   <span>Applications Received ({apps.length})</span>
                 </h3>
                 <button
                   onClick={handlePrintRoster}
-                  className="text-[#522C69] text-xs font-bold flex items-center gap-1 cursor-pointer hover:underline"
+                  className="text-[#194332] text-xs font-semibold flex items-center gap-1 cursor-pointer hover:underline"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Print</span>
@@ -1811,9 +1802,9 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   <button
                     key={tab.id}
                     onClick={() => setPipelineFilter(tab.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${pipelineFilter === tab.id
-                      ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm shadow-[#522C69]/20'
-                      : 'bg-[#18181c] text-gray-400 border border-white/5'
+                    className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${pipelineFilter === tab.id
+                      ? 'bg-[#194332] text-white font-semibold shadow-sm'
+                      : 'bg-[#F3F0E9] text-[#626860] border border-[#E7E5E0] hover:text-[#202923]'
                       }`}
                   >
                     {tab.label}
@@ -1823,14 +1814,14 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
               {/* Multi-Role Filter if 2 or more roles */}
               {allRoles.length > 1 && (
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 border-t border-white/5 pt-2">
-                  <span className="text-[11px] font-semibold text-neutral-400 whitespace-nowrap pr-1">Filter Role:</span>
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 border-t border-[#E7E5E0] pt-2">
+                  <span className="text-[11px] font-semibold text-[#777C75] whitespace-nowrap pr-1">Filter Role:</span>
                   <button
                     type="button"
                     onClick={() => setRoleFilter('all')}
                     className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all ${roleFilter === 'all'
-                      ? 'bg-white text-black font-bold'
-                      : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'
+                      ? 'bg-[#194332] text-white font-semibold'
+                      : 'bg-[#F3F0E9] text-[#626860] hover:text-[#202923] border border-[#E7E5E0]'
                       }`}
                   >
                     All Roles ({apps.length})
@@ -1843,8 +1834,8 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                         type="button"
                         onClick={() => setRoleFilter(r.name)}
                         className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all whitespace-nowrap ${roleFilter.toLowerCase() === r.name.toLowerCase()
-                          ? 'bg-[#522C69] text-white font-bold border border-[#ba7fd6]'
-                          : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'
+                          ? 'bg-[#194332] text-white font-semibold'
+                          : 'bg-[#F3F0E9] text-[#626860] hover:text-[#202923] border border-[#E7E5E0]'
                           }`}
                       >
                         {r.name} ({count})
@@ -1855,9 +1846,9 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               )}
 
               {loadingApps ? (
-                <div className="py-8 text-center text-xs text-gray-500">Loading applicants...</div>
+                <div className="py-8 text-center text-xs text-[#777C75]">Loading applicants...</div>
               ) : apps.length === 0 ? (
-                <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
+                <div className="py-8 text-center text-xs text-[#777C75] border border-dashed border-[#E7E5E0] rounded-xl">
                   No applications received yet.
                 </div>
               ) : apps
@@ -1872,11 +1863,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   if (roleFilter === 'all') return true;
                   return (a.roleName || '').toLowerCase() === roleFilter.toLowerCase();
                 }).length === 0 ? (
-                <div className="py-8 text-center text-xs text-gray-500 border border-dashed border-white/5 rounded-xl">
+                <div className="py-8 text-center text-xs text-[#777C75] border border-dashed border-[#E7E5E0] rounded-xl">
                   No applicants in this category.
                 </div>
               ) : (
-                <div className="divide-y divide-white/5 space-y-3">
+                <div className="divide-y divide-[#E7E5E0] space-y-3">
                   {apps
                     .filter((a) => {
                       const st = (a.status || 'pending').toLowerCase();
@@ -1895,9 +1886,9 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                           <div className="flex items-center gap-2.5">
                             <Avatar userId={app.userId} src={app.userPhoto} name={app.userName} size="sm" />
                             <div>
-                              <span className="font-bold text-white block">{app.userName}</span>
+                              <span className="font-semibold text-[#202923] block">{app.userName}</span>
                               <div className="flex items-center gap-1.5 pt-0.5">
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#522C69]/30 border border-[#522C69]/50 text-[#ba7fd6] font-semibold">
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EAF2ED] border border-[#194332]/20 text-[#194332] font-semibold">
                                   {app.roleName || 'General Role'}
                                 </span>
                               </div>
@@ -1905,7 +1896,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                           </div>
                           <button
                             onClick={() => onNavigate('profile', app.userId)}
-                            className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 cursor-pointer"
+                            className="px-2.5 py-0.5 rounded-md bg-white border border-[#E7E5E0] text-[10px] text-[#202923] cursor-pointer hover:bg-[#F3F0E9]"
                           >
                             Profile
                           </button>
@@ -1917,20 +1908,20 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                             {(app.contactEmail || app.userEmail) && (
                               <a
                                 href={`mailto:${app.contactEmail || app.userEmail}`}
-                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
+                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FAF8F4] border border-[#E7E5E0] text-[#414840] hover:text-[#194332] transition-colors"
                                 title="Click to email applicant"
                               >
-                                <Mail className="w-3 h-3 text-white" />
+                                <Mail className="w-3 h-3 text-[#194332]" />
                                 <span>{app.contactEmail || app.userEmail}</span>
                               </a>
                             )}
                             {(app.contactPhone || app.userPhone || app.phone) && (
                               <a
                                 href={`tel:${app.contactPhone || app.userPhone || app.phone}`}
-                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white transition-colors"
+                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FAF8F4] border border-[#E7E5E0] text-[#414840] hover:text-[#194332] transition-colors"
                                 title="Click to call applicant"
                               >
-                                <Phone className="w-3 h-3 text-emerald-400" />
+                                <Phone className="w-3 h-3 text-[#286847]" />
                                 <span>{app.contactPhone || app.userPhone || app.phone}</span>
                               </a>
                             )}
@@ -1938,7 +1929,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                         )}
 
                         {app.coverNote && (
-                          <p className="text-gray-300 italic bg-white/[0.04] p-2.5 rounded-xl text-[11px] leading-relaxed border border-white/5">
+                          <p className="text-[#414840] italic bg-[#FAF8F4] p-2.5 rounded-xl text-[11px] leading-relaxed border border-[#E7E5E0]">
                             "{app.coverNote}"
                           </p>
                         )}
@@ -1955,13 +1946,13 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                           return (
                             <div className="flex flex-wrap items-center gap-2 pt-1">
                               {directFileUrl && (
-                                <div className="inline-flex items-center gap-2 p-1.5 px-3 rounded-xl bg-white/[0.06] border border-white/10 hover:border-white/20 transition-all">
+                                <div className="inline-flex items-center gap-2 p-1.5 px-3 rounded-xl bg-white border border-[#E7E5E0] hover:border-[#D5D1C7] transition-all shadow-card">
                                   {isVideo ? (
-                                    <Video className="w-4 h-4 text-white shrink-0" />
+                                    <Video className="w-4 h-4 text-[#194332] shrink-0" />
                                   ) : (
-                                    <FileText className="w-4 h-4 text-white shrink-0" />
+                                    <FileText className="w-4 h-4 text-[#194332] shrink-0" />
                                   )}
-                                  <span className="text-xs font-semibold text-white truncate max-w-[130px] sm:max-w-[180px]">
+                                  <span className="text-xs font-semibold text-[#202923] truncate max-w-[130px] sm:max-w-[180px]">
                                     {app.fileName || (isVideo ? 'Video_Audition.mov' : isPdf ? 'Portfolio.pdf' : 'Attachment')}
                                   </span>
 
@@ -1972,10 +1963,10 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                         setPreviewPdfUrl(directFileUrl);
                                         setPreviewPdfName(app.fileName || `${app.userName || 'Applicant'}_Portfolio.pdf`);
                                       }}
-                                      className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] text-white font-bold transition-all cursor-pointer flex items-center gap-1"
+                                      className="px-2 py-1 rounded-md bg-[#F3F0E9] hover:bg-[#E7E5E0] text-[11px] text-[#202923] font-semibold transition-all cursor-pointer flex items-center gap-1"
                                       title="Preview PDF"
                                     >
-                                      <Eye className="w-3 h-3 text-white" />
+                                      <Eye className="w-3 h-3 text-[#194332]" />
                                       <span>View</span>
                                     </button>
                                   )}
@@ -1983,10 +1974,10 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                   <button
                                     type="button"
                                     onClick={() => handleDownloadMedia(directFileUrl, app.fileName || `${app.userName || 'Applicant'}_media`)}
-                                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-[11px] text-white font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                                    className="px-2.5 py-1 rounded-md bg-[#F3F0E9] hover:bg-[#E7E5E0] active:scale-95 text-[11px] text-[#202923] font-semibold transition-all cursor-pointer flex items-center gap-1 shadow-sm"
                                     title="Download file"
                                   >
-                                    <Download className="w-3.5 h-3.5 text-white" />
+                                    <Download className="w-3.5 h-3.5 text-[#194332]" />
                                     <span>Download</span>
                                   </button>
                                 </div>
@@ -1998,11 +1989,11 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                                   href={reelUrl.startsWith('http') ? reelUrl : `https://${reelUrl}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs text-white font-semibold hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#E7E5E0] text-xs text-[#202923] font-semibold hover:bg-[#F3F0E9] active:scale-95 transition-all cursor-pointer shadow-card"
                                 >
-                                  <Video className="w-3.5 h-3.5 text-white" />
+                                  <Video className="w-3.5 h-3.5 text-[#194332]" />
                                   <span className="truncate max-w-[140px]">Reel / Link</span>
-                                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                                  <ExternalLink className="w-3 h-3 text-[#777C75]" />
                                 </a>
                               )}
                             </div>
@@ -2010,7 +2001,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                         })()}
 
                         <div className="flex items-center justify-between pt-1">
-                          <span className="text-[10px] text-gray-500">{app.appliedAtFormatted}</span>
+                          <span className="text-[10px] text-[#777C75]">{app.appliedAtFormatted}</span>
                           <div className="flex items-center gap-1.5">
                             {[
                               { id: 'shortlisted', label: 'Shortlist' },
@@ -2020,9 +2011,9 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                               <button
                                 key={st.id}
                                 onClick={() => handleUpdateAppStatus(app.id, st.id)}
-                                className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase transition-all cursor-pointer ${app.status === st.id
-                                  ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border border-[#522C69]'
-                                  : 'bg-white/5 text-gray-400 border border-white/10'
+                                className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold uppercase transition-all cursor-pointer ${app.status === st.id
+                                  ? 'bg-[#194332] text-white border border-[#194332]'
+                                  : 'bg-white text-[#626860] border border-[#E7E5E0] hover:bg-[#F3F0E9]'
                                   }`}
                               >
                                 {st.label}
@@ -2041,14 +2032,14 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
           <div className="pt-3 pb-8">
             {isCreator ? (
               <div className="space-y-2.5">
-                <div className="w-full py-3.5 px-4 rounded-2xl bg-white/5 border border-white/10 text-center text-xs font-bold text-gray-300">
+                <div className="w-full py-3.5 px-4 rounded-xl bg-white border border-[#E7E5E0] text-center text-xs font-semibold text-[#414840] shadow-card">
                   You created this casting call ({apps.length} {apps.length === 1 ? 'applicant' : 'applicants'})
                 </div>
                 <div className="flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={() => onNavigate ? onNavigate('casting-edit', castingId) : (window.location.href = `/casting/${castingId}/edit`)}
-                    className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[#522C69] to-[#522C69]/40 hover:from-[#663782] hover:to-[#522C69]/60 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95"
+                    className="flex-1 py-3 px-4 rounded-lg bg-[#194332] hover:bg-[#102F28] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
                     title="Edit Casting Call"
                   >
                     <Edit3 className="w-4 h-4 text-white" />
@@ -2058,7 +2049,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                     type="button"
                     onClick={handleDelete}
                     disabled={deleting}
-                    className="py-3 px-4 rounded-xl bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-gray-400 hover:text-red-400 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                    className="py-3 px-4 rounded-lg bg-white hover:bg-[#FEE4E2] border border-[#E7E5E0] hover:border-[#B42318]/30 text-[#B42318] text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-card active:scale-95 disabled:opacity-50"
                     title="Delete Casting Call"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -2069,14 +2060,14 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
             ) : applied ? (
               <div className="flex items-center gap-2.5 sm:gap-3 w-full">
                 <div
-                  className={`flex-1 py-4 px-4 rounded-2xl text-center font-bold text-sm flex items-center justify-center gap-2 border shadow-sm ${applicationStatus === 'accepted'
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                  className={`flex-1 py-3.5 px-4 rounded-lg text-center font-semibold text-sm flex items-center justify-center gap-2 border shadow-card ${applicationStatus === 'accepted'
+                    ? 'bg-[#EAF2ED] text-[#194332] border-[#194332]/30'
                     : applicationStatus === 'rejected'
-                      ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                      : 'bg-white text-black border-white'
+                      ? 'bg-[#FEE4E2] text-[#B42318] border-[#B42318]/30'
+                      : 'bg-white text-[#202923] border-[#E7E5E0]'
                     }`}
                 >
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-[#194332]" />
                   <span className="truncate">
                     {applicationStatus === 'accepted'
                       ? 'Application Accepted'
@@ -2089,7 +2080,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                   <button
                     onClick={handleCancelApplication}
                     disabled={cancelling}
-                    className="py-4 px-5 rounded-2xl border border-white/30 bg-white/10 text-white text-sm font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50"
+                    className="py-3.5 px-5 rounded-lg border border-[#D5D1C7] bg-white hover:bg-[#F3F0E9] text-[#202923] text-sm font-semibold transition-all cursor-pointer whitespace-nowrap active:scale-95 shadow-card disabled:opacity-50"
                   >
                     {cancelling ? 'Withdrawing...' : 'Withdraw Application'}
                   </button>
@@ -2098,7 +2089,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
             ) : isExpired ? (
               <button
                 disabled
-                className="w-full py-4 px-6 rounded-2xl bg-white/5 border border-white/10 text-gray-500 font-bold text-base text-center cursor-not-allowed"
+                className="w-full py-4 px-6 rounded-lg bg-[#F3F0E9] border border-[#E7E5E0] text-[#777C75] font-semibold text-base text-center cursor-not-allowed"
               >
                 Audition Closed
               </button>
@@ -2106,7 +2097,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               <button
                 onClick={() => openApplyModal()}
                 disabled={applying}
-                className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold text-base sm:text-lg flex items-center justify-center gap-2 shadow-xl transition-all active:scale-[0.98] cursor-pointer"
+                className="w-full py-4 px-6 rounded-lg bg-[#194332] hover:bg-[#102F28] text-white font-semibold text-base sm:text-lg flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
               >
                 <span>{applying ? 'Submitting...' : 'Apply for Casting'}</span>
               </button>
@@ -2116,13 +2107,13 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
 
         {/* In-App PDF Portfolio Viewer Modal */}
         {previewPdfUrl && (
-          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
-            <div className="bg-[#18181c] border border-white/10 rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+          <div className="fixed inset-0 z-50 bg-[#202923]/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+            <div className="bg-[#FAF8F4] border border-[#E7E5E0] rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col shadow-dropdown overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/40">
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#E7E5E0] bg-white">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <FileText className="w-4 h-4 text-white shrink-0" />
-                  <span className="text-xs sm:text-sm font-bold text-white truncate">
+                  <FileText className="w-4 h-4 text-[#194332] shrink-0" />
+                  <span className="text-xs sm:text-sm font-semibold text-[#202923] truncate">
                     {previewPdfName || 'Applicant Portfolio PDF'}
                   </span>
                 </div>
@@ -2131,9 +2122,9 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                     href={previewPdfUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors"
+                    className="px-3 py-1.5 rounded-lg bg-white hover:bg-[#F3F0E9] border border-[#D5D1C7] text-xs font-semibold text-[#202923] flex items-center gap-1.5 transition-colors shadow-sm"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-3.5 h-3.5 text-[#194332]" />
                     <span className="hidden sm:inline">Open in New Tab</span>
                   </a>
                   <button
@@ -2141,7 +2132,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
                       setPreviewPdfUrl(null);
                       setPreviewPdfName(null);
                     }}
-                    className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-300 hover:text-white transition-colors cursor-pointer"
+                    className="w-8 h-8 rounded-full bg-[#F3F0E9] hover:bg-[#E7E5E0] flex items-center justify-center text-[#202923] transition-colors cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -2149,7 +2140,7 @@ export default function CastingCallDetail({ onNavigate, castingId, user, showAle
               </div>
 
               {/* PDF Preview Frame */}
-              <div className="flex-1 bg-[#101014] relative">
+              <div className="flex-1 bg-white relative">
                 <iframe
                   src={previewPdfUrl.includes('google.com') ? previewPdfUrl : `https://docs.google.com/viewer?url=${encodeURIComponent(previewPdfUrl)}&embedded=true`}
                   className="w-full h-full border-0"

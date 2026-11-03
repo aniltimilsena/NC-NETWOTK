@@ -92,43 +92,43 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
     return (<form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
       
       {/* Photo Section */}
-      <div className="bg-[#0E0E0E] border-0 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-5 items-center">
+      <div className="bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-5 items-center">
         <Avatar src={profile.image || profile.photoURL || CurrentUser.imageUrl || null} gender={profile.gender || ''} name={name} size="lg" editable={true} userId={profile.uid} onUploadSuccess={(url: string) => onUpdate({ image: url, photoURL: url })} showAlert={showAlert}/>
         <div className="text-center sm:text-left space-y-1">
-          <h3 className="text-base font-bold text-white">Profile Photo</h3>
+          <h3 className="text-base font-bold text-[#202923]">Profile Photo</h3>
         </div>
       </div>
 
       {/* Info Form Section */}
-      <div className="bg-[#0E0E0E] border-0 rounded-2xl p-4 sm:p-5 space-y-4">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <User className="w-4 h-4 text-white"/>
+      <div className="bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 space-y-4">
+        <h2 className="text-lg font-bold text-[#202923] flex items-center gap-2">
+          <User className="w-4 h-4 text-[#194332]"/>
           Basic Profile Information
         </h2>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           
           <div className="space-y-1.5 text-left">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Full Name</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"/>
+            <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Full Name</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none transition-all"/>
           </div>
 
           
           <div className="space-y-1.5 text-left">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Location</label>
-            <input type="text" value={location} placeholder="e.g. Kathmandu, Nepal" onChange={(e) => setLocation(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all"/>
+            <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Location</label>
+            <input type="text" value={location} placeholder="e.g. Kathmandu, Nepal" onChange={(e) => setLocation(e.target.value)} className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none transition-all"/>
           </div>
 
           
           <div className="space-y-1.5 text-left">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Role / Specialty</label>
+            <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Role / Specialty</label>
             <select
               value={role || category}
               onChange={(e) => {
                 setCategory(e.target.value);
                 setRole(e.target.value);
               }}
-              className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all appearance-none cursor-pointer"
+              className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] outline-none transition-all appearance-none cursor-pointer"
             >
               <option value="" disabled>Select Specialty</option>
               {CATEGORIES.map((opt) => {
@@ -143,8 +143,8 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
 
           
           <div className="space-y-1.5 text-left">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Gender</label>
-            <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all appearance-none cursor-pointer">
+            <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Gender</label>
+            <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] outline-none transition-all appearance-none cursor-pointer">
               <option value="">Select Gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -155,47 +155,47 @@ export default function ProfileSettings({ profile, onUpdate, showAlert }: Profil
         </div>
 
         <div className="space-y-1.5 text-left">
-          <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Bio</label>
-          <textarea rows={4} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Write a short summary about your professional background, acting range, and interests..." className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/20 outline-none transition-all resize-none"/>
+          <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Bio</label>
+          <textarea rows={4} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Write a short summary about your professional background, acting range, and interests..." className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] placeholder-[#777C75] outline-none transition-all resize-none"/>
         </div>
       </div>
 
       {/* Physical Appearance Section */}
-      <div className="bg-[#0E0E0E] border-0 rounded-2xl p-4 sm:p-5 space-y-4">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <User className="w-4 h-4 text-white"/>
+      <div className="bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 space-y-4">
+        <h2 className="text-lg font-bold text-[#202923] flex items-center gap-2">
+          <User className="w-4 h-4 text-[#194332]"/>
           Physical Appearance
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="space-y-1.5 text-left">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Height</label>
-            <input type="text" value={height} placeholder={"e.g. 5'10 ft"} onChange={(e) => setHeight(e.target.value)} onBlur={handleHeightBlur} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
+            <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Height</label>
+            <input type="text" value={height} placeholder={"e.g. 5'10 ft"} onChange={(e) => setHeight(e.target.value)} onBlur={handleHeightBlur} className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] outline-none transition-all"/>
           </div>
           <div className="space-y-1.5 text-left">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Weight</label>
-            <input type="text" value={weight} placeholder="e.g. 70 kg" onChange={(e) => setWeight(e.target.value)} onBlur={handleWeightBlur} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
+            <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Weight</label>
+            <input type="text" value={weight} placeholder="e.g. 70 kg" onChange={(e) => setWeight(e.target.value)} onBlur={handleWeightBlur} className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] outline-none transition-all"/>
           </div>
           <div className="space-y-1.5 text-left">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Eye Color</label>
-            <input type="text" value={eyeColor} placeholder="e.g. Brown" onChange={(e) => setEyeColor(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
+            <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Eye Color</label>
+            <input type="text" value={eyeColor} placeholder="e.g. Brown" onChange={(e) => setEyeColor(e.target.value)} className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] outline-none transition-all"/>
           </div>
           <div className="space-y-1.5 text-left">
-            <label className="text-[10px] text-nc-muted uppercase tracking-wider font-bold block">Hair Color</label>
-            <input type="text" value={hairColor} placeholder="e.g. Black" onChange={(e) => setHairColor(e.target.value)} className="w-full bg-[#16161a] border border-white/10 focus:border-[#522C69] rounded-xl px-3.5 py-2 text-xs text-white outline-none transition-all"/>
+            <label className="text-[10px] text-[#777C75] uppercase tracking-wider font-bold block">Hair Color</label>
+            <input type="text" value={hairColor} placeholder="e.g. Black" onChange={(e) => setHairColor(e.target.value)} className="w-full bg-[#FAF8F4] border border-[#E7E5E0] focus:border-[#194332] rounded-xl px-3.5 py-2 text-xs text-[#202923] outline-none transition-all"/>
           </div>
         </div>
       </div>
 
       {/* Visibility Section */}
-      <div className="bg-[#0E0E0E] border-0 rounded-2xl p-4 sm:p-5 flex justify-between items-center">
+      <div className="bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-5 flex justify-between items-center">
         <div className="text-left space-y-1">
-          <h3 className="text-sm font-bold text-white">Show Contact Info</h3>
-          <p className="text-xs text-nc-muted leading-relaxed">
+          <h3 className="text-sm font-bold text-[#202923]">Show Contact Info</h3>
+          <p className="text-xs text-[#777C75] leading-relaxed">
             Allow casting directors and verified actors to view your contact information (email/phone).
           </p>
         </div>
-        <button type="button" onClick={() => setShowContactInfo(!showContactInfo)} className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none cursor-pointer ${showContactInfo ? 'bg-[#522C69]' : 'bg-white/10'}`}>
-          <div className={`w-4 h-4 rounded-full bg-black transition-transform duration-300 ${showContactInfo ? 'translate-x-6' : 'translate-x-0'}`}/>
+        <button type="button" onClick={() => setShowContactInfo(!showContactInfo)} className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none cursor-pointer ${showContactInfo ? 'bg-[#194332]' : 'bg-[#E7E5E0]'}`}>
+          <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${showContactInfo ? 'translate-x-6' : 'translate-x-0'}`}/>
         </button>
       </div>
 

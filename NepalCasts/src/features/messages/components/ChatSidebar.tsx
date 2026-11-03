@@ -164,27 +164,27 @@ export default function ChatSidebar({
   ];
 
   return (
-    <div className="w-full h-full bg-[#0d0d0f] border-r border-white/5 flex flex-col shrink-0 select-none">
+    <div className="w-full h-full bg-[#FAF8F4] border-r border-[#E7E5E0] flex flex-col shrink-0 select-none font-inter">
       {/* Top Header */}
-      <div className="p-4 sm:p-5 pb-3 border-b border-white/5 space-y-4">
+      <div className="p-4 sm:p-5 pb-3 border-b border-[#E7E5E0] bg-white space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={handleBack}
               type="button"
-              className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
+              className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-[#626860] hover:text-[#202923] hover:bg-[#F3F0E9] transition-colors cursor-pointer shrink-0"
               title="Back"
               aria-label="Back"
             >
-              <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
+              <ChevronLeft className="w-6 h-6 text-[#202923]" strokeWidth={2.2} />
             </button>
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            <h1 className="font-display text-xl sm:text-2xl font-semibold text-[#202923] tracking-tight">
               Messages
             </h1>
           </div>
           <button
             onClick={onStartNewChat}
-            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all cursor-pointer"
+            className="w-8 h-8 rounded-full bg-[#FAF8F4] hover:bg-[#F3F0E9] border border-[#E7E5E0] flex items-center justify-center text-[#202923] transition-all cursor-pointer"
             title="New Conversation"
           >
             <Plus className="w-4 h-4" />
@@ -193,18 +193,18 @@ export default function ChatSidebar({
 
         {/* Search Input Bar */}
         <div className="relative">
-          <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#777C75] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search messages or applications..."
-            className="w-full bg-[#18181c] border border-white/5 rounded-xl pl-10 pr-9 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#522C69]/50 focus:border-[#522C69]/50 transition-all"
+            className="w-full bg-[#FAF8F4] border border-[#E7E5E0] rounded-xl pl-10 pr-9 py-2.5 text-sm text-[#202923] placeholder-[#777C75] focus:outline-none focus:ring-1 focus:ring-[#194332] focus:border-[#194332] transition-all"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#777C75] hover:text-[#202923]"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -221,14 +221,14 @@ export default function ChatSidebar({
                 onClick={() => setActiveFilter(tab.id)}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                   isActive
-                    ? 'bg-[#522C69] text-white shadow-sm shadow-[#522C69]/30'
-                    : 'bg-[#18181c] text-gray-400 hover:text-white border border-white/5 hover:border-white/15'
+                    ? 'bg-[#194332] text-white shadow-sm'
+                    : 'bg-[#FAF8F4] text-[#626860] hover:text-[#202923] border border-[#E7E5E0] hover:bg-[#F3F0E9]'
                 }`}
               >
                 <span>{tab.label}</span>
                 {tab.count !== undefined && (
                   <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-white/10 text-gray-300'
+                    isActive ? 'bg-white/20 text-white' : 'bg-[#E7E5E0] text-[#414840]'
                   }`}>
                     {tab.count}
                   </span>
@@ -242,7 +242,7 @@ export default function ChatSidebar({
       {/* Conversations List */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {filteredConversations.length > 0 ? (
-          <div className="flex flex-col divide-y divide-white/[0.03]">
+          <div className="flex flex-col divide-y divide-[#E7E5E0]">
             {filteredConversations.map((c) => {
               const isSelected = c.id === activeChatId || c.otherParticipantId === activeChatId;
               const unreadCount = c.unreadCounts?.[currentUser?.uid] || 0;
@@ -277,8 +277,8 @@ export default function ChatSidebar({
                   }}
                   className={`flex items-center gap-3.5 px-4 sm:px-5 py-3.5 cursor-pointer transition-all duration-150 active:scale-[0.99] ${
                     isSelected
-                      ? 'bg-white/[0.08]'
-                      : 'bg-transparent hover:bg-white/[0.03]'
+                      ? 'bg-white shadow-sm'
+                      : 'bg-transparent hover:bg-white/60'
                   }`}
                 >
                   <Avatar
@@ -287,25 +287,25 @@ export default function ChatSidebar({
                     name={c.name}
                     size="md"
                     showStatus={true}
-                    className="!w-13 !h-13 sm:!w-14 sm:!h-14 shrink-0 rounded-full"
+                    className="!w-13 !h-13 sm:!w-14 sm:!h-14 shrink-0 rounded-full border border-[#E7E5E0]"
                   />
                   <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
                     <div className="flex items-center gap-2">
-                      <span className="text-[15px] font-medium text-white truncate leading-tight">
+                      <span className="text-[15px] font-semibold text-[#202923] truncate leading-tight">
                         {c.name || 'User'}
                       </span>
                       {isAppConvo && (
-                        <span className="text-[9px] font-bold text-purple-300 bg-[#522C69]/30 border border-[#522C69]/40 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
+                        <span className="text-[9px] font-semibold text-[#194332] bg-[#EAF2ED] border border-[#194332]/20 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
                           {c.roleName || 'Audition'}
                         </span>
                       )}
                     </div>
                     {c.castingTitle && isAppConvo && (
-                      <span className="text-[11px] text-gray-400 truncate mt-0.5 block font-medium">
+                      <span className="text-[11px] text-[#626860] truncate mt-0.5 block font-medium">
                         {c.castingTitle}
                       </span>
                     )}
-                    <p className="text-[13px] text-gray-400 truncate font-normal mt-1 leading-snug">
+                    <p className="text-[13px] text-[#626860] truncate font-normal mt-1 leading-snug">
                       {formatLastMessage(c.lastMessage) || (
                         <span className="italic opacity-50 text-xs">No messages yet</span>
                       )}
@@ -314,15 +314,15 @@ export default function ChatSidebar({
                   <div className="flex flex-col items-end justify-center gap-1.5 shrink-0 ml-2 self-start pt-1">
                     {timeString && (
                       <span
-                        className={`text-xs font-medium whitespace-nowrap leading-none ${
-                          unreadCount > 0 ? 'text-[#522C69] font-semibold' : 'text-gray-500'
+                        className={`text-xs whitespace-nowrap leading-none ${
+                          unreadCount > 0 ? 'text-[#194332] font-semibold' : 'text-[#777C75]'
                         }`}
                       >
                         {timeString}
                       </span>
                     )}
                     {unreadCount > 0 && (
-                      <span className="min-w-[18px] h-4.5 px-1.5 rounded-full bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-extrabold text-[10px] flex items-center justify-center shadow-sm shadow-[#522C69]/30 leading-none">
+                      <span className="min-w-[18px] h-4.5 px-1.5 rounded-full bg-[#194332] text-white font-bold text-[10px] flex items-center justify-center shadow-sm leading-none">
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </span>
                     )}
@@ -333,17 +333,17 @@ export default function ChatSidebar({
           </div>
         ) : (
           <div className="py-16 px-6 text-center flex flex-col items-center justify-center space-y-2">
-            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-500 mb-1">
-              <MessageSquare className="w-5 h-5 text-gray-500" />
+            <div className="w-12 h-12 rounded-full bg-white border border-[#E7E5E0] flex items-center justify-center text-[#777C75] mb-1 shadow-sm">
+              <MessageSquare className="w-5 h-5 text-[#777C75]" />
             </div>
-            <p className="text-sm font-medium text-gray-300">
+            <p className="text-sm font-medium text-[#202923]">
               {query
                 ? 'No matching messages or applications'
                 : (activeFilter === 'applications'
                   ? 'No casting applications yet'
                   : 'No messages in this category')}
             </p>
-            <p className="text-xs text-gray-500 max-w-xs">
+            <p className="text-xs text-[#777C75] max-w-xs">
               {query
                 ? 'Try searching with a different keyword.'
                 : (activeFilter === 'applications'

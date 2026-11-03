@@ -331,7 +331,6 @@ export default function Home({ onNavigate, user }) {
     let deferredTimer = null;
 
     try {
-      // Stage 1: Critical above-the-fold batch (fast LCP & instantaneous load)
       unsubUsers = subscribeToTalents((data) => {
         if (Array.isArray(data)) {
           setTalents(data);
@@ -349,7 +348,6 @@ export default function Home({ onNavigate, user }) {
         }
       }, 6);
 
-      // Stage 2: Deferred below-the-fold batch (expanded pool for Trending/New carousels)
       const scheduleDeferred = () => {
         deferredTimer = setTimeout(() => {
           unsubDeferredUsers = subscribeToTalents((moreData) => {
@@ -367,7 +365,6 @@ export default function Home({ onNavigate, user }) {
       }
     } catch (err) {
       console.error("Critical subscription crash:", err);
-      setIsLoading(false);
     }
 
     return () => {
@@ -413,14 +410,12 @@ export default function Home({ onNavigate, user }) {
     return isNaN(parsed) ? 0 : parsed;
   }, []);
 
-  // New Born Talents: Strictly sorted by newest account creation date/time (Top 5)
   const newBornTalents = useMemo(() => {
     return [...activeTalentsList]
       .sort((a, b) => getTalentCreatedTime(b) - getTalentCreatedTime(a))
       .slice(0, 5);
   }, [activeTalentsList, getTalentCreatedTime]);
 
-  // Trending Talents: Sorted by followers count or views
   const trendingTalents = useMemo(() => {
     return [...activeTalentsList]
       .sort((a, b) => {
@@ -431,12 +426,10 @@ export default function Home({ onNavigate, user }) {
       .slice(0, 5);
   }, [activeTalentsList]);
 
-  // Active Casting Calls: Filter out closed calls and expired audition dates
   const activeCastingCalls = useMemo(() => {
     return castingCalls.filter(c => !isCastingCallClosed(c) && (c.title || c.project || c.roleName));
   }, [castingCalls]);
 
-  // Spotlight user rotation for overlaid rectangular portrait card
   const [spotlightProfile, setSpotlightProfile] = useState(null);
   const [spotlightImageError, setSpotlightImageError] = useState(false);
 
@@ -447,7 +440,7 @@ export default function Home({ onNavigate, user }) {
     if (displayFeaturedList.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentSpotlightIdx((prevIdx) => (prevIdx + 1) % displayFeaturedList.length);
-    }, 2800);
+    }, 4000);
     return () => clearInterval(timer);
   }, [displayFeaturedList.length]);
 
@@ -487,7 +480,6 @@ export default function Home({ onNavigate, user }) {
     currentSpotlightUser?.category ||
     'Actor';
   const spotlightRole = (rawSpotlightRole.toLowerCase().includes('actor') || rawSpotlightRole.toLowerCase().includes('actress')) ? 'Actor' : rawSpotlightRole;
-
   const spotlightAge = getTalentAge(spotlightProfile || currentSpotlightUser);
   const spotlightInitials = getInitials(spotlightName);
 
@@ -513,9 +505,10 @@ export default function Home({ onNavigate, user }) {
       loading={!talentsReceived || !callsReceived}
     >
       <PullToRefresh onRefresh={handleRefresh}>
-        <div className="min-h-screen bg-[#141414] text-white pt-0 pb-1 font-sans selection:bg-[#522C69] selection:text-black">
+        <div className="min-h-screen bg-[#FAF8F4] text-[#202923] pt-0 pb-6 selection:bg-[#194332]/10 selection:text-[#194332]">
+
           {/* ================= HERO SECTION (Overlayed under top navbar on mobile) ================= */}
-          <section className="relative w-full h-[260px] sm:h-[280px] lg:h-[310px] -mt-14 sm:mt-0 pt-14 sm:pt-16 overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5 m-0 p-0">
+          <section className="relative w-full h-[260px] sm:h-[280px] lg:h-[310px] -mt-14 sm:mt-0 pt-14 sm:pt-16 overflow-hidden bg-black select-none rounded-none rounded-b-2xl border-b border-white/5 m-0 p-0 mb-4 sm:mb-5">
             {/* 5 Smoothly Rotating Background Images (Every 4s) */}
             <div className="absolute inset-0 z-0 overflow-hidden">
               <AnimatePresence mode="popLayout">
@@ -541,8 +534,6 @@ export default function Home({ onNavigate, user }) {
 
             {/* Top Right Slogan in One Line with Typewriter Font & Live Typing Animation */}
             <HeroTypewriter />
-
-
 
             {/* Overlaid Inset Spotlight Card (Bottom Left, Inverted Rounded Corner Profile) */}
             {currentSpotlightUser && (
@@ -609,34 +600,36 @@ export default function Home({ onNavigate, user }) {
             )}
           </section>
 
-          {/* Lower Cards Container */}
-          <div className="px-0 sm:px-1.5 space-y-2 sm:space-y-2">
+          {/* Lower Sections Container */}
+          <div className="space-y-4 sm:space-y-5">
 
-            {/* ================= CASTING CALLS / HIRING NOW SECTION ================= */}
-            <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-              <div className="flex items-start justify-between gap-3 mb-3">
+            {/* ================= HIRING NOW (CASTING CALLS) ================= */}
+            <section className="bg-white rounded-2xl border border-[#E7E5E0] p-5 sm:p-6 text-[#202923] shadow-card">
+              <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none">
-                    <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
-                    Hiring Now
-                  </span>
-                  <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
-                    Active auditions in Nepal
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-5 bg-[#194332] rounded-full inline-block" />
+                    <h2 className="font-display font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
+                      Hiring Now
+                    </h2>
+                  </div>
+                  <p className="text-xs sm:text-sm text-[#626860] font-normal font-inter pl-3.5">
+                    Active auditions and production casting across Nepal
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigate('casting')}
                   onMouseEnter={() => prefetchRoute('casting')}
                   onTouchStart={() => prefetchRoute('casting')}
-                  className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
+                  className="text-[#194332] hover:text-[#102F28] text-xs sm:text-sm font-semibold flex items-center gap-0.5 cursor-pointer shrink-0 pt-1 transition-colors font-inter"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Horizontal Scroll Carousel: Borderless Poster Thumbnails with Call Details */}
-              <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pt-0.5 pb-1.5 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
+              {/* Horizontal Scroll Carousel */}
+              <div className="flex gap-3 sm:gap-4 overflow-x-auto pt-1 pb-2 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
                 {!callsReceived ? (
                   <CastingPosterScrollSkeleton count={3} />
                 ) : activeCastingCalls.length > 0 ? (
@@ -648,19 +641,19 @@ export default function Home({ onNavigate, user }) {
                         onClick={() => onNavigate('casting-detail', call.id)}
                         onMouseEnter={() => prefetchCasting(call.id)}
                         onTouchStart={() => prefetchCasting(call.id)}
-                        className="flex flex-col shrink-0 w-[46vw] sm:w-52 md:w-60 cursor-pointer cv-auto-card"
+                        className="flex flex-col shrink-0 w-[52vw] sm:w-56 md:w-64 cursor-pointer bg-[#FAF8F4] hover:bg-[#F3F0E9] border border-[#E7E5E0] hover:border-[#D5D1C7] rounded-xl overflow-hidden p-3 transition-all duration-200 shadow-card"
                       >
-                        {/* Borderless Tall Cinematic Poster Thumbnail (Half Mobile Screen Coverage) */}
-                        <div className="relative w-full aspect-[9/14] rounded-t-2xl rounded-b-none overflow-hidden bg-black shadow-md">
+                        {/* Poster Thumbnail */}
+                        <div className="relative w-full aspect-[9/13] rounded-lg overflow-hidden bg-[#F3F0E9] border border-[#E7E5E0] shadow-sm mb-3">
                           {thumbnail ? (
                             <img
                               src={getOptimizedImageUrl(thumbnail, { width: 480, quality: 'auto', format: 'auto' })}
                               srcSet={getImageSrcSet(thumbnail, [320, 480, 720])}
-                              sizes="(max-width: 640px) 46vw, 240px"
+                              sizes="(max-width: 640px) 52vw, 256px"
                               alt={call.title || 'Casting'}
                               loading="lazy"
                               decoding="async"
-                              className="w-full h-full object-cover rounded-t-2xl rounded-b-none"
+                              className="w-full h-full object-cover"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                                 const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
@@ -668,67 +661,62 @@ export default function Home({ onNavigate, user }) {
                               }}
                             />
                           ) : null}
-                          {/* Default Clapperboard Fallback */}
                           <div
-                            className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c20] to-[#121214] p-3 text-center"
+                            className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-[#F3F0E9] p-3 text-center"
                             style={{ display: thumbnail ? 'none' : 'flex' }}
                           >
-                            <svg className="w-10 h-10 text-white/70 fill-current drop-shadow-sm" viewBox="0 0 24 24">
+                            <svg className="w-10 h-10 text-[#777C75] fill-current" viewBox="0 0 24 24">
                               <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
                             </svg>
                           </div>
-                          {/* Category / Roles tag - Watermark Translucent Hanging Style */}
-                          <div
-                            className="absolute top-0 left-3 sm:left-4 z-10 px-3.5 pt-1.5 pb-2 rounded-b-xl bg-gradient-to-b from-[#522C69]/45 via-[#522C69]/20 to-transparent backdrop-blur-[2px] flex items-center justify-center max-w-[85%] border-0 outline-none select-none"
-                            title={
-                              Array.isArray(call.roles) && call.roles.length > 0
-                                ? call.roles.map(r => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(' • ')
-                                : (call.type || call.category || 'Audition')
-                            }
-                          >
-                            <span className="text-white font-bold text-xs sm:text-sm uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] truncate">
-                              {Array.isArray(call.roles) && call.roles.length > 0
-                                ? call.roles.map(r => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(' • ') || (call.type || call.category || 'Audition')
-                                : (call.type || call.category || 'Audition')}
-                            </span>
+
+                          {/* Category Tag */}
+                          <div className="absolute top-2 left-2 px-2.5 py-0.5 rounded-md bg-white/95 backdrop-blur-sm border border-[#E7E5E0] text-[10px] font-semibold text-[#194332] uppercase tracking-wider">
+                            {Array.isArray(call.roles) && call.roles.length > 0
+                              ? call.roles.map(r => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(' • ') || (call.type || call.category || 'Audition')
+                              : (call.type || call.category || 'Audition')}
                           </div>
-                          {/* Deadline on bottom right */}
+
+                          {/* Deadline Badge */}
                           {call.deadline && (
-                            <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[11px] sm:text-xs font-medium text-[#522C69] shadow-sm">
+                            <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-white/95 backdrop-blur-sm border border-[#E7E5E0] text-[10px] font-medium text-[#946019]">
                               Due {new Date(call.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </div>
                           )}
                         </div>
 
-                        {/* Details under thumbnail with side Apply Now button */}
-                        <div className="mt-2.5 flex items-center justify-between gap-2 px-0.5">
-                          <div className="min-w-0 flex-1 space-y-0.5 text-left">
-                            <p className="font-apple text-white font-bold text-base sm:text-lg md:text-xl truncate w-full tracking-normal">
+                        {/* Details & Apply Action */}
+                        <div className="space-y-1 text-left flex-1 flex flex-col justify-between">
+                          <div>
+                            <h3 className="font-inter text-[#202923] font-semibold text-sm sm:text-base truncate">
                               {call.title || call.project || 'Untitled Casting Call'}
-                            </p>
-                            <p className="font-apple text-slate-300 font-medium text-sm sm:text-base truncate w-full">
+                            </h3>
+                            <p className="text-xs text-[#626860] font-normal truncate mt-0.5 font-inter">
                               {call.company || call.director || 'Production'} • {call.location || 'Nepal'}
                             </p>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onNavigate('casting-apply', call.id);
-                            }}
-                            className="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold text-xs sm:text-sm tracking-wide transition-all shadow-md active:scale-95 cursor-pointer"
-                          >
-                            Apply Now
-                          </button>
+
+                          <div className="pt-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onNavigate('casting-apply', call.id);
+                              }}
+                              className="w-full py-2 rounded-lg bg-[#194332] hover:bg-[#102F28] text-white font-semibold text-xs tracking-wide transition-all shadow-sm cursor-pointer text-center font-inter"
+                            >
+                              Apply Now
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
                   })
                 ) : (
-                  <div className="w-full text-center py-5 bg-[#141416] rounded-xl border border-white/5">
-                    <p className="text-gray-400 text-sm mb-2">No active calls at the moment</p>
+                  <div className="w-full text-center py-6 bg-[#FAF8F4] rounded-xl border border-[#E7E5E0]">
+                    <p className="text-[#626860] text-sm mb-3 font-inter">No active calls at the moment</p>
                     <button
                       onClick={() => onNavigate('casting-create')}
-                      className="text-sm bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold px-4 py-2 rounded-md shadow-sm shadow-amber-950/20 cursor-pointer"
+                      className="text-xs bg-[#194332] hover:bg-[#102F28] text-white font-semibold px-4 py-2 rounded-lg shadow-sm cursor-pointer font-inter"
                     >
                       + Post a Casting Call
                     </button>
@@ -738,30 +726,32 @@ export default function Home({ onNavigate, user }) {
             </section>
 
             {/* ================= FEATURED TALENTS SECTION ================= */}
-            <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-              <div className="flex items-start justify-between gap-3 mb-3">
+            <section className="bg-white rounded-2xl border border-[#E7E5E0] p-5 sm:p-6 text-[#202923] shadow-card">
+              <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none">
-                    <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
-                    Featured Talents
-                  </span>
-                  <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
-                    Top verified Nepali talents
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-5 bg-[#194332] rounded-full inline-block" />
+                    <h2 className="font-display font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
+                      Featured Talents
+                    </h2>
+                  </div>
+                  <p className="text-xs sm:text-sm text-[#626860] font-normal font-inter pl-3.5">
+                    Top verified artists and creators across Nepal
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigate('listing')}
-                  className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
+                  className="text-[#194332] hover:text-[#102F28] text-xs sm:text-sm font-semibold flex items-center gap-0.5 cursor-pointer shrink-0 pt-1 transition-colors font-inter"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Horizontal Scroll Carousel: 2.5 cards on mobile, tight padding */}
+              {/* Horizontal Scroll Carousel */}
               <div
                 ref={actorsScrollRef}
-                className="flex gap-1.5 sm:gap-2.5 overflow-x-auto pt-0.5 pb-1.5 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+                className="flex gap-3 sm:gap-4 overflow-x-auto pt-1 pb-2 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
               >
                 {!talentsReceived ? (
                   <AvatarScrollSkeleton count={4} />
@@ -772,103 +762,103 @@ export default function Home({ onNavigate, user }) {
                       onClick={() => onNavigate('profile', talent.id)}
                       onMouseEnter={() => prefetchProfile(talent.id)}
                       onTouchStart={() => prefetchProfile(talent.id)}
-                      className="flex flex-col items-center shrink-0 w-[calc((100vw-36px)/2.5)] sm:w-36 cursor-pointer cv-auto-item"
+                      className="flex flex-col items-center shrink-0 w-28 sm:w-36 cursor-pointer p-2 rounded-xl hover:bg-[#FAF8F4] transition-all"
                     >
                       <Avatar
                         userId={talent.id || talent.uid}
                         user={talent}
                         size="none"
                         name={talent.name}
-                        className="w-[calc((100vw-44px)/2.5)] h-[calc((100vw-44px)/2.5)] sm:w-36 sm:h-36 rounded-full object-cover shadow-lg"
+                        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border border-[#E7E5E0] shadow-sm mb-2"
                       />
-                      <p className="font-apple text-white font-medium text-lg sm:text-xl md:text-2xl text-center mt-2.5 truncate w-full px-0.5 tracking-wide">
+                      <p className="font-inter text-[#202923] font-semibold text-sm sm:text-base text-center truncate w-full px-0.5">
                         {formatTalentName(talent.name)}
                       </p>
-                      <p className="font-apple text-[#522C69] font-semibold text-base sm:text-lg text-center mt-1 truncate w-full px-0.5 tracking-normal">
+                      <p className="font-inter text-[#194332] font-medium text-xs text-center truncate w-full px-0.5 mt-0.5">
                         {getTalentRole(talent)}
                       </p>
                       {getTalentAge(talent) ? (
-                        <p className="font-apple text-slate-300 font-medium text-base sm:text-lg text-center mt-0.5 truncate w-full px-0.5 tracking-normal">
+                        <p className="font-inter text-[#777C75] text-xs text-center truncate w-full px-0.5">
                           ({getTalentAge(talent)})
                         </p>
                       ) : null}
                     </div>
                   ))
                 ) : (
-                  <div className="text-gray-400 text-sm py-4">No talents found</div>
+                  <div className="text-[#626860] text-sm py-4">No talents found</div>
                 )}
               </div>
             </section>
 
             {/* ================= TALENTS BY CATEGORY SECTION ================= */}
-            <section
-              className="relative w-full rounded-2xl overflow-hidden p-3.5 sm:p-5 shadow-md select-none border-0 bg-black bg-gradient-to-r from-[#522C69] to-[#522C69]/20"
-            >
-              <div className="relative z-10 space-y-3">
-                <div className="flex items-start justify-between gap-3 mb-1">
-                  <div className="space-y-1">
-                    <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
-                      <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-white/80 to-white/10 rounded-full pointer-events-none" />
+            <section className="bg-white rounded-2xl border border-[#E7E5E0] p-5 sm:p-6 text-[#202923] shadow-card">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-5 bg-[#194332] rounded-full inline-block" />
+                    <h2 className="font-display font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
                       Talents by Category
-                    </span>
-                    <p className="text-xs sm:text-sm md:text-base text-gray-300 font-normal drop-shadow-sm">
-                      Explore all creative roles
-                    </p>
+                    </h2>
                   </div>
-                  <button
-                    onClick={() => onNavigate('discover')}
-                    className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
-                  >
-                    <span>View all</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  <p className="text-xs sm:text-sm text-[#626860] font-normal font-inter pl-3.5">
+                    Explore curated specialties in cinema, television, and digital media
+                  </p>
                 </div>
+                <button
+                  onClick={() => onNavigate('discover')}
+                  className="text-[#194332] hover:text-[#102F28] text-xs sm:text-sm font-semibold flex items-center gap-0.5 cursor-pointer shrink-0 pt-1 transition-colors font-inter"
+                >
+                  <span>View all</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
 
-                {/* Horizontal Scroll Carousel: All Category Cards */}
-                <div className="flex gap-3 sm:gap-4 overflow-x-auto pt-1 pb-2 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
-                  {HOME_CATEGORY_CARDS.map((cat) => {
-                    const count = getCategoryCount(cat.filter);
-                    return (
-                      <div
-                        key={cat.id}
-                        onClick={() => onNavigate('talents', cat.filter)}
-                        className="rounded-2xl p-4 sm:p-6 aspect-square shrink-0 w-44 sm:w-48 md:w-52 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-black/90 hover:bg-black shadow-xl border border-black/20 gap-2.5 sm:gap-3.5 active:scale-[0.98]"
-                      >
-                        <CategoryCardIcon
-                          type={cat.iconType}
-                          color="#ffffff"
-                          className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 fill-current text-white shrink-0"
-                        />
-                        <div className="w-full flex flex-col items-center justify-center shrink-0">
-                          <span className="font-apple text-white font-bold text-lg sm:text-xl md:text-2xl leading-tight whitespace-pre-line text-center tracking-normal">
-                            {cat.label}
-                          </span>
-                          <span className="font-apple text-neutral-400 font-medium text-sm sm:text-base mt-1 tracking-normal">
-                            ({count} {count === 1 ? 'talent' : 'talents'})
-                          </span>
-                        </div>
+              {/* Horizontal Scroll Carousel */}
+              <div className="flex gap-3 sm:gap-4 overflow-x-auto pt-1 pb-2 px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth">
+                {HOME_CATEGORY_CARDS.map((cat) => {
+                  const count = getCategoryCount(cat.filter);
+                  return (
+                    <div
+                      key={cat.id}
+                      onClick={() => onNavigate('talents', cat.filter)}
+                      className="rounded-2xl p-4 sm:p-5 aspect-square shrink-0 w-36 sm:w-44 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-[#FAF8F4] hover:bg-[#F3F0E9] border border-[#E7E5E0] hover:border-[#D5D1C7] shadow-card gap-2 active:scale-[0.98]"
+                    >
+                      <CategoryCardIcon
+                        type={cat.iconType}
+                        color="#194332"
+                        className="w-10 h-10 sm:w-12 sm:h-12 fill-current text-[#194332] shrink-0 mb-1"
+                      />
+                      <div className="w-full flex flex-col items-center justify-center shrink-0">
+                        <span className="font-inter text-[#202923] font-semibold text-sm sm:text-base leading-tight whitespace-pre-line text-center">
+                          {cat.label}
+                        </span>
+                        <span className="font-inter text-[#777C75] text-xs mt-1">
+                          ({count} {count === 1 ? 'talent' : 'talents'})
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
             </section>
 
             {/* ================= RECENTLY JOINED TALENTS SECTION ================= */}
-            <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-              <div className="flex items-start justify-between gap-3 mb-3">
+            <section className="bg-white rounded-2xl border border-[#E7E5E0] p-5 sm:p-6 text-[#202923] shadow-card">
+              <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none">
-                    <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
-                    Recently Joined
-                  </span>
-                  <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
-                    New artists and creators
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-5 bg-[#194332] rounded-full inline-block" />
+                    <h2 className="font-display font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
+                      Recently Joined
+                    </h2>
+                  </div>
+                  <p className="text-xs sm:text-sm text-[#626860] font-normal font-inter pl-3.5">
+                    Newly registered artists ready for auditions
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigate('listing')}
-                  className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
+                  className="text-[#194332] hover:text-[#102F28] text-xs sm:text-sm font-semibold flex items-center gap-0.5 cursor-pointer shrink-0 pt-1 transition-colors font-inter"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -876,19 +866,18 @@ export default function Home({ onNavigate, user }) {
               </div>
 
               {/* Ranked Card List Container */}
-              <div className="space-y-2.5 pt-1">
+              <div className="divide-y divide-[#E7E5E0]">
                 {!talentsReceived ? (
                   [1, 2, 3, 4, 5].map((num) => (
-                    <div key={num} className="flex items-center justify-between gap-3 sm:gap-4 py-2">
+                    <div key={num} className="flex items-center justify-between gap-3 sm:gap-4 py-3">
                       <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full skeleton shrink-0 border border-white/5" />
+                        <div className="w-12 h-12 rounded-full skeleton shrink-0" />
                         <div className="flex-1 space-y-2">
                           <div className="w-32 h-3.5 skeleton rounded" />
                           <div className="w-24 h-2.5 skeleton rounded" />
-                          <div className="w-20 h-2 skeleton rounded" />
                         </div>
                       </div>
-                      <div className="w-20 h-8 rounded-full skeleton shrink-0 hidden sm:block" />
+                      <div className="w-20 h-8 rounded-lg skeleton shrink-0 hidden sm:block" />
                     </div>
                   ))
                 ) : newBornTalents.length > 0 ? (
@@ -903,49 +892,42 @@ export default function Home({ onNavigate, user }) {
                         onClick={() => onNavigate('profile', talent.id)}
                         onMouseEnter={() => prefetchProfile(talent.id)}
                         onTouchStart={() => prefetchProfile(talent.id)}
-                        className="flex items-center justify-between gap-3 sm:gap-4 py-2 cursor-pointer cv-auto-item group"
+                        className="flex items-center justify-between gap-3 sm:gap-4 py-3 cursor-pointer group hover:bg-[#FAF8F4] px-2 rounded-lg transition-colors"
                       >
                         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                          {/* Circular Avatar */}
                           <Avatar
                             userId={talent.id}
                             user={talent}
                             size="none"
                             name={talent.name}
-                            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover shrink-0"
+                            className="w-12 h-12 rounded-full object-cover shrink-0 border border-[#E7E5E0]"
                           />
 
-                          {/* Metadata Lines & Talent Details */}
                           <div className="flex-1 min-w-0 space-y-0.5 text-left">
-                            <p className="font-apple text-base sm:text-lg md:text-xl font-medium text-white truncate tracking-wide group-hover:text-purple-300 transition-colors">
+                            <p className="font-inter text-sm sm:text-base font-semibold text-[#202923] truncate group-hover:text-[#194332] transition-colors">
                               {talent.name}
                             </p>
-
-                            {/* Username */}
-                            <p className="text-xs sm:text-sm text-gray-400 truncate">
+                            <p className="text-xs text-[#777C75] truncate font-inter">
                               @{talent.username || talent.name?.toLowerCase().replace(/\s+/g, '')}
                             </p>
-
-                            {/* Location • Role */}
-                            <p className="text-xs sm:text-sm text-gray-400 font-normal truncate flex items-center gap-1.5 mt-0.5">
-                              <MapPin className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                            <p className="text-xs text-[#626860] font-normal truncate flex items-center gap-1.5 font-inter">
+                              <MapPin className="w-3.5 h-3.5 text-[#777C75] shrink-0" />
                               <span>{location}</span>
-                              <span className="text-gray-600">•</span>
+                              <span className="text-[#D5D1C7]">•</span>
                               <span>{role}</span>
                             </p>
                           </div>
                         </div>
 
-                        {/* Right Side: Connect Button */}
                         <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                           {!isSelf && (
                             <button
                               type="button"
                               onClick={(e) => handleToggleFollow(e, talent.id)}
-                              className={`px-4 sm:px-5 py-1 sm:py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer shadow-none ${
+                              className={`px-3.5 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer font-inter ${
                                 isFollowing
-                                  ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
-                                  : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
+                                  ? 'bg-[#194332] text-white border-0 hover:bg-[#102F28]'
+                                  : 'border border-[#194332] text-[#194332] hover:bg-[#194332]/10 bg-transparent'
                               }`}
                             >
                               {isFollowing ? 'Connected' : 'Connect'}
@@ -956,29 +938,31 @@ export default function Home({ onNavigate, user }) {
                     );
                   })
                 ) : (
-                  <div className="text-gray-400 text-sm py-4 text-center">No new talents found</div>
+                  <div className="text-[#626860] text-sm py-4 text-center font-inter">No new talents found</div>
                 )}
               </div>
             </section>
 
-            {/* ================= REGIONAL FILM HUBS SECTION (TEST) ================= */}
+            {/* ================= REGIONAL FILM HUBS SECTION ================= */}
             <RegionalFilmHubs onNavigate={onNavigate} />
 
             {/* ================= TRENDING TALENTS SECTION ================= */}
-            <section className="bg-black rounded-2xl border border-white/5 p-3.5 sm:p-4 text-white shadow-md">
-              <div className="flex items-start justify-between gap-3 mb-3">
+            <section className="bg-white rounded-2xl border border-[#E7E5E0] p-5 sm:p-6 text-[#202923] shadow-card">
+              <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="space-y-1">
-                  <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none">
-                    <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
-                    Trending Talents
-                  </span>
-                  <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
-                    Popular profiles this week
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-5 bg-[#194332] rounded-full inline-block" />
+                    <h2 className="font-display font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
+                      Trending Talents
+                    </h2>
+                  </div>
+                  <p className="text-xs sm:text-sm text-[#626860] font-normal font-inter pl-3.5">
+                    Most viewed and connected profiles this week
                   </p>
                 </div>
                 <button
                   onClick={() => onNavigate('trending')}
-                  className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors"
+                  className="text-[#194332] hover:text-[#102F28] text-xs sm:text-sm font-semibold flex items-center gap-0.5 cursor-pointer shrink-0 pt-1 transition-colors font-inter"
                 >
                   <span>View all</span>
                   <ChevronRight className="w-4 h-4" />
@@ -986,11 +970,11 @@ export default function Home({ onNavigate, user }) {
               </div>
 
               {/* Ranked Trending List Container */}
-              <div className="space-y-2.5 pt-1">
+              <div className="divide-y divide-[#E7E5E0]">
                 {!talentsReceived ? (
                   [1, 2, 3, 4, 5].map((num) => (
-                    <div key={num} className="flex items-center gap-3 sm:gap-4 py-1">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full skeleton shrink-0 border border-white/5" />
+                    <div key={num} className="flex items-center gap-3 sm:gap-4 py-3">
+                      <div className="w-12 h-12 rounded-full skeleton shrink-0" />
                       <div className="flex-1 space-y-2">
                         <div className="w-full h-3.5 skeleton rounded" />
                         <div className="w-3/4 h-2.5 skeleton rounded" />
@@ -1004,42 +988,38 @@ export default function Home({ onNavigate, user }) {
                       onClick={() => onNavigate('profile', talent.id)}
                       onMouseEnter={() => prefetchProfile(talent.id)}
                       onTouchStart={() => prefetchProfile(talent.id)}
-                      className="flex items-center gap-3 sm:gap-4 py-1.5 cursor-pointer cv-auto-item"
+                      className="flex items-center gap-3 sm:gap-4 py-3 cursor-pointer group hover:bg-[#FAF8F4] px-2 rounded-lg transition-colors"
                     >
-                      {/* Circular Avatar */}
                       <Avatar
                         userId={talent.id}
                         user={talent}
                         size="none"
                         name={talent.name}
-                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover shrink-0"
+                        className="w-12 h-12 rounded-full object-cover shrink-0 border border-[#E7E5E0]"
                       />
 
-                      {/* Metadata Lines & Talent Details */}
-                      <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex-1 min-w-0 space-y-0.5 text-left">
                         <div className="flex items-center justify-between">
-                          <p className="font-apple text-base sm:text-lg md:text-xl font-medium text-white truncate tracking-wide">
+                          <p className="font-inter text-sm sm:text-base font-semibold text-[#202923] truncate group-hover:text-[#194332] transition-colors">
                             {talent.name}
                           </p>
-                          <span className="text-sm sm:text-base text-[#522C69] font-semibold shrink-0">
+                          <span className="text-xs text-[#194332] font-semibold shrink-0 font-inter">
                             {getTalentRoleAndAge(talent)}
                           </span>
                         </div>
 
-                        {/* Username & Location / Connects */}
-                        <div className="flex items-center justify-between text-sm text-gray-400">
+                        <div className="flex items-center justify-between text-xs text-[#777C75] font-inter">
                           <p className="truncate">
                             @{talent.username || talent.name?.toLowerCase().replace(/\s+/g, '')}
                           </p>
-                          <span className="text-gray-400 font-medium text-xs sm:text-sm shrink-0">
+                          <span className="text-[#626860] font-medium shrink-0">
                             {getTalentFollowersCount(talent)} {getTalentFollowersCount(talent) === 1 ? 'connect' : 'connects'}
                           </span>
                         </div>
+
                         {formatTalentLocation(talent) && (
-                          <p className="text-sm text-gray-500 truncate flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                            </svg>
+                          <p className="text-xs text-[#777C75] truncate flex items-center gap-1 font-inter">
+                            <MapPin className="w-3 h-3 shrink-0" />
                             {formatTalentLocation(talent)}
                           </p>
                         )}
@@ -1047,13 +1027,14 @@ export default function Home({ onNavigate, user }) {
                     </div>
                   ))
                 ) : (
-                  <div className="text-gray-400 text-sm py-4 text-center">No trending talents found</div>
+                  <div className="text-[#626860] text-sm py-4 text-center font-inter">No trending talents found</div>
                 )}
               </div>
             </section>
 
             {/* ================= OUR GOALS SECTION ================= */}
             <GoalsBannerCard onNavigate={onNavigate} />
+
           </div>
         </div>
       </PullToRefresh>

@@ -1,6 +1,6 @@
 import { Router, type Response } from 'express';
 import * as admin from 'firebase-admin';
-import { verifyToken } from '../middleware/auth';
+import { verifyToken, isAdmin } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
 import { NotificationTokenSchema } from '../schemas';
 import { db } from '../config';
@@ -67,8 +67,8 @@ const handleSendNotification = async (req: AuthedRequest, res: Response): Promis
         return res.status(500).json({ error: 'Notification failed', message: error.message });
     }
 };
-router.post('/notifications/send', verifyToken, handleSendNotification);
-router.post('/send-notification', verifyToken, handleSendNotification);
+router.post('/notifications/send', verifyToken, isAdmin, handleSendNotification);
+router.post('/send-notification', verifyToken, isAdmin, handleSendNotification);
 router.post('/notifications/register-token', verifyToken, validateBody(NotificationTokenSchema), async (req: AuthedRequest, res: Response): Promise<any> => {
     try {
         const { token } = req.body as any;

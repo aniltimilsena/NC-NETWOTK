@@ -209,28 +209,28 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
 
   return (
     <Desktop3ColumnLayout user={currentUser} onNavigate={onNavigate} activeNav="saved-castings" trendingCalls={savedCalls}>
-      <div className="min-h-screen bg-[#141414] text-white relative font-sans pb-12">
+      <div className="min-h-screen bg-[#FAF8F4] text-[#202923] relative font-sans pb-16">
         <SEO title="Saved Calls | NepalCasts" description="View and manage your bookmarked casting opportunities." />
 
-        <div className="max-w-4xl mx-auto px-0 sm:px-6 w-full pt-4 space-y-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 w-full pt-4 space-y-4">
           
           {/* Header */}
-          <div className="flex items-center justify-between px-3 sm:px-0">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 onClick={handleBack}
                 type="button"
-                className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
+                className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-[#626860] hover:text-[#202923] hover:bg-[#F3F0E9] transition-colors cursor-pointer shrink-0"
                 title="Go Back"
               >
-                <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
+                <ChevronLeft className="w-6 h-6" strokeWidth={2} />
               </button>
-              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-serif font-medium text-[#202923] tracking-tight">
                 Saved Calls
               </h1>
             </div>
 
-            <span className="text-xs font-black text-gray-400 bg-black px-3.5 py-1.5 rounded-full border border-white/10">
+            <span className="text-xs font-semibold text-[#626860] bg-white px-3.5 py-1.5 rounded-full border border-[#E7E5E0] shadow-card">
               {savedCalls.length} Saved
             </span>
           </div>
@@ -242,17 +242,17 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
 
           {/* Error State */}
           {error && savedCalls.length === 0 && (
-            <div className="py-16 text-center space-y-5 bg-red-500/10 rounded-xl border border-red-500/20 p-6 sm:p-10 mx-3 sm:mx-0">
-              <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto shadow-xl">
+            <div className="py-16 text-center space-y-5 bg-white rounded-2xl border border-[#E7E5E0] p-6 sm:p-10 shadow-card">
+              <div className="w-16 h-16 rounded-full bg-red-50 text-[#B42318] flex items-center justify-center mx-auto shadow-sm">
                 <AlertCircle className="w-8 h-8" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-lg sm:text-xl font-bold text-white">Failed to Load Saved Calls</h3>
-                <p className="text-xs sm:text-sm text-red-200 max-w-sm mx-auto leading-relaxed">
+                <h3 className="text-lg sm:text-xl font-serif font-semibold text-[#202923]">Failed to Load Saved Calls</h3>
+                <p className="text-xs sm:text-sm text-[#B42318] max-w-sm mx-auto leading-relaxed">
                   {error}
                 </p>
               </div>
-              <Button onClick={() => setReloadKey(k => k + 1)} variant="primary" size="lg" className="rounded-xl font-bold px-6 text-xs uppercase tracking-wider">
+              <Button onClick={() => setReloadKey(k => k + 1)} variant="primary" size="lg" className="rounded-lg font-semibold px-6 text-xs tracking-wider">
                 Try Again
               </Button>
             </div>
@@ -260,17 +260,17 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
 
           {/* Empty State */}
           {!loading && !error && savedCalls.length === 0 && (
-            <div className="py-16 text-center space-y-5 bg-black rounded-xl border border-white/10 p-6 sm:p-10 mx-3 sm:mx-0">
-              <div className="w-16 h-16 rounded-full bg-[#522C69]/10 text-[#522C69] flex items-center justify-center mx-auto shadow-xl">
+            <div className="py-16 text-center space-y-5 bg-white rounded-2xl border border-[#E7E5E0] p-6 sm:p-10 shadow-card">
+              <div className="w-16 h-16 rounded-full bg-[#EAF2ED] text-[#194332] flex items-center justify-center mx-auto shadow-sm">
                 <BookmarkX className="w-8 h-8" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-lg sm:text-xl font-bold text-white">No Saved Calls Yet</h3>
-                <p className="text-xs sm:text-sm text-gray-400 max-w-sm mx-auto leading-relaxed">
+                <h3 className="text-lg sm:text-xl font-serif font-semibold text-[#202923]">No Saved Calls Yet</h3>
+                <p className="text-xs sm:text-sm text-[#626860] max-w-sm mx-auto leading-relaxed">
                   Bookmark interesting auditions while browsing to revisit and apply later.
                 </p>
               </div>
-              <Button onClick={handleBrowse} variant="primary" size="lg" className="rounded-xl font-bold px-6 text-xs uppercase tracking-wider">
+              <Button onClick={handleBrowse} variant="primary" size="lg" className="rounded-lg font-semibold px-6 text-xs tracking-wider">
                 Browse Active Calls
               </Button>
             </div>
@@ -296,10 +296,10 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                   <div
                     key={call.saveId}
                     onClick={() => handleViewDetails(call.castingId)}
-                    className="bg-black rounded-2xl border border-white/5 overflow-hidden cursor-pointer flex flex-row shadow-xl cv-auto-card"
+                    className="bg-white rounded-2xl border border-[#E7E5E0] hover:border-[#D5D1C7] overflow-hidden cursor-pointer flex flex-row shadow-card hover:shadow-elevated transition-all text-[#202923] group select-none"
                   >
-                    {/* Full-Bleed Poster Thumbnail (No empty black padding around it) */}
-                    <div className="w-28 sm:w-40 md:w-44 self-stretch relative shrink-0 bg-[#121212] overflow-hidden flex items-center justify-center">
+                    {/* Full-Bleed Poster Thumbnail */}
+                    <div className="w-28 sm:w-40 md:w-44 self-stretch relative shrink-0 bg-[#F3F0E9] overflow-hidden flex items-center justify-center">
                       {bannerImage ? (
                         <img
                           src={getOptimizedImageUrl(bannerImage, { width: 400, quality: 'auto', format: 'auto' })}
@@ -308,7 +308,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                           alt={call.title}
                           loading="lazy"
                           decoding="async"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                             const fallback = e.currentTarget.parentElement?.querySelector('.default-clapper-thumb');
@@ -319,10 +319,10 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
 
                       {/* Default Clapperboard Thumbnail Fallback */}
                       <div
-                        className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1c1c1c] via-[#121212] to-[#080808] p-2 text-center"
+                        className="default-clapper-thumb w-full h-full flex flex-col items-center justify-center bg-[#F3F0E9] p-2 text-center"
                         style={{ display: bannerImage ? 'none' : 'flex' }}
                       >
-                        <svg className="w-9 h-9 sm:w-11 sm:h-11 text-white fill-current drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 24 24">
+                        <svg className="w-9 h-9 sm:w-11 sm:h-11 text-[#777C75] fill-current" viewBox="0 0 24 24">
                           <path d="M19.8 4H4.2C3 4 2 5 2 6.2v11.6C2 19 3 20 4.2 20h15.6c1.2 0 2.2-1 2.2-2.2V6.2c0-1.2-1-2.2-2.2-2.2zM8.3 6l2.1 3H7.6L5.5 6h2.8zm5.2 0l2.1 3h-2.8l-2.1-3h2.8zm5.2 0l.9 1.3-1.3 1.7h-2.4l-2.1-3h4.9zM4 18V10h16v8H4z" />
                         </svg>
                       </div>
@@ -333,7 +333,7 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                       <div className="space-y-1 sm:space-y-1.5">
                         {/* Top Row: Category Tag & Delete action */}
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[#522C69] font-bold text-[10px] sm:text-[11px] tracking-wider uppercase truncate">
+                          <span className="text-[#194332] font-semibold text-[11px] tracking-wider uppercase truncate">
                             {categoryTag}
                           </span>
 
@@ -343,49 +343,49 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
                               handleUnsave(call.saveId, call.title);
                             }}
                             disabled={removing === call.saveId}
-                            className="p-1 text-white hover:text-white/80 transition-colors cursor-pointer shrink-0"
+                            className="p-1 text-[#777C75] hover:text-[#B42318] transition-colors cursor-pointer shrink-0"
                             title="Remove Bookmark"
                             aria-label="Remove Bookmark"
                           >
-                            <Trash2 className="w-4 h-4 text-white" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
 
                         {/* Project Title */}
-                        <h3 className="text-base sm:text-lg font-bold text-white leading-tight truncate">
+                        <h3 className="text-base sm:text-lg font-serif font-semibold text-[#202923] group-hover:text-[#194332] leading-tight truncate transition-colors">
                           {call.title || 'Untitled Casting Call'}
                         </h3>
 
                         {/* Looking for */}
-                        <p className="text-xs sm:text-sm text-gray-300 font-medium line-clamp-1">
+                        <p className="text-xs sm:text-sm text-[#414840] font-normal line-clamp-1">
                           Looking for: {rolesSummary}
                         </p>
 
                         {/* Location */}
-                        <p className="text-xs text-gray-400 flex items-center gap-1.5 truncate">
-                          <MapPin className="w-3.5 h-3.5 text-white shrink-0" />
+                        <p className="text-xs text-[#777C75] flex items-center gap-1.5 truncate">
+                          <MapPin className="w-3.5 h-3.5 text-[#777C75] shrink-0" />
                           <span>{call.location || 'Kathmandu'}</span>
                         </p>
 
                         {/* Salary / Compensation */}
-                        <p className="text-xs sm:text-sm font-bold text-[#522C69] pt-0.5 truncate">
+                        <p className="text-xs sm:text-sm font-semibold text-[#202923] pt-0.5 truncate">
                           Salary: {call.budget || call.salary || 'NPR Negotiable'}
                         </p>
                       </div>
 
                       {/* Bottom Status Row / Footer */}
-                      <div className="flex items-center justify-between pt-2.5 border-t border-white/5 text-xs">
+                      <div className="flex items-center justify-between pt-2.5 border-t border-[#E7E5E0] text-xs">
                         {/* Left Deadline */}
-                        <div className="flex items-center gap-1.5 text-gray-400 text-[11px] sm:text-xs">
-                          <Clock className="w-3.5 h-3.5 text-white shrink-0" />
+                        <div className="flex items-center gap-1.5 text-[#777C75] text-[11px] sm:text-xs">
+                          <Clock className="w-3.5 h-3.5 text-[#777C75] shrink-0" />
                           <span>Deadline: {formattedDate}</span>
                         </div>
 
                         {/* Right Status Badge */}
-                        <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-md text-[9px] sm:text-xs font-black tracking-wider uppercase border ${
+                        <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-md text-[10px] sm:text-xs font-semibold tracking-wider uppercase border ${
                           deadlineBadge.isClosed
-                            ? 'bg-[#222] border-white/10 text-gray-400'
-                            : 'bg-[#522C69]/15 border-[#522C69]/30 text-[#522C69]'
+                            ? 'bg-[#F3F0E9] border-[#E7E5E0] text-[#777C75]'
+                            : 'bg-[#EAF2ED] border-[#194332]/20 text-[#194332] shadow-sm'
                         }`}>
                           {deadlineBadge.label}
                         </span>
@@ -397,13 +397,13 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
 
               {hasMore && (
                 <div ref={sentinelRef} className="flex flex-col items-center justify-center gap-2.5 pt-4 pb-8">
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <span className="w-4 h-4 border-2 border-[#522C69] border-t-transparent rounded-full animate-spin shrink-0" />
+                  <div className="flex items-center gap-2 text-xs text-[#626860]">
+                    <span className="w-4 h-4 border-2 border-[#194332] border-t-transparent rounded-full animate-spin shrink-0" />
                     <span>Loading more saved calls...</span>
                   </div>
                   <button
                     onClick={handleLoadMore}
-                    className="px-6 py-2.5 rounded-full bg-[#1c1c1c] hover:bg-[#282828] border border-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all cursor-pointer shadow-md active:scale-95"
+                    className="px-6 py-2.5 rounded-lg bg-white hover:bg-[#F3F0E9] border border-[#D5D1C7] text-xs font-semibold tracking-wide text-[#202923] transition-all cursor-pointer shadow-card active:scale-95"
                   >
                     Load More
                   </button>
@@ -419,4 +419,3 @@ const SavedCastingCalls = ({ user: propUser, onNavigate, showToast: propShowToas
 };
 
 export default SavedCastingCalls;
-

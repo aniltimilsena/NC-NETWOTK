@@ -29,13 +29,13 @@ function LanguageSettings({ showAlert }: { showAlert: (msg: string, type?: any) 
     };
 
     return (
-        <div className="bg-[#0E0E0E] border-0 rounded-2xl p-4 sm:p-6 space-y-5 text-left">
+        <div className="bg-white border border-[#E7E5E0] rounded-2xl p-4 sm:p-6 space-y-5 text-left">
             <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Globe className="w-5 h-5 text-white" />
+                <h3 className="text-lg font-bold text-[#202923] flex items-center gap-2">
+                    <Globe className="w-5 h-5 text-[#194332]" />
                     <span>Language & Regional Preference</span>
                 </h3>
-                <p className="text-gray-400 text-xs sm:text-sm mt-1">
+                <p className="text-[#626860] text-xs sm:text-sm mt-1">
                     Select your preferred language for the NepalCasts interface.
                 </p>
             </div>
@@ -49,15 +49,15 @@ function LanguageSettings({ showAlert }: { showAlert: (msg: string, type?: any) 
                             onClick={() => handleSelect(lang.code)}
                             className={`flex flex-col items-start p-4 rounded-xl border text-left transition-all cursor-pointer ${
                                 isSelected
-                                    ? 'bg-[#522C69]/10 border-[#522C69] text-white shadow-lg'
-                                    : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20'
+                                    ? 'bg-[#EAF2ED] border-[#194332] text-[#202923] shadow-lg'
+                                    : 'bg-[#FAF8F4] border-[#E7E5E0] text-[#414840] hover:bg-[#F3F0E9] hover:border-[#D5D1C7]'
                             }`}
                         >
                             <span className="text-2xl mb-2">{lang.flag}</span>
-                            <span className="font-bold text-sm text-white">{lang.label}</span>
-                            <span className="text-xs text-gray-400 mt-1">{lang.desc}</span>
+                            <span className="font-bold text-sm text-[#202923]">{lang.label}</span>
+                            <span className="text-xs text-[#777C75] mt-1">{lang.desc}</span>
                             {isSelected && (
-                                <span className="mt-3 text-[10px] font-extrabold text-[#522C69] bg-[#522C69]/20 px-2.5 py-0.5 rounded-full">
+                                <span className="mt-3 text-[10px] font-extrabold text-[#194332] bg-[#EAF2ED] px-2.5 py-0.5 rounded-full">
                                     ✓ Active
                                 </span>
                             )}
@@ -118,34 +118,34 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
 
     if (loading && !activeProfile) {
         return (
-            <div className="min-h-screen bg-nc-dark pb-6 animate-pulse">
+            <div className="min-h-screen bg-[#FAF8F4] pb-6 animate-pulse">
                 <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 pt-6 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 shrink-0" />
-                    <div className="h-6 bg-white/10 rounded-md w-48" />
+                    <div className="w-12 h-12 rounded-full bg-[#E7E5E0] border border-[#E7E5E0] shrink-0" />
+                    <div className="h-6 bg-[#E7E5E0] rounded-md w-48" />
                 </div>
 
                 <div className="max-w-[1600px] mx-auto px-3.5 sm:px-8 lg:px-12 mt-8 grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div className="md:col-span-1 space-y-2 flex flex-col items-stretch text-left">
                         {[1, 2, 3, 4, 5].map((i) => (
-                            <div key={i} className="h-14 bg-white/5 border border-white/5 rounded-2xl w-full" />
+                            <div key={i} className="h-14 bg-[#E7E5E0] border border-[#E7E5E0] rounded-2xl w-full" />
                         ))}
                     </div>
 
                     <div className="md:col-span-3 space-y-6">
-                        <div className="bg-[#0E0E0E] border border-white/10 rounded-xl p-4 sm:p-5 space-y-5">
-                            <div className="h-6 bg-white/10 rounded-md w-32 mb-4" />
+                        <div className="bg-white border border-[#E7E5E0] rounded-xl p-4 sm:p-5 space-y-5">
+                            <div className="h-6 bg-[#E7E5E0] rounded-md w-32 mb-4" />
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <div className="h-3 bg-white/5 rounded w-16" />
-                                    <div className="h-12 bg-white/5 border border-white/5 rounded-2xl w-full" />
+                                    <div className="h-3 bg-[#E7E5E0] rounded w-16" />
+                                    <div className="h-12 bg-[#E7E5E0] border border-[#E7E5E0] rounded-2xl w-full" />
                                 </div>
                                 <div className="space-y-2">
-                                    <div className="h-3 bg-white/5 rounded w-20" />
-                                    <div className="h-12 bg-white/5 border border-white/5 rounded-2xl w-full" />
+                                    <div className="h-3 bg-[#E7E5E0] rounded w-20" />
+                                    <div className="h-12 bg-[#E7E5E0] border border-[#E7E5E0] rounded-2xl w-full" />
                                 </div>
                                 <div className="space-y-2">
-                                    <div className="h-3 bg-white/5 rounded w-24" />
-                                    <div className="h-28 bg-white/5 border border-white/5 rounded-2xl w-full" />
+                                    <div className="h-3 bg-[#E7E5E0] rounded w-24" />
+                                    <div className="h-28 bg-[#E7E5E0] border border-[#E7E5E0] rounded-2xl w-full" />
                                 </div>
                             </div>
                         </div>
@@ -157,12 +157,12 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
 
     if (!activeProfile) {
         return (
-            <div className="min-h-screen bg-nc-dark pb-6 flex flex-col items-center justify-center text-center p-6">
-                <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
-                <p className="text-nc-muted text-sm max-w-xs mb-6">
+            <div className="min-h-screen bg-[#FAF8F4] pb-6 flex flex-col items-center justify-center text-center p-6">
+                <h2 className="text-xl font-bold text-[#202923] mb-2">Access Denied</h2>
+                <p className="text-[#777C75] text-sm max-w-xs mb-6">
                     Please log in to manage your account settings.
                 </p>
-                <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white shadow-sm font-bold rounded-2xl cursor-pointer">
+                <button onClick={() => onNavigate('signin')} className="px-6 py-2.5 bg-[#194332] hover:bg-[#102F28] text-white shadow-sm font-bold rounded-2xl cursor-pointer">
                     Sign In
                 </button>
             </div>
@@ -179,12 +179,12 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
     };
 
     return (
-        <div className="min-h-screen bg-nc-dark pb-6">
+        <div className="min-h-screen bg-[#FAF8F4] pb-6">
             <div className="max-w-[1600px] mx-auto px-3 sm:px-8 lg:px-12 pt-4 sm:pt-6 flex items-center gap-4">
-                <button onClick={handleBack} type="button" className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors shrink-0 cursor-pointer" aria-label="Back">
+                <button onClick={handleBack} type="button" className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-[#626860] hover:text-[#202923] hover:bg-[#F3F0E9] transition-colors shrink-0 cursor-pointer" aria-label="Back">
                     <ChevronLeft className="w-6 h-6" strokeWidth={2.2} />
                 </button>
-                <h1 className="text-2xl font-bold text-white tracking-tight">
+                <h1 className="text-2xl font-bold text-[#202923] tracking-tight">
                     <span className="md:inline hidden">Account Settings</span>
                     <span className="md:hidden inline">{currentMobileView === 'content' ? activeTabLabel : 'Account Settings'}</span>
                 </h1>
@@ -206,11 +206,11 @@ export default function SettingsPage({ onNavigate, user, initialTab, showAlert }
                                 }}
                                 className={`w-full flex items-center justify-start text-left gap-3.5 px-4 py-3 rounded-2xl text-base font-bold transition-all duration-150 border cursor-pointer active:scale-[0.98] ${
                                     isSelected
-                                        ? 'bg-white/10 text-white font-bold border-white/15 shadow-sm'
-                                        : 'text-gray-400 hover:text-white hover:bg-white/5 border-transparent font-medium'
+                                        ? 'bg-[#EAF2ED] text-[#194332] font-bold border-[#194332]/20 shadow-sm'
+                                        : 'text-[#626860] hover:text-[#202923] hover:bg-[#F3F0E9] border-transparent font-medium'
                                 }`}
                             >
-                                <Icon className={`w-5 h-5 shrink-0 transition-colors ${isSelected ? 'text-white' : 'text-gray-400'}`} />
+                                <Icon className={`w-5 h-5 shrink-0 transition-colors ${isSelected ? 'text-[#194332]' : 'text-[#777C75]'}`} />
                                 <span className="truncate text-left">{tab.label}</span>
                             </button>
                         );

@@ -12,7 +12,7 @@ const AgentationWidget = import.meta.env.DEV
 function MainApp() {
   const { user, isAdmin, authReady, handleLogout, showAlert, showToast } = useApp();
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#070709]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[#FAF8F4]" />}>
       <RouteConfig user={user} isAdmin={isAdmin} authReady={authReady} onLogout={handleLogout} showAlert={showAlert} showToast={showToast} />
     </Suspense>
   );

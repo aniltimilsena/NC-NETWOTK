@@ -20,7 +20,7 @@ const getNotificationDetails = (notif) => {
             themeColor: 'emerald',
             iconName: 'follow',
             text: (<span>
-                <span className="font-bold text-white mr-1">{senderName}</span>
+                <span className="font-semibold text-[#202923] mr-1">{senderName}</span>
                 connected with you
             </span>),
         };
@@ -32,30 +32,30 @@ const getNotificationDetails = (notif) => {
         
         if (body.includes('shortlisted') || notif.status === 'shortlisted') {
             displayElement = (<span>
-                <span className="font-bold text-white mr-1">{senderName}</span>
-                shortlisted your application for <span className="text-[#522C69] font-semibold">"{callTitle}"</span>
+                <span className="font-semibold text-[#202923] mr-1">{senderName}</span>
+                shortlisted your application for <span className="text-[#194332] font-semibold">"{callTitle}"</span>
             </span>);
         } else if (body.includes('accepted') || notif.status === 'accepted') {
             displayElement = (<span>
-                <span className="font-bold text-white mr-1">{senderName}</span>
-                accepted your application for <span className="text-emerald-400 font-semibold">"{callTitle}"</span>
+                <span className="font-semibold text-[#202923] mr-1">{senderName}</span>
+                accepted your application for <span className="text-[#286847] font-semibold">"{callTitle}"</span>
             </span>);
         } else if (body.includes('rejected') || notif.status === 'rejected') {
             displayElement = (<span>
-                <span className="font-bold text-white mr-1">{senderName}</span>
-                updated your application status for <span className="text-gray-300 font-semibold">"{callTitle}"</span>
+                <span className="font-semibold text-[#202923] mr-1">{senderName}</span>
+                updated your application status for <span className="text-[#626860] font-semibold">"{callTitle}"</span>
             </span>);
         } else if (body.includes('applied to') || body.includes('applied')) {
             const roleInfo = notif.roleName ? ` for role "${notif.roleName}"` : '';
             displayElement = (<span>
-                <span className="font-bold text-white mr-1">{senderName}</span>
-                applied to your casting call: <span className="text-[#522C69] font-semibold">"{callTitle}"</span>{roleInfo}
+                <span className="font-semibold text-[#202923] mr-1">{senderName}</span>
+                applied to your casting call: <span className="text-[#194332] font-semibold">"{callTitle}"</span>{roleInfo}
             </span>);
         } else if (cleanBody) {
             displayElement = (<span>
                 {cleanBody.startsWith(senderName) ? (
                     <>
-                        <span className="font-bold text-white mr-1">{senderName}</span>
+                        <span className="font-semibold text-[#202923] mr-1">{senderName}</span>
                         {cleanBody.substring(senderName.length)}
                     </>
                 ) : (
@@ -64,7 +64,7 @@ const getNotificationDetails = (notif) => {
             </span>);
         } else {
             displayElement = (<span>
-                New casting update for <span className="text-[#522C69]">"{callTitle}"</span>
+                New casting update for <span className="text-[#194332] font-semibold">"{callTitle}"</span>
             </span>);
         }
 
@@ -83,7 +83,7 @@ const getNotificationDetails = (notif) => {
                 iconName: 'missed_call',
                 text: (<span>
                     Missed a video call from
-                    <span className="font-bold text-white ml-1">{senderName}</span>
+                    <span className="font-semibold text-[#202923] ml-1">{senderName}</span>
                 </span>),
             };
         }
@@ -102,7 +102,7 @@ const getNotificationDetails = (notif) => {
             themeColor: 'blue',
             iconName: 'message_received',
             text: (<span>
-                <span className="font-bold text-white mr-1">{senderName}</span>
+                <span className="font-semibold text-[#202923] mr-1">{senderName}</span>
                 sent you a message
             </span>),
         };
@@ -118,38 +118,45 @@ const getNotificationDetails = (notif) => {
 };
 const renderIconCircle = (iconName) => {
     let IconComponent = Settings;
-    let colorClasses = 'bg-white/10 border-white/20 text-white';
+    let colorClasses = 'bg-[#FAF8F4] border-[#E7E5E0] text-[#194332]';
     if (iconName === 'message_received') {
         IconComponent = MessageSquare;
-        colorClasses = 'bg-white/10 border-white/20 text-white';
+        colorClasses = 'bg-[#EAF2ED] border-[#194332]/20 text-[#194332]';
     }
     else if (iconName === 'missed_call') {
         IconComponent = PhoneMissed;
-        colorClasses = 'bg-red-500/10 border-red-500/20 text-red-500';
+        colorClasses = 'bg-red-50 border-red-200 text-red-600';
     }
     else if (iconName === 'call_cancelled') {
         IconComponent = PhoneOff;
-        colorClasses = 'bg-amber-500/10 border-amber-500/20 text-amber-500';
+        colorClasses = 'bg-amber-50 border-amber-200 text-amber-600';
     }
     else if (iconName === 'follow') {
         IconComponent = UserPlus;
-        colorClasses = 'bg-white/10 border-white/20 text-white';
+        colorClasses = 'bg-[#EAF2ED] border-[#194332]/20 text-[#194332]';
     }
     else if (iconName === 'casting') {
         IconComponent = Clapperboard;
-        colorClasses = 'bg-white/10 border-white/20 text-white';
+        colorClasses = 'bg-[#EAF2ED] border-[#194332]/20 text-[#194332]';
     }
     else if (iconName === 'system') {
         IconComponent = Settings;
-        colorClasses = 'bg-white/10 border-white/20 text-white';
+        colorClasses = 'bg-[#EAF2ED] border-[#194332]/20 text-[#194332]';
     }
     return (<div className={`w-10 h-10 md:w-14 md:h-14 rounded-full border flex items-center justify-center flex-shrink-0 ${colorClasses}`}>
-        <IconComponent className="w-5 h-5 md:w-7 md:h-7 text-white" />
+        <IconComponent className="w-5 h-5 md:w-7 md:h-7" />
     </div>);
 };
 function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, onDeleteRequest, handleNotificationClick, timeAgo }) {
     const details = getNotificationDetails(notif);
     const showAvatar = details.iconName === 'message_received' || details.iconName === 'missed_call' || details.iconName === 'call_cancelled';
+    const isConnected = Boolean(
+        notif.senderId && followingIds && (
+            typeof followingIds.has === 'function'
+                ? followingIds.has(notif.senderId)
+                : Array.isArray(followingIds) && followingIds.includes(notif.senderId)
+        )
+    );
     const longPressTimer = useRef(null);
     const isLongPressActive = useRef(false);
     const startPress = useCallback(() => {
@@ -203,8 +210,8 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
         handleNotificationClick(notif);
     };
     const cardBgClass = notif.read
-        ? 'bg-transparent hover:bg-white/[0.02]'
-        : 'bg-[#522C69]/[0.03] hover:bg-[#522C69]/[0.06]';
+        ? 'bg-transparent hover:bg-[#F3F0E9]/60'
+        : 'bg-[#EAF2ED]/30 hover:bg-[#EAF2ED]/60';
     return (<div className="relative w-full">
         <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={endPress} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={handleMouseLeave} onClick={handleCardClick} className={`relative z-10 py-4 md:py-5 px-2 sm:px-4 md:px-6 cursor-pointer transition-colors duration-200 flex items-center gap-4 md:gap-6 select-none ${cardBgClass} w-full`}>
 
@@ -212,7 +219,7 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
 
 
             <div className="flex-1 min-w-0 pr-2">
-                <div className={`text-sm md:text-base leading-snug break-words ${notif.read ? 'text-[#888888] font-normal' : 'text-white font-semibold'}`}>
+                <div className={`text-sm md:text-base leading-snug break-words ${notif.read ? 'text-[#626860] font-normal' : 'text-[#202923] font-semibold'}`}>
                     {details.text}
                 </div>
 
@@ -222,12 +229,12 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
                         type="button"
                         onClick={(e) => handleFollowBack(e, notif.senderId)}
                         className={`px-4 sm:px-5 py-1 sm:py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer shadow-none ${
-                            followingIds.has(notif.senderId)
-                                ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
-                                : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
+                            isConnected
+                                ? 'bg-[#FAF8F4] border border-[#E7E5E0] text-[#626860]'
+                                : 'bg-[#194332] hover:bg-[#102F28] text-white shadow-xs'
                         }`}
                     >
-                        {followingIds.has(notif.senderId) ? 'Connected' : 'Connect'}
+                        {isConnected ? 'Connected' : 'Connect'}
                     </button>
                 </div>)}
             </div>
@@ -241,9 +248,9 @@ function NotificationCard({ notif, followingIds, handleFollowBack, markAsRead, o
                 {!notif.read && (<button onClick={(e) => {
                     e.stopPropagation();
                     markAsRead(notif.id);
-                }} className="group/btn relative w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors" title="Mark as read">
-                    <span className="absolute w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#522C69] group-hover/btn:opacity-0 transition-opacity" />
-                    <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-white opacity-0 group-hover/btn:opacity-100 transition-opacity shrink-0" />
+                }} className="group/btn relative w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-[#FAF8F4] transition-colors" title="Mark as read">
+                    <span className="absolute w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#194332] group-hover/btn:opacity-0 transition-opacity" />
+                    <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#194332] opacity-0 group-hover/btn:opacity-100 transition-opacity shrink-0" />
                 </button>)}
             </div>
         </div>
@@ -291,7 +298,9 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             return;
         }
         // Subscribe to who I am following via canonical service
-        const unsubFollowing = subscribeToUserFollows(user.uid, (set) => {
+        const unsubFollowing = subscribeToUserFollows(user.uid, (data) => {
+            const set = data instanceof Set ? data : new Set(Array.isArray(data) ? data : []);
+
             setFollowingIds(set);
         });
 
@@ -365,7 +374,12 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
                         });
                         return false;
                     }
-                    if (isFollowersLoaded && !activeFollowers.has(item.senderId)) {
+                    const isStillFollower = activeFollowers && (
+                        typeof activeFollowers.has === 'function'
+                            ? activeFollowers.has(item.senderId)
+                            : Array.isArray(activeFollowers) && activeFollowers.includes(item.senderId)
+                    );
+                    if (isFollowersLoaded && !isStillFollower) {
                         deleteDoc(doc(db, 'notifications', item.id)).catch((err) => {
                             console.warn("Could not delete orphaned notification:", err);
                         });
@@ -444,7 +458,13 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
         e.stopPropagation();
         if (!user?.uid || !senderId || user.uid === senderId)
             return;
-        const isFollowing = followingIds.has(senderId);
+        const isFollowing = Boolean(
+            followingIds && (
+                typeof followingIds.has === 'function'
+                    ? followingIds.has(senderId)
+                    : Array.isArray(followingIds) && followingIds.includes(senderId)
+            )
+        );
         try {
             await toggleFollowUser({
                 currentUserId: user.uid,
@@ -536,7 +556,7 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
         <span className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap">
             {label}
         </span>
-        <div className="h-[1px] w-full bg-white/5" />
+        <div className="h-[1px] w-full bg-[#E7E5E0]" />
     </div>);
     const renderGroupList = (groupItems) => (<ul className="w-full">
         <AnimatePresence initial={false}>
@@ -545,23 +565,23 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             </motion.li>))}
         </AnimatePresence>
     </ul>);
-    return (<div className="min-h-screen bg-[#141414] text-white">
+    return (<div className="min-h-screen bg-[#FAF8F4] text-[#202923]">
 
         <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3.5 sm:px-8 md:px-12 pt-4 sm:pt-6 md:pt-10">
             {/* Top Bar Header */}
             <div className="flex items-center justify-between mb-6 md:mb-8 pb-2">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => onNavigate('back')} type="button" className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors shrink-0 cursor-pointer" aria-label="Back">
-                        <ChevronLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
+                    <button onClick={() => onNavigate('back')} type="button" className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-[#202923] hover:bg-[#F3F0E9] transition-colors shrink-0 cursor-pointer" aria-label="Back">
+                        <ChevronLeft className="w-6 h-6 text-[#202923]" strokeWidth={2.2} />
                     </button>
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight whitespace-nowrap">
+                    <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-semibold text-[#202923] tracking-tight whitespace-nowrap">
                         Notifications
                     </h1>
                 </div>
                 <div className="flex items-center">
                     <button onClick={handleMarkAllRead} disabled={unreadCount === 0} className={`text-xs sm:text-sm md:text-base font-bold transition-colors px-3 md:px-4 py-1.5 md:py-2 rounded-lg ${unreadCount > 0
-                        ? 'text-[#522C69] hover:text-amber-300 hover:bg-white/5 cursor-pointer'
-                        : 'text-gray-600 cursor-not-allowed'}`}>
+                        ? 'text-[#194332] hover:text-[#102F28] hover:bg-[#EAF2ED] cursor-pointer'
+                        : 'text-[#777C75] cursor-not-allowed'}`}>
                         Mark all read
                     </button>
                 </div>
@@ -569,7 +589,7 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
 
 
             {/* Notification Filter Tabs (Compact Pill Row) */}
-            <div className="relative flex items-center gap-2 overflow-x-auto scrollbar-none py-1 border-b border-white/5 pb-3">
+            <div className="relative flex items-center gap-2 overflow-x-auto scrollbar-none py-1 border-b border-[#E7E5E0] pb-3">
                 {filters.map(f => {
                     const isActive = filter === f.id;
                     return (
@@ -577,14 +597,14 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
                             key={f.id}
                             onClick={() => setFilter(f.id)}
                             className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${isActive
-                                ? 'bg-[#522C69] text-[#0A0A0A] shadow-sm shadow-[#522C69]/20'
-                                : 'bg-[#18181c] text-gray-400 hover:text-white border border-white/5'
+                                ? 'bg-[#194332] text-white shadow-xs'
+                                : 'bg-white text-[#626860] hover:text-[#202923] border border-[#E7E5E0]'
                                 }`}
                         >
                             <span className="flex items-center gap-1.5">
                                 {f.label}
                                 {f.id === 'unread' && unreadCount > 0 && (
-                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-black/20 text-black' : 'bg-[#522C69]/20 text-[#522C69]'}`}>
+                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-[#EAF2ED] text-[#194332]'}`}>
                                         {unreadCount}
                                     </span>
                                 )}
@@ -600,11 +620,11 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
             {loading ? (
                 <NotificationSkeleton count={4} />
             ) : filtered.length === 0 ? (<div className="text-center py-16">
-                <div className="w-16 h-16 rounded-2xl bg-[#111111] flex items-center justify-center mx-auto mb-4 text-[#555] border border-white/5">
+                <div className="w-16 h-16 rounded-2xl bg-white border border-[#E7E5E0] shadow-card flex items-center justify-center mx-auto mb-4 text-[#777C75]">
                     <Settings className="w-8 h-8" />
                 </div>
-                <p className="text-white font-bold text-lg">{getEmptyStateText().title}</p>
-                <p className="text-[#555] text-sm mt-1">{getEmptyStateText().desc}</p>
+                <p className="font-display text-[#202923] font-semibold text-lg">{getEmptyStateText().title}</p>
+                <p className="text-[#626860] text-sm mt-1">{getEmptyStateText().desc}</p>
             </div>) : (<div className="space-y-6 mt-4 w-full">
                 {grouped.today.length > 0 && (<div>
                     {renderSectionHeader('Today')}
@@ -621,7 +641,7 @@ export default function Notifications({ onNavigate, user, initialFilter = 'all' 
 
 
                 {hasMore && (<div className="flex justify-center pt-4">
-                    <button onClick={loadMore} className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 text-xs font-bold tracking-wide transition-all active:scale-95">
+                    <button onClick={loadMore} className="px-6 py-2.5 rounded-xl bg-white border border-[#E7E5E0] text-[#202923] hover:bg-[#F3F0E9] text-xs font-semibold tracking-wide transition-all active:scale-95 shadow-xs cursor-pointer">
                         Load More
                     </button>
                 </div>)}

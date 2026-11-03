@@ -16,6 +16,30 @@ import crypto from 'crypto';
 
 const jwksCache = new Map();
 
+function isValidClerkIssuer(iss) {
+    if (typeof iss !== 'string') return false;
+    try {
+        const parsed = new URL(iss);
+        if (parsed.protocol !== 'https:') return false;
+
+        const configuredIssuer = process.env.CLERK_ISSUER_URL;
+        if (configuredIssuer && iss.replace(/\/$/, '') === configuredIssuer.replace(/\/$/, '')) {
+            return true;
+        }
+
+        if (/^[a-zA-Z0-9-]+\.clerk\.accounts\.dev$/.test(parsed.hostname)) {
+            return true;
+        }
+        if (parsed.hostname === 'clerk.com' || parsed.hostname.endsWith('.clerk.com')) {
+            return true;
+        }
+
+        return false;
+    } catch {
+        return false;
+    }
+}
+
 async function verifyClerkToken(token) {
     try {
         const parts = token.split('.');
@@ -28,8 +52,7 @@ async function verifyClerkToken(token) {
         if (payload.exp && payload.exp < now) return null;
         if (payload.nbf && payload.nbf > now) return null;
 
-        const isClerk = payload.iss && (payload.iss.includes('clerk') || payload.iss.includes('accounts.dev'));
-        if (!isClerk) return null;
+        if (!isValidClerkIssuer(payload.iss)) return null;
 
         const kid = header.kid;
         let publicKeyPem = null;
@@ -39,7 +62,8 @@ async function verifyClerkToken(token) {
             if (cached && cached.expiresAt > Date.now()) {
                 publicKeyPem = cached.pem;
             } else {
-                const jwksUrl = `${payload.iss.replace(/\/$/, '')}/.well-known/jwks.json`;
+                const parsedIss = new URL(payload.iss);
+                const jwksUrl = `https://${parsedIss.hostname}/.well-known/jwks.json`;
                 const res = await fetch(jwksUrl).catch(() => null);
                 if (res && res.ok) {
                     const jwks = await res.json();

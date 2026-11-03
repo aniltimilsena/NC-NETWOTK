@@ -7,13 +7,12 @@ import Avatar from '../ui/Avatar';
 import { getAvatar } from '../../utils/avatars';
 import { CurrentUser } from '../../utils/CurrentUser';
 import { formatRole, isCastingCallClosed } from '../../utils';
-import { doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, collection, query, where } from 'firebase/firestore';
+import { onSnapshot, collection, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useTranslation } from 'react-i18next';
 import { AuthService } from '../../services/AuthService';
-import { FollowItemSkeleton, SidebarWidgetSkeleton } from '../ui/Skeleton';
+import { FollowItemSkeleton } from '../ui/Skeleton';
 import Footer from './Footer';
-import { getOptimizedImageUrl } from '../../utils/media';
 import { useApp } from '../../providers/AppProviders';
 import { toggleFollowUser, subscribeToUserFollows } from '../../features/profile/services/users';
 
@@ -74,10 +73,11 @@ function FollowBtn({ targetUid, currentUser }) {
       type="button"
       onClick={handleToggle}
       disabled={loading}
-      className={`flex-shrink-0 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer active:scale-[0.96] flex items-center gap-1 ${following
-        ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white border-0'
-        : 'border border-[#522C69]/70 hover:border-[#522C69] text-purple-200 hover:bg-[#522C69]/20'
-        } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
+      className={`flex-shrink-0 px-3 py-1 rounded-lg text-xs font-semibold font-inter transition-all cursor-pointer active:scale-[0.96] flex items-center gap-1 ${
+        following
+          ? 'bg-[#194332] text-white border-0 hover:bg-[#102F28]'
+          : 'border border-[#194332] text-[#194332] hover:bg-[#194332]/10 bg-transparent'
+      } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
     >
       {following ? 'Connected' : 'Connect'}
     </button>
@@ -98,12 +98,11 @@ export default function Desktop3ColumnLayout({
   const pathname = location?.pathname || '';
   const isHomePage = pathname === '/' || pathname === '' || activeNav === 'home';
   const isAdmin = user?.admin === true || user?.role === 'admin' || CurrentUser.isAdmin === true;
-  const [profileData, setProfileData] = useState(null);
+  const [profileData] = useState(null);
 
   const [internalFeatured, setInternalFeatured] = useState([]);
-  const [internalTrending, setInternalTrending] = useState([]);
+  const [, setInternalTrending] = useState([]);
   const [talentsLoading, setTalentsLoading] = useState(false);
-  const [callsLoading, setCallsLoading] = useState(false);
   const [showSearchOverlay, setShowSearchOverlay] = useState(false);
 
   const hasPropsFeatured = Boolean(featuredTalents && featuredTalents.length > 0);
@@ -153,20 +152,17 @@ export default function Desktop3ColumnLayout({
     return () => {
       unsubTalents();
     };
-  }, [hasPropsFeatured]);
+  }, [hasPropsFeatured, user]);
 
   useEffect(() => {
     if (hasPropsTrending) {
-      setCallsLoading(false);
       return;
     }
 
-    setCallsLoading(true);
     const unsubCalls = subscribeToCastingCalls('All', (data) => {
       if (Array.isArray(data)) {
         setInternalTrending(data);
       }
-      setCallsLoading(false);
     });
 
     return () => {
@@ -186,16 +182,13 @@ export default function Desktop3ColumnLayout({
       return;
     }
 
-    // Real-time Followers count for logged-in user
     const qFollowers = query(collection(db, 'follows'), where('followingId', '==', uid));
     const unsubFollowers = onSnapshot(qFollowers, (snap) => {
-      // eslint-disable-next-line no-secrets/no-secrets
       const mockUids = new Set(['uyR9rwPbZBUms2ffermJA0SDbqw2', uid]);
       const valid = snap.docs.filter(d => d.data().followerId && !mockUids.has(d.data().followerId));
       setRealFollowers(valid.length);
     }, () => setRealFollowers(0));
 
-    // Real-time Following count for logged-in user
     const qFollowing = query(collection(db, 'follows'), where('followerId', '==', uid));
     const unsubFollowing = onSnapshot(qFollowing, (snap) => {
       const valid = snap.docs.filter(d => d.data().followingId && d.data().followingId !== uid);
@@ -235,393 +228,295 @@ export default function Desktop3ColumnLayout({
 
   const isVerified = profileData?.verified === true || user?.verified === true;
   const gender = profileData?.gender || user?.gender;
-
-  // Real-time stats from Firestore collections
-  const followersCount = realFollowers;
-  const followingCount = realFollowing;
-
-  // Profile strength calculation
-  const computeProfileStrength = () => {
-    const fields = [
-      realName && realName !== 'Talent Member',
-      realImage,
-      realRole && realRole !== 'Actor / Model',
-      profileData?.bio,
-      profileData?.location || profileData?.city,
-      profileData?.skills?.length > 0,
-      profileData?.experience?.length > 0,
-      profileData?.education?.length > 0,
-      profileData?.languages?.length > 0,
-      profileData?.phone || profileData?.contactEmail,
-    ];
-    const filled = fields.filter(Boolean).length;
-    return Math.round((filled / fields.length) * 100);
-  };
-  const profileStrength = user ? computeProfileStrength() : 0;
   const openToWork = profileData?.openToWork;
 
-
   const safeFeatured = (Array.isArray(featuredTalents) && featuredTalents.length > 0) ? featuredTalents : internalFeatured;
-  const safeTrending = ((Array.isArray(trendingCalls) && trendingCalls.length > 0) ? trendingCalls : internalTrending)
-    .filter(call => !isCastingCallClosed(call));
   const isTalentsLoading = loading || talentsLoading;
-  const isCallsLoading = loading || callsLoading;
-
-  const [featuredOffset, setFeaturedOffset] = useState(0);
-
-  useEffect(() => {
-    if (safeFeatured.length <= 3) return;
-    const timer = setInterval(() => {
-      setFeaturedOffset((prev) => (prev + 1) % safeFeatured.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [safeFeatured.length]);
-
-  const visibleFeatured = safeFeatured.length > 3
-    ? Array.from({ length: 3 }, (_, i) => safeFeatured[(featuredOffset + i) % safeFeatured.length])
-    : safeFeatured;
 
   const { t } = useTranslation();
 
   return (
-    <div className="w-full">
-      <div className="max-w-[1600px] mx-auto px-0 pt-0 pb-0">
-        <div className="grid grid-cols-12 gap-0 lg:gap-3">
+    <div className="w-full bg-[#FAF8F4] text-[#202923]">
+      <div className="max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 pt-0 pb-0">
+        <div className="grid grid-cols-12 gap-0 lg:gap-5">
 
           {/* LEFT SIDEBAR (Desktop: lg+) */}
-          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-14 sm:top-16 pt-0 pb-3 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] overflow-y-auto scrollbar-hide space-y-2">
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-16 sm:top-20 pt-2 pb-6 h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-4">
 
             {/* Inline Desktop Search Bar */}
-            <div className="px-1 pt-1">
+            <div className="px-1">
               <div
                 onClick={() => setShowSearchOverlay(true)}
-                className="relative flex items-center bg-[#242526] rounded-full px-4 py-2 border border-white/5 transition-all cursor-pointer"
+                className="relative flex items-center bg-white rounded-lg px-4 py-2.5 border border-[#D5D1C7] shadow-sm hover:border-[#194332] transition-all cursor-pointer"
               >
                 <input
                   type="text"
                   readOnly
-                  placeholder={t('ui.searchPlaceholder')}
-                  className="w-full bg-transparent outline-none text-white text-[15px] placeholder:text-white/40 pr-10 cursor-pointer border-0"
+                  placeholder={t('ui.searchPlaceholder') || "Search talents, casting calls..."}
+                  className="w-full bg-transparent outline-none text-[#202923] text-sm placeholder:text-[#777C75] pr-8 cursor-pointer border-0 font-inter"
                 />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#777C75]">
                   <Search className="w-4 h-4" />
                 </div>
               </div>
             </div>
 
-            <div className="space-y-1">
-              {/* === PROFILE CARD === */}
-              {user ? (
-                <>
-                  {/* Avatar + Info (Horizontal Row) */}
-                  <div className="px-4 py-3 relative z-10 flex items-center gap-4">
-                    <div className="relative shrink-0">
-                      <Avatar
-                        user={user}
-                        userId={user?.uid}
-                        src={realImage}
-                        gender={gender}
-                        name={realName}
-                        size={56}
-                        className="ring-2 ring-white/10 shadow-lg"
-                      />
-                      {/* Online dot */}
-                      <span className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-[#060709] shadow-[0_0_8px_rgba(52,211,153,0.8)] pointer-events-none" />
-                    </div>
+            {/* PROFILE CARD */}
+            {user ? (
+              <div className="bg-white rounded-2xl border border-[#E7E5E0] p-4 shadow-card">
+                <div className="flex items-center gap-3.5">
+                  <div className="relative shrink-0">
+                    <Avatar
+                      user={user}
+                      userId={user?.uid}
+                      src={realImage}
+                      gender={gender}
+                      name={realName}
+                      size={52}
+                      className="border border-[#E7E5E0] shadow-sm"
+                    />
+                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#286847] ring-2 ring-white pointer-events-none" />
+                  </div>
 
-                    <div className="flex-1 min-w-0 text-left flex flex-col gap-0.5">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <h3 className="text-white font-bold text-base leading-snug tracking-tight truncate">{realName}</h3>
-                        {isVerified && (
-                          <span className="rounded-full bg-[#00BFFF] flex items-center justify-center text-[#060709] shrink-0 shadow-sm" style={{ width: '16px', height: '16px' }} title="Verified Talent">
-                            <svg className="w-2.5 h-2.5 text-[#060709]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs font-normal capitalize truncate">{realRole}</span>
-                      </div>
-
-                      {openToWork && (
-                        <div className="mt-1">
-                          <span className="px-2 py-0.5 rounded-full bg-[#00BFFF]/10 text-[#00BFFF] text-[8px] font-normal tracking-wider uppercase border border-[#00BFFF]/20 flex items-center justify-center gap-1 w-fit">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-pulse" />
-                            OPEN TO WORK
-                          </span>
-                        </div>
+                  <div className="flex-1 min-w-0 text-left flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h3 className="text-[#202923] font-semibold text-base leading-snug tracking-tight truncate font-inter">
+                        {realName}
+                      </h3>
+                      {isVerified && (
+                        <span className="rounded-full bg-[#194332] flex items-center justify-center text-white shrink-0 w-4 h-4" title="Verified Talent">
+                          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </span>
                       )}
                     </div>
+
+                    <p className="text-[#626860] text-xs font-normal capitalize truncate font-inter">
+                      {realRole}
+                    </p>
+
+                    {openToWork && (
+                      <div className="mt-1">
+                        <span className="px-2 py-0.5 rounded-full bg-[#EAF2ED] text-[#286847] text-[9px] font-semibold tracking-wider uppercase border border-[#C8DFD2] flex items-center justify-center gap-1 w-fit">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#286847]" />
+                          OPEN TO WORK
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </>
-              ) : (
-                <div className="p-3 text-center space-y-3">
-                  <h3 className="text-white font-bold text-base">Join NepalCasts</h3>
-                  <p className="text-gray-400 text-xs leading-relaxed">Connect with top directors and casting opportunities in Nepal.</p>
-                  <Link
-                    to="/signin"
-                    className="w-full py-2.5 bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white font-bold rounded-xl text-sm transition-all cursor-pointer shadow-md active:scale-[0.98] text-center block"
-                  >
-                    Sign In
-                  </Link>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-[#E7E5E0] flex items-center justify-between text-xs text-[#626860] font-inter">
+                  <span><strong className="text-[#202923]">{realFollowers}</strong> connects</span>
+                  <span><strong className="text-[#202923]">{realFollowing}</strong> connecting</span>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-[#E7E5E0] p-5 text-center space-y-3 shadow-card">
+                <h3 className="text-[#202923] font-display font-semibold text-lg">Join NepalCasts</h3>
+                <p className="text-[#626860] text-xs leading-relaxed font-inter">Connect with top directors and casting opportunities in Nepal.</p>
+                <Link
+                  to="/signin"
+                  className="w-full py-2.5 bg-[#194332] hover:bg-[#102F28] text-white font-semibold rounded-lg text-sm transition-all cursor-pointer shadow-sm text-center block font-inter"
+                >
+                  Sign In
+                </Link>
+              </div>
+            )}
+
+            {/* NAVIGATION GROUPS */}
+            <div className="bg-white rounded-2xl border border-[#E7E5E0] p-3 shadow-card space-y-4 text-left">
+              {/* DISCOVER GROUP */}
+              <div>
+                <div className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[#777C75] select-none font-inter">
+                  Discover
+                </div>
+                <div className="space-y-0.5">
+                  {user && (
+                    <Link
+                      to={`/profile/${user?.uid}`}
+                      className={`flex items-center w-full px-3.5 py-2 rounded-lg transition-all font-inter text-sm ${
+                        pathname.startsWith('/profile')
+                          ? "bg-[#194332]/10 text-[#194332] font-semibold"
+                          : "text-[#414840] hover:bg-[#F3F0E9] hover:text-[#202923] font-medium"
+                      }`}
+                    >
+                      <Avatar
+                        userId={user?.uid}
+                        user={user}
+                        src={user?.photoURL || user?.profileImage || user?.image}
+                        name={user?.displayName || user?.name}
+                        size="none"
+                        className="w-5 h-5 rounded-full object-cover mr-3 shrink-0 border border-[#E7E5E0]"
+                      />
+                      <span>My Profile</span>
+                    </Link>
+                  )}
+
+                  {[
+                    { name: "Home", path: "/", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
+                    { name: "Discover", path: "/discover", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z" /> },
+                    { name: "Talent Directory", path: "/talents", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
+                    { name: "Trending", path: "/trending", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
+                  ].map((item, i) => {
+                    const isActive = item.path === '/'
+                      ? (pathname === '/' || pathname === '')
+                      : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
+                    return (
+                      <Link
+                        key={i}
+                        to={item.path}
+                        className={`flex items-center w-full px-3.5 py-2 rounded-lg transition-all font-inter text-sm ${
+                          isActive
+                            ? "bg-[#194332]/10 text-[#194332] font-semibold"
+                            : "text-[#414840] hover:bg-[#F3F0E9] hover:text-[#202923] font-medium"
+                        }`}
+                      >
+                        <svg className={`w-4 h-4 mr-3 shrink-0 ${isActive ? "text-[#194332]" : "text-[#777C75]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          {item.icon}
+                        </svg>
+                        <span>{item.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* PROJECTS GROUP */}
+              <div>
+                <div className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[#777C75] select-none font-inter">
+                  Projects
+                </div>
+                <div className="space-y-0.5">
+                  {[
+                    { name: "Casting Calls", path: "/casting", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
+                    { name: "Post Project", path: "/casting/create", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /> },
+                  ].map((item, i) => {
+                    const isActive = item.path === '/casting'
+                      ? (pathname === '/casting' || (pathname.startsWith('/casting/') && pathname !== '/casting/create'))
+                      : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
+                    return (
+                      <Link
+                        key={i}
+                        to={item.path}
+                        className={`flex items-center w-full px-3.5 py-2 rounded-lg transition-all font-inter text-sm ${
+                          isActive
+                            ? "bg-[#194332]/10 text-[#194332] font-semibold"
+                            : "text-[#414840] hover:bg-[#F3F0E9] hover:text-[#202923] font-medium"
+                        }`}
+                      >
+                        <svg className={`w-4 h-4 mr-3 shrink-0 ${isActive ? "text-[#194332]" : "text-[#777C75]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          {item.icon}
+                        </svg>
+                        <span>{item.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* PERSONAL GROUP */}
+              {user && (
+                <div>
+                  <div className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[#777C75] select-none font-inter">
+                    Personal
+                  </div>
+                  <div className="space-y-0.5">
+                    {[
+                      { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
+                      { name: "Saved Calls", path: "/saved", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /> },
+                    ].map((item, i) => {
+                      const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/'));
+                      return (
+                        <Link
+                          key={i}
+                          to={item.path}
+                          className={`flex items-center w-full px-3.5 py-2 rounded-lg transition-all font-inter text-sm ${
+                            isActive
+                              ? "bg-[#194332]/10 text-[#194332] font-semibold"
+                              : "text-[#414840] hover:bg-[#F3F0E9] hover:text-[#202923] font-medium"
+                          }`}
+                        >
+                          <svg className={`w-4 h-4 mr-3 shrink-0 ${isActive ? "text-[#194332]" : "text-[#777C75]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            {item.icon}
+                          </svg>
+                          <span>{item.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
-              {/* === CATEGORY GROUPED FLOATING NAVIGATION (LAPTOP VIEW) === */}
-              <div className="flex flex-col space-y-3 px-2 py-1 text-left">
-                {/* DISCOVER GROUP */}
-                <div>
-                  <div className="px-4 pt-1 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">Discover</div>
-                  <div className="space-y-0.5">
-                    {user && (
+              {/* ABOUT & SUPPORT */}
+              <div>
+                <div className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[#777C75] select-none font-inter">
+                  About & Support
+                </div>
+                <div className="space-y-0.5">
+                  {[
+                    { name: "About Us", path: "/about" },
+                    { name: "Help & FAQ", path: "/help" },
+                    { name: "Contact", path: "/contact" },
+                    { name: "Trust & Safety", path: "/trust-safety" },
+                  ].map((item) => {
+                    const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
+                    return (
                       <Link
-                        to={`/profile/${user?.uid}`}
-                        className={`flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                          pathname.startsWith('/profile')
-                            ? "text-white font-medium bg-white/5"
-                            : "text-gray-400 font-normal"
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center w-full px-3.5 py-2 rounded-lg transition-all font-inter text-sm ${
+                          isActive
+                            ? "bg-[#194332]/10 text-[#194332] font-semibold"
+                            : "text-[#414840] hover:bg-[#F3F0E9] hover:text-[#202923] font-medium"
                         }`}
                       >
-                        <Avatar
-                          userId={user?.uid}
-                          user={user}
-                          src={user?.photoURL || user?.profileImage || user?.image}
-                          name={user?.displayName || user?.name}
-                          size="none"
-                          className="w-5 h-5 rounded-full object-cover mr-3.5 shrink-0 border border-white/20"
-                        />
-                        <span className="text-[16px] tracking-tight">My Profile</span>
+                        <span>{item.name}</span>
                       </Link>
-                    )}
+                    );
+                  })}
 
-                    {[
-                      { name: "Home", path: "/", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
-                      { name: "Discover", path: "/discover", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 21a9 9 0 100-18 9 9 0 000 18zm.75-13.25l-2 4.5 4.5-2-4.5 2z" /> },
-                      { name: "Talent Directory", path: "/talents", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
-                      { name: "Trending", path: "/trending", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
-                    ].map((item, i) => {
-                      const isActive = item.path === '/'
-                        ? (pathname === '/' || pathname === '')
-                        : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
-                      return (
-                        <Link
-                          key={i}
-                          to={item.path}
-                          className={`flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                            isActive
-                              ? "text-white font-medium"
-                              : "text-gray-400 font-normal"
-                          }`}
-                        >
-                          <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            {item.icon}
-                          </svg>
-                          <span className="text-[16px] tracking-tight">{item.name}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* PROJECTS GROUP */}
-                <div>
-                  <div className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">Projects</div>
-                  <div className="space-y-0.5">
-                    {[
-                      { name: "Casting Calls", path: "/casting", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
-                      { name: "Post Project", path: "/casting/create", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-                    ].map((item, i) => {
-                      const isActive = item.path === '/casting'
-                        ? (pathname === '/casting' || (pathname.startsWith('/casting/') && pathname !== '/casting/create'))
-                        : (pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/')));
-                      return (
-                        <Link
-                          key={i}
-                          to={item.path}
-                          className={`flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                            isActive
-                              ? "text-white font-medium"
-                              : "text-gray-400 font-normal"
-                          }`}
-                        >
-                          <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            {item.icon}
-                          </svg>
-                          <span className="text-[16px] tracking-tight">{item.name}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* PERSONAL GROUP */}
-                {user && (
-                  <div>
-                    <div className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">Personal</div>
-                    <div className="space-y-0.5">
-                      {[
-                        { name: "Messages", path: "/messages", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
-                        { name: "Saved Calls", path: "/saved", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /> },
-                      ].map((item, i) => {
-                        const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path + '/'));
-                        return (
-                          <Link
-                            key={i}
-                            to={item.path}
-                            className={`flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                              isActive
-                                ? "text-white font-medium"
-                                : "text-gray-400 font-normal"
-                            }`}
-                          >
-                            <svg className={`w-5 h-5 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              {item.icon}
-                            </svg>
-                            <span className="text-[16px] tracking-tight">{item.name}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* ADMIN GROUP */}
-                {(profileData?.isAdmin === true || profileData?.role?.toLowerCase() === 'admin' || user?.isAdmin === true || user?.role?.toLowerCase() === 'admin') && (
-                  <div>
-                    <div className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-red-400 select-none">Administration</div>
-                    <div className="space-y-0.5">
-                      <Link
-                        to="/admin"
-                        className={`flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                          pathname.startsWith('/admin')
-                            ? "bg-red-500/20 text-red-300 font-bold border border-red-500/30"
-                            : "text-red-400/80 hover:text-white hover:bg-red-500/10 font-normal"
-                        }`}
-                      >
-                        <svg className="w-5 h-5 mr-3.5 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        <span className="text-[16px] tracking-tight">Admin Panel</span>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-
-                {/* LEGAL & SUPPORT GROUP */}
-                <div>
-                  <div className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">About & Support</div>
-                  <div className="space-y-0.5">
-                    {[
-                      {
-                        name: "About Us",
-                        path: "/about",
-                        icon: (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        ),
-                      },
-                      {
-                        name: "Help & FAQ",
-                        path: "/help",
-                        icon: (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        ),
-                      },
-                      {
-                        name: "Contact",
-                        path: "/contact",
-                        icon: (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        ),
-                      },
-                      {
-                        name: "Trust & Safety",
-                        path: "/trust-safety",
-                        icon: (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        ),
-                      },
-                      {
-                        name: "Privacy Policy",
-                        path: "/privacy",
-                        icon: (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        ),
-                      },
-                      {
-                        name: "Terms of Service",
-                        path: "/terms",
-                        icon: (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        ),
-                      },
-                    ].map((item) => {
-                      const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          className={`flex items-center w-full px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                            isActive
-                              ? "text-white font-medium bg-white/5"
-                              : "text-gray-400 font-normal"
-                          }`}
-                        >
-                          <svg className={`w-4 h-4 mr-3.5 shrink-0 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            {item.icon}
-                          </svg>
-                          <span className="text-[15px] tracking-tight">{item.name}</span>
-                        </Link>
-                      );
-                    })}
-
-                    {isAdmin && (
-                      <Link
-                        to="/admin"
-                        className={`flex items-center w-full px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.98] ${
-                          pathname.startsWith("/admin")
-                            ? "text-white font-medium bg-white/5"
-                            : "text-gray-400 font-normal"
-                        }`}
-                      >
-                        <svg className={`w-4 h-4 mr-3.5 shrink-0 transition-all duration-200 ${pathname.startsWith("/admin") ? "text-white scale-105" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        <span className="text-[15px] tracking-tight">Admin Panel</span>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-
-                {user && (
-                  <div className="pt-2 border-t border-white/5">
-                    <button
-                      type="button"
-                      onClick={onLogout || (() => AuthService.signOut())}
-                      className="flex items-center w-full px-4 py-2.5 rounded-full transition-all duration-200 text-gray-400 font-normal cursor-pointer active:scale-[0.98]"
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className={`flex items-center w-full px-3.5 py-2 rounded-lg transition-all font-inter text-sm ${
+                        pathname.startsWith("/admin")
+                          ? "bg-[#194332]/15 text-[#194332] font-semibold"
+                          : "text-[#194332] hover:bg-[#194332]/10 font-medium"
+                      }`}
                     >
-                      <svg className="w-5 h-5 mr-3.5 shrink-0 transition-colors text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      <span className="text-[16px] tracking-tight">Logout</span>
-                    </button>
-                  </div>
-                )}
+                      <span>Admin Panel</span>
+                    </Link>
+                  )}
+                </div>
               </div>
 
-              {/* Sidebar Bottom Copyright */}
-              <div className="px-4 py-2 mt-1 border-t border-white/5">
-                <p className="text-xs text-gray-500 font-semibold tracking-wide flex items-center justify-between">
-                  <span>&copy; {new Date().getFullYear()} NepalCasts</span>
-                  <span className="text-[10px] text-gray-600 font-medium">All rights reserved</span>
-                </p>
-              </div>
+              {user && (
+                <div className="pt-2 border-t border-[#E7E5E0]">
+                  <button
+                    type="button"
+                    onClick={onLogout || (() => AuthService.signOut())}
+                    className="flex items-center w-full px-3.5 py-2 rounded-lg transition-all text-[#B42318] hover:bg-[#FEE4E2] font-medium cursor-pointer font-inter text-sm"
+                  >
+                    <svg className="w-4 h-4 mr-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Logout</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="px-4 py-1 text-center">
+              <p className="text-[11px] text-[#777C75] font-inter">
+                &copy; {new Date().getFullYear()} NepalCasts. All rights reserved.
+              </p>
             </div>
           </aside>
 
           {/* CENTER MAIN CONTENT */}
-          <main className={`col-span-12 lg:col-span-8 ${isHomePage ? 'xl:col-span-6' : 'xl:col-span-9'} min-w-0 pt-0 pb-3 h-auto lg:h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] lg:overflow-y-auto flex flex-col justify-between`}>
+          <main className={`col-span-12 lg:col-span-8 ${isHomePage ? 'xl:col-span-6' : 'xl:col-span-9'} min-w-0 pt-0 pb-3 h-auto lg:h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] lg:overflow-y-auto flex flex-col justify-between`}>
             <div className="flex-1 min-w-0">
               {children}
             </div>
@@ -630,77 +525,81 @@ export default function Desktop3ColumnLayout({
 
           {/* RIGHT SIDEBAR (Desktop Only: Home Page Only) */}
           {isHomePage && (
-            <aside className="hidden xl:block xl:col-span-3 sticky top-14 sm:top-16 pt-0 pb-3 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] overflow-y-auto scrollbar-hide space-y-3">
+            <aside className="hidden xl:block xl:col-span-3 sticky top-16 sm:top-20 pt-2 pb-6 h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide space-y-4">
 
               {/* Why NepalCasts? Section */}
-              <div className="px-2 space-y-3">
-                <div className="px-1 pt-1">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none text-left">Why NepalCasts?</h4>
+              <div className="bg-white rounded-2xl border border-[#E7E5E0] p-5 shadow-card space-y-4 text-left">
+                <div className="flex items-center justify-between pb-2 border-b border-[#E7E5E0]">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-[#946019] font-inter select-none">
+                    Why NepalCasts?
+                  </h4>
                 </div>
 
-                <div className="space-y-4 text-left px-1">
+                <div className="space-y-4 text-left">
                   {/* Point 1 */}
-                  <div className="flex gap-3.5 items-start">
-                    <div className="shrink-0 mt-0.5">
-                      <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  <div className="flex gap-3 items-start">
+                    <div className="shrink-0 w-8 h-8 rounded-lg bg-[#FAF8F4] border border-[#E7E5E0] flex items-center justify-center text-[#194332]">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                     </div>
                     <div>
-                      <h5 className="text-gray-200 text-sm font-normal font-sans">Remote Live Auditions</h5>
-                      <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Audition from anywhere in Nepal via nepalcasts</p>
+                      <h5 className="text-[#202923] text-sm font-semibold font-inter">Live Remote Auditions</h5>
+                      <p className="text-[#626860] text-xs leading-relaxed mt-0.5 font-inter">Audition securely from anywhere in Nepal directly on NepalCasts.</p>
                     </div>
                   </div>
 
                   {/* Point 2 */}
-                  <div className="flex gap-3.5 items-start">
-                    <div className="shrink-0 mt-0.5">
-                      <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <div className="flex gap-3 items-start">
+                    <div className="shrink-0 w-8 h-8 rounded-lg bg-[#FAF8F4] border border-[#E7E5E0] flex items-center justify-center text-[#194332]">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                     </div>
                     <div>
-                      <h5 className="text-gray-200 text-sm font-normal font-sans">Direct Connections</h5>
-                      <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Message top directors and production teams directly without middle agents.</p>
+                      <h5 className="text-[#202923] text-sm font-semibold font-inter">Direct Connections</h5>
+                      <p className="text-[#626860] text-xs leading-relaxed mt-0.5 font-inter">Message directors and verified production teams without middlemen.</p>
                     </div>
                   </div>
 
                   {/* Point 3 */}
-                  <div className="flex gap-3.5 items-start">
-                    <div className="shrink-0 mt-0.5">
-                      <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <div className="flex gap-3 items-start">
+                    <div className="shrink-0 w-8 h-8 rounded-lg bg-[#FAF8F4] border border-[#E7E5E0] flex items-center justify-center text-[#194332]">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <div>
-                      <h5 className="text-gray-200 text-sm font-normal font-sans">Verified PRO Casting</h5>
-                      <p className="text-gray-400 text-xs leading-relaxed font-normal mt-0.5">Get verified to rank first in search results and stand out to casting teams.</p>
+                      <h5 className="text-[#202923] text-sm font-semibold font-inter">Verified Talent Profiles</h5>
+                      <p className="text-[#626860] text-xs leading-relaxed mt-0.5 font-inter">Gain authentic trust and get noticed first by major casting calls.</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* === PEOPLE TO FOLLOW === (Enlarged) */}
+              {/* PEOPLE TO CONNECT */}
               {(isTalentsLoading || safeFeatured.length > 0) && (
-                <div className="px-2 space-y-3">
-                  <div className="flex items-center justify-between px-1 pt-1">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 select-none">People to connect</h4>
+                <div className="bg-white rounded-2xl border border-[#E7E5E0] p-5 shadow-card space-y-4 text-left">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E7E5E0]">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-[#946019] font-inter select-none">
+                      People to connect
+                    </h4>
                     <button
                       type="button"
                       onClick={() => onNavigate?.('talent')}
-                      className="text-xs font-normal text-gray-300 hover:text-white transition-colors cursor-pointer flex items-center gap-0.5"
+                      className="text-xs font-medium text-[#194332] hover:text-[#102F28] transition-colors cursor-pointer flex items-center gap-0.5 font-inter"
                     >
                       View all <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <div className="px-1 space-y-4">
+                  <div className="space-y-3.5">
                     {isTalentsLoading ? (
                       <FollowItemSkeleton count={3} />
                     ) : (
-                      safeFeatured.slice(0, 3).map((item) => (
+                      safeFeatured.slice(0, 4).map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center gap-4"
+                          className="flex items-center gap-3"
                         >
                           <div
                             onClick={() => onNavigate?.('profile', item.id)}
@@ -709,17 +608,19 @@ export default function Desktop3ColumnLayout({
                             <Avatar
                               userId={item.id || item.uid}
                               src={getAvatar(item.photoURL || item.profileImage || item.image, item.gender)}
-                              size="lg"
+                              size="md"
+                              name={item.name}
+                              className="border border-[#E7E5E0]"
                             />
                           </div>
                           <div className="min-w-0 flex-1">
                             <h5
                               onClick={() => onNavigate?.('profile', item.id)}
-                              className="text-white text-base font-bold truncate cursor-pointer"
+                              className="text-[#202923] text-sm font-semibold truncate cursor-pointer hover:text-[#194332] font-inter"
                             >
                               {item.name || 'Talent'}
                             </h5>
-                            <p className="text-gray-400 text-xs font-normal truncate mt-0.5">
+                            <p className="text-[#626860] text-xs truncate mt-0.5 font-inter">
                               {formatRole(item.role || item.category || 'Talent')}
                               {item.location && <span> · {item.location}</span>}
                             </p>
@@ -738,8 +639,8 @@ export default function Desktop3ColumnLayout({
       </div>
 
       {showSearchOverlay && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-start justify-center pt-20 px-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-3xl relative">
+        <div className="fixed inset-0 z-[100] bg-[#202923]/40 backdrop-blur-md flex items-start justify-center pt-16 px-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-3xl relative bg-white border border-[#E7E5E0] rounded-2xl shadow-elevated p-2">
             <ActionSearchBar
               onClose={() => setShowSearchOverlay(false)}
               onActionSelect={(profileId) => {

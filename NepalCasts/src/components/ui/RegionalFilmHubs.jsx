@@ -515,15 +515,15 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
   const activeProvince = PROVINCES_DATA.find((p) => p.id === activeProvinceId) || PROVINCES_DATA[0];
 
   return (
-    <section className="bg-black rounded-2xl border-0 p-3.5 sm:p-4 text-white shadow-md select-none">
+    <section className="bg-white rounded-2xl border border-[#E7E5E0] p-4 sm:p-5 text-[#202923] shadow-card select-none">
       {/* Section Header */}
-      <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="flex items-start justify-between gap-3 mb-4">
         <div className="space-y-1">
-          <span className="relative inline-flex items-center pb-2 text-white font-bold text-lg sm:text-xl md:text-2xl tracking-normal select-none">
-            <span className="absolute bottom-0 left-0 w-3/4 h-[2.5px] bg-gradient-to-r from-[#522C69] to-[#522C69]/10 rounded-full pointer-events-none" />
+          <span className="relative inline-flex items-center pb-2 text-[#202923] font-serif font-semibold text-xl sm:text-2xl tracking-normal select-none">
+            <span className="absolute bottom-0 left-0 w-3/4 h-[2px] bg-[#194332] rounded-full pointer-events-none" />
             Regional Film Hubs
           </span>
-          <p className="text-xs sm:text-sm md:text-base text-gray-400 font-normal">
+          <p className="text-xs sm:text-sm text-[#626860] font-normal">
             Cinema hubs across Nepal
           </p>
         </div>
@@ -532,10 +532,10 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
         <button
           type="button"
           onClick={() => handleOpenModal('koshi')}
-          className="text-gray-300 hover:text-white text-sm sm:text-base font-bold flex items-center gap-0.5 cursor-pointer shrink-0 pt-0.5 transition-colors group"
+          className="text-[#626860] hover:text-[#194332] text-xs sm:text-sm font-semibold flex items-center gap-1 cursor-pointer shrink-0 pt-1 transition-colors group"
         >
-          <span className="group-hover:text-purple-300 transition-colors">View all</span>
-          <ChevronRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform" />
+          <span>View all</span>
+          <ChevronRight className="w-4 h-4 text-[#626860] group-hover:text-[#194332] group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>
 
@@ -547,23 +547,23 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
             <div
               key={hub.id}
               onClick={() => handleOpenModal(hub.id)}
-              className="relative shrink-0 w-[82vw] sm:w-[320px] md:w-[340px] rounded-2xl overflow-hidden border-0 group cursor-pointer shadow-xl transition-all duration-300 flex flex-col justify-between bg-[#0d0d10]"
+              className="relative shrink-0 w-[82vw] sm:w-[320px] md:w-[340px] rounded-2xl overflow-hidden border border-[#E7E5E0] hover:border-[#D5D1C7] group cursor-pointer shadow-card hover:shadow-elevated transition-all duration-300 flex flex-col justify-between bg-white"
             >
               {/* Background Landscape Photo with Cinematic Dark Gradient */}
-              <div className="relative h-44 sm:h-48 w-full overflow-hidden bg-black">
+              <div className="relative h-44 sm:h-48 w-full overflow-hidden bg-[#202923]">
                 <img
                   src={hub.bgImage}
                   alt={hub.name}
                   loading="lazy"
                   decoding="async"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-75 group-hover:opacity-90"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-95"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d10] via-black/45 to-black/25 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#202923] via-[#202923]/40 to-transparent pointer-events-none" />
 
                 {/* Top Province Badge */}
                 <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
                   <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-black/75 backdrop-blur-md border-0 text-white`}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-black/60 backdrop-blur-md text-white border border-white/20"
                   >
                     <IconComponent className="w-3 h-3 text-white" />
                     <span>{hub.nepaliName}</span>
@@ -572,39 +572,39 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
 
                 {/* Hub Title on Bottom of Image */}
                 <div className="absolute bottom-2.5 left-3 right-3 z-10 text-left">
-                  <h3 className="text-lg sm:text-xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] tracking-tight">
+                  <h3 className="text-lg sm:text-xl font-serif font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-tight">
                     {hub.name}
                   </h3>
-                  <p className="text-xs text-purple-200/90 font-medium truncate drop-shadow-sm">
+                  <p className="text-xs text-white/80 font-normal truncate drop-shadow-sm">
                     {hub.tagline}
                   </p>
                 </div>
               </div>
 
               {/* Card Body Details */}
-              <div className="p-3.5 flex-1 flex flex-col justify-between space-y-3 text-left">
-                <p className="text-[11px] sm:text-xs text-gray-400 line-clamp-2 leading-relaxed">
+              <div className="p-4 flex-1 flex flex-col justify-between space-y-3 text-left">
+                <p className="text-xs text-[#626860] line-clamp-2 leading-relaxed">
                   {hub.shortDescription}
                 </p>
 
                 {/* Key Sub-Locations / Hotspots */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-                    <MapPin className="w-3 h-3 text-white shrink-0" />
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1 text-[11px] uppercase font-semibold text-[#777C75] tracking-wider">
+                    <MapPin className="w-3.5 h-3.5 text-[#194332] shrink-0" />
                     <span>Top Filming Locations</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-1 pt-0.5">
                     {hub.famousPlaces.slice(0, 3).map((loc, idx) => (
                       <span
                         key={idx}
-                        className="text-[10px] text-gray-300 bg-white/5 px-2 py-0.5 rounded-md border-0 truncate max-w-[130px]"
+                        className="text-[11px] text-[#414840] bg-[#F3F0E9] px-2 py-0.5 rounded-md border border-[#E7E5E0] truncate max-w-[130px]"
                         title={loc.name}
                       >
                         {loc.name.split('&')[0].trim()}
                       </span>
                     ))}
                     {hub.famousPlaces.length > 3 && (
-                      <span className="text-[10px] text-purple-300 font-bold bg-purple-900/20 px-1.5 py-0.5 rounded-md border-0">
+                      <span className="text-[11px] text-[#194332] font-semibold bg-[#EAF2ED] px-1.5 py-0.5 rounded-md border border-[#E7E5E0]">
                         +{hub.famousPlaces.length - 3} more
                       </span>
                     )}
@@ -619,9 +619,9 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
                       e.stopPropagation();
                       handleOpenModal(hub.id);
                     }}
-                    className="w-full py-2 px-3 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.98] border-0"
+                    className="w-full py-2.5 px-3 rounded-lg text-xs font-semibold bg-[#194332] hover:bg-[#102F28] text-white transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98]"
                   >
-                    <span>Explore</span>
+                    <span>Explore Hub</span>
                     <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
@@ -636,30 +636,30 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
       {/* ========================================================================= */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 bg-[#202923]/60 backdrop-blur-sm animate-fade-in"
           onClick={handleCloseModal}
         >
           <div
-            className="relative w-full max-w-4xl max-h-[92vh] rounded-3xl overflow-hidden bg-[#0e0e13] border-0 shadow-2xl flex flex-col text-left text-white"
+            className="relative w-full max-w-4xl max-h-[92vh] rounded-2xl overflow-hidden bg-[#FAF8F4] border border-[#E7E5E0] shadow-dropdown flex flex-col text-left text-[#202923]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Top Sticky Header - Focused on Selected Province */}
-            <div className="shrink-0 px-4 sm:px-6 py-3.5 border-b border-white/5 bg-[#121218]/95 backdrop-blur-md flex items-center justify-between gap-4 z-20">
+            {/* Modal Top Sticky Header */}
+            <div className="shrink-0 px-5 sm:px-6 py-4 border-b border-[#E7E5E0] bg-white flex items-center justify-between gap-4 z-20">
               <div className="flex items-center gap-3 min-w-0">
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-600/30 text-white text-sm font-bold shrink-0">
-                  {React.createElement(activeProvince.icon, { className: 'w-4 h-4 text-white' })}
+                <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#F3F0E9] text-[#194332] text-sm font-semibold shrink-0">
+                  {React.createElement(activeProvince.icon, { className: 'w-4 h-4 text-[#194332]' })}
                 </span>
                 <div className="truncate">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white truncate">
+                    <h2 className="text-lg sm:text-xl font-serif font-semibold tracking-tight text-[#202923] truncate">
                       {activeProvince.name}
                     </h2>
-                    <span className="text-xs sm:text-sm font-bold text-purple-300 shrink-0">
+                    <span className="text-xs sm:text-sm font-semibold text-[#194332] shrink-0">
                       {activeProvince.nepaliName}
                     </span>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 truncate">
-                    {activeProvince.nepaliName} • Regional Cinema Profile & Filming Locations
+                  <p className="text-xs text-[#626860] mt-0.5 truncate">
+                    Regional Cinema Profile & Filming Locations
                   </p>
                 </div>
               </div>
@@ -668,104 +668,102 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer transition-colors border-0 shrink-0"
+                className="w-9 h-9 rounded-full bg-[#F3F0E9] hover:bg-[#E7E5E0] text-[#202923] flex items-center justify-center cursor-pointer transition-colors shrink-0"
                 aria-label="Close"
               >
-                <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                <X className="w-4 h-4 text-[#202923]" />
               </button>
             </div>
 
             {/* Scrollable Modal Content */}
-            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent">
+            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5 space-y-6">
               {/* Province Hero Banner */}
-              <div className="relative rounded-2xl overflow-hidden border-0 bg-black min-h-[200px] sm:min-h-[240px] flex flex-col justify-end p-4 sm:p-6 shadow-xl">
+              <div className="relative rounded-xl overflow-hidden bg-[#202923] min-h-[200px] sm:min-h-[240px] flex flex-col justify-end p-5 sm:p-6 shadow-card">
                 <img
                   src={activeProvince.bgImage}
                   alt={activeProvince.name}
                   loading="lazy"
                   decoding="async"
-                  className="absolute inset-0 w-full h-full object-cover opacity-60"
+                  className="absolute inset-0 w-full h-full object-cover opacity-70"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e13] via-[#0e0e13]/60 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#202923] via-[#202923]/50 to-transparent pointer-events-none" />
 
                 {/* Badges on Top of Banner */}
                 <div className="relative z-10 flex flex-wrap items-center gap-2 mb-3">
-                  <span
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-black/80 backdrop-blur-md border-0 text-white"
-                  >
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-black/60 backdrop-blur-md text-white border border-white/20">
                     {React.createElement(activeProvince.icon, { className: 'w-3.5 h-3.5 text-white' })}
                     <span>{activeProvince.badge}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md border-0 text-gray-200">
-                    <Building2 className="w-3 h-3 text-white" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-black/50 backdrop-blur-md text-white border border-white/20">
+                    <Building2 className="w-3.5 h-3.5 text-white" />
                     <span>Capital: {activeProvince.capital}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md border-0 text-gray-200">
-                    <Sun className="w-3 h-3 text-white" />
-                    <span>Filming Season: {activeProvince.bestSeason}</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-black/50 backdrop-blur-md text-white border border-white/20">
+                    <Sun className="w-3.5 h-3.5 text-white" />
+                    <span>Season: {activeProvince.bestSeason}</span>
                   </span>
                 </div>
 
                 {/* Title and Tagline */}
                 <div className="relative z-10">
                   <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-semibold text-white tracking-tight">
                       {activeProvince.name}
                     </h1>
-                    <span className="text-base sm:text-xl font-bold text-purple-300/90">
+                    <span className="text-base sm:text-xl font-serif text-[#D4A373]">
                       {activeProvince.nepaliName}
                     </span>
                   </div>
-                  <p className="text-sm sm:text-base text-gray-300 font-medium mt-1">
+                  <p className="text-sm sm:text-base text-white/90 font-normal mt-1">
                     {activeProvince.tagline}
                   </p>
                 </div>
               </div>
 
               {/* Quick Stats Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-                <div className="bg-white/5 border-0 rounded-xl p-3 text-center">
-                  <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Top Hotspots</p>
-                  <p className="text-base sm:text-lg font-bold text-white mt-0.5 tracking-tight">{activeProvince.stats.hotspotsCount}</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-white border border-[#E7E5E0] rounded-xl p-3.5 text-center shadow-card">
+                  <p className="text-[10px] uppercase font-semibold text-[#777C75] tracking-wider">Top Hotspots</p>
+                  <p className="text-base sm:text-lg font-serif font-semibold text-[#202923] mt-0.5 tracking-tight">{activeProvince.stats.hotspotsCount}</p>
                 </div>
-                <div className="bg-white/5 border-0 rounded-xl p-3 text-center">
-                  <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Capital City</p>
-                  <p className="text-base sm:text-lg font-bold text-purple-300 mt-0.5 truncate tracking-tight">{activeProvince.capital.split('(')[0].trim()}</p>
+                <div className="bg-white border border-[#E7E5E0] rounded-xl p-3.5 text-center shadow-card">
+                  <p className="text-[10px] uppercase font-semibold text-[#777C75] tracking-wider">Capital City</p>
+                  <p className="text-base sm:text-lg font-serif font-semibold text-[#194332] mt-0.5 truncate tracking-tight">{activeProvince.capital.split('(')[0].trim()}</p>
                 </div>
-                <div className="bg-white/5 border-0 rounded-xl p-3 text-center">
-                  <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Best Filming Season</p>
-                  <p className="text-xs sm:text-sm font-bold text-emerald-400 mt-1 truncate tracking-tight">{activeProvince.bestSeason.split('(')[0].trim()}</p>
+                <div className="bg-white border border-[#E7E5E0] rounded-xl p-3.5 text-center shadow-card">
+                  <p className="text-[10px] uppercase font-semibold text-[#777C75] tracking-wider">Best Season</p>
+                  <p className="text-xs sm:text-sm font-semibold text-[#286847] mt-1 truncate tracking-tight">{activeProvince.bestSeason.split('(')[0].trim()}</p>
                 </div>
-                <div className="bg-white/5 border-0 rounded-xl p-3 text-center">
-                  <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Highest Peak / Point</p>
-                  <p className="text-base sm:text-lg font-bold text-sky-300 mt-0.5 tracking-tight">{activeProvince.stats.elevationPeak}</p>
+                <div className="bg-white border border-[#E7E5E0] rounded-xl p-3.5 text-center shadow-card">
+                  <p className="text-[10px] uppercase font-semibold text-[#777C75] tracking-wider">Elevation Peak</p>
+                  <p className="text-base sm:text-lg font-serif font-semibold text-[#202923] mt-0.5 tracking-tight">{activeProvince.stats.elevationPeak}</p>
                 </div>
               </div>
 
               {/* Section 1: About That Province */}
-              <div className="bg-[#13131a] rounded-2xl border-0 p-4 sm:p-5 space-y-3 shadow-lg">
+              <div className="bg-white rounded-xl border border-[#E7E5E0] p-4 sm:p-5 space-y-3 shadow-card">
                 <div className="flex items-center gap-2">
-                  <Film className="w-4 h-4 text-white" />
-                  <h3 className="text-sm sm:text-base font-bold text-white uppercase tracking-wider">
+                  <Film className="w-4 h-4 text-[#194332]" />
+                  <h3 className="text-sm sm:text-base font-serif font-semibold text-[#202923] tracking-wide">
                     About {activeProvince.name} & Cinema Significance
                   </h3>
                 </div>
-                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                <p className="text-xs sm:text-sm text-[#414840] leading-relaxed">
                   {activeProvince.about}
                 </p>
 
                 {/* Notable Films Badges */}
                 <div className="pt-2">
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                  <p className="text-[11px] font-semibold text-[#777C75] uppercase tracking-wider mb-2">
                     Notable Films & Productions Shot Here:
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {activeProvince.projectRelevance.notableFilms.map((film, idx) => (
                       <span
                         key={idx}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium bg-purple-950/40 text-purple-200 border-0 px-2.5 py-1 rounded-lg"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium bg-[#F3F0E9] text-[#194332] border border-[#E7E5E0] px-2.5 py-1 rounded-md"
                       >
-                        <Clapperboard className="w-3 h-3 text-white" />
+                        <Clapperboard className="w-3.5 h-3.5 text-[#194332]" />
                         <span>{film}</span>
                       </span>
                     ))}
@@ -777,12 +775,12 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-white" />
-                    <h3 className="text-sm sm:text-base font-bold text-white uppercase tracking-wider">
+                    <MapPin className="w-4 h-4 text-[#194332]" />
+                    <h3 className="text-sm sm:text-base font-serif font-semibold text-[#202923] tracking-wide">
                       Famous Filming Locations in {activeProvince.name}
                     </h3>
                   </div>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-[#777C75]">
                     {activeProvince.famousPlaces.length} Iconic Locations
                   </span>
                 </div>
@@ -791,22 +789,22 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
                   {activeProvince.famousPlaces.map((place, idx) => (
                     <div
                       key={idx}
-                      className="bg-[#121219] hover:bg-[#161620] border-0 rounded-xl p-3.5 transition-all space-y-2 group shadow-md"
+                      className="bg-white hover:border-[#D5D1C7] border border-[#E7E5E0] rounded-xl p-4 transition-all space-y-2 group shadow-card"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <h4 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors">
+                          <h4 className="text-sm font-semibold text-[#202923] group-hover:text-[#194332] transition-colors">
                             {place.name}
                           </h4>
-                          <span className="text-[11px] text-gray-400 font-medium">
+                          <span className="text-xs text-[#777C75] font-normal">
                             District: {place.district}
                           </span>
                         </div>
-                        <span className="text-[10px] font-semibold bg-white/5 border-0 text-gray-300 px-2 py-0.5 rounded-full shrink-0">
+                        <span className="text-[11px] font-medium bg-[#F3F0E9] border border-[#E7E5E0] text-[#414840] px-2 py-0.5 rounded-full shrink-0">
                           {place.terrain}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-300 leading-relaxed">
+                      <p className="text-xs text-[#626860] leading-relaxed">
                         {place.highlight}
                       </p>
                     </div>
@@ -816,9 +814,9 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
             </div>
 
             {/* Modal Bottom Action Footer */}
-            <div className="shrink-0 px-4 sm:px-6 py-3.5 border-t border-white/5 bg-[#121218]/95 backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                <ShieldCheck className="w-4 h-4 text-white" />
+            <div className="shrink-0 px-5 sm:px-6 py-4 border-t border-[#E7E5E0] bg-white flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xs text-[#626860]">
+                <ShieldCheck className="w-4 h-4 text-[#194332]" />
                 <span>NepalCasts • Cinema & Talent Network</span>
               </div>
 
@@ -826,14 +824,14 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
                 <button
                   type="button"
                   onClick={() => handleBrowseTalents(activeProvince)}
-                  className="flex-1 sm:flex-initial py-2.5 px-4 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-white transition-all text-center cursor-pointer active:scale-95 border-0"
+                  className="flex-1 sm:flex-initial py-2.5 px-4 rounded-lg text-xs font-semibold bg-white hover:bg-[#F3F0E9] border border-[#D5D1C7] text-[#202923] transition-all text-center cursor-pointer active:scale-95 shadow-sm"
                 >
                   Explore {activeProvince.name.replace(' Province', '')} Talents
                 </button>
                 <button
                   type="button"
                   onClick={() => handleBrowseAuditions(activeProvince)}
-                  className="flex-1 sm:flex-initial py-2.5 px-4 rounded-xl text-xs font-bold bg-gradient-to-r from-[#522C69] to-[#6e3b8b] hover:from-[#5e3278] hover:to-[#7b429c] text-white transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 shadow-lg active:scale-95 border-0"
+                  className="flex-1 sm:flex-initial py-2.5 px-4 rounded-lg text-xs font-semibold bg-[#194332] hover:bg-[#102F28] text-white transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
                 >
                   <Clapperboard className="w-3.5 h-3.5 text-white" />
                   <span>View Auditions</span>

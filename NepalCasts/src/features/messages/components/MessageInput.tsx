@@ -108,27 +108,27 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
     const hasContent = Boolean(text.trim() || selectedFile);
 
     return (
-        <div className="p-3 sm:p-4 bg-[#141414] border-t border-white/5 space-y-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shrink-0">
+        <div className="p-3 sm:p-4 bg-white border-t border-[#E7E5E0] space-y-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shrink-0 font-inter">
             {replyingTo && (
-                <div className="flex justify-between items-center bg-[#1a1a1a] p-2.5 rounded-xl text-xs text-gray-400">
+                <div className="flex justify-between items-center bg-[#FAF8F4] border border-[#E7E5E0] p-2.5 rounded-xl text-xs text-[#626860]">
                     <div className="text-left truncate max-w-[80%]">
-                        <span className="font-bold text-white block mb-0.5">Replying to:</span>
+                        <span className="font-semibold text-[#194332] block mb-0.5">Replying to:</span>
                         <span>{replyingTo.text}</span>
                     </div>
-                    <button onClick={onCancelReply} className="text-gray-400 hover:text-white transition-colors cursor-pointer">
+                    <button onClick={onCancelReply} className="text-[#777C75] hover:text-[#202923] transition-colors cursor-pointer">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
             )}
 
             {previewUrl && selectedFile && (
-                <div className="relative inline-block bg-[#1a1a1a] p-2 rounded-xl max-w-[200px] text-left animate-in fade-in zoom-in duration-200">
+                <div className="relative inline-block bg-[#FAF8F4] border border-[#E7E5E0] p-2 rounded-xl max-w-[200px] text-left animate-in fade-in zoom-in duration-200">
                     {selectedFile.type.startsWith('image/') ? (
                         <img src={previewUrl} alt="Preview" decoding="async" className="max-w-[180px] max-h-[120px] rounded-lg object-cover" />
                     ) : (
                         <video src={previewUrl} preload="metadata" className="max-w-[180px] max-h-[120px] rounded-lg object-cover" />
                     )}
-                    <button type="button" onClick={handleRemovePreview} disabled={uploading} className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all z-10 cursor-pointer" title="Remove attachment">
+                    <button type="button" onClick={handleRemovePreview} disabled={uploading} className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-[#B42318] hover:bg-[#912018] disabled:opacity-50 text-white flex items-center justify-center shadow-md active:scale-90 transition-all z-10 cursor-pointer" title="Remove attachment">
                         <X className="w-3.5 h-3.5" />
                     </button>
                 </div>
@@ -136,32 +136,32 @@ export default function MessageInput({ onSend, replyingTo, onCancelReply, onTypi
 
             {uploading && (
                 <div className="space-y-1">
-                    <div className="flex justify-between items-center text-[10px] text-[#522C69] font-bold">
+                    <div className="flex justify-between items-center text-[10px] text-[#194332] font-semibold">
                         <span>Uploading attachment...</span>
                         <span>{uploadProgress}%</span>
                     </div>
-                    <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#522C69] transition-all duration-300 rounded-full" style={{ width: `${uploadProgress}%` }} />
+                    <div className="w-full h-1 bg-[#E7E5E0] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#194332] transition-all duration-300 rounded-full" style={{ width: `${uploadProgress}%` }} />
                     </div>
                 </div>
             )}
 
             <form onSubmit={handleSend} className="flex gap-2 sm:gap-3 items-center">
-                <button type="button" onClick={handleAttachClick} disabled={uploading} className="w-10 h-10 sm:w-11 sm:h-11 bg-[#1a1a1a] hover:bg-[#242424] disabled:opacity-50 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition-all shrink-0 active:scale-95 cursor-pointer" title="Attach photo or video">
+                <button type="button" onClick={handleAttachClick} disabled={uploading} className="w-10 h-10 sm:w-11 sm:h-11 bg-[#FAF8F4] hover:bg-[#F3F0E9] border border-[#E7E5E0] disabled:opacity-50 rounded-xl flex items-center justify-center text-[#626860] hover:text-[#202923] transition-all shrink-0 active:scale-95 cursor-pointer" title="Attach photo or video">
                     <Paperclip className="w-4 h-4" />
                 </button>
 
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*,video/*" className="hidden" />
 
-                <input type="text" placeholder={uploading ? "Uploading media..." : "Write a message..."} value={text} disabled={uploading} onChange={(e) => setText(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 bg-[#1a1a1a] rounded-xl px-4 py-2.5 sm:py-3 text-sm text-white placeholder-gray-500 outline-none focus:ring-1 focus:ring-white/20 transition-all disabled:opacity-50" />
+                <input type="text" placeholder={uploading ? "Uploading media..." : "Write a message..."} value={text} disabled={uploading} onChange={(e) => setText(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 bg-[#FAF8F4] rounded-xl px-4 py-2.5 sm:py-3 text-sm text-[#202923] placeholder-[#777C75] border border-[#E7E5E0] outline-none focus:border-[#194332] focus:ring-1 focus:ring-[#194332] transition-all disabled:opacity-50" />
 
                 <button
                     type="submit"
                     disabled={!hasContent || uploading}
-                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center font-black transition-all shrink-0 active:scale-95 ${
+                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center font-bold transition-all shrink-0 active:scale-95 ${
                         hasContent
-                            ? 'bg-gradient-to-r from-[#522C69] to-[#522C69]/20 hover:from-[#663782] hover:to-[#522C69]/35 text-white hover:bg-[#663782] shadow-sm cursor-pointer'
-                            : 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
+                            ? 'bg-[#194332] hover:bg-[#102F28] active:bg-[#0c241e] text-white shadow-sm cursor-pointer'
+                            : 'bg-[#FAF8F4] text-[#D5D1C7] border border-[#E7E5E0] cursor-not-allowed'
                     }`}
                     title="Send message"
                 >
