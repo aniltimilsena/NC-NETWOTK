@@ -72,6 +72,8 @@ export default {
         body: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         display: ['"Playfair Display"', 'Georgia', 'serif'],
         serif: ['"Playfair Display"', 'Georgia', 'serif'],
+        // Devanagari display — for section headers with Nepali cultural weight
+        devanagari: ['"Yatra One"', '"Playfair Display"', 'Georgia', 'serif'],
         ubuntu: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         apple: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         figtree: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],

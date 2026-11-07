@@ -603,18 +603,43 @@ export default function Home({ onNavigate, user }) {
           {/* Lower Sections Container */}
           <div className="space-y-4 sm:space-y-5">
 
+            {/* ===== STAT STRIP — Nepal Cinema at a Glance ===== */}
+            <div className="bg-white border border-[#E7E5E0] rounded-2xl px-5 py-3 shadow-card">
+              <div className="flex items-center justify-between gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                <div className="flex flex-col items-center shrink-0 px-3 text-center">
+                  <span className="font-devanagari text-[#194332] font-semibold text-lg sm:text-xl leading-tight">7</span>
+                  <span className="text-[9px] sm:text-[10px] text-[#777C75] uppercase tracking-widest mt-0.5 whitespace-nowrap">Provinces</span>
+                </div>
+                <span className="w-px h-8 bg-[#E7E5E0] shrink-0" />
+                <div className="flex flex-col items-center shrink-0 px-3 text-center">
+                  <span className="font-devanagari text-[#194332] font-semibold text-lg sm:text-xl leading-tight">{talents.length > 0 ? `${talents.length}+` : '—'}</span>
+                  <span className="text-[9px] sm:text-[10px] text-[#777C75] uppercase tracking-widest mt-0.5 whitespace-nowrap">Talent Profiles</span>
+                </div>
+                <span className="w-px h-8 bg-[#E7E5E0] shrink-0" />
+                <div className="flex flex-col items-center shrink-0 px-3 text-center">
+                  <span className="font-devanagari text-[#194332] font-semibold text-lg sm:text-xl leading-tight">{activeCastingCalls.length > 0 ? activeCastingCalls.length : '—'}</span>
+                  <span className="text-[9px] sm:text-[10px] text-[#777C75] uppercase tracking-widest mt-0.5 whitespace-nowrap">Open Castings</span>
+                </div>
+                <span className="w-px h-8 bg-[#E7E5E0] shrink-0" />
+                <div className="flex flex-col items-center shrink-0 px-3 text-center">
+                  <span className="font-devanagari text-[#194332] font-semibold text-lg sm:text-xl leading-tight">नेपाल</span>
+                  <span className="text-[9px] sm:text-[10px] text-[#777C75] uppercase tracking-widest mt-0.5 whitespace-nowrap">Made in Nepal</span>
+                </div>
+              </div>
+            </div>
+
             {/* ================= HIRING NOW (CASTING CALLS) ================= */}
             <section className="bg-white rounded-2xl border border-[#E7E5E0] p-5 sm:p-6 text-[#202923] shadow-card">
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-5 bg-[#194332] rounded-full inline-block" />
-                    <h2 className="font-display font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
+                    <h2 className="font-devanagari font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
                       Hiring Now
                     </h2>
                   </div>
                   <p className="text-xs sm:text-sm text-[#626860] font-normal font-inter pl-3.5">
-                    Active auditions and production casting across Nepal
+                    Open auditions — your next role is here
                   </p>
                 </div>
                 <button
@@ -731,12 +756,12 @@ export default function Home({ onNavigate, user }) {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-5 bg-[#194332] rounded-full inline-block" />
-                    <h2 className="font-display font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
+                    <h2 className="font-devanagari font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
                       Featured Talents
                     </h2>
                   </div>
                   <p className="text-xs sm:text-sm text-[#626860] font-normal font-inter pl-3.5">
-                    Top verified artists and creators across Nepal
+                    Nepal's most compelling faces, right now
                   </p>
                 </div>
                 <button
@@ -796,12 +821,12 @@ export default function Home({ onNavigate, user }) {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-5 bg-[#194332] rounded-full inline-block" />
-                    <h2 className="font-display font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
+                    <h2 className="font-devanagari font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
                       Talents by Category
                     </h2>
                   </div>
                   <p className="text-xs sm:text-sm text-[#626860] font-normal font-inter pl-3.5">
-                    Explore curated specialties in cinema, television, and digital media
+                    Every craft has its master — find yours
                   </p>
                 </div>
                 <button
@@ -848,12 +873,12 @@ export default function Home({ onNavigate, user }) {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-5 bg-[#194332] rounded-full inline-block" />
-                    <h2 className="font-display font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
+                    <h2 className="font-devanagari font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
                       Recently Joined
                     </h2>
                   </div>
                   <p className="text-xs sm:text-sm text-[#626860] font-normal font-inter pl-3.5">
-                    Newly registered artists ready for auditions
+                    Fresh faces stepping into Nepal's creative scene
                   </p>
                 </div>
                 <button
@@ -952,12 +977,12 @@ export default function Home({ onNavigate, user }) {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-5 bg-[#194332] rounded-full inline-block" />
-                    <h2 className="font-display font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
+                    <h2 className="font-devanagari font-semibold text-xl sm:text-2xl text-[#202923] tracking-tight">
                       Trending Talents
                     </h2>
                   </div>
                   <p className="text-xs sm:text-sm text-[#626860] font-normal font-inter pl-3.5">
-                    Most viewed and connected profiles this week
+                    Nepal's rising stars — most viewed this week
                   </p>
                 </div>
                 <button

@@ -138,7 +138,7 @@ export default function PublicLayout({
     !location.pathname.startsWith('/messages');
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FAF8F4] text-[#202923] selection:bg-[#194332]/10 selection:text-[#194332]">
+    <div className="flex flex-col min-h-screen bg-[#FAF8F4] nc-texture text-[#202923] selection:bg-[#194332]/10 selection:text-[#194332]">
       {showNavbar && (
         <Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate} />
       )}

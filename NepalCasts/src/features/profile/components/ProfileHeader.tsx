@@ -258,10 +258,10 @@ export default function ProfileHeader({
       )}
 
       {/* 2. LAPTOP / DESKTOP PROFILE HEADER (Instagram Web Style: Avatar Left, Details Right) */}
-      <div className="hidden md:flex items-start gap-8 lg:gap-12 px-4 sm:px-6 py-6 border-b border-white/[0.06]">
+      <div className="hidden md:flex items-start gap-8 lg:gap-12 px-4 sm:px-6 py-6 border-b border-[#E7E5E0]">
         {/* Large Avatar */}
         <div className="relative shrink-0">
-          <div className="w-32 h-32 lg:w-36 lg:h-36 rounded-full overflow-hidden border-2 border-white/10 shadow-lg">
+          <div className="w-32 h-32 lg:w-36 lg:h-36 rounded-full overflow-hidden border border-[#E7E5E0] shadow-sm bg-white">
             <Avatar
               user={profile}
               src={
@@ -280,20 +280,20 @@ export default function ProfileHeader({
               userId={profile.uid}
               showStatus={isUserOnline(profile)}
               status={isUserOnline(profile) ? 'online' : 'offline'}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover border-none shadow-none"
             />
           </div>
 
           {isRealOwn && (
             <label
               htmlFor="avatar-photo-upload"
-              className="absolute bottom-1 right-1 p-2 rounded-full bg-[#1e1e24] border border-white/20 text-white hover:bg-[#282830] cursor-pointer shadow-lg transition-all active:scale-95"
+              className="absolute bottom-1 right-1 p-2 rounded-full bg-white border border-[#E7E5E0] text-[#194332] hover:bg-[#FAF8F4] cursor-pointer shadow-sm transition-all active:scale-95"
               title="Change Profile Photo"
             >
               {uploadingAvatar ? (
-                <Loader2 className="w-4 h-4 text-white animate-spin" />
+                <Loader2 className="w-4 h-4 text-[#194332] animate-spin" />
               ) : (
-                <Camera className="w-4 h-4 text-white" />
+                <Camera className="w-4 h-4 text-[#194332]" />
               )}
             </label>
           )}
@@ -452,7 +452,7 @@ export default function ProfileHeader({
         <div className="flex items-center gap-5 sm:gap-7">
           {/* Avatar */}
           <div className="relative shrink-0">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border border-[#E7E5E0] shadow-sm bg-white">
               <Avatar
                 user={profile}
                 src={
@@ -471,7 +471,7 @@ export default function ProfileHeader({
                 userId={profile.uid}
                 showStatus={isUserOnline(profile)}
                 status={isUserOnline(profile) ? 'online' : 'offline'}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover border-none shadow-none"
               />
             </div>
 
@@ -479,13 +479,13 @@ export default function ProfileHeader({
             {isRealOwn && (
               <label
                 htmlFor="avatar-photo-upload"
-                className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[#1e1e24] border border-white/20 text-white hover:bg-[#282830] cursor-pointer shadow-lg transition-all active:scale-95"
+                className="absolute bottom-0 right-0 p-1.5 rounded-full bg-white border border-[#E7E5E0] text-[#194332] hover:bg-[#FAF8F4] cursor-pointer shadow-sm transition-all active:scale-95"
                 title="Change Profile Photo"
               >
                 {uploadingAvatar ? (
-                  <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 text-[#194332] animate-spin" />
                 ) : (
-                  <Camera className="w-3.5 h-3.5 text-white" />
+                  <Camera className="w-3.5 h-3.5 text-[#194332]" />
                 )}
               </label>
             )}

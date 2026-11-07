@@ -13,17 +13,31 @@ interface UserLayoutProps {
 }
 
 const RouteLoadingFallback = () => (
-  <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 animate-pulse space-y-6" aria-hidden="true">
-    <div className="h-8 bg-[#F3F0E9] rounded-xl w-48 mb-8" />
-    <div className="h-4 bg-[#F3F0E9] rounded-lg w-3/4" />
-    <div className="h-4 bg-[#F3F0E9] rounded-lg w-full" />
-    <div className="h-4 bg-[#F3F0E9] rounded-lg w-5/6" />
-    <div className="pt-8 space-y-4">
-      <div className="h-6 bg-[#F3F0E9] rounded-lg w-40" />
-      <div className="h-4 bg-[#F3F0E9] rounded-lg w-full" />
-      <div className="h-4 bg-[#F3F0E9] rounded-lg w-11/12" />
-      <div className="h-4 bg-[#F3F0E9] rounded-lg w-4/5" />
-    </div>
+  <div className="min-h-[60vh] flex flex-col items-center justify-center gap-5" aria-hidden="true">
+    {/* Camera aperture SVG loader */}
+    <svg
+      className="animate-aperture-pulse"
+      width="52" height="52" viewBox="0 0 52 52" fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle cx="26" cy="26" r="24" stroke="#E7E5E0" strokeWidth="2" />
+      <circle cx="26" cy="26" r="10" fill="#194332" fillOpacity="0.12" />
+      {/* Aperture blades */}
+      {[0,45,90,135,180,225,270,315].map((deg, i) => (
+        <line
+          key={i}
+          x1="26" y1="26"
+          x2={26 + 20 * Math.cos((deg * Math.PI) / 180)}
+          y2={26 + 20 * Math.sin((deg * Math.PI) / 180)}
+          stroke="#194332"
+          strokeWidth="1.5"
+          strokeOpacity="0.35"
+          strokeLinecap="round"
+        />
+      ))}
+      <circle cx="26" cy="26" r="4" fill="#194332" fillOpacity="0.7" />
+    </svg>
+    <p className="text-xs font-inter text-[#777C75] tracking-widest uppercase">Every story loads</p>
   </div>
 );
 
@@ -170,7 +184,7 @@ export default function UserLayout({
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FAF8F4] text-[#202923] selection:bg-[#194332]/10 selection:text-[#194332]">
+    <div className="flex flex-col min-h-screen bg-[#FAF8F4] nc-texture text-[#202923] selection:bg-[#194332]/10 selection:text-[#194332]">
       {showNavbar && (
         <Navbar user={user} isAdmin={isAdmin} onLogout={onLogout} onNavigate={handleLegacyNavigate} />
       )}

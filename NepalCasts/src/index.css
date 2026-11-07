@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================
+   NEPALCASTS — Nepali Cinema Identity System
+   ========================================================= */
+
+/* Dhaka weave texture — applied to main layout background */
+.nc-texture {
+  background-image: url('/assets/textures/dhaka-pattern.svg');
+  background-size: 80px 80px;
+  background-repeat: repeat;
+  background-attachment: local;
+}
+
+/* Film aperture loader animation */
+@keyframes aperture-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes aperture-pulse {
+  0%, 100% { opacity: 0.9; transform: rotate(0deg) scale(1); }
+  50%       { opacity: 0.6; transform: rotate(180deg) scale(0.95); }
+}
+@keyframes clapper-snap {
+  0%   { transform: rotate(0deg); transform-origin: left center; }
+  15%  { transform: rotate(-28deg); transform-origin: left center; }
+  30%  { transform: rotate(0deg); transform-origin: left center; }
+  100% { transform: rotate(0deg); transform-origin: left center; }
+}
+.animate-aperture { animation: aperture-spin 3s linear infinite; }
+.animate-aperture-pulse { animation: aperture-pulse 2.4s ease-in-out infinite; }
+.animate-clapper-snap { animation: clapper-snap 1.6s ease-in-out infinite; }
+
 :root {
   color-scheme: light;
 

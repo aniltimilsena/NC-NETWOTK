@@ -259,7 +259,7 @@ export default function Avatar(props: AvatarProps) {
         }
     };
     return (<>
-      <div onClick={handleAvatarClick} style={sizeStyle} className={`relative flex-shrink-0 rounded-full ${currentSrc ? 'border-0 ring-0' : 'border-2 border-white/10'} transition-all duration-300 select-none bg-gradient-to-b from-[#1E1E26] to-[#111116] ${sizeClass} ${className} ${editable ? 'cursor-pointer group/avatar' : ''}`}>
+      <div onClick={handleAvatarClick} style={sizeStyle} className={`relative flex-shrink-0 rounded-full border border-[#E7E5E0] shadow-2xs transition-all duration-300 select-none bg-white ${sizeClass} ${className} ${editable ? 'cursor-pointer group/avatar' : ''}`}>
         <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative">
           {currentSrc ? (
             <>
@@ -286,8 +286,8 @@ export default function Avatar(props: AvatarProps) {
           {uploading && (<div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex items-center justify-center rounded-full z-10 animate-fade-in">
               <div className="relative w-12 h-12 flex items-center justify-center">
                 <svg className="absolute w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path className="text-white/10" strokeWidth="2.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                  <path className="text-[#522C69] transition-all duration-300" strokeDasharray={`${progress}, 100`} strokeWidth="2.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <path className="text-[#E7E5E0]" strokeWidth="2.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <path className="text-[#194332] transition-all duration-300" strokeDasharray={`${progress}, 100`} strokeWidth="2.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
                 </svg>
                 <span className="text-[10px] text-white font-extrabold tracking-tighter">
                   {progress}%
@@ -315,26 +315,26 @@ export default function Avatar(props: AvatarProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/75 backdrop-blur-md z-[9999] flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.92, opacity: 0, y: 8 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 8 }}
               transition={{ type: "spring", duration: 0.3, bounce: 0.1 }}
-              className="relative bg-[#0D0D12]/95 border border-white/10 rounded-2xl p-5 w-full max-w-[270px] shadow-[0_0_40px_rgba(0,0,0,0.9)] text-center overflow-hidden"
+              className="relative bg-white border border-[#E7E5E0] rounded-2xl p-5 w-full max-w-[270px] shadow-xl text-center overflow-hidden"
             >
               {/* Subtle top accent gradient */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#522C69] to-transparent opacity-60" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#194332] to-transparent opacity-60" />
 
               {/* Header Icon & Text */}
               <div className="flex flex-col items-center gap-2 mb-4 pt-0.5">
-                <div className="w-11 h-11 rounded-xl bg-[#522C69]/20 flex items-center justify-center text-white">
-                  <Camera className="w-5 h-5 text-white" />
+                <div className="w-11 h-11 rounded-xl bg-[#EAF2ED] flex items-center justify-center text-[#194332]">
+                  <Camera className="w-5 h-5 text-[#194332]" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-sm font-bold text-white leading-tight">Profile Photo</h4>
-                  <p className="text-[11px] text-gray-400 mt-0.5">Choose an action below</p>
+                  <h4 className="text-sm font-bold text-[#202923] leading-tight">Profile Photo</h4>
+                  <p className="text-[11px] text-[#626860] mt-0.5">Choose an action below</p>
                 </div>
               </div>
 
@@ -346,7 +346,7 @@ export default function Avatar(props: AvatarProps) {
                     setShowOptionsModal(false);
                     fileInputRef.current?.click();
                   }}
-                  className="w-full py-2.5 px-3 bg-gradient-to-r from-[#522C69] to-[#663782] hover:from-[#663782] hover:to-[#7a429c] text-white shadow-md font-bold rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border-0 outline-none"
+                  className="w-full py-2.5 px-3 bg-[#194332] hover:bg-[#102F28] text-white shadow-xs font-bold rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border-0 outline-none"
                 >
                   <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Upload New Photo</span>
@@ -358,7 +358,7 @@ export default function Avatar(props: AvatarProps) {
                     setShowOptionsModal(false);
                     setConfirmDeleteOpen(true);
                   }}
-                  className="w-full py-2 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 font-bold border border-red-500/20 rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full py-2 px-3 bg-red-50 hover:bg-red-100 text-[#B42318] font-bold border border-red-200 rounded-xl text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Trash2 className="w-3.5 h-3.5 stroke-[2]" />
                   <span>Remove Current Photo</span>
@@ -367,7 +367,7 @@ export default function Avatar(props: AvatarProps) {
                 <button
                   type="button"
                   onClick={() => setShowOptionsModal(false)}
-                  className="w-full py-1 text-gray-400 hover:text-white font-semibold rounded-xl text-[11px] transition-colors cursor-pointer mt-0.5"
+                  className="w-full py-1 text-[#626860] hover:text-[#202923] font-semibold rounded-xl text-[11px] transition-colors cursor-pointer mt-0.5"
                 >
                   Cancel
                 </button>

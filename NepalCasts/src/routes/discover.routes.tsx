@@ -5,6 +5,7 @@ import { lazyWithRetry } from '../utils/lazyWithRetry';
 const TalentListing = lazyWithRetry(() => import('../pages/TalentListing'));
 const CastingCall = lazyWithRetry(() => import('../features/casting/CastingCall'));
 const Trending = lazyWithRetry(() => import('../pages/Trending'));
+const ExploreHubs = lazyWithRetry(() => import('../pages/ExploreHubs'));
 
 const DiscoverWrapper = ({ onNavigate, user }: any) => {
   const { category } = useParams();
@@ -31,6 +32,9 @@ export const DiscoverRoutes = ({ onNavigate, user, isAdmin }: any) => (
     <Route path="/talents" element={<TalentDirectoryWrapper onNavigate={onNavigate} user={user} />} />
     <Route path="/talents/:category" element={<TalentDirectoryWrapper onNavigate={onNavigate} user={user} />} />
     <Route path="/trending" element={<Trending onNavigate={onNavigate} user={user} />} />
+    <Route path="/hubs" element={<ExploreHubs onNavigate={onNavigate} />} />
+    <Route path="/hubs/:provinceId" element={<ExploreHubs onNavigate={onNavigate} />} />
+    <Route path="/explore-hubs" element={<ExploreHubs onNavigate={onNavigate} />} />
 
     {/* Search Routes */}
     <Route path="/search" element={<SearchWrapper onNavigate={onNavigate} user={user} isAdmin={isAdmin} />} />

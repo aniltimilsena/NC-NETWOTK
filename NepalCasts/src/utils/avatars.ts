@@ -1,8 +1,8 @@
 import { getOptimizedImageUrl } from './media';
 
-export const DEFAULT_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%2318181E" rx="50"/><path d="M50 25a15 15 0 1 0 15 15 15 15 0 0 0-15-15zm-25 50c0-10 15-15 25-15s25 5 25 15v5H25z" fill="%235A5A75"/></svg>`;
-export const MALE_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%2318181E" rx="50"/><path d="M50 25a15 15 0 1 0 15 15 15 15 0 0 0-15-15zm-25 50c0-10 15-15 25-15s25 5 25 15v5H25z" fill="%235A5A75"/></svg>`;
-export const FEMALE_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%2318181E" rx="50"/><path d="M50 25a15 15 0 1 0 15 15 15 15 0 0 0-15-15zm-25 50c0-10 15-15 25-15s25 5 25 15v5H25z" fill="%235A5A75"/></svg>`;
+export const DEFAULT_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="49" fill="%23FFFFFF" stroke="%23E7E5E0" stroke-width="1.5"/><circle cx="50" cy="40" r="13.33" fill="%235A5A75"/><ellipse cx="50" cy="73.33" rx="23.33" ry="16.67" fill="%235A5A75"/></svg>`;
+export const MALE_AVATAR = DEFAULT_AVATAR;
+export const FEMALE_AVATAR = DEFAULT_AVATAR;
 
 export const isDefaultImage = (url?: string | null) => {
     if (!url || typeof url !== 'string' || url.trim() === '')

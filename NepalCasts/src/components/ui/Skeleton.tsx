@@ -20,7 +20,7 @@ export const AvatarScrollSkeleton = ({ count = 5 }) => (
   <div className="flex gap-3 sm:gap-4 w-full animate-pulse" aria-hidden="true">
     {Array.from({ length: count }).map((_, i) => (
       <div key={i} className="flex flex-col items-center shrink-0 w-[140px] sm:w-[170px]">
-        <div className="w-[125px] h-[125px] sm:w-[155px] sm:h-[155px] rounded-full skeleton border-2 border-white/10" />
+        <div className="w-[125px] h-[125px] sm:w-[155px] sm:h-[155px] rounded-full skeleton border border-[#E7E5E0] bg-white" />
         <div className="h-3.5 skeleton w-2/3 mt-3" />
         <div className="h-2.5 skeleton w-1/2 mt-2" />
       </div>
@@ -37,7 +37,7 @@ export const TrendingListSkeleton = ({ count = 3 }) => (
           <span className="font-sans text-2xl sm:text-3xl font-black text-white/5 w-8 text-center shrink-0 select-none">
             {i + 1}
           </span>
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full skeleton shrink-0 border-2 border-white/10" />
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full skeleton shrink-0 border border-[#E7E5E0] bg-white" />
           <div className="space-y-2 flex-1 text-left">
             <div className="h-4 skeleton w-1/3" />
             <div className="h-3 skeleton w-1/2" />
@@ -294,7 +294,7 @@ export const ProfileSkeleton = () => (
 
       {/* Profile Identity & Avatar Block */}
       <div className="flex items-center gap-4 sm:gap-5 px-3.5 sm:px-4 py-2 mb-2">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full skeleton shrink-0 border-2 border-white/10" />
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full skeleton shrink-0 border border-[#E7E5E0] bg-white" />
         <div className="min-w-0 flex-1 space-y-2 text-left">
           <div className="h-5 sm:h-6 skeleton w-40 rounded-md" />
           <div className="h-3.5 skeleton w-24 rounded-md" />

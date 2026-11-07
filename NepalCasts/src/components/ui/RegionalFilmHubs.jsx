@@ -3,6 +3,7 @@ import {
   MapPin,
   Film,
   ChevronRight,
+  ChevronLeft,
   Clapperboard,
   Mountain,
   Building2,
@@ -460,14 +461,14 @@ export const PROVINCES_DATA = [
   },
 ];
 
-const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeProvinceId, setActiveProvinceId] = useState('koshi');
+const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate, initialOpen = false, defaultProvinceId = 'koshi', standalone = false }) {
+  const [isModalOpen, setIsModalOpen] = useState(initialOpen || standalone);
+  const [activeProvinceId, setActiveProvinceId] = useState(defaultProvinceId || 'koshi');
   const [activeSubTab, setActiveSubTab] = useState('all'); // 'all', 'places', 'project'
 
-  // Lock body scroll when modal is open
+  // Lock body scroll when fullscreen explorer is active
   useEffect(() => {
-    if (isModalOpen) {
+    if (isModalOpen || standalone) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -475,18 +476,22 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isModalOpen]);
+  }, [isModalOpen, standalone]);
 
   // Handle ESC key to close modal
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isModalOpen) {
-        setIsModalOpen(false);
+      if (e.key === 'Escape') {
+        if (standalone && onNavigate) {
+          onNavigate('back');
+        } else if (isModalOpen) {
+          setIsModalOpen(false);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isModalOpen]);
+  }, [isModalOpen, standalone]);
 
   const handleOpenModal = (provinceId = 'koshi') => {
     setActiveProvinceId(provinceId);
@@ -495,7 +500,11 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
   };
 
   const handleCloseModal = () => {
-    setIsModalOpen(false);
+    if (standalone && onNavigate) {
+      onNavigate('back');
+    } else {
+      setIsModalOpen(false);
+    }
   };
 
   const handleBrowseTalents = (province) => {
@@ -519,12 +528,12 @@ const RegionalFilmHubs = memo(function RegionalFilmHubs({ onNavigate }) {
       {/* Section Header */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="space-y-1">
-          <span className="relative inline-flex items-center pb-2 text-[#202923] font-serif font-semibold text-xl sm:text-2xl tracking-normal select-none">
+          <span className="relative inline-flex items-center pb-2 text-[#202923] font-devanagari font-semibold text-xl sm:text-2xl tracking-normal select-none">
             <span className="absolute bottom-0 left-0 w-3/4 h-[2px] bg-[#194332] rounded-full pointer-events-none" />
             Regional Film Hubs
           </span>
           <p className="text-xs sm:text-sm text-[#626860] font-normal">
-            Cinema hubs across Nepal
+            Every mountain has a story. Every face, a character.
           </p>
         </div>
 
